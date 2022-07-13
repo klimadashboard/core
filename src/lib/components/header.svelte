@@ -1,6 +1,21 @@
 <script>
     import { theme } from "../stores/theme";
     import { locale } from "../stores/i18n";
+import { check_outros } from "svelte/internal";
+
+    async function getNav() {
+        const res = await fetch(`https://cms.klimadashboard.org/de/klimadashboard-at.json`);
+		    const json = await res.json();
+
+		if (json) {
+      console.log(json.children);
+			return Object.values(json.children);
+		} else {
+			throw new Error(JSON.stringify(json));
+		}
+  };
+
+  let promise = getNav();
 </script>
 
 <header class="fixed py-3 w-full z-50 bg-white dark:bg-gray-900">
@@ -22,8 +37,27 @@
 
         <nav class="flex gap-2 sm:gap-4">
             <a href="/">Home</a>
+            
+            {#await promise then children}
+            <ul class="flex gap-2 sm:gap-4">
+            {#each children as child}
+              <li class="group">
+              <a href="{child.uri.replace("klimadashboard-at","")}">{child.content.title}</a>
+              <ul class="opacity-0 group-hover:opacity-100 absolute bottom-0 bg-white">
+              {#each child.children as grandchild}
+                  <li >
+                    <a href="{grandchild}">{grandchild}</a>
+                  </li>
+              {/each}
+              </ul>
+              </li>
+            {/each}
+            </ul>
+            {/await}
+
             <a href="/charts">Charts</a>
             <a href="/glossary">Glossary</a>
+            
             <button class="flex items-center" on:mousedown={() => locale.set($locale == "de" ? "en" : "de")}>
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>

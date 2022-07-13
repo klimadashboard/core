@@ -4,6 +4,6 @@
     export let block;
 </script>
 
-<div>
+<div class="my-4">
     <Chart id={block.content.chart[0]} />
 </div>  
