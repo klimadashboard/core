@@ -30,9 +30,9 @@
     }];
 
     let expansionGoals;
-    
+
     Papa.parse(
-    'http://data.klimadashboard.at/data/energy/renewables/ausbauziele.csv',
+    'https://scraper.klimadashboard.at/data/energy/renewables/ausbauziele.csv',
     {
       download: true,
       dynamicTyping: true,
@@ -48,7 +48,7 @@
 
     let electricityProduction;
     Papa.parse(
-    'http://data.klimadashboard.at/data/energy/renewables/stromproduktion.csv',
+    'https://scraper.klimadashboard.at/data/energy/renewables/stromproduktion.csv',
     {
       download: true,
       dynamicTyping: true,
