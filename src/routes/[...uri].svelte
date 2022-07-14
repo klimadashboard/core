@@ -18,7 +18,7 @@
 
     <section id="page-header" class="bg-gradient-green shadow-inner text-white pt-24 pb-10 mb-10">
         <div class="container">
-        <div class="max-w-2xl mx-auto">
+        <div class="max-w-2xl mx-auto break-words">
         <div class="flex gap-2 items-center">
         <span class="uppercase font-semibold tracking-wider">{item.eyebrow}</span>
         <button id="share" on:mousedown={() => navigator.share(shareData)}>
