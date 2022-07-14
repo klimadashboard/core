@@ -22,15 +22,13 @@
 {#await promise}
 	<p>...waiting</p>
 {:then chartData}
-    
-    <p class="mb-8">Data imported –</p>
-    
+        
     <div class="grid md:grid-cols-3 gap-4">
     {#each Object.values(chartData.charts) as chart}
-        <div class="bg-gray-100 p-8">
+        <a class="shadow p-4 border border-gray-100 rounded transition hover:bg-gray-100" href="{chart.id}">
             <h2 class="text-4xl">{chart.content.heading}</h2>
             <p>{chart.content.text}</p>
-        </div>
+        </a>
     {/each}
     </div>
     

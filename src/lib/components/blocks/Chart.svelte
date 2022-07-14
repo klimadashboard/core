@@ -5,5 +5,7 @@
 </script>
 
 <div class="my-4">
-    <Chart id={block.content.chart[0]} />
+    {#each block.content.chart as chart}
+    <Chart id={chart} />
+    {/each}
 </div>  

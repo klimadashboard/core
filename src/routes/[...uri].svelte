@@ -11,10 +11,10 @@
   </script>
   
   <svelte:head>
-  <title>{item.title}</title>
+  <title>{item.title} – Klimadashboard</title>
   </svelte:head>
 
-  <main>
+  <main class="mb-24">
 
     <section id="page-header" class="bg-gradient-green shadow-inner text-white pt-24 pb-10 mb-10">
         <div class="container">

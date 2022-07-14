@@ -1,15 +1,13 @@
 <script>
     import { theme } from "../stores/theme";
     import { locale } from "../stores/i18n";
-import { check_outros } from "svelte/internal";
 
     async function getNav() {
-        const res = await fetch(`https://cms.klimadashboard.org/de/klimadashboard-at.json`);
+        const res = await fetch('https://cms.klimadashboard.org/' + $locale + '/index.json');
 		    const json = await res.json();
 
 		if (json) {
-      console.log(json.children);
-			return Object.values(json.children);
+			return Object.values(json).filter(entry => entry.id.includes("klimadashboard-at"));
 		} else {
 			throw new Error(JSON.stringify(json));
 		}
@@ -40,23 +38,30 @@ import { check_outros } from "svelte/internal";
             
             {#await promise then children}
             <ul class="flex gap-2 sm:gap-4">
-            {#each children as child}
-              <li class="group">
+            {#each children.filter(d => d.num > 0 && d.parent == "klimadashboard-at") as child}
+              <li class="group relative">
               <a href="{child.uri.replace("klimadashboard-at","")}">{child.content.title}</a>
-              <ul class="opacity-0 group-hover:opacity-100 absolute bottom-0 bg-white">
-              {#each child.children as grandchild}
-                  <li >
-                    <a href="{grandchild}">{grandchild}</a>
+              {#if children.filter(c => c.id.includes(child.uri) && c !== child)}
+              <ul class="opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition absolute top-full -left-2 p-2 bg-white dark:bg-gray-800">
+              {#each children.filter(c => c.id.includes(child.uri) && c !== child) as grandchild}
+                  <li>
+                    <a href="{grandchild.id.replace("klimadashboard-at/","/")}">{grandchild.content.title}</a>
                   </li>
               {/each}
               </ul>
+              {/if}
               </li>
             {/each}
             </ul>
             {/await}
 
-            <a href="/charts">Charts</a>
-            <a href="/glossary">Glossary</a>
+            <div class="group relative">
+            <span>...</span>
+            <ul class="opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition absolute top-full -left-2 p-2 bg-white dark:bg-gray-800">
+            <li><a href="/charts">Charts</a></li>
+            <li><a href="/glossary">Glossary</a></li>
+            </ul>
+            </div>
             
             <button class="flex items-center" on:mousedown={() => locale.set($locale == "de" ? "en" : "de")}>
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">

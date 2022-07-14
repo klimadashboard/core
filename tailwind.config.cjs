@@ -3,6 +3,7 @@ const colors = require('tailwindcss/colors')
 module.exports = {
   content: [
     './public/index.html', 
+    './src/app.html',
     './src/**/*.svelte',
     './src/**/**/*.svelte'
   ],
