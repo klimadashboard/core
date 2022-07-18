@@ -5,6 +5,7 @@
     import Loader from "$lib/components/Loader.svelte";
 
     export let id;
+    export let hideWrapper;
     
     let Chart;
     let chartId;
@@ -18,6 +19,7 @@
       const chartData = Object.values(json.charts).find(entry => entry.id == id);
       Chart = (await import('./' + chartData.content.identifier_string + '/index.svelte')).default;
       chartId = chartData.id;
+      console.log(chartData);
       return chartData;
     } else {
       throw new Error(JSON.stringify(json));
@@ -79,11 +81,25 @@
         }
       });
   };
+
+  const createVariables = function(json) {
+    const input = JSON.parse(json);
+    console.log(input);
+    const variable = {};
+    for(var i = 0; i < input.length; i++) {
+        variable[input[i].content.label] = input[i].content.text;
+    }
+    console.log(variable);
+    return variable;
+  };
 </script>
 
 {#await promise}
 <Loader />
 {:then chart}
+{#if hideWrapper}
+    <svelte:component this={Chart} v={createVariables(chart.content.variables)} />
+{:else}
 <div class="shadow p-4 border border-gray-100 rounded" id="{chart.content.identifier_string}" bind:this={item}>
     <div class="flex justify-between items-center">
         <h3 class="uppercase tracking-wide font-semibold text-sm">{chart.content.eyebrow}</h3>
@@ -116,6 +132,7 @@
 
     <p class="text-lg max-w-2xl">{chart.content.text}</p>
 </div>
+{/if}
 {:catch error}
 {error}
 {/await}

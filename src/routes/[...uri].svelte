@@ -1,4 +1,5 @@
 <script>
+    import { locale } from "$lib/stores/i18n";
     import Blocks from "$lib/components/blocks/index.svelte";
     import { page } from '$app/stores';
     export let item;
@@ -40,7 +41,7 @@
 
     {#if item.pagelayout}
     {#each JSON.parse(item.pagelayout) as layout}
-        <section id="{layout.id}" class="container">
+        <section id="{layout.id}" class="">
         {#each layout.columns as column}
             <Blocks content={column.blocks} />
         {/each}

@@ -1,11 +1,15 @@
 import { locale } from "$lib/stores/i18n";
 
- 
 /** @type {import('./[uri]').RequestHandler} */
 export async function get({ params }) {
-  const url = "https://cms.klimadashboard.org/de/klimadashboard-at/" + params.uri + ".json";
-  const res = await fetch(url);
-  const item = await res.json();
+  let localeString = "de";
+  locale.subscribe(value => {
+     localeString = value
+  });
+  let url = "https://cms.klimadashboard.org/" + localeString + "/klimadashboard-at" + (params.uri !== "" ? "/" : "") + params.uri + ".json";
+  console.log(url);
+  let res = await fetch(url);
+  let item = await res.json();
 
   if (item) {
     return {
