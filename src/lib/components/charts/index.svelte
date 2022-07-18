@@ -19,7 +19,6 @@
       const chartData = Object.values(json.charts).find(entry => entry.id == id);
       Chart = (await import('./' + chartData.content.identifier_string + '/index.svelte')).default;
       chartId = chartData.id;
-      console.log(chartData);
       return chartData;
     } else {
       throw new Error(JSON.stringify(json));
@@ -84,12 +83,10 @@
 
   const createVariables = function(json) {
     const input = JSON.parse(json);
-    console.log(input);
     const variable = {};
     for(var i = 0; i < input.length; i++) {
         variable[input[i].content.label] = input[i].content.text;
     }
-    console.log(variable);
     return variable;
   };
 </script>

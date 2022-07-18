@@ -5,6 +5,7 @@
     import { area, line } from 'd3-shape';
     import dayjs from "dayjs";
     import formatNumber from "$lib/stores/formatNumber";
+    import { glossaryItem } from "$lib/stores/glossary";
 
     export let v;
     console.log(v);
@@ -300,7 +301,7 @@
             </div>
             <div class="flex items-center space-x-1 -mt-1">
                 <p class="font-semibold">{v.CO2ConcentrationLabel}</p>
-                <button on:mousedown={() => showGlossary("live.CO2Concentration")} aria-label="Info">
+                <button on:mousedown={() => glossaryItem.set("co2-konzentration")} aria-label="Info">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 icon icon-tabler icon-tabler-info-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                         <circle cx="12" cy="12" r="9"></circle>
@@ -339,7 +340,7 @@
             <p class="text-6xl font-extralight mb-2">+{formatNumber(globalWarming)}°C</p>
             <div class="flex items-center space-x-1">
             <p class="font-semibold">{v.globalWarmingLabel}</p>
-            <button on:mousedown={() => showGlossary("live.globalWarming")} aria-label="Info">
+            <button on:mousedown={() => glossaryItem.set("globale-erhitzung")} aria-label="Info">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 icon icon-tabler icon-tabler-info-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                     <circle cx="12" cy="12" r="9"></circle>
