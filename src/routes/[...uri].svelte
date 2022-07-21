@@ -9,10 +9,13 @@
       text: item.intro,
       url: $page.url
     }
+
+    console.log(item);
   </script>
   
   <svelte:head>
   <title>{item.title} – Klimadashboard</title>
+  <meta name="description" content="{item.meta_description}">
   </svelte:head>
 
   <main class="mb-24">
