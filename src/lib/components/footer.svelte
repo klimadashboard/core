@@ -29,8 +29,9 @@
          </svg>
         </a>
       </nav>
-      <nav>
-        <a href="https://klimadashboard.org">Unsere Organisation</a>
+      <div></div>
+      <nav class="flex">
+        <a href="https://klimadashboard.org" class="ml-auto">Unsere Organisation</a>
       </nav>
     </div>
     <div class="bg-gray-900 py-4">
