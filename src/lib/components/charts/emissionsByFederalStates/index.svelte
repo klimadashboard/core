@@ -6,7 +6,7 @@
     $: readMore = false;
   
     Papa.parse(
-      "../data_archive/Emission_All_sectors_Bundeslaender_Austria_1990-2019.csv",
+      "https://scraper.klimadashboard.at/data/Emission_All_sectors_Bundeslaender_Austria_1990-2019.csv",
       {
         download: true,
         dynamicTyping: true,
@@ -14,7 +14,6 @@
         complete: function (results) {
           if (results) {
             dataset = results.data;
-            // console.log(dataset);
           }
         },
       }

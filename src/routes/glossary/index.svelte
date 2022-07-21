@@ -29,11 +29,13 @@ $: if($locale) {
 {#await promise}
 Loading...
 {:then glossaryData}
+<div class="space-y-8 mb-24">
   {#each Object.values(glossaryData.glossary) as item}
-      <div class="bg-gray-100 p-8">
-          <h2 class="text-4xl">{item.content.title}</h2>
+      <div class="bg-gray-100 p-8 max-w-2xl">
+          <h2 class="text-3xl">{item.content.title}</h2>
           <Blocks content={JSON.parse(item.content.text)} />
       </div>
   {/each}
+</div>
 {/await}
 </div>

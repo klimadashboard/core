@@ -18,7 +18,7 @@
     <p class="uppercase tracking-wide font-semibold mb-2 text-green-600">Chart-Index &#8212;</p>
 </section>
 
-<div class="container">
+<div class="container mb-24">
 {#await promise}
 	<p>...waiting</p>
 {:then chartData}
@@ -26,8 +26,9 @@
     <div class="grid md:grid-cols-3 gap-4">
     {#each Object.values(chartData.charts) as chart}
         <a class="shadow p-4 border border-gray-100 rounded transition hover:bg-gray-100" href="{chart.id}">
-            <h2 class="text-4xl">{chart.content.heading}</h2>
-            <p>{chart.content.text}</p>
+            
+            <h2 class="uppercase font-semibold tracking-wide">{chart.content.title}</h2>
+            <p class="text-3xl mt-1">{chart.content.heading}</p>
         </a>
     {/each}
     </div>

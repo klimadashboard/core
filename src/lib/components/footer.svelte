@@ -29,18 +29,8 @@
          </svg>
         </a>
       </nav>
-      <div>
-          <a href="donate">Donate</a>
-      </div>
       <nav>
-          <ul>
-              <li>Who We Are</li>
-              <li>How We’re Funded</li>
-              <li>Code of Conduct</li>
-          </ul>
-          <ul>
-
-          </ul>
+        <a href="https://klimadashboard.org">Unsere Organisation</a>
       </nav>
     </div>
     <div class="bg-gray-900 py-4">
@@ -51,8 +41,7 @@
                 <path opacity="0.2" d="M148.95 0H129.808C128.732 0 127.701 0.433664 126.948 1.20302L91.7358 37.203C90.2152 38.7577 90.2152 41.2423 91.7358 42.797L126.948 78.797C127.701 79.5663 128.732 80 129.808 80H148.95C152.498 80 154.29 75.7227 151.8 73.1939L121.887 42.8061C120.355 41.2492 120.355 38.7508 121.887 37.1939L151.8 6.80607C154.29 4.27726 152.498 0 148.95 0Z" fill="#F5F5F5"/>
             </svg>                
         <nav class="flex space-x-4">
-            <a href="open">Open</a>
-            <a href="impressum">Impressum</a>
+            <a href="https://klimadashboard.org/impressum">Impressum</a>
         </nav>
         </div>
     </div>
