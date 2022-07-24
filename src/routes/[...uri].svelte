@@ -9,8 +9,6 @@
       text: item.intro,
       url: $page.url
     }
-
-    console.log(item);
   </script>
   
   <svelte:head>

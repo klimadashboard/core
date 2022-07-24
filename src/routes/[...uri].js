@@ -7,7 +7,6 @@ export async function get({ params }) {
      localeString = value
   });
   let url = "https://cms.klimadashboard.org/" + localeString + "/klimadashboard-at" + (params.uri !== "" ? "/" : "") + params.uri + ".json";
-  console.log(url);
   let res = await fetch(url);
   let item = await res.json();
 

@@ -2,7 +2,6 @@
     import { fly } from "svelte/transition";
     export let url = "";
     const pageTransitionDuration = 500;
-    console.log("page transition");
   </script>
   
   {#key url}

@@ -82,12 +82,17 @@
   };
 
   const createVariables = function(json) {
+    if(json) {
     const input = JSON.parse(json);
+    console.log(input);
     const variable = {};
     for(var i = 0; i < input.length; i++) {
         variable[input[i].content.label] = input[i].content.text;
     }
     return variable;
+  } else {
+    return "";
+  }
   };
 </script>
 
@@ -124,7 +129,7 @@
     <h3 class="text-2xl max-w-2xl tracking-tight">{chart.content.heading}</h3>
     
     <div class="my-4">
-        <svelte:component this={Chart} variables={chart.content.variables} />
+      <svelte:component this={Chart} v={createVariables(chart.content.variables)} />
     </div>
 
     <p class="text-lg max-w-2xl">{chart.content.text}</p>
