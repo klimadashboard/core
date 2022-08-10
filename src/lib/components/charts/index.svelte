@@ -102,7 +102,7 @@
 {#if hideWrapper}
     <svelte:component this={Chart} v={createVariables(chart.content.variables)} />
 {:else}
-<div class="shadow p-4 border border-gray-100 rounded" id="{chart.content.identifier_string}" bind:this={item}>
+<div class="p-4 border border-gray-100 rounded" id="{chart.content.identifier_string}" bind:this={item}>
     <div class="flex justify-between items-center">
         <h2 class="uppercase tracking-wide font-semibold text-sm">{chart.content.title}</h2>
         <div class="flex items-center gap-4 text-gray-700">
