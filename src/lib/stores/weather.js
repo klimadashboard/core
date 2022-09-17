@@ -1,7 +1,7 @@
 import { readable, writable } from 'svelte/store';
+import Papa from "papaparse";
 
 export const selectedStation = writable(105); // 105 is ID for Wien Hohe Warte+
-export const selectedStationName = readable("station");
 export const selectedWeatherYear = writable(new Date().getFullYear()) // set to current year
 
 export const types = readable([{

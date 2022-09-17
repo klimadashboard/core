@@ -32,7 +32,7 @@
     let expansionGoals;
 
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/energy/renewables/ausbauziele.csv',
+    'https://data.klimadashboard.org/at/energy/renewables/ausbauziele.csv',
     {
       download: true,
       dynamicTyping: true,
@@ -48,7 +48,7 @@
 
     let electricityProduction;
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/energy/renewables/stromproduktion.csv',
+    'https://data.klimadashboard.org/at/energy/renewables/stromproduktion.csv',
     {
       download: true,
       dynamicTyping: true,

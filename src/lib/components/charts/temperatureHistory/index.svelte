@@ -6,7 +6,7 @@
     $: showDays = false;
 
     async function getDataForSelectedStation(stationId) {
-    let response = await fetch('https://scraper.klimadashboard.at/data/zamg/tempdays/stations/' + stationId + '.json');
+    let response = await fetch('https://data.klimadashboard.org/at/zamg/tempdays/stations/' + stationId + '.json');
     let data = await response.json();
     if (response.ok) {
     return data;

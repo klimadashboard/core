@@ -1,7 +1,8 @@
 <script>
-    import { selectedStation, selectedStationName } from "$lib/stores/weather";
     import dayjs from "dayjs";
 
+    export let selectedStation;
+    export let selectedStationName;
     export let selectedStationData;
     export let title;
     export let description;
@@ -12,12 +13,12 @@
     let chartHeight;
     let chartWidth;
 
-    const totalForKeyCurrentYear = selectedStationData[selectedStationData.length - 1][key];
-    const currentYear = new Date(selectedStationData[selectedStationData.length - 1].endDate).getFullYear();
-    const timestamp = dayjs(selectedStationData[selectedStationData.length - 1].endDate).format("DD.MM");
+    $: totalForKeyCurrentYear = selectedStationData[selectedStationData.length - 1][key];
+    $: currentYear = new Date(selectedStationData[selectedStationData.length - 1].endDate).getFullYear();
+    $: timestamp = dayjs(selectedStationData[selectedStationData.length - 1].endDate).format("DD.MM");
     const firstYear = 1961;
     const lastYear = 1990;
-    const totalForKeyHistoricalAverage = Math.round(selectedStationData.filter(d => dayjs(d.endDate).year() >= firstYear && dayjs(d.endDate).year() <= lastYear).reduce((a,b) => a + b[key], 0) / (lastYear - firstYear));
+    $: totalForKeyHistoricalAverage = Math.round(selectedStationData.filter(d => dayjs(d.endDate).year() >= firstYear && dayjs(d.endDate).year() <= lastYear).reduce((a,b) => a + b[key], 0) / (lastYear - firstYear));
 </script>
 
 <div 
@@ -52,7 +53,7 @@ style="color: {color}">
 
         <g transform="translate(15,130)">
             <text transform="translate(0,0)" class="text-6xl font-extralight fill-current">{totalForKeyCurrentYear}</text>
-            <g transform="translate({totalForKeyCurrentYear.toString().length * 40},0)">
+            <g transform="translate({totalForKeyCurrentYear.toString().length * 36},0)">
                 <text class="font-semibold fill-current" y="-18">{title} bisher</text>
                 <text class="font-semibold fill-current">im Jahr {currentYear}</text>
             </g>
@@ -62,7 +63,7 @@ style="color: {color}">
 
         <g transform="translate(15,210)">
             <text transform="translate(0,0)" class="text-6xl font-extralight fill-current">{totalForKeyHistoricalAverage}</text>
-            <g transform="translate({totalForKeyHistoricalAverage.toString().length * 40},0)">
+            <g transform="translate({totalForKeyHistoricalAverage.toString().length * 36},0)">
                 <text class="font-semibold fill-current" y="-18">{title} bis {timestamp} im</text>
                 <text class="font-semibold fill-current">Durchschnitt {firstYear} – {lastYear}</text>
             </g>
@@ -79,7 +80,8 @@ style="color: {color}">
         y={chartHeight - 15}
         dominant-baseline="end"
         text-anchor="end"
-        class="text-xs opacity-50 fill-gray-700 dark:fill-gray-400">{$selectedStationName} – {timestamp} – ZAMG</text>
+        class="text-xs opacity-50 fill-gray-700 dark:fill-gray-400"
+        style="font-size: 0.7em;">{selectedStationName} – {selectedStation} – {timestamp} – ZAMG</text>
     </svg>
 {/if}
 </div>

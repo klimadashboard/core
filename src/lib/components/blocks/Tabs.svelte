@@ -4,8 +4,6 @@
 
     let wrapper;
 
-    console.log(block);
-
     $: tabs = block.content.sides;
     $: selectedTab = tabs[0];
 </script>

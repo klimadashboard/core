@@ -12,7 +12,7 @@
 
     $: dataset = [];
 
-    Papa.parse("https://scraper.klimadashboard.at/data/co2_mlo_weekly.csv", {
+    Papa.parse("https://data.klimadashboard.org/global/emissions/co2_mlo_weekly.csv", {
       download: true,
       dynamicTyping: true,
       skipEmptyLines: true,

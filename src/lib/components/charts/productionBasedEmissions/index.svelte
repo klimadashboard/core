@@ -11,7 +11,7 @@
     $: rawDataAustria = [];
 
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/Emission_All_sectors_Bundeslaender_Austria_1990-2019.csv',
+    'https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Bundeslaender_Austria_1990-2019.csv',
     {
       download: true,
       dynamicTyping: true,
@@ -26,7 +26,7 @@
     );
 
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/Emission_All_sectors_Austria_1990-2020.csv',
+    'https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Austria_1990-2020.csv',
     {
       download: true,
       dynamicTyping: true,
@@ -167,8 +167,6 @@
     } else if(showFlightEmissions == false) {
       dataset = selectedDataset?.reduce(reducer, []);
     };
-
-    // $: console.log(dataset);
 
     $: if(rawDataAustria.length > 0) {
       lastYear = rawDataAustria[rawDataAustria.length - 1]["year"];

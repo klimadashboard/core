@@ -9,7 +9,7 @@
     const unit = "°C";
 
     $: Papa.parse(
-      'https://scraper.klimadashboard.at/data/zamg/tempannual/stations/' + $selectedStation + '.csv',
+      'https://data.klimadashboard.org/at/zamg/tempannual/stations/' + $selectedStation + '.csv',
       {
         download: true,
         dynamicTyping: true,

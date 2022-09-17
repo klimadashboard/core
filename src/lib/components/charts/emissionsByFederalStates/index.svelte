@@ -6,7 +6,7 @@
     $: readMore = false;
   
     Papa.parse(
-      "https://scraper.klimadashboard.at/data/Emission_All_sectors_Bundeslaender_Austria_1990-2019.csv",
+      "https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Bundeslaender_Austria_1990-2019.csv",
       {
         download: true,
         dynamicTyping: true,

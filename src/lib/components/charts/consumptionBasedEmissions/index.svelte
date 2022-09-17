@@ -6,7 +6,7 @@
     $: rawDataProduction = [];
 
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/Emission_All_sectors_Austria_1990-2020.csv',
+    'https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Austria_1990-2020.csv',
     {
       download: true,
       dynamicTyping: true,

@@ -7,7 +7,7 @@
     let countryData;
 
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/Emissions_Global.csv',
+    'https://data.klimadashboard.org/global/emissions/emissions_global.csv',
     {
       download: true,
       dynamicTyping: true,
@@ -24,7 +24,7 @@
     let countryNames;
 
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/world.csv',
+    'https://data.klimadashboard.org/global/world.csv',
     {
       download: true,
       dynamicTyping: false,
@@ -44,7 +44,7 @@
     $: getIconString = function(iso) {
       var string = "";
       for(var i = 0; i < iso.length / 2; i++) {
-        string += "<image x=" + i * 30 + " height=15 href='https://scraper.klimadashboard.at/flags/" + iso.substring(i * 2, i * 2 + 2).toLowerCase() + ".svg' class='shadow' />";
+        string += "<image x=" + i * 30 + " height=15 href='https://data.klimadashboard.org/global/flags/" + iso.substring(i * 2, i * 2 + 2).toLowerCase() + ".svg' class='shadow' />";
       };
       return string;
     }
@@ -61,8 +61,6 @@
     return result;
     }, []);
 
-    // $: console.log(dataset);
-
     $: worldwideAverage = Math.round(countryData?.find(d => d.state_name == "World").co2_percapita * 10) / 10;
     $: lastYear = 2018;
     $: lastYearEmissions = countryData?.find(d => d.state_name == "Austria").co2_percapita;
@@ -73,7 +71,6 @@
     }];
 
     $: currentLocale = $locale;
-    // $: console.log(currentLocale);
 
     $: getCountryName = function(name, selectedLocale) {
       var countryName = name;

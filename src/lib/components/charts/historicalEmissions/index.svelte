@@ -8,7 +8,7 @@
     let chartWidth;
 
     Papa.parse(
-    'https://scraper.klimadashboard.at/data/Emissions_Austria_1850_2018_sectors_PIK_PRIMAP.csv',
+    'https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Austria_1850_2018_PIK_PRIMAP.csv',
     {
       download: true,
       dynamicTyping: true,

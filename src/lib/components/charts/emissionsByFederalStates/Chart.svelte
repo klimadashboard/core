@@ -56,7 +56,6 @@
     ];
   
     export let data;
-    // console.log(data);
   
     $: height = 200;
     $: width = 400;
@@ -88,11 +87,9 @@
     $: selectedYear = 2019;
   
     $: selectedStates = data.filter((d) => d.year == selectedYear).map(e => e.region).sort(sortStates);
-    // $: console.log(selectedStates);
     $: populations = selectedStates?.map((item, index) => {
       return data.filter((k) => k.region == item && k.year == selectedYear)[0].population;
     });
-    // $: console.log(populations);
   
     $: padding = 5;
   
@@ -123,7 +120,6 @@
       var result = 0;
       if(cumulative) {
       var currentRow = data.filter(d => d.region == state && d.year == selectedYear)[0];
-      // console.log(currentRow);
       var keys = Object.keys(currentRow);
       var selectedIndex = 0;
       if(sector == false) {
@@ -189,7 +185,6 @@
   
     $: selectSector = function(sector) {
           const index = selectedSectors.indexOf(sector.key);
-          // console.log(index);
           if (index > -1) {
             selectedSectors.splice(index, 1);
           } else {

@@ -30,11 +30,6 @@
     };
 
     $: areas = keys.map((key) => generateArea(key)(key == "production" ? dataProduction : dataGoals));
-
-    // console.log(type.key);
-    // console.log(dataGoals);
-    // console.log(dataProduction);
-    
 </script>
 
 <div class="bg-gray-100 rounded overflow-hidden">
