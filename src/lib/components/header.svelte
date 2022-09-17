@@ -86,6 +86,7 @@
             </ul>
             </div>
             
+            <!--
             <button class="flex items-center" on:mousedown={() => changeLocale()}>
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -97,6 +98,8 @@
              </svg>
              <span class="uppercase font-semibold">{["de","en"].find(d => d !== $locale)}</span>
             </button>
+            -->
+            <!--
           <button aria-label="Dark Mode">
           {#if $theme == "dark"}
           <svg xmlns="http://www.w3.org/2000/svg" on:mousedown={() => $theme = "light"} class="icon icon-tabler icon-tabler-sun" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -111,6 +114,7 @@
          </svg>
           {/if}
           </button>
+          -->
           </nav>
     </div>
 </header>

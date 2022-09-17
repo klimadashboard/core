@@ -46,6 +46,22 @@
     }
   });
 
+  $: selectedStationName = "station";
+
+  $: Papa.parse(
+        'https://data.klimadashboard.org/at/zamg/stations.csv',
+        {
+          download: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          header: true,
+          complete: function (results) {
+            if (results) {
+                selectedStationName = results.data.find(d => d.id == $selectedStation).name;
+            }
+          }
+        }
+    );
 </script>
 
 {#if historicalData}
@@ -62,7 +78,11 @@
             <div class="w-8 h-1 rounded-full bg-gray-200"></div>
             <p>Rollender Average</p>
         </div>
+
+        <p>ID{$selectedStation} – {selectedStationName}</p>
         </div>
+
+        
     </div>
 
 </div>

@@ -2,6 +2,7 @@
     import { selectedWeatherYear, selectedStation, types } from "$lib/stores/weather";
     import Loader from "$lib/components/Loader.svelte";
     import Chart from "./Chart.svelte";
+    import Papa from "papaparse";
 
     $: showDays = false;
 
@@ -17,6 +18,22 @@
 
   $: promise = getDataForSelectedStation($selectedStation || 105);
 
+  $: selectedStationName = "station";
+
+  $: Papa.parse(
+        'https://data.klimadashboard.org/at/zamg/stations.csv',
+        {
+          download: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          header: true,
+          complete: function (results) {
+            if (results) {
+                selectedStationName = results.data.find(d => d.id == $selectedStation).name;
+            }
+          }
+        }
+    );
 </script>
 
 <div class="my-4 flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
@@ -29,6 +46,8 @@
       <input type="range" min={1960} max={new Date().getFullYear()} bind:value={$selectedWeatherYear}>
       <span>{$selectedWeatherYear}</span>
     </label>
+
+    <p>ID{$selectedStation} – {selectedStationName}</p>
 </div>
 
 {#await promise}
