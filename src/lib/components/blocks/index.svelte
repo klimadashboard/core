@@ -5,6 +5,7 @@
     import Chart from "./Chart.svelte";
     import Toggle from "./Toggle.svelte";
     import Tabs from "./Tabs.svelte";
+    import Navigation from "./Navigation.svelte";
     export let content;
 
     const blocks = [{
@@ -25,6 +26,9 @@
     }, {
         "type": "toggle",
         component: Toggle
+    }, {
+        "type": "navigation",
+        component: Navigation
     }];
 </script>
 

@@ -23,7 +23,7 @@
     );
 
     const keys = ["energy", "industry", "agriculture", "waste", "other"];
-    const labels = "Sektor";
+    const labels = ["Energie", "Industrie", "Landwirtschaft", "Abfall", "Andere"];
     const colors = ["#BD3737", "#373949", "#65987D", "#B7693D", "#A4A4A4"];
 
     $: dataset = rawData?.map((entry, i) => {

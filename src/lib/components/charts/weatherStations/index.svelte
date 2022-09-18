@@ -2,6 +2,7 @@
     import Papa from "papaparse";
     import { selectedStation } from "$lib/stores/weather";
     import WeatherStationMap from "./Map.svelte";
+    import { glossaryItem } from "$lib/stores/glossary";
 
     let metaDataStations;
     $: geoLocationStatus = "";
@@ -93,7 +94,7 @@
 </div>
 
 <div class="my-auto space-y-4 text-gray-600 dark:text-gray-400 source-info">
-    <p class="">Wir werten täglich die Daten von mehr als 60 <span class='glossary-label' on:mousedown={() => showGlossary("zamg_stations")}></span> Wetterstationen der ZAMG <span class='glossary-label' on:mousedown={() => showGlossary("zamg")}></span> aus, um das laufende Jahr mit vergangenen Jahren zu vergleichen.</p>
+    <p class="">Wir werten täglich die Daten von mehr als 60 <span class='glossary-label' on:mousedown={() => glossaryItem.set("wetterstationen-der-zamg")}></span> Wetterstationen der ZAMG <span class='glossary-label' on:mousedown={() => glossaryItem.set("zamg")}></span> aus, um das laufende Jahr mit vergangenen Jahren zu vergleichen.</p>
     <p class="">Die Daten werden gegen 12 Uhr aktualisiert und stammen jeweils vom Vortag. Eine frühere Aktualisierung ist aufgrund der Datenquelle noch nicht möglich.</p>
 </div>
 

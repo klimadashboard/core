@@ -7,7 +7,8 @@
 		    const json = await res.json();
 
 		if (json) {
-			return Object.values(json).filter(entry => entry.id.includes("klimadashboard-at"));
+      let array = Object.values(json).filter(entry => entry.id.includes("klimadashboard-at"));
+			return array;
 		} else {
 			throw new Error(JSON.stringify(json));
 		}
@@ -59,11 +60,18 @@
             {#each children.filter(d => d.num > 0 && d.parent == "klimadashboard-at") as child}
               <li class="group relative">
               <a href="{child.uri.replace("klimadashboard-at","")}" class="navigation-link">{child.content.title}</a>
-              {#if children.filter(c => c.id.includes(child.uri) && c !== child)}
+              {#if children.filter(c => child.id == c.parent && c !== child)}
               <ul class="sm:opacity-0 sm:pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition sm:absolute top-full -left-2 p-2 bg-white dark:bg-gray-800 w-64">
-              {#each children.filter(c => c.id.includes(child.uri) && c !== child) as grandchild}
+              {#each children.filter(c => child.id == c.parent && c !== child) as grandchild}
                   <li>
-                    <a href="{grandchild.id.replace("klimadashboard-at/","/")}" class="navigation-link">{grandchild.content.title}</a>
+                    <a href="{grandchild.id.replace("klimadashboard-at/","/")}" class="navigation-link font-bold">{grandchild.content.title}</a>
+                      <ul>
+                        {#each children.filter(c => c.id.includes(grandchild.uri) && c !== grandchild) as greatgrandchild}
+                          <li>
+                            <a href="{greatgrandchild.id.replace("klimadashboard-at/","/")}" class="navigation-link">{greatgrandchild.content.title}</a>
+                          </li>
+                        {/each}
+                      </ul>
                   </li>
               {/each}
               </ul>

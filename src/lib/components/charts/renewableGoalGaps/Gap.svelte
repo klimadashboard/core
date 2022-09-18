@@ -1,0 +1,120 @@
+<script>
+    import { scaleLinear, scaleTime } from "d3-scale";
+    import { min,max } from "d3-array";
+    import formatNumber from "$lib/stores/formatNumber";
+    import Papa from "papaparse";
+
+    export let type;
+    export let dataset;
+
+    let nationalGoal;
+    Papa.parse(
+    'https://data.klimadashboard.org/at/energy/renewables/' + type.dataKey + '_zielpfad.csv',
+    {
+      download: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      header: true,
+      complete: function (results) {
+        if (results) {
+          nationalGoal = results.data.find(d => d.DateTime == "2030-12-31").Jahresproduktion * 1000; // convert to GWh
+        }
+      }
+    }
+    );
+
+    $: colorScale = scaleLinear().range(type.colorScale).domain([max(federalStates, (d) => d.goal), min(federalStates, (d) => d.goal)]);
+
+    $: federalStates = [...new Set(dataset?.map(d => d.state_name))].map(entry => {
+        const goal = dataset.find(d => d.state_name == entry && d.energy_type == type.key && d.goal_year == 2030) ? dataset.find(d => d.state_name == entry && d.energy_type == type.key && d.goal_year == 2030).goal_amount : 0;
+        const currentProduction = dataset.find(d => d.state_name == entry && d.energy_type == type.key).current_production > 0 ? dataset.find(d => d.state_name == entry && d.energy_type == type.key).current_production : 0;
+        
+        return {
+            state: entry,
+            goal: goal,
+            currentProduction: currentProduction,
+            goalAndProduction: goal + currentProduction,
+            abbreviation: dataset?.find(d => d.state_name == entry).state_short
+        }
+    }).sort((a,b) => b.goal - a.goal);
+
+
+    let chartWidth;
+    let chartHeight;
+
+    $: xScale = scaleLinear()
+    .range([0, chartWidth])
+    .domain([0, nationalGoal]);
+
+    $: getOffset = function(element, elements) {
+        var total = 0;
+        var index = elements.indexOf(element);
+
+        for(var i = 0; i < index; i++) {
+            total = total + elements[i].goalAndProduction;
+        }
+
+        return xScale(total);
+    }
+
+    $: totalGoals = federalStates.reduce((a,b) => a + b.goal, 0);
+    $: totalProduction = federalStates.reduce((a,b) => a + b.currentProduction, 0);
+    $: totalGoalsAndProduction = totalGoals + totalProduction;
+    $: percentage = totalGoalsAndProduction / nationalGoal * 100;
+    $: selectedState = null;
+    $: statesNoGoals = federalStates.filter(d => d.goal > 0 == false);
+    $: gap = nationalGoal - totalGoalsAndProduction;
+</script>
+
+<div class="bg-gray-100 dark:bg-gray-900 rounded overflow-hidden">
+    <div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
+    <h3 class="text-xl"><b>{type.label}</b> {#if type.key !== "Biomasse"} Nationales Ausbauziel zu {Math.round(percentage)}% abgedeckt{/if}</h3>
+    {@html type.icon}
+    </div>
+    
+    <div class="p-4">
+    <div class="w-full h-24 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900" 
+    bind:clientHeight={chartHeight} 
+    bind:clientWidth={chartWidth}>
+        <svg width={"100%"} height={"100%"}>
+        <g>
+        {#each federalStates as state}
+            <g transform="translate({getOffset(state, federalStates)},0)" 
+            on:mouseover={() => selectedState = state} 
+            on:mouseout={() => selectedState = null}>
+                <rect width={xScale(state.goal > 0 ? state.goal : state.currentProduction)} height={chartHeight} fill={type.color} class="stroke-white {state.goal > 0 ? "" : "opacity-50"}"></rect>
+                {#if xScale(state.goalAndProduction) > 16}
+                <text x={-6} y={6} dominant-baseline="hanging" class="font-bold text-xs fill-white dark:fill-black" text-anchor="end" transform="rotate(270)">{state.abbreviation}</text>
+                {/if}
+            </g>
+        {/each}
+        </g>
+        {#if gap > nationalGoal * 0.275 && xScale(gap) > 140}
+        <g transform="translate({xScale(federalStates.reduce((a,b) => a + b.goalAndProduction, 0))},{chartHeight / 2})" class="text-gray-400">
+            <line x1={5} x2={xScale(gap) - 8} y1={0} y2={0} class="stroke-current opacity-50" />
+            <g transform="translate({xScale(gap) / 2},0)">
+            <rect class="fill-white dark:fill-gray-900" height={10} width={120} x={-60} y={-5} />
+            <text class="text-sm uppercase tracking-wide font-semibold fill-current" text-anchor="middle" dominant-baseline="middle">Ausbaulücke</text>
+            </g>
+        </g>
+        {/if}
+        </svg>
+    </div>
+    <div class="flex justify-between pt-2 border-r-2 border-gray-300 dark:border-gray-700  text-gray-700 dark:text-gray-400 text-sm md:text-base">
+    {#if selectedState}
+    <p class="" style="color: {type.color}">Ziel von {selectedState.state}: <br>{formatNumber(Math.round(selectedState.goal))} GWh bis 2030</p>
+    {:else}
+    <p class="" style="color: {type.color}">Summe der Bundesländer-Ziele: <br>{formatNumber(Math.round(federalStates.reduce((a,b) => a + b.goal, 0)))} GWh bis 2030
+    <br>
+    <span class="opacity-70">
+    Keine Ziele für 2030:<br>
+    {#each statesNoGoals as state, index}
+        {state.state}{index !== statesNoGoals.length - 1 ? ", " : ""}
+    {/each}
+    </span>
+    </p>
+    {/if}
+    <p class="text-right pr-2">Nationales Ziel: <br>{formatNumber(Math.round(nationalGoal))} GWh bis 2030</p>
+    </div>
+</div>
+</div>

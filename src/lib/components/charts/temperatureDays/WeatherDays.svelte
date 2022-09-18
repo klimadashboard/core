@@ -18,7 +18,6 @@
         if (results) {
             "loading..."
             selectedStationData = results.data;
-            console.log(results.data);
         }
       }
     }

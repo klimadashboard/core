@@ -8,7 +8,6 @@
     import { glossaryItem } from "$lib/stores/glossary";
 
     export let v;
-    console.log(v);
 
     $: dataset = [];
 

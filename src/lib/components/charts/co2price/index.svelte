@@ -3,6 +3,7 @@
     import Papa from "papaparse";
     import "dayjs/locale/de-at";
     import formatNumber from "$lib/stores/formatNumber";
+    import { glossaryItem } from "$lib/stores/glossary";
 
     export let v;
 
@@ -42,13 +43,13 @@
 <div class="grid sm:grid-cols-2 gap-4">
     <div>
     <span class="text-6xl font-extralight tracking-tighter">{formatNumber(priceAustria)}€</span>
-    <p>{@html v.descriptionAustria.replace("glossary_nonETSPrice","<span class='glossary-label' onclick=showGlossary('nonETSPrice')></span>")}</p>
+    <p>{@html v.descriptionAustria}</p>
     <p class="text-sm text-gray-400 mt-2">{v.source}: <a href="https://www.parlament.gv.at/PAKT/VHG/XXVII/ME/ME_00158/" class="underline">{v.sourceAustria}</a></p>
     </div>
 
     <div>
     <span class="text-6xl font-extralight tracking-tighter">{formatNumber(priceETS)}€</span>
-    <p>{@html v.descriptionETS.replace("date", dateETS).replace("glossary_ETSPrice", "<span class='glossary-label' onclick=showGlossary('ETSPrice')></span>")}</p>
+    <p>{@html v.descriptionETS.replace("{date}",dateETS)}</p>
     <p class="text-sm text-gray-400 mt-2">{v.source}: <a href="https://tradingeconomics.com/commodity/carbon" class="underline">Trading Economics</a></p>
     </div>
 
