@@ -67,7 +67,7 @@
 
 <div class="flex flex-col md:flex-row justify-between">
     <div class="flex gap-2">
-    <input type="range" min=2004 max=2020 step=2 bind:value={selectedYear} aria-label="{v.selectedYear}">
+    <input type="range" min=2004 max=2020 step=2 bind:value={selectedYear} aria-label="{"Jahr auswählen"}">
     <p class="text-sm text-gray-600 dark:text-gray-400">{selectedYear}</p>
     </div>
     <label class="flex space-x-2 text-sm items-center {showPerHousehold ? "text-gray-700" : "text-gray-400"}">

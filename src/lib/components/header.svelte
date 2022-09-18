@@ -31,7 +31,7 @@
 
 <header class="fixed py-3 w-full z-50 bg-white dark:bg-gray-900">
     <div class="container flex justify-between items-center">
-        <a href="/">
+        <a href="/" aria-label="Startseite">
             <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 rounded">
                 <rect width="256" height="256" fill="url(#paint0_linear_1_17)"/>
                 <path d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z" fill="#DBF0E0"/>
