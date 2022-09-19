@@ -33,7 +33,6 @@ module.exports = {
     'border-fluorinatedGases',
     'border-economy'
     ],
-  darkMode: 'class',
   theme: {
     colors: {
       transparent: 'transparent',

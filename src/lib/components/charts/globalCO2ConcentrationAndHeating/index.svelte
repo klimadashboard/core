@@ -203,7 +203,7 @@
     $: selectedMark = marks[1];
 </script>
 
-<div class="w-screen bg-gradient-green dark:bg-opacity-50 text-white py-8 overflow-hidden">
+<div class="w-screen bg-gradient-green bg-opacity-50 text-white py-8 overflow-hidden">
     <div class="container">
         <h2 class="text-3xl tracking-tight mb-6 md:mb-4 max-w-2xl text-white">{v.heading}</h2>
         <div class="grid md:grid-cols-3 gap-8">
@@ -355,29 +355,3 @@
     <p class="mt-4 opacity-50 text-sm pl-3">Source: {v.source}</p>
 </div>
 </div>
-
-<style>
-
-.pulse {
-    transform-origin: center center;
-    transform: scale(1);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-	0% {
-		transform: scale(0.95);
-		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
-	}
-
-	70% {
-		transform: scale(1);
-		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-	}
-
-	100% {
-		transform: scale(0.95);
-		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-	}
-}
-</style>

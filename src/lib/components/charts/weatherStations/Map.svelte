@@ -48,7 +48,7 @@ bind:clientWidth={mapWidth}>
         {#each topo.features as feature}
           <path
             d={geoPath().projection(projection)(feature)}
-            class="fill-gray-200 dark:fill-gray-800 stroke-white dark:stroke-gray-700 stroke-1 shadow"
+            class="fill-gray-200  stroke-white  stroke-1 shadow"
           />
         {/each}
     </g>
@@ -70,7 +70,7 @@ bind:clientWidth={mapWidth}>
     </g>
 </svg>
 {/if}
-<div class="absolute bottom-0 left-0 right-0 text-gray-600 dark:text-gray-400">
+<div class="absolute bottom-0 left-0 right-0 text-gray-600">
     <div class="container flex items-center gap-2 text-sm">
     <span>117m Seehöhe</span>
     <div 

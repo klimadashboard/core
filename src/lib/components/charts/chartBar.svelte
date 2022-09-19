@@ -140,7 +140,7 @@
   
           <g transform={`translate(${margin.left}, ${margin.top})`}>
           {#each data as datapoint, i}
-          <g class="{datapoint.highlight ? "text-green-700 dark:text-green-600" : "text-green-500 dark:text-green-800"}"
+          <g class="{datapoint.highlight ? "text-green-700" : "text-green-500 "}"
           transform="{`translate(${i * (barWidth + padding) || 0} 0)`}" 
           in:fade="{{delay: i * 62}}"
           >
@@ -162,7 +162,9 @@
               x={visualisation == "grouped" ? j * barWidth / datapoint.categories.length || 0 : 0}
               y={calculateYPositionForCategory(category, datapoint)}
               on:mouseover={(e) => selectedBar = datapoint}
+              on:focus={(e) => selectedBar = datapoint}
               on:mouseout={(e) => selectedBar = []}
+              on:blur={(e) => selectedBar = []}
               >   
           </rect>
           </g>
@@ -179,15 +181,17 @@
               x=0
               y={innerChartHeight - yScale(datapoint.value) || 0}
               on:mouseover={(e) => selectedBar = datapoint}
+              on:focus={(e) => selectedBar = datapoint}
               on:mouseout={(e) => selectedBar = []}
+              on:blur={(e) => selectedBar = []}
               >   
               </rect>
               {#if selectedBar == datapoint}
               <g transform="{`translate(0, ${innerChartHeight - yScale(datapoint.value) - 32 || 0})`}" 
-              class="text-sm text-white dark:text-gray-800"
+              class="text-sm text-white"
               >
               <rect width={barWidth} height=28 class="shadow-sm fill-current"></rect>
-              <g transform="translate(4,4)" class="text-gray-800 dark:text-gray-200">
+              <g transform="translate(4,4)" class="text-gray-800">
               <text class="fill-current">{datapoint.label}</text>
               <text y=16 class="fill-current">{Math.round(datapoint.value * 10) / 10} {unit}</text>
               </g>
@@ -199,14 +203,14 @@
           {/if}
   
           {#if i % xAxixInterval == 0}
-              <g transform="translate(0, {innerChartHeight + 4})" class="text-xs {selectedBar == datapoint ? "text-gray-700 dark:text-gray-400" : "text-gray-500"} tracking-wide">
-                  <rect width={barWidth} height={margin.bottom} x={-4} class="text-white dark:text-gray-800 fill-current"></rect>
+              <g transform="translate(0, {innerChartHeight + 4})" class="text-xs {selectedBar == datapoint ? "text-gray-700 " : "text-gray-500"} tracking-wide">
+                  <rect width={barWidth} height={margin.bottom} x={-4} class="text-white  fill-current"></rect>
                   <text fill="currentColor" dominant-baseline="hanging">{datapoint.label}</text>
               </g>
           {/if}
           
           {#if datapoint.annotation}
-          <g transform="translate({-barWidth / 2},{innerChartHeight * 0.15})" class="text-gray-700 dark:text-gray-300">
+          <g transform="translate({-barWidth / 2},{innerChartHeight * 0.15})" class="text-gray-700">
               <text class="text-sm fill-current font-semibold" text-anchor="end" dominant-baseline="hanging" y="-1em">
                   {#each datapoint.annotation.match(/.{1,30}/g) as text}
                   <tspan x="0" dy="1em">{text}</tspan>
@@ -224,7 +228,7 @@
           {/each}
   
           {#each lines as line}
-          <g class="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 transition" transform={`translate(0, ${innerChartHeight - yScale(line.value) || 0})`} >
+          <g class="text-gray-500 hover:text-gray-600   transition" transform={`translate(0, ${innerChartHeight - yScale(line.value) || 0})`} >
           <line x1=0 y1=0 x2={chartWidth} y2=0 stroke="currentColor" stroke-dasharray="1,10" stroke-linecap="round" stroke-width="2"></line>
           {#each line.label.split(" ") as text, index}
           <text x={innerChartWidth - 10} y="{-6 + (line.label.split(" ").length - 1 - index) * -14}" text-anchor="end" class="text-xs uppercase font-semibold fill-current">{text}</text>

@@ -66,14 +66,14 @@
     $: gap = nationalGoal - totalGoalsAndProduction;
 </script>
 
-<div class="bg-gray-100 dark:bg-gray-900 rounded overflow-hidden">
+<div class="bg-gray-100  rounded overflow-hidden">
     <div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
     <h3 class="text-xl"><b>{type.label}</b> {#if type.key !== "Biomasse"} Nationales Ausbauziel zu {Math.round(percentage)}% abgedeckt{/if}</h3>
     {@html type.icon}
     </div>
     
     <div class="p-4">
-    <div class="w-full h-24 border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900" 
+    <div class="w-full h-24 border-2 border-gray-300  bg-white" 
     bind:clientHeight={chartHeight} 
     bind:clientWidth={chartWidth}>
         <svg width={"100%"} height={"100%"}>
@@ -84,7 +84,7 @@
             on:mouseout={() => selectedState = null}>
                 <rect width={xScale(state.goal > 0 ? state.goal : state.currentProduction)} height={chartHeight} fill={type.color} class="stroke-white {state.goal > 0 ? "" : "opacity-50"}"></rect>
                 {#if xScale(state.goalAndProduction) > 16}
-                <text x={-6} y={6} dominant-baseline="hanging" class="font-bold text-xs fill-white dark:fill-black" text-anchor="end" transform="rotate(270)">{state.abbreviation}</text>
+                <text x={-6} y={6} dominant-baseline="hanging" class="font-bold text-xs fill-white" text-anchor="end" transform="rotate(270)">{state.abbreviation}</text>
                 {/if}
             </g>
         {/each}
@@ -93,14 +93,14 @@
         <g transform="translate({xScale(federalStates.reduce((a,b) => a + b.goalAndProduction, 0))},{chartHeight / 2})" class="text-gray-400">
             <line x1={5} x2={xScale(gap) - 8} y1={0} y2={0} class="stroke-current opacity-50" />
             <g transform="translate({xScale(gap) / 2},0)">
-            <rect class="fill-white dark:fill-gray-900" height={10} width={120} x={-60} y={-5} />
+            <rect class="fill-white" height={10} width={120} x={-60} y={-5} />
             <text class="text-sm uppercase tracking-wide font-semibold fill-current" text-anchor="middle" dominant-baseline="middle">Ausbaulücke</text>
             </g>
         </g>
         {/if}
         </svg>
     </div>
-    <div class="flex justify-between pt-2 border-r-2 border-gray-300 dark:border-gray-700  text-gray-700 dark:text-gray-400 text-sm md:text-base">
+    <div class="flex justify-between pt-2 border-r-2 border-gray-300  text-gray-700 text-sm md:text-base">
     {#if selectedState}
     <p class="" style="color: {type.color}">Ziel von {selectedState.state}: <br>{formatNumber(Math.round(selectedState.goal))} GWh bis 2030</p>
     {:else}

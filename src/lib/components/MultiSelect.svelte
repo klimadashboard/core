@@ -182,7 +182,7 @@
     }
   </style>
   
-  <div class="multiselect bg-gray-100 dark:bg-gray-700 rounded-full" class:readonly>
+  <div class="multiselect bg-gray-100  rounded-full" class:readonly>
     <div class="tokens overflow-scroll" class:showOptions on:click={handleTokenClick}>
       {#each Object.values(selected).splice(1) as s}
         <div class="token bg-gradient-green font-semibold uppercase tracking-wide pl-2 text-white text-sm rounded-full mr-4" data-id="{s.value}">
@@ -214,7 +214,7 @@
     {#if showOptions}
       <ul class="options" transition:fly="{{duration: 200, y: 5}}" on:mousedown|preventDefault={handleOptionMousedown}>
         {#each filtered as option}
-          <li data-value="{option.value}" class="bg-white dark:bg-gray-900 {selected[option.value] ? "bg-gradient-green text-white" : ""}">{option.name}</li>
+          <li data-value="{option.value}" class="bg-white  {selected[option.value] ? "bg-gradient-green text-white" : ""}">{option.name}</li>
         {/each}
       </ul>
     {/if}

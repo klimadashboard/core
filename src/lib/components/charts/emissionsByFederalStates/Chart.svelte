@@ -229,7 +229,7 @@
   
     <div class="flex gap-2">
       <input type="range" min="1990" max="2019" bind:value={selectedYear} aria-label="Jahr auswählen">
-      <p class="text-sm text-gray-600 dark:text-gray-400">{selectedYear}</p>
+      <p class="text-sm text-gray-600 ">{selectedYear}</p>
       {#if !playing}
       <button on:mousedown={() => playAnimation(false)} aria-label="Play">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-play" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -251,7 +251,7 @@
   <div class="flex gap-2 mt-4 overflow-x-scroll">
     {#each sectors as sector}
     <button 
-    class="bg-{sector.color} flex space-x-2 items-center rounded-full font-semibold uppercase tracking-wide px-4 py-2 text-white dark:bg-opacity-80 text-sm {selectedSectors.includes(sector.key) ? "opacity-100" : "opacity-70"}" 
+    class="bg-{sector.color} flex space-x-2 items-center rounded-full font-semibold uppercase tracking-wide px-4 py-2 text-white text-sm {selectedSectors.includes(sector.key) ? "opacity-100" : "opacity-70"}" 
     on:mousedown={selectSector(sector)} 
     aria-label="{sector.label}"
     >
@@ -319,7 +319,7 @@
       class="text-{sectors.find(s => s.key == sector).color}"
       >
       
-      <rect fill="currentColor" class="dark:opacity-80" width={dimensions.width} height={dimensions.height} stroke="#fff"></rect>
+      <rect fill="currentColor" class="" width={dimensions.width} height={dimensions.height} stroke="#fff"></rect>
   
       {#if dimensions.width > 36 && dimensions.height > 30}
       <g transform="translate(10,10)">
@@ -343,14 +343,16 @@
       height={dimensions.height} 
       fill="transparent"
       on:mouseover={() => activeState = state}
+      on:focus={() => activeState = state}
       on:mouseout={() => activeState = ""}
+      on:blur={() => activeState = ""}
       >
       </g>
       {/each}
     </g>
     {#if yScale(populations[i]) > 60}
     <g transform="translate({getLength(false, state, true) + 10 || 0},{(yScale(populations[i]) - padding) / 2})">
-    <text dominant-baseline="auto" class="text-sm text-black dark:text-gray-100 fill-current">{state}</text>
+    <text dominant-baseline="auto" class="text-sm text-black  fill-current">{state}</text>
     <g class="text-gray-400 text-xs fill-current">
     <text dominant-baseline="hanging"  y=6>{formatNumber(data.find(d => d.region == state && d.year == selectedYear).total_co2e_t)} t gesamt</text>
     <text dominant-baseline="hanging" y=20>und {formatNumber(data.find(d => d.region == state && d.year == selectedYear).total_co2e_t_percapita)} t pro Kopf</text>
@@ -358,7 +360,7 @@
     </g>
     {:else}
     <g transform="translate({getLength(false, state, true) + 10 || 0},{(yScale(populations[i]) - padding) / 2 || 0})">
-    <text dominant-baseline="middle" class="text-sm text-black dark:text-gray-100 fill-current">{state}</text>
+    <text dominant-baseline="middle" class="text-sm text-black  fill-current">{state}</text>
     {#if activeState == state}
     <g transform="translate({state.length * 7.5 || 0},0)" class="text-gray-400 text-xs fill-current">
     <text dominant-baseline="auto">{formatNumber(data.find(d => d.region == state && d.year == selectedYear).total_co2e_t)} t gesamt</text>
@@ -386,7 +388,7 @@
     on:mousedown={() => openMap = !openMap}
     on:focus={() => openMap = !openMap}
     >
-      <rect width=24 height=24 class="fill-white dark:fill-gray-900" stroke-width="0"></rect>
+      <rect width=24 height=24 class="fill-white" stroke-width="0"></rect>
       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
       <polyline points="3 7 9 4 15 7 21 4 21 17 15 20 9 17 3 20 3 7"></polyline>
       <line x1="9" y1="4" x2="9" y2="17"></line>
@@ -400,13 +402,15 @@
             <path
               d={geoPath().projection(projection)(feature)}
               fill={getColor(feature)}
-              class="transition {activeState !== "" && activeState !== feature.properties.name ? "opacity-70 dark:opacity-60" : "opacity-100 dark:opacity-80"}"
+              class="transition {activeState !== "" && activeState !== feature.properties.name ? "opacity-70" : "opacity-100"}"
               stroke="#FFFFFF"
               strokeWidth=1
               on:mouseup={() => handleMouseOver(feature)}
               on:touchstart={() => handleMouseOver(feature)}
               on:mouseover={() => activeState = feature.properties.name}
+              on:focus={() => activeState = feature.properties.name}
               on:mouseout={() => activeState = ""}
+              on:blur={() => activeState = ""}
               transition:fade
             />
           {/each}</g

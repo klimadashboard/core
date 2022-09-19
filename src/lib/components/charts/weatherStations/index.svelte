@@ -47,8 +47,8 @@
 </script>
 
 {#if metaDataStations}
-<div class="sticky top-16 bg-white dark:bg-gray-900 py-2 z-20 flex flex-col items-center">
-    <div class="items-center flex gap-4 text-gray-600 dark:text-gray-400">
+<div class="sticky top-16 bg-white  py-2 z-20 flex flex-col items-center">
+    <div class="items-center flex gap-4 text-gray-600">
     <span class="hidden md:inline">Wähle deine Wetterstation: </span>
     <div class="relative">
     <svg xmlns="http://www.w3.org/2000/svg" class="absolute pointer-events-none top-3 h-6 right-2 transform -translate-y-0.5 icon-tabler-selector" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -56,7 +56,7 @@
         <polyline points="8 9 12 5 16 9"></polyline>
         <polyline points="16 15 12 19 8 15"></polyline>
       </svg> 
-    <select name="weatherStations" id="weatherStations" class="block appearance-none w-full bg-gray-200 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 dark:text-gray-400 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm" bind:value={$selectedStation}>
+    <select name="weatherStations" id="weatherStations" class="block appearance-none w-full bg-gray-200  border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm" bind:value={$selectedStation}>
         {#each [...metaDataStations].sort((a,b) => a.name.localeCompare(b.name)) as station}
             <option value="{station.id}">{station.name} ({station.height}m)</option>
         {/each}
@@ -93,7 +93,7 @@
 <WeatherStationMap data={metaDataStations} />
 </div>
 
-<div class="my-auto space-y-4 text-gray-600 dark:text-gray-400 source-info">
+<div class="my-auto space-y-4 text-gray-600  source-info">
     <p class="">Wir werten täglich die Daten von mehr als 60 <span class='glossary-label' on:mousedown={() => glossaryItem.set("wetterstationen-der-zamg")}></span> Wetterstationen der ZAMG <span class='glossary-label' on:mousedown={() => glossaryItem.set("zamg")}></span> aus, um das laufende Jahr mit vergangenen Jahren zu vergleichen.</p>
     <p class="">Die Daten werden gegen 12 Uhr aktualisiert und stammen jeweils vom Vortag. Eine frühere Aktualisierung ist aufgrund der Datenquelle noch nicht möglich.</p>
 </div>

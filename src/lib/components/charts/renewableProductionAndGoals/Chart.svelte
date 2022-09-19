@@ -86,7 +86,7 @@
     
 </script>
 
-<div class="bg-gray-100 dark:bg-gray-900 rounded overflow-hidden">
+<div class="bg-gray-100  rounded overflow-hidden">
     <div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
     <h3 class="text-xl"><b>{type.label}</b> Produktion und Ausbauziel</h3>
     {@html type.icon}
@@ -105,7 +105,7 @@
         <g>
             {#each xScale.ticks(6) as tick, index}
             <g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-white">
-              <rect x={0} y={-chartHeight - margin.top} width={chartWidth / 15} height={chartHeight} class="fill-gray-200 dark:fill-gray-800 opacity-50"></rect>
+              <rect x={0} y={-chartHeight - margin.top} width={chartWidth / 15} height={chartHeight} class="fill-gray-200  opacity-50"></rect>
               <!--
               <line x1="{-chartWidth / 12}" x2="{-chartWidth / 12}" y1="{-chartHeight}" y2={0} stroke-width="1" class="stroke-current" />
               <line x1="0" x2="0" y1="{-chartHeight}" y2={0} stroke-width="1" class="stroke-current" />

@@ -52,7 +52,7 @@
           <polyline points="8 9 12 5 16 9"></polyline>
           <polyline points="16 15 12 19 8 15"></polyline>
         </svg> 
-      <select bind:value={selectedRegion} class="block appearance-none w-full bg-gray-200 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 dark:text-gray-400 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm">
+      <select bind:value={selectedRegion} class="block appearance-none w-full bg-gray-200 border border-gray-100  py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm">
         {#each regions as region}
         <option value="{region}">{region}</option>
         {/each}

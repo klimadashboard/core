@@ -36,7 +36,7 @@
     );
 </script>
 
-<div class="my-4 flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+<div class="my-4 flex items-center gap-6 text-sm text-gray-600">
     <label class="flex items-center gap-2">
     <input type="checkbox" bind:checked={showDays}>
     <span>Einzelne Tage für das aktuelle Jahr anzeigen?</span>

@@ -34,7 +34,7 @@ style="color: {color}">
         <rect 
         width={chartWidth} 
         height={chartHeight} 
-        class="text-gray-100 dark:text-gray-800 fill-current"
+        class="text-gray-100  fill-current"
         >
         </rect>
 
@@ -59,7 +59,7 @@ style="color: {color}">
             </g>
         </g>
 
-        <line x1=0 y1=150 x2={chartWidth} y2=150 class="stroke-white dark:stroke-gray-900"></line>
+        <line x1=0 y1=150 x2={chartWidth} y2=150 class="stroke-white"></line>
 
         <g transform="translate(15,210)">
             <text transform="translate(0,0)" class="text-6xl font-extralight fill-current">{totalForKeyHistoricalAverage}</text>
@@ -80,7 +80,7 @@ style="color: {color}">
         y={chartHeight - 15}
         dominant-baseline="end"
         text-anchor="end"
-        class="text-xs opacity-50 fill-gray-700 dark:fill-gray-400"
+        class="text-xs opacity-50 fill-gray-700"
         style="font-size: 0.7em;">{selectedStationName} – {selectedStation} – {timestamp} – ZAMG</text>
     </svg>
 {/if}

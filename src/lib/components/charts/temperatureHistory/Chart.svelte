@@ -113,9 +113,9 @@ bind:clientWidth={chartWidth}>
     <svg width={"100%"} height={"100%"}>
     <g transform="translate({margin.left},0)">
     {#each months as month, i}
-    <g transform="translate({Math.floor((new Date(2000, month, 1) - new Date(2000, 0, 1)) / (1000 * 60 * 60 * 24)) * innerChartWidth / 365}, 0)" class="text-xs text-gray-500 dark:text-gray-400">
+    <g transform="translate({Math.floor((new Date(2000, month, 1) - new Date(2000, 0, 1)) / (1000 * 60 * 60 * 24)) * innerChartWidth / 365}, 0)" class="text-xs text-gray-500">
     {#if i % 2 == 0}
-    <rect height={innerChartHeight} width={innerChartWidth / 12} class="fill-gray-50 dark:fill-gray-800"></rect>
+    <rect height={innerChartHeight} width={innerChartWidth / 12} class="fill-gray-50"></rect>
     {/if}
     <text fill="currentColor" x={innerChartWidth / 24} y={5} text-anchor="middle" dominant-baseline="hanging">{new Date(2000, month, 1).toLocaleString('de-AT', { month: 'short' })}</text>
     </g>
@@ -124,9 +124,9 @@ bind:clientWidth={chartWidth}>
 
     <g transform="">
     {#each yScale.ticks(4) as tick}
-    <g transform={`translate(0, ${yScale(tick)})`} class="text-xs text-gray-500 dark:text-gray-400">
+    <g transform={`translate(0, ${yScale(tick)})`} class="text-xs text-gray-500">
     <text fill="currentColor" x={innerChartWidth - 22} dominant-baseline="middle" text-anchor="end">{tick}°C</text>
-    <line class="text-white dark:text-gray-900" x1=0 y1=0 x2={margin.left + innerChartWidth} y2=0 stroke="currentColor" stroke-width="2" stroke-opacity="0.1"></line>
+    <line class="text-white" x1=0 y1=0 x2={margin.left + innerChartWidth} y2=0 stroke="currentColor" stroke-width="2" stroke-opacity="0.1"></line>
     </g>
     {/each}
     </g>
@@ -146,7 +146,7 @@ bind:clientWidth={chartWidth}>
     on:mouseout={() => $selectedWeatherYear = currentYear}
     on:blur={() => $selectedWeatherYear = currentYear}
     opacity={$selectedWeatherYear == years[i] ? 1 : 0.3}
-    class="transition duration-75 text-gray-900 dark:text-gray-50"
+    class="transition duration-75 text-gray-900"
     in:draw="{{duration: 1000, delay: i * 200}}"
     ></path>
     {/each}
@@ -155,7 +155,7 @@ bind:clientWidth={chartWidth}>
 
     {#if $selectedWeatherYear == currentYear && !showDays}
     <g transform="translate({xScale(dataForCurrentYear[dataForCurrentYear.length - 1].day)},{yScale(dataForCurrentYear[dataForCurrentYear.length - 1].average)})" 
-    class="text-gray-900 dark:text-gray-50 transition"
+    class="text-gray-900 transition"
     transition:fade>
       <circle r={6} class="fill-current">
         <animate attributeName="r" from="6" to="10" dur="1.5s" begin="0s" repeatCount="indefinite"/>
@@ -207,7 +207,7 @@ bind:clientWidth={chartWidth}>
         class="{commonClasses} {selectedDay && selectedDay !== index ? "opacity-50" : "opacity-100"}"></circle>
         {:else}
         <circle r={circleRadius} 
-        class="fill-gray-900 dark:fill-gray-50 {commonClasses} {selectedDay && selectedDay !== index ? "opacity-50" : "opacity-100"}"></circle>
+        class="fill-gray-900  {commonClasses} {selectedDay && selectedDay !== index ? "opacity-50" : "opacity-100"}"></circle>
         {/if}
       </g>
     {/each}

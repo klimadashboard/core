@@ -86,7 +86,7 @@
              </svg>
         </button>
     </p>
-    <p class="text-gray-700 dark:text-gray-400 mt-2">
+    <p class="text-gray-700  mt-2">
         Das entspricht {(Math.round(areaOfAustria * 1000) / 1000).toString().replace(".",",")}% der Fläche Österreichs.
     </p>
 </div>

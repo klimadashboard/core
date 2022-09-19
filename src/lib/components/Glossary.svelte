@@ -23,7 +23,7 @@
 {#if $glossaryItem}
 <div class="popup fixed inset-0 grid bg-black bg-opacity-50 p-4 z-50"
 transition:fade="{{ duration: 200 }}">
-  <div class="bg-white dark:bg-gray-800 m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll" style="max-height: 70vh;"
+  <div class="bg-white  m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll" style="max-height: 70vh;"
   use:clickOutside
   on:click_outside={() => glossaryItem.set(false)}>
     <button on:mousedown={() => glossaryItem.set(false)} class="absolute top-4 right-4" aria-label="Close">

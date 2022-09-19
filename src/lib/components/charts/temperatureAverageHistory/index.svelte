@@ -68,7 +68,7 @@
 <div class="w-full my-4 relative" style="height: 50vh;">
     <ChartDots data={historicalData} {unit} colors={$theme == "dark" ? ["#333BCC","#D9264F"] : ["#313695","#a50026"]}/>
 
-    <div class="text-sm text-gray-600 dark:text-gray-400 absolute top-9 md:top-11 w-full pointer-events-none">
+    <div class="text-sm text-gray-600  absolute top-9 md:top-11 w-full pointer-events-none">
         <div class="container flex flex-col sm:flex-row sm:items-center sm:space-x-4 transform translate-y-2">
         <div class="flex items-center space-x-1">
             <div class="w-3 h-3 rounded-full" style="background-color: #AD0826"></div>

@@ -214,10 +214,10 @@
           {/each}
         </g>
   
-        <g class="chart-selected-index text-gray-600 dark:text-gray-400 selection-indicator" transform={`translate(${margin.left + xScale(selectedIndex)},${margin.top})`}>
+        <g class="chart-selected-index text-gray-600  selection-indicator" transform={`translate(${margin.left + xScale(selectedIndex)},${margin.top})`}>
           <line x1=0 x2=0 y1=0 y2={innerChartHeight} stroke="currentColor" stroke-opacity="0.7"></line>
           <g class="text-xs" transform={`translate(0, ${innerChartHeight + circleRadius})`}>
-          <rect class="text-white dark:text-gray-800 fill-current" width="40" x="-20" height={margin.bottom}></rect>
+          <rect class="text-white  fill-current" width="40" x="-20" height={margin.bottom}></rect>
           <text fill="currentColor" text-anchor="middle" y=10>{data[selectedIndex].label}</text>
           </g>
         </g>
