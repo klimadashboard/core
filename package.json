@@ -34,6 +34,7 @@
     "d3": "^7.6.1",
     "dayjs": "^1.11.3",
     "dom-to-image": "^2.6.0",
+    "fathom-client": "^3.5.0",
     "papaparse": "^5.3.2"
   }
 }
