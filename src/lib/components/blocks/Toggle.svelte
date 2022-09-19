@@ -4,7 +4,7 @@
     export let block;
 </script>
 
-<details class="max-w-2xl mx-auto my-4">
+<details class="max-w-2xl mx-auto my-4 px-4">
     <summary class="text-xl border-b">{block.content.label}</summary>
     <Blocks content={JSON.parse(block.content.blocks)} />
 </details>
