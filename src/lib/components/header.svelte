@@ -7,7 +7,7 @@
 		    const json = await res.json();
 
 		if (json) {
-      let array = Object.values(json).filter(entry => entry.id.includes("klimadashboard-at"));
+      let array = Object.values(json).filter(entry => entry.id.includes("klimadashboard-at") && entry.num);
 			return array;
 		} else {
 			throw new Error(JSON.stringify(json));

@@ -102,9 +102,11 @@
     </div>
     <div class="flex justify-between pt-2 border-r-2 border-gray-300  text-gray-700 text-sm md:text-base">
     {#if selectedState}
-    <p class="" style="color: {type.color}">Ziel von {selectedState.state}: <br>{formatNumber(Math.round(selectedState.goal))} GWh bis 2030</p>
+    <p class="" style="color: {type.color}">
+        Ziel von {selectedState.state}: <br>{formatNumber(Math.round(selectedState.goal))} GWh bis 2030</p>
     {:else}
-    <p class="" style="color: {type.color}">Summe der Bundesländer-Ziele: <br>{formatNumber(Math.round(federalStates.reduce((a,b) => a + b.goal, 0)))} GWh bis 2030
+    <p class="" style="color: {type.color}">
+        Summe der Bundesländer-Ziele: <br>{formatNumber(Math.round(federalStates.reduce((a,b) => a + b.goal, 0)))} GWh bis 2030
     <br>
     <span class="opacity-70">
     Keine Ziele für 2030:<br>
