@@ -139,7 +139,7 @@
     </div>
 
     <div class="md:flex md:gap-4">
-    <p class="text-lg max-w-2xl">{chart.content.text}</p>
+    <p class="text-lg max-w-2xl">{@html chart.content.text}</p>
     <p class="text-gray-700 md:max-w-xs mt-4 md:mt-0">{chart.content.source}</p>
     </div>
     {:else}
