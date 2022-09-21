@@ -8,6 +8,8 @@
     export let dataset;
 
     let nationalGoal;
+    let unit = "TWh";
+
     Papa.parse(
     'https://data.klimadashboard.org/at/energy/renewables/' + type.dataKey + '_zielpfad.csv',
     {
@@ -17,7 +19,7 @@
       header: true,
       complete: function (results) {
         if (results) {
-          nationalGoal = results.data.find(d => d.DateTime == "2030-12-31").Jahresproduktion * 1000; // convert to GWh
+          nationalGoal = results.data.find(d => d.DateTime == "2030-12-31").Jahresproduktion;
         }
       }
     }
@@ -26,18 +28,21 @@
     $: colorScale = scaleLinear().range(type.colorScale).domain([max(federalStates, (d) => d.goal), min(federalStates, (d) => d.goal)]);
 
     $: federalStates = [...new Set(dataset?.map(d => d.state_name))].map(entry => {
-        const goal = dataset.find(d => d.state_name == entry && d.energy_type == type.key && d.goal_year == 2030) ? dataset.find(d => d.state_name == entry && d.energy_type == type.key && d.goal_year == 2030).goal_amount : 0;
+        const goal = dataset.find(d => d.state_name == entry && d.energy_type == type.key && (d.goal_year == 2030 || d.goal_year == 2025 || d.goal_year == 2024)) ? dataset.find(d => d.state_name == entry && d.energy_type == type.key && (d.goal_year == 2030 || d.goal_year == 2025 || d.goal_year == 2024)).goal_amount : 0;
+        const goalYear = dataset.find(d => d.state_name == entry && d.energy_type == type.key && (d.goal_year == 2030 || d.goal_year == 2025 || d.goal_year == 2024)) ? dataset.find(d => d.state_name == entry && d.energy_type == type.key && (d.goal_year == 2030 || d.goal_year == 2025 || d.goal_year == 2024)).goal_year : 2030;
         const currentProduction = dataset.find(d => d.state_name == entry && d.energy_type == type.key).current_production > 0 ? dataset.find(d => d.state_name == entry && d.energy_type == type.key).current_production : 0;
         
         return {
             state: entry,
             goal: goal,
+            goalYear: goalYear,
             currentProduction: currentProduction,
             goalAndProduction: goal + currentProduction,
             abbreviation: dataset?.find(d => d.state_name == entry).state_short
         }
     }).sort((a,b) => b.goal - a.goal);
 
+    $: console.log(federalStates);
 
     let chartWidth;
     let chartHeight;
@@ -68,7 +73,7 @@
 
 <div class="bg-gray-100  rounded overflow-hidden">
     <div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
-    <h3 class="text-xl"><b>{type.label}</b> {#if type.key !== "Biomasse"} Nationales Ausbauziel zu {Math.round(percentage)}% abgedeckt{/if}</h3>
+    <h3 class="text-xl"><b>{type.label}</b> Nationales Ausbauziel zu {Math.round(percentage)}% abgedeckt</h3>
     {@html type.icon}
     </div>
     
@@ -103,20 +108,28 @@
     <div class="flex justify-between pt-2 border-r-2 border-gray-300  text-gray-700 text-sm md:text-base">
     {#if selectedState}
     <p class="" style="color: {type.color}">
-        Ziel von {selectedState.state}: <br>{formatNumber(Math.round(selectedState.goal))} GWh bis 2030</p>
+        {#if selectedState.goal > 0}
+        Ziel von {selectedState.state}: <br>{formatNumber(selectedState.goal)} {unit} bis {selectedState.goalYear}
+        {:else}
+        {selectedState.state} hat kein definiertes Ziel bis {selectedState.goalYear}.
+        {/if}
+        {#if selectedState.currentProduction > 0}
+        <br>Aktuelle Produktion: <br>{formatNumber(selectedState.currentProduction)} {unit}
+        {/if}
+    </p>
     {:else}
     <p class="" style="color: {type.color}">
-        Summe der Bundesländer-Ziele: <br>{formatNumber(Math.round(federalStates.reduce((a,b) => a + b.goal, 0)))} GWh bis 2030
+    Geplante Stromproduktion der Bundesländer: <br>{formatNumber(federalStates.reduce((a,b) => a + b.goal, 0))} {unit} im Jahr 2030
     <br>
     <span class="opacity-70">
-    Keine Ziele für 2030:<br>
+    Bundesländer ohne Ziele für 2030:<br>
     {#each statesNoGoals as state, index}
         {state.state}{index !== statesNoGoals.length - 1 ? ", " : ""}
     {/each}
     </span>
     </p>
     {/if}
-    <p class="text-right pr-2">Nationales Ziel: <br>{formatNumber(Math.round(nationalGoal))} GWh bis 2030</p>
+    <p class="text-right pr-2">Nationales Ziel: <br>{formatNumber(nationalGoal)} {unit} bis 2030</p>
     </div>
 </div>
 </div>
