@@ -111,7 +111,7 @@
               <line x1="0" x2="0" y1="{-chartHeight}" y2={0} stroke-width="1" class="stroke-current" />
               <line x1="{chartWidth / 12}" x2="{chartWidth / 12}" y1="{-chartHeight}" y2={0} stroke-width="1" class="stroke-current" />
               -->
-              <text class="text-xs text-gray-600 fill-current" x="6" y="{-margin.top - 4}">{tick.getFullYear()}</text>
+              <text class="text-sm text-gray-600 fill-current" x="6" y="{-margin.top - 4}">{tick.getFullYear()}</text>
             </g>
             {/each}
         </g>
@@ -119,7 +119,7 @@
           {#each yScale.ticks(6) as tick, index}
           <g transform={`translate(0, ${yScale(tick)})`} class="text-gray-400">
             <line x1="0" x2={chartWidth} y1="0" y2="0" stroke-width="1" class="stroke-gray-200 opacity-50" />
-            <text class="text-xs text-gray-600 fill-current bg-white" x="10" y="-4">{tick} {index == yScale.ticks(6).length - 1 ? " TWh" : ""}</text>
+            <text class="text-sm text-gray-600 fill-current bg-white" x="10" y="-4">{tick} {index == yScale.ticks(6).length - 1 ? " TWh" : ""}</text>
           </g>
           {/each}
       </g>
@@ -157,12 +157,12 @@
         </circle>
             
         {#if selected}
-          <text class="text-xs font-semibold fill-current" x={10} y={0}>{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion am {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</text>
+          <text class="text-sm font-semibold fill-current" x={10} y={0}>{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion am {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</text>
         {/if}
         </g>
 
         <g transform="translate({xScale(dataGoal[dataGoal.length - 1].x)},{yScale(dataGoal[dataGoal.length - 1].y)})">
-            <text style="color:{colors[0]}" class="text-xs font-semibold fill-current" text-anchor="end" x={-10} y={-2}>2030-Ziel: {Math.round(dataGoal[dataGoal.length - 1].y)} TWh Strom aus {type.label}</text>
+            <text style="color:{colors[0]}" class="text-sm font-semibold fill-current" text-anchor="end" x={-10} y={-2}>2030-Ziel: {Math.round(dataGoal[dataGoal.length - 1].y)} TWh Strom aus {type.label}</text>
             <circle r=5 fill="{colors[0]}"></circle>
         </g>
       </g>
