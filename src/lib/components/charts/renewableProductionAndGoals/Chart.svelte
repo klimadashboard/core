@@ -2,10 +2,11 @@
     import { scaleLinear, scaleTime } from "d3-scale";
     import { area, line } from "d3-shape";
     import Papa from "papaparse";
+    import formatNumber from "$lib/stores/formatNumber";
+    import dayjs from "dayjs";
 
     export let type;
     export let unifiedScaling;
-
 
     $: maxValue = 50;
 
@@ -82,8 +83,7 @@
       areas = keys.map((key) => generateArea(key)(key == "production" ? dataProduction : dataGoal));
     }
 
-    $: selected = false;
-    
+    $: selected = false;    
 </script>
 
 <div class="bg-gray-100  rounded overflow-hidden">
@@ -143,17 +143,22 @@
             {/each}
         </g>
 
-        <g transform="translate({xScale(dataProduction[dataProduction.length - 1].x)},{yScale(dataProduction[dataProduction.length - 1].y)})" on:mouseover={() => selected = true} on:mouseout={() => selected = false} style="color: {colors[1]}">
-            <circle r=5 class="fill-current"></circle>
+        <g transform="translate({xScale(dataProduction[dataProduction.length - 1].x)},{yScale(dataProduction[dataProduction.length - 1].y)})" 
+        style="color: {colors[1]}"
+        on:mouseover={() => selected = true} 
+        on:focus={() => selected = true}
+        on:mouseout={() => selected = false}
+        on:blur={() => selected = false}>
+        
+        <circle r=5 class="fill-current"></circle>
             <circle r=5 class="fill-current">
             <animate attributeName="r" from="5" to="10" dur="1.5s" begin="0s" repeatCount="indefinite"/>
             <animate attributeName="opacity" from="1" to="0.5" dur="1.5s" begin="0s" repeatCount="indefinite"/>
-            </circle>
-            <!--
-            {#if selected}
-              <text class="text-xs font-semibold fill-current" x={5} y={-5}>{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion im {dayjs(dataProduction[dataProduction.length - 1].x).format("MMM YYYY")}</text>
-            {/if}
-            -->
+        </circle>
+            
+        {#if selected}
+          <text class="text-xs font-semibold fill-current" x={10} y={0}>{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion am {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</text>
+        {/if}
         </g>
 
         <g transform="translate({xScale(dataGoal[dataGoal.length - 1].x)},{yScale(dataGoal[dataGoal.length - 1].y)})">

@@ -3,6 +3,7 @@
     import dayjs from "dayjs";
     import Papa from "papaparse";
     import duration from "dayjs/plugin/duration";
+    import { glossaryItem } from "$lib/stores/glossary";
 
     export let gap;
     export let icon;
@@ -77,7 +78,7 @@
         {:else}
         <b>zusätzliche Windräder</b> (mit je 5MW Leistung) müssen <b>pro Monat</b> bis 2030 gebaut werden, um die Erneuerbaren-Ausbau-Gesetzes-Vorgabe zu erreichen. Für diese {formatNumber(values[2])} Windräder würden circa {formatNumber(Math.round(values[1]) / 1000000)} km<sup>2</sup> Fläche (inkl. Bauplatz und Wege) benötigt.
         {/if}
-        <button on:mousedown={() => showGlossary(gap == "pv" ? "renewables_pv": "renewables_wind")} aria-label="Info" class="translate-y-1">
+        <button on:mousedown={() => glossaryItem.set(gap == "pv" ? "platzbedarf-pv": "platzbedarf-wind")} aria-label="Info" class="translate-y-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 icon icon-tabler icon-tabler-info-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <circle cx="12" cy="12" r="9"></circle>
