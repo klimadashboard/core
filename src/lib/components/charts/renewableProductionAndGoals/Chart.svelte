@@ -4,6 +4,7 @@
     import Papa from "papaparse";
     import formatNumber from "$lib/stores/formatNumber";
     import dayjs from "dayjs";
+    import { fade } from "svelte/transition";
 
     export let type;
     export let unifiedScaling;
@@ -88,7 +89,7 @@
 
 <div class="bg-gray-100  rounded overflow-hidden">
     <div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
-    <h3 class="text-xl"><b>{type.label}</b> Produktion und Ausbauziel</h3>
+    <h3 class="text-xl"><b>{type.label}</b> Jahresproduktion vs. Ausbauziel</h3>
     {@html type.icon}
     </div>
     <div class="">
@@ -157,7 +158,7 @@
         </circle>
             
         {#if selected}
-          <text class="text-sm font-semibold fill-current" x={10} y={0}>{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion am {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</text>
+          <text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade >{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion im Zeitraum <tspan x=16 y=16>{dayjs(dataProduction[dataProduction.length - 1].x).subtract(364,"day").format("D.M.YYYY")} – {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</tspan></text>
         {/if}
         </g>
 
