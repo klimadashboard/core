@@ -94,12 +94,19 @@
             </g>
         {/each}
         </g>
-        {#if gap > nationalGoal * 0.275 && xScale(gap) > 140}
+        {#if gap > nationalGoal * 0.275 && xScale(gap) > 50}
         <g transform="translate({xScale(federalStates.reduce((a,b) => a + b.goalAndProduction, 0))},{chartHeight / 2})" class="text-gray-400">
             <line x1={5} x2={xScale(gap) - 8} y1={0} y2={0} class="stroke-current opacity-50" />
             <g transform="translate({xScale(gap) / 2},0)">
-            <rect class="fill-white" height={10} width={120} x={-60} y={-5} />
-            <text class="text-sm uppercase tracking-wide font-semibold fill-current" text-anchor="middle" dominant-baseline="middle">Ausbaulücke</text>
+            <rect class="fill-white" height={10} width={xScale(gap) > 120 ? 120 : 70} x={xScale(gap) > 120 ? -60 : -35} y={-5} />
+            <text class="text-sm uppercase tracking-wide font-semibold fill-current" text-anchor="middle" dominant-baseline="middle">
+                {#if xScale(gap) > 120}
+                Ausbaulücke
+                {:else}
+                <tspan x="0" y="-2">Ausbau</tspan>
+                <tspan x="0" y="14">lücke</tspan>
+                {/if}
+            </text>
             </g>
         </g>
         {/if}
