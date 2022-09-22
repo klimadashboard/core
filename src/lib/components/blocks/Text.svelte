@@ -2,7 +2,7 @@
     export let block;
 </script>
 
-<div class="my-4 text-lg max-w-2xl mx-auto px-4 text" id="{block.id}">
+<div class="my-8 text-lg max-w-2xl mx-auto px-4 text" id="{block.id}">
 {@html block.content.text}
 </div>
 
@@ -12,6 +12,6 @@
     }
 
     :global(.text p) {
-        @apply my-2;
+        @apply my-4;
     }
 </style>
