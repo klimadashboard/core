@@ -34,7 +34,7 @@
              </svg>
         </button>
         </div>
-        <h1 class="text-5xl tracking-tight my-2">{item.heading}</h1>
+        <h1 class="text-4xl sm:text-5xl tracking-tight my-2">{item.heading}</h1>
         <p class="text-xl mt-4">{item.intro}</p>
         </div>
         </div>
