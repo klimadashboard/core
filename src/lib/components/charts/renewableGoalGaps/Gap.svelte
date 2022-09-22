@@ -129,7 +129,7 @@
     Geplante Stromproduktion der Bundesländer: <br>{formatNumber(federalStates.reduce((a,b) => a + b.goal, 0))} {unit} im Jahr 2030
     <br>
     <span class="opacity-70">
-    Bundesländer ohne Ziele für 2030:<br>
+    Bundesländer ohne Ausbauziele bis 2030:<br>
     {#each statesNoGoals as state, index}
         {state.state}{index !== statesNoGoals.length - 1 ? ", " : ""}
     {/each}
