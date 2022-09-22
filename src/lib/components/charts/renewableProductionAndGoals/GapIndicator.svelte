@@ -74,9 +74,9 @@
     </div>
     <p class="mt-2 leading-snug">
         {#if gap == "pv"}
-        zusätzliche <b>Photovoltaik-Anlagen</b> (je 20 kWp und 200 m<sup>2</sup> PV-Fläche) müssen <b>pro Monat</b> bis 2030 gebaut werden, um die Erneuerbaren-Ausbau-Gesetzes-Vorgabe zu erreichen. Für die Vorgabe wird eine Gesamt-PV-Fläche von etwa {formatNumber(Math.round(values[1]) / 1000000)} km<sup>2</sup> benötigt.
+        zusätzliche <b>Photovoltaik-Anlagen</b> (je 20 kWp und 200 m<sup>2</sup> PV-Fläche) müssen <b>pro Monat</b> bis 2030 gebaut werden, um die Erneuerbaren-Ausbau-Gesetzes-Vorgabe zu erreichen. <br>Für die Vorgabe wird eine Gesamt-PV-Fläche von etwa {formatNumber(Math.round(values[1]) / 1000000)} km<sup>2</sup> benötigt.
         {:else}
-        <b>zusätzliche Windräder</b> (mit je 5MW Leistung) müssen <b>pro Monat</b> bis 2030 gebaut werden, um die Erneuerbaren-Ausbau-Gesetzes-Vorgabe zu erreichen. Für diese {formatNumber(values[2])} Windräder würden circa {formatNumber(Math.round(values[1]) / 1000000)} km<sup>2</sup> Fläche (inkl. Bauplatz und Wege) benötigt.
+        <b>zusätzliche Windräder</b> (mit je 5MW Leistung) müssen <b>pro Monat</b> bis 2030 gebaut werden, um die Erneuerbaren-Ausbau-Gesetzes-Vorgabe zu erreichen. <br>Für diese {formatNumber(values[2])} Windräder würden circa {formatNumber(Math.round(values[1]) / 1000000)} km<sup>2</sup> Fläche (inkl. Bauplatz und Wege) benötigt.
         {/if}
         <button on:mousedown={() => glossaryItem.set(gap == "pv" ? "platzbedarf-pv": "platzbedarf-wind")} aria-label="Info" class="translate-y-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 icon icon-tabler icon-tabler-info-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -86,8 +86,6 @@
                 <polyline points="11 12 12 12 12 16 13 16"></polyline>
              </svg>
         </button>
-    </p>
-    <p class="text-gray-700  mt-2">
         Das entspricht {(Math.round(areaOfAustria * 1000) / 1000).toString().replace(".",",")}% der Fläche Österreichs.
     </p>
 </div>
