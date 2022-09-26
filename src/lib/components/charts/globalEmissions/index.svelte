@@ -105,9 +105,8 @@
         data={dataset} 
         sort={"descending"}
         label={"Pro-Kopf-Emissionen"}
-        source={"Quelle: Our World in Data"}
         lines={lines}
-        unit={"t"}
+        unit={"t THG"}
          />
         {/if}
         </div>

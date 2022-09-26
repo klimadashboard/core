@@ -248,10 +248,8 @@
     {#if dataset.length > 0}
     <BarChart 
     data={dataset}
-    label={"Label, to do"}
-    source={"Quelle, to do"}
     xAxixInterval=5
-    unit={"t"}
+    unit={"t THG"}
     visualisation="{"stacked"}"
     freezeYAxis = {freezeYAxis}/>
     {:else}

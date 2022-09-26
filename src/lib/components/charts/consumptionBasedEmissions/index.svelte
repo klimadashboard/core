@@ -62,7 +62,7 @@
             visualisation="grouped"
             xAxixInterval=5
             label={"Konsumbasierte Emissionen 1990 - 2015"}
-            unit={"t"}
+            unit={"t THG"}
             showDifferenceArea={true}
             /> 
             {:else}

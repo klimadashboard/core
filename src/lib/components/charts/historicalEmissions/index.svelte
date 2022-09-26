@@ -59,7 +59,7 @@
             lineWidth=2
             xTicksInterval={chartWidth > 600 ? 10 : 50}
             visualisation="stacked"
-            unit=" Mio t"
+            unit=" Mio t THG"
             />
             {/if}
     </div>
