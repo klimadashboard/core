@@ -106,10 +106,7 @@
         <g>
             {#each xScale.ticks(6) as tick, index}
             <g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-gray-200">
-              
               <rect x={0} y={-chartHeight - margin.top} width={chartWidth / 15} height={chartHeight} class="fill-gray-200  opacity-50"></rect>
-              
-              
               <text class="text-sm text-gray-600 fill-current" x="6" y="{-margin.top - 4}">{tick.getFullYear()}</text>
             </g>
             {/each}
