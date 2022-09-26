@@ -39,6 +39,10 @@
 </script>
 
 <section>
+    <label class="flex gap-1 text-gray-700 items-center">
+        <input type="checkbox" bind:checked={unifiedScaling}>
+        <span>Einheitliche Skalierung?</span>
+    </label>
 <div class="grid md:grid-cols-2 gap-4 my-4">
     {#each energyTypes as type}
     <Chart 
