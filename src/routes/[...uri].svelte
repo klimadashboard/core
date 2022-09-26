@@ -18,7 +18,7 @@
 
   <main class="mb-24">
 
-    <section id="page-header" class="bg-gradient-green shadow-inner text-white pt-24 pb-10 mb-10">
+    <section id="page-header" class="bg-gradient-green shadow-inner text-white pt-24 pb-10 mb-10" style="{item.cover_styles}">
         <div class="container">
         <div class="max-w-2xl mx-auto break-words">
         <div class="flex gap-2 items-center">
