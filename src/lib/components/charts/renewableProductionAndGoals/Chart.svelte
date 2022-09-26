@@ -161,7 +161,7 @@
         </g>
 
         <g transform="translate({xScale(dataGoal[dataGoal.length - 1].x)},{yScale(dataGoal[dataGoal.length - 1].y)})">
-            <text style="color:{colors[0]}" class="text-sm font-semibold fill-current" text-anchor="end" x={-10} y={-2}>2030-Ziel: {Math.round(dataGoal[dataGoal.length - 1].y)} TWh Strom aus {type.label}</text>
+            <text style="color:{colors[0]}" class="text-sm font-semibold fill-current" text-anchor="end" x={-10} y={-2}>2030-Ziel: {formatNumber(dataGoal[dataGoal.length - 1].y)} TWh Strom aus {type.label}</text>
             <circle r=5 fill="{colors[0]}"></circle>
         </g>
       </g>
