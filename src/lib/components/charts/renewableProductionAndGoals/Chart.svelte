@@ -151,14 +151,21 @@
             <animate attributeName="r" from="5" to="10" dur="1.5s" begin="0s" repeatCount="indefinite"/>
             <animate attributeName="opacity" from="1" to="0.5" dur="1.5s" begin="0s" repeatCount="indefinite"/>
         </circle>
-            
+        {#if !unifiedScaling}
         <text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade >{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion im Zeitraum <tspan x=16 y=16>{dayjs(dataProduction[dataProduction.length - 1].x).subtract(364,"day").format("D.M.YYYY")} – {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</tspan></text>
+        {/if}
         </g>
 
+        
         <g transform="translate({xScale(dataGoal[dataGoal.length - 1].x)},{yScale(dataGoal[dataGoal.length - 1].y)})">
+            {#if !unifiedScaling}
             <text style="color:{colors[0]}" class="text-sm font-semibold fill-current" text-anchor="end" x={-10} y={-2}>2030-Ziel: {formatNumber(dataGoal[dataGoal.length - 1].y)} TWh Strom aus {type.label}</text>
+            {/if}
+            
             <circle r=5 fill="{colors[0]}"></circle>
+            
         </g>
+        
       </g>
     </svg>
     {/if}
