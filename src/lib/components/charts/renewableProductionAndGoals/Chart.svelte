@@ -152,9 +152,7 @@
             <animate attributeName="opacity" from="1" to="0.5" dur="1.5s" begin="0s" repeatCount="indefinite"/>
         </circle>
             
-        {#if selected}
-          <text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade >{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion im Zeitraum <tspan x=16 y=16>{dayjs(dataProduction[dataProduction.length - 1].x).subtract(364,"day").format("D.M.YYYY")} – {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</tspan></text>
-        {/if}
+        <text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade >{formatNumber(Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100)} TWh Produktion im Zeitraum <tspan x=16 y=16>{dayjs(dataProduction[dataProduction.length - 1].x).subtract(364,"day").format("D.M.YYYY")} – {dayjs(dataProduction[dataProduction.length - 1].x).format("D.M.YYYY")}</tspan></text>
         </g>
 
         <g transform="translate({xScale(dataGoal[dataGoal.length - 1].x)},{yScale(dataGoal[dataGoal.length - 1].y)})">
