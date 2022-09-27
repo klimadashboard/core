@@ -135,7 +135,7 @@
     </p>
     {:else}
     <p class="" style="color: {type.color}">
-    Geplante Stromproduktion der Bundesländer: <br>{formatNumber(federalStates.reduce((a,b) => a + b.goal, 0))} {unit} im Jahr 2030
+    Geplante Stromproduktion der Bundesländer: <br>{formatNumber(federalStates.reduce((a,b) => a + b.goalAndProduction, 0))} {unit} im Jahr 2030
     <br>
     <span class="opacity-70">
     Bundesländer ohne Ausbauziele bis 2030:<br>
