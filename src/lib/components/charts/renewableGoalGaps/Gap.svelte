@@ -105,9 +105,9 @@
             <rect class="fill-white" height={10} width={xScale(gap) > 120 ? 120 : 70} x={xScale(gap) > 120 ? -60 : -35} y={-5} />
             <text class="text-sm uppercase tracking-wide font-semibold fill-current" text-anchor="middle" dominant-baseline="middle">
                 {#if xScale(gap) > 120}
-                Ausbaulücke
+                Ambitionslücke
                 {:else}
-                <tspan x="0" y="-2">Ausbau</tspan>
+                <tspan x="0" y="-2">Ambitions</tspan>
                 <tspan x="0" y="14">lücke</tspan>
                 {/if}
             </text>
