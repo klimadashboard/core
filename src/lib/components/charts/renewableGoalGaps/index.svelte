@@ -19,6 +19,13 @@
         "color": "#E0A906",
         "colorScale": ["#E0A906","#E8CD7D"],
         "icon": "<svg xmlns='http://www.w3.org/2000/svg' class='w-8 h-8 icon icon-tabler icon-tabler-sun' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><circle cx='12' cy='12' r='4'></circle><path d='M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7'></path></svg>"
+    }, {
+        "key": "Wasserkraft",
+        "label": "Wasserkraft",
+        "dataKey": "wasserkraft",
+        "color": "#08519C",
+        "colorScale": ["#08519C","#7098C2"],
+        "icon": "<svg xmlns='http://www.w3.org/2000/svg' class='w-8 h-8 icon icon-tabler icon-tabler-ripple' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M3 7c3 -2 6 -2 9 0s6 2 9 0'></path><path d='M3 17c3 -2 6 -2 9 0s6 2 9 0'></path><path d='M3 12c3 -2 6 -2 9 0s6 2 9 0'></path></svg>"
     }];
 
     let dataset;
@@ -47,6 +54,9 @@
     {dataset}
     />
     {/each}
+    <div class="bg-gray-100 p-4">
+        <p>Für Biomasse stehen noch nicht ausreichend Daten zu Verfügung.</p>
+    </div>
 </div>
 {:else}
 <Loader />

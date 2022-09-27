@@ -78,6 +78,10 @@
     </div>
     
     <div class="p-4">
+
+    {#if type.key == "Biomasse"}
+    Ausbauziele für Biomasse stehen noch nicht zu Verfügung.
+    {:else}
     <div class="w-full h-24 border-2 border-gray-300  bg-white" 
     bind:clientHeight={chartHeight} 
     bind:clientWidth={chartWidth}>
@@ -121,7 +125,12 @@
         {selectedState.state} hat kein definiertes Ziel bis {selectedState.goalYear}.
         {/if}
         {#if selectedState.currentProduction > 0}
-        <br>Aktuelle Produktion: <br>{formatNumber(selectedState.currentProduction)} {unit}
+        {#if type.key == "Wasserkraft"}
+        <br>Durchschnittsproduktion 2018-2020:  
+        {:else}
+        <br>Aktuelle Produktion: 
+        {/if}
+        <br>{formatNumber(selectedState.currentProduction)} {unit}
         {/if}
     </p>
     {:else}
@@ -138,5 +147,6 @@
     {/if}
     <p class="text-right pr-2">Nationales Ziel: <br>{formatNumber(nationalGoal)} {unit} bis 2030</p>
     </div>
+    {/if}
 </div>
 </div>
