@@ -123,7 +123,7 @@ bind:clientWidth={chartWidth}>
     </g>
 
     <g transform="">
-    {#each yScale.ticks(4) as tick}
+    {#each yScale.ticks(5).splice(0) as tick}
     <g transform={`translate(0, ${yScale(tick)})`} class="text-xs text-gray-500">
     <text fill="currentColor" x={innerChartWidth - 22} dominant-baseline="middle" text-anchor="end">{tick}°C</text>
     <line class="text-white" x1=0 y1=0 x2={margin.left + innerChartWidth} y2=0 stroke="currentColor" stroke-width="2" stroke-opacity="0.1"></line>
