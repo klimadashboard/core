@@ -31,9 +31,9 @@
       </nav>
       <div></div>
       <nav class="flex">
-        <a href="https://klimadashboard.org/forum" class="ml-auto" target="_blank">Klimaforum</a>
-        &bull;
-        <a href="https://klimadashboard.org" class="ml-auto" target="_blank">Über uns</a>
+        <a href="https://klimadashboard.org/forum" class="ml-auto mr-2" target="_blank">Klimaforum</a>
+        <span>&bull;</span>
+        <a href="https://klimadashboard.org" class="ml-2" target="_blank">Über uns</a>
       </nav>
     </div>
     <div class="bg-gray-900 py-4">
