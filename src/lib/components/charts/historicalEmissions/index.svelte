@@ -8,7 +8,7 @@
     let chartWidth;
 
     Papa.parse(
-    'https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Austria_1850_2018_PIK_PRIMAP.csv',
+    'https://data.klimadashboard.org/at/emissions/AT_Historical-Emissions_PIK-PRIMAP.csv',
     {
       download: true,
       dynamicTyping: true,
@@ -16,7 +16,7 @@
       skipEmptyLines: true,
       complete: function (results) {
         if (results) {
-          rawData = results.data;
+          rawData = results.data.filter(d => d.year > 1799);
         }
       }
     }
