@@ -6,6 +6,8 @@
     import Toggle from "./Toggle.svelte";
     import Tabs from "./Tabs.svelte";
     import Navigation from "./Navigation.svelte";
+    import Image from "./Image.svelte";
+
     export let content;
 
     const blocks = [{
@@ -29,6 +31,9 @@
     }, {
         "type": "navigation",
         component: Navigation
+    }, {
+        "type": "image",
+        component: Image
     }];
 </script>
 
