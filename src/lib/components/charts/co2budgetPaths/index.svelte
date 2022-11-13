@@ -3,6 +3,7 @@
     import { line, area } from "d3-shape";
     import { scaleLinear } from "d3-scale";
     import { draw } from "svelte/transition";
+	  import { quintOut } from 'svelte/easing';
 
     let budgets = [{
       value: 510,
@@ -102,48 +103,59 @@
     $: innerChartHeight = chartHeight - margin.top - margin.bottom;
 </script>
 
-<div id="switch" class="flex gap-4">
-  <div class="flex gap-2 items-center">
-  <h3 class="font-bold">Wahrscheinlichkeiten</h3>
-  <label class="flex items-center gap-1">
+<div id="switch" class="flex flex-wrap gap-4 items-center">
+  <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
+  <label class="flex items-center gap-1 {chosenProbability == 66 ? "font-bold" : ""}">
   <input type="radio" value={66} bind:group={chosenProbability}>
   <span>66%</span>
   </label>
-  <label class="flex items-center gap-1">
+  <label class="flex items-center gap-1 {chosenProbability == 50 ? "font-bold" : ""}">
   <input type="radio" value={50} bind:group={chosenProbability}>
   <span>50%</span>
   </label>
+  <span class="font-bold">Wahrscheinlichkeit</span>
+
   </div>
   <div>
-  <div class="flex ml-4 gap-2">
-  <h3 class="font-bold">Temperatur-Ziel</h3>
-  <label class="flex items-center gap-1">
+  <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
+  <label class="flex items-center gap-1 {chosenTemperature == 1.5 ? "font-bold" : ""}">
   <input type="radio" name="goal" value={1.5} bind:group={chosenTemperature}>
-  <span>1,5 Grad</span>
+  <span>1,5°C</span>
   </label>
-  <label class="flex items-center gap-1">
+  <label class="flex items-center gap-1 {chosenTemperature == 1.65 ? "font-bold" : ""}">
   <input type="radio" name="goal" value={1.65} bind:group={chosenTemperature}>
-  <span>1,5 Grad mit zwischenzeitlich 1,65 Grad</span>
+  <span>1,65°C (1,5°C langfristig)</span>
   </label>
+  <span class="font-bold">Zieltemperatur</span>
   </div>
   </div>
+  <p><b>= {chosenBudget} Mio. t. Budget verbleiben</b> ab 2022</p>
 </div>
 
-<div id="legend" class="flex gap-4">
+<div class="h-72 w-full mt-4 rounded-xl overflow-hidden"
+bind:clientHeight={chartHeight}
+bind:clientWidth={chartWidth}>
+<div id="legend" class="flex-col absolute top-12 text-sm" style="left: {xScale(2030)}px">
   {#each keys as key, i}
-    <div class="flex gap-1 items-center">
+    <div class="flex gap-1 items-center leading-tight">
       <span class="inline-block h-3 w-3 rounded-full" style="background: {colors[i]}"></span>
       <span>{key.label}</span>
     </div>
   {/each}
 </div>
 
-<div class="h-56 w-full"
-bind:clientHeight={chartHeight}
-bind:clientWidth={chartWidth}>
   <svg width={"100%"} height={"100%"}>
     {#if chartWidth && chartHeight}
+    <rect
+        width={xScale(2021)}
+        height={chartHeight - margin.bottom}
+        class="fill-gray-100">
+    </rect>
+    <text text-anchor="end" dominant-baseline="hanging" x={xScale(2021) - 5} y=5 class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Vergangenheit</text>
+    <text x={xScale(2021) + 5} y=5 dominant-baseline="hanging" class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Zukunft</text>
+
     <g transform="translate({margin.left},{margin.top})">
+      
       <g class="chart-y-axis text-sm text-gray-600">
         {#each yScale.ticks(6) as tick, index}
         <g transform={`translate(0, ${yScale(tick)})`} class="text-gray-500">
@@ -165,15 +177,31 @@ bind:clientWidth={chartWidth}>
             >
           {/each}
         </g>
+        {#key chosenBudget}
         <g>
-          {#each lines as line, i}
-          <g id="line-{keys[i]}">
+          {#each [...lines].splice(0,3) as line, i}
+          <g id="line-{keys[i].key}">
           <path
           d={line}
           fill="none"
           stroke-width=4
           stroke={colors[i]}
-          transition:draw
+          transition:draw={{duration: 2000, easing: quintOut}}
+          >
+          </path>
+          </g>
+          {/each}
+        </g>
+        {/key}
+
+        <g>
+          {#each lines.splice(3,1) as line, i}
+          <g id="line-historic">
+          <path
+          d={line}
+          fill="none"
+          stroke-width=4
+          stroke={colors[3]}
           >
           </path>
           </g>
