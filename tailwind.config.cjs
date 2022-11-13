@@ -84,7 +84,9 @@ module.exports = {
         1000: '#1A0003'
       },
       gray: colors.neutral,
-      yellow: colors.yellow
+      yellow: colors.yellow,
+      orange: colors.orange,
+      amber: colors.amber
     },
     container: {
       center: true,

@@ -24,6 +24,10 @@
     $: chosenBudget = budgets[1];
     let historicalEmissions = 8029;
     $: total = historicalEmissions + chosenBudget.value;
+
+    $: arrayHistorical = Array(Math.round(historicalEmissions / 10)).fill("historical");
+    $: arrayBudget = Array(Math.round(chosenBudget.value / 10)).fill("budget");
+    $: boxes = arrayHistorical.concat(arrayBudget);
 </script>
 
 <div class="relative text-gray-600 max-w-sm">
@@ -41,21 +45,23 @@
 </select>
 </div>
 
-<div class="grid grid-cols-6 mt-4">
-<div class="flex flex-col h-64 md:col-span-4">
-    <div class="bg-red-700 relative"
-    style="height: {chosenBudget.value / total * 100}%">
-    </div>
-    <div class="bg-yellow-500 relative"
-    style="height: {historicalEmissions / total * 100}%">
-    </div>
+<section class="mt-4">
+<p class="text-orange-600 border-l-2 border-current mt-auto pl-2 pb-2 font-semibold leading-tight">
+    Bisherige THG-Emissionen<br>{historicalEmissions} Mio. Tonnen THG
+</p>
+
+<div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-orange-600">
+    {#each boxes as box}
+        <div class="w-3 h-3 md:w-4 md:h-4 {box == "historical" ? "bg-orange-600" : "bg-amber-500"}"></div>
+    {/each}
 </div>
-<div class="col-span-4 md:col-span-2 flex flex-col">
-    <p class="border-t border-t-red-700 text-red-700 pl-2 pt-2 leading-tight">
-        Verbleibendes Budget<br>{chosenBudget.value} Mio. Tonnen THG
-    </p>
-    <p class="border-b border-yellow-500 text-yellow-500 mt-auto pl-2 pb-2 leading-tight">
-        Bisherige THG-Emissionen<br>{historicalEmissions} Mio. Tonnen THG
-    </p>
+
+<p class="text-amber-500 border-current border-l-2 pl-2 pt-2 leading-tight font-semibold">
+    Verbleibendes Budget<br>{chosenBudget.value} Mio. Tonnen THG
+</p>
+
+<div class="flex gap-2 pl-2 items-center text-gray-500 mt-4">
+    <div class="w-3 h-3 md:w-4 md:h-4 bg-current"></div>
+    <div>entspricht 10 Millionen Tonnen Treibhausgasen</div>
 </div>
-</div>
+</section>
