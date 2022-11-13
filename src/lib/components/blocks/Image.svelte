@@ -2,7 +2,6 @@
     import { page } from "$app/stores";
 
     export let block;
-    console.log(block.content);
 </script>
 
 {#each block.content.image as image}
