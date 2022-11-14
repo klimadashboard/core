@@ -29,13 +29,13 @@
 
     const keys = [{
       key: "linear",
-      label: "Lineare Abnahme"
+      label: "Jährliche Abnahme um {value} Mio t"
     }, {
       key: "percentage",
-      label: "Prozentuale Abnahme"
+      label: "Pfad bis Klimaneutralität 2040"
     }, {
       key: "nochange",
-      label: "Business As Usual"
+      label: "Gleichbleibende Emissionen"
     }];
 
     const colors = ['#00429d', '#73a2c6', '#f4777f', '#93003a'];
@@ -69,7 +69,6 @@
       complete: function (results) {
         if (results) {
           dataHistoric = results.data;
-          console.log(dataHistoric);
         }
       }
     }
@@ -101,9 +100,26 @@
     let margin = { top: 20, right: 15, bottom: 20, left: 0};
     $: innerChartWidth = chartWidth - margin.left - margin.right;
     $: innerChartHeight = chartHeight - margin.top - margin.bottom;
+    $: linearReduction = 0;
+
+    $: if(data[0]) {
+      linearReduction = Math.round(data[0][chosenBudget + "_linear"] - data[1][chosenBudget + "_linear"]);
+    } 
 </script>
 
 <div id="switch" class="flex flex-wrap gap-4 items-center">
+    <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
+    <label class="flex items-center gap-1 {chosenTemperature == 1.5 ? "font-bold" : ""}">
+    <input type="radio" name="goal" value={1.5} bind:group={chosenTemperature}>
+    <span>+1.5°C</span>
+    </label>
+    <label class="flex items-center gap-1 {chosenTemperature == 1.65 ? "font-bold" : ""}">
+    <input type="radio" name="goal" value={1.65} bind:group={chosenTemperature}>
+    <span>+1,5°C, zwischenzeitlich 1.65°C</span>
+    </label>
+    <span class="font-bold">Erderhitzung im Jahr 2100</span>
+    </div>
+
   <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
   <label class="flex items-center gap-1 {chosenProbability == 66 ? "font-bold" : ""}">
   <input type="radio" value={66} bind:group={chosenProbability}>
@@ -116,19 +132,6 @@
   <span class="font-bold">Wahrscheinlichkeit</span>
 
   </div>
-  <div>
-  <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
-  <label class="flex items-center gap-1 {chosenTemperature == 1.5 ? "font-bold" : ""}">
-  <input type="radio" name="goal" value={1.5} bind:group={chosenTemperature}>
-  <span>1,5°C</span>
-  </label>
-  <label class="flex items-center gap-1 {chosenTemperature == 1.65 ? "font-bold" : ""}">
-  <input type="radio" name="goal" value={1.65} bind:group={chosenTemperature}>
-  <span>1,65°C (1,5°C langfristig)</span>
-  </label>
-  <span class="font-bold">Zieltemperatur</span>
-  </div>
-  </div>
   <p><b>= {chosenBudget} Mio. t. Budget verbleiben</b> ab 2022</p>
 </div>
 
@@ -139,7 +142,7 @@ bind:clientWidth={chartWidth}>
   {#each keys as key, i}
     <div class="flex gap-1 items-center leading-tight">
       <span class="inline-block h-3 w-3 rounded-full" style="background: {colors[i]}"></span>
-      <span>{key.label}</span>
+      <span>{key.label.replace("{value}",linearReduction)}</span>
     </div>
   {/each}
 </div>
@@ -211,6 +214,14 @@ bind:clientWidth={chartWidth}>
           </path>
           </g>
           {/each}
+        </g>
+
+        <g transform="translate({xScale(2021)},{yScale(80)})">
+        <circle r=5 fill="{colors[3]}"></circle>
+            <circle r=5 fill="{colors[3]}">
+            <animate attributeName="r" from="5" to="10" dur="1.5s" begin="0s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="1" to="0.5" dur="1.5s" begin="0s" repeatCount="indefinite"/>
+        </circle>
         </g>
     </g>
     {/if}
