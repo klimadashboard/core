@@ -28,6 +28,7 @@
     $: arrayHistorical = Array(Math.round(historicalEmissions / 10)).fill("historical");
     $: arrayBudget = Array(Math.round(chosenBudget.value / 10)).fill("budget");
     $: boxes = arrayHistorical.concat(arrayBudget);
+    $: console.log(boxes.length);
 </script>
 
 <div class="relative text-gray-600 max-w-sm">
