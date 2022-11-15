@@ -23,11 +23,12 @@
 
     $: chosenBudget = budgets[1];
     let historicalEmissions = 8029;
+    let yearlyEmissions = 80;
     $: total = historicalEmissions + chosenBudget.value;
 
     $: arrayHistorical = Array(Math.round(historicalEmissions / 10)).fill("historical");
     $: arrayBudget = Array(Math.round(chosenBudget.value / 10)).fill("budget");
-    $: boxes = arrayHistorical.concat(arrayBudget);
+    $: boxes = arrayBudget.concat(arrayHistorical);
     $: console.log(boxes.length);
 </script>
 
@@ -47,22 +48,39 @@
 </div>
 
 <section class="mt-4">
-<p class="text-orange-600 border-l-2 border-current mt-auto pl-2 pb-2 font-semibold leading-tight">
+
+
+<div class="grid md:grid-cols-3 gap-8">
+<div class="col-span-2">
+  <p class="text-orange-600 border-l-2 border-current mt-auto pl-2 pb-2 font-semibold leading-tight">
     Bisherige THG-Emissionen seit 1750 <br>{historicalEmissions} Mio. Tonnen THG
 </p>
 
 <div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-orange-600">
-    {#each boxes as box}
-        <div class="w-3 h-3 md:w-4 md:h-4 {box == "historical" ? "bg-orange-600" : "bg-amber-500"}"></div>
+    {#each arrayHistorical as box}
+        <div class="w-2 h-2 md:w-3 md:h-3 bg-orange-600"></div>
     {/each}
 </div>
-
-<p class="text-amber-500 border-current border-l-2 pl-2 pt-2 leading-tight font-semibold">
-    Verbleibendes Budget<br>{chosenBudget.value} Mio. Tonnen THG
-</p>
-
-<div class="flex gap-2 pl-2 items-center text-gray-500 mt-4">
-    <div class="w-3 h-3 md:w-4 md:h-4 bg-current"></div>
-    <div>entspricht 10 Millionen Tonnen Treibhausgasen</div>
 </div>
+
+<div>
+  <p class="text-amber-500 border-current border-l-2 pl-2 pb-2 leading-tight font-semibold">
+    Verbleibendes Budget<br>{chosenBudget.value} Mio. Tonnen THG
+  </p>
+<div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-amber-500">
+  {#each arrayBudget as box}
+      <div class="w-2 h-2 md:w-3 md:h-3 bg-amber-500"></div>
+  {/each}
+</div>
+<p class="mt-4">Jedes Jahr verbrauchen wir 80 Mio. t Treibhausgase. Wenn wir weiterhin so viel</p>
+<div class="flex gap-2 items-center text-gray-500 mt-4">
+  <div class="w-3 h-3 md:w-4 md:h-4 bg-current"></div>
+  <div>entspricht 10 Millionen Tonnen Treibhausgasen</div>
+</div>
+</div>
+</div>
+
+
+
+
 </section>

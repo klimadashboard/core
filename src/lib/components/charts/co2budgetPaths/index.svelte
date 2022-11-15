@@ -5,6 +5,9 @@
     import { draw, fade } from "svelte/transition";
 	  import { quintOut } from 'svelte/easing';
 
+    export let v;
+    console.log(v);
+
     let budgets = [{
       value: 510,
       probability: 50,
@@ -36,9 +39,12 @@
     }, {
       key: "percentage",
       label: "Pfad bis Klimaneutralität 2040"
+    }, {
+      key: "historic",
+      label: "Historische Emissionen"
     }];
 
-    const colors = ['#00429d', '#73a2c6', '#f4777f', '#93003a'];
+    const colors = ['#00429d', '#73a2c6', '#f4777f', '#93003a', '#93003a'];
 
     $: data = [];
     $: dataHistoric = [];
@@ -74,9 +80,11 @@
     }
     );
 
+    $: selectedStartYear = 1990;
+
     $: xScale = scaleLinear()
       .range([0, innerChartWidth])
-      .domain([2000, 2040]);
+      .domain([selectedStartYear, 2040]);
 
     $: yScale = scaleLinear()
       .range([innerChartHeight, 0])
@@ -88,21 +96,19 @@
       .y(d => yScale(key == "total_co2e_t" ? (d[key] / 1000000) : d[key]));
     }
 
-    $: generateArea = (key) => {
-      return area()
-      .x(d => xScale(d.year))
-      .y0(innerChartHeight)
-      .y1(d => yScale(d[key]));
-    }
-
     $: chosenBudget = budgets.find(d => d.temperature == chosenTemperature && d.probability == chosenProbability).value;
     $: chosenTemperature = 1.5;
     $: chosenProbability = 66;
     $: chosenPath = 2;
 
-    $: lines = keys.map((key) => generateLine(chosenBudget + "_" + key.key)(data))
-    .concat(generateLine("total_co2e_t")(dataHistoric));
-    $: areas = keys.map((key) => generateArea(chosenBudget + "_" + key.key)(data));
+    $: lines = keys.map((key) => {
+    if(key.key == "historic") {
+    return generateLine("total_co2e_t")(dataHistoric)
+    } else {
+    return generateLine(chosenBudget + "_" + key.key)(data);
+    }
+    }
+    );
 
     let chartWidth;
     let chartHeight;
@@ -117,6 +123,8 @@
 </script>
 
 <div id="switch" class="flex flex-wrap gap-4 items-center">
+    <div>
+    <h3 class="font-bold">Erderhitzung im Jahr 2100</h3>
     <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
     <label class="flex items-center gap-1 {chosenTemperature == 1.5 ? "font-bold" : ""}">
     <input type="radio" name="goal" value={1.5} bind:group={chosenTemperature}>
@@ -126,10 +134,13 @@
     <input type="radio" name="goal" value={1.65} bind:group={chosenTemperature}>
     <span>+1,5°C, zwischenzeitlich 1.65°C</span>
     </label>
-    <span class="font-bold">Erderhitzung im Jahr 2100</span>
+    </div>
     </div>
 
-  <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
+  <div>
+  <h3 class="font-bold">Wahrscheinlichkeit</h3>
+  <div class="flex gap-1 bg-gray-100 rounded-full py-1 px-3">
+  
   <label class="flex items-center gap-1 {chosenProbability == 66 ? "font-bold" : ""}">
   <input type="radio" value={66} bind:group={chosenProbability}>
   <span>66%</span>
@@ -138,13 +149,18 @@
   <input type="radio" value={50} bind:group={chosenProbability}>
   <span>50%</span>
   </label>
-  <span class="font-bold">Wahrscheinlichkeit</span>
 
   </div>
-  <p><b>= {chosenBudget} Mio. t. Budget verbleiben</b> ab 2022</p>
+</div>
+  <p><b>= {chosenBudget} Mio. t. THG Budget verbleiben</b> ab 2022</p>
+
+  <div class="ml-auto">
+    <h3 class="font-bold">Startjahr</h3>
+  <input type="number" min=1990 max=2021 bind:value={selectedStartYear} class="px-3 py-1 w-24 bg-gray-100 rounded-full">
+  </div>
 </div>
 
-<div class="h-72 w-full mt-4 rounded-xl overflow-hidden"
+<div class="h-72 w-full mt-4"
 bind:clientHeight={chartHeight}
 bind:clientWidth={chartWidth}>
 <div id="legend" class="flex-col absolute top-12 text-sm" style="left: {xScale(2030)}px">
@@ -158,11 +174,20 @@ bind:clientWidth={chartWidth}>
 
   <svg width={"100%"} height={"100%"}>
     {#if chartWidth && chartHeight}
+    <!--
     <rect
         width={xScale(2021)}
         height={chartHeight - margin.bottom}
         class="fill-gray-100">
     </rect>
+    -->
+    <line 
+    x1={xScale(2021)}
+    x2={xScale(2021)}
+    y1={0}
+    y2={chartHeight - margin.bottom}
+    class="stroke-gray-400"
+    ></line>
     <text text-anchor="end" dominant-baseline="hanging" x={xScale(2021) - 5} y=5 class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Vergangenheit</text>
     <text x={xScale(2021) + 5} y=5 dominant-baseline="hanging" class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Zukunft</text>
 
@@ -182,8 +207,8 @@ bind:clientWidth={chartWidth}>
         {/each}
       </g>
       <g class="chart-x-axis">
-        {#each xScale.ticks(6) as tick, i}
-            <g transform={`translate(${xScale(tick)}, ${innerChartHeight})`} class="text-xs text-gray-500">
+        {#each xScale.ticks(6) as tick, index}
+            <g transform={`translate(${index == 0 ? xScale(tick) + 12 : xScale(tick)}, ${innerChartHeight})`} class="text-xs text-gray-500">
               <text dy={15} text-anchor="middle" fill="currentColor">
                 {tick}
               </text>
@@ -196,21 +221,19 @@ bind:clientWidth={chartWidth}>
         </g>
         {#key chosenBudget}
         <g>
-          {#each [...areas].splice(chosenPath,1) as area}
-          <g id="area-{keys[areas.indexOf(area)].key}">
+          {#each lines as line, i}
+          {#if keys[i].key == "historic" || i == chosenPath}
           <path
-          d={area}
-          fill={colors[areas.indexOf(area)]}
+          d="{line}L{xScale(2021)},{innerChartHeight}{keys[i].key == "historic" ? ("L0," + innerChartHeight) : ""}Z"
+          fill={colors[i]}
           fill-opacity=0.2
           transition:fade
           >
           </path>
-          </g>
-          {/each}
-        </g>
-        <g>
-          {#each [...lines].splice(0,3) as line, i}
-          <g id="line-{keys[i].key}">
+          {/if}
+          <g id="line"
+          on:mouseover={() => chosenPath = i}
+          on:mouseout={() => chosenPath = 2}>
           <path
           d={line}
           fill="none"
@@ -224,20 +247,6 @@ bind:clientWidth={chartWidth}>
         </g>
         {/key}
 
-        <g>
-          {#each lines.splice(3,1) as line, i}
-          <g id="line-historic">
-          <path
-          d={line}
-          fill="none"
-          stroke-width=4
-          stroke={colors[3]}
-          >
-          </path>
-          </g>
-          {/each}
-        </g>
-
         <g transform="translate({xScale(2021)},{yScale(80)})">
         <circle r=5 fill="{colors[3]}"></circle>
             <circle r=5 fill="{colors[3]}">
@@ -250,4 +259,11 @@ bind:clientWidth={chartWidth}>
     </g>
     {/if}
   </svg>
+</div>
+
+<div class="text-lg max-w-2xl mx-auto mt-4">
+  {@html v.description
+  .replace("{selectedTemperature}",chosenTemperature)
+  .replace("{selectedProbability}",chosenProbability)
+  .replace("{remainingBudget}",chosenBudget)}
 </div>
