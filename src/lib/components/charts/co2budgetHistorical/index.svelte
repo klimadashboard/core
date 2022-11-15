@@ -48,7 +48,7 @@
 
 <section class="mt-4">
 <p class="text-orange-600 border-l-2 border-current mt-auto pl-2 pb-2 font-semibold leading-tight">
-    Bisherige THG-Emissionen<br>{historicalEmissions} Mio. Tonnen THG
+    Bisherige THG-Emissionen seit 1750 <br>{historicalEmissions} Mio. Tonnen THG
 </p>
 
 <div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-orange-600">

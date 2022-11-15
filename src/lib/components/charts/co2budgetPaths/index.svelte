@@ -2,7 +2,7 @@
     import Papa from "papaparse";
     import { line, area } from "d3-shape";
     import { scaleLinear } from "d3-scale";
-    import { draw } from "svelte/transition";
+    import { draw, fade } from "svelte/transition";
 	  import { quintOut } from 'svelte/easing';
 
     let budgets = [{
@@ -28,14 +28,14 @@
     }];
 
     const keys = [{
+      key: "nochange",
+      label: "Gleichbleibende Emissionen"
+    }, {
       key: "linear",
       label: "Jährliche Abnahme um {value} Mio t"
     }, {
       key: "percentage",
       label: "Pfad bis Klimaneutralität 2040"
-    }, {
-      key: "nochange",
-      label: "Gleichbleibende Emissionen"
     }];
 
     const colors = ['#00429d', '#73a2c6', '#f4777f', '#93003a'];
@@ -88,12 +88,21 @@
       .y(d => yScale(key == "total_co2e_t" ? (d[key] / 1000000) : d[key]));
     }
 
+    $: generateArea = (key) => {
+      return area()
+      .x(d => xScale(d.year))
+      .y0(innerChartHeight)
+      .y1(d => yScale(d[key]));
+    }
+
     $: chosenBudget = budgets.find(d => d.temperature == chosenTemperature && d.probability == chosenProbability).value;
     $: chosenTemperature = 1.5;
     $: chosenProbability = 66;
+    $: chosenPath = 2;
 
     $: lines = keys.map((key) => generateLine(chosenBudget + "_" + key.key)(data))
     .concat(generateLine("total_co2e_t")(dataHistoric));
+    $: areas = keys.map((key) => generateArea(chosenBudget + "_" + key.key)(data));
 
     let chartWidth;
     let chartHeight;
@@ -187,6 +196,19 @@ bind:clientWidth={chartWidth}>
         </g>
         {#key chosenBudget}
         <g>
+          {#each [...areas].splice(chosenPath,1) as area}
+          <g id="area-{keys[areas.indexOf(area)].key}">
+          <path
+          d={area}
+          fill={colors[areas.indexOf(area)]}
+          fill-opacity=0.2
+          transition:fade
+          >
+          </path>
+          </g>
+          {/each}
+        </g>
+        <g>
           {#each [...lines].splice(0,3) as line, i}
           <g id="line-{keys[i].key}">
           <path
@@ -223,6 +245,8 @@ bind:clientWidth={chartWidth}>
             <animate attributeName="opacity" from="1" to="0.5" dur="1.5s" begin="0s" repeatCount="indefinite"/>
         </circle>
         </g>
+
+        <text x={xScale(2021) + 5} y={innerChartHeight - 5} class="text-xs uppercase opacity-20 font-semibold tracking-wide">Budget</text>
     </g>
     {/if}
   </svg>
