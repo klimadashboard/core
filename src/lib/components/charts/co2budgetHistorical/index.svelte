@@ -1,6 +1,8 @@
 <script>
     import { onMount } from 'svelte';
     import { fade } from "svelte/transition";
+    import Papa from "papaparse";
+    import formatNumber from "$lib/stores/formatNumber";
 
     let budgets = [{
       value: 510,
@@ -24,25 +26,48 @@
       type: "THG"
     }];
 
+    $: historicalEmissions = [];
+
+    Papa.parse(
+    'https://data.klimadashboard.org/at/emissions/AT_Historical-Emissions_PIK-PRIMAP.csv',
+    {
+      download: true,
+      dynamicTyping: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function (results) {
+        if (results) {
+          historicalEmissions = results.data;
+        }
+      }
+    }
+    );
 
     $: chosenBudget = budgets[1];
-    $: historicalEmissions = 8000;
+    $: totalHistoricalEmissions = historicalEmissions
+    .filter(d => d.year <= endYear && d.year >= startYear)
+    .reduce((a,b) => a + b.total_AR4_Mt_CO2e, 0);
     $: remainingBudget = chosenBudget.value;
     $: yearlyEmissions = 80;
-    $: total = historicalEmissions + chosenBudget.value;
 
-    $: arrayHistorical = Array(Math.round(historicalEmissions / 10)).fill("historical");
+    $: arrayHistorical = Array(Math.round(totalHistoricalEmissions / 10)).fill("historical");
     $: arrayBudget = Array(Math.round(remainingBudget / 10)).fill("budget");
     $: arrayCurrent = Array(Math.round(yearlyEmissions / 10)).fill("current");
-    $: boxes = arrayBudget.concat(arrayHistorical);
     $: remainingYears = Math.round(chosenBudget.value / yearlyEmissions * 10) / 10;
-    $: selectedYear = 2021;
+    $: startYear = 1750;
+    $: endYear = 2021;
 
 </script>
 
 <section class="max-w-2xl mx-auto text-xl px-4 md:px-0">
-  <p class="text-budgetHistoric max-w-md leading-tight">In den letzten 260 Jahren hat Österreich <nobr>8 Milliarden Tonnen Treibhausgase</nobr> ausgestoßen.</p>
-  
+  <p class="text-budgetHistoric max-w-lg leading-tight">
+    {#if endYear == 2021}
+    In den letzten {endYear - startYear} Jahren hat Österreich <nobr>{formatNumber(Math.round(totalHistoricalEmissions))} Mio. Tonnen</nobr> Treibhausgase ausgestoßen.
+    {:else}
+    In den {endYear - startYear} Jahren zwischen {startYear} und {endYear} hat Österreich <nobr>{formatNumber(Math.round(totalHistoricalEmissions))} Mio. Tonnen Treibhausgase</nobr> ausgestoßen.
+    {/if}
+  </p>
+
   <div class="flex flex-col md:flex-row md:items-center justify-between text-sm text-gray-500 mt-2">
   <div class=" flex gap-2 items-center ">
     <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current"></div>
@@ -50,8 +75,9 @@
     
   </div>
   <div class="flex gap-2 items-center">
-    <span>1760 - {selectedYear}</span>
-    <input type="range" bind:value={selectedYear} max=2021 min=1760>
+    <input type="number" bind:value={startYear} min={1750} max={2020}>
+    <span>–</span>
+    <input type="number" bind:value={endYear} min={1800} max={2021}>
   </div>
   </div>
 
@@ -61,7 +87,7 @@
     {/each}
   </div>
 
-  <p class="mt-6 text-budgetDefault leading-tight">Nun verbleiben nur noch {remainingBudget} Millionen Tonnen, um das Pariser Klimaabkommen mit einer Erderhitzung von +1.5°C einzuhalten.</p>
+  <p class="mt-6 text-budgetDefault leading-tight">Ab 2022 verbleiben nur noch {remainingBudget} Millionen Tonnen, um das Pariser Klimaabkommen mit einer Erderhitzung von +1.5°C einzuhalten.</p>
 
   <div class="relative text-gray-600 max-w-sm text-sm mt-2">
     <svg xmlns="http://www.w3.org/2000/svg" class="absolute pointer-events-none -left-2 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
