@@ -1,4 +1,7 @@
 <script>
+    import { onMount } from 'svelte';
+    import { fade } from "svelte/transition";
+
     let budgets = [{
       value: 510,
       probability: 50,
@@ -21,15 +24,27 @@
       type: "THG"
     }];
 
+    
+
+    onMount(() => {
+    setInterval(function() {
+      animation = !animation;
+    }, 2000);
+	  })
+
     $: chosenBudget = budgets[1];
-    let historicalEmissions = 8029;
-    let yearlyEmissions = 80;
+    $: animation = false;
+    $: historicalEmissions = animation ? 7949 : 8029;
+    $: remainingBudget = animation ? chosenBudget.value : chosenBudget.value - yearlyEmissions;
+    $: yearlyEmissions = 80;
     $: total = historicalEmissions + chosenBudget.value;
 
     $: arrayHistorical = Array(Math.round(historicalEmissions / 10)).fill("historical");
-    $: arrayBudget = Array(Math.round(chosenBudget.value / 10)).fill("budget");
+    $: arrayBudget = Array(Math.round(remainingBudget / 10)).fill("budget");
     $: boxes = arrayBudget.concat(arrayHistorical);
     $: console.log(boxes.length);
+    $: remainingYears = Math.round(chosenBudget.value / yearlyEmissions * 10) / 10;
+
 </script>
 
 <div class="relative text-gray-600 max-w-sm">
@@ -50,37 +65,36 @@
 <section class="mt-4">
 
 
-<div class="grid md:grid-cols-3 gap-8">
-<div class="col-span-2 text-budgetHistoric">
+<div class=" text-budgetHistoric">
   <p class=" border-l-2 border-current mt-auto pl-2 pb-2 font-semibold leading-tight">
-    Bisherige THG-Emissionen seit 1750 <br>{historicalEmissions} Mio. Tonnen THG
+    THG-Emissionen 1750-{animation ? "2020" : "2021"} <br>{historicalEmissions} Mio. Tonnen THG
 </p>
 
-<div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-current">
+<div class="pl-1 border-l-2 border-current flex flex-wrap gap-1">
     {#each arrayHistorical as box}
-        <div class="w-2 h-2 md:w-3 md:h-3 bg-current"></div>
+        <div class="w-2 h-2 md:w-3 md:h-3 bg-current" transition:fade></div>
     {/each}
 </div>
 </div>
 
-<div class="text-budgetDefault">
-  <p class="text-current border-current border-l-2 pl-2 pb-2 leading-tight font-semibold">
-    Verbleibendes Budget<br>{chosenBudget.value} Mio. Tonnen THG
-  </p>
+<div class="text-budgetDefault mt-2">
+  
 <div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-current">
   {#each arrayBudget as box}
-      <div class="w-2 h-2 md:w-3 md:h-3 bg-current"></div>
+      <div class="w-2 h-2 md:w-3 md:h-3 bg-current" transition:fade></div>
   {/each}
 </div>
-<p class="mt-4">Jedes Jahr verbrauchen wir 80 Mio. t Treibhausgase. Wenn wir weiterhin so viel</p>
+<div class="text-current border-current border-l-2 pl-2 pt-2 leading-tight flex">
+<p class="font-semibold">
+  Verbleibendes Budget ab {animation ? "2021" : "2022"}<br>{remainingBudget} Mio. Tonnen THG
+</p>
+<p class="ml-auto max-w-2xl text-right {animation ? "text-budgetDefault" : "text-budgetHistoric"}">
+  Die Animation zeigt die 80 Mio. t Treibhausgase, die Österreich aktuell jährlich ausstößt – wenn wir in dem Tempo weiter emittieren, ist unser Budget in {remainingYears} Jahren aufgebraucht.</p>
+</div>
 <div class="flex gap-2 items-center text-gray-500 mt-4">
   <div class="w-3 h-3 md:w-4 md:h-4 bg-current"></div>
   <div>entspricht 10 Millionen Tonnen Treibhausgasen</div>
 </div>
 </div>
-</div>
-
-
-
 
 </section>

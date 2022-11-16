@@ -265,5 +265,7 @@ bind:clientWidth={chartWidth}>
   {@html v.description
   .replace("{selectedTemperature}",chosenTemperature)
   .replace("{selectedProbability}",chosenProbability)
-  .replace("{remainingBudget}",chosenBudget)}
+  .replace("{remainingBudget}",chosenBudget)
+  .replace("{yearsRemainingBusinessAsUsual}", Math.round(chosenBudget / 80))
+  .replace("")}
 </div>
