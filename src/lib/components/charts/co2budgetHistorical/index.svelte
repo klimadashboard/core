@@ -133,6 +133,8 @@
 
   <div class="border-t pt-1 mt-6 text-gray-600 border-current text-sm">
     <p>
+      Quellen:
+      <br>
       Historische Emissionen: Gütschow, J.; Pflüger, M. (2022): PRIMAP-hist v2.4 (1750-2021). zenodo.
       <br>
       Treibhausgasbudget: CCCA (2022): 1,5° C: Wieviel Treibhausgase dürfen wir noch emittieren?

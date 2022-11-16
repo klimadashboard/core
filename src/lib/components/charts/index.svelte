@@ -143,7 +143,7 @@
       {@html chart.content.text}
     </div>
     <div class="text-gray-700 md:max-w-xs mt-4 md:mt-0">
-    Quelle: {@html chart.content.source}
+    Quellen: {@html chart.content.source}
     </div>
     </div>
     {:else}
