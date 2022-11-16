@@ -4,6 +4,7 @@
     import { scaleLinear } from "d3-scale";
     import { draw, fade } from "svelte/transition";
 	  import { quintOut } from 'svelte/easing';
+    import { pointer } from "d3-selection";
 
     export let v;
     console.log(v);
@@ -32,13 +33,16 @@
 
     const keys = [{
       key: "nochange",
-      label: "Gleichbleibende Emissionen"
+      label: "Gleichbleibende Emissionen",
+      zeroYear: 2026
     }, {
       key: "linear",
-      label: "Jährliche Abnahme um {value} Mio t"
+      label: "Jährliche Abnahme um {value} Mio t",
+      zeroYear: 2029
     }, {
       key: "percentage",
-      label: "Pfad bis Klimaneutralität 2040"
+      label: "Pfad bis Klimaneutralität 2040",
+      zeroYear: 2040
     }, {
       key: "historic",
       label: "Historische Emissionen"
@@ -120,40 +124,23 @@
     $: if(data[0]) {
       linearReduction = Math.round(data[0][chosenBudget + "_linear"] - data[1][chosenBudget + "_linear"]);
     } 
+
+    $: pivot = [];
+
+    const handleMouseMove = function (event) {
+      console.log(pointer(event));
+      pivot = [Math.round(xScale.invert(pointer(event)[0])),Math.round(yScale.invert(pointer(event)[1]))];
+      console.log(pivot);
+    };
+  
+    const handleMouseLeave = function () {
+      pivot = [];
+    };
 </script>
 
+
 <div id="switch" class="flex flex-wrap gap-4 items-center">
-    <div>
-    <h3 class="font-bold">Erderhitzung im Jahr 2100</h3>
-    <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
-    <label class="flex items-center gap-1 {chosenTemperature == 1.5 ? "font-bold" : ""}">
-    <input type="radio" name="goal" value={1.5} bind:group={chosenTemperature}>
-    <span>+1.5°C</span>
-    </label>
-    <label class="flex items-center gap-1 {chosenTemperature == 1.65 ? "font-bold" : ""}">
-    <input type="radio" name="goal" value={1.65} bind:group={chosenTemperature}>
-    <span>+1,5°C, zwischenzeitlich 1.65°C</span>
-    </label>
-    </div>
-    </div>
-
-  <div>
-  <h3 class="font-bold">Wahrscheinlichkeit</h3>
-  <div class="flex gap-1 bg-gray-100 rounded-full py-1 px-3">
-  
-  <label class="flex items-center gap-1 {chosenProbability == 66 ? "font-bold" : ""}">
-  <input type="radio" value={66} bind:group={chosenProbability}>
-  <span>66%</span>
-  </label>
-  <label class="flex items-center gap-1 {chosenProbability == 50 ? "font-bold" : ""}">
-  <input type="radio" value={50} bind:group={chosenProbability}>
-  <span>50%</span>
-  </label>
-
-  </div>
-</div>
-  <p><b>= {chosenBudget} Mio. t. THG Budget verbleiben</b> ab 2022</p>
-
+    
   <div class="ml-auto">
     <h3 class="font-bold">Startjahr</h3>
   <input type="number" min=1990 max=2021 bind:value={selectedStartYear} class="px-3 py-1 w-24 bg-gray-100 rounded-full">
@@ -173,7 +160,7 @@ bind:clientWidth={chartWidth}>
 </div>
 
   <svg width={"100%"} height={"100%"}>
-    {#if chartWidth && chartHeight}
+    {#if chartWidth && chartHeight && data}
     <!--
     <rect
         width={xScale(2021)}
@@ -209,9 +196,11 @@ bind:clientWidth={chartWidth}>
       <g class="chart-x-axis">
         {#each xScale.ticks(6) as tick, index}
             <g transform={`translate(${index == 0 ? xScale(tick) + 12 : xScale(tick)}, ${innerChartHeight})`} class="text-xs text-gray-500">
+              {#if tick < 2022}
               <text dy={15} text-anchor="middle" fill="currentColor">
                 {tick}
               </text>
+              {/if}
               <g class="text-gray-500">
               <line y1={0} y2={4} stroke="currentColor" />
               </g>
@@ -247,6 +236,12 @@ bind:clientWidth={chartWidth}>
         </g>
         {/key}
 
+        {#each keys as key, i}
+        <g transform="translate({xScale(key.zeroYear)},{innerChartHeight})" style="color: {colors[i]}">
+          <text class="fill-current text-xs" dy={15} text-anchor="middle">{key.zeroYear}</text>
+        </g>
+        {/each}
+
         <g transform="translate({xScale(2021)},{yScale(80)})">
         <circle r=5 fill="{colors[3]}"></circle>
             <circle r=5 fill="{colors[3]}">
@@ -259,13 +254,4 @@ bind:clientWidth={chartWidth}>
     </g>
     {/if}
   </svg>
-</div>
-
-<div class="text-lg max-w-2xl mx-auto mt-4">
-  {@html v.description
-  .replace("{selectedTemperature}",chosenTemperature)
-  .replace("{selectedProbability}",chosenProbability)
-  .replace("{remainingBudget}",chosenBudget)
-  .replace("{yearsRemainingBusinessAsUsual}", Math.round(chosenBudget / 80))
-  .replace("")}
 </div>

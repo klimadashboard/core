@@ -28,8 +28,12 @@
 
     onMount(() => {
     setInterval(function() {
+      if(allowAnimation) {
       animation = !animation;
-    }, 2000);
+      } else {
+      animation = false;
+      }
+    }, 4000);
 	  })
 
     $: chosenBudget = budgets[1];
@@ -44,6 +48,7 @@
     $: boxes = arrayBudget.concat(arrayHistorical);
     $: console.log(boxes.length);
     $: remainingYears = Math.round(chosenBudget.value / yearlyEmissions * 10) / 10;
+    $: allowAnimation = true;
 
 </script>
 
@@ -56,7 +61,11 @@
     <select name="budget" bind:value={chosenBudget} class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm">
     {#each budgets as budget}
     <option value={budget}>
-        {budget.temperature}°C bei {budget.probability}% Wahrscheinlichkeit
+        {#if budget.temperature == 1.65}
+        1,5 °C mit zwischenzeitlich 1,65°C bei {budget.probability}% Eintrittswahrscheinlichkeit
+        {:else}
+        1,5 °C bei {budget.probability}% Eintrittswahrscheinlichkeit
+        {/if}
     </option>
     {/each}
 </select>
@@ -84,17 +93,26 @@
       <div class="w-2 h-2 md:w-3 md:h-3 bg-current" transition:fade></div>
   {/each}
 </div>
-<div class="text-current border-current border-l-2 pl-2 pt-2 leading-tight flex">
-<p class="font-semibold">
+<div class="text-current  leading-tight flex">
+<div>
+<p class="font-semibold border-current border-l-2 pl-2 pt-2">
   Verbleibendes Budget ab {animation ? "2021" : "2022"}<br>{remainingBudget} Mio. Tonnen THG
 </p>
-<p class="ml-auto max-w-2xl text-right {animation ? "text-budgetDefault" : "text-budgetHistoric"}">
-  Die Animation zeigt die 80 Mio. t Treibhausgase, die Österreich aktuell jährlich ausstößt – wenn wir in dem Tempo weiter emittieren, ist unser Budget in {remainingYears} Jahren aufgebraucht.</p>
-</div>
 <div class="flex gap-2 items-center text-gray-500 mt-4">
-  <div class="w-3 h-3 md:w-4 md:h-4 bg-current"></div>
+  <div class="w-2 h-2 md:w-3 md:h-3 bg-current"></div>
   <div>entspricht 10 Millionen Tonnen Treibhausgasen</div>
 </div>
+</div>
+<div class="md:ml-auto max-w-2xl {animation ? "text-budgetDefault" : "text-budgetHistoric"}">
+<p class="text-right ">
+  Die Animation zeigt die 80 Mio. t Treibhausgase, die Österreich aktuell jährlich ausstößt – wenn wir in dem Tempo weiter emittieren, ist unser Budget in {remainingYears} Jahren aufgebraucht.</p>
+<label for="animation" class="float-right block">
+  Animation zeigen?
+  <input type="checkbox" name="animation" bind:checked={allowAnimation} on:mousedown={() => animation = false}>
+</label>
+</div>
+</div>
+
 </div>
 
 </section>
