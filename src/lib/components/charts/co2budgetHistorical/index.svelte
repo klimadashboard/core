@@ -46,7 +46,6 @@
     $: arrayHistorical = Array(Math.round(historicalEmissions / 10)).fill("historical");
     $: arrayBudget = Array(Math.round(remainingBudget / 10)).fill("budget");
     $: boxes = arrayBudget.concat(arrayHistorical);
-    $: console.log(boxes.length);
     $: remainingYears = Math.round(chosenBudget.value / yearlyEmissions * 10) / 10;
     $: allowAnimation = true;
 

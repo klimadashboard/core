@@ -7,7 +7,6 @@
     import { pointer } from "d3-selection";
 
     export let v;
-    console.log(v);
 
     let budgets = [{
       value: 510,
@@ -63,7 +62,6 @@
       complete: function (results) {
         if (results) {
           data = results.data;
-          console.log(data);
         }
       }
     }
@@ -84,7 +82,7 @@
     }
     );
 
-    $: selectedStartYear = 1990;
+    $: selectedStartYear = chartWidth > 1000 ? 1990 : 2010;
 
     $: xScale = scaleLinear()
       .range([0, innerChartWidth])
@@ -97,13 +95,21 @@
     $: generateLine = (key) => {
       return line()
       .x(d => xScale(d.year))
-      .y(d => yScale(key == "total_co2e_t" ? (d[key] / 1000000) : d[key]));
+      .y(d => yScale(key == "total_co2e_t" ? (d[key] / 1000000) : d[key])) || 0;
+    }
+
+    $: generateArea = (key) => {
+      return line()
+      .x(d => xScale(d.year || 2021))
+      .y(d => yScale(d[key] || 0));
     }
 
     $: chosenBudget = budgets.find(d => d.temperature == chosenTemperature && d.probability == chosenProbability).value;
     $: chosenTemperature = 1.5;
     $: chosenProbability = 66;
     $: chosenPath = 2;
+
+    $: areas = [...keys].splice(0,3).map((key) => generateArea(chosenBudget + "_" + key.key)(data));
 
     $: lines = keys.map((key) => {
     if(key.key == "historic") {
@@ -113,6 +119,8 @@
     }
     }
     );
+
+    $: console.log(areas);
 
     let chartWidth;
     let chartHeight;
@@ -124,34 +132,14 @@
     $: if(data[0]) {
       linearReduction = Math.round(data[0][chosenBudget + "_linear"] - data[1][chosenBudget + "_linear"]);
     } 
-
-    $: pivot = [];
-
-    const handleMouseMove = function (event) {
-      console.log(pointer(event));
-      pivot = [Math.round(xScale.invert(pointer(event)[0])),Math.round(yScale.invert(pointer(event)[1]))];
-      console.log(pivot);
-    };
-  
-    const handleMouseLeave = function () {
-      pivot = [];
-    };
 </script>
 
-
-<div id="switch" class="flex flex-wrap gap-4 items-center">
-    
-  <div class="ml-auto">
-    <h3 class="font-bold">Startjahr</h3>
-  <input type="number" min=1990 max=2021 bind:value={selectedStartYear} class="px-3 py-1 w-24 bg-gray-100 rounded-full">
-  </div>
-</div>
 
 <div class="h-72 w-full mt-4"
 bind:clientHeight={chartHeight}
 bind:clientWidth={chartWidth}>
 <div id="legend" class="flex-col absolute top-12 text-sm" style="left: {xScale(2030)}px">
-  {#each keys as key, i}
+  {#each [...keys].splice(0,3) as key, i}
     <div class="flex gap-1 items-center leading-tight">
       <span class="inline-block h-3 w-3 rounded-full" style="background: {colors[i]}"></span>
       <span>{key.label.replace("{value}",linearReduction)}</span>
@@ -210,10 +198,23 @@ bind:clientWidth={chartWidth}>
         </g>
         {#key chosenBudget}
         <g>
-          {#each lines as line, i}
-          {#if keys[i].key == "historic" || i == chosenPath}
+          {#key chosenPath}
+          {#each areas as area, i}
           <path
-          d="{line}L{xScale(2021)},{innerChartHeight}{keys[i].key == "historic" ? ("L0," + innerChartHeight) : ""}Z"
+          d="{area}L{xScale(2021)},{yScale(0)}L{xScale(2021)},{yScale(80)}z"
+          fill={colors[i]}
+          fill-opacity={chosenPath == i ? "0.5" : "0"}
+          transition:fade
+          on:mouseover={() => chosenPath = i}
+          on:mouseout={() => chosenPath = 2}
+          >
+          </path>
+          {/each}
+          {/key}
+          {#each lines as line, i}
+          {#if keys[i].key == "historic"}
+          <path
+          d="{line}L{xScale(2021)},{innerChartHeight}L0,{innerChartHeight}Z"
           fill={colors[i]}
           fill-opacity=0.2
           transition:fade
@@ -236,7 +237,7 @@ bind:clientWidth={chartWidth}>
         </g>
         {/key}
 
-        {#each keys as key, i}
+        {#each [...keys].splice(0,3) as key, i}
         <g transform="translate({xScale(key.zeroYear)},{innerChartHeight})" style="color: {colors[i]}">
           <text class="fill-current text-xs" dy={15} text-anchor="middle">{key.zeroYear}</text>
         </g>
@@ -250,8 +251,16 @@ bind:clientWidth={chartWidth}>
         </circle>
         </g>
 
-        <text x={xScale(2021) + 5} y={innerChartHeight - 5} class="text-xs uppercase opacity-20 font-semibold tracking-wide">Budget</text>
+        <text x={xScale(2021) + 5} y={innerChartHeight - 5} class="fill-gray-700 text-sm uppercase font-semibold tracking-wide">
+          <tspan dx=0 dy=-14>{chosenBudget} Mio. t THG</tspan>
+          <tspan dx=-100 dy=14>Budget</tspan>
+        </text>
     </g>
     {/if}
   </svg>
+</div>
+
+<div id="settings" class="flex items-center gap-2 text-sm">
+  <span>Startjahr auswählen</span>
+  <input type="number" min=1990 max=2021 bind:value={selectedStartYear} class="px-3 py-1 w-20 bg-gray-100 rounded-full">
 </div>
