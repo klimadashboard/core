@@ -44,7 +44,7 @@
       label: "Historische Emissionen"
     }];
 
-    const colors = ['#00429d', '#73a2c6', '#f4777f', '#93003a', '#93003a'];
+    const colors = ['#9E0669', '#F56860', '#FADEA5', '#268EA5'];
 
     $: data = [];
     $: dataHistoric = [];

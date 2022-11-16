@@ -51,25 +51,25 @@
 
 
 <div class="grid md:grid-cols-3 gap-8">
-<div class="col-span-2">
-  <p class="text-orange-600 border-l-2 border-current mt-auto pl-2 pb-2 font-semibold leading-tight">
+<div class="col-span-2 text-budgetHistoric">
+  <p class=" border-l-2 border-current mt-auto pl-2 pb-2 font-semibold leading-tight">
     Bisherige THG-Emissionen seit 1750 <br>{historicalEmissions} Mio. Tonnen THG
 </p>
 
-<div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-orange-600">
+<div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-current">
     {#each arrayHistorical as box}
-        <div class="w-2 h-2 md:w-3 md:h-3 bg-orange-600"></div>
+        <div class="w-2 h-2 md:w-3 md:h-3 bg-current"></div>
     {/each}
 </div>
 </div>
 
-<div>
-  <p class="text-amber-500 border-current border-l-2 pl-2 pb-2 leading-tight font-semibold">
+<div class="text-budgetDefault">
+  <p class="text-current border-current border-l-2 pl-2 pb-2 leading-tight font-semibold">
     Verbleibendes Budget<br>{chosenBudget.value} Mio. Tonnen THG
   </p>
-<div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-amber-500">
+<div class="flex gap-0.5 md:gap-1 flex-wrap pl-1 border-l-2 border-current">
   {#each arrayBudget as box}
-      <div class="w-2 h-2 md:w-3 md:h-3 bg-amber-500"></div>
+      <div class="w-2 h-2 md:w-3 md:h-3 bg-current"></div>
   {/each}
 </div>
 <p class="mt-4">Jedes Jahr verbrauchen wir 80 Mio. t Treibhausgase. Wenn wir weiterhin so viel</p>

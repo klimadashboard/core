@@ -86,7 +86,11 @@ module.exports = {
       gray: colors.neutral,
       yellow: colors.yellow,
       orange: colors.orange,
-      amber: colors.amber
+      amber: colors.amber,
+      budgetLight: "#FADEA5",
+      budgetDefault: "#F56860",
+      budgetDark: "#9E0669",
+      budgetHistoric: "#268EA5"
     },
     container: {
       center: true,
