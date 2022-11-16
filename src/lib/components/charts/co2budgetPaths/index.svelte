@@ -138,9 +138,14 @@
 <div class="h-72 w-full mt-4"
 bind:clientHeight={chartHeight}
 bind:clientWidth={chartWidth}>
-<div id="legend" class="flex-col absolute top-12 text-sm" style="left: {xScale(2030)}px">
+<div id="legend" class="flex-col mb-4 md:absolute md:top-12 text-sm" style="left: {xScale(2030)}px">
   {#each [...keys].splice(0,3) as key, i}
-    <div class="flex gap-1 items-center leading-tight">
+    <div class="flex gap-1 items-center leading-tight {chosenPath == i ? "opacity-100" : "opacity-60"}" 
+    on:mouseover={() => chosenPath = i}
+    on:focus={() => chosenPath = i}
+    on:mouseout={() => chosenPath = 2}
+    on:blur={() => chosenPath = 2}
+    >
       <span class="inline-block h-3 w-3 rounded-full" style="background: {colors[i]}"></span>
       <span>{key.label.replace("{value}",linearReduction)}</span>
     </div>
@@ -198,19 +203,6 @@ bind:clientWidth={chartWidth}>
         </g>
         {#key chosenBudget}
         <g>
-          {#key chosenPath}
-          {#each areas as area, i}
-          <path
-          d="{area}L{xScale(2021)},{yScale(0)}L{xScale(2021)},{yScale(80)}z"
-          fill={colors[i]}
-          fill-opacity={chosenPath == i ? "0.5" : "0"}
-          transition:fade
-          on:mouseover={() => chosenPath = i}
-          on:mouseout={() => chosenPath = 2}
-          >
-          </path>
-          {/each}
-          {/key}
           {#each lines as line, i}
           {#if keys[i].key == "historic"}
           <path
@@ -218,6 +210,16 @@ bind:clientWidth={chartWidth}>
           fill={colors[i]}
           fill-opacity=0.2
           transition:fade
+          >
+          </path>
+          {:else}
+          <path
+          d="{areas[i]}L{xScale(2021)},{yScale(0)}L{xScale(2021)},{yScale(80)}z"
+          fill={colors[i]}
+          fill-opacity={chosenPath == i ? "0.5" : "0"}
+          transition:fade
+          on:mouseover={() => chosenPath = i}
+          on:mouseout={() => chosenPath = 2}
           >
           </path>
           {/if}
