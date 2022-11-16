@@ -182,9 +182,9 @@ bind:clientWidth={chartWidth}>
         {/each}
       </g>
       <g class="chart-x-axis">
-        {#each xScale.ticks(6) as tick, index}
+        {#each xScale.ticks(10) as tick, index}
             <g transform={`translate(${index == 0 ? xScale(tick) + 12 : xScale(tick)}, ${innerChartHeight})`} class="text-xs text-gray-500">
-              {#if tick < 2022}
+              {#if tick < 2022 && tick % 10 == 0}
               <text dy={15} text-anchor="middle" fill="currentColor">
                 {tick}
               </text>
@@ -251,10 +251,13 @@ bind:clientWidth={chartWidth}>
         </circle>
         </g>
 
-        <text x={xScale(2021) + 5} y={innerChartHeight - 5} class="fill-gray-700 text-sm uppercase font-semibold tracking-wide">
-          <tspan dx=0 dy=-14>{chosenBudget} Mio. t THG</tspan>
-          <tspan dx=-100 dy=14>Budget</tspan>
+        <g transform="translate({xScale(2021) + 15},{innerChartHeight - 70})">
+        <text class="fill-gray-700 uppercase font-semibold tracking-wide">
+          <tspan x="0" dy="1.2em">280 Mio. t</tspan>
+          <tspan x="0" dy="1.2em">THG</tspan>
+          <tspan x="0" dy="1.2em">Budget</tspan>
         </text>
+        </g>
     </g>
     {/if}
   </svg>
