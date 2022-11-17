@@ -47,7 +47,7 @@
       label: "Historische Emissionen"
     }];
 
-    const colors = ['#9E0669', '#F56860', '#F4B83E', '#268EA5'];
+    const colors = ['#9E0669', '#F56860', '#F2A60D', '#268EA5'];
 
     $: data = [];
     $: dataHistoric = [];
@@ -216,7 +216,7 @@ bind:clientWidth={chartWidth}>
           <path
           d="{areas[i]}L{xScale(2021)},{yScale(0)}L{xScale(2021)},{yScale(80)}z"
           fill={colors[i]}
-          fill-opacity={chosenPath == i ? "0.5" : "0"}
+          fill-opacity={chosenPath == i ? "0.3" : "0"}
           transition:fade
           on:mouseover={() => chosenPath = i}
           on:mouseout={() => chosenPath = 2}
