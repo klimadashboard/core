@@ -261,7 +261,7 @@ bind:clientWidth={chartWidth}>
         </circle>
         </g>
 
-        <g transform="translate({xScale(2021) + 15},{innerChartHeight - 70})"
+        <g transform="translate({xScale(2021) + 10},{innerChartHeight - 65})"
         >
         <text style="color: {colors[chosenPath]}" class="fill-current uppercase font-semibold tracking-wide">
           <tspan x="0" dy="1.2em">280 Mio. t</tspan>
