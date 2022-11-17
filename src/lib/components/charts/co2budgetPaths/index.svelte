@@ -47,7 +47,7 @@
       label: "Historische Emissionen"
     }];
 
-    const colors = ['#9E0669', '#F56860', '#FADEA5', '#268EA5'];
+    const colors = ['#9E0669', '#F56860', '#F4B83E', '#268EA5'];
 
     $: data = [];
     $: dataHistoric = [];
@@ -253,8 +253,9 @@ bind:clientWidth={chartWidth}>
         </circle>
         </g>
 
-        <g transform="translate({xScale(2021) + 15},{innerChartHeight - 70})">
-        <text class="fill-gray-700 uppercase font-semibold tracking-wide">
+        <g transform="translate({xScale(2021) + 15},{innerChartHeight - 70})"
+        >
+        <text style="color: {colors[chosenPath]}" class="fill-current uppercase font-semibold tracking-wide">
           <tspan x="0" dy="1.2em">280 Mio. t</tspan>
           <tspan x="0" dy="1.2em">THG</tspan>
           <tspan x="0" dy="1.2em">Budget</tspan>

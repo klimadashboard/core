@@ -62,7 +62,7 @@
 <section class="max-w-2xl mx-auto text-xl px-4 md:px-0">
   <p class="text-budgetHistoric max-w-lg leading-tight">
     {#if endYear == 2021}
-    In den letzten {endYear - startYear} Jahren hat Österreich <nobr>{formatNumber(Math.round(totalHistoricalEmissions))} Mio. Tonnen</nobr> Treibhausgase ausgestoßen.
+    In den letzten {endYear - startYear + 1} Jahren hat Österreich <nobr>{formatNumber(Math.round(totalHistoricalEmissions))} Mio. Tonnen</nobr> Treibhausgase ausgestoßen.
     {:else}
     In den {endYear - startYear} Jahren zwischen {startYear} und {endYear} hat Österreich <nobr>{formatNumber(Math.round(totalHistoricalEmissions))} Mio. Tonnen Treibhausgase</nobr> ausgestoßen.
     {/if}
@@ -75,9 +75,9 @@
     
   </div>
   <div class="flex gap-2 items-center">
-    <input type="number" bind:value={startYear} min={1750} max={2020}>
+    <input type="number" bind:value={startYear} min={1750} max={Math.min(endYear, 2020)}>
     <span>–</span>
-    <input type="number" bind:value={endYear} min={1800} max={2021}>
+    <input type="number" bind:value={endYear} min={Math.max(1800, startYear)} max={2021}>
   </div>
   </div>
 
@@ -89,7 +89,7 @@
 
   <p class="mt-6 text-budgetDefault leading-tight">Ab 2022 verbleiben nur noch {remainingBudget} Millionen Tonnen, um das Pariser Klimaabkommen mit einer Erderhitzung von +1.5°C einzuhalten.</p>
 
-  <div class="relative text-gray-600 max-w-sm text-sm mt-2">
+  <div class="relative text-gray-600 max-w-md text-sm mt-2">
     <svg xmlns="http://www.w3.org/2000/svg" class="absolute pointer-events-none -left-2 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
       <polyline points="8 9 12 5 16 9"></polyline>
@@ -135,11 +135,11 @@
     <p>
       Quellen:
       <br>
-      Historische Emissionen: Gütschow, J.; Pflüger, M. (2022): PRIMAP-hist v2.4 (1750-2021). zenodo.
+      Historische Emissionen: <a href="https://www.zenodo.org/record/7179775#.Y25UcOSZNPY" class="underline">Gütschow, J.; Pflüger, M. (2022): PRIMAP-hist v2.4 (1750-2021). zenodo.</a>
       <br>
-      Treibhausgasbudget: CCCA (2022): 1,5° C: Wieviel Treibhausgase dürfen wir noch emittieren?
+      Treibhausgasbudget: <a href="https://ccca.ac.at" class="underline">CCCA (2022): 1,5° C: Wieviel Treibhausgase dürfen wir noch emittieren?</a>
       <br>
-      Emissionen 2021: Nowcast des Wegener Centers - Universität Graz (Datenstand Juli 2022)
+      Emissionen 2021: <a href="https://wegccloud.uni-graz.at/s/65GyKoKtq3zeRea" class="underline">Nowcast des Wegener Centers - Universität Graz (Datenstand Juli 2022)</a>
     </p>
   </div>
 </section>
