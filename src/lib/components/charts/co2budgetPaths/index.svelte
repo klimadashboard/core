@@ -82,7 +82,7 @@
     }
     );
 
-    $: selectedStartYear = chartWidth > 1000 ? 1990 : 2010;
+    $: selectedStartYear = chartWidth > 1000 ? 1990 : 2000;
 
     $: xScale = scaleLinear()
       .range([0, innerChartWidth])
@@ -135,9 +135,7 @@
 </script>
 
 
-<div class="h-72 w-full mt-4"
-bind:clientHeight={chartHeight}
-bind:clientWidth={chartWidth}>
+<div class="relative">
 <div id="legend" class="flex-col mb-4 md:absolute md:top-12 text-sm" style="left: {xScale(2030)}px">
   {#each [...keys].splice(0,3) as key, i}
     <div class="flex gap-1 items-center leading-tight {chosenPath == i ? "opacity-100" : "opacity-60"}" 
@@ -150,7 +148,13 @@ bind:clientWidth={chartWidth}>
       <span>{key.label.replace("{value}",linearReduction)}</span>
     </div>
   {/each}
+  <p style="color: {colors[chosenPath]}" class="md:hidden mt-2 font-semibold">280 Mio. t THG Budget</p>
+
 </div>
+
+<div class="h-72 w-full mt-4"
+bind:clientHeight={chartHeight}
+bind:clientWidth={chartWidth}>
 
   <svg width={"100%"} height={"100%"}>
     {#if chartWidth && chartHeight && data}
@@ -261,9 +265,9 @@ bind:clientWidth={chartWidth}>
         </circle>
         </g>
 
-        <g transform="translate({xScale(2021) + 10},{innerChartHeight - 65})"
+        <g transform="translate({xScale(2021) + 10},{innerChartHeight - 65})" class="hidden md:block"
         >
-        <text style="color: {colors[chosenPath]}" class="fill-current uppercase font-semibold tracking-wide">
+        <text style="color: {colors[chosenPath]}" class="text-sm md:text-base fill-current uppercase font-semibold tracking-wide">
           <tspan x="0" dy="1.2em">280 Mio. t</tspan>
           <tspan x="0" dy="1.2em">THG</tspan>
           <tspan x="0" dy="1.2em">Budget</tspan>
@@ -273,8 +277,10 @@ bind:clientWidth={chartWidth}>
     {/if}
   </svg>
 </div>
+</div>
 
-<div id="settings" class="flex items-center gap-2 text-sm">
+
+<div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
   <span>Startjahr auswählen</span>
   <input type="number" min=1990 max=2021 bind:value={selectedStartYear} class="px-3 py-1 w-20 bg-gray-100 rounded-full">
 </div>
