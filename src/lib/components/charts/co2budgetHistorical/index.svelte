@@ -57,6 +57,24 @@
     $: startYear = 1750;
     $: endYear = 2021;
 
+    $: playing = false;
+
+    const iterate = function() {
+      var interval = setInterval(function(){ 
+      if(endYear > 2020) {
+        playing = false;
+        clearInterval(interval);
+      } else {
+        endYear = Math.min(endYear + 10,2021);
+      }
+      }, 500);
+    }
+
+    $: if(playing) {
+      endYear = 1800;
+      iterate();  
+    }
+
 </script>
 
 <section class="max-w-2xl mx-auto text-xl px-4 md:px-0">
@@ -75,9 +93,23 @@
     
   </div>
   <div class="flex gap-2 items-center">
-    <input type="number" bind:value={startYear} min={1750} max={Math.min(endYear, 2020)}>
+    <button on:mousedown={() => playing = !playing}>
+      {#if playing}
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-pause" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+        <rect x="6" y="5" width="4" height="14" rx="1"></rect>
+        <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+     </svg>
+      {:else}
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-player-play" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+        <path d="M7 4v16l13 -8z"></path>
+     </svg>
+     {/if}
+    </button>
+    <input type="number" class="w-12" bind:value={startYear} min={1750} max={Math.min(endYear, 2020)}>
     <span>–</span>
-    <input type="number" bind:value={endYear} min={Math.max(1800, startYear)} max={2021}>
+    <input type="number" class="w-12" bind:value={endYear} min={Math.max(1800, startYear)} max={2021}>
   </div>
   </div>
 
