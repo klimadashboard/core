@@ -33,7 +33,7 @@
     const keys = [{
       key: "nochange",
       label: "Gleichbleibende Emissionen",
-      zeroYear: 2026
+      zeroYear: 2025.5
     }, {
       key: "linear",
       label: "Jährliche Abnahme um {value} Mio t",
@@ -241,7 +241,9 @@ bind:clientWidth={chartWidth}>
 
         {#each [...keys].splice(0,3) as key, i}
         <g transform="translate({xScale(key.zeroYear)},{innerChartHeight})" style="color: {colors[i]}">
-          <text class="fill-current text-xs" dy={15} text-anchor="middle">{key.zeroYear}</text>
+          <text class="fill-current text-xs" dy={15} text-anchor="middle">
+            {key.zeroYear == 2025.5 ? "Juni 2025" : key.zeroYear}
+          </text>
         </g>
         {/each}
 
