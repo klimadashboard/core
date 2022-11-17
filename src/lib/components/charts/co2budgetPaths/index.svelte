@@ -247,8 +247,8 @@ bind:clientWidth={chartWidth}>
         <g transform="translate({xScale(key.zeroYear)},{innerChartHeight + 16})" style="color: {colors[i]}">
           <text class="fill-current text-xs" text-anchor="middle">
             {#if key.zeroYear == 2025.5}
-            <tspan x=-12 y=0>Mitte</tspan>
-            <tspan x=-13 y=14>2025</tspan>
+            <tspan x=1 y=0>Mitte</tspan>
+            <tspan x=0 y=14>2025</tspan>
             {:else}
             <tspan x=0 y=0>Ende</tspan>
             <tspan x=-1 y=14>{key.zeroYear}</tspan>
