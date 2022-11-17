@@ -124,7 +124,7 @@
 
     let chartWidth;
     let chartHeight;
-    let margin = { top: 20, right: 15, bottom: 20, left: 0};
+    let margin = { top: 20, right: 15, bottom: 30, left: 0};
     $: innerChartWidth = chartWidth - margin.left - margin.right;
     $: innerChartHeight = chartHeight - margin.top - margin.bottom;
     $: linearReduction = 0;
@@ -240,9 +240,15 @@ bind:clientWidth={chartWidth}>
         {/key}
 
         {#each [...keys].splice(0,3) as key, i}
-        <g transform="translate({xScale(key.zeroYear)},{innerChartHeight})" style="color: {colors[i]}">
-          <text class="fill-current text-xs" dy={15} text-anchor="middle">
-            {key.zeroYear == 2025.5 ? "Mitte 2025" : key.zeroYear}
+        <g transform="translate({xScale(key.zeroYear)},{innerChartHeight + 16})" style="color: {colors[i]}">
+          <text class="fill-current text-xs" text-anchor="middle">
+            {#if key.zeroYear == 2025.5}
+            <tspan x=-12 y=0>Mitte</tspan>
+            <tspan x=-13 y=14>2025</tspan>
+            {:else}
+            <tspan x=0 y=0>Ende</tspan>
+            <tspan x=-1 y=14>{key.zeroYear}</tspan>
+            {/if}
           </text>
         </g>
         {/each}
