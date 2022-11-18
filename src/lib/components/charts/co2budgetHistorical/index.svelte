@@ -146,7 +146,7 @@
   <p class="mt-2 text-sm text-budgetDefault">Wenn das Temperaturziel nur mit 50%-iger Wahrscheinlichkeit erreicht werden soll, ist das verbleibende Budget zwar größer, die Einhaltung aber auch unwahrscheinlicher.</p>
   {/if}
   {#if chosenBudget.temperature == 1.65}
-  <p class="mt-2 text-sm text-budgetDefault">Das Budget mit zwischenzeitlich 1,65°C ist zwar größer, aber auch gefährlicher: denn jedes Zehntel Grad Erderhitzung gefährdet mehr Menschenleben durch irreversible Kipp-Punkte und zusätzlichen Meeresspiegelanstieg.</p>
+  <p class="mt-2 text-sm text-budgetDefault">Das Budget mit zwischenzeitlich +1,65°C ist zwar größer, aber auch riskanter: denn jedes Zehntel Grad Erderhitzung gefährdet mehr Menschenleben durch das immer wahrscheinlich werdende Überschreiten irreversibler Kipp-Punkte.</p>
   {/if}
 
   <p class="mt-6 leading-tight text-budgetDark">In dem aktuellen Tempo ist unser Budget <nobr>in {remainingYears.toString().replace(".",",")} Jahren aufgebraucht.</nobr></p>
@@ -164,7 +164,7 @@
       <br>
       Historische Emissionen: <a href="https://www.zenodo.org/record/7179775#.Y25UcOSZNPY" class="underline">Gütschow, J.; Pflüger, M. (2022): PRIMAP-hist v2.4 (1750-2021). zenodo.</a>
       <br>
-      Treibhausgasbudget: <a href="https://ccca.ac.at" class="underline">CCCA (2022): 1,5° C: Wieviel Treibhausgase dürfen wir noch emittieren?</a>
+      Treibhausgasbudget: <a href="https://ccca.ac.at/thg-budget" class="underline">CCCA (2022): 1,5° C: Wieviel Treibhausgase dürfen wir noch emittieren?</a>
       <br>
       Emissionen 2021: <a href="https://wegccloud.uni-graz.at/s/65GyKoKtq3zeRea" class="underline">Nowcast des Wegener Centers - Universität Graz (Datenstand Juli 2022)</a>
     </p>
