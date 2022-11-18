@@ -96,9 +96,9 @@
      </svg>
      {/if}
     </button>
-    <input type="number" class="w-12" bind:value={startYear} min={1750} max={Math.min(endYear, 2020)}>
+    <input type="number" class="w-14 bg-gray-100 p-1" bind:value={startYear} min={1750} max={Math.min(endYear, 2020)}>
     <span>–</span>
-    <input type="number" class="w-12" bind:value={endYear} min={Math.max(1800, startYear)} max={2021}>
+    <input type="number" class="w-14 bg-gray-100 p-1" bind:value={endYear} min={Math.max(1800, startYear)} max={2021}>
   </div>
 
   <div class="flex gap-2 items-center">
@@ -116,13 +116,13 @@
 
   <p class="mt-6 text-budgetDefault leading-tight">Ab 2022 verbleiben nur noch {remainingBudget} Millionen Tonnen, um das Pariser Klimaabkommen mit einer Erderhitzung von +1.5°C einzuhalten.</p>
 
-  <div class="relative text-gray-600 max-w-md text-sm mt-2">
-    <svg xmlns="http://www.w3.org/2000/svg" class="absolute pointer-events-none -left-2 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <div class="relative text-gray-600 text-sm mt-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="absolute pointer-events-none top-1 right-0 h-4" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
       <polyline points="8 9 12 5 16 9"></polyline>
       <polyline points="16 15 12 19 8 15"></polyline>
     </svg>
-    <select name="budget" bind:value={chosenBudget} class="block appearance-none w-full pl-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-">
+    <select name="budget" bind:value={chosenBudget} class="block appearance-none w-full leading-tight focus:outline-none focus:bg-gray-200 focus:border-gray-500 bg-gray-100 py-1 px-2">
     {#each budgets as budget}
     <option value={budget}>
         {#if budget.temperature == 1.65}
