@@ -86,12 +86,7 @@
     {/if}
   </p>
 
-  <div class="flex flex-col md:flex-row md:items-center justify-between text-sm text-gray-500 mt-2">
-  <div class=" flex gap-2 items-center ">
-    <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current"></div>
-    <div>1 Kasten entspricht 10 Mio. t Treibhausgasen</div>
-    
-  </div>
+  <div class="flex flex-col md:flex-row md:items-center justify-between text-sm text-gray-500 mt-2 -translate-x-0.5">
   <div class="flex gap-2 items-center">
     <button on:mousedown={() => playing = !playing}>
       {#if !playing}
@@ -105,6 +100,12 @@
     <span>–</span>
     <input type="number" class="w-12" bind:value={endYear} min={Math.max(1800, startYear)} max={2021}>
   </div>
+
+  <div class="flex gap-2 items-center">
+    <div>1 Kasten entspricht 10 Mio. t Treibhausgasen</div>
+    <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current"></div>
+  </div>
+
   </div>
 
   <div class="grid gap-1 mx-auto mt-2 text-budgetHistoric budget-grid">

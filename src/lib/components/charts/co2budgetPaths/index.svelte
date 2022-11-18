@@ -40,7 +40,7 @@
       zeroYear: 2029
     }, {
       key: "percentage",
-      label: "Pfad bis Klimaneutralität 2040 -22% pro Jahr",
+      label: "Pfad bis Klimaneutralität 2040 <br>-22% pro Jahr",
       zeroYear: 2040
     }, {
       key: "historic",
@@ -138,14 +138,14 @@
 <div class="relative">
 <div id="legend" class="flex-col mb-4 md:absolute md:top-12 text-sm" style="left: {xScale(2030)}px">
   {#each [...keys].splice(0,3) as key, i}
-    <div class="flex gap-1 items-center leading-tight {chosenPath == i ? "opacity-100" : "opacity-60"}" 
+    <div class="flex gap-1 items-start leading-tight {chosenPath == i ? "opacity-100" : "opacity-60"}" 
     on:mouseover={() => chosenPath = i}
     on:focus={() => chosenPath = i}
     on:mouseout={() => chosenPath = 2}
     on:blur={() => chosenPath = 2}
     >
-      <span class="inline-block h-3 w-3 rounded-full" style="background: {colors[i]}"></span>
-      <span>{key.label.replace("{value}",linearReduction)}</span>
+      <span class="inline-block h-3 w-3 rounded-full translate-y-1" style="background: {colors[i]}"></span>
+      <span>{@html key.label.replace("{value}",linearReduction)}</span>
     </div>
   {/each}
   <p style="color: {colors[chosenPath]}" class="md:hidden mt-2 font-semibold">280 Mio. t THG Budget</p>
@@ -165,6 +165,7 @@ bind:clientWidth={chartWidth}>
         class="fill-gray-100">
     </rect>
     -->
+    {#if selectedStartYear < 2016}
     <line 
     x1={xScale(2021)}
     x2={xScale(2021)}
@@ -174,6 +175,7 @@ bind:clientWidth={chartWidth}>
     ></line>
     <text text-anchor="end" dominant-baseline="hanging" x={xScale(2021) - 5} y=5 class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Vergangenheit</text>
     <text x={xScale(2021) + 5} y=5 dominant-baseline="hanging" class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Zukunft</text>
+    {/if}
 
     <g transform="translate({margin.left},{margin.top})">
       
@@ -265,7 +267,7 @@ bind:clientWidth={chartWidth}>
         </circle>
         </g>
 
-        <g transform="translate({xScale(2021) + 10},{innerChartHeight - 65})" class="hidden md:block"
+        <g transform="translate({xScale(2021) + (selectedStartYear < 2020 ? 10 : 20)},{innerChartHeight - 65})" class="hidden md:block"
         >
         <text style="color: {colors[chosenPath]}" class="text-sm md:text-base fill-current uppercase font-semibold tracking-wide">
           <tspan x="0" dy="1.2em">280 Mio. t</tspan>
