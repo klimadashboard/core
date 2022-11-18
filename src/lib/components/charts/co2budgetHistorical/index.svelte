@@ -67,7 +67,7 @@
       } else {
         endYear = Math.min(endYear + 10,2021);
       }
-      }, 500);
+      }, 1000);
     }
 
     $: if(playing) {

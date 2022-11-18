@@ -40,7 +40,7 @@
       zeroYear: 2029
     }, {
       key: "percentage",
-      label: "Pfad bis Klimaneutralität 2040",
+      label: "Pfad bis Klimaneutralität 2040 -22% pro Jahr",
       zeroYear: 2040
     }, {
       key: "historic",
@@ -90,7 +90,7 @@
 
     $: yScale = scaleLinear()
       .range([innerChartHeight, 0])
-      .domain([0, 90]);
+      .domain([0, 100]);
 
     $: generateLine = (key) => {
       return line()
@@ -182,9 +182,9 @@ bind:clientWidth={chartWidth}>
         <g transform={`translate(0, ${yScale(tick)})`} class="text-gray-500">
           <line x1="0" x2={innerChartWidth} y1="0" y2="0" stroke-width="1" class="stroke-current opacity-30" />
           <text class="text-xs fill-current bg-white" x="2" y="-3">{tick} 
-          <tspan dx=2>Mio. t</tspan>
-          {#if index == 0}
-          <tspan dx=1>Treibhausgase</tspan>
+          <tspan dx=2></tspan>
+          {#if index == 5}
+          <tspan dx=1>Mio. t Treibhausgase</tspan>
           {/if}
           </text>
         </g>
