@@ -1,7 +1,7 @@
 <footer class="text-white bg-gray-800">
     <div class="container grid md:grid-cols-3 gap-4 py-8">
       <div class="">
-        <h2 class="font-bold">Bleibe informiert</h2>
+        <h2 class="font-bold">Bleib informiert</h2>
         <p>In unserem Newsletter und auf Social Media gibt es Updates zu neuen Visualisierungen.</p>
         <div class="flex items-center space-x-2 flex-wrap">
         <form
