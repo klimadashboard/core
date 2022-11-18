@@ -165,7 +165,7 @@ bind:clientWidth={chartWidth}>
         class="fill-gray-100">
     </rect>
     -->
-    {#if selectedStartYear < 2016}
+    {#if selectedStartYear < 2016 && xScale(2021) > 250}
     <line 
     x1={xScale(2021)}
     x2={xScale(2021)}
