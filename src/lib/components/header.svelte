@@ -89,7 +89,6 @@
                 <circle cx="19" cy="12" r="1"></circle>
              </svg>
             <ul class="sm:opacity-0 sm:pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition absolute top-full -left-2 p-2 bg-white ">
-            <li><a href="/charts" class="navigation-link">Charts</a></li>
             </ul>
             </div>
             
