@@ -94,7 +94,7 @@
 
     $: generateLine = (key) => {
       return line()
-      .x(d => xScale(d.year))
+      .x(d => xScale(d.year || 0))
       .y(d => yScale(key == "total_co2e_t" ? (d[key] / 1000000) : d[key])) || 0;
     }
 
@@ -119,8 +119,6 @@
     }
     }
     );
-
-    $: console.log(areas);
 
     let chartWidth;
     let chartHeight;
@@ -157,7 +155,7 @@ bind:clientHeight={chartHeight}
 bind:clientWidth={chartWidth}>
 
   <svg width={"100%"} height={"100%"}>
-    {#if chartWidth && chartHeight && data}
+    {#if chartWidth && chartHeight && lines && areas}
     <!--
     <rect
         width={xScale(2021)}

@@ -139,9 +139,9 @@
     </div>
 
     <div class="max-w-4xl">
-    <p class="text-gray-700 text">{@html chart.content.source}</p>
+    <p class="text-gray-700">{@html chart.content.source}</p>
 
-    <p class="text-lg text">Quellen: {@html chart.content.text}</p>
+    <p class="text-lg text">{@html chart.content.text}</p>
     </div>
     {:else}
 

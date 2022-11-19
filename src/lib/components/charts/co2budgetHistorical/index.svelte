@@ -1,5 +1,4 @@
 <script>
-    import { onMount } from 'svelte';
     import { fade } from "svelte/transition";
     import Papa from "papaparse";
     import formatNumber from "$lib/stores/formatNumber";
@@ -47,10 +46,21 @@
     $: totalHistoricalEmissions = historicalEmissions
     .filter(d => d.year <= endYear && d.year >= startYear)
     .reduce((a,b) => a + b.total_AR4_Mt_CO2e, 0);
+    $: chosenHistoricalEmissions = historicalEmissions
+    .filter(d => d.year <= endYear && d.year >= startYear);
     $: remainingBudget = chosenBudget.value;
     $: yearlyEmissions = 80;
 
-    $: arrayHistorical = Array(Math.round(totalHistoricalEmissions / 10)).fill("historical");
+    let decades = [1750,1760,1770,1780,1790,1800,1810,1820,1830,1840,1850,1860,1870,1880,1890,1900,1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020];
+
+    $: console.log(decades);
+    $: console.log(arrayHistorical);
+
+    $: arrayHistorical = decades.map(key => {
+      let values = chosenHistoricalEmissions.filter(d => d.year >= key && d.year < key + 10).reduce((a,b) => Math.round(a + b.total_AR4_Mt_CO2e), 0);
+      return values;
+    })
+
     $: arrayBudget = Array(Math.round(remainingBudget / 10)).fill("budget");
     $: arrayCurrent = Array(Math.round(yearlyEmissions / 10)).fill("current");
     $: remainingYears = Math.round(chosenBudget.value / yearlyEmissions * 10) / 10;
@@ -71,10 +81,11 @@
     }
 
     $: if(playing) {
-      endYear = 1800;
+      endYear = 1799;
       iterate();  
     }
 
+    $: showDecades = false;
 </script>
 
 <section class="max-w-2xl mx-auto text-xl px-4 md:px-0">
@@ -99,6 +110,10 @@
     <input type="number" class="w-14 bg-gray-100 p-1" bind:value={startYear} min={1750} max={Math.min(endYear, 2020)}>
     <span>–</span>
     <input type="number" class="w-14 bg-gray-100 p-1" bind:value={endYear} min={Math.max(1800, startYear)} max={2021}>
+    <label class="space-x-1 ml-2 flex items-center">
+      <input type="checkbox" bind:checked={showDecades}>
+      <span>Jahrzehnte anzeigen?</span>
+    </label>
   </div>
 
   <div class="flex gap-2 items-center">
@@ -109,8 +124,29 @@
   </div>
 
   <div class="grid gap-1 mx-auto mt-2 text-budgetHistoric budget-grid">
-    {#each arrayHistorical as box}
-        <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current" transition:fade></div>
+    {#each arrayHistorical as decade, i}
+        {@const decadeString = decades[i].toString()}
+        {#if showDecades && decade > 0}
+        <div class="col-span-2 flex items-center {i % 2 == 0 ? "opacity-100" : "opacity-70"}" style="font-size: 12px; line-height: 1;">
+          <span class="tabular-nums tracking-tight -translate-x-0.5">{decadeString}</span>
+          <svg width="13" height="24" class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3" viewBox="0 0 13 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 2L12 12L0 22" stroke="currentColor" stroke-width=2 stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>            
+        </div>
+        {/if}
+        {#each Array(Math.round(decade / 10)) as box, j}
+        <div class="w-3 h-3 bg-current grid {showDecades ? (i % 2 == 0 ? "opacity-100" : "opacity-70") : ""}" transition:fade>
+          <!--
+          {#if j == 0}
+          <div class="text-white font-bold m-auto text-center" style="font-size: 7px; line-height: 0.9">
+          <span>{decadeString.substr(0,2)}</span>
+          <span>{decadeString.substr(-2)}</span>
+          </div>
+          {/if}
+          -->
+        </div>
+        {/each}
+        
     {/each}
   </div>
 
@@ -138,7 +174,7 @@
 
   <div class="grid gap-1 mx-auto mt-2 text-budgetDefault budget-grid">
     {#each arrayBudget as box}
-        <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current" transition:fade></div>
+        <div class="w-3 h-3 bg-current" transition:fade></div>
     {/each}
   </div>
 
@@ -153,7 +189,7 @@
 
   <div class="grid gap-1 mx-auto mt-2 text-budgetDark budget-grid">
     {#each arrayCurrent as box}
-        <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current" transition:fade></div>
+        <div class="w-3 h-3 bg-current" transition:fade></div>
     {/each}
         <div class="text-sm -translate-y-1" style="grid-column: span 24 / span 24;">80 Mio. Tonnen hat Österreich im Jahr 2021 emittiert</div>
   </div>
@@ -174,5 +210,23 @@
 <style>
   .budget-grid {
     grid-template-columns: repeat(40, minmax(0, 1fr));
+  }
+
+  @media screen and (max-width: 650px) {
+    .budget-grid {
+      grid-template-columns: repeat(32, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    .budget-grid {
+      grid-template-columns: repeat(24, minmax(0, 1fr));
+    }
+  }
+
+  @media screen and (max-width: 350px) {
+    .budget-grid {
+      grid-template-columns: repeat(18, minmax(0, 1fr));
+    }
   }
 </style>
