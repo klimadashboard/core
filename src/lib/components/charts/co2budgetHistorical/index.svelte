@@ -53,9 +53,6 @@
 
     let decades = [1750,1760,1770,1780,1790,1800,1810,1820,1830,1840,1850,1860,1870,1880,1890,1900,1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020];
 
-    $: console.log(decades);
-    $: console.log(arrayHistorical);
-
     $: arrayHistorical = decades.map(key => {
       let values = chosenHistoricalEmissions.filter(d => d.year >= key && d.year < key + 10).reduce((a,b) => Math.round(a + b.total_AR4_Mt_CO2e), 0);
       return values;
