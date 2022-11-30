@@ -73,7 +73,7 @@
 
 
 <div class="relative" bind:clientWidth={containerWidth}>
-  <div id="switch" class="flex flex-wrap gap-4 items-center">
+  <div id="switch" class="flex flex-wrap gap-4 items-center text-sm">
     <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
     <label class="flex items-center gap-1 {chosenProbability == 66 ? "font-bold" : ""}">
     <input type="radio" value={66} bind:group={chosenProbability}>
@@ -83,7 +83,7 @@
     <input type="radio" value={50} bind:group={chosenProbability}>
     <span>50%</span>
     </label>
-    <span class="font-bold">Wahrscheinlichkeit</span>
+    <span class="font-bold">Eintrittswahrscheinlichkeit</span>
     </div>
     <div>
     <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
@@ -95,7 +95,7 @@
     <input type="radio" name="goal" value={1.65} bind:group={chosenTemperature}>
     <span>1,65°C (1,5°C langfristig)</span>
     </label>
-    <span class="font-bold">Zieltemperatur</span>
+    <span class="font-bold">Temperaturlimit</span>
     </div>
     </div>
     <p><b>= {chosenBudget} Mio. t. Budget verbleiben</b> ab 2022</p>

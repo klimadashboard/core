@@ -105,7 +105,7 @@
 </script>
 
 <div class="relative">
-<div id="legend" class="flex-col mb-4 mt-4 md:mt-0 md:absolute md:top-12 text-sm" style="left: {xScale(2030)}px">
+<div id="legend" class="flex-col mb-4 mt-4 md:mt-0 md:absolute md:top-12 text-sm bg-white z-20 md:p-1" style="left: {xScale(2030)}px">
     {#each selectedKeys as key, i}
       {@const selectedKey = keys.find(d => d.key == key.replace(chosenBudget + "_", ""))}
       <div class="flex my-1 gap-1 items-start leading-tight {chosenPath == i ? "opacity-100" : "opacity-60"}" 
