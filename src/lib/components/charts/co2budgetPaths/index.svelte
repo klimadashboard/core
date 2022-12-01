@@ -89,11 +89,11 @@
     <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
     <label class="flex items-center gap-1 {chosenTemperature == 1.5 ? "font-bold" : ""}">
     <input type="radio" name="goal" value={1.5} bind:group={chosenTemperature}>
-    <span>1,5°C</span>
+    <span>+1,5°C</span>
     </label>
     <label class="flex items-center gap-1 {chosenTemperature == 1.65 ? "font-bold" : ""}">
     <input type="radio" name="goal" value={1.65} bind:group={chosenTemperature}>
-    <span>1,65°C (1,5°C langfristig)</span>
+    <span>+1,5°C (zwischenzeitlich 1.65°C)</span>
     </label>
     <span class="font-bold">Temperaturlimit</span>
     </div>
@@ -110,3 +110,21 @@
   <span>Startjahr auswählen</span>
   <input type="number" min=1990 max=2021 bind:value={selectedStartYear} class="px-3 py-1 w-20 bg-gray-100 rounded-full">
 </div>
+
+{#if chosenProbability == 50 || chosenTemperature == 1.65}
+<div class="flex text-sm text-budgetDefault items-center space-x-2">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 icon icon-tabler icon-tabler-alert-triangle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+    <path d="M12 9v2m0 4v.01"></path>
+    <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"></path>
+ </svg>
+<div class="max-w-2xl">
+{#if chosenProbability == 50}
+  <p class="mt-2 ">Wenn das Temperaturziel nur mit 50%-iger Wahrscheinlichkeit erreicht werden soll, ist das verbleibende Budget zwar größer, die Einhaltung aber auch unwahrscheinlicher.</p>
+{/if}
+{#if chosenTemperature == 1.65}
+  <p class="mt-2">Das Budget mit zwischenzeitlich +1,65°C ist zwar größer, aber auch riskanter: denn jedes Zehntel Grad Erderhitzung gefährdet mehr Menschenleben durch das immer wahrscheinlich werdende Überschreiten irreversibler Kipp-Punkte.</p>
+{/if}
+</div>
+</div>
+{/if}

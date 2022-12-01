@@ -44,9 +44,9 @@
       .domain([0, 100]);
 
     $: generateLine = (key) => {
-      return line()
+    return line()
       .x(d => xScale(d.year || 0) )
-      .y(d => yScale(key == "total_co2e_t" ? (d[key] / 1000000) : d[key])) || 0;
+      .y(d => yScale(key == "total_co2e_t" ? (d[key] / 1000000) : d[key])) || 0
     }
 
     $: generateArea = (key) => {
@@ -57,15 +57,28 @@
 
     $: chosenPath = 1;
 
-    $: areas = selectedKeys.map((key) => generateArea(key)(dataPaths));
-    $: lines = selectedKeys.map((key) => generateLine(key)(dataPaths));
+    $: areas = selectedKeys.map((key) => 
+    key.replace(chosenBudget + "_","") == "nochange" ? 
+    ("M" + xScale(2021) + "," + yScale(80) + "L" + xScale(getZeroYear(key)) + "," + yScale(80) + "L" + xScale(getZeroYear(key)) + "," + yScale(0) + "L" + xScale(2021) + "," + yScale(0) + "Z") : 
+    generateArea(key)(dataPaths));
+    $: lines = selectedKeys.map((key) => 
+    key.replace(chosenBudget + "_","") == "nochange" ? 
+    ("M" + xScale(2021) + "," + yScale(80) + "L" + xScale(getZeroYear(key)) + "," + yScale(80) + "L" + xScale(getZeroYear(key)) + "," + yScale(0)) : 
+    generateLine(key)(dataPaths));
 
     $: lineHistoric = generateLine("total_co2e_t")(dataHistoric);
 
     $: selectedKeys = Object.keys(dataPaths[0]).filter(d => d.includes(chosenBudget));
 
     $: getZeroYear = function(key) {
+        if(key.replace(chosenBudget + "_","") == "nochange") {
+        var selectedRow = dataPaths.find(d => (d[key] > 0 && d[key] < 80));
+        var year = selectedRow.year;
+        var selectedValue = selectedRow[key];
+        return year + 80 / selectedValue / 10;
+        } else {
         return dataPaths.find(d => d[key] == 0).year;
+        }
     }
 
     $: getReductionRate = function(key) {
@@ -82,12 +95,6 @@
                 inflectionIndex = i;
             }
         }
-
-        console.log(values);
-        console.log(rates);
-        console.log(inflectionIndex);
-        console.log("")
-        
 
         var valueBeforeInflection = rates[inflectionIndex - 1];
         var valueAfterInflection = rates[inflectionIndex];
@@ -125,13 +132,6 @@ bind:clientWidth={chartWidth}>
 
   <svg width={"100%"} height={"100%"}>
     {#if chartWidth && chartHeight && lines && areas}
-    <!--
-    <rect
-        width={xScale(2021)}
-        height={chartHeight - margin.bottom}
-        class="fill-gray-100">
-    </rect>
-    -->
     {#if selectedStartYear < 2016 && xScale(2021) > 250}
     <line 
     x1={xScale(2021)}
@@ -225,12 +225,12 @@ bind:clientWidth={chartWidth}>
         {#each selectedKeys as key, i}
         <g transform="translate({xScale(getZeroYear(key))},{innerChartHeight + 16})" style="color: {keys[keys.findIndex(d => d.key == selectedKeys[i].replace(chosenBudget + "_",""))].color}">
           <text class="fill-current text-xs" text-anchor="middle">
-            {#if getZeroYear(key) == 2025.5}
+            {#if getZeroYear(key) % 1 !== 0}
             <tspan x=1 y=0>Mitte</tspan>
-            <tspan x=0 y=14>2025</tspan>
+            <tspan x=0 y=14>{Math.floor(getZeroYear(key))}</tspan>
             {:else}
             <tspan x=0 y=0>Ende</tspan>
-            <tspan x=-1 y=14>{getZeroYear(key)}</tspan>
+            <tspan x=-1 y=14>{Math.floor(getZeroYear(key))}</tspan>
             {/if}
           </text>
         </g>
@@ -244,12 +244,11 @@ bind:clientWidth={chartWidth}>
         </circle>
         </g>
 
-        <g transform="translate({xScale(2021) + (selectedStartYear < 2020 ? 10 : 20)},{innerChartHeight - 65})" class="hidden md:block"
+        <g transform="translate({xScale(2021) + (selectedStartYear < 2020 ? 10 : 20)},{innerChartHeight - 45})" class="hidden md:block"
         >
-        <text style="color: {keys[keys.findIndex(d => d.key == selectedKeys[chosenPath].replace(chosenBudget + "_",""))].color}" class="text-sm md:text-base fill-current uppercase font-semibold tracking-wide">
+        <text style="color: {keys[keys.findIndex(d => d.key == selectedKeys[chosenPath].replace(chosenBudget + "_",""))].color}" class="text-sm fill-current uppercase font-semibold tracking-wide">
           <tspan x="0" dy="1.2em">{chosenBudget} Mio. t</tspan>
-          <tspan x="0" dy="1.2em">THG</tspan>
-          <tspan x="0" dy="1.2em">Budget</tspan>
+          <tspan x="0" dy="1.2em">THG Budget</tspan>
         </text>
         </g>
     </g>
