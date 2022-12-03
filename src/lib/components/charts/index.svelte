@@ -16,7 +16,7 @@
 
     if (json) {
       const chartData = Object.values(json.charts).find(entry => entry.id == id);
-      Chart = (await import('./' + chartData.content.identifier_string + '/index.svelte')).default;
+      Chart = (await import('../charts/' + chartData.content.identifier_string + '/index.svelte')).default;
       chartId = chartData.id;
       return chartData;
     } else {
