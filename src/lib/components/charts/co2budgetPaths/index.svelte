@@ -98,7 +98,6 @@
     <span class="font-bold">Temperaturlimit</span>
     </div>
     </div>
-    <p><b>= {chosenBudget} Mio. t. THG-Budget verbleiben</b> ab 2022</p>
   </div>
 </div>
 
