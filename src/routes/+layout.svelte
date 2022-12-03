@@ -11,7 +11,7 @@
     import Glossary from "$lib/components/Glossary.svelte";
 
     import { onMount } from 'svelte'
-    import { browser } from '$app/env'
+    import { browser } from '$app/environment'
     import { page } from '$app/stores'
     import * as Fathom from 'fathom-client'
 

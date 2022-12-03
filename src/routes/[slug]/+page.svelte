@@ -1,8 +1,11 @@
 <script>
-    import { locale } from "$lib/stores/i18n";
     import Blocks from "$lib/components/blocks/index.svelte";
     import { page } from '$app/stores';
-    export let item;
+
+    /** @type {import('./$types').PageData} */
+    export let data = [];
+
+    console.log(item);
 
     const shareData = {
       title: item.heading,

@@ -1,5 +1,4 @@
 <script>
-    import { onMount } from 'svelte';
     import { locale } from "$lib/stores/i18n";
     import domtoimage from 'dom-to-image';
     import Loader from "$lib/components/Loader.svelte";
