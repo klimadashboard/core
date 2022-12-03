@@ -98,7 +98,7 @@
     <span class="font-bold">Temperaturlimit</span>
     </div>
     </div>
-    <p><b>= {chosenBudget} Mio. t. Budget verbleiben</b> ab 2022</p>
+    <p><b>= {chosenBudget} Mio. t. THG-Budget verbleiben</b> ab 2022</p>
   </div>
 </div>
 
@@ -120,10 +120,10 @@
  </svg>
 <div class="max-w-2xl">
 {#if chosenProbability == 50}
-  <p class="mt-2 ">Wenn das Temperaturziel nur mit 50%-iger Wahrscheinlichkeit erreicht werden soll, ist das verbleibende Budget zwar größer, die Einhaltung aber auch unwahrscheinlicher.</p>
+  <p class="mt-2 ">{v.disclaimerProbability}</p>
 {/if}
 {#if chosenTemperature == 1.65}
-  <p class="mt-2">Das Budget mit zwischenzeitlich +1,65°C ist zwar größer, aber auch riskanter: denn jedes Zehntel Grad Erderhitzung gefährdet mehr Menschenleben durch das immer wahrscheinlich werdende Überschreiten irreversibler Kipp-Punkte.</p>
+  <p class="mt-2">{v.disclaimerTemperature}</p>
 {/if}
 </div>
 </div>
