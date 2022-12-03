@@ -138,7 +138,7 @@
     </div>
 
     <div class="max-w-4xl">
-    <p class="text-gray-700">{@html chart.content.source}</p>
+    <p class="text-gray-700 mb-2 text-sm max-w-xl text">{@html chart.content.source}</p>
 
     <p class="text-lg text">{@html chart.content.text}</p>
     </div>

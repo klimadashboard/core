@@ -127,3 +127,7 @@
 </div>
 </div>
 {/if}
+
+<p class="text-lg max-w-4xl mt-2 text-prose">
+  {@html v["text" + chosenBudget]}
+</p>

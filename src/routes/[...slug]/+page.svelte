@@ -1,31 +1,32 @@
 <script>
     import Blocks from "$lib/components/blocks/index.svelte";
     import { page } from '$app/stores';
+    import { fade } from "svelte/transition";
 
     /** @type {import('./$types').PageData} */
     export let data = [];
 
-    console.log(item);
+    $: console.log(data);
 
     const shareData = {
-      title: item.heading,
-      text: item.intro,
+      title: data.heading,
+      text: data.intro,
       url: $page.url
     }
   </script>
   
   <svelte:head>
-  <title>{item.title} – Klimadashboard</title>
-  <meta name="description" content="{item.meta_description}">
+  <title>{data.title} – Klimadashboard</title>
+  <meta name="description" content="{data.meta_description}">
   </svelte:head>
 
   <main class="mb-24">
 
-    <section id="page-header" class="bg-gradient-green shadow-inner text-white pt-16 pb-8 mb-8" style="{item.cover_styles}">
+    <section id="page-header" class="bg-gradient-green shadow-inner text-white pt-16 pb-8 mb-8" style="{data.cover_styles}">
         <div class="container">
         <div class="max-w-2xl mx-auto break-words">
-        <div class="flex gap-2 items-center">
-        <span class="uppercase font-semibold tracking-wider">{item.eyebrow}</span>
+        <div class="flex gap-2 datas-center">
+        <span class="uppercase font-semibold tracking-wider">{data.eyebrow}</span>
         <button id="share" on:mousedown={() => navigator.share(shareData)} aria-label="Seite teilen">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-share" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -37,15 +38,16 @@
              </svg>
         </button>
         </div>
-        <h1 class="text-4xl sm:text-5xl tracking-tight my-2">{item.heading}</h1>
-        <p class="text-xl mt-4">{item.intro}</p>
+        <h1 class="text-4xl sm:text-5xl tracking-tight my-2">{data.heading}</h1>
+        <p class="text-xl mt-4">{data.intro}</p>
         </div>
         </div>
     </section>
 
-    {#if item.pagelayout}
-    {#each JSON.parse(item.pagelayout) as layout}
-        <section id="{layout.id}" class="">
+    {#key data}
+    {#if data.pagelayout}
+    {#each JSON.parse(data.pagelayout) as layout}
+        <section id="{layout.id}" class="" transition:fade>
         {#each layout.columns as column}
             <Blocks content={column.blocks} />
         {/each}
@@ -54,4 +56,5 @@
     {:else}
     Content not found.
     {/if}
-  </main>
+    {/key}
+</main>

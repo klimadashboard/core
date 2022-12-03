@@ -229,7 +229,7 @@ bind:clientWidth={chartWidth}>
             <tspan x=1 y=0>Mitte</tspan>
             <tspan x=0 y=14>{Math.floor(getZeroYear(key))}</tspan>
             {:else}
-            <tspan x=0 y=0>Ende</tspan>
+            <tspan x=0 y=0>Anfang</tspan>
             <tspan x=-1 y=14>{Math.floor(getZeroYear(key))}</tspan>
             {/if}
           </text>

@@ -164,3 +164,15 @@ details[open] summary:before {
   content: '–';
   margin-right: 0.65em;
 }
+
+.text-prose a {
+  @apply border-b hover:text-gray-900 transition;
+}
+
+.text-prose h2 {
+  @apply text-2xl mt-4 mb-1;
+}
+
+.text-prose h3 {
+  @apply text-xl mt-4 mb-1;
+}
