@@ -138,10 +138,16 @@
       <svelte:component this={Chart} v={createVariables(chart.content.variables)} /> 
     </div>
 
-    <div class="max-w-4xl">
-    <p class="text-gray-700 mb-2 text-sm max-w-xl text">{@html chart.content.source}</p>
+    <div class="max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4">
+    <p class="text-lg text col-span-2">{@html chart.content.text}</p>
 
-    <p class="text-lg text">{@html chart.content.text}</p>
+    <div class="text-gray-700 text-sm max-w-xl">
+      <h3 class="font-bold -mb-4">Datenquellen</h3>
+      <p class="text">
+      {@html chart.content.source}
+      </p>
+    </div>
+
     </div>
     {:else}
 
