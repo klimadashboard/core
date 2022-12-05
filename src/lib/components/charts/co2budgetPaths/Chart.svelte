@@ -89,7 +89,6 @@
 
         for(var i = 0; i < rates.length; i++) {
             var difference = rates[i] - rates[Math.max((i-1),0)];
-            console.log(difference);
             if(difference > 1 || difference < -1) {
                 inflectionYear = dataPaths[i].year;
                 inflectionIndex = i;

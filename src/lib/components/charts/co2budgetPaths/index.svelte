@@ -64,9 +64,7 @@
     $: chosenBudget = budgets.find(d => d.temperature == chosenTemperature && d.probability == chosenProbability).value;
     $: chosenTemperature = 1.5;
     $: chosenProbability = 66;
-    
-    $: console.log(dataHistoric);
-    $: console.log(dataPaths);
+
 
     $: containerWidth = 0;
 </script>

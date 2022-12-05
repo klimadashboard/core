@@ -42,8 +42,6 @@
         }
     }).sort((a,b) => b.goal - a.goal);
 
-    $: console.log(federalStates);
-
     let chartWidth;
     let chartHeight;
 

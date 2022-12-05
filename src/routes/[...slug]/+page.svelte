@@ -6,8 +6,6 @@
     /** @type {import('./$types').PageData} */
     export let data = [];
 
-    $: console.log(data);
-
     const shareData = {
       title: data.heading,
       text: data.intro,

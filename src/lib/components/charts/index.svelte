@@ -2,6 +2,9 @@
     import { locale } from "$lib/stores/i18n";
     import domtoimage from 'dom-to-image';
     import Loader from "$lib/components/Loader.svelte";
+    const charts = import.meta.glob('./*/index.svelte', { import: 'default', eager: true });
+
+    console.log(charts);
 
     export let id;
     export let hideWrapper;
@@ -16,7 +19,8 @@
 
     if (json) {
       const chartData = Object.values(json.charts).find(entry => entry.id == id);
-      Chart = (await import('../charts/' + chartData.content.identifier_string + '/index.svelte')).default;
+      Chart = await charts['./' + chartData.content.identifier_string + '/index.svelte'];
+      console.log(Chart);
       chartId = chartData.id;
       return chartData;
     } else {
