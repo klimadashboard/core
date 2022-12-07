@@ -71,7 +71,7 @@
 
 
 <div class="relative" bind:clientWidth={containerWidth}>
-  <div id="switch" class="flex flex-wrap gap-4 items-center text-sm">
+  <div id="switch" class="flex flex-wrap gap-4 items-center text-sm hidden">
     <div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
     <label class="flex items-center gap-1 {chosenProbability == 66 ? "font-bold" : ""}">
     <input type="radio" value={66} bind:group={chosenProbability}>
