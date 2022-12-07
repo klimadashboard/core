@@ -2,6 +2,8 @@
     import { locale } from "$lib/stores/i18n";
     import domtoimage from 'dom-to-image';
     import Loader from "$lib/components/Loader.svelte";
+    import { error } from '@sveltejs/kit';
+    
     const charts = import.meta.glob('./*/index.svelte', { import: 'default', eager: true });
 
     export let id;
@@ -11,7 +13,7 @@
     let chartId;
     let item = null;
 
-    async function getCharts() {
+    const getCharts = async function () {
       const res = await fetch("https://cms.klimadashboard.org/" + $locale + "/charts.json");
       const json = await res.json();
 
@@ -21,7 +23,7 @@
       chartId = chartData.id;
       return chartData;
     } else {
-      throw new Error(JSON.stringify(json));
+      throw error(404, 'Bei der Verbindung zu unserem Server ist ein Fehler aufgetreten. Bitte lade die Seite neu, um es nochmal zu probieren.');
     }
     };
 
