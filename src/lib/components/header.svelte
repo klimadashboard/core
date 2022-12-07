@@ -1,6 +1,7 @@
 <script>
   import { theme } from "../stores/theme";
   import { locale } from "../stores/i18n";
+  import { error } from '@sveltejs/kit';
 
   const getNav = async function () {
   const res = await fetch('https://cms.klimadashboard.org/' + $locale + '/index.json');
@@ -10,7 +11,7 @@
       let array = Object.values(json).filter(entry => entry.id.includes("klimadashboard-at") && entry.num);
 			return array;
 		} else {
-			throw new Error(JSON.stringify(json));
+			throw error(404, 'Bei der Verbindung zu unserem Server ist ein Fehler aufgetreten. Bitte lade die Seite neu, um es nochmal zu probieren.');
 		}
   };
 

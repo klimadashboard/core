@@ -14,7 +14,7 @@
       if (json) {
         return Object.values(json.glossary);
       } else {
-        throw error(404, 'Not found');
+        throw error(404, 'Bei der Verbindung zu unserem Server ist ein Fehler aufgetreten. Bitte lade die Seite neu, um es nochmal zu probieren.');
       }
     };
 
