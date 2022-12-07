@@ -18,7 +18,7 @@
       }
     };
 
-    $: promise = getGlossary();
+    let promise = getGlossary();
 </script>
 
 {#if $glossaryItem}

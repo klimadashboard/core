@@ -3,7 +3,7 @@
     import domtoimage from 'dom-to-image';
     import Loader from "$lib/components/Loader.svelte";
     import { error } from '@sveltejs/kit';
-    
+
     const charts = import.meta.glob('./*/index.svelte', { import: 'default', eager: true });
 
     export let id;
@@ -13,7 +13,7 @@
     let chartId;
     let item = null;
 
-    const getCharts = async function () {
+    const getChart = async function () {
       const res = await fetch("https://cms.klimadashboard.org/" + $locale + "/charts.json");
       const json = await res.json();
 
@@ -27,11 +27,11 @@
     }
     };
 
-    $: promise = getCharts();
+    let promise = getChart();
 
     $: if($locale) {
       // reload when language changes
-      promise = getCharts();
+      promise = getChart();
     }
 
     const copyToClipboard = function(copyText) {
