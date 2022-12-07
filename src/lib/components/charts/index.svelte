@@ -13,8 +13,8 @@
     let chartId;
     let item = null;
 
-    const getChart = async function () {
-      const res = await fetch("https://cms.klimadashboard.org/" + $locale + "/charts.json");
+    async function getChart() {
+      const res = await fetch("https://cms.klimadashboard.org/de/charts.json");
       const json = await res.json();
 
     if (json) {

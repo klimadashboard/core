@@ -3,7 +3,7 @@
   import { locale } from "../stores/i18n";
   import { error } from '@sveltejs/kit';
 
-  const getNav = async function () {
+  async function getNav() {
   const res = await fetch('https://cms.klimadashboard.org/' + $locale + '/index.json');
 	const json = await res.json();
 
