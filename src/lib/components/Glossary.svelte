@@ -2,18 +2,19 @@
     import { clickOutside } from "$lib/utils/clickOutside";
     import { glossaryItem } from "$lib/stores/glossary";
     import { fade } from "svelte/transition";
+    import { error } from '@sveltejs/kit';
     import Loader from "$lib/components/Loader.svelte";
     import { locale } from "$lib/stores/i18n";
     import Blocks from "$lib/components/blocks/index.svelte";
 
-    async function getGlossary() {
+    $: getGlossary = async function () {
       const res = await fetch("https://cms.klimadashboard.org/" + $locale + "/glossary.json");
       const json = await res.json();
 
       if (json) {
         return Object.values(json.glossary);
       } else {
-        throw new Error(JSON.stringify(json));
+        throw error(404, 'Not found');
       }
     };
 
