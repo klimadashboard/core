@@ -7,7 +7,7 @@
     import { locale } from "$lib/stores/i18n";
     import Blocks from "$lib/components/blocks/index.svelte";
 
-    $: getGlossary = async function () {
+    const getGlossary = async function () {
       const res = await fetch("https://cms.klimadashboard.org/" + $locale + "/glossary.json");
       const json = await res.json();
 

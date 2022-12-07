@@ -1,12 +1,12 @@
 <script>
-    import { theme } from "../stores/theme";
-    import { locale } from "../stores/i18n";
+  import { theme } from "../stores/theme";
+  import { locale } from "../stores/i18n";
 
-    async function getNav() {
-        const res = await fetch('https://cms.klimadashboard.org/' + $locale + '/index.json');
-		    const json = await res.json();
+  const getNav = async function () {
+  const res = await fetch('https://cms.klimadashboard.org/' + $locale + '/index.json');
+	const json = await res.json();
 
-		if (json) {
+	  if (json) {
       let array = Object.values(json).filter(entry => entry.id.includes("klimadashboard-at") && entry.num);
 			return array;
 		} else {
