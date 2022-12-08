@@ -7,7 +7,8 @@
     import { locale } from "$lib/stores/i18n";
     import Blocks from "$lib/components/blocks/index.svelte";
 
-    async function getGlossary() {
+
+    const getGlossary = async function () {
       const res = await fetch("https://cms.klimadashboard.org/de/glossary.json")
       .then(function(response) {
       if (!response.ok) {
@@ -23,7 +24,7 @@
       throw error(500, 'Timeout when loading glossary.');
     };
 
-    let promise = getGlossary();
+    $: promise = getGlossary();
 </script>
 
 {#if $glossaryItem}
