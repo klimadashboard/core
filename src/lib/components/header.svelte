@@ -85,6 +85,8 @@
               </li>
             {/each}
             </ul>
+            {:catch error}
+            {error}
             {/await}
 
             <div class="{showNav ? "absolute top-96 left-4 md:left-0 md:top-14 " : "hidden  sm:block"} group sm:relative text-gray-700">
