@@ -5,8 +5,6 @@
 
 <script>
     import "../app.css";
-    import Header from "../lib/components/header.svelte";
-    import Footer from "../lib/components/footer.svelte";
     import Glossary from "$lib/components/Glossary.svelte";
 
     import { onMount } from 'svelte'
@@ -27,12 +25,6 @@
     export let url;
 </script>
 
-<Header />
-
 <Glossary />
 
-<main class="min-h-screen pt-16">
-    <slot />
-</main>
-
-<Footer />
+<slot />

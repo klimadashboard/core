@@ -2,42 +2,26 @@
     import { locale } from "$lib/stores/i18n";
     import domtoimage from 'dom-to-image';
     import Loader from "$lib/components/Loader.svelte";
-    import { error } from '@sveltejs/kit';
-
-    const charts = import.meta.glob('./*/index.svelte', { import: 'default', eager: true });
+    import { chartsData } from "../../stores/charts";
+    const chartComponents = import.meta.glob('./*/index.svelte', { import: 'default', eager: true });
 
     export let id;
-    export let hideWrapper;
-    
-    let Chart;
+    export let hideWrapper = false;
+
+    let Chart; 
     let chartId;
     let item = null;
 
-    async function getChart() {
-    const res = await fetch("https://cms.klimadashboard.org/de/charts.json")
-    .then(function(response) {
-      if (!response.ok) {
-        throw error(500, response.statusText);
+    $: getChart = async function () {
+      if($chartsData.charts !== undefined) {
+      const dataForChart = Object.values($chartsData.charts).find(entry => entry.id == id.toString());
+      Chart = await chartComponents['./' + dataForChart.content.identifier_string + '/index.svelte'];
+      chartId = dataForChart.id;
+      return dataForChart;
       }
-      return response;
-    });
-    const json = await res.json();
-
-    if (json) {
-      const chartData = Object.values(json.charts).find(entry => entry.id == id);
-      Chart = await charts['./' + chartData.content.identifier_string + '/index.svelte'];
-      chartId = chartData.id;
-      return chartData;
     }
-    throw error(500, 'Timeout when loading charts.');
-    };
 
-    let promise = getChart();
-
-    $: if($locale) {
-      // reload when language changes
-      promise = getChart();
-    }
+    $: promise = getChart();
 
     const copyToClipboard = function(copyText) {
         var dummy = document.createElement("textarea");
@@ -107,6 +91,7 @@
 {#await promise}
 <Loader />
 {:then chart}
+{#if chart !== undefined}
 {#if hideWrapper}
     <svelte:component this={Chart} v={createVariables(chart.content.variables)} />
 {:else}
@@ -137,19 +122,16 @@
             </a>
         </div>
     </div>
-
     {#if !showNotices}
     <h3 class="text-2xl max-w-2xl tracking-tight">{chart.content.heading}</h3>
     
     <div class="my-4">
       <svelte:component this={Chart} v={createVariables(chart.content.variables)} /> 
     </div>
-
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     {#if chart.content.text}
     <p class="text-lg text col-span-2">{@html chart.content.text}</p>
     {/if}
-
     {#if chart.content.source}
     <div class="text-gray-700 text-sm">
       <div class="flex items-center gap-0.5 font-bold -mb-4">
@@ -161,25 +143,20 @@
       </svg>
       <h3 class="">Datenquellen</h3>
       </div>
-
       <p class="text">
       {@html chart.content.source}
       </p>
     </div>
     {/if}
-
     </div>
     {:else}
-
     <div class="text-lg relative overflow-hidden" style="max-height: 32rem">
       <div class="overflow-scroll data-notices" style="max-height:32rem;">
       {@html chart.content.methods}
       </div>
       <div class="absolute left-0 right-0 bottom-0 h-16 bg-gradient-to-t from-white pointer-events-none"></div>
     </div>
-
     {/if}
-
     {#if chart.content.methods}
     <div id="tab-switcher" class="absolute rounded-b bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100  text-sm md:text-base">
       <button on:mousedown={() => showNotices = !showNotices} class="{!showNotices ? "bg-white" : "border-t "} py-2">
@@ -191,6 +168,7 @@
     </div>
     {/if}
 </div>
+{/if}
 {/if}
 {:catch error}
 {error}
