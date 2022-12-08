@@ -14,17 +14,16 @@
     let item = null;
 
     async function getChart() {
-      const res = await fetch("https://cms.klimadashboard.org/de/charts.json");
-      const json = await res.json();
+    const res = await fetch("https://cms.klimadashboard.org/de/charts.json");
+    const json = await res.json();
 
     if (json) {
       const chartData = Object.values(json.charts).find(entry => entry.id == id);
       Chart = await charts['./' + chartData.content.identifier_string + '/index.svelte'];
       chartId = chartData.id;
       return chartData;
-    } else {
-      throw error(404, 'Bei der Verbindung zu unserem Server ist ein Fehler aufgetreten. Bitte lade die Seite neu, um es nochmal zu probieren.');
     }
+    throw error(500, 'Timeout when loading charts.');
     };
 
     let promise = getChart();

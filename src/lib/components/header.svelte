@@ -4,15 +4,14 @@
   import { error } from '@sveltejs/kit';
 
   async function getNav() {
-  const res = await fetch('https://cms.klimadashboard.org/' + $locale + '/index.json');
+  const res = await fetch('https://cms.klimadashboard.org/de/index.json');
 	const json = await res.json();
 
 	  if (json) {
       let array = Object.values(json).filter(entry => entry.id.includes("klimadashboard-at") && entry.num);
 			return array;
-		} else {
-			throw error(404, 'Bei der Verbindung zu unserem Server ist ein Fehler aufgetreten. Bitte lade die Seite neu, um es nochmal zu probieren.');
 		}
+    throw error(500, 'Timeout when loading navigation.');
   };
 
   let promise = getNav();
