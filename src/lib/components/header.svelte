@@ -4,7 +4,13 @@
   import { error } from '@sveltejs/kit';
 
   async function getNav() {
-  const res = await fetch('https://cms.klimadashboard.org/de/index.json');
+  const res = await fetch('https://cms.klimadashboard.org/de/index.json')
+  .then(function(response) {
+      if (!response.ok) {
+        throw error(500, response.statusText);
+      }
+      return response;
+  });
 	const json = await res.json();
 
 	  if (json) {

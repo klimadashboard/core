@@ -8,7 +8,13 @@
     import Blocks from "$lib/components/blocks/index.svelte";
 
     async function getGlossary() {
-      const res = await fetch("https://cms.klimadashboard.org/de/glossary.json");
+      const res = await fetch("https://cms.klimadashboard.org/de/glossary.json")
+      .then(function(response) {
+      if (!response.ok) {
+        throw error(500, response.statusText);
+      }
+      return response;
+      });
       const json = await res.json();
 
       if (json) {
