@@ -4,7 +4,7 @@
 </script>
 
 
-<details class="max-w-2xl mx-auto my-4 px-4">
+<details class="max-w-2xl mx-auto my-4 px-4 md:px-0">
     <summary class="text-xl border-b">{block.content.label}</summary>
     {#if block.content.blocks}
     <Blocks content={JSON.parse(block.content.blocks)} />
