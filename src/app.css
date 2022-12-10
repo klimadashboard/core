@@ -130,24 +130,19 @@ background-clip: text;
   .bg-gradient-red {
       background: linear-gradient(95.92deg, #C9AD77 0%, #A74052 120.03%);
   }
+  
   .bg-gradient-blue {
       background: linear-gradient(95.92deg, rgb(121, 173, 202) 0%, rgb(46, 64, 156) 120.03%);
   }
-  .dark .bg-gradient-blue {
-      background: linear-gradient(95.92deg, rgba(121, 173, 202, 0.8) 0%, rgba(46, 64, 156, 0.7) 120.03%);
-  }
+
   .bg-gradient-yellow {
       background: linear-gradient(95.92deg, rgb(194, 202, 121) 0%, rgb(156, 108, 46) 120.03%);
   }
-  .dark .bg-gradient-yellow {
-      background: linear-gradient(95.92deg, rgba(194, 202, 121, 0.7) 0%, rgba(156, 108, 46, 0.6) 120.03%);
-  }
+
   .bg-gradient-green {
       background: linear-gradient(90deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
   }
-  .dark .bg-gradient-green {
-      background: linear-gradient(90deg, rgba(121, 202, 148, 0.7) 0%, rgba(46, 156, 92, 0.6) 100%);
-  }
+
 summary {
   display: inline !important;
   cursor: pointer;
