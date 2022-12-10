@@ -8,6 +8,6 @@
 
 <div class="my-4 {hideWrapper ? "" : "container"} {multipleCharts ? "grid gap-4 md:grid-cols-2" : ""}">
     {#each block.content.chart as chart}
-    <Chart id={chart} {hideWrapper} />
+    <Chart id={chart.replace("page://","")} {hideWrapper} />
     {/each}
 </div>  

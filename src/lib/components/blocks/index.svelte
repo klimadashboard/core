@@ -37,7 +37,7 @@
     }];
 </script>
 
-<div class="">
+<div>
     {#each content.filter(d => !d.isHidden) as block}
         <svelte:component this={blocks.find(d => d.type == block.type).component} {block} />
     {/each}
