@@ -23,7 +23,7 @@
     }
     );
 
-    let priceAustria = 30;
+    let priceAustria = 32.5;
 
     $: priceETS = 0;
     $: dateETS = dayjs();
