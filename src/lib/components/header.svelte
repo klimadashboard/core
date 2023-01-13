@@ -4,7 +4,7 @@
   import { error } from '@sveltejs/kit';
 
   $: getNav = async function() {
-  const res = await fetch('https://cms.klimadashboard.org/de/index.json')
+  const res = await fetch('https://klimadashboard.org/get/navigation/at.json')
   .then(function(response) {
       if (!response.ok) {
         throw error(500, response.statusText);
@@ -14,7 +14,7 @@
 	const json = await res.json();
 
 	  if (json) {
-      let array = Object.values(json).filter(entry => entry.id.includes("klimadashboard-at") && entry.num);
+      let array = Object.values(json.data).filter(entry => entry.num);
 			return array;
 		}
     throw error(500, 'Timeout when loading navigation.');
