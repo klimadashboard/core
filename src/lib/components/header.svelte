@@ -3,7 +3,7 @@
   import { locale } from "../stores/i18n";
   import { error } from '@sveltejs/kit';
 
-  async function getNav() {
+  $: getNav = async function() {
   const res = await fetch('https://cms.klimadashboard.org/de/index.json')
   .then(function(response) {
       if (!response.ok) {
@@ -20,7 +20,7 @@
     throw error(500, 'Timeout when loading navigation.');
   };
 
-  let promise = getNav();
+  $: promise = getNav();
 
   $: if($locale) {
   // reload when language changes
