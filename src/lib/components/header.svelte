@@ -4,7 +4,7 @@
   import { error } from '@sveltejs/kit';
 
   const fetchWithTimeout = async function(resource, options = {}) {
-  const { timeout = 8000 } = options;
+  const { timeout = 4000 } = options;
   
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -31,10 +31,8 @@
       let array = Object.values(json.data).filter(entry => entry.num);
 			return array;
 		  }
-  } catch (error) {
-    // Timeouts if the request takes
-    // longer than 6 seconds
-    throw error(500, 'Timeout when loading navigation.');
+  } catch (errorCode) {
+    throw error(500, 'Timeout when loading navigation. ' + errorCode);
   } 
   };
 
