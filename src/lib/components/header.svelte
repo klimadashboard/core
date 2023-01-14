@@ -4,7 +4,7 @@
   import { error } from '@sveltejs/kit';
 
   const fetchWithTimeout = async function(resource, options = {}) {
-  const { timeout = 4000 } = options;
+  const { timeout = 8000 } = options;
   
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -20,10 +20,10 @@
     try {
       const res = await fetchWithTimeout('https://klimadashboard.org/get/navigation/at.json')
       .then(function(response) {
-      if (!response.ok) {
-        throw error(500, response.statusText);
-      }
       return response;
+      })
+      .catch(function(err){
+        throw error(500, 'Timeout when loading navigation. ' + err);
       });
 	    const json = await res.json();
 
@@ -31,9 +31,9 @@
       let array = Object.values(json.data).filter(entry => entry.num);
 			return array;
 		  }
-  } catch (errorCode) {
-    throw error(500, 'Timeout when loading navigation. ' + errorCode);
-  } 
+      } catch (err) {
+      throw error(500, 'Timeout when loading navigation. ' + err);
+      } 
   };
 
   $: promise = getNav();
