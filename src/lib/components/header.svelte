@@ -3,52 +3,14 @@
   import { locale } from "../stores/i18n";
   import { error } from '@sveltejs/kit';
 
-  const fetchWithTimeout = async function(resource, options = {}) {
-  const { timeout = 8000 } = options;
-  
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  const response = await fetch(resource, {
-    ...options,
-    signal: controller.signal  
-  });
-  clearTimeout(id);
-  return response;
-  } 
-
-  $: getNav = async function() {
-    try {
-      const res = await fetchWithTimeout('https://klimadashboard.org/get/navigation/at.json')
-      .then(function(response) {
-      return response;
-      })
-      .catch(function(err){
+  let promise = fetch('https://klimadashboard.org/get/navigation/at.json')
+  .then((x) => x.json())
+  .then((x) => Object.values(x.data))
+  .catch(function(err){
         throw error(500, 'Timeout when loading navigation. ' + err);
-      });
-	    const json = await res.json();
-
-	    if (json) {
-      let array = Object.values(json.data).filter(entry => entry.num);
-			return array;
-		  }
-      } catch (err) {
-      throw error(500, 'Timeout when loading navigation. ' + err);
-      } 
-  };
-
-  $: promise = getNav();
-
-  $: if($locale) {
-  // reload when language changes
-  promise = getNav();
-  }
+  });
 
   $: showNav = false;
-
-  $: changeLocale = function() {
-    locale.set($locale == "de" ? "en" : "de");
-    location.reload();
-  }
 </script>
 
 <header class="fixed py-3 w-full z-50 bg-white ">
