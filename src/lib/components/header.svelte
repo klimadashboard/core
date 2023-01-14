@@ -3,21 +3,39 @@
   import { locale } from "../stores/i18n";
   import { error } from '@sveltejs/kit';
 
+  const fetchWithTimeout = async function(resource, options = {}) {
+  const { timeout = 8000 } = options;
+  
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal  
+  });
+  clearTimeout(id);
+  return response;
+  } 
+
   $: getNav = async function() {
-  const res = await fetch('https://klimadashboard.org/get/navigation/at.json')
-  .then(function(response) {
+    try {
+      const res = await fetchWithTimeout('https://klimadashboard.org/get/navigation/at.json')
+      .then(function(response) {
       if (!response.ok) {
         throw error(500, response.statusText);
       }
       return response;
-  });
-	const json = await res.json();
+      });
+	    const json = await res.json();
 
-	  if (json) {
+	    if (json) {
       let array = Object.values(json.data).filter(entry => entry.num);
 			return array;
-		}
+		  }
+  } catch (error) {
+    // Timeouts if the request takes
+    // longer than 6 seconds
     throw error(500, 'Timeout when loading navigation.');
+  } 
   };
 
   $: promise = getNav();
