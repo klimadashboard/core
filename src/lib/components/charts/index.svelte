@@ -16,7 +16,7 @@
       if($chartsData.charts !== undefined) {
       const dataForChart = Object.values($chartsData.charts).find(entry => entry.content.uuid == id.toString());
       Chart = await chartComponents['./' + dataForChart.content.identifier_string + '/index.svelte'];
-      chartId = dataForChart.id;
+      chartId = dataForChart.content.uuid;
       return dataForChart;
       }
     }
