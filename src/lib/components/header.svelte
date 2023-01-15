@@ -5,7 +5,7 @@
 
   let promise = fetch('https://klimadashboard.org/get/navigation/at.json')
   .then((x) => x.json())
-  .then((x) => Object.values(x.data))
+  .then((x) => Object.values(x.data).filter(d => d.num))
   .catch(function(err){
         throw error(500, 'Timeout when loading navigation. ' + err);
   });
