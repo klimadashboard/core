@@ -178,10 +178,18 @@
     $: if(dataset.findIndex(x => x.label == 2021) < 0 && selectedRegion == "Austria" && (activeView == "sector_overview" || activeView == "total_co2e_t") && !showPerCapita) {
         dataset.push({
             label: 2021,
-            annotation: "Nowcast 2021",
             categories: [{
-              label: "Nowcast 2021",
-              value: 80200000,
+              label: "Gesamt",
+              value: 77500000,
+              estimate: false
+            }],
+            estimate: false
+        }, {
+            label: 2022,
+            annotation: "Nowcast 2022",
+            categories: [{
+              label: "Nowcast 2022",
+              value: 73600000,
               estimate: true
             }],
             estimate: true
