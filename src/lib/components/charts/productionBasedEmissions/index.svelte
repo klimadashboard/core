@@ -186,9 +186,9 @@
             estimate: false
         }, {
             label: 2022,
-            annotation: "Nowcast 2022",
+            annotation: "Prognose 2022",
             categories: [{
-              label: "Nowcast 2022",
+              label: "Prognose 2022",
               value: 73600000,
               estimate: true
             }],
