@@ -1,15 +1,19 @@
 <script>
-    import { selectedWeatherYear, selectedStation, types } from "$lib/stores/weather";
+    import { selectedStation, types } from "$lib/stores/weather";
     import Loader from "$lib/components/Loader.svelte";
     import Chart from "./Chart.svelte";
     import Papa from "papaparse";
 
     $: showDays = false;
+    let maxYear;
+    $: selectedYear = 0;
 
     async function getDataForSelectedStation(stationId) {
     let response = await fetch('https://data.klimadashboard.org/at/zamg/tempdays/stations/' + stationId + '.json');
     let data = await response.json();
     if (response.ok) {
+    maxYear = new Date(data.timestamps[data.timestamps.length - 1]).getFullYear();
+    selectedYear = maxYear;
     return data;
 	  } else {
 	  throw new Error(data);
@@ -43,8 +47,8 @@
     </label>
   
     <label class="{showDays ? "opacity-50 pointer-events-none" : ""} flex items-center gap-2">
-      <input type="range" min={1960} max={new Date().getFullYear()} bind:value={$selectedWeatherYear}>
-      <span>{$selectedWeatherYear}</span>
+      <input type="range" min={1960} max={maxYear} bind:value={selectedYear}>
+      <span>{selectedYear}</span>
     </label>
 
     <p>ID{$selectedStation} – {selectedStationName}</p>
@@ -53,7 +57,7 @@
 {#await promise}
 <Loader />
 {:then selectedStationData}
-<Chart {selectedStationData} types={$types} {showDays} />
+<Chart {selectedStationData} types={$types} {showDays} {maxYear} bind:selectedYear={selectedYear} />
 {:catch error}
 Error
 {/await}

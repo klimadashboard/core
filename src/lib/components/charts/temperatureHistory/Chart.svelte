@@ -8,6 +8,8 @@
     export let selectedStationData;
     export let types;
     export let showDays;
+    export let selectedYear;
+    export let maxYear;
 
     let chartWidth;
     let chartHeight;
@@ -38,9 +40,10 @@
         }
     });
 
-    const currentYear = new Date().getFullYear();
+    const currentYear = maxYear;
     const firstDayOfCurrentYear = new Date(currentYear, 0, 1);
     $: dataForCurrentYear = data.filter(d => d.day > firstDayOfCurrentYear);
+    $: console.log(dataForCurrentYear);
 
     const margin = { top: 25, right: 10, bottom: 5, left: 5};
 
@@ -49,7 +52,7 @@
 
     $: xScale = scaleTime()
     .rangeRound([0, innerChartWidth])
-    .domain([min(dataForCurrentYear, (d) => d.day), new Date(new Date().getFullYear(), 11, 31)]);
+    .domain([min(dataForCurrentYear, (d) => d.day), new Date(currentYear, 11, 31)]);
 
     $: yScale = scaleLinear()
     .rangeRound([innerChartHeight, 0])
@@ -141,11 +144,11 @@ bind:clientWidth={chartWidth}>
     stroke-width="2"
     stroke="{getColor(i)}"
     id="line-{i}"
-    on:mouseover={() => $selectedWeatherYear = years[i]}
-    on:focus={() => $selectedWeatherYear = years[i]}
-    on:mouseout={() => $selectedWeatherYear = currentYear}
-    on:blur={() => $selectedWeatherYear = currentYear}
-    opacity={$selectedWeatherYear == years[i] ? 1 : 0.3}
+    on:mouseover={() => selectedYear = years[i]}
+    on:focus={() => selectedYear = years[i]}
+    on:mouseout={() => selectedYear = currentYear}
+    on:blur={() => selectedYear = currentYear}
+    opacity={selectedYear == years[i] ? 1 : 0.3}
     class="transition duration-75 text-gray-900"
     in:draw="{{duration: 1000, delay: i * 200}}"
     ></path>
@@ -153,7 +156,7 @@ bind:clientWidth={chartWidth}>
     </g>
     {/if}
 
-    {#if $selectedWeatherYear == currentYear && !showDays}
+    {#if selectedYear == currentYear && !showDays}
     <g transform="translate({xScale(dataForCurrentYear[dataForCurrentYear.length - 1].day)},{yScale(dataForCurrentYear[dataForCurrentYear.length - 1].average)})" 
     class="text-gray-900 transition"
     transition:fade>
