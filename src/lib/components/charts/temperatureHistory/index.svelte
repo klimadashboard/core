@@ -10,7 +10,7 @@
 
 	async function getDataForSelectedStation(stationId) {
 		let response = await fetch(
-			'https://data.klimadashboard.org/at/zamg/tempdays/stations/' + stationId + '.json'
+			'https://data.klimadashboard.org/at/zamg/stations/' + stationId + '/data.json'
 		);
 		let data = await response.json();
 		if (response.ok) {
