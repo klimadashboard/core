@@ -1,43 +1,40 @@
 /* barlow-200 - latin */
 @font-face {
-  font-family: 'Barlow';
-  font-style: normal;
-  font-weight: 200;
-  src: url('/fonts/barlow-v12-latin-200.eot'); /* IE9 Compat Modes */
-  src: local(''),
-       url('/fonts/barlow-v12-latin-200.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('/fonts/barlow-v12-latin-200.woff2') format('woff2'), /* Super Modern Browsers */
-       url('/fonts/barlow-v12-latin-200.woff') format('woff'), /* Modern Browsers */
-       url('/fonts/barlow-v12-latin-200.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('/fonts/barlow-v12-latin-200.svg#Barlow') format('svg'); /* Legacy iOS */
+	font-family: 'Barlow';
+	font-style: normal;
+	font-weight: 200;
+	src: url('/fonts/barlow-v12-latin-200.eot'); /* IE9 Compat Modes */
+	src: local(''), url('/fonts/barlow-v12-latin-200.eot?#iefix') format('embedded-opentype'),
+		/* IE6-IE8 */ url('/fonts/barlow-v12-latin-200.woff2') format('woff2'),
+		/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-200.woff') format('woff'),
+		/* Modern Browsers */ url('/fonts/barlow-v12-latin-200.ttf') format('truetype'),
+		/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-200.svg#Barlow') format('svg'); /* Legacy iOS */
 }
 
 /* barlow-regular - latin */
 @font-face {
-  font-family: 'Barlow';
-  font-style: normal;
-  font-weight: 400;
-  src: url('/fonts/barlow-v12-latin-regular.eot'); /* IE9 Compat Modes */
-  src: local(''),
-       url('/fonts/barlow-v12-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('/fonts/barlow-v12-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
-       url('/fonts/barlow-v12-latin-regular.woff') format('woff'), /* Modern Browsers */
-       url('/fonts/barlow-v12-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('/fonts/barlow-v12-latin-regular.svg#Barlow') format('svg'); /* Legacy iOS */
+	font-family: 'Barlow';
+	font-style: normal;
+	font-weight: 400;
+	src: url('/fonts/barlow-v12-latin-regular.eot'); /* IE9 Compat Modes */
+	src: local(''), url('/fonts/barlow-v12-latin-regular.eot?#iefix') format('embedded-opentype'),
+		/* IE6-IE8 */ url('/fonts/barlow-v12-latin-regular.woff2') format('woff2'),
+		/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-regular.woff') format('woff'),
+		/* Modern Browsers */ url('/fonts/barlow-v12-latin-regular.ttf') format('truetype'),
+		/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-regular.svg#Barlow') format('svg'); /* Legacy iOS */
 }
 
 /* barlow-600 - latin */
 @font-face {
-  font-family: 'Barlow';
-  font-style: normal;
-  font-weight: 600;
-  src: url('/fonts/barlow-v12-latin-600.eot'); /* IE9 Compat Modes */
-  src: local(''),
-       url('/fonts/barlow-v12-latin-600.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
-       url('/fonts/barlow-v12-latin-600.woff2') format('woff2'), /* Super Modern Browsers */
-       url('/fonts/barlow-v12-latin-600.woff') format('woff'), /* Modern Browsers */
-       url('/fonts/barlow-v12-latin-600.ttf') format('truetype'), /* Safari, Android, iOS */
-       url('/fonts/barlow-v12-latin-600.svg#Barlow') format('svg'); /* Legacy iOS */
+	font-family: 'Barlow';
+	font-style: normal;
+	font-weight: 600;
+	src: url('/fonts/barlow-v12-latin-600.eot'); /* IE9 Compat Modes */
+	src: local(''), url('/fonts/barlow-v12-latin-600.eot?#iefix') format('embedded-opentype'),
+		/* IE6-IE8 */ url('/fonts/barlow-v12-latin-600.woff2') format('woff2'),
+		/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-600.woff') format('woff'),
+		/* Modern Browsers */ url('/fonts/barlow-v12-latin-600.ttf') format('truetype'),
+		/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-600.svg#Barlow') format('svg'); /* Legacy iOS */
 }
 
 @tailwind base;
@@ -45,29 +42,29 @@
 @tailwind utilities;
 
 body {
-  scroll-behavior: smooth;
-  font-family: 'Barlow', sans-serif;
+	scroll-behavior: smooth;
+	font-family: 'Barlow', sans-serif;
 }
 
 .glossary-label {
-  color: #fff;
-  background: linear-gradient(90deg, #79ca94 0%, #2e9c5c 100%);
-  font-weight: 600;
-  cursor: help;
-  width: 0.8em;
-  height: 0.8em;
-  vertical-align: super;
-  border-radius: 9999px;
-  font-size: 0.6em;
-  padding: 0.15em 0.5em 0.15em 0.5em;
+	color: #fff;
+	background: linear-gradient(90deg, #79ca94 0%, #2e9c5c 100%);
+	font-weight: 600;
+	cursor: help;
+	width: 0.8em;
+	height: 0.8em;
+	vertical-align: super;
+	border-radius: 9999px;
+	font-size: 0.6em;
+	padding: 0.15em 0.5em 0.15em 0.5em;
 }
 
 .glossary-label:before {
-  content: "?"
+	content: '?';
 }
 
 .glossary-label:after {
-  /*
+	/*
   content: " ";
   width: 10ch;
   height: 2px;
@@ -77,97 +74,97 @@ body {
   */
 }
 .source-info a {
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+	border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }
 .dark .source-info a {
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+	border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .scroll-wrapper {
-  overflow-x: scroll;
-  height: 300px;
-  width: 100%;
-  scroll-behavior: smooth;
-  padding-bottom: 10px;
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+	overflow-x: scroll;
+	height: 300px;
+	width: 100%;
+	scroll-behavior: smooth;
+	padding-bottom: 10px;
+	-ms-overflow-style: none; /* Internet Explorer 10+ */
 }
 .no-scrollbar {
--ms-overflow-style: none;  /* IE and Edge */
-scrollbar-width: none;  /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
 }
 .no-scrollbar::-webkit-scrollbar {
-display: none;
+	display: none;
 }
 .carousel {
-  align-items: stretch;
-  overflow-x: scroll;
-  scroll-snap-type: x mandatory;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+	align-items: stretch;
+	overflow-x: scroll;
+	scroll-snap-type: x mandatory;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
 }
 .carousel-item {
-  min-width: 40ch;
-  max-width: 40ch;
+	min-width: 40ch;
+	max-width: 40ch;
 }
 
 @media screen and (max-width: 800px) {
-  .carousel-item {
-  min-width: 80vw;
-  max-width: 80vw;
-}
+	.carousel-item {
+		min-width: 80vw;
+		max-width: 80vw;
+	}
 }
 .card {
-  @apply relative shadow transition p-4 border-t-2 border-green-400;
+	@apply relative shadow transition p-4 border-t-2 border-green-400;
 }
 
 .text-gradient-green {
-background: -webkit-linear-gradient(240deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
-background-clip: text;
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
+	background: -webkit-linear-gradient(240deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
 }
 
-  .bg-gradient-red {
-      background: linear-gradient(95.92deg, #C9AD77 0%, #A74052 120.03%);
-  }
-  
-  .bg-gradient-blue {
-      background: linear-gradient(95.92deg, rgb(121, 173, 202) 0%, rgb(46, 64, 156) 120.03%);
-  }
+.bg-gradient-red {
+	background: linear-gradient(95.92deg, #c9ad77 0%, #a74052 120.03%);
+}
 
-  .bg-gradient-yellow {
-      background: linear-gradient(95.92deg, rgb(194, 202, 121) 0%, rgb(156, 108, 46) 120.03%);
-  }
+.bg-gradient-blue {
+	background: linear-gradient(95.92deg, rgb(121, 173, 202) 0%, rgb(46, 64, 156) 120.03%);
+}
 
-  .bg-gradient-green {
-      background: linear-gradient(90deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
-  }
+.bg-gradient-yellow {
+	background: linear-gradient(95.92deg, rgb(194, 202, 121) 0%, rgb(156, 108, 46) 120.03%);
+}
+
+.bg-gradient-green {
+	background: linear-gradient(90deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
+}
 
 summary {
-  display: inline !important;
-  cursor: pointer;
+	display: inline !important;
+	cursor: pointer;
 }
 summary::-webkit-details-marker {
-  display: none;
+	display: none;
 }
 summary:before {
-  content: '+';
-  float: left;
-  margin-right: 0.5em;
+	content: '+';
+	float: left;
+	margin-right: 0.5em;
 }
 details[open] summary:before {
-  content: '–';
-  margin-right: 0.65em;
+	content: '–';
+	margin-right: 0.65em;
 }
 
 .text-prose a {
-  @apply border-b hover:text-gray-900 transition;
+	@apply border-b hover:text-gray-900 transition;
 }
 
 .text-prose h2 {
-  @apply text-2xl mt-4 mb-1;
+	@apply text-2xl mt-4 mb-1;
 }
 
 .text-prose h3 {
-  @apply text-xl mt-4 mb-1;
+	@apply text-xl mt-4 mb-1;
 }

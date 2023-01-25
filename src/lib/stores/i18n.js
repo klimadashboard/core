@@ -1,5 +1,5 @@
-import { writable } from "svelte/store";
+import { writable } from 'svelte/store';
 
-let locale = writable("de");
+let locale = writable('de');
 
-export { locale }
+export { locale };
