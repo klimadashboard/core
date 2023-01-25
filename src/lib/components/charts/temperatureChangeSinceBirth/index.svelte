@@ -23,7 +23,6 @@
 							.map((row) => {
 								return row['mean_temperature_austria'];
 							});
-						console.log(boundYears);
 						const average =
 							boundYears.length > 1 ? boundYears.reduce((a, b) => a + b) / boundYears.length : 0;
 						// console.log(average);

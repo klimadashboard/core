@@ -9,7 +9,7 @@
 	const unit = '°C';
 
 	$: Papa.parse(
-		'https://data.klimadashboard.org/at/zamg/tempannual/stations/' + $selectedStation + '.csv',
+		'https://data.klimadashboard.org/at/zamg/stations/' + $selectedStation + '/yearly.csv',
 		{
 			download: true,
 			dynamicTyping: true,
@@ -17,7 +17,7 @@
 			header: true,
 			complete: function (results) {
 				if (results) {
-					historicalDataset = results.data;
+					historicalDataset = results.data.filter(d => d.averageTemperature !== "null");
 				}
 			}
 		}
@@ -34,14 +34,14 @@
 		const rollingAverageDataset = [...historicalDataset].slice(lowerBoundIndex, upperBoundIndex);
 		rollingAverageSum = 0;
 		for (var i = 0; i < rollingAverageDataset.length; i++) {
-			rollingAverageSum += rollingAverageDataset[i].annualtemp;
+			rollingAverageSum += rollingAverageDataset[i].averageTemperature;
 		}
 		const rollingAverageYears = upperBoundYear - lowerBoundYear;
 		const rollingAverage = rollingAverageSum / rollingAverageYears;
 
 		return {
 			x: entry.year,
-			y: Math.round(entry.annualtemp * 10) / 10,
+			y: Math.round(entry.averageTemperature * 10) / 10,
 			path: rollingAverage
 		};
 	});
@@ -75,11 +75,11 @@
 			>
 				<div class="flex items-center space-x-1">
 					<div class="w-3 h-3 rounded-full" style="background-color: #AD0826" />
-					<p>Yearly Average</p>
+					<p>Jahresdurchschnittstemperatur</p>
 				</div>
 				<div class="flex items-center space-x-1">
 					<div class="w-8 h-1 rounded-full bg-gray-200" />
-					<p>Rollender Average</p>
+					<p>30-jähriger Durchschnitt</p>
 				</div>
 
 				<p>ID{$selectedStation} – {selectedStationName}</p>

@@ -44,7 +44,6 @@
 	const currentYear = maxYear;
 	const firstDayOfCurrentYear = new Date(currentYear, 0, 1);
 	$: dataForCurrentYear = data.filter((d) => d.day > firstDayOfCurrentYear);
-	$: console.log(dataForCurrentYear);
 
 	const margin = { top: 25, right: 10, bottom: 5, left: 5 };
 
@@ -218,7 +217,8 @@
 								/>
 							</circle>
 							<circle r={6} class="fill-current" />
-							<text class="text-sm fill-current" x={30} y={30}>
+							<rect x={30} y={-30} width={200} height={20} class="fill-white opacity-30"></rect>
+							<text class="text-sm fill-current" x={30} y={-30}>
 								<tspan x={0}>30-tägige Durchschnittstemperatur</tspan>
 								<tspan x={0} dy={16}
 									>am {dataForCurrentYear[dataForCurrentYear.length - 1].day.toLocaleDateString(
