@@ -89,6 +89,16 @@
 	};
 
 	$: showNotices = false;
+
+	// when scroll reaches bottom, fade out the gradient
+	$: showBottomFade = true;
+
+	function observeBottomInView(element) {
+		const observer = new IntersectionObserver((entries) => {
+			entries.forEach((entry) => (showBottomFade = !entry.isIntersecting));
+		});
+		observer.observe(element);
+	}
 </script>
 
 {#await promise}
@@ -234,9 +244,12 @@
 					<div class="text-lg relative overflow-hidden" style="max-height: 32rem">
 						<div class="overflow-scroll data-notices" style="max-height:32rem;">
 							{@html chart.content.methods}
+							<div class="bottom-hint" use:observeBottomInView />
 						</div>
 						<div
-							class="absolute left-0 right-0 bottom-0 h-16 bg-gradient-to-t from-white pointer-events-none"
+							class="absolute left-0 right-0 bottom-0 h-16 bg-gradient-to-t from-white pointer-events-none transition-opacity {!showBottomFade
+								? 'opacity-0'
+								: ''}"
 						/>
 					</div>
 				{/if}
