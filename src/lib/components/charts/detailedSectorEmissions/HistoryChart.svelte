@@ -1,59 +1,40 @@
 <script>
-	export let data;
+	import { scaleLinear } from 'd3-scale';
+	export let explanations;
+	export let detailLayers;
 	export let selectedYear;
-	export let selectedGhGas;
-	export let selectedSectors;
+	export let total1990;
 	export let ksgSelection;
 	export let crfSelection;
 
-	$: yearlySectorData = data.filter(
-		(entry) =>
-			entry.Schadstoff == selectedGhGas && selectedSectorCodes.find((s) => s.code == entry.CRF_Code)
-	);
+	const height = 300;
 
-	let years = data.reduce((list, entry) => {
-		if (list.indexOf(entry.Jahr) < 0) list.push(entry.Jahr);
-		return list;
-	}, []);
+	$: yAxisScale = ksgSelection == null ? total1990 * 2 : total1990 * 0.5;
 
-	$: yearlySectorData = years.map((year) => {
-		let yearlyList = selectedSectorCodes.map((sectorCode) => {
-			let accumulatedDataForYear = data.filter(
-				(entry) =>
-					entry.Schadstoff == selectedGhGas && entry.CRF_Code == sectorCode && entry.Jahr == year
-			);
-			return { year: year, code: sectorCode, value: accumulatedDataForYear[0].Werte };
-		});
-
-		return yearlyList;
-	});
-
-	// TODO: don't simply sum, but stack sectors (with respective sector colour)
-	$: yearlySectorSum = yearlySectorData.map((list) =>
-		list.reduce((sum, entry) => sum + entry.value, 0)
-	);
+	$: yScale = scaleLinear().domain([0, yAxisScale]).range([0, height]);
 </script>
 
-{#if yearlySectorData}
-	<svg viewBox="0 0 1000 300" style="width: 100%;">
-		{#each yearlySectorSum as data, d}
-			{#if d <= 30}
-				{@const x = 15 + d * 30}
-				{@const yearlySectorMax = yearlySectorSum.reduce(
-					(max, data) => (max > data ? max : data),
-					0
-				)}
-				{@const h = (data / yearlySectorMax) * 190}
-				<rect
-					width={25}
-					height={h}
-					x={0 + x}
-					y={200 - h}
-					fill={selectedYear == 1990 + d ? 'red' : 'gray'}
-				/>
-				<text x={12 + x} y={220} font-size="10" text-anchor="middle"><tspan>{1990 + d}</tspan></text
-				>
-			{/if}
-		{/each}
-	</svg>
+{#if detailLayers}
+	<div class="w-full grow shrink basis-1/2">
+		<svg viewBox="0 0 1000 300">
+			{#each Object.entries(detailLayers) as [year, ksgSectors], y}
+				{@const x = 15 + y * 30}
+				{#each ksgSectors as ksgSector, s}
+					{@const previousSum = ksgSectors.slice(0, s).reduce((sum, entry) => sum + entry.value, 0)}
+					{@const selected = ksgSelection == s}
+					{@const h = yScale(ksgSector.value)}
+					{@const y = selected ? 0 : yScale(previousSum)}
+
+					{#if ksgSelection == null || selected}
+						<rect width={28} height={h} x={0 + x} y={200 - h - y} fill={ksgSector.colorCode} />
+					{/if}
+				{/each}
+				<text x={14 + x} y={220} font-size="10" text-anchor="middle"><tspan>{year}</tspan></text>
+
+				{#if year == selectedYear}
+					<line x1={x + 15} x2={x + 15} y1="0" y2="200" stroke="red" stroke-width="2" />
+				{/if}
+			{/each}
+		</svg>
+	</div>
 {/if}

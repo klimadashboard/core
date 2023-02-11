@@ -15,19 +15,24 @@
 	$: ksgTooltip = null;
 	$: crfTooltip = null;
 	$: mouse = null;
+
+	const updateDescription = (crfCode) => {
+		if (crfTooltip)
+			crfTooltip.explanation =
+				explanations?.find((entry) => entry.crfCode == crfCode).erklaerung || '';
+	};
 </script>
 
-<div class="detail-emissions-tree-map relative pt-10">
+<div class="detail-emissions-tree-map relative pt-10 w-full max-w-2xl">
 	{#if detailLayers}
 		<svg
 			viewBox="-100 -100 1200 1400"
-			style="max-width: 600px;"
 			on:mouseleave={() => {
 				ksgTooltip = null;
 				crfTooltip = null;
 				mouse = null;
 			}}
-			on:mousemove={() => {
+			on:mousedown={() => {
 				crfSelection = null;
 				ksgSelection = null;
 			}}
@@ -107,11 +112,13 @@
 
 									mouse = { x: e.layerX, y: e.layerY };
 									crfTooltip = crfSector;
+									updateDescription(crfSector.code);
 								}}
 								on:focus={(e) => {
 									if (crfSelection != null) return;
 									mouse = { x: e.layerX, y: e.layerY };
 									crfTooltip = crfSector;
+									updateDescription(crfSector.code);
 								}}
 								opacity={crfTooltip == crfSector ? 0.8 : 1}
 							>
@@ -129,7 +136,7 @@
 									}}
 								/>
 								{#if ksgSelection != null && h2 > 20}
-									<text x={x2 + 20} y={y2 + 20} font-size="15" fill="white">{crfSector.label}</text>
+									<text x={x2 + 20} y={y2 + 20} font-size="20" fill="white">{crfSector.label}</text>
 								{/if}
 							</g>
 
@@ -166,9 +173,13 @@
 		</div>
 	{/if}
 	{#if crfTooltip}
-		<div class="absolute bg-white rounded p-4" style="top: {mouse.y}px; left: {mouse.x}px;">
+		<div
+			class="absolute bg-white rounded p-4 max-w-prose"
+			style="top: {mouse.y}px; left: {mouse.x}px;"
+		>
 			<h4><strong>{crfTooltip.label}</strong></h4>
-			{crfTooltip.absolute.toFixed(3).replace('.', ',')} Mt CO2eq
+			<strong>{crfTooltip.absolute.toFixed(3).replace('.', ',')} Mt CO2eq</strong>
+			<p>{crfTooltip.explanation}</p>
 		</div>
 	{/if}
 </div>

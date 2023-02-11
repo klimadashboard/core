@@ -192,42 +192,51 @@
 	// console.log('1990', total1990 / 10 ** 6);
 	// $: console.log('2020', totalSelectedYear / 10 ** 6);
 
-	$: detailLayers = ksgSectors.map((ksgSector) => {
-		const sectors = selectedSectors?.filter((data) => {
-			const crfSector = crf(data);
-			return crfSector ? crfSector.ksgSector == ksgSector.label : false;
-		});
-		const total = sectors?.reduce((sum, crf) => sum + crf.Werte, 0);
+	let years = Array.from({ length: 2020 - 1990 + 1 }).map((_, i) => 1990 + i);
 
-		return {
-			label: ksgSector.label,
-			sectors: sectors
-				?.map((sec) => {
-					const crfNameDE =
-						explanations?.find((entry) => entry.crfCode == crf(sec).code).crfNamenDe || '';
+	$: detailLayers = Object.fromEntries(
+		new Map(
+			years.map((year) => {
+				return [
+					year,
+					ksgSectors.map((ksgSector) => {
+						const sectors = selectedSectors?.filter((entry) =>
+							entry.Jahr == year && crf(entry) ? crf(entry).ksgSector == ksgSector.label : false
+						);
+						const total = sectors?.reduce((sum, crf) => sum + crf.Werte, 0);
 
-					return {
-						label: crfNameDE,
-						value: sec.Werte,
-						absolute: sec.Werte / 1000000,
-						relative: sec.Werte / totalSelectedYear
-					};
-				})
-				.sort((secA, secB) => secB.value - secA.value),
-			value: total, // t CO2eq
-			absolute: total / 1000000, // Mt CO2eq
-			relative: total / totalSelectedYear, // % THG / year
-			color: ksgSector.color,
-			colorCode: ksgSector.colorCode
-		};
-	});
+						return {
+							label: ksgSector.label,
+							sectors: sectors
+								?.map((sec) => {
+									const crfNameDE =
+										explanations?.find((entry) => entry.crfCode == crf(sec).code).crfNamenDe || '';
+
+									return {
+										label: crfNameDE,
+										code: crf(sec).code,
+										value: sec.Werte,
+										absolute: sec.Werte / 1000000,
+										relative: sec.Werte / totalSelectedYear
+									};
+								})
+								.sort((secA, secB) => secB.value - secA.value),
+							value: total, // t CO2eq
+							absolute: total / 1000000, // Mt CO2eq
+							relative: total / totalSelectedYear, // % THG / year
+							color: ksgSector.color,
+							colorCode: ksgSector.colorCode
+						};
+					})
+				];
+			})
+		)
+	);
 
 	// dynamic variables
 	let selectedYear = 2020;
 	let selectedGhGas = 'THG';
-	$: selectedSectors = dataset?.filter(
-		(entry) => entry.Jahr == selectedYear && entry.Schadstoff == selectedGhGas
-	);
+	$: selectedSectors = dataset?.filter((entry) => entry.Schadstoff == selectedGhGas);
 
 	// TREE PLOT selections
 	let ksgSelection = null;
@@ -236,7 +245,7 @@
 
 {#if dataset}
 	<div class="" style="padding: 0.5em; background-color: aliceblue;">
-		<div style="position: sticky; top: 64px; background-color: aliceblue;">
+		<div style="position: sticky; top: 64px; background-color: aliceblue; z-index: 1;">
 			<input
 				type="range"
 				min="1990"
@@ -255,24 +264,19 @@
 		</div>
 		<hr />
 
-		<!-- <div class="flex justify-start flex-wrap"> -->
-		<SectorsTreeChart
-			{crfSectors}
-			{ksgSectors}
-			{explanations}
-			{total1990}
-			{totalSelectedYear}
-			{detailLayers}
-			bind:ksgSelection
-			bind:crfSelection
-		/>
-		<!-- <HistoryChart
-				{selectedYear}
-				{detailLayers}
+		<div class="flex justify-start items-center flex-wrap">
+			<SectorsTreeChart
+				{crfSectors}
+				{ksgSectors}
+				{explanations}
+				{total1990}
+				{totalSelectedYear}
+				detailLayers={detailLayers[selectedYear]}
 				bind:ksgSelection
 				bind:crfSelection
-			/> -->
-		<!-- </div> -->
+			/>
+			<HistoryChart {selectedYear} {total1990} {detailLayers} bind:ksgSelection bind:crfSelection />
+		</div>
 
 		<div class="h-4 bg-black" />
 		<LandUseChart data={dataset} {selectedYear} />
