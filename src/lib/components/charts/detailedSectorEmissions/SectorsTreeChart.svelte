@@ -11,87 +11,164 @@
 
 	// TREE MAP
 	// $: console.log(detailLayers, total1990, totalSelectedYear);
+
+	$: ksgTooltip = null;
+	$: crfTooltip = null;
+	$: mouse = null;
 </script>
 
-<div class="detail-emissions-tree-map pt-10">
+<div class="detail-emissions-tree-map relative pt-10">
 	{#if detailLayers}
-		<svg viewBox="0 0 1000 1200" style="max-width: 600px;">
+		<svg
+			viewBox="-100 -100 1200 1400"
+			style="max-width: 600px;"
+			on:mouseleave={() => {
+				ksgTooltip = null;
+				crfTooltip = null;
+				mouse = null;
+			}}
+			on:mousemove={() => {
+				crfSelection = null;
+				ksgSelection = null;
+			}}
+		>
+			<rect
+				x="-100"
+				y="-100"
+				width="1200"
+				height="1400"
+				fill="transparent"
+				class={ksgSelection != null ? 'cursor-zoom-out' : ''}
+			/>
 			{#each detailLayers as ksgSector, s}
-				<g
-					on:mouseover={(ksgSector.hover = true)}
-					on:focus={(ksgSector.hover = true)}
-					opacity={ksgSector.hover ? 0.5 : 1}
-				>
-					{#each ksgSector.sectors as crfSector, c}
-						{@const HEIGHT = (totalSelectedYear / total1990) * 1000}
-						{@const percentSector = ksgSector.value / totalSelectedYear}
-						{@const percentUpToHalf =
-							detailLayers.slice(0, 2).reduce((sum, entry) => sum + entry.value, 0) /
-							totalSelectedYear}
-						{@const percentUpToKSGIndex =
-							detailLayers.slice(0, s).reduce((sum, entry) => sum + entry.value, 0) /
-							totalSelectedYear}
+				{#if ksgSelection == null || s == ksgSelection}
+					<g
+						on:mousemove|stopPropagation={(e) => {
+							if (ksgSelection != null) return;
+							mouse = { x: e.layerX, y: e.layerY };
+							ksgTooltip = ksgSector;
+						}}
+						tab-index="1"
+						on:focus={() => {
+							ksgTooltip = ksgSector;
+						}}
+						on:mousedown|stopPropagation={() => {
+							ksgSelection = s;
+							ksgTooltip = null;
+						}}
+						opacity={ksgTooltip == ksgSector ? 0.8 : 1}
+						class="transition-opacity {ksgSelection == null ? 'cursor-zoom-in' : 'cursor-pointer'}"
+					>
+						{#each ksgSector.sectors as crfSector, c}
+							{@const selected = ksgSelection == s}
+							{@const percentSector = ksgSector.value / totalSelectedYear}
+							{@const percentUpToHalf =
+								detailLayers.slice(0, 2).reduce((sum, entry) => sum + entry.value, 0) /
+								totalSelectedYear}
+							{@const percentUpToKSGIndex =
+								detailLayers.slice(0, s).reduce((sum, entry) => sum + entry.value, 0) /
+								totalSelectedYear}
+							{@const HEIGHT = (totalSelectedYear / total1990) * 1000}
 
-						{@const w =
-							s < 2
+							{@const w = selected
+								? 1000
+								: s < 2
 								? (1000 * percentSector) / percentUpToHalf
 								: (1000 * percentSector) / (1 - percentUpToHalf)}
-						{@const h = s < 2 ? percentUpToHalf * HEIGHT : HEIGHT * (1 - percentUpToHalf)}
-						{@const x =
-							s < 2
+							{@const h = selected
+								? HEIGHT
+								: s < 2
+								? percentUpToHalf * HEIGHT
+								: HEIGHT * (1 - percentUpToHalf)}
+							{@const x = selected
+								? 0
+								: s < 2
 								? (percentUpToKSGIndex / percentUpToHalf) * 1000
 								: ((percentUpToKSGIndex - percentUpToHalf) / (1 - percentUpToHalf)) * 1000}
-						{@const y = s < 2 ? 0 : percentUpToHalf * HEIGHT}
+							{@const y = selected ? 0 : s < 2 ? 0 : percentUpToHalf * HEIGHT}
 
-						{#if c == 0}
-							<rect height={h} width={w} {x} {y} fill={ksgSector.colorCode} />
-						{/if}
+							{#if c == 0}
+								<rect height={h} width={w} {x} {y} fill={ksgSector.colorCode} />
+							{/if}
 
-						{@const percentUpToCRFIndex =
-							ksgSector.sectors.slice(0, c).reduce((sum, entry) => sum + entry.value, 0) /
-							totalSelectedYear}
+							{@const percentUpToCRFIndex =
+								ksgSector.sectors.slice(0, c).reduce((sum, entry) => sum + entry.value, 0) /
+								totalSelectedYear}
 
-						{@const w2 = w}
-						{@const h2 = (h * crfSector.relative) / ksgSector.relative}
-						{@const x2 = x}
-						{@const y2 = y + h * (percentUpToCRFIndex / ksgSector.relative)}
+							{@const w2 = w}
+							{@const h2 = (h * crfSector.relative) / ksgSector.relative}
+							{@const x2 = x}
+							{@const y2 = y + h * (percentUpToCRFIndex / ksgSector.relative)}
 
-						<rect
-							height={h2}
-							width={w2}
-							x={x2}
-							y={y2}
-							fill="transparent"
-							stroke-width="1"
-							stroke="white"
-						/>
-						{#if crfSector.relative > 0.02}
-							<text x={x2 + 20} y={y2 + 20} font-size="15" fill="white">{crfSector.label}</text>
-						{/if}
+							<g
+								on:mousemove={(e) => {
+									if (ksgSelection == null) return;
+									else e.stopPropagation();
 
-						{#if c == ksgSector.sectors.length - 1}
-							<rect
-								{x}
-								{y}
-								height="40"
-								width="230"
-								transform="translate({x + 43}, {y + 15}) rotate(90) translate({-x}, {-y})"
-								fill="rgba(255,255,255,0.3)"
-							/>
-							<text
-								{x}
-								{y}
-								font-size="30"
-								transform="translate({x + 13}, {y + 30}) rotate(90) translate({-x}, {-y})"
-								>{ksgSector.label}</text
+									mouse = { x: e.layerX, y: e.layerY };
+									crfTooltip = crfSector;
+								}}
+								on:focus={(e) => {
+									if (crfSelection != null) return;
+									mouse = { x: e.layerX, y: e.layerY };
+									crfTooltip = crfSector;
+								}}
+								opacity={crfTooltip == crfSector ? 0.8 : 1}
 							>
-							<text x={x + w - 80} y={y + h - 30} font-size="20"
-								>{ksgSector.absolute.toFixed(1).replace('.', ',')} Mt</text
-							>
-						{/if}
-					{/each}
-				</g>
+								<rect
+									height={h2}
+									width={w2}
+									x={x2}
+									y={y2}
+									fill={c == crfSelection ? 'rgba(0,0,0,0.1)' : 'transparent'}
+									stroke-width="1"
+									stroke="rgba(255,255,255,{ksgSelection ? 1 : 0.3})"
+									on:pointerdown|stopPropagation={() => {
+										if (ksgSelection == null) return;
+										crfSelection = c;
+									}}
+								/>
+								{#if ksgSelection != null && h2 > 20}
+									<text x={x2 + 20} y={y2 + 20} font-size="15" fill="white">{crfSector.label}</text>
+								{/if}
+							</g>
+
+							{#if c == ksgSector.sectors.length - 1}
+								<rect
+									{x}
+									{y}
+									height="40"
+									width="230"
+									transform="translate({x + 43}, {y + 15}) rotate(90) translate({-x}, {-y})"
+									fill="rgba(255,255,255,0.3)"
+								/>
+								<text
+									{x}
+									{y}
+									font-size="30"
+									transform="translate({x + 13}, {y + 30}) rotate(90) translate({-x}, {-y})"
+									>{ksgSector.label}</text
+								>
+								<text x={x + w - 80} y={y + h - 30} font-size="20"
+									>{ksgSector.absolute.toFixed(1).replace('.', ',')} Mt</text
+								>
+							{/if}
+						{/each}
+					</g>
+				{/if}
 			{/each}
 		</svg>
+	{/if}
+	{#if ksgTooltip}
+		<div class="absolute bg-white rounded p-4" style="top: {mouse.y}px; left: {mouse.x}px;">
+			<h4><strong>{ksgTooltip.label}</strong></h4>
+			{ksgTooltip.absolute.toFixed(2).replace('.', ',')} Mt CO2eq
+		</div>
+	{/if}
+	{#if crfTooltip}
+		<div class="absolute bg-white rounded p-4" style="top: {mouse.y}px; left: {mouse.x}px;">
+			<h4><strong>{crfTooltip.label}</strong></h4>
+			{crfTooltip.absolute.toFixed(3).replace('.', ',')} Mt CO2eq
+		</div>
 	{/if}
 </div>

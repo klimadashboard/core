@@ -201,14 +201,19 @@
 
 		return {
 			label: ksgSector.label,
-			sectors: sectors?.map((sec) => {
-				return {
-					label: crf(sec).crfName,
-					value: sec.Werte,
-					absolute: sec.Werte / 1000000,
-					relative: sec.Werte / totalSelectedYear
-				};
-			}),
+			sectors: sectors
+				?.map((sec) => {
+					const crfNameDE =
+						explanations?.find((entry) => entry.crfCode == crf(sec).code).crfNamenDe || '';
+
+					return {
+						label: crfNameDE,
+						value: sec.Werte,
+						absolute: sec.Werte / 1000000,
+						relative: sec.Werte / totalSelectedYear
+					};
+				})
+				.sort((secA, secB) => secB.value - secA.value),
 			value: total, // t CO2eq
 			absolute: total / 1000000, // Mt CO2eq
 			relative: total / totalSelectedYear, // % THG / year
@@ -250,6 +255,7 @@
 		</div>
 		<hr />
 
+		<!-- <div class="flex justify-start flex-wrap"> -->
 		<SectorsTreeChart
 			{crfSectors}
 			{ksgSectors}
@@ -260,14 +266,13 @@
 			bind:ksgSelection
 			bind:crfSelection
 		/>
-		<div class="h-1 bg-black" />
 		<!-- <HistoryChart
-			data={dataset}
-			{selectedYear}
-			{detailLayers}
-			bind:ksgSelection
-			bind:crfSelection
-		/> -->
+				{selectedYear}
+				{detailLayers}
+				bind:ksgSelection
+				bind:crfSelection
+			/> -->
+		<!-- </div> -->
 
 		<div class="h-4 bg-black" />
 		<LandUseChart data={dataset} {selectedYear} />
