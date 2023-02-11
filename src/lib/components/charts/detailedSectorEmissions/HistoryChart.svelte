@@ -2,7 +2,9 @@
 	export let data;
 	export let selectedYear;
 	export let selectedGhGas;
-	export let selectedSectorCodes;
+	export let selectedSectors;
+	export let ksgSelection;
+	export let crfSelection;
 
 	$: yearlySectorData = data.filter(
 		(entry) =>
@@ -26,7 +28,7 @@
 		return yearlyList;
 	});
 
-	// TODO: don't simply sum, but stack sectors with respective sector colour
+	// TODO: don't simply sum, but stack sectors (with respective sector colour)
 	$: yearlySectorSum = yearlySectorData.map((list) =>
 		list.reduce((sum, entry) => sum + entry.value, 0)
 	);

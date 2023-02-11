@@ -4,8 +4,8 @@
 	import SectorsTreeChart from './SectorsTreeChart.svelte';
 	import LandUseChart from './LandUseChart.svelte';
 
-	$: dataset = null;
-	$: explanations = null;
+	let dataset = null;
+	let explanations = null;
 
 	Papa.parse('./data/CRF_austria.csv', {
 		download: true,
@@ -30,12 +30,6 @@
 
 	let ksgSectors = [
 		{
-			label: 'Energie',
-			color: 'energy',
-			colorCode: 'rgb(189, 55, 55)',
-			icon: "<svg width='16' height='20' viewBox='0 0 16 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 1V8H15L7 19V12H1L9 1Z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
-		},
-		{
 			label: 'Industrie',
 			color: 'industry',
 			colorCode: 'rgb(55, 57, 73)',
@@ -46,6 +40,12 @@
 			color: 'mobility',
 			colorCode: 'rgb(245, 175, 74)',
 			icon: "<svg width='20' height='15' viewBox='0 0 20 15' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M5 14C6.10457 14 7 13.1046 7 12C7 10.8954 6.10457 10 5 10C3.89543 10 3 10.8954 3 12C3 13.1046 3.89543 14 5 14Z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M15 14C16.1046 14 17 13.1046 17 12C17 10.8954 16.1046 10 15 10C13.8954 10 13 10.8954 13 12C13 13.1046 13.8954 14 15 14Z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3 12H1V6M1 6L3 1H12L16 6M1 6H16M16 6H17C17.5304 6 18.0391 6.21071 18.4142 6.58579C18.7893 6.96086 19 7.46957 19 8V12H17M10 6V1' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M7 12H13' stroke='white' stroke-width='2' stroke-linejoin='round'/></svg>"
+		},
+		{
+			label: 'Energie',
+			color: 'energy',
+			colorCode: 'rgb(189, 55, 55)',
+			icon: "<svg width='16' height='20' viewBox='0 0 16 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 1V8H15L7 19V12H1L9 1Z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		},
 		{
 			label: 'Gebäude',
@@ -74,11 +74,11 @@
 		{
 			label: 'Memo',
 			colorCode: '#ccc,'
-		},
-		{
-			label: 'LULUCF',
-			colorCode: '#e3eef8'
 		}
+		// {
+		// 	label: 'LULUCF',
+		// 	colorCode: '#e3eef8'
+		// }
 	];
 
 	let crfSectors = [
@@ -152,7 +152,7 @@
 		{ code: '2 E', ksgSector: 'Fluorierte Gase', crfName: 'Electronics Industry' },
 		{ code: '2 F', ksgSector: 'Fluorierte Gase', crfName: 'Product Uses as Substitutes for ODS' },
 		// LULUCF
-		{ code: '4', ksgSector: 'LULUCF', crfName: 'Land Use, Land Use Change and Forestry' },
+		// { code: '4', ksgSector: 'LULUCF', crfName: 'Land Use, Land Use Change and Forestry' },
 		// { code: '4', ksgSector: 'LULUCF', crfName: 'Total land use categories' },
 		// Waste
 		// { code: "5", ksgSector: 'Abfall', crfName: "Total Waste", },
@@ -167,13 +167,66 @@
 		{ code: 'Memo 1 D 1 b', ksgSector: 'Memo', crfName: 'International Navigation' }
 	];
 
-	// resolve combined sectors
-	$: sectorMap = {};
+	function crf(data) {
+		return crfSectors.find((crf) => crf.code === data.CRF_Code.toString());
+	}
+
+	$: total1990 = dataset
+		?.filter(
+			(entry) =>
+				entry.Jahr == 1990 && entry.Schadstoff == selectedGhGas && crf(entry) && entry.Werte > 0
+		)
+		.reduce((sum, entry) => sum + entry.Werte, 0);
+
+	$: totalSelectedYear = dataset
+		?.filter(
+			(entry) =>
+				entry.Jahr == selectedYear &&
+				entry.Schadstoff == selectedGhGas &&
+				crf(entry) &&
+				entry.Werte > 0
+		)
+		.reduce((sum, entry) => sum + entry.Werte, 0);
+
+	// compare totals to Klimaschutzbericht
+	// console.log('1990', total1990 / 10 ** 6);
+	// $: console.log('2020', totalSelectedYear / 10 ** 6);
+
+	$: detailLayers = ksgSectors.map((ksgSector) => {
+		const sectors = selectedSectors?.filter((data) => {
+			const crfSector = crf(data);
+			return crfSector ? crfSector.ksgSector == ksgSector.label : false;
+		});
+		const total = sectors?.reduce((sum, crf) => sum + crf.Werte, 0);
+
+		return {
+			label: ksgSector.label,
+			sectors: sectors?.map((sec) => {
+				return {
+					label: crf(sec).crfName,
+					value: sec.Werte,
+					absolute: sec.Werte / 1000000,
+					relative: sec.Werte / totalSelectedYear
+				};
+			}),
+			value: total, // t CO2eq
+			absolute: total / 1000000, // Mt CO2eq
+			relative: total / totalSelectedYear, // % THG / year
+			color: ksgSector.color,
+			colorCode: ksgSector.colorCode
+		};
+	});
 
 	// dynamic variables
 	let selectedYear = 2020;
 	let selectedGhGas = 'THG';
-	let selectedSectorCodes = crfSectors.map((s) => s.code);
+	$: selectedSectors = dataset?.filter(
+		(entry) => entry.Jahr == selectedYear && entry.Schadstoff == selectedGhGas
+	);
+
+	// TREE PLOT selections
+	let ksgSelection = null;
+	let crfSelection = null;
 </script>
 
 {#if dataset}
@@ -198,17 +251,23 @@
 		<hr />
 
 		<SectorsTreeChart
-			data={dataset}
-			{explanations}
-			{selectedYear}
-			{selectedGhGas}
-			bind:sectorMap
-			bind:selectedSectorCodes
 			{crfSectors}
 			{ksgSectors}
+			{explanations}
+			{total1990}
+			{totalSelectedYear}
+			{detailLayers}
+			bind:ksgSelection
+			bind:crfSelection
 		/>
 		<div class="h-1 bg-black" />
-		<HistoryChart data={dataset} {selectedYear} {selectedGhGas} {selectedSectorCodes} />
+		<!-- <HistoryChart
+			data={dataset}
+			{selectedYear}
+			{detailLayers}
+			bind:ksgSelection
+			bind:crfSelection
+		/> -->
 
 		<div class="h-4 bg-black" />
 		<LandUseChart data={dataset} {selectedYear} />
