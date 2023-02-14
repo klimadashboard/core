@@ -21,10 +21,14 @@
 <main class="mb-24">
 	<section
 		id="page-header"
-		class="bg-gradient-green shadow-inner text-white pt-16 pb-8 mb-8"
+		class="bg-gradient-green shadow-inner text-white pt-16 pb-8 mb-8 relative"
 		style={data.cover_styles}
 	>
-		<div class="container">
+		{#if data.cover_background}
+			<img src="https://klimadashboard.org/@/file/{data.cover_background}"
+			class="object-cover absolute inset-0 w-full h-full" />
+		{/if}
+		<div class="container z-10 relative">
 			<div class="max-w-2xl mx-auto break-words">
 				<div class="flex gap-2 datas-center">
 					<span class="uppercase font-semibold tracking-wider">{data.eyebrow}</span>
