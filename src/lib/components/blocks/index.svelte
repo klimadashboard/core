@@ -46,7 +46,7 @@
 	];
 </script>
 
-<div>
+<div itemscope itemtype="https://schema.org/FAQPage">
 	{#each content.filter((d) => !d.isHidden) as block}
 		<svelte:component this={blocks.find((d) => d.type == block.type).component} {block} />
 	{/each}

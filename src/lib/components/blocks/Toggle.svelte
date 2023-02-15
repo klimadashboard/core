@@ -3,11 +3,15 @@
 	export let block;
 </script>
 
-<details class="max-w-2xl mx-auto my-4 px-4 md:px-0">
-	<summary class="text-xl border-b">{block.content.label}</summary>
+<details class="max-w-2xl mx-auto my-4 px-4 md:px-0" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+	<summary class="text-xl border-b" itemprop="name">{block.content.label}</summary>
+	<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
 	{#if block.content.blocks}
+		<div itemprop="text">
 		<Blocks content={JSON.parse(block.content.blocks)} />
+		</div>
 	{/if}
+	</div>
 </details>
 
 <style>
