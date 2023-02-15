@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.title} – Klimadashboard</title>
+	<title>{data.title} – Klimadashboard Österreich</title>
 	<meta name="description" content={data.meta_description} />
 </svelte:head>
 
