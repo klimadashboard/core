@@ -5,7 +5,7 @@
 
 <Header />
 
-<main class="min-h-screen pt-16">
+<main class="min-h-screen pt-16" itemscope itemtype="https://schema.org/FAQPage">
 	<slot />
 </main>
 
