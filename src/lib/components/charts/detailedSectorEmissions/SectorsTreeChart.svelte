@@ -1,11 +1,9 @@
 <script>
-	// export let data;
 	export let explanations;
-	// export let ksgSectors;
-	// export let crfSectors;
 	export let total1990;
 	export let totalSelectedYear;
-	export let detailLayers;
+	export let sectorlyData;
+	export let selectedYear;
 	export let ksgSelection;
 	export let crfSelection;
 
@@ -15,6 +13,10 @@
 	$: ksgTooltip = null;
 	$: crfTooltip = null;
 	$: mouse = null;
+	$: extensiveList = false;
+
+	$: _y = selectedYear - 1990;
+	$: HEIGHT = (totalSelectedYear / total1990) * 1000;
 
 	const updateDescription = (crfCode) => {
 		if (crfTooltip)
@@ -23,29 +25,36 @@
 	};
 </script>
 
-<div class="detail-emissions-tree-map relative pt-10 w-full max-w-2xl">
-	{#if detailLayers}
+{#if ksgSelection != null}
+	<button
+		class="absolute top-0 left-0"
+		on:mousedown={() => {
+			crfSelection = null;
+			ksgSelection = null;
+			extensiveList = false;
+		}}>Zurück zur Übersicht</button
+	>
+{/if}
+<div class="detail-emissions-tree-map relative basis-1/2 max-w-2xl">
+	{#if sectorlyData}
 		<svg
-			viewBox="-100 -100 1200 1400"
+			viewBox="0 0 1000 {HEIGHT}"
 			on:mouseleave={() => {
 				ksgTooltip = null;
 				crfTooltip = null;
 				mouse = null;
 			}}
-			on:mousedown={() => {
-				crfSelection = null;
-				ksgSelection = null;
-			}}
 		>
-			<rect
+			<!-- <rect
 				x="-100"
 				y="-100"
 				width="1200"
 				height="1400"
 				fill="transparent"
 				class={ksgSelection != null ? 'cursor-zoom-out' : ''}
-			/>
-			{#each detailLayers as ksgSector, s}
+			/> -->
+
+			{#each sectorlyData as ksgSector, s}
 				{#if ksgSelection == null || s == ksgSelection}
 					<g
 						on:mousemove|stopPropagation={(e) => {
@@ -62,18 +71,17 @@
 							ksgTooltip = null;
 						}}
 						opacity={ksgTooltip == ksgSector ? 0.8 : 1}
-						class="transition-opacity {ksgSelection == null ? 'cursor-zoom-in' : 'cursor-pointer'}"
+						class="transition-opacity cursor-pointer"
 					>
 						{#each ksgSector.sectors as crfSector, c}
 							{@const selected = ksgSelection == s}
-							{@const percentSector = ksgSector.value / totalSelectedYear}
+							{@const percentSector = ksgSector.value[_y] / totalSelectedYear}
 							{@const percentUpToHalf =
-								detailLayers.slice(0, 2).reduce((sum, entry) => sum + entry.value, 0) /
+								sectorlyData.slice(0, 2).reduce((sum, entry) => sum + entry.value[_y], 0) /
 								totalSelectedYear}
 							{@const percentUpToKSGIndex =
-								detailLayers.slice(0, s).reduce((sum, entry) => sum + entry.value, 0) /
+								sectorlyData.slice(0, s).reduce((sum, entry) => sum + entry.value[_y], 0) /
 								totalSelectedYear}
-							{@const HEIGHT = (totalSelectedYear / total1990) * 1000}
 
 							{@const w = selected
 								? 1000
@@ -92,18 +100,31 @@
 								: ((percentUpToKSGIndex - percentUpToHalf) / (1 - percentUpToHalf)) * 1000}
 							{@const y = selected ? 0 : s < 2 ? 0 : percentUpToHalf * HEIGHT}
 
+							<!-- {@const combinedIndices = ksgSector.sectors.reduce(
+								(combined, crfEntry, cIndex) => {
+									const hh = h * crfEntry.relative[_y];
+									if (combined.height + hh > 40) return combined;
+									console.log('also include to COMBINED', crfEntry.label, {
+										index: cIndex,
+										height: combined.height + hh
+									});
+									return { index: cIndex, height: combined.height + hh };
+								},
+								{ index: 0, height: 0 }
+							)} -->
+
 							{#if c == 0}
 								<rect height={h} width={w} {x} {y} fill={ksgSector.colorCode} />
 							{/if}
 
 							{@const percentUpToCRFIndex =
-								ksgSector.sectors.slice(0, c).reduce((sum, entry) => sum + entry.value, 0) /
+								ksgSector.sectors.slice(0, c).reduce((sum, entry) => sum + entry.value[_y], 0) /
 								totalSelectedYear}
 
 							{@const w2 = w}
-							{@const h2 = (h * crfSector.relative) / ksgSector.relative}
+							{@const h2 = (h * crfSector.relative[_y]) / ksgSector.relative[_y]}
 							{@const x2 = x}
-							{@const y2 = y + h * (percentUpToCRFIndex / ksgSector.relative)}
+							{@const y2 = y + h * (percentUpToCRFIndex / ksgSector.relative[_y])}
 
 							<g
 								on:mousemove={(e) => {
@@ -132,11 +153,17 @@
 									stroke="rgba(255,255,255,{ksgSelection ? 1 : 0.3})"
 									on:pointerdown|stopPropagation={() => {
 										if (ksgSelection == null) return;
+										if (h2 < 100) {
+											extensiveList = true;
+											return;
+										}
 										crfSelection = c;
 									}}
 								/>
 								{#if ksgSelection != null && h2 > 20}
-									<text x={x2 + 20} y={y2 + 20} font-size="20" fill="white">{crfSector.label}</text>
+									<text x={x2 + 20} y={y2 + 20} font-size="20" fill="white"
+										>{crfSector.label} | {crfSector.absolute[_y].toFixed(2)}Mt CO2eq</text
+									>
 								{/if}
 							</g>
 
@@ -156,9 +183,11 @@
 									transform="translate({x + 13}, {y + 30}) rotate(90) translate({-x}, {-y})"
 									>{ksgSector.label}</text
 								>
-								<text x={x + w - 80} y={y + h - 30} font-size="20"
-									>{ksgSector.absolute.toFixed(1).replace('.', ',')} Mt</text
-								>
+								{#if w > 80}
+									<text x={x + w - 90} y={y + h - 30} font-size="30"
+										>{ksgSector.absolute[_y].toFixed(1).replace('.', ',')}Mt</text
+									>
+								{/if}
 							{/if}
 						{/each}
 					</g>
@@ -166,10 +195,31 @@
 			{/each}
 		</svg>
 	{/if}
+	{#if extensiveList && ksgSelection != null}
+		<div
+			class="absolute rounded p-4 top-0 left-0 h-full w-full overflow-scroll"
+			style="background-color: {sectorlyData[ksgSelection].colorCode};"
+		>
+			<ul class="divide-y">
+				{#each sectorlyData[ksgSelection].sectors as crfSector, c}
+					<li
+						class="mb-1 text-white grid grid-cols-2"
+						on:pointerdown|stopPropagation={() => {
+							crfSelection = c;
+							extensiveList = false;
+						}}
+					>
+						<span>{crfSector.absolute[_y].toFixed(2)}Mt CO2eq</span>
+						<strong>{crfSector.label}</strong>
+					</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
 	{#if ksgTooltip}
 		<div class="absolute bg-white rounded p-4" style="top: {mouse.y}px; left: {mouse.x}px;">
 			<h4><strong>{ksgTooltip.label}</strong></h4>
-			{ksgTooltip.absolute.toFixed(2).replace('.', ',')} Mt CO2eq
+			{ksgTooltip.absolute[_y].toFixed(2).replace('.', ',')} Mt CO2eq
 		</div>
 	{/if}
 	{#if crfTooltip}
@@ -178,7 +228,7 @@
 			style="top: {mouse.y}px; left: {mouse.x}px;"
 		>
 			<h4><strong>{crfTooltip.label}</strong></h4>
-			<strong>{crfTooltip.absolute.toFixed(3).replace('.', ',')} Mt CO2eq</strong>
+			<strong>{crfTooltip.absolute[_y].toFixed(3).replace('.', ',')} Mt CO2eq</strong>
 			<p>{crfTooltip.explanation}</p>
 		</div>
 	{/if}

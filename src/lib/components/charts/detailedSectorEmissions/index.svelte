@@ -7,13 +7,16 @@
 	let dataset = null;
 	let explanations = null;
 
-	Papa.parse('./data/CRF_austria.csv', {
+	let years = Array.from({ length: 2020 - 1990 + 1 }).map((_, i) => 1990 + i);
+
+	Papa.parse('./data/emissions_crf_AT.csv', {
 		download: true,
 		dynamicTyping: true,
 		skipEmptyLines: true,
 		header: true,
 		complete: function (results) {
 			dataset = results.data;
+			console.log(dataset);
 		}
 	});
 	Papa.parse('./data/CRF_en_de_expl.csv', {
@@ -23,6 +26,8 @@
 		header: true,
 		complete: function (results) {
 			explanations = results.data;
+
+			sectorlyDataWithMemo = getSectorlyDataWithMemo();
 		}
 	});
 
@@ -91,11 +96,7 @@
 		// { code: "1 A 1", ksgSector: '', crfName: "Energy Industries", },
 		{ code: '1 A 1 a', ksgSector: 'Energie', crfName: 'Public Electricity and Heat Production' },
 		{ code: '1 A 1 b', ksgSector: 'Energie', crfName: 'Petroleum Refining' },
-		{
-			code: '1 A 1 c',
-			ksgSector: 'Energie',
-			crfName: 'Manufacture of Solid Fuels and Other Energy Industries'
-		},
+		{ code: '1 A 1 c', ksgSector: 'Energie', crfName: 'Manufacture of Solid Fuels and Other' },
 		{ code: '1 A 3 e 1', ksgSector: 'Energie', crfName: 'Pipeline Transport' },
 		// { code: "1 B", ksgSector: '', crfName: "Fugitive Emissions from Fuels", },
 		{ code: '1 B 1', ksgSector: 'Energie', crfName: 'Solid Fuels' },
@@ -114,11 +115,7 @@
 		{ code: '2 A', ksgSector: 'Industrie', crfName: 'Mineral Industry' },
 		{ code: '2 B', ksgSector: 'Industrie', crfName: 'Chemical Industry' },
 		{ code: '2 C', ksgSector: 'Industrie', crfName: 'Metal Industry' },
-		{
-			code: '2 D',
-			ksgSector: 'Industrie',
-			crfName: 'Non-Energy Products from Fuels and Solvent Use'
-		},
+		{ code: '2 D', ksgSector: 'Industrie', crfName: 'Non-Energy Products from Fuels, Solvent Use' },
 		{ code: '2 G', ksgSector: 'Industrie', crfName: 'Other Product Manufacture and Use' },
 		// Transport
 		// { code: "1 A 3", ksgSector: 'Mobilität', crfName: "Transport", },
@@ -176,6 +173,7 @@
 			(entry) =>
 				entry.Jahr == 1990 && entry.Schadstoff == selectedGhGas && crf(entry) && entry.Werte > 0
 		)
+		// .filter((entry) => (crf(entry).ksgSector == 'Memo' ? showFlightEmissions : true))
 		.reduce((sum, entry) => sum + entry.Werte, 0);
 
 	$: totalSelectedYear = dataset
@@ -186,52 +184,75 @@
 				crf(entry) &&
 				entry.Werte > 0
 		)
+		.filter((entry) => (crf(entry).ksgSector == 'Memo' ? showFlightEmissions : true))
 		.reduce((sum, entry) => sum + entry.Werte, 0);
 
-	// compare totals to Klimaschutzbericht
+	// TODO: compare totals to Klimaschutzbericht
 	// console.log('1990', total1990 / 10 ** 6);
 	// $: console.log('2020', totalSelectedYear / 10 ** 6);
 
-	let years = Array.from({ length: 2020 - 1990 + 1 }).map((_, i) => 1990 + i);
+	let sectorlyDataWithMemo = null;
+	const getSectorlyDataWithMemo = () =>
+		ksgSectors.map((ksgSector) => {
+			let total = (year, ksgSector) => {
+				const sectors = selectedSectors?.filter(
+					(entry) =>
+						entry.Jahr == year && (crf(entry) ? crf(entry).ksgSector == ksgSector.label : false)
+				);
+				return sectors?.reduce((sum, crf) => sum + crf.Werte, 0);
+			};
 
-	$: detailLayers = Object.fromEntries(
-		new Map(
-			years.map((year) => {
-				return [
-					year,
-					ksgSectors.map((ksgSector) => {
-						const sectors = selectedSectors?.filter((entry) =>
-							entry.Jahr == year && crf(entry) ? crf(entry).ksgSector == ksgSector.label : false
-						);
-						const total = sectors?.reduce((sum, crf) => sum + crf.Werte, 0);
+			const sectors = selectedSectors
+				?.filter(
+					(entry) =>
+						entry.Jahr == 2020 && (crf(entry) ? crf(entry).ksgSector == ksgSector.label : false)
+				)
+				.sort((a, b) => a.Werte - b.Werte);
+
+			return {
+				label: ksgSector.label,
+				sectors: sectors
+					?.map((sec) => {
+						const crfNameDE =
+							explanations?.find((entry) => entry.crfCode == crf(sec).code).crfNamenDe || '';
 
 						return {
-							label: ksgSector.label,
-							sectors: sectors
-								?.map((sec) => {
-									const crfNameDE =
-										explanations?.find((entry) => entry.crfCode == crf(sec).code).crfNamenDe || '';
-
-									return {
-										label: crfNameDE,
-										code: crf(sec).code,
-										value: sec.Werte,
-										absolute: sec.Werte / 1000000,
-										relative: sec.Werte / totalSelectedYear
-									};
-								})
-								.sort((secA, secB) => secB.value - secA.value),
-							value: total, // t CO2eq
-							absolute: total / 1000000, // Mt CO2eq
-							relative: total / totalSelectedYear, // % THG / year
-							color: ksgSector.color,
-							colorCode: ksgSector.colorCode
+							label: crfNameDE,
+							code: crf(sec).code,
+							value: years.map(
+								(year) =>
+									selectedSectors?.find(
+										(entry) => entry.CRF_Code == crf(sec).code && entry.Jahr == year
+									)?.Werte
+							),
+							absolute: years.map(
+								(year) =>
+									selectedSectors?.find(
+										(entry) => entry.CRF_Code == crf(sec).code && entry.Jahr == year
+									)?.Werte / 1000000
+							),
+							relative: years.map(
+								(year) =>
+									selectedSectors?.find(
+										(entry) => entry.CRF_Code == crf(sec).code && entry.Jahr == year
+									)?.Werte / totalSelectedYear
+							)
 						};
 					})
-				];
-			})
-		)
+					.sort((secA, secB) => secB.value - secA.value),
+				value: years.map((year) => total(year, ksgSector)), // t CO2eq
+				absolute: years.map((year) => total(year, ksgSector) / 1000000), // Mt CO2eq
+				relative: years.map((year) => total(year, ksgSector) / totalSelectedYear), // % THG / year
+				color: ksgSector.color,
+				colorCode: ksgSector.colorCode
+			};
+		});
+
+	$: sectorlyData = sectorlyDataWithMemo?.filter((sector) =>
+		sector.label == 'Memo' ? showFlightEmissions : true
 	);
+
+	$: console.log('sectorlyData', sectorlyData);
 
 	// dynamic variables
 	let selectedYear = 2020;
@@ -241,10 +262,13 @@
 	// TREE PLOT selections
 	let ksgSelection = null;
 	let crfSelection = null;
+
+	let freezeYAxis = false;
+	let showFlightEmissions = true;
 </script>
 
 {#if dataset}
-	<div class="" style="padding: 0.5em; background-color: aliceblue;">
+	<div class="">
 		<div style="position: sticky; top: 64px; background-color: aliceblue; z-index: 1;">
 			<input
 				type="range"
@@ -261,24 +285,43 @@
 					<option value={ghg}>{ghg}</option>
 				{/each}
 			</select>
+			<br />
+			<!-- <input type="checkbox" bind:checked={freezeYAxis} />
+			<span>Y-Achse fixieren?</span> 
+			<br />
+			-->
+			<input type="checkbox" bind:checked={showFlightEmissions} />
+			<span>Internationaler Schiffs- und Flugverkehr (MEMO)</span>
 		</div>
+
 		<hr />
 
-		<div class="flex justify-start items-center flex-wrap">
+		<div class="relative pt-10 flex justify-center flex-wrap">
 			<SectorsTreeChart
 				{crfSectors}
 				{ksgSectors}
 				{explanations}
 				{total1990}
 				{totalSelectedYear}
-				detailLayers={detailLayers[selectedYear]}
+				{sectorlyData}
+				{selectedYear}
 				bind:ksgSelection
 				bind:crfSelection
 			/>
-			<HistoryChart {selectedYear} {total1990} {detailLayers} bind:ksgSelection bind:crfSelection />
+			<!--
+				detailLayers={detailLayers[selectedYear]}
+			-->
+			<HistoryChart
+				{years}
+				{selectedYear}
+				{total1990}
+				{sectorlyData}
+				bind:ksgSelection
+				bind:crfSelection
+			/>
 		</div>
 
-		<div class="h-4 bg-black" />
-		<LandUseChart data={dataset} {selectedYear} />
+		<!-- <div class="h-4 bg-black" /> -->
+		<!-- <LandUseChart data={dataset} {selectedYear} /> -->
 	</div>
 {/if}
