@@ -6,6 +6,7 @@
 	export let selectedYear;
 	export let ksgSelection;
 	export let crfSelection;
+	export let extensiveList;
 
 	// TREE MAP
 	// $: console.log(detailLayers, total1990, totalSelectedYear);
@@ -13,7 +14,6 @@
 	$: ksgTooltip = null;
 	$: crfTooltip = null;
 	$: mouse = null;
-	$: extensiveList = false;
 
 	$: _y = selectedYear - 1990;
 	$: HEIGHT = (totalSelectedYear / total1990) * 1000;
@@ -25,20 +25,19 @@
 	};
 </script>
 
-{#if ksgSelection != null}
-	<button
-		class="absolute top-0 left-0"
-		on:mousedown={() => {
-			crfSelection = null;
-			ksgSelection = null;
-			extensiveList = false;
-		}}>Zurück zur Übersicht</button
-	>
-{/if}
-<div class="detail-emissions-tree-map relative basis-1/2 max-w-2xl">
+<div class="detail-emissions-tree-map relative basis-[400px]">
+	<input
+		type="range"
+		min="1990"
+		max="2020"
+		bind:value={selectedYear}
+		name="emission-detail-year"
+		id="emission-detail-year"
+	/><label for="emission-detail-year">Jahr: {selectedYear}</label><br />
+
 	{#if sectorlyData}
 		<svg
-			viewBox="0 0 1000 {HEIGHT}"
+			viewBox="-150 0 1150 {HEIGHT}"
 			on:mouseleave={() => {
 				ksgTooltip = null;
 				crfTooltip = null;
@@ -55,6 +54,23 @@
 			/> -->
 
 			{#each sectorlyData as ksgSector, s}
+				{@const cumulativePercent = sectorlyData
+					.slice(0, s)
+					.reduce((sum, sec) => sum + sec.relative[_y], 0)}
+				{@const sectorHeight = ksgSector.relative[_y] * HEIGHT}
+				<rect
+					x="-140"
+					y={cumulativePercent * HEIGHT}
+					width="80"
+					height={sectorHeight}
+					fill={ksgSector.colorCode}
+					opacity={ksgSelection != null && s != ksgSelection ? 0.2 : 1}
+				/>
+				{#if sectorHeight > 30}
+					<g transform="translate(-110, {cumulativePercent * HEIGHT - sectorHeight / 2 - 10})">
+						{@html ksgSector.icon}
+					</g>
+				{/if}
 				{#if ksgSelection == null || s == ksgSelection}
 					<g
 						on:mousemove|stopPropagation={(e) => {
@@ -216,13 +232,13 @@
 			</ul>
 		</div>
 	{/if}
-	{#if ksgTooltip}
+	<!-- {#if ksgTooltip}
 		<div class="absolute bg-white rounded p-4" style="top: {mouse.y}px; left: {mouse.x}px;">
 			<h4><strong>{ksgTooltip.label}</strong></h4>
 			{ksgTooltip.absolute[_y].toFixed(2).replace('.', ',')} Mt CO2eq
 		</div>
-	{/if}
-	{#if crfTooltip}
+	{/if} -->
+	<!-- {#if crfTooltip}
 		<div
 			class="absolute bg-white rounded p-4 max-w-prose"
 			style="top: {mouse.y}px; left: {mouse.x}px;"
@@ -231,5 +247,5 @@
 			<strong>{crfTooltip.absolute[_y].toFixed(3).replace('.', ',')} Mt CO2eq</strong>
 			<p>{crfTooltip.explanation}</p>
 		</div>
-	{/if}
+	{/if} -->
 </div>
