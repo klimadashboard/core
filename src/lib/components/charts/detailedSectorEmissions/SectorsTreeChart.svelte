@@ -1,12 +1,11 @@
 <script>
 	export let explanations;
-	export let total1990;
-	export let totalSelectedYear;
 	export let sectorlyData;
 	export let selectedYear;
 	export let ksgSelection;
 	export let crfSelection;
 	export let extensiveList;
+	export let years;
 
 	// TREE MAP
 	// $: console.log(detailLayers, total1990, totalSelectedYear);
@@ -16,7 +15,19 @@
 	$: mouse = null;
 
 	$: _y = selectedYear - 1990;
-	$: HEIGHT = (totalSelectedYear / total1990) * 1000;
+	$: totalSelectedYear = sectorlyData.reduce((sum, sec) => sum + sec.value[_y], 0);
+	console.log(totalSelectedYear);
+
+	$: [maxTotalYear, maxTotal] = years
+		.map((y, yi) => [y, sectorlyData.reduce((sum, sec) => sum + sec.value[yi], 0)])
+		.reduce(
+			(max, entry) => {
+				return max[1] < entry[1] ? entry : max;
+			},
+			[1990, 0]
+		);
+	// $: console.log(maxTotalYear, maxTotal);
+	$: HEIGHT = (totalSelectedYear / maxTotal) * 1150;
 
 	const updateDescription = (crfCode) => {
 		if (crfTooltip)
@@ -25,7 +36,7 @@
 	};
 </script>
 
-<div class="detail-emissions-tree-map relative basis-[400px]">
+<div class="detail-emissions-tree-map relative basis-[500px]" style="background: rgba(0,0,0,0)">
 	<input
 		type="range"
 		min="1990"
@@ -37,23 +48,40 @@
 
 	{#if sectorlyData}
 		<svg
-			viewBox="-150 0 1150 {HEIGHT}"
+			viewBox="-150 0 1150 1150"
 			on:mouseleave={() => {
 				ksgTooltip = null;
 				crfTooltip = null;
 				mouse = null;
 			}}
 		>
-			<!-- <rect
-				x="-100"
-				y="-100"
-				width="1200"
-				height="1400"
-				fill="transparent"
-				class={ksgSelection != null ? 'cursor-zoom-out' : ''}
-			/> -->
+			{#if ksgSelection == null}
+				<rect
+					x="-140"
+					y="2"
+					width="80"
+					height="1146"
+					fill="transparent"
+					stroke="#ccc"
+					stroke-dasharray="20"
+				/>
+
+				<rect
+					x="2"
+					y="2"
+					width="996"
+					height="1146"
+					fill="transparent"
+					stroke="#ccc"
+					stroke-dasharray="20"
+				/>
+				<text x="970" y="1110" text-anchor="end" font-size="40" fill="#ccc"
+					>Maximum {maxTotalYear}: {(maxTotal / 1000000).toFixed(1).replace('.', ',')} Mt CO2eq</text
+				>
+			{/if}
 
 			{#each sectorlyData as ksgSector, s}
+				<!-- 100% Overview bar -->
 				{@const cumulativePercent = sectorlyData
 					.slice(0, s)
 					.reduce((sum, sec) => sum + sec.relative[_y], 0)}
@@ -67,10 +95,11 @@
 					opacity={ksgSelection != null && s != ksgSelection ? 0.2 : 1}
 				/>
 				{#if sectorHeight > 30}
-					<g transform="translate(-110, {cumulativePercent * HEIGHT - sectorHeight / 2 - 10})">
+					<g transform="translate(-110, {cumulativePercent * HEIGHT + sectorHeight / 2 - 10})">
 						{@html ksgSector.icon}
 					</g>
 				{/if}
+
 				{#if ksgSelection == null || s == ksgSelection}
 					<g
 						on:mousemove|stopPropagation={(e) => {
@@ -177,7 +206,7 @@
 									}}
 								/>
 								{#if ksgSelection != null && h2 > 20}
-									<text x={x2 + 20} y={y2 + 20} font-size="20" fill="white"
+									<text x={x2 + 20} y={y2 + 30} font-size="30" fill="white"
 										>{crfSector.label} | {crfSector.absolute[_y].toFixed(2)}Mt CO2eq</text
 									>
 								{/if}

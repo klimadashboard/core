@@ -1,25 +1,23 @@
 <script>
 	import ChartAxes from './ChartAxes.svelte';
+	import ChartLegend from './ChartLegend.svelte';
 
 	import { scaleLinear } from 'd3-scale';
 	export let selectedYear;
-	export let total1990;
 	export let ksgSelection;
 	export let crfSelection;
 	export let years;
 	export let sectorlyData;
 
-	let chartHeight = 500;
+	let chartHeight = 800;
 	let chartWidth = 1000;
-	$: baseline = chartHeight - 60;
-	$: console.log(chartWidth, chartHeight);
+	$: baseline = chartHeight - 100;
+	$: startline = 100;
+	$: dx = (chartWidth - startline) / years.length;
 
-	$: yAxisScale = ksgSelection == null ? (total1990 * 1.5) / 1000000 : (total1990 * 1.5) / 1000000;
 	$: yAxisMax = years.reduce((max, y, yi) => Math.max(max, ksgSectorSum(0, yi)), 0);
 
-	$: yScale = scaleLinear()
-		.domain([0, yAxisMax * 1.3])
-		.range([0, chartHeight]);
+	$: yScale = scaleLinear().domain([0, yAxisMax]).range([0, baseline]);
 
 	$: ksgTooltip = null;
 	$: crfTooltip = null;
@@ -32,34 +30,54 @@
 			.slice(0, sectorlyData.length - s)
 			.reduce((sum, entry) => sum + entry.absolute[yi], 0);
 	};
+
+	$: highlightedYearIndex = null;
+	$: legendCategories = ksgSelection == null ? sectorlyData : sectorlyData[ksgSelection].sectors;
 </script>
 
 {#if sectorlyData}
-	<div class="basis-[400px]" style="background: rgba(0,0,0,0.1)">
-		<svg viewBox="0 0 {chartWidth} {chartHeight}">
-			<!-- <ChartAxes
-				width={1000}
-				{height}
-				xAxisInterval={5}
-				unit={'Mio t CO2eq'}
-				xAxisValues={years}
-				yAxisMax={100}
-			/> -->
+	<div class="basis-[400px] grow max-w-[70vh]" style="background: rgba(0,0,0,0)">
+		<ChartLegend
+			categories={legendCategories}
+			{highlightedYearIndex}
+			bind:ksgSelection
+			bind:crfSelection
+		/>
+
+		<svg
+			viewBox="0 0 {chartWidth} {chartHeight}"
+			on:mousemove|capture={function (e) {
+				mouse = {
+					x: ((e.layerX - this.getBoundingClientRect().left) / this.clientWidth) * chartWidth,
+					y: ((e.layerY - this.getBoundingClientRect().top) / this.clientHeight) * chartHeight
+				};
+				// console.log(e.layerX, 'offset', this.clientWidth, chartWidth);
+
+				highlightedYearIndex = Math.min(
+					years.length - 1,
+					Math.max(0, Math.round((mouse.x - startline / 2) / dx))
+				);
+			}}
+			on:mouseleave={(e) => {
+				mouse = null;
+				highlightedYearIndex = null;
+			}}
+		>
 			{#each [...sectorlyData].reverse() as ksgSector, s}
 				{#if ksgSelection == null || ksgSelection == sectorlyData.length - 1 - s}
 					{@const path = ksgSector.absolute
 						.map((year, yi) => {
 							const sum = ksgSectorSum(s, yi);
-							const x = 15 + yi * 30;
+							const x = startline + yi * dx;
 							const y = yScale(sum);
 							return [yi == 0 ? 'M' : 'L', x, baseline - y];
 						})
 						.concat([
 							'L',
-							15 + (ksgSector.absolute.length - 1) * 30,
+							startline + (ksgSector.absolute.length - 1) * dx,
 							baseline,
 							'L',
-							15,
+							startline,
 							baseline,
 							'Z'
 						])
@@ -72,7 +90,6 @@
 							: ksgSector.colorCode}"
 						on:mousemove={(e) => {
 							if (ksgSelection != null) return;
-							mouse = { x: e.layerX, y: e.layerY };
 							ksgTooltip = ksgSector;
 						}}
 						on:mousedown|stopPropagation={() => {
@@ -92,16 +109,16 @@
 										ksgSector.sectors
 											.slice(0, ksgSector.sectors.length - c - 1)
 											.reduce((sum, entry) => sum + entry.absolute[yi], 0);
-									const x = 15 + yi * 30;
+									const x = startline + yi * dx;
 									const y = yScale(sum);
 									return [yi ? 'L' : 'M', x, baseline - y];
 								})
 								.concat([
 									'L',
-									15 + (ksgSector.absolute.length - 1) * 30,
+									startline + (ksgSector.absolute.length - 1) * dx,
 									baseline,
 									'L',
-									15,
+									startline,
 									baseline,
 									'Z'
 								])
@@ -116,12 +133,45 @@
 						{@const sum = sectorlyData
 							.slice(0, sectorlyData.length - s)
 							.reduce((sum, entry) => sum + entry.absolute[yi], 0)}
-						{@const x = 15 + yi * 30}
+						{@const x = startline + yi * dx}
 						{@const y = yScale(sum)}
 						<circle r="3" cx={x} cy={baseline - y} />
 					{/each} -->
 				{/if}
 			{/each}
+
+			<ChartAxes
+				width={chartWidth}
+				height={chartHeight}
+				{baseline}
+				{startline}
+				{dx}
+				xAxisInterval={5}
+				unit={'Mio t CO2eq'}
+				xAxisValues={years}
+				{yAxisMax}
+			/>
+
+			{#if highlightedYearIndex != null}
+				<line
+					x1={startline + highlightedYearIndex * dx}
+					x2={startline + highlightedYearIndex * dx}
+					y1="0"
+					y2={baseline}
+					stroke="red"
+					stroke-width="3"
+				/>
+			{/if}
+			{#if selectedYear != null}
+				<rect
+					x={startline + (selectedYear - 1990) * dx - 10}
+					y="0}"
+					width="20"
+					height={baseline}
+					fill="none"
+					stroke="black"
+				/>
+			{/if}
 		</svg>
 		<!-- {#if ksgTooltip}
 			<div class="absolute bg-white rounded p-4" style="top: {mouse.y}px; left: {mouse.x}px;">

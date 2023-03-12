@@ -188,8 +188,10 @@
 	// $: console.log('2020', totalSelectedYear / 10 ** 6);
 
 	let sectorlyDataWithMemo = null;
-	const getSectorlyDataWithMemo = () =>
-		ksgSectors.map((ksgSector) => {
+	const getSectorlyDataWithMemo = () => {
+		if (dataset == null) return null;
+
+		return ksgSectors.map((ksgSector) => {
 			let total = (year, ksgSector) => {
 				const sectors = selectedSectors?.filter(
 					(entry) =>
@@ -212,9 +214,13 @@
 						const crfNameDE =
 							explanations?.find((entry) => entry.crfCode == crf(sec).code).crfNamenDe || '';
 
+						console.log('calculating sector for', selectedGhGas);
 						return {
 							label: crfNameDE,
 							code: crf(sec).code,
+							color: ksgSector.color,
+							colorCode: ksgSector.colorCode,
+							colorCodeHighlight: ksgSector.colorCodeHighlighted,
 							value: years.map(
 								(year) =>
 									selectedSectors?.find(
@@ -231,43 +237,36 @@
 								(year) =>
 									selectedSectors?.find(
 										(entry) => entry.CRF_Code == crf(sec).code && entry.Jahr == year
-									)?.Werte / totalSelectedYear
+									)?.Werte / totalForYear(year)
 							)
 						};
 					})
 					.sort((secA, secB) => secB.value - secA.value),
 				value: years.map((year) => total(year, ksgSector)), // t CO2eq
 				absolute: years.map((year) => total(year, ksgSector) / 1000000), // Mt CO2eq
-				relative: years.map((year) => total(year, ksgSector) / totalSelectedYear), // % THG / year
+				relative: years.map((year) => total(year, ksgSector) / totalForYear(year)), // % THG / year
 				icon: ksgSector.icon,
 				color: ksgSector.color,
 				colorCode: ksgSector.colorCode,
 				colorCodeHighlight: ksgSector.colorCodeHighlighted
 			};
 		});
+	};
+
+	$: selectedGhGas, (sectorlyDataWithMemo = getSectorlyDataWithMemo());
 
 	$: sectorlyData = sectorlyDataWithMemo?.filter((sector) =>
 		sector.label == 'Memo' ? showFlightEmissions : true
 	);
 
-	$: total1990 = dataset
-		?.filter(
-			(entry) =>
-				entry.Jahr == 1990 && entry.Schadstoff == selectedGhGas && crf(entry) && entry.Werte > 0
-		)
-		// .filter((entry) => (crf(entry).ksgSector == 'Memo' ? showFlightEmissions : true))
-		.reduce((sum, entry) => sum + entry.Werte, 0);
-
-	$: totalSelectedYear = dataset
-		?.filter(
-			(entry) =>
-				entry.Jahr == selectedYear &&
-				entry.Schadstoff == selectedGhGas &&
-				crf(entry) &&
-				entry.Werte > 0
-		)
-		.filter((entry) => (crf(entry).ksgSector == 'Memo' ? showFlightEmissions : true))
-		.reduce((sum, entry) => sum + entry.Werte, 0);
+	$: totalForYear = (year) =>
+		dataset
+			?.filter(
+				(entry) =>
+					entry.Jahr == year && entry.Schadstoff == selectedGhGas && crf(entry) && entry.Werte > 0
+			)
+			.filter((entry) => (crf(entry).ksgSector == 'Memo' ? showFlightEmissions : true))
+			.reduce((sum, entry) => sum + entry.Werte, 0);
 
 	// let sectorlyPromise = fetch('./data/emission-sectors.json')
 	// 	.then((x) => x.json())
@@ -304,11 +303,11 @@
 
 {#if sectorlyData}
 	<div
-		style="transition: 0.5s background ease-in-out; background-color: {ksgSelection
+		style="transition: 0.5s background ease-in-out; background-color: {ksgSelection != null
 			? ksgSectors[ksgSelection].colorCodeLight
 			: 'white'}"
 	>
-		<div style="position: sticky; top: 64px; background-color: rgba(0,0,0,0.1); z-index: 1;">
+		<div>
 			<label for="emission-detail-ghg">Treibhausgas:</label>
 			<select bind:value={selectedGhGas} id="emission-detail-ghg">
 				{#each ghGas as ghg}
@@ -346,27 +345,20 @@
 			</h4>
 		{/if}
 
-		<div class="relative pt-10 flex justify-center flex-wrap">
+		<div class="relative pt-10 flex justify-center items-end flex-wrap gap-x-8">
 			<SectorsTreeChart
 				{crfSectors}
 				{ksgSectors}
 				{explanations}
-				{total1990}
-				{totalSelectedYear}
 				{sectorlyData}
+				{years}
 				bind:selectedYear
 				bind:ksgSelection
 				bind:crfSelection
 				bind:extensiveList
+				class="p-4"
 			/>
-			<HistoryChart
-				{years}
-				{selectedYear}
-				{total1990}
-				{sectorlyData}
-				bind:ksgSelection
-				bind:crfSelection
-			/>
+			<HistoryChart {years} {selectedYear} {sectorlyData} bind:ksgSelection bind:crfSelection />
 		</div>
 	</div>
 {/if}
