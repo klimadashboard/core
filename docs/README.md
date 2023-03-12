@@ -35,6 +35,12 @@ npm install
 npm run dev
 ```
 
+To make sure the correct content is being loaded from our CMS, add an .env file with a PUBLIC_VERSION variable, which you set to at or de depending on the version you’d like to work on.
+
+```
+PUBLIC_VERSION=at
+```
+
 Build the Application:
 
 ```
