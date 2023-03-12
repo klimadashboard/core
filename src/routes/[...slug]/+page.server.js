@@ -1,6 +1,6 @@
 import { locale } from '$lib/stores/i18n';
 import { error } from '@sveltejs/kit';
-import { env } from '$env/dynamic/public';
+import { PUBLIC_VERSION } from '$env/static/public';
 
 let localeString = 'de';
 locale.subscribe((value) => {
@@ -13,7 +13,7 @@ export async function load({ params }) {
 		'https://cms.klimadashboard.org/' +
 		localeString +
 		'/klimadashboard-' +
-		'at' +
+		PUBLIC_VERSION +
 		(params.slug !== '' ? '/' : '') +
 		params.slug +
 		'.json';
