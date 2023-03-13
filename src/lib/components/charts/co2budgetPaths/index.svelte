@@ -34,7 +34,7 @@
 	let dataPaths;
 	let dataHistoric;
 
-	Papa.parse('../data/scenarios_co2budget.csv', {
+	Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2budget_scenarios_AT.csv', {
 		download: true,
 		dynamicTyping: true,
 		header: true,
@@ -46,7 +46,7 @@
 		}
 	});
 
-	Papa.parse('../data/historic_emissions.csv', {
+	Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2_historic_AT.csv', {
 		download: true,
 		dynamicTyping: true,
 		header: true,
