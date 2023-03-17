@@ -10,14 +10,12 @@
 
 	async function getDataForSelectedStation(stationId) {
 		let response = await fetch(
-			`https://data.klimadashboard.org/at/zamg/stations/${stationId}/data.json`
-			// `../data/at/zamg/stations/${stationId}/data.json`
-			// `../data-handler/data-105.json`
+			`https://data.klimadashboard.org/at/zamg/stations/${stationId}/data-processed.json`
 		);
 		let data = await response.json();
 		if (response.ok) {
-			unifiedDate = data.years[data.years.length - 1];
-			selectedYear = unifiedDate;
+			maxYear = data.years[data.years.length - 1];
+			selectedYear = maxYear;
 			return data;
 		} else {
 			throw new Error(data);
