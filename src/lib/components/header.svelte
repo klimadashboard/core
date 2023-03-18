@@ -2,8 +2,9 @@
 	import { theme } from '../stores/theme';
 	import { locale } from '../stores/i18n';
 	import { error } from '@sveltejs/kit';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
-	let promise = fetch('https://klimadashboard.org/get/navigation/at.json')
+	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
 		.then((x) => x.json())
 		.then((x) => Object.values(x.data).filter((d) => d.num))
 		.catch(function (err) {
@@ -81,10 +82,10 @@
 						? 'flex flex-col absolute inset-0 h-screen top-14 p-4'
 						: 'hidden'} sm:flex"
 				>
-					{#each children.filter((d) => d.num > 0 && d.parent == 'klimadashboard-at') as child}
+					{#each children.filter((d) => d.num > 0 && d.parent == 'klimadashboard-' + PUBLIC_VERSION) as child}
 						<li class="group relative">
 							<a
-								href={child.uri.replace('klimadashboard-at', '')}
+								href={child.uri.replace('klimadashboard-' + PUBLIC_VERSION, '')}
 								class="navigation-link"
 								on:mouseup={() => (showNav = false)}>{child.content.title}</a
 							>
@@ -95,7 +96,7 @@
 									{#each children.filter((c) => child.id == c.parent && c !== child) as grandchild}
 										<li>
 											<a
-												href={grandchild.id.replace('klimadashboard-at/', '/')}
+												href={grandchild.id.replace('klimadashboard-' + PUBLIC_VERSION + '/', '/')}
 												class="navigation-link font-bold"
 												on:mouseup={() => (showNav = false)}>{grandchild.content.title}</a
 											>
@@ -103,7 +104,7 @@
 												{#each children.filter((c) => c.id.includes(grandchild.uri) && c !== grandchild) as greatgrandchild}
 													<li>
 														<a
-															href={greatgrandchild.id.replace('klimadashboard-at/', '/')}
+															href={greatgrandchild.id.replace('klimadashboard-' + PUBLIC_VERSION + '/', '/')}
 															on:mouseup={() => (showNav = false)}
 															class="navigation-link">{greatgrandchild.content.title}</a
 														>

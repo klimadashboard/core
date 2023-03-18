@@ -20,11 +20,11 @@ Before contributing, read our [Code of Conduct](CODE_OF_CONDUCT.md). See below f
 
 ## Create a Klimadashboard for your state/region/... 🗾
 
-We’d love to expand Klimadashboard beyond Austria, but we need data research, coding and translation support to do so. If you’d like to help us build Klimadashboard for your region, get in touch and join the team as a regional ambassador. <team@klimadashboard.at>
+We’d love to expand Klimadashboard beyond Austria, but we need data research, coding and translation support to do so. If you’d like to help us build Klimadashboard for your region, get in touch and join the team as a regional ambassador. <team@klimadashboard.org>
 
 ## Branches & Deployment 🧭
 
-The [main] branch of this repository is automatically deployed to klimadashboard.at via Vercel.
+The [main] branch of this repository is automatically deployed to our server via ploi.io. 
 
 ## Development & Build
 
@@ -33,6 +33,12 @@ Run the Application in development mode:
 ```
 npm install
 npm run dev
+```
+
+To make sure the correct content is being loaded from our CMS, add an .env file with a PUBLIC_VERSION variable, which you set to at or de depending on the version you’d like to work on.
+
+```
+PUBLIC_VERSION=at
 ```
 
 Build the Application:

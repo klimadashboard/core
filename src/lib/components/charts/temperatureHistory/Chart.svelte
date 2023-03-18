@@ -14,36 +14,29 @@
 	let chartWidth;
 	let chartHeight;
 
-	$: data = selectedStationData.timestamps.map((timestamp, i) => {
-		const parameters = selectedStationData.features[0].properties.parameters;
-		const startIndex = Math.max(0, i - 30);
-		const endIndex = i;
-		const values = [...parameters.t.data].slice(startIndex, endIndex);
-		let average;
-		if (values.indexOf(null) > -1 || values.length < 30) {
-			average = null;
-		} else {
-			average =
-				[...values].reduce((a, b) => {
-					return a + b;
-				}, 0) / Math.max(1, values.length);
-		}
+	$: data = selectedStationData.t.map((_, i) => {
 		return {
-			day: new Date(timestamp),
-			t: parameters.t.data[i],
-			tmin: parameters.tmin.data[i],
-			tmax: parameters.tmax.data[i],
-			average: average,
-			heatDay: parameters.tmax.data[i] >= 30 ? true : false,
-			summerDay: parameters.tmax.data[i] >= 25 ? true : false,
-			tropicalNight: parameters.tmin.data[i] >= 20 ? true : false,
-			iceDay: parameters.tmax.data[i] <= 0 ? true : false
+			day: selectedStationData.days[i],
+			month: selectedStationData.months[i],
+			year: selectedStationData.years[i],
+			date: new Date(
+				selectedStationData.years[i],
+				selectedStationData.months[i],
+				selectedStationData.days[i]
+			),
+			t: selectedStationData.t[i],
+			tmin: selectedStationData.tmin[i],
+			tmax: selectedStationData.tmax[i],
+			average: selectedStationData.average[i],
+			heatDay: selectedStationData.tmax[i] >= 30 ? true : false,
+			summerDay: selectedStationData.tmax[i] >= 25 ? true : false,
+			tropicalNight: selectedStationData.tmin[i] >= 20 ? true : false,
+			iceDay: selectedStationData.tmax[i] <= 0 ? true : false
 		};
 	});
 
 	const currentYear = maxYear;
-	const firstDayOfCurrentYear = new Date(currentYear, 0, 1);
-	$: dataForCurrentYear = data.filter((d) => d.day > firstDayOfCurrentYear);
+	$: dataForCurrentYear = data.filter((d) => d.year == currentYear);
 
 	const margin = { top: 25, right: 10, bottom: 5, left: 5 };
 
@@ -52,7 +45,7 @@
 
 	$: xScale = scaleTime()
 		.rangeRound([0, innerChartWidth])
-		.domain([min(dataForCurrentYear, (d) => d.day), new Date(currentYear, 11, 31)]);
+		.domain([min(dataForCurrentYear, (d) => d.date), new Date(currentYear, 11, 31)]);
 
 	$: yScale = scaleLinear()
 		.rangeRound([innerChartHeight, 0])
@@ -61,20 +54,18 @@
 	$: selectedDay = false;
 
 	$: generateLine = (year) => {
-		const firstDayOfYear = new Date(year, 0, 1);
-		const lastDayOfYear = new Date(year, 11, 31);
-		const dataset = data
-			.filter((d) => d.day > firstDayOfYear && d.day < lastDayOfYear)
+		const dataForYear = data
+			.filter((d) => d.year == year)
 			.map((d, i) => {
 				return {
-					day: new Date(currentYear, d.day.getMonth(), d.day.getDate()),
+					unifiedDate: new Date(currentYear, d.month, d.day),
 					average: d.average
 				};
 			});
 
 		return line()(
-			dataset.map((d) => {
-				return [xScale(d.day), yScale(d.average)];
+			dataForYear.map((d) => {
+				return [xScale(d.unifiedDate), yScale(d.average)];
 			})
 		);
 	};
@@ -88,11 +79,11 @@
 	const colors = ['#CDE4EF', '#FADEA5', '#FDA26F', '#F56860', '#D5345E', '#9E0669']; // from blue to red
 
 	$: yearlyAverages = years.map((year) => {
-		const dataset = data.filter((d) => d.day.getFullYear() == year);
+		const dataForYear = data.filter((d) => d.year == year);
 		return (
-			dataset.reduce((a, b) => {
-				return a + b.t;
-			}, 0) / dataset.length
+			dataForYear.reduce((sum, d) => {
+				return sum + d.t;
+			}, 0) / dataForYear.length
 		);
 	});
 
@@ -191,10 +182,11 @@
 					{/if}
 
 					{#if selectedYear == currentYear && !showDays}
+						{@const currentYearData = dataForCurrentYear[dataForCurrentYear.length - 1]}
 						<g
-							transform="translate({xScale(
-								dataForCurrentYear[dataForCurrentYear.length - 1].day
-							)},{yScale(dataForCurrentYear[dataForCurrentYear.length - 1].average)})"
+							transform="translate({xScale(currentYearData.date)},{yScale(
+								currentYearData.average
+							)})"
 							class="text-gray-900 transition"
 							transition:fade
 						>
@@ -217,14 +209,15 @@
 								/>
 							</circle>
 							<circle r={6} class="fill-current" />
-							<rect x={30} y={-30} width={200} height={20} class="fill-white opacity-30"></rect>
+							<rect x={30} y={-30} width={200} height={20} class="fill-white opacity-30" />
 							<text class="text-sm fill-current" x={30} y={-30}>
 								<tspan x={0}>30-tägige Durchschnittstemperatur</tspan>
-								<tspan x={0} dy={16}
-									>am {dataForCurrentYear[dataForCurrentYear.length - 1].day.toLocaleDateString(
-										'de-AT',
-										{ month: 'long', day: 'numeric', year: 'numeric' }
-									)}</tspan
+								<tspan x={0} dy={16}>
+									am {currentYearData.date.toLocaleDateString('de-AT', {
+										month: 'long',
+										day: 'numeric',
+										year: 'numeric'
+									})}</tspan
 								>
 							</text>
 						</g>
@@ -235,7 +228,7 @@
 							{#each dataForCurrentYear as day, index}
 								{@const circleRadius = 5}
 								{@const commonClasses = 'transition pointer-events-none'}
-								<g transform="translate({xScale(day.day)},{yScale(day.t)})">
+								<g transform="translate({xScale(day.date)},{yScale(day.t)})">
 									<rect
 										fill="white"
 										opacity={0}
@@ -294,10 +287,9 @@
 					{/if}
 
 					{#if selectedDay}
+						{@const selectedData = dataForCurrentYear[selectedDay]}
 						<g
-							transform="translate({xScale(dataForCurrentYear[selectedDay].day) - 40},{yScale(
-								dataForCurrentYear[selectedDay].t
-							) - 84})"
+							transform="translate({xScale(selectedData.date) - 40},{yScale(selectedData.t) - 84})"
 						>
 							<path
 								d="m 35 75 l 5 5 l 5 -5 h 35 v -75 h -80 v 75 z"
@@ -309,29 +301,28 @@
 								dominant-baseline="hanging"
 								text-anchor="middle"
 								x={40}
-								y={5}
-								>{new Date(dataForCurrentYear[selectedDay].day).toLocaleDateString('de-AT')}</text
+								y={5}>{selectedData.date.toLocaleDateString('de-AT')}</text
 							>
 							<text
 								class="text-gray-700 fill-current text-sm"
 								dominant-baseline="hanging"
 								text-anchor="middle"
 								x={40}
-								y={25}>{dataForCurrentYear[selectedDay].tmax}°C</text
+								y={25}>{selectedData.tmax}°C</text
 							>
 							<text
 								class="text-gray-900 fill-current text-lg"
 								dominant-baseline="hanging"
 								text-anchor="middle"
 								x={40}
-								y={40}>{dataForCurrentYear[selectedDay].t}°C</text
+								y={40}>{selectedData.t}°C</text
 							>
 							<text
 								class="text-gray-700 fill-current text-sm"
 								dominant-baseline="hanging"
 								text-anchor="middle"
 								x={40}
-								y={60}>{dataForCurrentYear[selectedDay].tmin}°C</text
+								y={60}>{selectedData.tmin}°C</text
 							>
 						</g>
 					{/if}

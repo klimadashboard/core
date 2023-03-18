@@ -10,11 +10,11 @@
 
 	async function getDataForSelectedStation(stationId) {
 		let response = await fetch(
-			'https://data.klimadashboard.org/at/zamg/stations/' + stationId + '/data.json'
+			`https://data.klimadashboard.org/at/zamg/stations/${stationId}/data-processed.json`
 		);
 		let data = await response.json();
 		if (response.ok) {
-			maxYear = new Date(data.timestamps[data.timestamps.length - 1]).getFullYear();
+			maxYear = data.years[data.years.length - 1];
 			selectedYear = maxYear;
 			return data;
 		} else {
@@ -58,5 +58,5 @@
 {:then selectedStationData}
 	<Chart {selectedStationData} types={$types} {showDays} {maxYear} bind:selectedYear />
 {:catch error}
-	Error
+	Error {error}
 {/await}
