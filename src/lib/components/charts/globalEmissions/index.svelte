@@ -3,6 +3,7 @@
 	import { locale } from '$lib/stores/i18n';
 	import MultiSelect from '$lib/components/MultiSelect.svelte';
 	import BarChart from '../chartBar.svelte';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let countryData;
 
@@ -32,7 +33,7 @@
 		}
 	});
 
-	$: selectedCountries = ['AT', 'CN', 'US', 'DE', 'UK', 'SE', 'IT'];
+	$: selectedCountries = [PUBLIC_VERSION.toUpperCase(), 'CN', 'US', 'UK', 'SE', 'IT'];
 
 	$: getIconString = function (iso) {
 		var string = '';
@@ -52,7 +53,7 @@
 			result.push({
 				label: getCountryName(entry.state_iso),
 				value: entry.co2_percapita,
-				highlight: entry.state_name == 'Austria' ? true : false,
+				highlight: entry.state_iso == PUBLIC_VERSION.toUpperCase() ? true : false,
 				icon: getIconString(entry.state_iso)
 			});
 		}
@@ -62,7 +63,7 @@
 	$: worldwideAverage =
 		Math.round(countryData?.find((d) => d.state_name == 'World').co2_percapita * 10) / 10;
 	$: lastYear = 2018;
-	$: lastYearEmissions = countryData?.find((d) => d.state_name == 'Austria').co2_percapita;
+	$: lastYearEmissions = countryData?.find((d) => d.state_iso == PUBLIC_VERSION.toUpperCase()).co2_percapita;
 
 	$: lines = [
 		{
