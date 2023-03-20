@@ -104,12 +104,14 @@
 	};
 </script>
 
-<div class="" id="temperature-shareable">
+<div class="bg-gradient-green py-8" id="temperature-shareable">
+	<div class="container flex flex-col items-center">
+	<div class="flex flex-col md:flex-row items-center gap-8">
 	<div
 		id="shareable-graphic"
 		bind:clientHeight={chartHeight}
 		bind:clientWidth={chartWidth}
-		class="bg-white shadow hover:shadow-lg transition rounded w-80 h-80 mx-auto max-w-xl relative z-30"
+		class="bg-white shadow hover:shadow-lg transition rounded w-80 h-80 relative z-30"
 	>
 		{#if canShare}
 			<button
@@ -203,10 +205,10 @@
 		{/if}
 	</div>
 	<div
-		class="bg-gradient-green p-8 pt-16 -mt-8 rounded shadow text-white relative z-10 max-w-2xl mx-auto flex flex-col items-center"
+		class="text-white w-80"
 	>
-		<h3 class="text-2xl text-center">Erstelle deine persönliche Temperaturgeschichte.</h3>
-		<p class="text-lg max-w-lg text-center mx-auto">
+		<h3 class="text-2xl md:text-3xl">Erstelle deine persönliche Temperaturgeschichte.</h3>
+		<p class="text-lg mt-4">
 			Gib dein Geburtsjahr ein und finde heraus, wie sehr sich Österreich seitdem im Flächenmittel
 			erhitzt hat.
 		</p>
@@ -226,6 +228,8 @@
 			<p class="mt-2">Bitte gib ein Jahr zwischen 1800 und 2010 ein.</p>
 		{/if}
 	</div>
+</div>
+</div>
 </div>
 
 <style>
