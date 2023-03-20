@@ -148,9 +148,9 @@
 					>
 						{#if datapoint.categories !== undefined}
 							{#each datapoint.categories as category, j}
-								<g>
+								<g style="color: {category.color}">
 									<linearGradient
-										id="grad-{category.key}-{category.color}"
+										id="grad-{category.color.replace("#","")}-{i}-{j}"
 										x1="0%"
 										y1="0%"
 										x2="0%"
@@ -168,7 +168,7 @@
 										fill={category.estimate
 											? 'transparent'
 											: category.color
-											? 'url(#grad-' + category.key + '-' + category.color + ')'
+											? 'url(#grad-' + category.color.replace("#","") + '-' + i + '-' + j + ')'
 											: 'currentColor'}
 										stroke={category.estimate
 											? 'currentColor'
