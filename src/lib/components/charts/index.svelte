@@ -109,15 +109,15 @@
 			<svelte:component this={Chart} v={createVariables(chart.content.variables)} />
 		{:else}
 			<div
-				class="bg-white p-4 border border-gray-100 rounded relative {chart.content.methods
+				class="bg-white p-4 border border-gray-200 rounded relative {chart.content.methods
 					? 'pb-16'
 					: ''}"
 				id={chart.content.identifier_string}
 				bind:this={item}
 			>
-				<div class="flex justify-between items-center mb-1">
+				<div class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition">
 					<h2 class="uppercase tracking-wide font-semibold text-sm">{chart.content.title}</h2>
-					<div class="flex items-center gap-3 text-gray-400 transition">
+					<div class="flex items-center gap-3 transition">
 						<button
 							on:mousedown={() => exportImage()}
 							class="hover:text-black"
