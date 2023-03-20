@@ -22,7 +22,6 @@
 				if (results) {
 					rawData = results.data;
 					defaultRegion = rawData[0].region;
-					console.log(rawData);
 				}
 			}
 		}
