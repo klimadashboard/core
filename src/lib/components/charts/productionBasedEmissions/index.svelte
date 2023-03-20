@@ -6,12 +6,13 @@
 	import { fade } from 'svelte/transition';
 	import formatNumber from '$lib/stores/formatNumber';
 	import formatPercentage from '$lib/stores/formatPercentage';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
-	$: rawDataFederalStates = [];
-	$: rawDataAustria = [];
+	let rawData;
+	let defaultRegion;
 
 	Papa.parse(
-		'https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Bundeslaender_Austria_1990-2019.csv',
+		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
 		{
 			download: true,
 			dynamicTyping: true,
@@ -19,22 +20,9 @@
 			skipEmptyLines: true,
 			complete: function (results) {
 				if (results) {
-					rawDataFederalStates = results.data;
-				}
-			}
-		}
-	);
-
-	Papa.parse(
-		'https://data.klimadashboard.org/at/emissions/Emission_All_sectors_Austria_1990-2020.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			header: true,
-			skipEmptyLines: true,
-			complete: function (results) {
-				if (results) {
-					rawDataAustria = results.data;
+					rawData = results.data;
+					defaultRegion = rawData[0].region;
+					console.log(rawData);
 				}
 			}
 		}
@@ -102,19 +90,12 @@
 
 	const views = aggregatedViews.concat(sectors);
 
-	$: activeView = 'total_co2e_t';
+	$: selectedRegion = defaultRegion;
 
-	$: selectedRegion = 'Austria';
+	$: activeView = 'total_co2e_t';
 
 	$: selectedSectors =
 		activeView == 'sector_overview' ? sectors : views.filter((e) => e.key == activeView);
-
-	$: selectedDataset = rawDataAustria;
-	$: if (selectedRegion !== 'Austria') {
-		selectedDataset = rawDataFederalStates;
-	} else {
-		selectedDataset = rawDataAustria;
-	}
 
 	$: reducer = function (result, entry) {
 		var perCapitaString = showPerCapita ? '_percapita' : '';
@@ -135,7 +116,9 @@
 		return result;
 	};
 
-	$: dataset = selectedDataset?.reduce(reducer, []);
+	$: dataset = rawData?.reduce(reducer, []);
+
+	$: regions = [... new Set(rawData?.map(d => d.region))];
 
 	// variables for dynamic text generation
 	let lastYear;
@@ -163,8 +146,8 @@
 			categories.push({
 				label: 'Flug',
 				value: Math.round(
-					rawDataAustria.findIndex((e) => e.year == d.label) > -1
-						? rawDataAustria.find((e) => e.year == d.label).international_flight_co2e_t
+					rawData.findIndex((e) => e.year == d.label) > -1
+						? rawData.find((e) => e.year == d.label).international_flight_co2e_t
 						: 0
 				),
 				color: '#7586C1'
@@ -175,17 +158,18 @@
 			};
 		});
 	} else if (showFlightEmissions == false) {
-		dataset = selectedDataset?.reduce(reducer, []);
+		dataset = rawData?.reduce(reducer, []);
 	}
 
-	$: if (rawDataAustria.length > 0) {
-		lastYear = rawDataAustria[rawDataAustria.length - 1]['year'];
-		firstYearEmissions = Math.round(rawDataAustria[0]['total_co2e_t']);
-		lastYearEmissions = Math.round(rawDataAustria[rawDataAustria.length - 1]['total_co2e_t']);
+	$: if (rawData?.length > 0) {
+		lastYear = rawData[rawData.length - 1]['year'];
+		firstYearEmissions = Math.round(rawData[0]['total_co2e_t']);
+		lastYearEmissions = Math.round(rawData[rawData.length - 1]['total_co2e_t']);
 		percentage1990lastYear = getPercentageChange(firstYearEmissions, lastYearEmissions) / 100;
 	}
 
 	$: if (
+		dataset &&
 		dataset.findIndex((x) => x.label == 2021) < 0 &&
 		selectedRegion == 'Austria' &&
 		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
@@ -198,7 +182,8 @@
 					{
 						label: 'Gesamt',
 						value: 77500000,
-						estimate: false
+						estimate: false,
+						color: "#4DB263"
 					}
 				],
 				estimate: false
@@ -210,7 +195,8 @@
 					{
 						label: 'Prognose 2022',
 						value: 73600000,
-						estimate: true
+						estimate: true,
+						color: "#4DB263"
 					}
 				],
 				estimate: true
@@ -243,16 +229,9 @@
 			bind:value={selectedRegion}
 			class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 		>
-			<option value="Austria">Österreich</option>
-			<option value="Burgenland">Burgenland</option>
-			<option value="Wien">Wien</option>
-			<option value="Vorarlberg">Vorarlberg</option>
-			<option value="Steiermark">Steiermark</option>
-			<option value="Salzburg">Salzburg</option>
-			<option value="Oberösterreich">Oberösterreich</option>
-			<option value="Niederösterreich">Niederösterreich</option>
-			<option value="Kärnten">Kärnten</option>
-			<option value="Tirol">Tirol</option>
+			{#each regions as region}
+			<option value="{region}">{region}</option>
+			{/each}
 		</select>
 	</div>
 	{#if allowFlightEmissions}
@@ -345,7 +324,7 @@
 	</label>
 </div>
 <div class="h-80">
-	{#if dataset.length > 0}
+	{#if dataset}
 		<BarChart
 			data={dataset}
 			xAxixInterval="5"
