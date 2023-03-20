@@ -207,8 +207,8 @@
 	<div
 		class="text-white w-80"
 	>
-		<h3 class="text-2xl md:text-3xl">Erstelle deine persönliche Temperaturgeschichte.</h3>
-		<p class="text-lg mt-4">
+		<h3 class="text-2xl md:text-3xl leading-tight">Erstelle deine persönliche Temperaturgeschichte.</h3>
+		<p class="text-lg mt-4 leading-snug">
 			Gib dein Geburtsjahr ein und finde heraus, wie sehr sich Österreich seitdem im Flächenmittel
 			erhitzt hat.
 		</p>
