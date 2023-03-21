@@ -8,6 +8,7 @@ const shareData = {
 	text: data.intro,
 	url: $page.url
 };
+
 </script>
 
 <section
@@ -16,8 +17,9 @@ const shareData = {
 	style={data.cover_styles}
 >
 	{#if data.cover_background}
-		<img src="https://klimadashboard.org/@/file/{data.cover_background}"
-		class="object-cover absolute inset-0 w-full h-full" />
+		<img src="https://klimadashboard.org/@/file/{data.cover_background.replace("- file://","")}"
+		class="object-cover absolute inset-0 w-full h-full"
+		alt="" />
 	{/if}
 	<div class="container z-10 relative">
 		<div class="max-w-2xl mx-auto break-words">
