@@ -103,7 +103,7 @@
 			<p class="opacity-50 text-sm leading-tight mt-2">
 				Du erhältst nicht mehr als 12 Newsletter pro Jahr.<br />Wir verwenden Buttondown als
 				Newsletter-Tool. <br />Mehr in unserer
-				<a href="/impressum" class="underline">Datenschutzvereinbarung</a>.
+				<a href="https://klimadashboard.org/impressum" class="underline">Datenschutzvereinbarung</a>.
 			</p>
 		</div>
 		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
