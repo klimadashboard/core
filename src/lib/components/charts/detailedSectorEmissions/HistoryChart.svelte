@@ -6,11 +6,13 @@
 	export let selectedYear;
 	export let ksgSelection;
 	export let crfSelection;
-	export let years;
 	export let sectorlyData;
+	export let colorForKey;
+	export let years;
+	export let maxYear;
 
-	let chartHeight = 800;
-	let chartWidth = 1000;
+	let chartHeight = 1000;
+	let chartWidth = 1150;
 	$: baseline = chartHeight - 100;
 	$: startline = 100;
 	$: dx = (chartWidth - startline) / years.length;
@@ -26,9 +28,10 @@
 	$: ksgSectorSum = (s, yi) => {
 		if (crfSelection != null) return sectorlyData[ksgSelection].sectors[crfSelection].absolute[yi];
 		if (ksgSelection != null) return sectorlyData[ksgSelection].absolute[yi];
-		return sectorlyData
+		const ksgSum = sectorlyData
 			.slice(0, sectorlyData.length - s)
 			.reduce((sum, entry) => sum + entry.absolute[yi], 0);
+		return ksgSum;
 	};
 
 	$: highlightedYearIndex = null;
@@ -36,27 +39,34 @@
 </script>
 
 {#if sectorlyData}
-	<div class="basis-[400px] grow max-w-[70vh]" style="background: rgba(0,0,0,0)">
-		<ChartLegend
-			categories={legendCategories}
-			{highlightedYearIndex}
-			bind:ksgSelection
-			bind:crfSelection
-		/>
-
+	<div class="basis-[400px]" style="background: rgba(0,0,0,0)">
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<svg
 			viewBox="0 0 {chartWidth} {chartHeight}"
 			on:mousemove|capture={function (e) {
 				mouse = {
-					x: ((e.layerX - this.getBoundingClientRect().left) / this.clientWidth) * chartWidth,
-					y: ((e.layerY - this.getBoundingClientRect().top) / this.clientHeight) * chartHeight
+					x: ((e.pageX - this.getBoundingClientRect().left) / this.clientWidth) * chartWidth,
+					y: ((e.pageY - this.getBoundingClientRect().top) / this.clientHeight) * chartHeight
 				};
 				// console.log(e.layerX, 'offset', this.clientWidth, chartWidth);
 
 				highlightedYearIndex = Math.min(
-					years.length - 1,
-					Math.max(0, Math.round((mouse.x - startline / 2) / dx))
+					maxYear - 1990,
+					Math.max(0, Math.round((mouse.x - startline) / dx))
 				);
+			}}
+			on:click={function (e) {
+				mouse = {
+					x: ((e.pageX - this.getBoundingClientRect().left) / this.clientWidth) * chartWidth,
+					y: ((e.pageY - this.getBoundingClientRect().top) / this.clientHeight) * chartHeight
+				};
+				// console.log(e.layerX, 'offset', this.clientWidth, chartWidth);
+
+				highlightedYearIndex = Math.min(
+					maxYear - 1990,
+					Math.max(0, Math.round((mouse.x - startline) / dx))
+				);
+				selectedYear = 1990 + highlightedYearIndex;
 			}}
 			on:mouseleave={(e) => {
 				mouse = null;
@@ -66,6 +76,7 @@
 			{#each [...sectorlyData].reverse() as ksgSector, s}
 				{#if ksgSelection == null || ksgSelection == sectorlyData.length - 1 - s}
 					{@const path = ksgSector.absolute
+						.filter((_, yi) => 1990 + yi <= maxYear)
 						.map((year, yi) => {
 							const sum = ksgSectorSum(s, yi);
 							const x = startline + yi * dx;
@@ -74,7 +85,7 @@
 						})
 						.concat([
 							'L',
-							startline + (ksgSector.absolute.length - 1) * dx,
+							startline + (maxYear - 1990) * dx,
 							baseline,
 							'L',
 							startline,
@@ -86,15 +97,11 @@
 					<path
 						d={path}
 						style="transition: fill 0.3s ease-in-out; fill: {ksgTooltip == ksgSector
-							? ksgSector.colorCodeHighlight
-							: ksgSector.colorCode}"
+							? colorForKey(ksgSector.key).colorCode
+							: colorForKey(ksgSector.key).colorCode}"
 						on:mousemove={(e) => {
 							if (ksgSelection != null) return;
 							ksgTooltip = ksgSector;
-						}}
-						on:mousedown|stopPropagation={() => {
-							ksgSelection = sectorlyData.length - 1 - s;
-							ksgTooltip = null;
 						}}
 						class="cursor-pointer"
 					/>
@@ -124,7 +131,7 @@
 								])
 								.flat()
 								.join(' ')}
-							<path d={crfPath} fill="none" stroke="#ffffff66" stroke-width="0.5" />
+							<path d={crfPath} fill="none" stroke="#ffffffaa" stroke-width="0.5" />
 						{/if}
 					{/each}
 
