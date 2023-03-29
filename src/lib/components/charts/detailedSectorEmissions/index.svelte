@@ -2,6 +2,7 @@
 	import HistoryChart from './HistoryChart.svelte';
 	import SectorsTreeChart from './SectorsTreeChart.svelte';
 	import LandUseChart from './LandUseChart.svelte';
+	import { glossaryItem } from '$lib/stores/glossary';
 
 	let dataset = null;
 	let explanations = null;
@@ -176,8 +177,10 @@
 				bind:checked={showFlightEmissions}
 			/>
 			<label for="emissions-detail-memo-checkbox"
-				>Internationaler Schiffs- und Flugverkehr (MEMO)</label
-			>
+				>Internationaler Schiffs- und Flugverkehr (MEMO <span
+				class="glossary-label"
+				on:mousedown={() => glossaryItem.set('memo-items')}
+			/>)</label>
 
 			<div class="flex items-center gap-2">
 				<input
@@ -233,5 +236,5 @@
 		{/if}
 	</div>
 
-	<!-- <LandUseChart /> -->
+	<LandUseChart />
 {/if}
