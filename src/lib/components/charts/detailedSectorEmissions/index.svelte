@@ -104,7 +104,7 @@
 	];
 	const colorForKey = (key) => ksgSectors.find((sector) => sector.color == key);
 
-	const datasetPromise = fetch('../data/at/emissions/emissions_crf_at.json')
+	const datasetPromise = fetch('https://data.klimadashboard.at/at/emissions/emissions_crf_at.json')
 		.then((response) => response.json())
 		.then((responseData) => {
 			dataset = responseData;
@@ -236,5 +236,5 @@
 		{/if}
 	</div>
 
-	<LandUseChart />
+	<!-- <LandUseChart /> -->
 {/if}

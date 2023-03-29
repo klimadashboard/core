@@ -4,6 +4,7 @@
 	$: _y = selectedYear - 1990;
 
 	let dataset = 0;
+	// const datasetPromise = fetch('https://data.klimadashboard.at/at/emissions/emissions_lulucf_at.json')
 	const datasetPromise = fetch('../data/at/emissions/emissions_lulucf_at.json')
 		.then((response) => response.json())
 		.then((responseData) => {
@@ -62,25 +63,26 @@
 		const abs = Math.abs(crf.absolute[_y]);
 		return abs > max ? abs : max;
 	}, 0)}
-	<svg viewBox="-500 0 1000 1000" height="700">
+	<svg viewBox="0 -500 1000 1000" height="700">
 		<text x={0} y={50} alignment-baseline="middle">0</text>
 
 		{#each lulucfData.sectors as sector, s}
-			{@const w = 200 * (sector.absolute[_y] / lulucfDataMax)}
-			{@const x =
-				(200 * lulucfData.sectors.slice(0, s).reduce((sum, entry) => sum + entry.absolute[_y], 0)) /
+			{@const h = 300 * (sector.absolute[_y] / lulucfDataMax)}
+			{@const y =
+				(300 * lulucfData.sectors.slice(0, s).reduce((sum, entry) => sum + entry.absolute[_y], 0)) /
 					lulucfDataMax +
-				(w < 0 ? w : 0)}
+				(h < 0 ? h : 0)}
 
+			<line x1="0" x2="1000" y1="0" y2="0" stroke="black"></line>
 			<rect
-				width={10 + Math.abs(w)}
-				height="50"
-				{x}
-				y={100 + s * 60}
-				fill={w > 0 ? 'red' : 'green'}
+				width="50"
+				height={10 + Math.abs(h)}
+				x={100 + s * 60}
+				y={-y + h}
+				fill={h > 0 ? 'red' : 'green'}
 			/>
-			<text x={x + Math.abs(w)} y={100 + s * 60 + 30} alignment-baseline="middle"
-				>{w < 0 ? '<- ' : '-> '} {sector.label}</text
+			<text x={100 + s * 60 + 30} y={-y - Math.abs(h)} alignment-baseline="middle"
+				>{h < 0 ? 'v ' : '^ '} {sector.label}</text
 			>
 		{/each}
 
