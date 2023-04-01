@@ -7,11 +7,12 @@
 	export let sectorlyData;
 	export let colorForKey;
 	export let selectedYear;
+	export let totalSelectedYear;
 	export let ksgSelection;
 	export let crfSelection;
 	export let extensiveList;
 	export let years;
-	export let useRelativeUnits;
+	export let useAbsoluteUnits;
 
 	// TREE MAP
 	// $: console.log(detailLayers, total1990, totalSelectedYear);
@@ -21,10 +22,9 @@
 	$: mouse = null;
 
 	$: _y = selectedYear - 1990;
-	$: totalSelectedYear = sectorlyData.reduce((sum, sec) => sum + sec.absolute[_y], 0);
-	$: relativeFactor = useRelativeUnits ? 100 / totalSelectedYear : 1;
-	$: unitShort = useRelativeUnits ? '%' : 'Mt';
-	$: unitLong = useRelativeUnits ? '%' : 'Mt CO₂eq';
+	$: relativeFactor = useAbsoluteUnits ? 1 : 100 / totalSelectedYear;
+	$: unitShort = useAbsoluteUnits ? 'Mt' : '%';
+	$: unitLong = useAbsoluteUnits ? 'Mt CO₂eq' : '%';
 	// $: console.log("totalSelectedYear", totalSelectedYear);
 
 	$: [maxTotalYear, maxTotal] = years
@@ -131,11 +131,14 @@
 		: area.set([-150, 0, 1150, 1150]);
 </script>
 
-<div class="detail-emissions-tree-map relative basis-[400px]" style="background: rgba(0,0,0,0)">
+<div
+	class="detail-emissions-tree-map relative basis-[500px] pb-[40px]"
+	style="background: rgba(0,0,0,0)"
+>
 	{#if sortedData}
 		<!-- <svg viewBox={$area}></svg> -->
 		<svg
-			viewBox="-150 0 1150 1150"
+			viewBox="-150 0 1150 1000"
 			on:mouseleave={() => {
 				ksgTooltip = null;
 				crfTooltip = null;
@@ -151,9 +154,15 @@
 					height={ksgSector.relative * HEIGHT}
 					fill={colorForKey(ksgSector.key).colorCode}
 					opacity={ksgSelection != null && s != ksgSelection ? 0.2 : 1}
+					class="cursor-pointer"
+					on:mousedown|stopPropagation={() => {
+						ksgSelection = s;
+						ksgTooltip = null;
+					}}
 				/>
 				{#if ksgSector.relative * HEIGHT > 30}
 					<g
+						class="pointer-events-none"
 						transform="translate(-110, {ksgSector.percentCumulative * HEIGHT +
 							(ksgSector.relative * HEIGHT) / 2 -
 							10})"
@@ -178,6 +187,7 @@
 					>
 						{#each ksgSector.sectors as crfSector, c}
 							{#if c == 0}
+								{@const fontSize = parseInt(Math.max(20, Math.min(ksgSector.h / 2, 50)).toFixed(0))}
 								<foreignObject
 									height={ksgSector.h}
 									width={ksgSector.w}
@@ -189,16 +199,20 @@
 										style="background-color: {colorForKey(ksgSector.key).colorCode};"
 									>
 										<div
-											class="w-full flex flex-wrap flex-grow-0 gap-2 p-5 text-white text-2xl"
-											style="font-size: 40px;"
+											class="w-full flex flex-wrap flex-grow-0 gap-2 text-white"
+											style="padding: {fontSize < 30
+												? 4
+												: fontSize / 4}px; font-size: {fontSize}px;"
 										>
-											<span class="py-4">{@html colorForKey(ksgSector.key).icon(2)}</span>
-											<strong class="text-ellipsis overflow-hidden py-4">{ksgSector.label}</strong>
-											<span class="py-4"
-												>{(ksgSector.absolute[_y] * relativeFactor)
-													.toFixed(1)
-													.replace('.', ',')}{unitShort}</span
-											>
+											{#if ksgSelection == null}
+												<span class="">{@html colorForKey(ksgSector.key).icon(fontSize / 20)}</span>
+												<strong class="text-ellipsis overflow-hidden ">{ksgSector.label}</strong>
+												<span class=""
+													>{(ksgSector.absolute[_y] * relativeFactor)
+														.toFixed(1)
+														.replace('.', ',')}{unitShort}</span
+												>
+											{/if}
 										</div>
 									</div>
 								</foreignObject>
@@ -245,9 +259,6 @@
 					</g>
 				{/if}
 			{/each}
-			<text x="990" y="1060" font-size="50" text-anchor="end"
-				>{totalSelectedYear.toFixed(2).replace('.', ',')}Mt CO2eq</text
-			>
 		</svg>
 	{/if}
 	{#if extensiveList && ksgSelection != null}

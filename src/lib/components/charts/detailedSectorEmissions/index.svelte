@@ -1,7 +1,6 @@
 <script>
 	import HistoryChart from './HistoryChart.svelte';
 	import SectorsTreeChart from './SectorsTreeChart.svelte';
-	import LandUseChart from './LandUseChart.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
 
 	let dataset = null;
@@ -11,7 +10,13 @@
 
 	let years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
 
-	let ghGas = ['THG', 'CO2', 'CH4', 'N2O', 'FLU'];
+	let ghGas = [
+		{ key: 'THG', label: 'Alle Treibhausgase' },
+		{ key: 'CO2', label: 'CO₂' },
+		{ key: 'CH4', label: 'Methan' },
+		{ key: 'N2O', label: 'Lachgas (N₂O)' },
+		{ key: 'FLU', label: 'Fluorierte Gase' }
+	];
 
 	let ksgSectors = [
 		{
@@ -94,12 +99,12 @@
 		{
 			label: 'Memo',
 			color: 'memo',
-			colorCode: 'hsl(0, 0%, 50%)',
-			colorCodeHighlighted: 'hsl(0, 0%, 60%)',
+			colorCode: 'hsl(227, 38%, 61%)',
+			colorCodeHighlighted: 'hsl(227, 38%, 71%)',
 			icon: (size) =>
-				`<svg width='${size * 20}' height='${
-					size * 20
-				}' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 3 L 17 3 L 17 17 L 3 17 Z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`
+				`<svg width='${size * 24}' height='${
+					size * 24
+				}' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`
 		}
 	];
 	const colorForKey = (key) => ksgSectors.find((sector) => sector.color == key);
@@ -123,6 +128,7 @@
 
 	$: totalForYear = (year) =>
 		sectorlyData?.reduce((sum, entry) => sum + entry.absolute[year - 1990], 0);
+	$: totalSelectedYear = totalForYear(selectedYear);
 
 	// dynamic variables
 	let selectedYear = maxYear;
@@ -131,110 +137,184 @@
 	// TREE PLOT selections
 	let ksgSelection = null;
 	let crfSelection = null;
+	let ksgHover = null;
+	let crfHover = null;
 	let extensiveList = false;
 
-	// let freezeYAxis = false;
-	let useRelativeUnits = false;
+	let useAbsoluteUnits = false;
 	let showFlightEmissions = true;
 </script>
 
 {#if sectorlyData}
-	<div
-		style="transition: 0.5s background ease-in-out; background-color: {ksgSelection != null
-			? ksgSectors[ksgSelection].colorCodeLight
-			: 'white'}"
-	>
-		<div>
-			<span>Treibhausgas:</span>
-			{#each ghGas as ghg, g}
-				<label>
-					<input
-						type="radio"
-						checked={g == 0}
-						bind:group={selectedGhGas}
-						name="scoops"
-						value={ghg}
-					/>
-					{ghg}
-				</label>
-			{/each}
-			<!-- <select bind:value={selectedGhGas} id="emission-detail-ghg">
-				{#each ghGas as ghg}
-					<option value={ghg}>{ghg}</option>
-				{/each}
-			</select> -->
-			<br />
-			<!-- <input type="checkbox" bind:checked={freezeYAxis} />
-			<span>Y-Achse fixieren?</span>
-			<br />
-			-->
-			<input type="checkbox" bind:checked={useRelativeUnits} />
-			<span>Relative Zahlen</span>
-			<br />
-			<input
-				id="emissions-detail-memo-checkbox"
-				type="checkbox"
-				bind:checked={showFlightEmissions}
-			/>
-			<label for="emissions-detail-memo-checkbox"
-				>Internationaler Schiffs- und Flugverkehr (MEMO <span
-				class="glossary-label"
-				on:mousedown={() => glossaryItem.set('memo-items')}
-			/>)</label>
-
-			<div class="flex items-center gap-2">
-				<input
-					type="range"
-					min="1990"
-					max="2020"
-					bind:value={selectedYear}
-					name="emission-detail-year"
-					id="emission-detail-year"
-				/><label for="emission-detail-year">{selectedYear}</label><br />
-			</div>
-		</div>
-
-		<div class="relative pt-10 flex justify-stretch items-end flex-wrap gap-x-8">
-			<SectorsTreeChart
-				{ksgSectors}
-				{explanations}
-				{sectorlyData}
-				{colorForKey}
-				{years}
-				{useRelativeUnits}
-				bind:selectedYear
-				bind:ksgSelection
-				bind:crfSelection
-				bind:extensiveList
-				class="p-4"
-			/>
-			<HistoryChart
-				{years}
-				{maxYear}
-				{sectorlyData}
-				{colorForKey}
-				bind:selectedYear
-				bind:ksgSelection
-				bind:crfSelection
-			/>
-		</div>
-		{#if ksgSelection != null}
-			<button
-				class="inline-block"
-				on:mousedown={() => {
-					crfSelection = null;
-					ksgSelection = null;
-					extensiveList = false;
-				}}>Zurück zur Übersicht</button
+	<div class="flex flex-wrap gap-5 items-center sm:justify-start">
+		<div class="relative text-gray-600">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="absolute pointer-events-none top-5 h-5 right-2 transform -translate-y-0.5 icon-tabler-selector"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><polyline
+					points="8 9 12 5 16 9"
+				/><polyline points="16 15 12 19 8 15" /></svg
 			>
-			<h4 class="text-black text-l inline-block">
+			<select
+				bind:value={selectedGhGas}
+				class="block appearance-none w-full bg-gray-200 border border-gray-100 h-14 py-3 px-4 pr-8 rounded leading-tight cursor-pointer focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+				id="emission-detail-ghg"
+			>
+				{#each ghGas as ghg}
+					<option value={ghg.key}>{ghg.label}</option>
+				{/each}
+			</select>
+		</div>
+
+		<label
+			class="flex gap-1 text-sm items-center cursor-pointer {showFlightEmissions
+				? 'text-blue-700'
+				: 'text-gray-400'}"
+			style=""
+			><svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="w-5 h-5 icon icon-tabler icon-tabler-plane"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+					d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z"
+				/></svg
+			>
+			<span
+				>Internationale Emissionen (Memo <span
+					class="glossary-label"
+					on:mousedown={() => glossaryItem.set('memo-items')}
+				/>)</span
+			> <input type="checkbox" bind:checked={showFlightEmissions} /></label
+		>
+
+		<label class="flex gap-1 text-sm items-center text-gray-400">
+			<input
+				type="range"
+				min="1990"
+				max="2020"
+				bind:value={selectedYear}
+				class="cursor-pointer"
+			/><span>{selectedYear}</span>
+		</label>
+
+		<label
+			class="flex gap-1 text-sm items-center cursor-pointer {useAbsoluteUnits
+				? 'text-blue-700'
+				: 'text-gray-400'}"
+			style=""
+		>
+			<span>Absolute Werte</span>
+			<input type="checkbox" bind:checked={useAbsoluteUnits} /></label
+		>
+	</div>
+
+	<div class="text-2xl py-3">
+		<span
+			class="cursor-pointer transition-colors {ksgSelection != null ? 'hover:text-gray-500' : ''}"
+			on:mousedown={() => {
+				crfSelection = null;
+				ksgSelection = null;
+				extensiveList = false;
+			}}
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="inline-block w-5 h-5 icon icon-tabler icon-tabler-plane"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				{#if ksgSelection == null}
+					<circle r="10" cx="12" cy="12" fill="currentColor" />
+				{:else}
+					<path stroke="none" d="M20 4 L 4 12 L 20 20" fill="currentColor" /><path />
+				{/if}
+			</svg>
+			<strong>Gesamtemissionen {selectedYear}</strong>
+			<small class="opacity-50"
+				>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO2eq (100%)</small
+			>
+		</span>
+		{#if ksgSelection != null}
+			<svg viewbox="0 0 12 22" class="h-[1em] px-2 inline-block"
+				><path
+					d="M 2 2 L 10 11 L 2 20"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+				/></svg
+			>
+			<span>
 				<i style="filter: invert(); display: inline-block;"
 					>{@html ksgSectors[ksgSelection].icon(1)}</i
 				>
-				{ksgSectors[ksgSelection].label}
-			</h4>
+				{sectorlyData[ksgSelection].label}
+			</span>
+		{/if}
+		{#if ksgSelection != null && crfSelection != null}
+			<svg viewbox="0 0 12 22" class="h-[1em] px-2 inline-block"
+				><path
+					d="M 2 2 L 10 11 L 2 20"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+				/></svg
+			>
+			<span>
+				{sectorlyData[ksgSelection].sectors[crfSelection].label}
+			</span>
 		{/if}
 	</div>
 
-	<!-- <LandUseChart /> -->
+	<div class="relative flex justify-stretch items-stretch flex-wrap gap-x-8">
+		<SectorsTreeChart
+			{ksgSectors}
+			{explanations}
+			{sectorlyData}
+			{colorForKey}
+			{years}
+			{useAbsoluteUnits}
+			{totalSelectedYear}
+			{selectedYear}
+			bind:ksgSelection
+			bind:crfSelection
+			bind:ksgHover
+			bind:crfHover
+			bind:extensiveList
+			class="p-4"
+		/>
+		<HistoryChart
+			{years}
+			{maxYear}
+			{sectorlyData}
+			{colorForKey}
+			{selectedYear}
+			bind:ksgSelection
+			bind:crfSelection
+			bind:ksgHover
+			bind:crfHover
+		/>
+	</div>
 {/if}

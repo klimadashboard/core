@@ -63,7 +63,7 @@
 		const abs = Math.abs(crf.absolute[_y]);
 		return abs > max ? abs : max;
 	}, 0)}
-	<svg viewBox="0 -500 1000 1000" height="700">
+	<svg viewBox="0 -250 1000 1000" height="700">
 		<text x={0} y={50} alignment-baseline="middle">0</text>
 
 		{#each lulucfData.sectors as sector, s}
@@ -78,10 +78,10 @@
 				width="50"
 				height={10 + Math.abs(h)}
 				x={100 + s * 60}
-				y={-y + h}
+				y={h < 0 ? -y + h : -y-h}
 				fill={h > 0 ? 'red' : 'green'}
 			/>
-			<text x={100 + s * 60 + 30} y={-y - Math.abs(h)} alignment-baseline="middle"
+			<text x={100 + s * 60 + 30} y={h < 0 ? -y + h : -y-h} alignment-baseline="middle"
 				>{h < 0 ? 'v ' : '^ '} {sector.label}</text
 			>
 		{/each}

@@ -11,9 +11,11 @@
 	export let years;
 	export let maxYear;
 
-	let chartHeight = 1000;
-	let chartWidth = 1150;
-	$: baseline = chartHeight - 100;
+	let clientHeight = 1000;
+	let clientWidth = 1000;
+	$: chartHeight = clientHeight;
+	$: chartWidth = clientWidth;
+	$: baseline = chartHeight - 40;
 	$: startline = 100;
 	$: dx = (chartWidth - startline) / years.length;
 
@@ -39,10 +41,15 @@
 </script>
 
 {#if sectorlyData}
-	<div class="basis-[400px]" style="background: rgba(0,0,0,0)">
+	<div
+		class="basis-[500px] min-h-[400px] grow"
+		style="background: rgba(0,0,0,0)"
+		bind:clientWidth
+		bind:clientHeight
+	>
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<svg
-			viewBox="0 0 {chartWidth} {chartHeight}"
+			class="w-full h-full"
 			on:mousemove|capture={function (e) {
 				mouse = {
 					x: ((e.pageX - this.getBoundingClientRect().left) / this.clientWidth) * chartWidth,
@@ -170,13 +177,16 @@
 				/>
 			{/if}
 			{#if selectedYear != null}
-				<rect
-					x={startline + (selectedYear - 1990) * dx - 10}
-					y="0}"
-					width="20"
+				<line
+					x1={startline + (selectedYear - 1990) * dx}
+					x2={startline + (selectedYear - 1990) * dx}
+					y1="3"
+					y2={baseline}
 					height={baseline}
-					fill="none"
-					stroke="black"
+					stroke-width="6"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke="#00000088"
 				/>
 			{/if}
 		</svg>
