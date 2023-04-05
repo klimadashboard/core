@@ -104,7 +104,10 @@
 												{#each children.filter((c) => c.id.includes(grandchild.uri) && c !== grandchild) as greatgrandchild}
 													<li>
 														<a
-															href={greatgrandchild.id.replace('klimadashboard-' + PUBLIC_VERSION + '/', '/')}
+															href={greatgrandchild.id.replace(
+																'klimadashboard-' + PUBLIC_VERSION + '/',
+																'/'
+															)}
 															on:mouseup={() => (showNav = false)}
 															class="navigation-link">{greatgrandchild.content.title}</a
 														>
@@ -121,33 +124,6 @@
 			{:catch error}
 				{error}
 			{/await}
-
-			<div
-				class="{showNav
-					? 'absolute top-96 left-4 md:left-0 md:top-14 '
-					: 'hidden  sm:block'} group sm:relative text-gray-700"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="hidden sm:inline-block"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<circle cx="5" cy="12" r="1" />
-					<circle cx="12" cy="12" r="1" />
-					<circle cx="19" cy="12" r="1" />
-				</svg>
-				<ul
-					class="sm:opacity-0 sm:pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 transition absolute top-full -left-2 p-2 bg-white "
-				/>
-			</div>
 
 			<!--
             <button class="flex items-center" on:mousedown={() => changeLocale()} aria-label="Language Switch">
