@@ -11,10 +11,12 @@
 	// export let xAxisInterval;
 	export let yAxisMax;
 
+	$: skipCount = Math.ceil(xAxisValues.length / ((width - startline) / 50));
+
 	$: yScale = scaleLinear().domain([0, yAxisMax]).range([0, baseline]);
 </script>
 
-<g class="chart-y-axis">
+<g class="chart-y-axis pointer-events-none">
 	{#each yScale.ticks(6) as tick, index}
 		{@const tickLabel =
 			tick > 999999
@@ -32,7 +34,7 @@
 <g class="chart-x-axis">
 	{#each xAxisValues as year, i}
 		{@const x = startline + i * dx}
-		{#if i % 2 == 0}
+		{#if (xAxisValues.length - 1 - i) % skipCount == 0}
 			<text {x} y={baseline + 20} font-size="15" text-anchor="middle"><tspan>{year}</tspan></text>
 		{/if}
 	{/each}

@@ -3,22 +3,21 @@
 	import { tweened } from 'svelte/motion';
 	import { cubicInOut } from 'svelte/easing';
 
-	export let explanations;
-	export let sectorlyData;
+	export let sortedData;
 	export let colorForKey;
+	export let iconForCRFCode;
 	export let selectedYear;
 	export let totalSelectedYear;
-	export let ksgSelection;
-	export let crfSelection;
-	export let extensiveList;
 	export let years;
 	export let useAbsoluteUnits;
+	// interactive
+	export let ksgSelection;
+	export let crfSelection;
+	export let ksgHover;
+	export let crfHover;
+	export let extensiveList;
 
 	// TREE MAP
-	// $: console.log(detailLayers, total1990, totalSelectedYear);
-
-	$: ksgTooltip = null;
-	$: crfTooltip = null;
 	$: mouse = null;
 
 	$: _y = selectedYear - 1990;
@@ -28,7 +27,7 @@
 	// $: console.log("totalSelectedYear", totalSelectedYear);
 
 	$: [maxTotalYear, maxTotal] = years
-		.map((y, yi) => [y, sectorlyData.reduce((sum, sec) => sum + sec.absolute[yi], 0)])
+		.map((y, yi) => [y, sortedData.reduce((sum, sec) => sum + sec.absolute[yi], 0)])
 		.reduce(
 			(max, entry) => {
 				return max[1] < entry[1] ? entry : max;
@@ -37,91 +36,6 @@
 		);
 	// $: console.log(maxTotalYear, maxTotal);
 	$: HEIGHT = 1000;
-
-	const updateDescription = (crfCode) => {
-		if (crfTooltip)
-			crfTooltip.explanation =
-				explanations?.find((entry) => entry.crfCode == crfCode).erklaerung || '';
-	};
-
-	let rows = [2, 3, sectorlyData.length - 5];
-
-	$: sortedData = sectorlyData.map((ksg, s) => {
-		const row = rows.reduce(
-			(row, count, c) => {
-				if (!row.foundRow && s >= row.start + count)
-					return { start: row.start + count, foundRow: false };
-				else
-					return {
-						start: row.start,
-						end: row.end || row.start + count,
-						foundRow: true
-					};
-			},
-			{ start: 0, foundRow: false }
-		);
-		// percentages
-		const percentSector = ksg.absolute[_y] / totalSelectedYear;
-		const percentCumulative = sectorlyData
-			.slice(0, s)
-			.reduce((sum, sec) => sum + sec.absolute[_y] / totalSelectedYear, 0);
-		const percentRow =
-			sectorlyData.slice(row.start, row.end).reduce((sum, entry) => sum + entry.absolute[_y], 0) /
-			totalSelectedYear;
-		const percentPreRow =
-			sectorlyData.slice(0, row.start).reduce((sum, entry) => sum + entry.absolute[_y], 0) /
-			totalSelectedYear;
-		const percentUpToKSGIndex =
-			sectorlyData.slice(row.start, s).reduce((sum, entry) => sum + entry.absolute[_y], 0) /
-			totalSelectedYear;
-
-		const selected = ksgSelection == s;
-		const w = selected ? 1000 : (1000 * percentSector) / percentRow;
-		const h = selected ? HEIGHT : percentRow * HEIGHT;
-		const x = selected ? 0 : (percentUpToKSGIndex / percentRow) * 1000;
-		const y = selected ? 0 : percentPreRow * HEIGHT;
-
-		// CRF sectors -----------------------------------------
-		let crfSectors = ksg.sectors.map((crf, c) => {
-			const percentUpToCRFIndex =
-				ksg.sectors.slice(0, c).reduce((sum, entry) => sum + entry.absolute[_y], 0) /
-				totalSelectedYear;
-			const w2 = w;
-			const h2 = (h * crf.absolute[_y]) / ksg.absolute[_y];
-			const x2 = x;
-			const y2 = y + h * (percentUpToCRFIndex / (ksg.absolute[_y] / totalSelectedYear));
-
-			return {
-				absolute: crf.absolute,
-				key: crf.key,
-				code: crf.code,
-				label: crf.label,
-				w2,
-				h2,
-				x2,
-				y2
-			};
-		});
-		crfSectors.sort((a, b) => {
-			return -a.absolute[a.absolute.length - 1] + b.absolute[a.absolute.length - 1];
-		});
-
-		// KSG sectors -----------------------------------------
-		return {
-			absolute: ksg.absolute,
-			key: ksg.key,
-			ksgSector: ksg.ksgSector,
-			label: ksg.label,
-			sectors: crfSectors,
-			percentCumulative,
-			relative: percentSector,
-			w,
-			h,
-			x,
-			y
-		};
-	});
-	// $: console.log('sortedData', sortedData);
 
 	// selected ksg sector
 	$: selection = ksgSelection != null ? sortedData[ksgSelection] : null;
@@ -132,16 +46,16 @@
 </script>
 
 <div
-	class="detail-emissions-tree-map relative basis-[500px] pb-[40px]"
+	class="detail-emissions-tree-map relative basis-[500px] pb-[40px] select-none"
 	style="background: rgba(0,0,0,0)"
 >
 	{#if sortedData}
 		<!-- <svg viewBox={$area}></svg> -->
 		<svg
-			viewBox="-150 0 1150 1000"
+			viewBox="-150 -20 1150 1020"
 			on:mouseleave={() => {
-				ksgTooltip = null;
-				crfTooltip = null;
+				ksgHover = null;
+				crfHover = null;
 				mouse = null;
 			}}
 		>
@@ -152,22 +66,29 @@
 					y={ksgSector.percentCumulative * HEIGHT}
 					width="80"
 					height={ksgSector.relative * HEIGHT}
-					fill={colorForKey(ksgSector.key).colorCode}
+					fill={ksgHover == s
+						? colorForKey(ksgSector.key).colorCodeHighlighted
+						: colorForKey(ksgSector.key).colorCode}
+					style="transition: fill 0.3s ease;"
 					opacity={ksgSelection != null && s != ksgSelection ? 0.2 : 1}
 					class="cursor-pointer"
 					on:mousedown|stopPropagation={() => {
 						ksgSelection = s;
-						ksgTooltip = null;
+						ksgHover = null;
+					}}
+					on:mousemove|stopPropagation={(e) => {
+						if (ksgSelection != null) return;
+						ksgHover = s;
 					}}
 				/>
 				{#if ksgSector.relative * HEIGHT > 30}
 					<g
 						class="pointer-events-none"
-						transform="translate(-110, {ksgSector.percentCumulative * HEIGHT +
+						transform="translate(-115, {ksgSector.percentCumulative * HEIGHT +
 							(ksgSector.relative * HEIGHT) / 2 -
 							10})"
 					>
-						{@html colorForKey(ksgSector.key).icon(1.2)}
+						{@html colorForKey(ksgSector.key).icon(1)}
 					</g>
 				{/if}
 
@@ -176,36 +97,44 @@
 						on:mousemove|stopPropagation={(e) => {
 							if (ksgSelection != null) return;
 							mouse = { x: e.layerX, y: e.layerY };
-							ksgTooltip = ksgSector;
+							ksgHover = s;
 						}}
 						on:mousedown|stopPropagation={() => {
 							ksgSelection = s;
-							ksgTooltip = null;
+							ksgHover = null;
 						}}
-						opacity={ksgTooltip == ksgSector ? 0.8 : 1}
 						class="transition-opacity cursor-pointer"
 					>
 						{#each ksgSector.sectors as crfSector, c}
+							{@const fontSize = parseInt(Math.max(20, Math.min(ksgSector.h / 2, 50)).toFixed(0))}
+							{@const fontSizeCRF = parseInt(
+								Math.max(20, Math.min(crfSector.h2 / 2, 50)).toFixed(0)
+							)}
 							{#if c == 0}
-								{@const fontSize = parseInt(Math.max(20, Math.min(ksgSector.h / 2, 50)).toFixed(0))}
 								<foreignObject
 									height={ksgSector.h}
 									width={ksgSector.w}
 									x={ksgSector.x}
 									y={ksgSector.y}
+									title="{ksgSector.label} {(ksgSector.absolute[_y] * relativeFactor).toFixed(1)}"
 								>
 									<div
 										class="w-full h-full flex items-end justify-start"
-										style="background-color: {colorForKey(ksgSector.key).colorCode};"
+										style="border: 3px solid white; transition: background 0.3s ease; background-color: {ksgHover ==
+										s
+											? colorForKey(ksgSector.key).colorCodeHighlighted
+											: colorForKey(ksgSector.key).colorCode};"
 									>
 										<div
-											class="w-full flex flex-wrap flex-grow-0 gap-2 text-white"
+											class="w-full flex items-center flex-wrap flex-grow-0 gap-2 text-white"
 											style="padding: {fontSize < 30
 												? 4
 												: fontSize / 4}px; font-size: {fontSize}px;"
 										>
 											{#if ksgSelection == null}
-												<span class="">{@html colorForKey(ksgSector.key).icon(fontSize / 20)}</span>
+												<span style="display: inline-block; margin-right: {fontSize / 6}px"
+													>{@html colorForKey(ksgSector.key).icon(fontSize / 20)}</span
+												>
 												<strong class="text-ellipsis overflow-hidden ">{ksgSector.label}</strong>
 												<span class=""
 													>{(ksgSector.absolute[_y] * relativeFactor)
@@ -216,86 +145,208 @@
 										</div>
 									</div>
 								</foreignObject>
-								<!-- <rect height={h} width={w} {x} {y} fill={colorForKey(ksgSector.key).colorCode} /> -->
 							{/if}
 
-							<g
+							<!-- CRF -->
+							<foreignObject
+								height={crfSector.h2}
+								width={crfSector.w2}
+								x={crfSector.x2}
+								y={crfSector.y2}
 								on:mousemove={(e) => {
 									if (ksgSelection == null) return;
 									else e.stopPropagation();
 
 									mouse = { x: e.layerX, y: e.layerY };
-									crfTooltip = crfSector;
-									updateDescription(crfSector.code);
+									crfHover = c;
 								}}
-								opacity={crfTooltip == crfSector ? 0.8 : 1}
+								on:pointerdown|stopPropagation={() => {
+									if (ksgSelection == null) return;
+									crfSelection = c;
+								}}
 							>
-								<rect
-									height={crfSector.h2}
-									width={crfSector.w2}
-									x={crfSector.x2}
-									y={crfSector.y2}
-									fill={c == crfSelection ? 'rgba(0,0,0,0.1)' : 'transparent'}
-									stroke-width="1"
-									stroke="rgba(255,255,255,{ksgSelection ? 1 : 0.3})"
-									on:pointerdown|stopPropagation={() => {
-										if (ksgSelection == null) return;
-										if (crfSector.h2 < 100) {
-											extensiveList = true;
-											return;
-										}
-										crfSelection = c;
-									}}
-								/>
-								{#if ksgSelection != null && crfSector.h2 > 20}
-									<text x={crfSector.x2 + 20} y={crfSector.y2 + 30} font-size="30" fill="white"
-										>{crfSector.label} | {(crfSector.absolute[_y] * relativeFactor)
-											.toFixed(2)
-											.replace('.', ',')}{unitLong}</text
+								{#if crfSector.h2 >= 40}
+									<div
+										class="w-full h-full flex items-end justify-between px-[25px]"
+										style="transition: background 0.3s ease; background-color: {ksgSelection == null
+											? 'transparent'
+											: crfHover == c
+											? colorForKey(crfSector.key).colorCodeHighlighted
+											: colorForKey(crfSector.key).colorCode}; {ksgHover == s ||
+										ksgSelection != null
+											? 'border-bottom: 4px solid #ffffff44;'
+											: ''} padding-block: {fontSizeCRF < 30
+											? 4
+											: fontSizeCRF / 4}px; font-size: {fontSizeCRF}px; color: white;"
 									>
+										{#if ksgSelection != null}
+											<strong class="flex items-center"
+												><span class="mr-4">
+													{@html iconForCRFCode({
+														crfCode: crfSector.code,
+														ksgKey: ksgSector.key,
+														size: fontSizeCRF / 30
+													})}
+												</span>
+												{crfSector.label}
+												{crfSector.code}</strong
+											>
+											<span>
+												{(crfSector.absolute[_y] * relativeFactor)
+													.toFixed(2)
+													.replace('.', ',')}{unitLong}
+											</span>
+										{/if}
+									</div>
 								{/if}
-							</g>
+							</foreignObject>
 						{/each}
+						{#if ksgSelection != null && crfSelection == null && ksgSector.more.active}
+							<rect
+								height={ksgSector.more.height + 20}
+								width={1000}
+								x={0}
+								y={-20}
+								fill={crfHover == -1
+									? colorForKey(ksgSector.key).colorCodeHighlighted
+									: colorForKey(ksgSector.key).colorCode}
+								style="transition: fill 0.3s ease"
+								on:pointerdown|stopPropagation={() => {
+									extensiveList = true;
+								}}
+								on:mousemove={(e) => {
+									e.stopPropagation();
+									crfHover = -1;
+								}}
+							/>
+							<line
+								x1="0"
+								x2="1000"
+								y1={ksgSector.more.height}
+								y2={ksgSector.more.height}
+								stroke="#ffffff66"
+								stroke-width="3"
+							/>
+							<text
+								x={25}
+								y={ksgSector.more.height / 2}
+								font-size={Math.min(40, ((ksgSector.more.height + 20) * 3) / 4)}
+								font-weight="bold"
+								fill="white"
+								class="pointer-events-none">Weitere</text
+							>
+						{/if}
 					</g>
+				{/if}
+				{#if ksgSelection != null && crfSelection != null}
+					{@const detailSector = selection?.sectors[crfSelection]}
+					<foreignObject height={HEIGHT} width={1000} x={0} y={0}>
+						<div
+							class="w-full h-full flex flex-col p-8"
+							style="background-color: {colorForKey(detailSector.key)
+								.colorCode}; font-size: 50px; color: white;"
+						>
+							<strong class="basis-[100px] text-center flex items-center">
+								<span class="mr-8"
+									>{@html iconForCRFCode({
+										crfCode: detailSector.code,
+										ksgKey: sortedData[ksgSelection].key,
+										size: 50 / 30
+									})}</span
+								>
+								{detailSector.label}
+							</strong>
+							<div class="basis-[300px] w-full flex justify-center gap-20">
+								<span>
+									{detailSector.absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq
+								</span>
+								<span
+									>{((detailSector.absolute[_y] * 100) / totalSelectedYear)
+										.toFixed(2)
+										.replace('.', ',')}%</span
+								>
+							</div>
+							<p class="basis-[600px]">{detailSector.explanation}</p>
+						</div>
+					</foreignObject>
 				{/if}
 			{/each}
 		</svg>
 	{/if}
 	{#if extensiveList && ksgSelection != null}
 		<div
-			class="absolute rounded p-4 top-0 left-0 h-full w-full overflow-scroll"
+			class="absolute rounded -top-4 -right-4 h-90 w-5/6 overflow-scroll"
 			style="background-color: {colorForKey(sortedData[ksgSelection].key).colorCode};"
 		>
+			<div
+				class="text-white p-4 flex justify-between items-start"
+				style="background-color: rgba(255,255,255,0.2)"
+				on:mousemove={(e) => {
+					e.stopPropagation();
+					crfHover = null;
+				}}
+			>
+				<strong>Weitere</strong>
+				<button
+					on:click={() => {
+						extensiveList = false;
+					}}
+					><svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="icon icon-tabler icon-tabler-x"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						stroke="currentColor"
+						fill="none"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><line
+							x1="18"
+							y1="6"
+							x2="6"
+							y2="18"
+						/><line x1="6" y1="6" x2="18" y2="18" /></svg
+					></button
+				>
+			</div>
 			<ul class="divide-y">
 				{#each sortedData[ksgSelection].sectors as crfSector, c}
-					<li
-						class="mb-1 text-white grid grid-cols-2"
-						on:pointerdown|stopPropagation={() => {
-							crfSelection = c;
-							extensiveList = false;
-						}}
-					>
-						<span>{(crfSector.absolute[_y] * relativeFactor).toFixed(3)}{unitLong}</span>
-						<strong>{crfSector.label}</strong>
-					</li>
+					{#if crfSector.h2 < 40}
+						<li
+							class="px-4 py-2 text-white flex justify-between cursor-pointer"
+							style="transition: background 0.3s ease; background-color: {crfHover == c
+								? colorForKey(crfSector.key).colorCodeHighlighted
+								: colorForKey(crfSector.key).colorCode};"
+							on:mousemove={(e) => {
+								e.stopPropagation();
+								mouse = { x: e.layerX, y: e.layerY };
+								crfHover = c;
+							}}
+							on:pointerdown|stopPropagation={() => {
+								crfSelection = c;
+								extensiveList = false;
+							}}
+						>
+							<strong class="flex items-center"
+								><span class="mr-4">
+									{@html iconForCRFCode({
+										crfCode: crfSector.code,
+										ksgKey: sortedData[ksgSelection].key,
+										size: 25 / 30
+									})}
+								</span>{crfSector.label}</strong
+							>
+							<span
+								>{(crfSector.absolute[_y] * relativeFactor)
+									.toFixed(3)
+									.replace('.', ',')}{unitLong}</span
+							>
+						</li>
+					{/if}
 				{/each}
 			</ul>
 		</div>
 	{/if}
-	<!-- {#if ksgTooltip}
-		<div class="absolute bg-white rounded p-4" style="top: {mouse.y}px; left: {mouse.x}px;">
-			<h4><strong>{ksgTooltip.label}</strong></h4>
-			{ksgTooltip.absolute[_y].toFixed(2).replace('.', ',')} Mt CO2eq
-		</div>
-	{/if} -->
-	<!-- {#if crfTooltip}
-		<div
-			class="absolute bg-white rounded p-4 max-w-prose"
-			style="top: {mouse.y}px; left: {mouse.x}px;"
-		>
-			<h4><strong>{crfTooltip.label}</strong></h4>
-			<strong>{crfTooltip.absolute[_y].toFixed(3).replace('.', ',')} Mt CO2eq</strong>
-			<p>{crfTooltip.explanation}</p>
-		</div>
-	{/if} -->
 </div>
