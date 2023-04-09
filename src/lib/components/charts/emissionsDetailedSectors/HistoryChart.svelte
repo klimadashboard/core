@@ -4,7 +4,7 @@
 
 	import { scaleLinear } from 'd3-scale';
 	export let selectedYear;
-	export let sortedData;
+	export let sectorlyData;
 	export let colorForKey;
 	export let years;
 	export let maxYear;
@@ -24,24 +24,24 @@
 
 	$: yAxisMax = years.reduce((max, y, yi) => Math.max(max, ksgSectorSum(0, yi)), 0);
 
-	$: yScale = scaleLinear().domain([0, yAxisMax]).range([0, baseline]);
+	$: yScale = scaleLinear().domain([0, yAxisMax]).range([10, baseline]);
 
 	$: mouse = null;
 
 	$: ksgSectorSum = (s, yi) => {
-		if (crfSelection != null) return sortedData[ksgSelection].sectors[crfSelection].absolute[yi];
-		if (ksgSelection != null) return sortedData[ksgSelection].absolute[yi];
-		const ksgSum = sortedData
-			.slice(0, sortedData.length - s)
+		if (crfSelection != null) return sectorlyData[ksgSelection].sectors[crfSelection].absolute[yi];
+		if (ksgSelection != null) return sectorlyData[ksgSelection].absolute[yi];
+		const ksgSum = sectorlyData
+			.slice(0, sectorlyData.length - s)
 			.reduce((sum, entry) => sum + entry.absolute[yi], 0);
 		return ksgSum;
 	};
 
 	$: highlightedYearIndex = null;
-	$: legendCategories = ksgSelection == null ? sortedData : sortedData[ksgSelection].sectors;
+	$: legendCategories = ksgSelection == null ? sectorlyData : sectorlyData[ksgSelection].sectors;
 </script>
 
-{#if sortedData}
+{#if sectorlyData}
 	<div
 		class="basis-[500px] min-h-[400px] grow"
 		style="background: rgba(0,0,0,0)"
@@ -68,8 +68,8 @@
 				{yAxisMax}
 			/>
 
-			{#each [...sortedData].reverse() as ksgSector, s}
-				{#if ksgSelection == null || ksgSelection == sortedData.length - 1 - s}
+			{#each [...sectorlyData].reverse() as ksgSector, s}
+				{#if ksgSelection == null || ksgSelection == sectorlyData.length - 1 - s}
 					{@const path = ksgSector.absolute
 						.filter((_, yi) => 1990 + yi <= maxYear)
 						.map((year, yi) => {
@@ -92,17 +92,17 @@
 					{#if ksgSelection == null}
 						<path
 							d={path}
-							fill={ksgHover == sortedData.length - s - 1
+							fill={ksgHover == sectorlyData.length - s - 1
 								? colorForKey(ksgSector.key).colorCodeHighlighted
 								: colorForKey(ksgSector.key).colorCode}
 							stroke="white"
 							stroke-width="2"
 							on:mousemove={(e) => {
 								if (ksgSelection != null) return;
-								ksgHover = sortedData.length - s - 1;
+								ksgHover = sectorlyData.length - s - 1;
 							}}
 							on:mousedown={(e) => {
-								ksgSelection = sortedData.length - s - 1;
+								ksgSelection = sectorlyData.length - s - 1;
 							}}
 							class="cursor-pointer"
 						/>
@@ -110,7 +110,7 @@
 
 					<!-- biggest CRF Lines? -->
 					{#each [...ksgSector.sectors].reverse() as crfSector, c}
-						{#if (ksgHover != null && ksgHover == sortedData.length - s - 1) || (ksgSelection != null && (crfSelection == null || crfSelection == ksgSector.sectors.length - c - 1))}
+						{#if (ksgHover != null && ksgHover == sectorlyData.length - s - 1) || (ksgSelection != null && (crfSelection == null || crfSelection == ksgSector.sectors.length - c - 1))}
 							{@const crfPath = crfSector.absolute
 								.filter((_, yi) => 1990 + yi <= maxYear)
 								.map((year, yi) => {
@@ -137,10 +137,10 @@
 							<path
 								d={crfPath}
 								data-path="crf-{ksgSector.key}-{c}"
-								fill={crfHover == c
+								fill={ksgHover == sectorlyData.length - s - 1 || crfHover == c
 									? colorForKey(ksgSector.key).colorCodeHighlighted
 									: colorForKey(ksgSector.key).colorCode}
-								stroke={ksgHover == sortedData.length - s - 1 || ksgSelection != null
+								stroke={ksgHover == sectorlyData.length - s - 1 || ksgSelection != null
 									? '#ffffffaa'
 									: 'transparent'}
 								stroke-width="1"
@@ -162,8 +162,8 @@
 
 				<!-- Dots -->
 				<!-- {#each ksgSector.absolute as year, yi}
-						{@const sum = sortedData
-							.slice(0, sortedData.length - s)
+						{@const sum = sectorlyData
+							.slice(0, sectorlyData.length - s)
 							.reduce((sum, entry) => sum + entry.absolute[yi], 0)}
 						{@const x = startline + yi * dx}
 						{@const y = yScale(sum)}

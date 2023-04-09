@@ -109,7 +109,10 @@
 		}
 	];
 	const colorForKey = (key) => ksgSectors.find((sector) => sector.color == key);
-	let rows = [2, 3, (sortedData?.length || 8) - 5];
+	let rows =
+		PUBLIC_VERSION == 'at'
+			? [2, 3, (sortedData?.length || 8) - 5]
+			: [2, 2, (sortedData?.length || 8) - 4];
 
 	let crfIcons = [
 		// Auto
@@ -140,9 +143,26 @@
 		},
 		// Lieferwagen
 		// { codes: ['1 A 3 b 2'], icon: (size) => `<svg width="${size * 30}" height="${size * 55}" viewBox="0 0 76 55" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M23.5111 51.0221C27.107 51.0221 30.0221 48.1071 30.0221 44.5111C30.0221 40.915 27.107 38 23.5111 38C19.9151 38 17 40.915 17 44.5111C17 48.1071 19.9151 51.0221 23.5111 51.0221Z" stroke="white" stroke-width="6.51107" stroke-linecap="round" stroke-linejoin="round"/><path d="M59.0111 51.0221C62.607 51.0221 65.5221 48.1071 65.5221 44.5111C65.5221 40.915 62.607 38 59.0111 38C55.4151 38 52.5 40.915 52.5 44.5111C52.5 48.1071 55.4151 51.0221 59.0111 51.0221Z" stroke="white" stroke-width="6.51107" stroke-linecap="round" stroke-linejoin="round"/><path d="M52 45V14.5L44.371 4H9V45" stroke="white" stroke-width="6.45" stroke-linecap="round" stroke-linejoin="round"/><path d="M52 15H68.3636L72 25.5V43C72 44.1046 71.1046 45 70 45H68.3636" stroke="white" stroke-width="6.45" stroke-linecap="round" stroke-linejoin="round"/><path d="M52 45H30" stroke="white" stroke-width="6.45" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.5 45H4.5" stroke="white" stroke-width="6.45" stroke-linecap="round"/><path d="M4 28H22" stroke="white" stroke-width="6.45" stroke-linecap="round"/></svg>` },
-		// LKW-Kabi30
+		// LKW-Kabi
 		// { codes: ['1 A 3 b 2'], icon: (size) => `<svg width="${size * 30}" height="${size * 58}" viewBox="0 0 76 58" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M56.4889 54.0221C52.893 54.0221 49.9779 51.1071 49.9779 47.5111C49.9779 43.915 52.893 41 56.4889 41C60.0849 41 63 43.915 63 47.5111C63 51.1071 60.0849 54.0221 56.4889 54.0221Z" stroke="white" stroke-width="6.51107" stroke-linecap="round" stroke-linejoin="round"/><path d="M25.4889 54.3222C21.8929 54.3222 18.9779 51.4072 18.9779 47.8111C18.9779 44.2151 21.8929 41.3 25.4889 41.3C29.085 41.3 32 44.2151 32 47.8111C32 51.4072 29.085 54.3222 25.4889 54.3222Z" stroke="white" stroke-width="6.51107" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 48H9.43448M17.6979 48H9.43448M63.7366 48H71C71.5523 48 72 47.5523 72 47V33H15.4345C12.1208 33 9.43448 35.6863 9.43448 39V48M50.1517 48H32.2759" stroke="white" stroke-width="6.45" stroke-linecap="round"/><path d="M58 10V31" stroke="white" stroke-width="6.45"/><path d="M41 48V10C41 9.44772 41.4477 9 42 9H55C64.3888 9 72 16.6112 72 26V39.9706" stroke="white" stroke-width="6.45"/><path d="M41 10.5V9C41 6.23858 38.7614 4 36 4H34" stroke="white" stroke-width="6.45" stroke-linecap="round"/><path d="M41 10.5V9C41 6.23858 38.7614 4 36 4H34" stroke="white" stroke-width="6.45" stroke-linecap="round"/></svg>` },
-		// Energ30
+		// Flugzeug
+		{
+			codes: ['1 A 3 a'],
+			icon: (size) => `<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="${size * 30}" height="${size * 58}"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="white"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+						d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z"
+					/></svg
+				>`
+		},
+		// Energy
 		{
 			codes: ['1 A 2 g'],
 			icon: (size) =>
@@ -193,7 +213,6 @@
 	];
 
 	const iconForCRFCode = ({ crfCode, ksgKey, size }) => {
-		console.log('icon for key', ksgKey, crfCode);
 		let icon = '';
 		const crfIcon = crfIcons.find((icon) => icon.codes.indexOf(crfCode) >= 0);
 		if (crfIcon) return crfIcon.icon(size);
@@ -201,10 +220,10 @@
 		return icon;
 	};
 
-	// const datasetPromise = fetch(
-	// 	`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
-	// )
-	const datasetPromise = fetch('../data/at/emissions/emissions_crf_at.json')
+	const datasetPromise = fetch(
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
+	)
+		// const datasetPromise = fetch('../data/at/emissions/emissions_crf_at.json')
 		// const datasetPromise = fetch('../data/de/emissions/emissions_crf_de.json')
 		.then((response) => response.json())
 		.then((responseData) => {
@@ -213,6 +232,25 @@
 		});
 
 	$: data = dataset?.[selectedGhGas].sort((a, b) => b.absolute[30] - a.absolute[30]);
+	$: sectorlyData = data
+		?.filter((sector) => (sector.label == 'Memo' ? showFlightEmissions : true))
+		.map((sector) => {
+			let crfSectors = [...sector.sectors];
+			crfSectors = crfSectors.sort((a, b) => {
+				const last = maxYear - 1990;
+				return a.absolute[last] - b.absolute[last];
+			});
+			crfSectors = crfSectors.map((crf, c) => {
+				return { ...crf, index: c };
+			});
+
+			return {
+				...sector,
+				sectors: crfSectors
+			};
+		});
+	$: memoAvailable = data ? data.find((sector) => sector.label == 'Memo').absolute[0] != 0 : false;
+
 	$: sortedData = sectorlyData?.map((ksg, s) => {
 		const row = rows.reduce(
 			(row, count, c) => {
@@ -266,8 +304,8 @@
 			moreSection.active = moreSection.active || h2 < 40;
 			if (h2 < 40) moreSection.height += h2;
 
-			console.log(crf.label, crf.code);
 			return {
+				index: crf.index,
 				absolute: crf.absolute,
 				key: crf.key,
 				code: crf.code,
@@ -301,9 +339,6 @@
 	// TODO: compare totals to Klimaschutzbericht
 	// console.log('1990', total1990 / 10 ** 6);
 	// $: console.log('2020', totalSelectedYear / 10 ** 6);
-
-	$: sectorlyData = data?.filter((sector) => (sector.label == 'Memo' ? showFlightEmissions : true));
-	$: memoAvailable = data ? data.find((sector) => sector.label == 'Memo').absolute[0] != 0 : false;
 
 	$: totalForYear = (year) =>
 		sectorlyData?.reduce((sum, entry) => sum + entry.absolute[year - 1990], 0);
@@ -454,10 +489,10 @@
 				}}
 				style="color: {colorForKey(sortedData[ksgSelection].color)};"
 			>
-				<i style="filter: invert(); display: inline-block;"
+				<!-- <i style="filter: invert(); display: inline-block; transform: translateY(0.25em)"
 					>{@html ksgSectors[ksgSelection].icon(1)}</i
-				>
-				{sortedData[ksgSelection].label}
+				> -->
+				<span>{sortedData[ksgSelection].label}</span>
 			</span>
 		{/if}
 		{#if ksgSelection != null && crfSelection != null}
@@ -480,6 +515,7 @@
 		<SectorsTreeChart
 			{ksgSectors}
 			{explanations}
+			{sectorlyData}
 			{sortedData}
 			{colorForKey}
 			{iconForCRFCode}
@@ -497,7 +533,7 @@
 		<HistoryChart
 			{years}
 			{maxYear}
-			{sortedData}
+			{sectorlyData}
 			{colorForKey}
 			{selectedYear}
 			bind:ksgSelection

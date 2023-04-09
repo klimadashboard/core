@@ -4,6 +4,7 @@
 	import { cubicInOut } from 'svelte/easing';
 
 	export let sortedData;
+	export let sectorlyData;
 	export let colorForKey;
 	export let iconForCRFCode;
 	export let selectedYear;
@@ -22,8 +23,19 @@
 
 	$: _y = selectedYear - 1990;
 	$: relativeFactor = useAbsoluteUnits ? 1 : 100 / totalSelectedYear;
-	$: unitShort = useAbsoluteUnits ? 'Mt' : '%';
-	$: unitLong = useAbsoluteUnits ? 'Mt CO₂eq' : '%';
+	$: unitValue = ({ value, short = true }) => {
+		let val = value * relativeFactor;
+		let u = 'M';
+		if (useAbsoluteUnits && val < 0.1) {
+			val *= 1000;
+			u = 'k';
+		}
+		return `${val.toFixed(1).replace('.', ',')}${
+			short ? (useAbsoluteUnits ? `${u}t` : '%') : useAbsoluteUnits ? `${u}t CO₂eq` : '%'
+		}`;
+	};
+	// $: unitShort = useAbsoluteUnits ? 'Mt' : '%';
+	// $: unitLong = useAbsoluteUnits ? 'Mt CO₂eq' : '%';
 	// $: console.log("totalSelectedYear", totalSelectedYear);
 
 	$: [maxTotalYear, maxTotal] = years
@@ -39,6 +51,7 @@
 
 	// selected ksg sector
 	$: selection = ksgSelection != null ? sortedData[ksgSelection] : null;
+	$: fixedSelection = ksgSelection != null ? sectorlyData[ksgSelection] : null;
 	const area = tweened([-150, 0, 1150, 1150], { easing: cubicInOut, duration: 800 });
 	$: selection != null
 		? area.set([selection.x, selection.y, selection.w, selection.h])
@@ -126,7 +139,7 @@
 											: colorForKey(ksgSector.key).colorCode};"
 									>
 										<div
-											class="w-full flex items-center flex-wrap flex-grow-0 gap-2 text-white"
+											class="w-full max-h-full flex items-center flex-wrap flex-grow-0 gap-2 text-white"
 											style="padding: {fontSize < 30
 												? 4
 												: fontSize / 4}px; font-size: {fontSize}px;"
@@ -135,11 +148,13 @@
 												<span style="display: inline-block; margin-right: {fontSize / 6}px"
 													>{@html colorForKey(ksgSector.key).icon(fontSize / 20)}</span
 												>
-												<strong class="text-ellipsis overflow-hidden ">{ksgSector.label}</strong>
+												<strong
+													class="{ksgSector.h < 100
+														? 'max-w-[60%]'
+														: ''} text-ellipsis overflow-hidden">{ksgSector.label}</strong
+												>
 												<span class=""
-													>{(ksgSector.absolute[_y] * relativeFactor)
-														.toFixed(1)
-														.replace('.', ',')}{unitShort}</span
+													>{unitValue({ value: ksgSector.absolute[_y], short: true })}</span
 												>
 											{/if}
 										</div>
@@ -158,7 +173,7 @@
 									else e.stopPropagation();
 
 									mouse = { x: e.layerX, y: e.layerY };
-									crfHover = c;
+									crfHover = crfSector.index;
 								}}
 								on:pointerdown|stopPropagation={() => {
 									if (ksgSelection == null) return;
@@ -170,7 +185,7 @@
 										class="w-full h-full flex items-end justify-between px-[25px]"
 										style="transition: background 0.3s ease; background-color: {ksgSelection == null
 											? 'transparent'
-											: crfHover == c
+											: crfHover == crfSector.index
 											? colorForKey(crfSector.key).colorCodeHighlighted
 											: colorForKey(crfSector.key).colorCode}; {ksgHover == s ||
 										ksgSelection != null
@@ -189,12 +204,10 @@
 													})}
 												</span>
 												{crfSector.label}
-												{crfSector.code}</strong
-											>
+												<!-- {crfSector.code} -->
+											</strong>
 											<span>
-												{(crfSector.absolute[_y] * relativeFactor)
-													.toFixed(2)
-													.replace('.', ',')}{unitLong}
+												{unitValue({ value: crfSector.absolute[_y], short: false })}
 											</span>
 										{/if}
 									</div>
@@ -239,24 +252,24 @@
 					</g>
 				{/if}
 				{#if ksgSelection != null && crfSelection != null}
-					{@const detailSector = selection?.sectors[crfSelection]}
+					{@const detailSector = fixedSelection?.sectors[crfSelection]}
 					<foreignObject height={HEIGHT} width={1000} x={0} y={0}>
 						<div
 							class="w-full h-full flex flex-col p-8"
 							style="background-color: {colorForKey(detailSector.key)
 								.colorCode}; font-size: 50px; color: white;"
 						>
-							<strong class="basis-[100px] text-center flex items-center">
+							<strong class="basis-[125px] text-center flex items-center">
 								<span class="mr-8"
 									>{@html iconForCRFCode({
 										crfCode: detailSector.code,
-										ksgKey: sortedData[ksgSelection].key,
+										ksgKey: sectorlyData[ksgSelection].key,
 										size: 50 / 30
 									})}</span
 								>
 								{detailSector.label}
 							</strong>
-							<div class="basis-[300px] w-full flex justify-center gap-20">
+							<div class="basis-[150px] w-full flex justify-center gap-20">
 								<span>
 									{detailSector.absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq
 								</span>
@@ -266,7 +279,9 @@
 										.replace('.', ',')}%</span
 								>
 							</div>
-							<p class="basis-[600px]">{detailSector.explanation}</p>
+							<div class="basis-[725px] overflow-auto">
+								<p>{detailSector.explanation}</p>
+							</div>
 						</div>
 					</foreignObject>
 				{/if}
@@ -316,13 +331,14 @@
 					{#if crfSector.h2 < 40}
 						<li
 							class="px-4 py-2 text-white flex justify-between cursor-pointer"
-							style="transition: background 0.3s ease; background-color: {crfHover == c
+							style="transition: background 0.3s ease; background-color: {crfHover ==
+							crfSector.index
 								? colorForKey(crfSector.key).colorCodeHighlighted
 								: colorForKey(crfSector.key).colorCode};"
 							on:mousemove={(e) => {
 								e.stopPropagation();
 								mouse = { x: e.layerX, y: e.layerY };
-								crfHover = c;
+								crfHover = crfSector.index;
 							}}
 							on:pointerdown|stopPropagation={() => {
 								crfSelection = c;
@@ -336,13 +352,10 @@
 										ksgKey: sortedData[ksgSelection].key,
 										size: 25 / 30
 									})}
-								</span>{crfSector.label}</strong
-							>
-							<span
-								>{(crfSector.absolute[_y] * relativeFactor)
-									.toFixed(3)
-									.replace('.', ',')}{unitLong}</span
-							>
+								</span>{crfSector.label}
+								<!-- {crfSector.code} -->
+							</strong>
+							<span>{unitValue({ value: crfSector.absolute[_y], short: false })}</span>
 						</li>
 					{/if}
 				{/each}
