@@ -23,20 +23,17 @@
 
 	$: _y = selectedYear - 1990;
 	$: relativeFactor = useAbsoluteUnits ? 1 : 100 / totalSelectedYear;
-	$: unitValue = ({ value, short = true }) => {
-		let val = value * relativeFactor;
+	$: unitValue = ({ value, short = true, forceAbsolute = false }) => {
+		let val = value * (forceAbsolute ? 1 : relativeFactor);
 		let u = 'M';
-		if (useAbsoluteUnits && val < 0.1) {
+		if ((useAbsoluteUnits || forceAbsolute) && val < 0.1) {
 			val *= 1000;
 			u = 'k';
 		}
 		return `${val.toFixed(1).replace('.', ',')}${
-			short ? (useAbsoluteUnits ? `${u}t` : '%') : useAbsoluteUnits ? `${u}t CO₂eq` : '%'
+			short ? ((useAbsoluteUnits || forceAbsolute) ? `${u}t` : '%') : (useAbsoluteUnits || forceAbsolute) ? `${u}t CO₂eq` : '%'
 		}`;
 	};
-	// $: unitShort = useAbsoluteUnits ? 'Mt' : '%';
-	// $: unitLong = useAbsoluteUnits ? 'Mt CO₂eq' : '%';
-	// $: console.log("totalSelectedYear", totalSelectedYear);
 
 	$: [maxTotalYear, maxTotal] = years
 		.map((y, yi) => [y, sortedData.reduce((sum, sec) => sum + sec.absolute[yi], 0)])
@@ -63,7 +60,6 @@
 	style="background: rgba(0,0,0,0)"
 >
 	{#if sortedData}
-		<!-- <svg viewBox={$area}></svg> -->
 		<svg
 			viewBox="-150 -20 1150 1020"
 			on:mouseleave={() => {
@@ -271,7 +267,7 @@
 							</strong>
 							<div class="basis-[150px] w-full flex justify-center gap-20">
 								<span>
-									{detailSector.absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq
+									{unitValue({ value: detailSector.absolute[_y], short: false, forceAbsolute: true })}
 								</span>
 								<span
 									>{((detailSector.absolute[_y] * 100) / totalSelectedYear)

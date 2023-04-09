@@ -24,7 +24,7 @@
 
 	$: yAxisMax = years.reduce((max, y, yi) => Math.max(max, ksgSectorSum(0, yi)), 0);
 
-	$: yScale = scaleLinear().domain([0, yAxisMax]).range([10, baseline]);
+	$: yScale = scaleLinear().domain([0, yAxisMax]).range([5, baseline-20]);
 
 	$: mouse = null;
 
@@ -63,9 +63,9 @@
 				{startline}
 				{dx}
 				xAxisInterval={5}
-				unit={'Mio t CO2eq'}
+				unit={'Mt CO₂eq'}
 				xAxisValues={years}
-				{yAxisMax}
+				yAxisMax={yAxisMax == 0 ? 1 : yAxisMax}
 			/>
 
 			{#each [...sectorlyData].reverse() as ksgSector, s}
@@ -76,15 +76,15 @@
 							const sum = ksgSectorSum(s, yi);
 							const x = startline + yi * dx;
 							const y = yScale(sum);
-							return [yi == 0 ? 'M' : 'L', x, baseline - y];
+							return [yi == 0 ? 'M' : 'L', x, baseline-5 - y];
 						})
 						.concat([
 							'L',
 							startline + (maxYear - 1990) * dx,
-							baseline,
+							baseline-5,
 							'L',
 							startline,
-							baseline,
+							baseline-5,
 							'Z'
 						])
 						.flat()
@@ -114,26 +114,27 @@
 							{@const crfPath = crfSector.absolute
 								.filter((_, yi) => 1990 + yi <= maxYear)
 								.map((year, yi) => {
+									const subSectorSum = ksgSector.sectors
+									.slice(0, c)
+									.reduce((subSum, entry) => subSum + entry.absolute[yi], 0)
 									const sum =
-										ksgSectorSum(s, yi) -
-										ksgSector.sectors
-											.slice(0, c)
-											.reduce((sum, entry) => sum + entry.absolute[yi], 0);
+										ksgSectorSum(s, yi) - (crfSelection != null ? 0 : subSectorSum);
 									const x = startline + yi * dx;
-									const y = yScale(sum);
-									return [yi ? 'L' : 'M', x, baseline - y];
+									const y = sum == 0 ? 0 : yScale(sum);
+									return [yi ? 'L' : 'M', x, baseline-5 - y];
 								})
 								.concat([
 									'L',
 									startline + (maxYear - 1990) * dx,
-									baseline,
+									baseline-5,
 									'L',
 									startline,
-									baseline,
+									baseline-5,
 									'Z'
 								])
 								.flat()
 								.join(' ')}
+								<!-- {@const crfPath = computeCRFPath(c, crfSector, s, ksgSector)} -->
 							<path
 								d={crfPath}
 								data-path="crf-{ksgSector.key}-{c}"

@@ -13,7 +13,9 @@
 
 	$: skipCount = Math.ceil(xAxisValues.length / ((width - startline) / 50));
 
-	$: yScale = scaleLinear().domain([0, yAxisMax]).range([0, baseline]);
+	$: yScale = scaleLinear()
+		.domain([0, yAxisMax])
+		.range([5, baseline - 20]);
 </script>
 
 <g class="chart-y-axis pointer-events-none">
