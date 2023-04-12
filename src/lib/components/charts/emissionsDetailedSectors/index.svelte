@@ -365,7 +365,7 @@
 		<div class="relative text-gray-600">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
-				class="absolute pointer-events-none top-5 h-5 right-2 transform -translate-y-0.5 icon-tabler-selector"
+				class="absolute pointer-events-none top-4 h-5 right-2 transform -translate-y-0.5 icon-tabler-selector"
 				width="24"
 				height="24"
 				viewBox="0 0 24 24"
@@ -380,7 +380,7 @@
 			>
 			<select
 				bind:value={selectedGhGas}
-				class="block appearance-none w-full bg-gray-200 border border-gray-100 h-14 py-3 px-4 pr-8 rounded leading-tight cursor-pointer focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+				class="block appearance-none w-full bg-gray-200 border border-gray-100 px-4 py-3 pr-8 rounded leading-tight cursor-pointer focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 				id="emission-detail-ghg"
 			>
 				{#each ghGas as ghg}
@@ -389,36 +389,7 @@
 			</select>
 		</div>
 
-		{#if memoAvailable}
-			<label
-				class="flex gap-1 text-sm items-center cursor-pointer {showFlightEmissions
-					? 'text-blue-700'
-					: 'text-gray-400'}"
-				style=""
-				><svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="w-5 h-5 icon icon-tabler icon-tabler-plane"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-						d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z"
-					/></svg
-				>
-				<span
-					>Internationale Emissionen (Memo <span
-						class="glossary-label"
-						on:mousedown={() => glossaryItem.set('memo-items')}
-					/>)</span
-				> <input type="checkbox" bind:checked={showFlightEmissions} /></label
-			>
-		{/if}
-		<label class="flex gap-1 text-sm items-center text-gray-400">
+		<label class="flex gap-1 text-sm items-center text-gray-700">
 			<input
 				type="range"
 				min="1990"
@@ -428,9 +399,43 @@
 			/><span>{selectedYear}</span>
 		</label>
 
+		{#if memoAvailable}
+			<label
+				class="flex gap-1 text-sm items-center cursor-pointer {showFlightEmissions
+					? 'text-gray-700'
+					: 'text-gray-400'}"
+				style=""
+				><svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="w-5 h-5"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+					<path d="M3.6 9h16.8" />
+					<path d="M3.6 15h16.8" />
+					<path d="M11.5 3a17 17 0 0 0 0 18" />
+					<path d="M12.5 3a17 17 0 0 1 0 18" />
+				</svg>
+				<span class="-translate-y-0.5"
+					>Internationale Emissionen (Memo <span
+						class="glossary-label"
+						on:mousedown={() => glossaryItem.set('memo-items')}
+					/>)</span
+				> <input type="checkbox" bind:checked={showFlightEmissions} /></label
+			>
+		{/if}
+
 		<label
 			class="flex gap-1 text-sm items-center cursor-pointer {useAbsoluteUnits
-				? 'text-blue-700'
+				? 'text-gray-700'
 				: 'text-gray-400'}"
 			style=""
 		>
