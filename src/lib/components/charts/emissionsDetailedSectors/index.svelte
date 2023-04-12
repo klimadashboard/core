@@ -439,76 +439,99 @@
 		>
 	</div>
 
-	<div class="py-3" style="font-size: clamp(1rem, 4vw, 1.5rem)">
-		<span
-			class="cursor-pointer transition-colors {ksgSelection != null ? 'hover:text-gray-500' : ''}"
-			on:mousedown={() => {
-				crfSelection = null;
-				ksgSelection = null;
-				extensiveList = false;
-			}}
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="inline-block w-5 h-5 icon icon-tabler icon-tabler-plane"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				{#if ksgSelection == null}
-					<circle r="10" cx="12" cy="12" fill="currentColor" />
-				{:else}
-					<path stroke="none" d="M20 4 L 4 12 L 20 20" fill="currentColor" /><path />
-				{/if}
-			</svg>
-			<strong>Gesamtemissionen {selectedYear}</strong>
-			<small class="opacity-50"
-				>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO2eq (100%)</small
-			>
-		</span>
-		{#if ksgSelection != null}
-			<svg viewbox="0 0 12 22" class="h-[1em] px-2 inline-block"
-				><path
-					d="M 2 2 L 10 11 L 2 20"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-				/></svg
-			>
-			<span
-				class="cursor-pointer transition-colors {crfSelection != null ? 'hover:text-gray-500' : ''}"
+	<div class="relative overflow-hidden mt-6 py-1 border-b sm:text-lg">
+		<div class="breadcrumb-slider overflow-x-scroll flex items-center pr-8">
+			<button
+				class="flex space-x-1 items-center group"
 				on:mousedown={() => {
 					crfSelection = null;
+					ksgSelection = null;
 					extensiveList = false;
 				}}
-				style="color: {colorForKey(sortedData[ksgSelection].color)};"
+				disabled={ksgSelection == null}
 			>
-				<!-- <i style="filter: invert(); display: inline-block; transform: translateY(0.25em)"
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="w-5 h-5"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path d="M12 21a9 9 0 1 0 0 -18a9 9 0 0 0 0 18" />
+					{#if ksgSelection !== null}
+						<path d="M8 12l4 4" />
+						<path d="M8 12h8" />
+						<path d="M12 8l-4 4" />
+					{/if}
+				</svg>
+				<span class="underline-offset-2 group-hover:underline group-disabled:no-underline font-bold"
+					>Gesamtemissionen {selectedYear}</span
+				>
+				<span class="opacity-50"
+					>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO2eq (100%)</span
+				>
+			</button>
+			{#if ksgSelection != null}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="icon icon-tabler icon-tabler-chevron-right"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path d="M9 6l6 6l-6 6" />
+				</svg>
+				<button
+					class="hover:underline disabled:no-underline underline-offset-2"
+					style="color: {colorForKey(sortedData[ksgSelection].color)};"
+					on:mousedown={() => {
+						crfSelection = null;
+						extensiveList = false;
+					}}
+					disabled={!crfSelection && !extensiveList}
+				>
+					<!-- <i style="filter: invert(); display: inline-block; transform: translateY(0.25em)"
 					>{@html ksgSectors[ksgSelection].icon(1)}</i
 				> -->
-				<span>{sortedData[ksgSelection].label}</span>
-			</span>
-		{/if}
-		{#if ksgSelection != null && crfSelection != null}
-			<svg viewbox="0 0 12 22" class="h-[1em] px-2 inline-block"
-				><path
-					d="M 2 2 L 10 11 L 2 20"
-					fill="none"
-					stroke="currentColor"
+					<span>{sortedData[ksgSelection].label}</span>
+				</button>
+			{/if}
+			{#if ksgSelection != null && crfSelection != null}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="icon icon-tabler icon-tabler-chevron-right"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
 					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
 					stroke-linecap="round"
-				/></svg
-			>
-			<span>
-				{sortedData[ksgSelection].sectors[crfSelection].label}
-			</span>
-		{/if}
+					stroke-linejoin="round"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path d="M9 6l6 6l-6 6" />
+				</svg>
+				<span>
+					{sortedData[ksgSelection].sectors[crfSelection].label}
+				</span>
+			{/if}
+			<div
+				class="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-r from-transparent to-white"
+			/>
+		</div>
 	</div>
 
 	<div class="relative flex justify-stretch items-stretch flex-wrap gap-x-8">
@@ -543,3 +566,9 @@
 		/>
 	</div>
 {/if}
+
+<style>
+	.breadcrumb-slider > * {
+		@apply flex-shrink-0;
+	}
+</style>
