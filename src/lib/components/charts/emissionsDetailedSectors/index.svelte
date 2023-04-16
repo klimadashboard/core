@@ -287,7 +287,7 @@
 		const y = selected ? 0 : percentPreRow * 1000;
 
 		// CRF sectors -----------------------------------------
-		let moreSection = { active: false, height: 0 };
+		let moreSection = { active: false, height: 0, absolute: 0 };
 
 		let crfSectors = ksg.sectors;
 		crfSectors = crfSectors.sort((a, b) => {
@@ -303,6 +303,7 @@
 			const y2 = y + h * (percentUpToCRFIndex / (ksg.absolute[_y] / totalSelectedYear));
 			moreSection.active = moreSection.active || h2 < 40;
 			if (h2 < 40) moreSection.height += h2;
+			if (h2 < 40) moreSection.absolute += crf.absolute[_y];
 
 			return {
 				index: crf.index,
@@ -323,11 +324,15 @@
 			absolute: ksg.absolute,
 			key: ksg.key,
 			ksgSector: ksg.ksgSector,
-			label: ksg.label,
+			label: colorForKey(ksg.key).label,
 			sectors: crfSectors,
 			percentCumulative,
 			relative: percentSector,
-			more: { active: moreSection.active, height: moreSection.height },
+			more: {
+				active: moreSection.active,
+				height: moreSection.height,
+				absolute: moreSection.absolute
+			},
 			w,
 			h,
 			x,
@@ -479,7 +484,7 @@
 					>Gesamtemissionen {selectedYear}</span
 				>
 				<span class="opacity-50"
-					>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO2eq (100%)</span
+					>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO₂eq (100%)</span
 				>
 			</button>
 			{#if ksgSelection != null}

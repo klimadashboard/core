@@ -31,7 +31,13 @@
 			u = 'k';
 		}
 		return `${val.toFixed(1).replace('.', ',')}${
-			short ? ((useAbsoluteUnits || forceAbsolute) ? `${u}t` : '%') : (useAbsoluteUnits || forceAbsolute) ? `${u}t CO₂eq` : '%'
+			short
+				? useAbsoluteUnits || forceAbsolute
+					? `${u}t`
+					: '%'
+				: useAbsoluteUnits || forceAbsolute
+				? `${u}t CO₂eq`
+				: '%'
 		}`;
 	};
 
@@ -84,6 +90,8 @@
 					on:mousedown|stopPropagation={() => {
 						ksgSelection = s;
 						ksgHover = null;
+						crfSelection = null;
+						crfHover = null;
 					}}
 					on:mousemove|stopPropagation={(e) => {
 						if (ksgSelection != null) return;
@@ -211,14 +219,12 @@
 							</foreignObject>
 						{/each}
 						{#if ksgSelection != null && crfSelection == null && ksgSector.more.active}
-							<rect
+							{@const fontSizeMore = Math.min(40, ((ksgSector.more.height + 20) * 3) / 4)}
+							<foreignObject
 								height={ksgSector.more.height + 20}
 								width={1000}
 								x={0}
 								y={-20}
-								fill={crfHover == -1
-									? colorForKey(ksgSector.key).colorCodeHighlighted
-									: colorForKey(ksgSector.key).colorCode}
 								style="transition: fill 0.3s ease"
 								on:pointerdown|stopPropagation={() => {
 									extensiveList = true;
@@ -227,23 +233,23 @@
 									e.stopPropagation();
 									crfHover = -1;
 								}}
-							/>
-							<line
-								x1="0"
-								x2="1000"
-								y1={ksgSector.more.height}
-								y2={ksgSector.more.height}
-								stroke="#ffffff66"
-								stroke-width="3"
-							/>
-							<text
-								x={25}
-								y={ksgSector.more.height / 2}
-								font-size={Math.min(40, ((ksgSector.more.height + 20) * 3) / 4)}
-								font-weight="bold"
-								fill="white"
-								class="pointer-events-none">Weitere</text
 							>
+								<div
+									class="w-full h-full flex items-center justify-between px-[25px]"
+									style="transition: background 0.3s ease; background-color: {crfHover == -1
+										? colorForKey(ksgSector.key).colorCodeHighlighted
+										: colorForKey(ksgSector.key).colorCode}; {ksgHover == s || ksgSelection != null
+										? 'border-bottom: 4px solid #ffffff44;'
+										: ''} font-size: {fontSizeMore}px; color: white;"
+								>
+									{#if ksgSelection != null}
+										<strong class="flex items-center"> Weitere </strong>
+										<span>
+											{unitValue({ value: ksgSector.more.absolute, short: false })}
+										</span>
+									{/if}
+								</div>
+							</foreignObject>
 						{/if}
 					</g>
 				{/if}
@@ -267,7 +273,11 @@
 							</strong>
 							<div class="basis-[150px] w-full flex justify-center gap-20">
 								<span>
-									{unitValue({ value: detailSector.absolute[_y], short: false, forceAbsolute: true })}
+									{unitValue({
+										value: detailSector.absolute[_y],
+										short: false,
+										forceAbsolute: true
+									})}
 								</span>
 								<span
 									>{((detailSector.absolute[_y] * 100) / totalSelectedYear)
