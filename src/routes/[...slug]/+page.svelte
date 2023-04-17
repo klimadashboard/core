@@ -7,7 +7,6 @@
 
 	/** @type {import('./$types').PageData} */
 	export let data = [];
-	console.log(JSON.parse(data.pagelayout));
 </script>
 
 <svelte:head>
@@ -21,7 +20,7 @@
 	{#key data}
 		{#if data.pagelayout}
 			{#each JSON.parse(data.pagelayout) as layout}
-				<section id="{layout.id} {layout.attrs.id}" class="{layout.attrs.class}" transition:fade>
+				<section id="{layout.id} {layout.attrs.id}" class={layout.attrs.class} transition:fade>
 					{#if layout.attrs.headline}
 						<SectionHeader attrs={layout.attrs} />
 					{/if}
