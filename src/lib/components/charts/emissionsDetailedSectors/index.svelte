@@ -387,6 +387,10 @@
 				bind:value={selectedGhGas}
 				class="block appearance-none w-full bg-gray-200 border border-gray-100 px-4 py-3 pr-8 rounded leading-tight cursor-pointer focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 				id="emission-detail-ghg"
+				on:input={() => {
+					ksgSelection = null;
+					crfSelection = null;
+				}}
 			>
 				{#each ghGas as ghg}
 					<option value={ghg.key}>{ghg.label}</option>
@@ -430,10 +434,10 @@
 					<path d="M12.5 3a17 17 0 0 1 0 18" />
 				</svg>
 				<span class="-translate-y-0.5"
-					>Internationale Emissionen (Memo <span
+					>Internationale Emissionen <span
 						class="glossary-label"
 						on:mousedown={() => glossaryItem.set('memo-items')}
-					/>)</span
+					/></span
 				> <input type="checkbox" bind:checked={showFlightEmissions} /></label
 			>
 		{/if}
@@ -450,7 +454,7 @@
 	</div>
 
 	<div class="relative overflow-hidden mt-6 py-1 border-b sm:text-lg">
-		<div class="breadcrumb-slider overflow-x-scroll flex items-center pr-8">
+		<div class="breadcrumb-slider overflow-x-auto flex items-center pr-8">
 			<button
 				class="flex space-x-1 items-center group"
 				on:mousedown={() => {

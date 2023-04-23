@@ -30,7 +30,7 @@
 			val *= 1000;
 			u = 'k';
 		}
-		return `${val.toFixed(1).replace('.', ',')}${
+		return `${val.toFixed(2).replace('.', ',')}${
 			short
 				? useAbsoluteUnits || forceAbsolute
 					? `${u}t`
@@ -269,9 +269,9 @@
 										size: 50 / 30
 									})}</span
 								>
-								{detailSector.label}
+								{detailSector.label} ({detailSector.code})
 							</strong>
-							<div class="basis-[150px] w-full flex justify-center gap-20">
+							<div class="basis-[150px] w-full flex justify-start gap-24">
 								<span>
 									{unitValue({
 										value: detailSector.absolute[_y],
