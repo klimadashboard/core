@@ -133,7 +133,6 @@
 									width={ksgSector.w}
 									x={ksgSector.x}
 									y={ksgSector.y}
-									title="{ksgSector.label} {(ksgSector.absolute[_y] * relativeFactor).toFixed(1)}"
 								>
 									<div
 										class="w-full h-full flex items-end justify-start"
@@ -155,7 +154,7 @@
 												<strong
 													class="{ksgSector.h < 100
 														? 'max-w-[60%]'
-														: ''} text-ellipsis overflow-hidden">{ksgSector.label}</strong
+														: ''} text-ellipsis overflow-hidden">{@html ksgSector.label}</strong
 												>
 												<span class=""
 													>{unitValue({ value: ksgSector.absolute[_y], short: true })}</span
@@ -269,7 +268,7 @@
 										size: 50 / 30
 									})}</span
 								>
-								{detailSector.label} ({detailSector.code})
+								{detailSector.label} <small>({detailSector.code})</small>
 							</strong>
 							<div class="basis-[150px] w-full flex justify-start gap-24">
 								<span>

@@ -65,7 +65,7 @@
 				}' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 10H1L10 1L19 10H17' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3 10V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19H15C15.5304 19 16.0391 18.7893 16.4142 18.4142C16.7893 18.0391 17 17.5304 17 17V10' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M12 10H8V14H12V10Z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`
 		},
 		{
-			label: 'Landwirtschaft',
+			label: 'Land&shy;wirt&shy;schaft',
 			color: 'agriculture',
 			colorCode: 'hsl(148, 20%, 50%)',
 			colorCodeHighlighted: 'hsl(148, 20%, 40%)',
@@ -519,7 +519,7 @@
 					<!-- <i style="filter: invert(); display: inline-block; transform: translateY(0.25em)"
 					>{@html ksgSectors[ksgSelection].icon(1)}</i
 				> -->
-					<span>{sortedData[ksgSelection].label}</span>
+					<span>{@html sortedData[ksgSelection].label}</span>
 				</button>
 			{/if}
 			{#if ksgSelection != null && crfSelection != null}
@@ -539,7 +539,7 @@
 					<path d="M9 6l6 6l-6 6" />
 				</svg>
 				<span>
-					{sortedData[ksgSelection].sectors[crfSelection].label}
+					{@html sortedData[ksgSelection].sectors[crfSelection].label}
 				</span>
 			{/if}
 			<div
