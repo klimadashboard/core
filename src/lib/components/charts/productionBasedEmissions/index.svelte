@@ -9,6 +9,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let rawData;
+	let rawKeys;
 	let defaultRegion;
 
 	Papa.parse(
@@ -22,6 +23,7 @@
 				if (results) {
 					rawData = results.data;
 					defaultRegion = rawData[0].region;
+					rawKeys = Object.keys(results.data[0]);
 				}
 			}
 		}
@@ -87,14 +89,16 @@
 		}
 	];
 
-	const views = aggregatedViews.concat(sectors);
+	$: availableSectors = sectors.filter((d) => rawKeys?.indexOf(d.key) > -1);
+
+	$: views = aggregatedViews.concat(availableSectors);
 
 	$: selectedRegion = defaultRegion;
 
 	$: activeView = 'total_co2e_t';
 
 	$: selectedSectors =
-		activeView == 'sector_overview' ? sectors : views.filter((e) => e.key == activeView);
+		activeView == 'sector_overview' ? availableSectors : views.filter((e) => e.key == activeView);
 
 	$: reducer = function (result, entry) {
 		var perCapitaString = showPerCapita ? '_percapita' : '';
@@ -117,7 +121,7 @@
 
 	$: dataset = rawData?.reduce(reducer, []);
 
-	$: regions = [... new Set(rawData?.map(d => d.region))];
+	$: regions = [...new Set(rawData?.map((d) => d.region))];
 
 	// variables for dynamic text generation
 	let lastYear;
@@ -135,9 +139,7 @@
 
 	let showFlightEmissions = false;
 	$: allowFlightEmissions =
-		selectedRegion == 'Austria' &&
-		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
-		!showPerCapita;
+		(activeView == 'sector_overview' || activeView == 'total_co2e_t') && !showPerCapita;
 
 	$: if (showFlightEmissions == true && allowFlightEmissions) {
 		dataset = dataset.map((d) => {
@@ -182,7 +184,7 @@
 						label: 'Gesamt',
 						value: 77500000,
 						estimate: false,
-						color: "#4DB263"
+						color: '#4DB263'
 					}
 				],
 				estimate: false
@@ -195,7 +197,7 @@
 						label: 'Prognose 2022',
 						value: 73600000,
 						estimate: true,
-						color: "#4DB263"
+						color: '#4DB263'
 					}
 				],
 				estimate: true
@@ -229,7 +231,7 @@
 			class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 		>
 			{#each regions as region}
-			<option value="{region}">{region}</option>
+				<option value={region}>{region}</option>
 			{/each}
 		</select>
 	</div>
