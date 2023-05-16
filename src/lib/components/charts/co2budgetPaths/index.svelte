@@ -1,6 +1,7 @@
 <script>
 	import Papa from 'papaparse';
 	import Chart from './Chart.svelte';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let v;
 
@@ -34,29 +35,37 @@
 	let dataPaths;
 	let dataHistoric;
 
-	Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2budget_scenarios_AT.csv', {
-		download: true,
-		dynamicTyping: true,
-		header: true,
-		skipEmptyLines: true,
-		complete: function (results) {
-			if (results) {
-				dataPaths = results.data;
+	Papa.parse(
+		'https://data.klimadashboard.org/' +
+			PUBLIC_VERSION +
+			'/emissions/emissions_co2budget_scenarios_AT.csv',
+		{
+			download: true,
+			dynamicTyping: true,
+			header: true,
+			skipEmptyLines: true,
+			complete: function (results) {
+				if (results) {
+					dataPaths = results.data;
+				}
 			}
 		}
-	});
+	);
 
-	Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2_historic_AT.csv', {
-		download: true,
-		dynamicTyping: true,
-		header: true,
-		skipEmptyLines: true,
-		complete: function (results) {
-			if (results) {
-				dataHistoric = results.data;
+	Papa.parse(
+		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_co2_historic.csv',
+		{
+			download: true,
+			dynamicTyping: true,
+			header: true,
+			skipEmptyLines: true,
+			complete: function (results) {
+				if (results) {
+					dataHistoric = results.data;
+				}
 			}
 		}
-	});
+	);
 
 	$: selectedStartYear = containerWidth > 1000 ? 1990 : 2000;
 
