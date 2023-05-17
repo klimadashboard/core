@@ -12,8 +12,11 @@
 	let rawKeys;
 	let defaultRegion;
 
+	let classifications;
+	$: selectedClassification = 'Gesamt';
+
 	Papa.parse(
-		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
+		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors_new.csv',
 		{
 			download: true,
 			dynamicTyping: true,
@@ -23,6 +26,10 @@
 				if (results) {
 					rawData = results.data;
 					defaultRegion = rawData[0].region;
+					classifications = rawData
+						.filter((d) => d.year == rawData[0].year && d.region == rawData[0].region)
+						.map((d) => d.classification);
+					console.log(classifications);
 					rawKeys = Object.keys(results.data[0]);
 				}
 			}
@@ -108,9 +115,7 @@
 				categories: selectedSectors?.map(function (item, index) {
 					return {
 						label: item.label,
-						value: showPerCapita
-							? Math.round(entry[item.key + perCapitaString] * 1000) / 1000
-							: Math.round(entry[item.key]),
+						value: showPerCapita ? entry[item.key + perCapitaString] : entry[item.key],
 						color: item.color
 					};
 				})
@@ -119,7 +124,9 @@
 		return result;
 	};
 
-	$: dataset = rawData?.reduce(reducer, []);
+	$: dataset = [];
+
+	$: console.log(dataset);
 
 	$: regions = [...new Set(rawData?.map((d) => d.region))];
 
@@ -142,25 +149,31 @@
 		(activeView == 'sector_overview' || activeView == 'total_co2e_t') && !showPerCapita;
 
 	$: if (showFlightEmissions == true && allowFlightEmissions) {
-		dataset = dataset.map((d) => {
-			var categories = d.categories;
-			categories.push({
-				label: 'Flug',
-				value: Math.round(
-					rawData.findIndex((e) => e.year == d.label) > -1
-						? rawData.find((e) => e.year == d.label).international_flight_co2e_t
-						: 0
-				),
-				color: '#7586C1'
+		dataset = dataset
+			.filter((d) => d.classification == selectedClassification)
+			.map((d) => {
+				var categories = d.categories;
+				categories.push({
+					label: 'Flug',
+					value: Math.round(
+						rawData.findIndex((e) => e.year == d.label) > -1
+							? rawData.find((e) => e.year == d.label).international_flight_co2e_t
+							: 0
+					),
+					color: '#7586C1'
+				});
+				return {
+					label: d.label,
+					categories
+				};
 			});
-			return {
-				label: d.label,
-				categories
-			};
-		});
 	} else if (showFlightEmissions == false) {
-		dataset = rawData?.reduce(reducer, []);
+		dataset = rawData
+			?.filter((d) => d.classification == selectedClassification)
+			.reduce(reducer, []);
 	}
+
+	$: console.log(rawData?.filter((d) => d.classification == selectedClassification));
 
 	$: if (rawData?.length > 0) {
 		lastYear = rawData[rawData.length - 1]['year'];
@@ -235,6 +248,36 @@
 			{/each}
 		</select>
 	</div>
+
+	{#if classifications}
+		<div class="relative text-gray-600">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="absolute pointer-events-none top-3 h-6 right-2 transform -translate-y-0.5 icon-tabler-selector"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<polyline points="8 9 12 5 16 9" />
+				<polyline points="16 15 12 19 8 15" />
+			</svg>
+			<select
+				bind:value={selectedClassification}
+				class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+			>
+				{#each classifications as classification}
+					<option value={classification}>{classification}</option>
+				{/each}
+			</select>
+		</div>
+	{/if}
+
 	{#if allowFlightEmissions}
 		<label
 			class="flex gap-1 text-sm items-center {showFlightEmissions
