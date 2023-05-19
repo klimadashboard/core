@@ -4,37 +4,52 @@
 	import Papa from 'papaparse';
 	import duration from 'dayjs/plugin/duration';
 	import { glossaryItem } from '$lib/stores/glossary';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let gap;
 	export let icon;
 
 	let currentGoal;
-	Papa.parse('https://data.klimadashboard.org/at/energy/renewables/' + gap + '_zielpfad.csv', {
-		download: true,
-		dynamicTyping: true,
-		skipEmptyLines: true,
-		header: true,
-		complete: function (results) {
-			if (results) {
-				currentGoal = results.data.find((d) => d.DateTime == '2030-12-31').Jahresproduktion;
+	Papa.parse(
+		'https://data.klimadashboard.org/' +
+			PUBLIC_VERSION +
+			'/energy/renewables/' +
+			gap +
+			'_zielpfad.csv',
+		{
+			download: true,
+			dynamicTyping: true,
+			skipEmptyLines: true,
+			header: true,
+			complete: function (results) {
+				if (results) {
+					currentGoal = results.data.find((d) => d.DateTime == '2030-12-31').Jahresproduktion;
+				}
 			}
 		}
-	});
+	);
 
 	let currentProduction;
 	let lastUpdate;
-	Papa.parse('https://data.klimadashboard.org/at/energy/renewables/' + gap + '_produktion.csv', {
-		download: true,
-		dynamicTyping: true,
-		skipEmptyLines: true,
-		header: true,
-		complete: function (results) {
-			if (results) {
-				lastUpdate = results.data[results.data.length - 1].DateTime.substring(0, 10);
-				currentProduction = results.data[results.data.length - 1].Jahresproduktion;
+	Papa.parse(
+		'https://data.klimadashboard.org/' +
+			PUBLIC_VERSION +
+			'/energy/renewables/' +
+			gap +
+			'_produktion.csv',
+		{
+			download: true,
+			dynamicTyping: true,
+			skipEmptyLines: true,
+			header: true,
+			complete: function (results) {
+				if (results) {
+					lastUpdate = results.data[results.data.length - 1].DateTime.substring(0, 10);
+					currentProduction = results.data[results.data.length - 1].Jahresproduktion;
+				}
 			}
 		}
-	});
+	);
 
 	dayjs.extend(duration);
 
