@@ -109,7 +109,7 @@
 			<svelte:component this={Chart} v={createVariables(chart.content.variables)} />
 		{:else}
 			<div
-				class="bg-white p-4 border border-gray-100 rounded relative {chart.content.methods
+				class="bg-white p-4 border border-gray-200 rounded relative {chart.content.methods
 					? 'pb-16'
 					: ''}"
 				id={chart.content.identifier_string}
@@ -286,5 +286,13 @@
 
 	:global(.data-notices h3) {
 		@apply text-2xl;
+	}
+
+	:global(.data-notices ul) {
+		@apply list-disc list-outside pl-5 py-2;
+	}
+
+	:global(.data-notices ol) {
+		@apply list-decimal list-inside py-2;
 	}
 </style>
