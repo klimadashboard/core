@@ -7,7 +7,7 @@
 	let dataset = null;
 	let explanations = null;
 
-	let maxYear = 2020;
+	let maxYear = 2021;
 
 	let years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
 
@@ -402,7 +402,7 @@
 			<input
 				type="range"
 				min="1990"
-				max="2020"
+				max="{maxYear}"
 				bind:value={selectedYear}
 				class="cursor-pointer"
 			/><span>{selectedYear}</span>
