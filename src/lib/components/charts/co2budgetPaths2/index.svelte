@@ -1,7 +1,6 @@
 <script>
 	import Papa from 'papaparse';
 	import Chart from './Chart.svelte';
-	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let v;
 
@@ -35,7 +34,7 @@
 	let dataPaths;
 	let dataHistoric;
 
-	Papa.parse('../../data/at/emissions/emissions_co2budget_scenarios_AT.csv', {
+	Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2budget_scenarios_AT.csv', {
 		download: true,
 		dynamicTyping: true,
 		header: true,
@@ -47,8 +46,7 @@
 		}
 	});
 
-	// Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2_historic_AT.csv', {
-	Papa.parse(`../../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`, {
+	Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2_historic_AT.csv', {
 		download: true,
 		dynamicTyping: true,
 		header: true,
