@@ -9,8 +9,7 @@
 	let chartWidth;
 
 	Papa.parse(
-		// `https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/${PUBLIC_VERSION.toLocaleUpperCase()}_Historical-Emissions_PIK-PRIMAP.csv`,
-		`../data/${PUBLIC_VERSION}/emissions/${PUBLIC_VERSION.toLocaleUpperCase()}_Historical-Emissions_PIK-PRIMAP.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/${PUBLIC_VERSION.toLocaleUpperCase()}_Historical-Emissions_PIK-PRIMAP.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
