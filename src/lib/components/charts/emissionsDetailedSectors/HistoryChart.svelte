@@ -1,6 +1,5 @@
 <script>
 	import ChartAxes from './ChartAxes.svelte';
-	import ChartLegend from './ChartLegend.svelte';
 
 	import { scaleLinear } from 'd3-scale';
 	export let selectedYear;
@@ -24,7 +23,9 @@
 
 	$: yAxisMax = years.reduce((max, y, yi) => Math.max(max, ksgSectorSum(0, yi)), 0);
 
-	$: yScale = scaleLinear().domain([0, yAxisMax]).range([5, baseline-20]);
+	$: yScale = scaleLinear()
+		.domain([0, yAxisMax])
+		.range([5, baseline - 20]);
 
 	$: mouse = null;
 
@@ -76,15 +77,15 @@
 							const sum = ksgSectorSum(s, yi);
 							const x = startline + yi * dx;
 							const y = yScale(sum);
-							return [yi == 0 ? 'M' : 'L', x, baseline-5 - y];
+							return [yi == 0 ? 'M' : 'L', x, baseline - 5 - y];
 						})
 						.concat([
 							'L',
 							startline + (maxYear - 1990) * dx,
-							baseline-5,
+							baseline - 5,
 							'L',
 							startline,
-							baseline-5,
+							baseline - 5,
 							'Z'
 						])
 						.flat()
@@ -115,26 +116,25 @@
 								.filter((_, yi) => 1990 + yi <= maxYear)
 								.map((year, yi) => {
 									const subSectorSum = ksgSector.sectors
-									.slice(0, c)
-									.reduce((subSum, entry) => subSum + entry.absolute[yi], 0)
-									const sum =
-										ksgSectorSum(s, yi) - (crfSelection != null ? 0 : subSectorSum);
+										.slice(0, c)
+										.reduce((subSum, entry) => subSum + entry.absolute[yi], 0);
+									const sum = ksgSectorSum(s, yi) - (crfSelection != null ? 0 : subSectorSum);
 									const x = startline + yi * dx;
 									const y = sum == 0 ? 0 : yScale(sum);
-									return [yi ? 'L' : 'M', x, baseline-5 - y];
+									return [yi ? 'L' : 'M', x, baseline - 5 - y];
 								})
 								.concat([
 									'L',
 									startline + (maxYear - 1990) * dx,
-									baseline-5,
+									baseline - 5,
 									'L',
 									startline,
-									baseline-5,
+									baseline - 5,
 									'Z'
 								])
 								.flat()
 								.join(' ')}
-								<!-- {@const crfPath = computeCRFPath(c, crfSector, s, ksgSector)} -->
+							<!-- {@const crfPath = computeCRFPath(c, crfSector, s, ksgSector)} -->
 							<path
 								d={crfPath}
 								data-path="crf-{ksgSector.key}-{c}"
@@ -151,7 +151,7 @@
 									crfHover = c;
 								}}
 								on:mousedown={(e) => {
-									if (crfSelection != null) return
+									if (crfSelection != null) return;
 									crfSelection = c;
 								}}
 							/>
