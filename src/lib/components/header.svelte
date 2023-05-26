@@ -12,85 +12,12 @@
 		});
 
 	$: showNav = false;
-
-	const structure = [
-		{
-			label: 'Emissionen',
-			children: [
-				{
-					label: 'Vergangenheit'
-				},
-				{
-					label: 'Treibhausgasbudget'
-				}
-			]
-		},
-
-		{
-			label: 'Sektoren',
-			children: [
-				{
-					label: 'Energie'
-				},
-				{
-					label: 'Mobilität'
-				},
-				{
-					label: 'Landwirtschaft',
-					comingSoon: true
-				},
-				{
-					label: 'Industrie',
-					comingSoon: true
-				},
-				{
-					label: 'Gebäude',
-					comingSoon: true
-				}
-			]
-		},
-		{
-			label: 'Regionen',
-			children: [
-				{
-					label: 'Vor Ort',
-					comingSoon: true
-				},
-				{
-					label: 'Niederösterreich'
-				},
-				{
-					label: 'Wien'
-				},
-				{
-					label: 'Salzburg'
-				},
-				{
-					label: 'Oberösterreich'
-				}
-			]
-		},
-		{
-			label: 'Auswirkungen',
-			children: [
-				{
-					label: 'Temperatur'
-				},
-				{
-					label: 'Gletscher'
-				}
-			]
-		},
-		{
-			label: 'Gesellschaft'
-		}
-	];
 </script>
 
-<header class="fixed w-full z-50 border-b-2 border-b-green-600">
+<header class="fixed w-full z-50">
 	<div class="bg-white">
-		<div class="container flex gap-8 items-center text-xl">
-			<a href="/" class="">
+		<div class="container flex gap-4 items-center text-xl">
+			<a href="/" class="flex gap-4 font-bold items-center text-green-500">
 				<svg
 					width="256"
 					height="256"
@@ -128,8 +55,12 @@
 						</linearGradient>
 					</defs>
 				</svg>
+				<span>Klimadashboard.at</span>
 			</a>
-			<button class="md:hidden flex">
+			<button
+				class="md:hidden flex items-center gap-1 leading-[5rem] px-2"
+				on:mousedown={() => (showNav = !showNav)}
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="icon icon-tabler icon-tabler-menu-2"
@@ -147,70 +78,88 @@
 					<path d="M4 12l16 0" />
 					<path d="M4 18l16 0" />
 				</svg>
-				<span>Menü</span>
+				<span>Themen</span>
 			</button>
-			<nav class="hidden md:flex items-center">
-				<ul class="flex flex-col md:flex-row space-x-6">
-					{#each structure as item}
-						<li class="group">
-							<a class="leading-[4rem]" href="#">{item.label}</a>
-							{#if item.children}
-								<div class="absolute left-0 top-16 md:top-16 bg-gradient-green w-screen text-white">
-									<ul class="md:container flex gap-4 py-4 md:hidden group-hover:flex">
-										{#each item.children as child}
-											<li>{child.label}</li>
-										{/each}
-									</ul>
-								</div>
-							{/if}
-						</li>
-					{/each}
+			<nav
+				class="{showNav
+					? ''
+					: 'hidden'} absolute bg-white top-20 w-full h-screen md:h-auto md:w-auto md:top-0 md:relative md:flex items-center"
+			>
+				<ul class="flex flex-col md:flex-row">
+					{#await promise}
+						...
+					{:then navigation}
+						{#each navigation.filter((d) => d.num > 0 && d.parent == 'klimadashboard-' + PUBLIC_VERSION) as item}
+							<li class="group md:px-4 relative navigation-item">
+								<a
+									href={item.uri.replace('klimadashboard-' + PUBLIC_VERSION, '')}
+									class="leading-[5rem] font-bold md:font-normal"
+									on:mouseup={() => (showNav = false)}>{item.content.title}</a
+								>
+
+								{#if navigation.filter((c) => item.id == c.parent && c !== item).length > 0}
+									<div class="md:fixed left-0 md:top-18 w-screen md:bg-gray-200">
+										<ul class="md:container flex gap-6 py-4 md:hidden group-hover:flex">
+											{#each navigation.filter((c) => item.id == c.parent && c !== item) as child}
+												<li>
+													<a
+														href={child.id.replace('klimadashboard-' + PUBLIC_VERSION + '/', '/')}
+														on:mouseup={() => (showNav = false)}
+														class="navigation-link">{child.content.title}</a
+													>
+												</li>
+											{/each}
+										</ul>
+									</div>
+								{/if}
+							</li>
+						{/each}
+					{:catch error}
+						{error}
+					{/await}
 				</ul>
 			</nav>
 			<nav class="ml-auto">
 				<ul class="flex gap-2 text-sm font-bold uppercase tracking-wide">
-					<li class="flex flex-col items-center opacity-70 hover:opacity-100">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="icon icon-tabler icon-tabler-info-circle"
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-							stroke="currentColor"
-							fill="none"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-							<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-							<path d="M12 9h.01" />
-							<path d="M11 12h1v4h1" />
-						</svg>
-						<span>Info</span>
+					<li class="opacity-70 hover:opacity-100 transition">
+						<a href="https://klimadashboard.org">Über Uns</a>
 					</li>
-					<li class="flex flex-col items-center opacity-70 hover:opacity-100">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="icon icon-tabler icon-tabler-chart-area-line"
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							stroke-width="2"
-							stroke="currentColor"
-							fill="none"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-							<path d="M4 19l4 -6l4 2l4 -5l4 4l0 5l-16 0" />
-							<path d="M4 12l3 -4l4 2l5 -6l4 4" />
-						</svg>
-						<span>Charts</span>
-					</li>
-					<li>Glossar</li>
 				</ul>
 			</nav>
 		</div>
 	</div>
 </header>
+
+<style>
+	:global(.navigation-item:hover::before),
+	:global(.navigation-item:hover::after) {
+		content: '';
+		position: absolute;
+		z-index: 1000;
+		bottom: 0;
+		height: 4rem;
+		width: 120%;
+		animation: hoverHelpFade 1.2s;
+	}
+
+	:global(.navigation-item:hover::before) {
+		left: -120%;
+		clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+	}
+	:global(.navigation-item:hover::after) {
+		right: -120%;
+		clip-path: polygon(0 0, 0% 100%, 100% 100%);
+	}
+
+	@keyframes hoverHelpFade {
+		0% {
+			height: 3rem;
+		}
+		99% {
+			height: 3rem;
+		}
+		100% {
+			height: 0;
+		}
+	}
+</style>
