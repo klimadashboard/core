@@ -295,4 +295,8 @@
 	:global(.data-notices ol) {
 		@apply list-decimal list-inside py-2;
 	}
+
+	:global(.data-notices li p) {
+		@apply whitespace-nowrap inline;
+	}
 </style>
