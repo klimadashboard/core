@@ -7,7 +7,7 @@
 	let dataset = null;
 	let explanations = null;
 
-	let maxYear = 2020;
+	let maxYear = 2021;
 
 	let years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
 
@@ -65,7 +65,7 @@
 				}' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 10H1L10 1L19 10H17' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3 10V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19H15C15.5304 19 16.0391 18.7893 16.4142 18.4142C16.7893 18.0391 17 17.5304 17 17V10' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M12 10H8V14H12V10Z' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`
 		},
 		{
-			label: 'Landwirtschaft',
+			label: 'Land&shy;wirt&shy;schaft',
 			color: 'agriculture',
 			colorCode: 'hsl(148, 20%, 50%)',
 			colorCodeHighlighted: 'hsl(148, 20%, 40%)',
@@ -231,7 +231,8 @@
 			return responseData;
 		});
 
-	$: data = dataset?.[selectedGhGas].sort((a, b) => b.absolute[30] - a.absolute[30]);
+	$: console.log(selectedGhGas, dataset?.[selectedGhGas]);
+	$: data = dataset?.[selectedGhGas].sort((a, b) => b.absolute[maxYear-1990] - a.absolute[maxYear-1990]);
 	$: sectorlyData = data
 		?.filter((sector) => (sector.label == 'Memo' ? showFlightEmissions : true))
 		.map((sector) => {
@@ -362,7 +363,7 @@
 	let extensiveList = false;
 
 	let useAbsoluteUnits = false;
-	let showFlightEmissions = true;
+	let showFlightEmissions = false;
 </script>
 
 {#if sortedData}
@@ -402,7 +403,7 @@
 			<input
 				type="range"
 				min="1990"
-				max="2020"
+				max="{maxYear}"
 				bind:value={selectedYear}
 				class="cursor-pointer"
 			/><span>{selectedYear}</span>
@@ -484,12 +485,14 @@
 						<path d="M12 8l-4 4" />
 					{/if}
 				</svg>
-				<span class="underline-offset-2 group-hover:underline group-disabled:no-underline font-bold"
-					>Gesamtemissionen {selectedYear}</span
-				>
-				<span class="opacity-50"
-					>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO₂eq (100%)</span
-				>
+				<span>
+					<span class="underline-offset-2 group-hover:underline group-disabled:no-underline font-bold"
+						>Gesamtemissionen {selectedYear}</span
+					>
+					<span class="text-sm opacity-50"
+						>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO₂eq (100%)</span
+					>
+				</span>
 			</button>
 			{#if ksgSelection != null}
 				<svg
@@ -508,7 +511,7 @@
 					<path d="M9 6l6 6l-6 6" />
 				</svg>
 				<button
-					class="hover:underline disabled:no-underline underline-offset-2"
+					class="group"
 					style="color: {colorForKey(sortedData[ksgSelection].color)};"
 					on:mousedown={() => {
 						crfSelection = null;
@@ -516,10 +519,8 @@
 					}}
 					disabled={!crfSelection && !extensiveList}
 				>
-					<!-- <i style="filter: invert(); display: inline-block; transform: translateY(0.25em)"
-					>{@html ksgSectors[ksgSelection].icon(1)}</i
-				> -->
-					<span>{sortedData[ksgSelection].label}</span>
+					<span class="group-hover:underline group-disabled:no-underline underline-offset-2">{@html sortedData[ksgSelection].label}</span>
+					<span class="text-sm max-sm:hidden opacity-50">{sortedData[ksgSelection].absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(sortedData[ksgSelection].absolute[_y]/totalSelectedYear*100).toFixed(2).replace('.', ',')}%)</span>
 				</button>
 			{/if}
 			{#if ksgSelection != null && crfSelection != null}
@@ -539,8 +540,9 @@
 					<path d="M9 6l6 6l-6 6" />
 				</svg>
 				<span>
-					{sortedData[ksgSelection].sectors[crfSelection].label}
+					{@html sortedData[ksgSelection].sectors[crfSelection].label}
 				</span>
+				<span class="text-sm max-sm:hidden opacity-50 ml-1">{sortedData[ksgSelection].sectors[crfSelection].absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(sortedData[ksgSelection].sectors[crfSelection].absolute[_y]/totalSelectedYear*100).toFixed(2).replace('.', ',')}%)</span>
 			{/if}
 			<div
 				class="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-r from-transparent to-white"

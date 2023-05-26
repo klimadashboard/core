@@ -19,7 +19,7 @@
 	$: chartHeight = clientHeight;
 	$: chartWidth = clientWidth;
 	$: baseline = chartHeight - 40;
-	$: startline = 100;
+	$: startline = 80;
 	$: dx = (chartWidth - startline) / years.length;
 
 	$: yAxisMax = years.reduce((max, y, yi) => Math.max(max, ksgSectorSum(0, yi)), 0);
