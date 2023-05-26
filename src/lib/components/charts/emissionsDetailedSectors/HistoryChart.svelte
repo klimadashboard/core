@@ -151,6 +151,7 @@
 									crfHover = c;
 								}}
 								on:mousedown={(e) => {
+									if (crfSelection != null) return
 									crfSelection = c;
 								}}
 							/>
