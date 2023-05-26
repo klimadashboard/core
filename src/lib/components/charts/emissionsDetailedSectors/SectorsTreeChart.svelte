@@ -268,7 +268,7 @@
 										size: 50 / 30
 									})}</span
 								>
-								{detailSector.label} <small>({detailSector.code})</small>
+								{detailSector.label}
 							</strong>
 							<div class="basis-[150px] w-full flex justify-start gap-24">
 								<span>
