@@ -252,45 +252,45 @@
 						{/if}
 					</g>
 				{/if}
-				{#if ksgSelection != null && crfSelection != null}
-					{@const detailSector = fixedSelection?.sectors[crfSelection]}
-					<foreignObject height={HEIGHT} width={1000} x={0} y={0}>
-						<div
-							class="w-full h-full flex flex-col p-8"
-							style="background-color: {colorForKey(detailSector.key)
-								.colorCode}; font-size: 50px; color: white;"
-						>
-							<strong class="basis-[125px] text-center flex items-center">
-								<span class="mr-8"
-									>{@html iconForCRFCode({
-										crfCode: detailSector.code,
-										ksgKey: sectorlyData[ksgSelection].key,
-										size: 50 / 30
-									})}</span
-								>
-								{detailSector.label}
-							</strong>
-							<div class="basis-[150px] w-full flex justify-start gap-24">
-								<span>
-									{unitValue({
-										value: detailSector.absolute[_y],
-										short: false,
-										forceAbsolute: true
-									})}
-								</span>
-								<span
-									>{((detailSector.absolute[_y] * 100) / totalSelectedYear)
-										.toFixed(2)
-										.replace('.', ',')}%</span
-								>
-							</div>
-							<div class="basis-[725px] overflow-auto">
-								<p>{detailSector.explanation}</p>
-							</div>
-						</div>
-					</foreignObject>
-				{/if}
 			{/each}
+			{#if ksgSelection != null && crfSelection != null}
+				{@const detailSector = fixedSelection?.sectors[crfSelection]}
+				<foreignObject height={HEIGHT} width={1000} x={0} y={0}>
+					<div
+						class="w-full h-full flex flex-col p-8"
+						style="background-color: {colorForKey(detailSector.key)
+							.colorCode}; font-size: 50px; color: white;"
+					>
+						<strong class="basis-[125px] flex items-center">
+							<span class="mr-8"
+								>{@html iconForCRFCode({
+									crfCode: detailSector.code,
+									ksgKey: sectorlyData[ksgSelection].key,
+									size: 50 / 30
+								})}</span
+							>
+							{detailSector.label}
+						</strong>
+						<div class="basis-[150px] w-full flex justify-start gap-24">
+							<span>
+								{unitValue({
+									value: detailSector.absolute[_y],
+									short: false,
+									forceAbsolute: true
+								})}
+							</span>
+							<span
+								>{((detailSector.absolute[_y] * 100) / totalSelectedYear)
+									.toFixed(2)
+									.replace('.', ',')}%</span
+							>
+						</div>
+						<div class="basis-[730px] overflow-hidden">
+							<p style="font-size: 43px;">{detailSector.explanation}</p>
+						</div>
+					</div>
+				</foreignObject>
+			{/if}
 		</svg>
 	{/if}
 	{#if extensiveList && ksgSelection != null}

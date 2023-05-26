@@ -232,7 +232,9 @@
 		});
 
 	$: console.log(selectedGhGas, dataset?.[selectedGhGas]);
-	$: data = dataset?.[selectedGhGas].sort((a, b) => b.absolute[maxYear-1990] - a.absolute[maxYear-1990]);
+	$: data = dataset?.[selectedGhGas].sort(
+		(a, b) => b.absolute[maxYear - 1990] - a.absolute[maxYear - 1990]
+	);
 	$: sectorlyData = data
 		?.filter((sector) => (sector.label == 'Memo' ? showFlightEmissions : true))
 		.map((sector) => {
@@ -403,7 +405,7 @@
 			<input
 				type="range"
 				min="1990"
-				max="{maxYear}"
+				max={maxYear}
 				bind:value={selectedYear}
 				class="cursor-pointer"
 			/><span>{selectedYear}</span>
@@ -435,7 +437,7 @@
 					<path d="M12.5 3a17 17 0 0 1 0 18" />
 				</svg>
 				<span class="-translate-y-0.5"
-					>Internationale Emissionen <span
+					>int. Flug- & Schiffverkehr <span
 						class="glossary-label"
 						on:mousedown={() => glossaryItem.set('memo-items')}
 					/></span
@@ -486,10 +488,11 @@
 					{/if}
 				</svg>
 				<span>
-					<span class="underline-offset-2 group-hover:underline group-disabled:no-underline font-bold"
+					<span
+						class="underline-offset-2 group-hover:underline group-disabled:no-underline font-bold"
 						>Gesamtemissionen {selectedYear}</span
 					>
-					<span class="text-sm opacity-50"
+					<span class="text-sm opacity-50 pb-[2px]"
 						>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO₂eq (100%)</span
 					>
 				</span>
@@ -511,16 +514,25 @@
 					<path d="M9 6l6 6l-6 6" />
 				</svg>
 				<button
-					class="group"
+					class="group overflow"
 					style="color: {colorForKey(sortedData[ksgSelection].color)};"
 					on:mousedown={() => {
 						crfSelection = null;
 						extensiveList = false;
 					}}
-					disabled={!crfSelection && !extensiveList}
+					disabled={crfSelection == null && !extensiveList}
 				>
-					<span class="group-hover:underline group-disabled:no-underline underline-offset-2">{@html sortedData[ksgSelection].label}</span>
-					<span class="text-sm max-sm:hidden opacity-50">{sortedData[ksgSelection].absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(sortedData[ksgSelection].absolute[_y]/totalSelectedYear*100).toFixed(2).replace('.', ',')}%)</span>
+					<span class="group-hover:underline group-disabled:no-underline underline-offset-2"
+						>{@html sortedData[ksgSelection].label}</span
+					>
+					<span class="text-sm max-sm:hidden opacity-50 pb-[2px]"
+						>{sortedData[ksgSelection].absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(
+							(sortedData[ksgSelection].absolute[_y] / totalSelectedYear) *
+							100
+						)
+							.toFixed(2)
+							.replace('.', ',')}%)</span
+					>
 				</button>
 			{/if}
 			{#if ksgSelection != null && crfSelection != null}
@@ -540,9 +552,20 @@
 					<path d="M9 6l6 6l-6 6" />
 				</svg>
 				<span>
-					{@html sortedData[ksgSelection].sectors[crfSelection].label}
+					<span>
+						{@html sortedData[ksgSelection].sectors[crfSelection].label}
+					</span>
+					<span class="text-sm max-sm:hidden opacity-50 pb-[2px] ml-1"
+						>{sortedData[ksgSelection].sectors[crfSelection].absolute[_y]
+							.toFixed(2)
+							.replace('.', ',')} Mt CO₂eq ({(
+							(sortedData[ksgSelection].sectors[crfSelection].absolute[_y] / totalSelectedYear) *
+							100
+						)
+							.toFixed(2)
+							.replace('.', ',')}%)</span
+					>
 				</span>
-				<span class="text-sm max-sm:hidden opacity-50 ml-1">{sortedData[ksgSelection].sectors[crfSelection].absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(sortedData[ksgSelection].sectors[crfSelection].absolute[_y]/totalSelectedYear*100).toFixed(2).replace('.', ',')}%)</span>
 			{/if}
 			<div
 				class="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-r from-transparent to-white"
