@@ -3,6 +3,7 @@
 	import { locale } from '../stores/i18n';
 	import { error } from '@sveltejs/kit';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import Loader from './Loader.svelte';
 
 	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
 		.then((x) => x.json())
@@ -87,7 +88,9 @@
 			>
 				<ul class="flex flex-col space-y-8 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full">
 					{#await promise}
-						...
+						<div class="translate-y-5">
+							<Loader />
+						</div>
 					{:then navigation}
 						{#each navigation.filter((d) => d.num > 0 && d.parent == 'klimadashboard-' + PUBLIC_VERSION) as item}
 							<li class="group md:px-2 lg:px-3 relative navigation-item">
