@@ -437,7 +437,7 @@
 					<path d="M12.5 3a17 17 0 0 1 0 18" />
 				</svg>
 				<span class="-translate-y-0.5"
-					>Internationale Emissionen <span
+					>int. Flug- & Schiffverkehr <span
 						class="glossary-label"
 						on:mousedown={() => glossaryItem.set('memo-items')}
 					/></span
