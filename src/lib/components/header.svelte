@@ -15,8 +15,8 @@
 </script>
 
 <header class="fixed w-full z-50">
-	<div class="bg-white">
-		<div class="container flex gap-4 items-center text-xl">
+	<div class="bg-white md:shadow-sm">
+		<div class="container flex gap-4 items-center text-lg">
 			<a href="/" class="flex gap-4 font-bold items-center text-green-500">
 				<svg
 					width="256"
@@ -55,10 +55,10 @@
 						</linearGradient>
 					</defs>
 				</svg>
-				<span>Klimadashboard.at</span>
+				<span>Klimadashboard.{PUBLIC_VERSION}</span>
 			</a>
 			<button
-				class="md:hidden flex items-center gap-1 leading-[5rem] px-2"
+				class="md:hidden flex items-center gap-1 leading-[5rem] px-2 ml-auto"
 				on:mousedown={() => (showNav = !showNav)}
 			>
 				<svg
@@ -78,34 +78,34 @@
 					<path d="M4 12l16 0" />
 					<path d="M4 18l16 0" />
 				</svg>
-				<span>Themen</span>
+				<span>Menü</span>
 			</button>
 			<nav
 				class="{showNav
 					? ''
-					: 'hidden'} absolute bg-white top-20 w-full h-screen md:h-auto md:w-auto md:top-0 md:relative md:flex items-center"
+					: 'hidden'} absolute bg-white top-20 w-screen left-0 p-4 md:p-0 h-screen md:h-auto md:top-0 md:relative md:flex items-center"
 			>
-				<ul class="flex flex-col md:flex-row">
+				<ul class="flex flex-col space-y-8 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full">
 					{#await promise}
 						...
 					{:then navigation}
 						{#each navigation.filter((d) => d.num > 0 && d.parent == 'klimadashboard-' + PUBLIC_VERSION) as item}
-							<li class="group md:px-4 relative navigation-item">
+							<li class="group md:px-2 lg:px-3 relative navigation-item">
 								<a
 									href={item.uri.replace('klimadashboard-' + PUBLIC_VERSION, '')}
-									class="leading-[5rem] font-bold md:font-normal"
+									class="md:leading-[5rem] font-bold md:font-normal hover:underline underline-offset-2"
 									on:mouseup={() => (showNav = false)}>{item.content.title}</a
 								>
 
 								{#if navigation.filter((c) => item.id == c.parent && c !== item).length > 0}
-									<div class="md:fixed left-0 md:top-18 w-screen md:bg-gray-200">
-										<ul class="md:container flex gap-6 py-4 md:hidden group-hover:flex">
+									<div class="md:fixed left-0 md:top-18 w-screen md:bg-gray-100 md:shadow-xl">
+										<ul class="md:container flex gap-6 md:py-4 md:hidden group-hover:flex">
 											{#each navigation.filter((c) => item.id == c.parent && c !== item) as child}
 												<li>
 													<a
 														href={child.id.replace('klimadashboard-' + PUBLIC_VERSION + '/', '/')}
 														on:mouseup={() => (showNav = false)}
-														class="navigation-link">{child.content.title}</a
+														class="hover:underline underline-offset-2">{child.content.title}</a
 													>
 												</li>
 											{/each}
@@ -117,12 +117,11 @@
 					{:catch error}
 						{error}
 					{/await}
-				</ul>
-			</nav>
-			<nav class="ml-auto">
-				<ul class="flex gap-2 text-sm font-bold uppercase tracking-wide">
-					<li class="opacity-70 hover:opacity-100 transition">
-						<a href="https://klimadashboard.org">Über Uns</a>
+					<li class="opacity-70 hover:opacity-100 transition md:ml-auto">
+						<a
+							href="https://klimadashboard.org"
+							class="leading-[5rem] text-sm font-bold uppercase tracking-wide">Klimadashboard.org</a
+						>
 					</li>
 				</ul>
 			</nav>
@@ -137,26 +136,26 @@
 		position: absolute;
 		z-index: 1000;
 		bottom: 0;
-		height: 4rem;
-		width: 120%;
-		animation: hoverHelpFade 1.2s;
+		width: 300%;
+		height: 2.5rem;
+		animation: hoverHelpFade 2s;
 	}
 
 	:global(.navigation-item:hover::before) {
-		left: -120%;
+		left: -300%;
 		clip-path: polygon(100% 0, 0% 100%, 100% 100%);
 	}
 	:global(.navigation-item:hover::after) {
-		right: -120%;
+		right: -300%;
 		clip-path: polygon(0 0, 0% 100%, 100% 100%);
 	}
 
 	@keyframes hoverHelpFade {
 		0% {
-			height: 3rem;
+			height: 2.5rem;
 		}
 		99% {
-			height: 3rem;
+			height: 2.5rem;
 		}
 		100% {
 			height: 0;

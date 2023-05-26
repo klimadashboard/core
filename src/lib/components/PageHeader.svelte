@@ -10,7 +10,11 @@
 	};
 </script>
 
-<section id="page-header" class="pt-24 pb-4" style={data.cover_styles}>
+<section
+	id="page-header"
+	class="bg-gradient-green shadow-inner text-white pt-14 pb-4 mb-8 relative"
+	style={data.cover_styles}
+>
 	{#if data.cover_background}
 		<img
 			src="https://klimadashboard.org/@/file/{data.cover_background.replace('- file://', '')}"
@@ -19,8 +23,8 @@
 		/>
 	{/if}
 	<div class="container z-10 relative">
-		<div class="max-w-2xl">
-			{#if data.eyebrow && false == true}
+		<div class="max-w-2xl break-words">
+			{#if data.eyebrow}
 				<div class="flex gap-2">
 					<span class="uppercase font-semibold tracking-wider">{data.eyebrow}</span>
 					<button
@@ -50,7 +54,7 @@
 					</button>
 				</div>
 			{/if}
-			<h1 class="text-3xl sm:text-5xl tracking-tight my-2">{data.heading}</h1>
+			<h1 class="text-4xl sm:text-5xl tracking-tight my-2">{data.heading}</h1>
 			<div class="text-xl mt-4 page-intro">
 				{@html data.intro}
 			</div>
@@ -60,16 +64,10 @@
 
 <style>
 	:global(.page-intro ul) {
-		@apply list-disc;
+		@apply list-disc pl-6;
 	}
 
 	:global(.page-intro p, .page-intro ul) {
 		@apply my-1;
 	}
-
-	/*
-	#page-header {
-		background-image: linear-gradient(60deg, #29323c 0%, #485563 100%);
-	}
-	*/
 </style>
