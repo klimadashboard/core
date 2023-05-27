@@ -62,7 +62,7 @@
 </script>
 
 <div
-	class="detail-emissions-tree-map relative basis-[400px] pb-[40px] select-none"
+	class="detail-emissions-tree-map relative basis-[450px] pb-[40px] select-none"
 	style="background: rgba(0,0,0,0)"
 >
 	{#if sortedData}
