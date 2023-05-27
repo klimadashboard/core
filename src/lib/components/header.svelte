@@ -123,7 +123,7 @@
 					<li class="opacity-70 hover:opacity-100 transition md:ml-auto">
 						<a
 							href="https://klimadashboard.org"
-							class="leading-[5rem] text-sm font-bold uppercase tracking-wide">Klimadashboard.org</a
+							class="leading-[5rem] text-sm font-bold uppercase tracking-wide">Über uns</a
 						>
 					</li>
 				</ul>
