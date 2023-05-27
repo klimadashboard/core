@@ -86,14 +86,16 @@
 					? ''
 					: 'hidden'} absolute bg-white top-20 w-screen left-0 p-4 md:p-0 h-screen md:h-auto md:top-0 md:relative md:flex items-center"
 			>
-				<ul class="flex flex-col space-y-8 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full">
+				<ul class="flex flex-col space-y-4 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full">
 					{#await promise}
 						<div class="translate-y-5">
 							<Loader />
 						</div>
 					{:then navigation}
 						{#each navigation.filter((d) => d.num > 0 && d.parent == 'klimadashboard-' + PUBLIC_VERSION) as item}
-							<li class="group md:px-2 lg:px-3 relative navigation-item">
+							<li
+								class="group md:px-2 lg:px-3 relative navigation-item border-b pb-4 md:pb-0 md:border-b-0"
+							>
 								<a
 									href={item.uri.replace('klimadashboard-' + PUBLIC_VERSION, '')}
 									class="md:leading-[5rem] font-bold md:font-normal hover:underline underline-offset-2"
