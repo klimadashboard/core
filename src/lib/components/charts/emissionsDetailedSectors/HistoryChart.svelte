@@ -44,7 +44,7 @@
 
 {#if sectorlyData}
 	<div
-		class="basis-[500px] min-h-[400px] grow"
+		class="basis-[350px] min-h-[400px] grow"
 		style="background: rgba(0,0,0,0)"
 		bind:clientWidth
 		bind:clientHeight

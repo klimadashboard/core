@@ -573,7 +573,7 @@
 		</div>
 	</div>
 
-	<div class="relative flex justify-stretch items-stretch flex-wrap gap-x-8">
+	<div class="relative flex justify-stretch items-stretch flex-wrap gap-x-4">
 		<SectorsTreeChart
 			{ksgSectors}
 			{explanations}
