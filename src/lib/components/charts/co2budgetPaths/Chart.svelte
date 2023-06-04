@@ -37,12 +37,22 @@
 	let chartHeight;
 	let margin = { top: 20, right: 15, bottom: 30, left: 0 };
 
+	let currentYear = dataHistoric[dataHistoric.length - 1].year;
+	let maxTHG =
+		dataHistoric.reduce((max, value) => {
+			if (value.total_co2e_t > max) return value.total_co2e_t;
+			return max;
+		}, 0) / 1000000;
+	let lastTHG = dataHistoric[dataHistoric.length - 1].total_co2e_t / 1000000;
+	let maxAxis = Math.ceil((maxTHG * 1.1) / 100) * 100;
+	let maxYear = dataPaths[dataPaths.length-1].year;
+
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
-	$: xScale = scaleLinear().range([0, innerChartWidth]).domain([selectedStartYear, 2040]);
+	$: xScale = scaleLinear().range([0, innerChartWidth]).domain([selectedStartYear, maxYear]);
 
-	$: yScale = scaleLinear().range([innerChartHeight, 0]).domain([0, 100]);
+	$: yScale = scaleLinear().range([innerChartHeight, 0]).domain([0, maxAxis]);
 
 	$: generateLine = (key) => {
 		return (
@@ -54,7 +64,7 @@
 
 	$: generateArea = (key) => {
 		return line()
-			.x((d) => xScale(d.year || 2021))
+			.x((d) => xScale(d.year || currentYear))
 			.y((d) => yScale(d[key] || 0));
 	};
 
@@ -63,19 +73,19 @@
 	$: areas = selectedKeys.map((key) =>
 		key.replace(chosenBudget + '_', '') == 'nochange'
 			? 'M' +
-			  xScale(2021) +
+			  xScale(currentYear) +
 			  ',' +
-			  yScale(80) +
+			  yScale(lastTHG) +
 			  'L' +
 			  xScale(getZeroYear(key)) +
 			  ',' +
-			  yScale(80) +
+			  yScale(lastTHG) +
 			  'L' +
 			  xScale(getZeroYear(key)) +
 			  ',' +
 			  yScale(0) +
 			  'L' +
-			  xScale(2021) +
+			  xScale(currentYear) +
 			  ',' +
 			  yScale(0) +
 			  'Z'
@@ -84,13 +94,13 @@
 	$: lines = selectedKeys.map((key) =>
 		key.replace(chosenBudget + '_', '') == 'nochange'
 			? 'M' +
-			  xScale(2021) +
+			  xScale(currentYear) +
 			  ',' +
-			  yScale(80) +
+			  yScale(lastTHG) +
 			  'L' +
 			  xScale(getZeroYear(key)) +
 			  ',' +
-			  yScale(80) +
+			  yScale(lastTHG) +
 			  'L' +
 			  xScale(getZeroYear(key)) +
 			  ',' +
@@ -102,12 +112,17 @@
 
 	$: selectedKeys = Object.keys(dataPaths[0]).filter((d) => d.includes(chosenBudget));
 
+	$: console.log('dataPaths', dataPaths);
+	$: console.log('dataHistoric', dataHistoric);
+	// $: console.log('current year:', dataHistoric[dataHistoric.length - 1].year);
+	$: console.log('TODO maximum value:', maxTHG);
+
 	$: getZeroYear = function (key) {
 		if (key.replace(chosenBudget + '_', '') == 'nochange') {
-			var selectedRow = dataPaths.find((d) => d[key] > 0 && d[key] < 80);
+			var selectedRow = dataPaths.find((d) => d[key] > 0 && d[key] < lastTHG*0.99);
 			var year = selectedRow.year;
 			var selectedValue = selectedRow[key];
-			return year + 80 / selectedValue / 10;
+			return year + selectedValue / lastTHG;
 		} else {
 			return dataPaths.find((d) => d[key] == 0).year;
 		}
@@ -122,16 +137,16 @@
 		var inflectionYear = 0;
 		var inflectionIndex = 0;
 
-		for (var i = 0; i < rates.length; i++) {
-			var difference = rates[i] - rates[Math.max(i - 1, 0)];
-			if (difference > 1 || difference < -1) {
-				inflectionYear = dataPaths[i].year;
-				inflectionIndex = i;
-			}
-		}
-
-		var valueBeforeInflection = rates[inflectionIndex - 1];
-		var valueAfterInflection = rates[inflectionIndex];
+		// for (var i = 0; i < rates.length; i++) {
+		// 	var difference = rates[i] - rates[Math.max(i - 1, 0)];
+		// 	console.log(i, difference);
+		// 	if (difference > 1 || difference < -1) {
+		// 		inflectionYear = dataPaths[i].year;
+		// 		inflectionIndex = i;
+		// 	}
+		// }
+		// var valueBeforeInflection = rates[inflectionIndex - 1];
+		// var valueAfterInflection = rates[inflectionIndex];
 
 		var string = '';
 
@@ -154,8 +169,7 @@
 <div class="relative">
 	<div
 		id="legend"
-		class="flex-col mb-4 mt-4 md:mt-0 md:absolute md:top-12 text-sm bg-white z-20 md:p-1"
-		style="left: {xScale(2030)}px"
+		class="flex-col mb-4 mt-4 md:mt-0 md:absolute md:left-10 md:bottom-10 text-sm bg-white z-20 md:p-1"
 	>
 		{#each selectedKeys as key, i}
 			{@const selectedKey = keys.find((d) => d.key == key.replace(chosenBudget + '_', ''))}
@@ -178,10 +192,10 @@
 	<div class="h-72 w-full mt-4" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
 		<svg width={'100%'} height={'100%'}>
 			{#if chartWidth && chartHeight && lines && areas}
-				{#if selectedStartYear < 2016 && xScale(2021) > 250}
+				{#if selectedStartYear < 2016 && xScale(currentYear) > 250}
 					<line
-						x1={xScale(2021)}
-						x2={xScale(2021)}
+						x1={xScale(currentYear)}
+						x2={xScale(currentYear)}
 						y1={0}
 						y2={chartHeight - margin.bottom}
 						class="stroke-gray-400"
@@ -189,12 +203,12 @@
 					<text
 						text-anchor="end"
 						dominant-baseline="hanging"
-						x={xScale(2021) - 5}
+						x={xScale(currentYear) - 5}
 						y="5"
 						class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Vergangenheit</text
 					>
 					<text
-						x={xScale(2021) + 5}
+						x={xScale(currentYear) + 5}
 						y="5"
 						dominant-baseline="hanging"
 						class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Zukunft</text
@@ -244,7 +258,7 @@
 					</g>
 					<g id="historic">
 						<path
-							d="{lineHistoric}L{xScale(2021)},{innerChartHeight}L0,{innerChartHeight}Z"
+							d="{lineHistoric}L{xScale(currentYear)},{innerChartHeight}L0,{innerChartHeight}Z"
 							fill={'#268EA5'}
 							fill-opacity="0.2"
 							transition:fade
@@ -266,7 +280,7 @@
 								<g id="area">
 									<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 									<path
-										d="{areas[i]}L{xScale(2021)},{yScale(0)}L{xScale(2021)},{yScale(80)}z"
+										d="{areas[i]}L{xScale(currentYear)},{yScale(0)}L{xScale(currentYear)},{yScale(lastTHG)}z"
 										fill={selectedKey.color}
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
 										transition:fade
@@ -312,7 +326,7 @@
 						</g>
 					{/each}
 
-					<g transform="translate({xScale(2021)},{yScale(80)})">
+					<g transform="translate({xScale(currentYear)},{yScale(lastTHG)})">
 						<circle r="5" fill="#268EA5" />
 						<circle r="5" fill="#268EA5">
 							<animate
@@ -335,8 +349,8 @@
 					</g>
 
 					<g
-						transform="translate({xScale(2021) +
-							(selectedStartYear < 2020 ? 10 : 20)},{innerChartHeight - 45})"
+						transform="translate({xScale(currentYear) +
+							(selectedStartYear < 2020 ? 5 : 20)},{innerChartHeight - 45})"
 						class="hidden md:block"
 					>
 						<text

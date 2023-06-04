@@ -5,37 +5,27 @@
 
 	export let v;
 
-	let budgets = [
-		{
-			value: 510,
-			probability: 50,
-			temperature: 1.5,
-			type: 'THG'
-		},
-		{
-			value: 280,
-			probability: 66,
-			temperature: 1.5,
-			type: 'THG'
-		},
-		{
-			value: 610,
-			probability: 50,
-			temperature: 1.65,
-			type: 'THG'
-		},
-		{
-			value: 340,
-			probability: 66,
-			temperature: 1.65,
-			type: 'THG'
-		}
-	];
+	let budgets = {
+		at: [
+			{ value: 280, probability: 66, temperature: 1.5, type: 'THG' },
+			{ value: 510, probability: 50, temperature: 1.5, type: 'THG' },
+			{ value: 340, probability: 66, temperature: 1.65, type: 'THG' },
+			{ value: 610, probability: 50, temperature: 1.65, type: 'THG' },
+		],
+		de: [
+			{ value: 2000, probability: 66, temperature: 1.5, type: 'THG' },
+			{ value: 3100, probability: 50, temperature: 1.5, type: 'THG' },
+			{ value: 6100, probability: 66, temperature: 1.75, type: 'THG' }
+		]
+	};
+
+	let budget = budgets[PUBLIC_VERSION];
 
 	let dataPaths;
 	let dataHistoric;
 
-	Papa.parse('../../data/at/emissions/emissions_co2budget_scenarios_AT.csv', {
+	// Papa.parse(`../../data/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`, {
+	Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`, {
 		download: true,
 		dynamicTyping: true,
 		header: true,
@@ -47,22 +37,23 @@
 		}
 	});
 
-	// Papa.parse('https://data.klimadashboard.org/at/emissions/emissions_co2_historic_AT.csv', {
-	Papa.parse(`../../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`, {
-		download: true,
-		dynamicTyping: true,
-		header: true,
-		skipEmptyLines: true,
-		complete: function (results) {
-			if (results) {
-				dataHistoric = results.data;
+	// Papa.parse(`../../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
+	Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`, {
+			download: true,
+			dynamicTyping: true,
+			header: true,
+			skipEmptyLines: true,
+			complete: function (results) {
+				if (results) {
+					dataHistoric = results.data;
+				}
 			}
 		}
-	});
+	);
 
 	$: selectedStartYear = containerWidth > 1000 ? 1990 : 2000;
 
-	$: chosenBudget = budgets.find(
+	$: chosenBudget = budget.find(
 		(d) => d.temperature == chosenTemperature && d.probability == chosenProbability
 	).value;
 	$: chosenTemperature = 1.5;
@@ -109,7 +100,7 @@
 	<input
 		type="number"
 		min="1990"
-		max="2021"
+		max="2020"
 		bind:value={selectedStartYear}
 		class="px-3 py-1 w-20 bg-gray-100 rounded-full"
 	/>
@@ -146,6 +137,8 @@
 	</div>
 {/if}
 
-<p class="text-lg max-w-4xl mt-2 text-prose">
-	{@html v['text' + chosenBudget]}
-</p>
+{#if v == undefined}
+	<p class="text-lg max-w-4xl mt-2 text-prose">
+		{@html v['text' + chosenBudget]}
+	</p>
+{/if}
