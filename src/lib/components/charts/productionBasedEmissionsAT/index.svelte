@@ -12,6 +12,23 @@
 	let rawKeys;
 	let defaultRegion;
 
+	const classifications = [
+		{
+			label: 'Gesamt',
+			key: 'Gesamt'
+		},
+		{
+			label: 'Emissionshandel',
+			key: 'Emissionshandel Abgrenzung ab 2013'
+		},
+		{
+			label: 'Klimaschutzgesetz',
+			key: 'KSG'
+		}
+	];
+
+	$: selectedClassification = classifications[0].key;
+
 	Papa.parse(
 		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
 		{
@@ -106,20 +123,30 @@
 			result.push({
 				label: entry.year,
 				categories: selectedSectors?.map(function (item, index) {
-					return {
-						label: item.label,
-						value: showPerCapita
-							? Math.round(entry[item.key + perCapitaString] * 1000) / 1000
-							: Math.round(entry[item.key]),
-						color: item.color
-					};
+					if (selectedClassification == 'Emissionshandel Abgrenzung ab 2013') {
+						return {
+							label: item.label,
+							value: showPerCapita
+								? entry['energy_industry_co2e_t_percapita']
+								: entry['energy_industry_co2e_t'],
+							color: item.color
+						};
+					} else {
+						return {
+							label: item.label,
+							value: showPerCapita ? entry[item.key + perCapitaString] : entry[item.key],
+							color: item.color
+						};
+					}
 				})
 			});
 		}
 		return result;
 	};
 
-	$: dataset = rawData?.reduce(reducer, []);
+	$: dataset = [];
+
+	$: console.log(dataset);
 
 	$: regions = [...new Set(rawData?.map((d) => d.region))];
 
@@ -139,28 +166,37 @@
 
 	let showFlightEmissions = false;
 	$: allowFlightEmissions =
-		(activeView == 'sector_overview' || activeView == 'total_co2e_t') && !showPerCapita;
+		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
+		!showPerCapita &&
+		selectedClassification == 'Gesamt';
 
 	$: if (showFlightEmissions == true && allowFlightEmissions) {
-		dataset = dataset.map((d) => {
-			var categories = d.categories;
-			categories.push({
-				label: 'Flug',
-				value: Math.round(
-					rawData.findIndex((e) => e.year == d.label) > -1
-						? rawData.find((e) => e.year == d.label).international_flight_co2e_t
-						: 0
-				),
-				color: '#7586C1'
+		dataset = rawData
+			?.filter((d) => d.classification == selectedClassification)
+			.reduce(reducer, [])
+			.map((d) => {
+				var categories = d.categories;
+				var index = rawData.findIndex(
+					(e) =>
+						e.year == d.label && e.region == 'Austria' && e.classification == selectedClassification
+				);
+				categories.push({
+					label: 'Flug',
+					value: Math.round(index > -1 ? rawData[index].international_flight_co2e_t : 0),
+					color: '#7586C1'
+				});
+				return {
+					label: d.label,
+					categories
+				};
 			});
-			return {
-				label: d.label,
-				categories
-			};
-		});
-	} else if (showFlightEmissions == false) {
-		dataset = rawData?.reduce(reducer, []);
+	} else {
+		dataset = rawData
+			?.filter((d) => d.classification == selectedClassification)
+			.reduce(reducer, []);
 	}
+
+	$: console.log(rawData?.filter((d) => d.classification == selectedClassification));
 
 	$: if (rawData?.length > 0) {
 		lastYear = rawData[rawData.length - 1]['year'];
@@ -171,45 +207,40 @@
 
 	$: if (
 		dataset &&
-		dataset.findIndex((x) => x.label == 2021) < 0 &&
 		selectedRegion == 'Austria' &&
 		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
+		selectedClassification == 'Gesamt' &&
 		!showPerCapita
 	) {
-		dataset.push(
-			{
-				label: 2021,
-				categories: [
-					{
-						label: 'Gesamt',
-						value: 77500000,
-						estimate: false,
-						color: '#4DB263'
-					}
-				],
-				estimate: false
-			},
-			{
-				label: 2022,
-				annotation: 'Prognose 2022',
-				categories: [
-					{
-						label: 'Prognose 2022',
-						value: 73600000,
-						estimate: true,
-						color: '#4DB263'
-					}
-				],
-				estimate: true
-			}
-		);
+		dataset.push({
+			label: 2022,
+			annotation: 'Prognose 2022',
+			categories: [
+				{
+					label: 'Prognose 2022',
+					value: 73600000,
+					estimate: true,
+					color: '#4DB263'
+				}
+			],
+			estimate: true
+		});
 	}
 
 	let freezeYAxis = false;
+
+	$: if (selectedClassification == 'Emissionshandel Abgrenzung ab 2013') {
+		selectedRegion = 'Austria';
+		activeView = 'total_co2e_t';
+	}
 </script>
 
 <div class="flex flex-wrap gap-4 items-center sm:justify-between">
-	<div class="relative text-gray-600">
+	<div
+		class="relative text-gray-600 {selectedClassification == 'Emissionshandel Abgrenzung ab 2013'
+			? 'opacity-50'
+			: ''}"
+	>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			class="absolute pointer-events-none top-3 h-6 right-2 transform -translate-y-0.5 icon-tabler-selector"
@@ -229,12 +260,43 @@
 		<select
 			bind:value={selectedRegion}
 			class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+			disabled={selectedClassification == 'Emissionshandel Abgrenzung ab 2013'}
 		>
 			{#each regions as region}
 				<option value={region}>{region}</option>
 			{/each}
 		</select>
 	</div>
+
+	{#if classifications}
+		<div class="relative text-gray-600">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="absolute pointer-events-none top-3 h-6 right-2 transform -translate-y-0.5 icon-tabler-selector"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<polyline points="8 9 12 5 16 9" />
+				<polyline points="16 15 12 19 8 15" />
+			</svg>
+			<select
+				bind:value={selectedClassification}
+				class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+			>
+				{#each classifications as classification}
+					<option value={classification.key}>{classification.label}</option>
+				{/each}
+			</select>
+		</div>
+	{/if}
+
 	{#if allowFlightEmissions}
 		<label
 			class="flex gap-1 text-sm items-center {showFlightEmissions
@@ -257,7 +319,7 @@
 				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 				<path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z" />
 			</svg>
-			<span>Internationaler Flugverkehr</span>
+			<span>Int. Flugverkehr</span>
 			<input type="checkbox" bind:checked={showFlightEmissions} />
 		</label>
 	{/if}
@@ -338,10 +400,12 @@
 	{/if}
 </div>
 
-<Switch
-	{views}
-	{activeView}
-	on:itemClick={(event) => {
-		activeView = event.detail;
-	}}
-/>
+{#if selectedClassification !== 'Emissionshandel Abgrenzung ab 2013'}
+	<Switch
+		{views}
+		{activeView}
+		on:itemClick={(event) => {
+			activeView = event.detail;
+		}}
+	/>
+{/if}

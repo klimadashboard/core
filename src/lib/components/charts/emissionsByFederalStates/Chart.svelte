@@ -83,7 +83,7 @@
 	let chartWidth;
 	let chartHeight;
 
-	$: selectedYear = 2019;
+	$: selectedYear = 2020;
 
 	$: selectedStates = data
 		.filter((d) => d.year == selectedYear)
@@ -125,7 +125,7 @@
 			var keys = Object.keys(currentRow);
 			var selectedIndex = 0;
 			if (sector == false) {
-				selectedIndex = 20;
+				selectedIndex = 25;
 			} else {
 				selectedIndex = keys.indexOf(sector);
 			}
@@ -236,7 +236,7 @@
 			<input
 				type="range"
 				min="1990"
-				max="2019"
+				max="2020"
 				bind:value={selectedYear}
 				aria-label="Jahr auswählen"
 			/>
