@@ -18,11 +18,11 @@
 			key: 'Gesamt'
 		},
 		{
-			label: 'Emissionshandel',
+			label: 'Emissionshandel (ETS)',
 			key: 'Emissionshandel Abgrenzung ab 2013'
 		},
 		{
-			label: 'Klimaschutzgesetz',
+			label: 'Nicht-Emissionshandel (Non-ETS)',
 			key: 'KSG'
 		}
 	];
