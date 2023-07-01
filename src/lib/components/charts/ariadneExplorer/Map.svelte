@@ -1,5 +1,4 @@
 <script>
-	import topo from './germany.json';
 	import { geoPath, geoAlbers } from 'd3-geo';
 	import { scaleLinear, scaleOrdinal, scaleBand } from 'd3-scale';
 
@@ -7,6 +6,7 @@
 	let mapHeight;
 
 	export let data;
+	export let topo;
 	export let selectedFeature = false;
 
 	$: console.log(data);
@@ -15,7 +15,6 @@
 		[0, 0],
 		[mapWidth - 10, mapHeight - 10]
 	];
-	$: projection = geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo);
 
 	$: colorScale = scaleLinear()
 		.range([
@@ -49,7 +48,9 @@
 			<g>
 				{#each topo.features as feature}
 					<path
-						d={geoPath().projection(projection)(feature)}
+						d={geoPath().projection(
+							geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo)
+						)(feature)}
 						on:mouseover={() => (selectedFeature = feature)}
 						on:focus={() => (selectedFeature = feature)}
 						on:mouseout={() => (selectedFeature = false)}

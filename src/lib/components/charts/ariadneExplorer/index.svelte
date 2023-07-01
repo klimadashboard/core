@@ -1,5 +1,5 @@
 <script>
-	import Map from './Map.svelte';
+	import MapWrapper from './MapWrapper.svelte';
 	import Table from './Table.svelte';
 	import Papa from 'papaparse';
 
@@ -72,7 +72,7 @@
 	<div class="flex space-x-2">
 		{#each years as year}
 			<div class="text-center">
-				<Map data={data.filter((d) => d.year == year)} bind:selectedFeature />
+				<MapWrapper data={data.filter((d) => d.year == year)} bind:selectedFeature />
 
 				<p class="text-gray-700">{year}</p>
 				{#if selectedFeature}
