@@ -1,6 +1,6 @@
 <script>
 	import { geoPath, geoAlbers } from 'd3-geo';
-	import { scaleLinear, scaleOrdinal, scaleBand } from 'd3-scale';
+	import { scaleLinear } from 'd3-scale';
 
 	let mapWidth;
 	let mapHeight;
@@ -9,7 +9,7 @@
 	export let topo;
 	export let selectedFeature = false;
 
-	$: console.log(data);
+	// $: console.log(data);
 
 	$: bounds = [
 		[0, 0],
@@ -40,6 +40,9 @@
 		const dataForFeature = getDataForFeature(feature);
 		if (dataForFeature) return colorScale(dataForFeature['support.rd']);
 	};
+
+	$: projection = geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo);
+	$: path = geoPath(projection);
 </script>
 
 <div id="map" bind:clientHeight={mapHeight} bind:clientWidth={mapWidth}>
@@ -48,9 +51,7 @@
 			<g>
 				{#each topo.features as feature}
 					<path
-						d={geoPath().projection(
-							geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo)
-						)(feature)}
+						d={path(feature)}
 						on:mouseover={() => (selectedFeature = feature)}
 						on:focus={() => (selectedFeature = feature)}
 						on:mouseout={() => (selectedFeature = false)}
@@ -59,6 +60,7 @@
 						stroke="#000"
 						stroke-width={selectedFeature == feature ? 1 : 0}
 						class={selectedFeature && selectedFeature !== feature ? 'opacity-70' : 'opacity-100'}
+						id={feature.properties.DEBKG_ID}
 					/>
 				{/each}
 			</g>

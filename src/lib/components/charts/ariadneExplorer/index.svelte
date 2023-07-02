@@ -1,5 +1,5 @@
 <script>
-	import MapWrapper from './MapWrapper.svelte';
+	import Maps from './Maps.svelte';
 	import Table from './Table.svelte';
 	import Papa from 'papaparse';
 
@@ -64,37 +64,13 @@
 		<input type="checkbox" bind:checked={showAllYears} />
 		<span>Zeige alle Jahre?</span>
 	</label>
-
-	{#if selectedFeature}{/if}
 </div>
 
 {#if data}
-	<div class="flex space-x-2">
-		{#each years as year}
-			<div class="text-center">
-				<MapWrapper data={data.filter((d) => d.year == year)} bind:selectedFeature />
-
-				<p class="text-gray-700">{year}</p>
-				{#if selectedFeature}
-					<p class="text-4xl">
-						{data.find(
-							(d) =>
-								d.year == year &&
-								d.code == selectedFeature.properties.RS &&
-								d.policy == selectedPolicy
-						)['support.rd']}%
-					</p>
-					<p>
-						Zustimmung in
-						{selectedFeature.properties.GEN}
-					</p>
-				{/if}
-			</div>
-		{/each}
-		{#if !showAllYears}
-			<Table {data} />
-		{/if}
-	</div>
+	<Maps {data} {years} {selectedPolicy} bind:selectedFeature />
+	{#if !showAllYears}
+		<Table {data} />
+	{/if}
 {/if}
 
 <style>
