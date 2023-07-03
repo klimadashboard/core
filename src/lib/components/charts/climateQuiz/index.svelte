@@ -98,4 +98,10 @@
 {/if}
 
 <style>
+	.bg-green-600 {
+		background-color: green;
+	}
+	.bg-red-600 {
+		background-color: red;
+	}
 </style>
