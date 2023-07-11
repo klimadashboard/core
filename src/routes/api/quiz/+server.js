@@ -2,9 +2,12 @@ import { saveQuizAnswerToDb, getQuizAnswersFromDb } from '../../../lib/component
 import { json } from '@sveltejs/kit';
 
 export async function GET (request) {
-    const searchParams = await request.url.searchParams.get('questionUuid')
-    const result = await getQuizAnswersFromDb(searchParams)
-    return json(result)
+    const searchParams = request.url.searchParams.get('questionUuid')
+    if (searchParams) {
+        const result = await getQuizAnswersFromDb(searchParams)
+        return json(result)
+    }
+    return json({})
 }
 
 export async function POST ({ request }) {

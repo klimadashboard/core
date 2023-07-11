@@ -13,7 +13,6 @@
 		"@sveltejs/adapter-auto": "next",
 		"@sveltejs/adapter-node": "^1.2.0",
 		"@sveltejs/kit": "next",
-		"@tsconfig/svelte": "^5.0.0",
 		"@typescript-eslint/eslint-plugin": "5.45.0",
 		"@typescript-eslint/parser": "5.45.0",
 		"autoprefixer": "^10.4.7",

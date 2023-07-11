@@ -43,8 +43,8 @@
 		const answerCounts: DbCountQuizAnswer[] = await getOtherAnswersFromDb()
 
 		if (answerCounts.length > 0) {
-			answerCounts.forEach((answer, index) => {
-				quizQuestions[questionIndex].answers[index].count = answer.count
+			answerCounts.forEach((answer) => {
+				quizQuestions[questionIndex].answers[answer.answerId].count = answer.count
 			})
 		}
 	};
