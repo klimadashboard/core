@@ -77,8 +77,8 @@
 </script>
 
 {#if quizQuestions != null}
-	<div class="w-screen bg-gradient-green bg-opacity-50 text-white py-8 overflow-hidden">
-		<div class="container">
+	<div class="w-full flex justify-center bg-gradient-green bg-opacity-50 text-white py-8 overflow-hidden">
+		<div class="container max-w-prose">
 			{#if questionIndex < quizQuestions.length}
 				<h4 class="text-3xl pb-4">{quizQuestions[questionIndex].question}</h4>
 				<small class="block pb-4">{@html quizQuestions[questionIndex].text_question}</small>
