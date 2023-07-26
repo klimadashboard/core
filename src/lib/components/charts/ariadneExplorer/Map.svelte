@@ -1,6 +1,6 @@
 <script>
 	import { geoPath, geoAlbers } from 'd3-geo';
-	import { scaleLinear } from 'd3-scale';
+	import { scaleApproval } from '$lib/stores/scales';
 
 	let mapWidth;
 	let mapHeight;
@@ -16,29 +16,13 @@
 		[mapWidth - 10, mapHeight - 10]
 	];
 
-	$: colorScale = scaleLinear()
-		.range([
-			'#8b0000',
-			'#bf2344',
-			'#e45678',
-			'#fa8da3',
-			'#ffc7c6',
-			'#ffffe0',
-			'#c2efb1',
-			'#94d98e',
-			'#6ec171',
-			'#4ea859',
-			'#308f44'
-		])
-		.domain([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
-
 	$: getDataForFeature = (feature) => {
 		return data.find((d) => d.code == feature.properties.RS);
 	};
 
 	$: getColor = (feature) => {
 		const dataForFeature = getDataForFeature(feature);
-		if (dataForFeature) return colorScale(dataForFeature['support.rd']);
+		if (dataForFeature) return scaleApproval(dataForFeature['support.rd']);
 	};
 
 	$: projection = geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo);

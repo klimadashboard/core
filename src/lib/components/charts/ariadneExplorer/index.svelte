@@ -2,6 +2,7 @@
 	import Maps from './Maps.svelte';
 	import Table from './Table.svelte';
 	import Papa from 'papaparse';
+	import { scaleApproval } from '$lib/stores/scales';
 
 	let dataset;
 
@@ -62,16 +63,28 @@
 
 	<label class="flex space-x-2 items-center">
 		<input type="checkbox" bind:checked={showAllYears} />
-		<span>Zeige alle Jahre?</span>
+		<span>Alle Jahre zeigen</span>
 	</label>
+
+	<div class="flex rounded-lg overflow-hidden">
+		{#each Array.from(Array(11).keys()) as i}
+			<div class="w-6 h-6 grid" style="background: {scaleApproval(i * 10)}">
+				{#if i < 2 || i > 8}
+					<p class="text-white m-auto font-bold" style="font-size: 0.6em;">{i * 10}%</p>
+				{/if}
+			</div>
+		{/each}
+	</div>
 </div>
 
-{#if data}
-	<Maps {data} {years} {selectedPolicy} bind:selectedFeature />
-	{#if !showAllYears}
-		<Table {data} />
+<div class="flex">
+	{#if data}
+		<Maps {data} {years} {selectedPolicy} bind:selectedFeature />
+		{#if !showAllYears}
+			<Table {data} bind:selectedFeature />
+		{/if}
 	{/if}
-{/if}
+</div>
 
 <style>
 	.wrapper {
