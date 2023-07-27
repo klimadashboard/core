@@ -1,6 +1,7 @@
 <script>
 	import Papa from 'papaparse';
 	import Map from './Map.svelte';
+	import Loader from '$lib/components/Loader.svelte';
 
 	let dataset;
 
@@ -30,7 +31,7 @@
 
 <div class="max-w-6xl mx-auto">
 	{#await promise}
-		Loading...
+		<Loader />
 	{:then topo}
 		{#if dataset.length > 0}
 			<div class="grid grid-cols-3 md:grid-cols-6 gap-4">
