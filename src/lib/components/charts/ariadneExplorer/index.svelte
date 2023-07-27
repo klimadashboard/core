@@ -16,7 +16,6 @@
 			complete: function (results) {
 				if (results) {
 					dataset = results.data;
-					console.log(dataset);
 				}
 			}
 		}
