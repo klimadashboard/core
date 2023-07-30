@@ -133,7 +133,9 @@
 						</div>
 					{/each}
 				</div>
-				<small>{@html quizQuestions[questionIndex].text_answer}</small>
+				{#if clicked >= 0}
+					<p class="my-4 text-xl">{@html quizQuestions[questionIndex].text_answer}</p>
+				{/if}
 			{/if}
 			{#if clicked != -1 && questionIndex < quizQuestions.length}
 				<div class="text-right max-w-prose">
