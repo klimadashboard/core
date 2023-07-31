@@ -6,20 +6,17 @@
 
 	let dataset;
 
-	Papa.parse(
-		'/data_temp/Data_Downscaling_Climate_Policy_Attitudes-2023-05-31 - Data_Downscaling_Climate_Policy_Attitudes-2023-05-31.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			header: true,
-			skipEmptyLines: true,
-			complete: function (results) {
-				if (results) {
-					dataset = results.data;
-				}
+	Papa.parse('/data_temp/ariadne-dataset.csv', {
+		download: true,
+		dynamicTyping: true,
+		header: true,
+		skipEmptyLines: true,
+		complete: function (results) {
+			if (results) {
+				dataset = results.data;
 			}
 		}
-	);
+	});
 
 	$: selectedPolicy = false;
 
