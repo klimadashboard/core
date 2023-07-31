@@ -30,7 +30,7 @@
 	{#await promise}
 		<Loader />
 	{:then topo}
-		{#if dataset.length > 0}
+		{#if dataset}
 			<div class="grid grid-cols-3 md:grid-cols-6 gap-4">
 				{#each policies as policy}
 					<div class="text-center leading-tight">
