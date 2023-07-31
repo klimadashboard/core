@@ -7,6 +7,7 @@
 	import Tabs from './Tabs.svelte';
 	import Navigation from './Navigation.svelte';
 	import Image from './Image.svelte';
+	import Numbers from './Numbers.svelte';
 
 	export let content;
 
@@ -42,6 +43,10 @@
 		{
 			type: 'image',
 			component: Image
+		},
+		{
+			type: 'numbers',
+			component: Numbers
 		}
 	];
 </script>
