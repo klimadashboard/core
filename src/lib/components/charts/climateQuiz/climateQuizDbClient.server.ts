@@ -1,10 +1,10 @@
-import { env } from '$env/dynamic/private';
+import { MONGODB_COLLECTION_ANSWER_API } from '$env/static/private';
 import { getDb } from './dbConnector.server';
 
 export async function saveQuizAnswerToDb(answer: DbQuizAnswer) {
     try {
         const dbClient = await getDb()
-        const collection = dbClient.collection(env.MONGODB_COLLECTION_ANSWER_API)
+        const collection = dbClient.collection(MONGODB_COLLECTION_ANSWER_API)
         await collection.insertOne(answer)
         console.log('saved to db: ', answer)
         return { success: true }
@@ -17,7 +17,7 @@ export async function saveQuizAnswerToDb(answer: DbQuizAnswer) {
 export async function getQuizAnswersFromDb(questionUuid: string) {
     try {
         const dbClient = await getDb();
-        const collection = dbClient.collection(env.MONGODB_COLLECTION_ANSWER_API);
+        const collection = dbClient.collection(MONGODB_COLLECTION_ANSWER_API);
         const aggregation = [
             { $match: { questionUuid: questionUuid } }, 
             { $group: { 

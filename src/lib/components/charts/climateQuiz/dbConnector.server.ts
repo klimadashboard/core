@@ -1,14 +1,14 @@
-import { env } from '$env/dynamic/private';
+import { MONGODB_URI, MONGODB_DATABASE } from '$env/static/private';
 import { Db, MongoClient } from 'mongodb';
 
-const client = new MongoClient(env.MONGODB_URI);
+const client = new MongoClient(MONGODB_URI);
 let db: Db;
 let isConnected = false;
 
 async function connect() {
     try {
         await client.connect();
-        db = client.db(env.MONGODB_DATABASE);
+        db = client.db(MONGODB_DATABASE);
         isConnected = true;
         console.log('Connected to MongoDB');
     } catch (error) {
