@@ -1,6 +1,5 @@
 <script>
 	export let block;
-	console.log(block);
 </script>
 
 <section class="my-4 max-w-2xl mx-auto px-4 md:px-0">
