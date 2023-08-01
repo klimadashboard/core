@@ -7,6 +7,7 @@
 	import { fade } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	/** @type {import('./$types').PageData} */
 	export let data = [];
@@ -17,7 +18,9 @@
 </script>
 
 <svelte:head>
-	<title>{data.title} – Klimadashboard Österreich</title>
+	<title
+		>{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}</title
+	>
 	<meta name="description" content={data.meta_description} />
 </svelte:head>
 
