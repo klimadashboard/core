@@ -3,18 +3,27 @@
 	import { selectedStation } from '$lib/stores/weather';
 	import WeatherStationMap from './Map.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let metaDataStations;
 	$: geoLocationStatus = '';
 
-	Papa.parse('https://data.klimadashboard.org/at/zamg/stations.csv', {
+	const wetterdienst = PUBLIC_VERSION == 'at' ? 'zamg' : 'impact';
+
+	// Papa.parse('https://data.klimadashboard.org/at/zamg/stations.csv', {
+	// Papa.parse(`../data/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
+	Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
 		download: true,
 		dynamicTyping: true,
 		skipEmptyLines: true,
 		header: true,
 		complete: function (results) {
 			if (results) {
-				metaDataStations = results.data.filter((d) => new Date(d.Startdatum).getFullYear() < 1961);
+				metaDataStations = results.data.filter(
+					(d) =>
+						(PUBLIC_VERSION == 'de' && d.id < 1000) /* DEBUGGING */ ||
+						new Date(d.Startdatum).getFullYear() < 1961 // german wheather stations already filtered
+				);
 			}
 		}
 	});
@@ -49,7 +58,7 @@
 </script>
 
 {#if metaDataStations}
-	<div class="sticky top-16 bg-white  py-2 z-20 flex flex-col items-center">
+	<div class="sticky top-16 bg-white py-2 z-20 flex flex-col items-center">
 		<div class="items-center flex gap-4 text-gray-600">
 			<span class="hidden md:inline">Wähle deine Wetterstation: </span>
 			<div class="relative">
@@ -72,11 +81,11 @@
 				<select
 					name="weatherStations"
 					id="weatherStations"
-					class="block appearance-none w-full bg-gray-200  border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+					class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 					bind:value={$selectedStation}
 				>
 					{#each [...metaDataStations].sort((a, b) => a.name.localeCompare(b.name)) as station}
-						<option value={station.id}>{station.name} ({station.height}m)</option>
+						<option value={station.id}>{station.id} | {station.name} ({station.height}m)</option>
 					{/each}
 				</select>
 			</div>
@@ -132,20 +141,31 @@
 				<WeatherStationMap data={metaDataStations} />
 			</div>
 
-			<div class="my-auto space-y-4 text-gray-600  source-info">
-				<p class="">
-					Wir werten täglich die Daten von mehr als 60 <span
-						class="glossary-label"
-						on:mousedown={() => glossaryItem.set('wetterstationen-der-zamg')}
-					/>
-					Wetterstationen der ZAMG
-					<span class="glossary-label" on:mousedown={() => glossaryItem.set('zamg')} /> aus, um das laufende
-					Jahr mit vergangenen Jahren zu vergleichen.
-				</p>
-				<p class="">
-					Die Daten werden gegen 12 Uhr aktualisiert und stammen jeweils vom Vortag. Eine frühere
-					Aktualisierung ist aufgrund der Datenquelle noch nicht möglich.
-				</p>
+			<div class="my-auto space-y-4 text-gray-600 source-info">
+				{#if PUBLIC_VERSION == 'at'}
+					<p class="">
+						Wir werten täglich die Daten von mehr als 60 <span
+							class="glossary-label"
+							on:mousedown={() => glossaryItem.set('wetterstationen-der-zamg')}
+						/>
+						Wetterstationen der ZAMG
+						<span class="glossary-label" on:mousedown={() => glossaryItem.set('zamg')} /> aus, um das
+						laufende Jahr mit vergangenen Jahren zu vergleichen.
+					</p>
+					<p class="">
+						Die Daten werden gegen 12 Uhr aktualisiert und stammen jeweils vom Vortag. Eine frühere
+						Aktualisierung ist aufgrund der Datenquelle noch nicht möglich.
+					</p>
+				{:else if PUBLIC_VERSION == 'de'}
+					<p>
+						Wir werten täglich die Daten von mehr als 230 Wetterstationen des <strong>DWD</strong> (Deutschen
+						Wetterdienstes) aus, um das laufende Jahr mit vergangenen Jahren zu vergleichen.
+					</p>
+					<p>
+						Die Daten werden gegen 12 Uhr aktualisiert und stammen jeweils vom Vortag. Eine frühere
+						Aktualisierung ist aufgrund der Datenquelle noch nicht möglich.
+					</p>
+				{/if}
 			</div>
 		</div>
 	{/if}
