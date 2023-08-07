@@ -4,6 +4,7 @@
 
 	export let selectedFeature;
 	export let data;
+	export let stateWideAverage;
 </script>
 
 <div class="overflow-scroll h-96 relative ml-auto">
@@ -31,7 +32,7 @@
 			<tfoot>
 				<tr>
 					<td />
-					<td>X%</td>
+					<td>{stateWideAverage}%</td>
 					<td>Bundesdurchschnitt</td>
 				</tr>
 			</tfoot>

@@ -77,7 +77,13 @@
 	{#if data}
 		<Maps {data} {years} {selectedPolicy} bind:selectedFeature />
 		{#if !showAllYears}
-			<Table {data} bind:selectedFeature />
+			<Table
+				{data}
+				bind:selectedFeature
+				stateWideAverage={dataset?.find((e) => e.level == 0 && e.policy == selectedPolicy)[
+					'support.rd'
+				]}
+			/>
 		{/if}
 	{/if}
 </div>
