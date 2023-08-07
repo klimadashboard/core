@@ -14,8 +14,6 @@
 		});
 
 	$: showNav = false;
-
-	$: console.log($page);
 </script>
 
 <header class="fixed w-full z-50">
