@@ -4,6 +4,7 @@
 	import { error } from '@sveltejs/kit';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Loader from './Loader.svelte';
+	import { page } from '$app/stores';
 
 	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
 		.then((x) => x.json())
@@ -13,6 +14,8 @@
 		});
 
 	$: showNav = false;
+
+	$: console.log($page);
 </script>
 
 <header class="fixed w-full z-50">
@@ -98,19 +101,31 @@
 							>
 								<a
 									href={item.uri.replace('klimadashboard-' + PUBLIC_VERSION, '')}
-									class="md:leading-[5rem] font-bold md:font-normal hover:underline underline-offset-2"
+									class="md:leading-[5rem] font-bold {$page.params.slug.includes(item.slug)
+										? ''
+										: 'md:font-normal'} hover:underline underline-offset-2"
 									on:mouseup={() => (showNav = false)}>{item.content.title}</a
 								>
 
 								{#if navigation.filter((c) => item.id == c.parent && c !== item).length > 0}
-									<div class="md:fixed left-0 md:top-18 w-screen md:bg-gray-100 md:shadow-xl">
-										<ul class="md:container flex gap-6 md:py-4 md:hidden group-hover:flex">
+									<div
+										class="md:fixed left-0 md:top-18 w-screen md:bg-gray-100 md:shadow-sm transition"
+									>
+										<ul
+											class="md:container flex gap-6 md:py-3 {!$page.params.slug.includes(item.slug)
+												? 'md:hidden'
+												: ''} group-hover:flex"
+										>
 											{#each navigation.filter((c) => item.id == c.parent && c !== item) as child}
 												<li>
 													<a
 														href={child.id.replace('klimadashboard-' + PUBLIC_VERSION + '/', '/')}
 														on:mouseup={() => (showNav = false)}
-														class="hover:underline underline-offset-2">{child.content.title}</a
+														class="hover:underline underline-offset-2 {$page.params.slug.includes(
+															child.slug
+														)
+															? 'font-bold'
+															: ''}">{child.content.title}</a
 													>
 												</li>
 											{/each}
