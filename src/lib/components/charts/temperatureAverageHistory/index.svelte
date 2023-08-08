@@ -21,7 +21,7 @@
 	const wetterdienst = PUBLIC_VERSION == 'at' ? 'zamg' : 'impact';
 	$: Papa.parse(
 		// `https://data.klimadashboard.org/${PUBLIC_VERSION}/zamg/stations/${$selectedStation}/yearly.csv`,
-		`../data/${PUBLIC_VERSION}/${wetterdienst}/stations/${$selectedStation}/yearly.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations/${$selectedStation}/yearly.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
