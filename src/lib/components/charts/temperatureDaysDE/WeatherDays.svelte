@@ -32,7 +32,8 @@
 	$: selectedStationName = 'station';
 
 	// $: Papa.parse('https://data.klimadashboard.org/de/zamg/stations.csv', {
-	$: Papa.parse(`../data/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
+	// $: Papa.parse(`../data/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
+	$: Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
 		download: true,
 		dynamicTyping: true,
 		skipEmptyLines: true,
