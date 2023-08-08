@@ -8,6 +8,7 @@
 	import Navigation from './Navigation.svelte';
 	import Image from './Image.svelte';
 	import Numbers from './Numbers.svelte';
+	import ChartPeople from './ChartPeople.svelte';
 
 	export let content;
 
@@ -47,6 +48,10 @@
 		{
 			type: 'numbers',
 			component: Numbers
+		},
+		{
+			type: 'chartPeople',
+			component: ChartPeople
 		}
 	];
 </script>
