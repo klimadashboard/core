@@ -2,8 +2,10 @@
 	export let block;
 </script>
 
-<div class="my-8 text-lg max-w-2xl mx-auto px-4 md:px-0 text" id={block.id}>
-	{@html block.content.text}
+<div class="my-8 text-lg container text" id={block.id}>
+	<div class="max-w-4xl">
+		{@html block.content.text}
+	</div>
 </div>
 
 <style>

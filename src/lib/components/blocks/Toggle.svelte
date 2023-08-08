@@ -3,16 +3,18 @@
 	export let block;
 </script>
 
-<details class="max-w-2xl mx-auto my-4 px-4 md:px-0" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-	<summary class="text-xl border-b" itemprop="name">{block.content.label}</summary>
-	<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-	{#if block.content.blocks}
-		<div itemprop="text">
-		<Blocks content={JSON.parse(block.content.blocks)} />
+<section class="container my-4">
+	<details class="max-w-4xl" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+		<summary class="text-xl border-b" itemprop="name">{block.content.label}</summary>
+		<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+			{#if block.content.blocks}
+				<div itemprop="text">
+					<Blocks content={JSON.parse(block.content.blocks)} />
+				</div>
+			{/if}
 		</div>
-	{/if}
-	</div>
-</details>
+	</details>
+</section>
 
 <style>
 	:global(details[open] summary ~ *) {

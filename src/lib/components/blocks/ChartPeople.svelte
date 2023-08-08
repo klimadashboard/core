@@ -19,28 +19,30 @@
 	}
 </script>
 
-<div class="max-w-2xl mx-auto px-4 md:px-0 my-8">
-	<h2 class="text-2xl" style="color: {categories[0].color}">
-		{block.content.heading}
-	</h2>
-	<div class="flex space-x-4 mt-2">
-		{#each categories as value}
-			<div class="flex items-center space-x-1" style="color: {value.color}">
-				<div class="h-2 w-2 rounded-full bg-current" />
-				<span>{value.value}% {value.label}</span>
-			</div>
-		{/each}
+<div class="container my-8">
+	<div class="max-w-4xl">
+		<h2 class="text-2xl" style="color: {categories[0].color}">
+			{block.content.heading}
+		</h2>
+		<div class="flex space-x-4 mt-2">
+			{#each categories as value}
+				<div class="flex items-center space-x-1" style="color: {value.color}">
+					<div class="h-2 w-2 rounded-full bg-current" />
+					<span>{value.value}% {value.label}</span>
+				</div>
+			{/each}
+		</div>
+		<div class="grid grid-heads gap-2 my-4 -px-1">
+			{#each people as person}
+				<div style="color: {person}" class="">
+					{@html images[Math.floor(Math.random() * images.length)]}
+				</div>
+			{/each}
+		</div>
+		{#if block.content.source}
+			<p class="text-sm text-gray-700">{block.content.source}</p>
+		{/if}
 	</div>
-	<div class="grid grid-heads gap-2 my-4 -px-1">
-		{#each people as person}
-			<div style="color: {person}" class="">
-				{@html images[Math.floor(Math.random() * images.length)]}
-			</div>
-		{/each}
-	</div>
-	{#if block.content.source}
-		<p class="text-sm text-gray-700">{block.content.source}</p>
-	{/if}
 </div>
 
 <style>
