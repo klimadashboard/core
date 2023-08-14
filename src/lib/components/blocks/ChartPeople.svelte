@@ -21,7 +21,7 @@
 
 <div class="container my-8">
 	<div class="max-w-4xl">
-		<h2 class="text-2xl" style="color: {categories[0].color}">
+		<h2 class="text-2xl">
 			{block.content.heading}
 		</h2>
 		<div class="flex space-x-4 mt-2">
