@@ -9,6 +9,7 @@
 	import Image from './Image.svelte';
 	import Numbers from './Numbers.svelte';
 	import ChartPeople from './ChartPeople.svelte';
+	import ChartBar from './ChartBar.svelte';
 
 	export let content;
 
@@ -52,6 +53,10 @@
 		{
 			type: 'chartPeople',
 			component: ChartPeople
+		},
+		{
+			type: 'chartBars',
+			component: ChartBar
 		}
 	];
 </script>
