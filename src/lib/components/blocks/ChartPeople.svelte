@@ -10,7 +10,7 @@
 	];
 
 	$: people = [];
-	let categories = block.content.values.sort((a, b) => b.value - a.value);
+	let categories = block.content.values;
 
 	$: if (categories.length) {
 		for (let i = 0; i < categories.length; i++) {
