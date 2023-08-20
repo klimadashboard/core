@@ -221,6 +221,7 @@
 	};
 
 	const datasetPromise = fetch(
+		// `../data/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
 	)
 		// const datasetPromise = fetch('../data/at/emissions/emissions_crf_at.json')
