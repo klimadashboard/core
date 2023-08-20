@@ -109,14 +109,18 @@
 			<svelte:component this={Chart} v={createVariables(chart.content.variables)} />
 		{:else}
 			<div
-				class="bg-white p-4 border border-gray-200 rounded relative overflow-hidden {chart.content.methods
+				class="bg-white p-4 border border-gray-200 rounded relative {chart.content.methods
 					? 'pb-16'
 					: ''}"
 				id={chart.content.identifier_string}
 				bind:this={item}
 			>
-				<div class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition">
-					<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">{chart.content.title}</h2>
+				<div
+					class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition"
+				>
+					<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
+						{chart.content.title}
+					</h2>
 					<div class="flex items-center gap-3 transition">
 						<button
 							on:mousedown={() => exportImage()}
@@ -286,5 +290,17 @@
 
 	:global(.data-notices h3) {
 		@apply text-2xl;
+	}
+
+	:global(.data-notices ul) {
+		@apply list-disc list-outside pl-5 py-2;
+	}
+
+	:global(.data-notices ol) {
+		@apply list-decimal list-inside py-2;
+	}
+
+	:global(.data-notices li p) {
+		@apply whitespace-nowrap inline;
 	}
 </style>

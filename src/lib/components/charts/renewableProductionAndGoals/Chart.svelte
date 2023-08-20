@@ -5,15 +5,27 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	import dayjs from 'dayjs';
 	import { fade } from 'svelte/transition';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let type;
 	export let unifiedScaling;
+	export let maxX;
+	export let maxY;
+
+	let goalYear;
+	let unit = PUBLIC_VERSION == 'de' ? 'GW' : 'TWh';
+	let title =
+		PUBLIC_VERSION == 'de' ? 'Installierte Leistung vs. Ziel' : 'Jahresproduktion vs. Ausbauziel';
 
 	$: maxValue = 50;
 
 	let dataGoal;
 	Papa.parse(
-		'https://data.klimadashboard.org/at/energy/renewables/' + type.dataKey + '_zielpfad.csv',
+		'https://data.klimadashboard.org/' +
+			PUBLIC_VERSION +
+			'/energy/renewables/' +
+			type.dataKey +
+			'_zielpfad.csv',
 		{
 			download: true,
 			dynamicTyping: true,
@@ -28,6 +40,7 @@
 						};
 					});
 					maxValue = results.data[results.data.length - 1].Jahresproduktion;
+					goalYear = new Date(results.data[results.data.length - 1].DateTime).getFullYear();
 				}
 			}
 		}
@@ -35,7 +48,11 @@
 
 	let dataProduction;
 	Papa.parse(
-		'https://data.klimadashboard.org/at/energy/renewables/' + type.dataKey + '_produktion.csv',
+		'https://data.klimadashboard.org/' +
+			PUBLIC_VERSION +
+			'/energy/renewables/' +
+			type.dataKey +
+			'_produktion.csv',
 		{
 			download: true,
 			dynamicTyping: true,
@@ -68,11 +85,11 @@
 
 	$: xScale = scaleTime()
 		.range([0, chartWidth])
-		.domain([new Date(2016, 1, 1), new Date(2031, 1, 31)]);
+		.domain([new Date(2016, 1, 1), new Date(maxX)]);
 
 	$: yScale = scaleLinear()
 		.range([innerChartHeight, 0])
-		.domain([0, unifiedScaling ? 50 : maxValue]);
+		.domain([0, unifiedScaling ? maxY : maxValue]);
 
 	$: generateArea = (key) => {
 		return area()
@@ -91,7 +108,7 @@
 
 <div class="bg-gray-100  rounded overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
-		<h3 class="text-xl"><b>{type.label}</b> Jahresproduktion vs. Ausbauziel</h3>
+		<h3 class="text-xl"><b>{type.label}</b> {title}</h3>
 		{@html type.icon}
 	</div>
 	<div class="">
@@ -127,7 +144,7 @@
 										class="stroke-gray-200 opacity-50"
 									/>
 									<text class="text-sm text-gray-600 fill-current bg-white" x="10" y="-4"
-										>{tick} {index == yScale.ticks(6).length - 1 ? ' TWh' : ''}</text
+										>{tick} {index == yScale.ticks(6).length - 1 ? ' ' + unit : ''}</text
 									>
 								</g>
 							{/each}
@@ -185,15 +202,23 @@
 								<text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade
 									>{formatNumber(
 										Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100
-									)} TWh Produktion im Zeitraum
-									<tspan x="16" y="16"
-										>{dayjs(dataProduction[dataProduction.length - 1].x)
-											.subtract(364, 'day')
-											.format('D.M.YYYY')} – {dayjs(
+									)}
+									{' ' + unit + ' '}
+									{#if PUBLIC_VERSION == 'at'}
+										Produktion im Zeitraum
+										<tspan x="16" y="16"
+											>{dayjs(dataProduction[dataProduction.length - 1].x)
+												.subtract(364, 'day')
+												.format('D.M.YYYY')} – {dayjs(
+												dataProduction[dataProduction.length - 1].x
+											).format('D.M.YYYY')}</tspan
+										>
+									{:else if PUBLIC_VERSION == 'de'}
+										Installierte Leistung am {dayjs(
 											dataProduction[dataProduction.length - 1].x
-										).format('D.M.YYYY')}</tspan
-									></text
-								>
+										).format('D.M.YYYY')}
+									{/if}
+								</text>
 							{/if}
 						</g>
 
@@ -209,7 +234,8 @@
 									text-anchor="end"
 									x={-10}
 									y={-2}
-									>2030-Ziel: {formatNumber(dataGoal[dataGoal.length - 1].y)} TWh Strom aus {type.label}</text
+									>{goalYear}-Ziel: {formatNumber(dataGoal[dataGoal.length - 1].y)}
+									{unit} Strom aus {type.label}</text
 								>
 							{/if}
 

@@ -14,7 +14,9 @@
 			header: true,
 			complete: function (results) {
 				if (results) {
-					dataset = results.data.filter((d) => d.region !== 'Austria');
+					dataset = results.data.filter(
+						(d) => d.region !== 'Austria' && d.classification == 'Gesamt' && d.year < 2021
+					);
 				}
 			}
 		}

@@ -35,7 +35,7 @@
 				dataPaths = results.data;
 			}
 		}
-	});
+	);
 
 	// Papa.parse(`../../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
 	Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`, {

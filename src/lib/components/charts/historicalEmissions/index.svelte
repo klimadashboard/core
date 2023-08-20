@@ -1,6 +1,7 @@
 <script>
 	import LineChart from '../chartLine.svelte';
 	import Papa from 'papaparse';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	$: rawData = [];
 	$: readMore = false;
@@ -8,7 +9,7 @@
 	let chartWidth;
 
 	Papa.parse(
-		'https://data.klimadashboard.org/at/emissions/AT_Historical-Emissions_PIK-PRIMAP.csv',
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/${PUBLIC_VERSION.toLocaleUpperCase()}_Historical-Emissions_PIK-PRIMAP.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
