@@ -10,7 +10,7 @@
 	export let chosenBudget;
 	export let selectedStartYear;
 
-	const keys = [
+	$: keys = [
 		{
 			key: 'nochange',
 			label: 'Gleichbleibende Emissionen',
@@ -28,7 +28,7 @@
 		},
 		{
 			key: 'percentage',
-			label: 'Pfad bis Klimaneutralität 2040 <br>-22% pro Jahr',
+			label: `Pfad bis Klimaneutralität 2040 <br>-${chosenBudget.percentPerYear}% pro Jahr`,
 			color: '#F2A60D'
 		}
 	];
@@ -45,7 +45,7 @@
 		}, 0) / 1000000;
 	let lastTHG = dataHistoric[dataHistoric.length - 1].total_co2e_t / 1000000;
 	let maxAxis = Math.ceil((maxTHG * 1.1) / 100) * 100;
-	let maxYear = dataPaths[dataPaths.length-1].year;
+	let maxYear = dataPaths[dataPaths.length - 1].year;
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -71,7 +71,7 @@
 	$: chosenPath = 1;
 
 	$: areas = selectedKeys.map((key) =>
-		key.replace(chosenBudget + '_', '') == 'nochange'
+		key.replace(chosenBudget.value + '_', '') == 'nochange'
 			? 'M' +
 			  xScale(currentYear) +
 			  ',' +
@@ -92,7 +92,7 @@
 			: generateArea(key)(dataPaths)
 	);
 	$: lines = selectedKeys.map((key) =>
-		key.replace(chosenBudget + '_', '') == 'nochange'
+		key.replace(chosenBudget.value + '_', '') == 'nochange'
 			? 'M' +
 			  xScale(currentYear) +
 			  ',' +
@@ -110,21 +110,22 @@
 
 	$: lineHistoric = generateLine('total_co2e_t')(dataHistoric);
 
-	$: selectedKeys = Object.keys(dataPaths[0]).filter((d) => d.includes(chosenBudget));
+	$: selectedKeys = Object.keys(dataPaths[0]).filter((d) => d.includes(chosenBudget.value));
 
+	$: console.log('chosenBudget', chosenBudget);
 	$: console.log('dataPaths', dataPaths);
 	$: console.log('dataHistoric', dataHistoric);
 	// $: console.log('current year:', dataHistoric[dataHistoric.length - 1].year);
 	$: console.log('TODO maximum value:', maxTHG);
 
 	$: getZeroYear = function (key) {
-		if (key.replace(chosenBudget + '_', '') == 'nochange') {
-			var selectedRow = dataPaths.find((d) => d[key] > 0 && d[key] < lastTHG*0.99);
+		if (key.replace(chosenBudget.value + '_', '') == 'nochange') {
+			var selectedRow = dataPaths.find((d) => d[key] > 0 && d[key] < lastTHG * 0.99);
 			var year = selectedRow.year;
 			var selectedValue = selectedRow[key];
 			return year + selectedValue / lastTHG;
 		} else {
-			return dataPaths.find((d) => d[key] == 0).year;
+			return dataPaths.find((d) => d[key] == 0)?.year || dataPaths.length - 1;
 		}
 	};
 
@@ -172,7 +173,7 @@
 		class="flex-col mb-4 mt-4 md:mt-0 md:absolute md:left-10 md:bottom-10 text-sm bg-white z-20 md:p-1"
 	>
 		{#each selectedKeys as key, i}
-			{@const selectedKey = keys.find((d) => d.key == key.replace(chosenBudget + '_', ''))}
+			{@const selectedKey = keys.find((d) => d.key == key.replace(chosenBudget.value + '_', ''))}
 			<div
 				class="flex my-1 gap-1 items-start leading-tight {chosenPath == i
 					? 'opacity-100'
@@ -271,16 +272,18 @@
 							transition:draw={{ duration: 2000, easing: quintOut }}
 						/>
 					</g>
-					{#key chosenBudget}
+					{#key chosenBudget.value}
 						<g id="budget">
 							{#each lines as line, i}
 								{@const selectedKey = keys.find(
-									(d) => d.key == selectedKeys[i].replace(chosenBudget + '_', '')
+									(d) => d.key == selectedKeys[i].replace(chosenBudget.value + '_', '')
 								)}
 								<g id="area">
 									<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 									<path
-										d="{areas[i]}L{xScale(currentYear)},{yScale(0)}L{xScale(currentYear)},{yScale(lastTHG)}z"
+										d="{areas[i]}L{xScale(currentYear)},{yScale(0)}L{xScale(currentYear)},{yScale(
+											lastTHG
+										)}z"
 										fill={selectedKey.color}
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
 										transition:fade
@@ -311,7 +314,9 @@
 						<g
 							transform="translate({xScale(getZeroYear(key))},{innerChartHeight + 16})"
 							style="color: {keys[
-								keys.findIndex((d) => d.key == selectedKeys[i].replace(chosenBudget + '_', ''))
+								keys.findIndex(
+									(d) => d.key == selectedKeys[i].replace(chosenBudget.value + '_', '')
+								)
 							].color}"
 						>
 							<text class="fill-current text-xs" text-anchor="middle">
@@ -356,12 +361,12 @@
 						<text
 							style="color: {keys[
 								keys.findIndex(
-									(d) => d.key == selectedKeys[chosenPath].replace(chosenBudget + '_', '')
+									(d) => d.key == selectedKeys[chosenPath].replace(chosenBudget.value + '_', '')
 								)
 							].color}"
 							class="text-sm fill-current uppercase font-semibold tracking-wide"
 						>
-							<tspan x="0" dy="1.2em">{chosenBudget} Mio. t</tspan>
+							<tspan x="0" dy="1.2em">{chosenBudget.value} Mio. t</tspan>
 							<tspan x="0" dy="1.2em">THG Budget</tspan>
 						</text>
 					</g>
