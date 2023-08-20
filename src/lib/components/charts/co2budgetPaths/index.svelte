@@ -25,8 +25,8 @@
 	let dataHistoric;
 
 	Papa.parse(
-		`../../data/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
-		// `https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
+		// `../../data/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
