@@ -68,8 +68,8 @@
 	let showKSGGoal = false;
 
 	Papa.parse(
-		// `https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
-		`../../data/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
+		// `../../data/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
@@ -85,8 +85,8 @@
 
 	// Papa.parse(`../../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
 	Papa.parse(
-		// `https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
-		`../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
+		// `../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
