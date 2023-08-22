@@ -4,11 +4,13 @@
 	import { draw, fade } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { pointer } from 'd3-selection';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let dataHistoric;
 	export let dataPaths;
 	export let chosenBudget;
 	export let selectedStartYear;
+	export let showKSGGoal;
 
 	$: keys = [
 		{
@@ -28,7 +30,9 @@
 		},
 		{
 			key: 'percentage',
-			label: `Pfad bis Klimaneutralität 2040 <br>-${chosenBudget.percentPerYear}% pro Jahr`,
+			label: `Pfad bis Klimaneutralität ${PUBLIC_VERSION == 'at' ? '2040' : ''}<br>${
+				chosenBudget.percentPerYear
+			}`,
 			color: '#F2A60D'
 		}
 	];
@@ -37,13 +41,15 @@
 	let chartHeight;
 	let margin = { top: 20, right: 15, bottom: 30, left: 0 };
 
+	const thgFactor = PUBLIC_VERSION == 'at' ? 1000 * 1000 : 1;
+
 	let currentYear = dataHistoric[dataHistoric.length - 1].year;
 	let maxTHG =
 		dataHistoric.reduce((max, value) => {
 			if (value.total_co2e_t > max) return value.total_co2e_t;
 			return max;
-		}, 0) / 1000000;
-	let lastTHG = dataHistoric[dataHistoric.length - 1].total_co2e_t / 1000000;
+		}, 0) / thgFactor;
+	let lastTHG = dataHistoric[dataHistoric.length - 1].total_co2e_t / thgFactor;
 	let maxAxis = Math.ceil((maxTHG * 1.1) / 100) * 100;
 	let maxYear = dataPaths[dataPaths.length - 1].year;
 
@@ -58,7 +64,7 @@
 		return (
 			line()
 				.x((d) => xScale(d.year || 0))
-				.y((d) => yScale(key == 'total_co2e_t' ? d[key] / 1000000 : d[key])) || 0
+				.y((d) => yScale(key == 'total_co2e_t' ? d[key] / thgFactor : d[key])) || 0
 		);
 	};
 
@@ -89,7 +95,7 @@
 			  ',' +
 			  yScale(0) +
 			  'Z'
-			: generateArea(key)(dataPaths)
+			: generateArea(key)(dataPaths.filter((d) => d.year >= currentYear))
 	);
 	$: lines = selectedKeys.map((key) =>
 		key.replace(chosenBudget.value + '_', '') == 'nochange'
@@ -105,22 +111,16 @@
 			  xScale(getZeroYear(key)) +
 			  ',' +
 			  yScale(0)
-			: generateLine(key)(dataPaths)
+			: generateLine(key)(dataPaths.filter((d) => d.year >= currentYear))
 	);
 
 	$: lineHistoric = generateLine('total_co2e_t')(dataHistoric);
 
 	$: selectedKeys = Object.keys(dataPaths[0]).filter((d) => d.includes(chosenBudget.value));
 
-	$: console.log('chosenBudget', chosenBudget);
-	$: console.log('dataPaths', dataPaths);
-	$: console.log('dataHistoric', dataHistoric);
-	// $: console.log('current year:', dataHistoric[dataHistoric.length - 1].year);
-	$: console.log('TODO maximum value:', maxTHG);
-
 	$: getZeroYear = function (key) {
 		if (key.replace(chosenBudget.value + '_', '') == 'nochange') {
-			var selectedRow = dataPaths.find((d) => d[key] > 0 && d[key] < lastTHG * 0.99);
+			var selectedRow = dataPaths.reduce((last, d) => (d[key] > 0 ? d : last), null);
 			var year = selectedRow.year;
 			var selectedValue = selectedRow[key];
 			return year + selectedValue / lastTHG;
@@ -165,6 +165,8 @@
 
 		return string;
 	};
+
+	$: ksgDottedLine = showKSGGoal ? generateLine('ksg')(dataPaths) : null;
 </script>
 
 <div class="relative">
@@ -175,7 +177,7 @@
 		{#each selectedKeys as key, i}
 			{@const selectedKey = keys.find((d) => d.key == key.replace(chosenBudget.value + '_', ''))}
 			<div
-				class="flex my-1 gap-1 items-start leading-tight {chosenPath == i
+				class="flex my-1 gap-1 items-start leading-tight cursor-pointer {chosenPath == i
 					? 'opacity-100'
 					: 'opacity-60'}"
 				on:mouseover={() => (chosenPath = i)}
@@ -188,6 +190,16 @@
 				</div>
 			</div>
 		{/each}
+		{#if showKSGGoal}
+			<hr />
+			<div
+				class="flex my-1 gap-1 items-start leading-tight {chosenPath == dataPaths.length - 1
+					? 'opacity-100'
+					: 'opacity-60'}"
+			>
+				<div class="pl-1 dot-before">Reduktionspfad der Bundesregierung</div>
+			</div>
+		{/if}
 	</div>
 
 	<div class="h-72 w-full mt-4" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
@@ -272,6 +284,18 @@
 							transition:draw={{ duration: 2000, easing: quintOut }}
 						/>
 					</g>
+					{#if ksgDottedLine}
+						<g id="ksg-path">
+							<path
+								d={ksgDottedLine}
+								fill="none"
+								stroke-width="4"
+								stroke={'#666666'}
+								stroke-dasharray="1 8"
+								stroke-linecap="round"
+							/>
+						</g>
+					{/if}
 					{#key chosenBudget.value}
 						<g id="budget">
 							{#each lines as line, i}
@@ -375,3 +399,20 @@
 		</svg>
 	</div>
 </div>
+
+<style>
+	.dot-before {
+		padding-left: 0;
+		border-left: none;
+	}
+	.dot-before::before {
+		content: '';
+		display: inline-block;
+		height: 4px;
+		width: 4px;
+		margin-bottom: 3px;
+		margin-right: 4px;
+		background-color: #666666;
+		border-radius: 2px;
+	}
+</style>

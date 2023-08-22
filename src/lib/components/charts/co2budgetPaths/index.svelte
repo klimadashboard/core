@@ -7,15 +7,57 @@
 
 	let budgets = {
 		at: [
-			{ value: 280, probability: 66, temperature: 1.5, type: 'THG', percentPerYear: 22 },
-			{ value: 510, probability: 50, temperature: 1.5, type: 'THG', percentPerYear: 22 },
-			{ value: 340, probability: 66, temperature: 1.65, type: 'THG', percentPerYear: 22 },
-			{ value: 610, probability: 50, temperature: 1.65, type: 'THG', percentPerYear: 22 }
+			{
+				value: 280,
+				probability: 66,
+				temperature: 1.5,
+				type: 'THG',
+				percentPerYear: '-22% pro Jahr'
+			},
+			{
+				value: 510,
+				probability: 50,
+				temperature: 1.5,
+				type: 'THG',
+				percentPerYear: '-22% pro Jahr'
+			},
+			{
+				value: 340,
+				probability: 66,
+				temperature: 1.65,
+				type: 'THG',
+				percentPerYear: '-22% pro Jahr'
+			},
+			{
+				value: 610,
+				probability: 50,
+				temperature: 1.65,
+				type: 'THG',
+				percentPerYear: '-22% pro Jahr'
+			}
 		],
 		de: [
-			{ value: 2000, probability: 66, temperature: 1.5, type: 'THG', percentPerYear: 25 },
-			{ value: 3100, probability: 50, temperature: 1.5, type: 'THG', percentPerYear: 25 },
-			{ value: 6100, probability: 66, temperature: 1.75, type: 'THG', percentPerYear: 8.6 }
+			{
+				value: 1343,
+				probability: 66,
+				temperature: 1.5,
+				type: 'THG',
+				percentPerYear: '-25% pro Jahr'
+			},
+			{
+				value: 2443,
+				probability: 50,
+				temperature: 1.5,
+				type: 'THG',
+				percentPerYear: '-25% pro Jahr'
+			},
+			{
+				value: 5443,
+				probability: 66,
+				temperature: 1.75,
+				type: 'THG',
+				percentPerYear: '-10% pro Jahr'
+			}
 		]
 	};
 
@@ -23,10 +65,11 @@
 
 	let dataPaths;
 	let dataHistoric;
+	let showKSGGoal = false;
 
 	Papa.parse(
-		// `../../data/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
+		// `../../data/${PUBLIC_VERSION}/emissions/emissions_co2budget_scenarios_${PUBLIC_VERSION.toLocaleUpperCase()}.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
@@ -43,6 +86,7 @@
 	// Papa.parse(`../../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
 	Papa.parse(
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
+		// `../data/${PUBLIC_VERSION}/emissions/emissions_co2_historic.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
@@ -51,6 +95,7 @@
 			complete: function (results) {
 				if (results) {
 					dataHistoric = results.data;
+					console.log(dataHistoric);
 				}
 			}
 		}
@@ -73,15 +118,17 @@
 		class="flex flex-wrap gap-4 items-center text-sm {PUBLIC_VERSION == 'at' ? 'hidden' : ''}"
 	>
 		<div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
-			<!-- <label class="flex items-center gap-1 {chosenProbability == 66 ? 'font-bold' : ''}">
+			<label class="flex items-center gap-1 {chosenProbability == 66 ? 'font-bold' : ''}">
 				<input type="radio" value={66} bind:group={chosenProbability} />
 				<span>66%</span>
 			</label>
-			<label class="flex items-center gap-1 {chosenProbability == 50 ? 'font-bold' : ''}">
-				<input type="radio" value={50} bind:group={chosenProbability} />
-				<span>50%</span>
-			</label> -->
-			<span class="font-bold">66% Eintrittswahrscheinlichkeit</span>
+			{#if chosenTemperature == 1.5}
+				<label class="flex items-center gap-1 {chosenProbability == 50 ? 'font-bold' : ''}">
+					<input type="radio" value={50} bind:group={chosenProbability} />
+					<span>50%</span>
+				</label>
+			{/if}
+			<span class="font-bold">Eintrittswahrscheinlichkeit</span>
 		</div>
 		<div>
 			<div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
@@ -93,18 +140,34 @@
 					<input type="radio" name="goal" value={1.65} bind:group={chosenTemperature} />
 					<span>+1,5°C (zwischenzeitlich 1.65°C)</span>
 				</label> -->
-				<label class="flex items-center gap-1 {chosenTemperature == 1.67 ? 'font-bold' : ''}">
-					<input type="radio" name="goal" value={1.75} bind:group={chosenTemperature} />
+				<label class="flex items-center gap-1 {chosenTemperature == 1.75 ? 'font-bold' : ''}">
+					<input
+						type="radio"
+						name="goal"
+						value={1.75}
+						bind:group={chosenTemperature}
+						on:click={() => {
+							chosenProbability = 66;
+						}}
+					/>
 					<span>+1,75°C</span>
 				</label>
 				<span class="font-bold">Temperaturlimit</span>
+			</div>
+		</div>
+		<div>
+			<div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
+				<label class="flex items-center gap-1 {showKSGGoal ? 'font-bold' : ''}">
+					<input type="checkbox" bind:checked={showKSGGoal} />
+					<span>Reduktionspfad der Bundesregierung anzeigen</span>
+				</label>
 			</div>
 		</div>
 	</div>
 </div>
 
 {#if dataHistoric && dataPaths}
-	<Chart {dataHistoric} {dataPaths} {chosenBudget} {selectedStartYear} />
+	<Chart {dataHistoric} {dataPaths} {chosenBudget} {selectedStartYear} {showKSGGoal} />
 {/if}
 
 <div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
@@ -118,7 +181,7 @@
 	/>
 </div>
 
-{#if chosenProbability == 50 || chosenTemperature == 1.65}
+{#if chosenProbability == 50 && chosenTemperature == 1.65}
 	<div class="flex text-sm text-budgetDefault items-center space-x-2">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
