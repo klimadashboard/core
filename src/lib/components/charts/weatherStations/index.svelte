@@ -21,8 +21,8 @@
 			if (results) {
 				metaDataStations = results.data.filter(
 					(d) =>
-						(PUBLIC_VERSION == 'de' && d.id < 1000) /* DEBUGGING */ ||
-						new Date(d.Startdatum).getFullYear() < 1961 // german wheather stations already filtered
+						PUBLIC_VERSION == 'de' /* german wheather stations already filtered */ ||
+						new Date(d.Startdatum).getFullYear() < 1961
 				);
 			}
 		}
@@ -85,7 +85,7 @@
 					bind:value={$selectedStation}
 				>
 					{#each [...metaDataStations].sort((a, b) => a.name.localeCompare(b.name)) as station}
-						<option value={station.id}>{station.id} | {station.name} ({station.height}m)</option>
+						<option value={station.id}>{station.name} ({station.height}m)</option>
 					{/each}
 				</select>
 			</div>
