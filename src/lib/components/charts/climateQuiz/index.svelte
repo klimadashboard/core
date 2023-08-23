@@ -2,31 +2,34 @@
 	import { clickOutside } from '$lib/utils/clickOutside';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/stores';
 
 	let clicked: number = -1;
+	let clickAnimation: boolean = false;
 	let quizQuestions: QuizQuestion[];
 	$: questionIndex = 0;
 	$: questionText = '';
 
 	fetch('https://klimadashboard.org/quiz.json').then(async (response) => {
 		const questions = (await response.json()) as QuizQuestion[];
-		// TODO: filter only questions for this page!
-		// get uid of page I am on
-		const uuid = 'xjupJCcUKMP1vzer'; // e.g. Detail-Emissionen
-		quizQuestions = questions.filter((q) => {
-			// 	console.log(PUBLIC_VERSION);
-			return q.showOnVersions == '' || q.showOnVersions.split(', ').indexOf(PUBLIC_VERSION) >= 0;
-		});
-		// .filter((q) => {
-		// 	// return q.showOnPages == null   // only STARTPAGE
-		// 	return q.showOnPages?.filter((p) => p.uuid == uuid).length;
-		// });
+		// filter only questions for this page!
+		quizQuestions = questions
+			.filter((q) => {
+				return q.showOnVersions == '' || q.showOnVersions.split(', ').indexOf(PUBLIC_VERSION) >= 0;
+			})
+			.filter((q) => {
+				const uuid = $page.data.uuid;
+				if ($page.data.title == 'Startseite') return true; // q.showOnPages == null   // only STARTPAGE
+				return q.showOnPages?.filter((p) =>
+					p.uid.split('-')[0].includes($page.data.title.toLocaleLowerCase())
+				).length;
+			});
 
 		// randomise questions
-		// shuffleArray(quizQuestions);
+		shuffleArray(quizQuestions);
 		console.log(quizQuestions);
 
-		// TODO: randomise answers
+		// possible TODO: randomise answers?
 
 		console.log(PUBLIC_VERSION);
 	});
@@ -41,6 +44,9 @@
 	$: questionClicked = async function (answerIndex: number) {
 		if (clicked != -1) return;
 		clicked = answerIndex;
+		setTimeout(() => {
+			clickAnimation = true;
+		}, 1000);
 
 		await postAnswerToDb();
 		let answerCounts: DbCountQuizAnswer[] = await getClickedAnswersFromDb();
@@ -74,7 +80,7 @@
 			quizQuestions[questionIndex].answers[a].percent =
 				(count / quizQuestions[questionIndex].clickedCount) * 100;
 			quizQuestions[questionIndex].answers[a].width =
-				count / quizQuestions[questionIndex].maxClicked;
+				count / quizQuestions[questionIndex].clickedCount;
 		});
 
 		if (answerCounts.length > 0) {
@@ -137,25 +143,97 @@
 					{#each quizQuestions[questionIndex].answers as answer, i}
 						{@const isCorrect = clicked === i && answer.istrue === 'true'}
 						{@const isWrong = clicked === i && answer.istrue === 'false'}
-						<div class="quiz-button">
-							<button
-								class="relative bg-white text-black p-2 m-1 block w-full rounded-md {isCorrect
-									? 'bg-green-600 text-white'
-									: isWrong
-									? 'bg-red-600 text-white'
-									: ''}"
-								on:click={() => questionClicked(i)}
-							>
-								<span class="absolute top-1/2 left-2 -translate-y-1/2 font-bold">
-									{String.fromCharCode(65 + i)}
+						<button
+							class="relative text-black p-2 pl-16 m-1 block w-full text-left rounded-md quiz-button {clicked >=
+							0
+								? 'animate-bar'
+								: ''} {clickAnimation ? 'animate' : ''}"
+							disabled={clicked >= 0 ? 'disabled' : ''}
+							style="background-color: {clicked >= 0
+								? clicked == i
+									? 'rgba(255,255,255,0.6)'
+									: 'rgba(255,255,255,0.1)'
+								: 'white'}; --bar-width: {answer.width * 100}%;"
+							on:click={() => questionClicked(i)}
+						>
+							<span class="bar" />
+							<span class="absolute top-1/2 left-2 -translate-y-1/2">
+								<strong>{String.fromCharCode(65 + i)}</strong>
+								<span class="text-fade-in">
+									{#if clicked >= 0}
+										⋅ <small>{Math.round(answer.percent)}%</small>
+									{/if}
 								</span>
-								<span>{answer.label}</span>
-							</button>
-						</div>
+							</span>
+							<span>{answer.label}</span>
+							{#if clicked == i || (clicked >= 0 && answer.istrue === 'true')}
+								<span
+									class="absolute top-1/2 right-2 -translate-y-1/2 {isCorrect
+										? 'fill-green-600 text-white'
+										: isWrong
+										? 'text-red-600 text-white'
+										: ''}"
+								>
+									{#if answer.istrue === 'true'}<svg
+											xmlns="http://www.w3.org/2000/svg"
+											x="0px"
+											y="0px"
+											width="20"
+											height="20"
+											viewBox="0 0 48 48"
+										>
+											<path
+												fill={clicked == i ? 'green' : 'rgba(150,150,150,0.8)'}
+												d="M44,24c0,11.045-8.955,20-20,20S4,35.045,4,24S12.955,4,24,4S44,12.955,44,24z"
+											/>
+											<path
+												fill="white"
+												d="M21.293,32.707l-8-8c-0.391-0.391-0.391-1.024,0-1.414l1.414-1.414	c0.391-0.391,1.024-0.391,1.414,0L22,27.758l10.879-10.879c0.391-0.391,1.024-0.391,1.414,0l1.414,1.414	c0.391,0.391,0.391,1.024,0,1.414l-13,13C22.317,33.098,21.683,33.098,21.293,32.707z"
+											/>
+										</svg>{/if}
+									{#if answer.istrue === 'false'}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											x="0px"
+											y="0px"
+											width="20"
+											height="20"
+											viewBox="0 0 48 48"
+										>
+											<path
+												fill="red"
+												d="M44,24c0,11.045-8.955,20-20,20S4,35.045,4,24S12.955,4,24,4S44,12.955,44,24z"
+											/><path
+												fill="#fff"
+												d="M31.071,15.515l1.414,1.414c0.391,0.391,0.391,1.024,0,1.414L18.343,32.485	c-0.391,0.391-1.024,0.391-1.414,0l-1.414-1.414c-0.391-0.391-0.391-1.024,0-1.414l14.142-14.142	C30.047,15.124,30.681,15.124,31.071,15.515z"
+											/><path
+												fill="#fff"
+												d="M32.485,31.071l-1.414,1.414c-0.391,0.391-1.024,0.391-1.414,0L15.515,18.343	c-0.391-0.391-0.391-1.024,0-1.414l1.414-1.414c0.391-0.391,1.024-0.391,1.414,0l14.142,14.142	C32.876,30.047,32.876,30.681,32.485,31.071z"
+											/>
+										</svg>
+									{/if}
+								</span>
+							{/if}
+						</button>
 					{/each}
 				</div>
-				<div class="grid grid-cols-[1fr_200px] height-32 my-4">
+				<div class={clickAnimation ? 'animate' : ''}>
 					{#if clicked >= 0}
+						<p class="mx-3 my-4 text-fade-in">
+							<span
+								><strong
+									>{quizQuestions[questionIndex].answers[clicked].istrue == 'true'
+										? 'Richtig!'
+										: 'Leider Falsch!'}</strong
+								>
+								{quizQuestions[questionIndex].answers[clicked].percent
+									?.toFixed(0)
+									.replace('.', ',')}% der Besucher:innen haben die Frage richtig geantwortet.</span
+							><br />
+							<span class="opacity-50"
+								>Diese Frage wurde insgesamt {quizQuestions[questionIndex].clickedCount} mal beantwortet.</span
+							>
+						</p>
 						<div
 							class="text-3xl flex justify-center items-center"
 							transition:fade={{ duration: 200 }}
@@ -169,23 +247,6 @@
 								>
 							{/if}
 						</div>
-						{#if quizQuestions[questionIndex].clickedCount}
-							<div class="progress-wrapper border-l-4 border-white">
-								<span class="uppercase inline-block ml-2">Ergebnisse</span>
-								{#each quizQuestions[questionIndex].answers as answer, i}
-									<div class="relative flex justify-start items-center gap-x-[1ch]">
-										<span
-											class="inline-block bg-white"
-											style="height: 1em; width: {answer.width * 120}px;"
-										/>
-										<span>{Math.round(answer.percent)} %</span>
-										<span class="absolute left-[-1rem] top-[-0.2rem]"
-											>{String.fromCharCode(65 + i)}</span
-										>
-									</div>
-								{/each}
-							</div>
-						{/if}
 					{/if}
 				</div>
 			{/if}
@@ -195,6 +256,7 @@
 						class="bg-white text-black p-2 rounded-md ml-auto"
 						on:click={() => {
 							clicked = -1;
+							clickAnimation = false;
 							questionIndex++;
 						}}>Nächste Frage</button
 					>
@@ -252,14 +314,34 @@
 {/if}
 
 <style>
-	.bg-green-600 {
-		background-color: green;
-	}
-	.bg-red-600 {
-		background-color: red;
-	}
 	.quiz-button {
-		display: flex;
-		align-items: center;
+		margin-bottom: 0.4em;
+		isolation: isolate;
+	}
+
+	.text-fade-in {
+		opacity: 0;
+		transition-delay: 2s;
+		transition: opacity 1s ease-out;
+	}
+	.animate .text-fade-in {
+		opacity: 1;
+	}
+
+	.quiz-button.animate-bar::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		width: 0px;
+		background-color: rgb(210, 255, 200);
+		border-radius: 0.375rem;
+		transition-delay: 0s;
+		transition: width 2s ease-out;
+		z-index: -1;
+	}
+	.animate-bar.animate::before {
+		width: var(--bar-width);
 	}
 </style>
