@@ -226,9 +226,10 @@
 										? 'Richtig!'
 										: 'Leider Falsch!'}</strong
 								>
-								{quizQuestions[questionIndex].answers[clicked].percent
-									?.toFixed(0)
-									.replace('.', ',')}% der Besucher:innen haben die Frage richtig geantwortet.</span
+								{quizQuestions[questionIndex].answers
+									.find((a) => a.istrue == 'true')
+									.percent?.toFixed(0)
+									.replace('.', ',')}% der Besucher:innen haben die Frage richtig beantwortet.</span
 							><br />
 							<span class="opacity-50"
 								>Diese Frage wurde insgesamt {quizQuestions[questionIndex].clickedCount} mal beantwortet.</span
