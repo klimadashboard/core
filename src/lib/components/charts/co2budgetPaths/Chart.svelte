@@ -9,6 +9,7 @@
 	export let dataHistoric;
 	export let dataPaths;
 	export let chosenBudget;
+	export let thgPathDe;
 	export let selectedStartYear;
 	export let showKSGGoal;
 
@@ -167,6 +168,7 @@
 	};
 
 	$: ksgDottedLine = showKSGGoal ? generateLine('ksg')(dataPaths) : null;
+	$: ksgTHGLine = showKSGGoal ? generateLine('thg')(thgPathDe) : null;
 </script>
 
 <div class="relative">
@@ -294,6 +296,23 @@
 								stroke-dasharray="1 8"
 								stroke-linecap="round"
 							/>
+							<path d={ksgTHGLine} fill="none" stroke-width="4" stroke="navy" />
+							<text
+								text-anchor="end"
+								dominant-baseline="hanging"
+								x={xScale(2018)}
+								y="40"
+								class="text-m uppercase font-semibold tracking-wide"
+								fill="navy">THG</text
+							>
+							<text
+								text-anchor="end"
+								dominant-baseline="hanging"
+								x={xScale(2018)}
+								y="100"
+								class="text-m uppercase font-semibold tracking-wide"
+								fill="#268EA5">CO₂</text
+							>
 						</g>
 					{/if}
 					{#key chosenBudget.value}

@@ -64,6 +64,7 @@
 	let budget = budgets[PUBLIC_VERSION];
 
 	let dataPaths;
+	let thgPathDe = null;
 	let dataHistoric;
 	let showKSGGoal = false;
 
@@ -96,6 +97,26 @@
 				if (results) {
 					dataHistoric = results.data;
 					console.log(dataHistoric);
+				}
+			}
+		}
+	);
+
+	// DE THG
+	Papa.parse(
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_by_sectors.csv`,
+		// `../data/${PUBLIC_VERSION}/emissions/emissions_by_sectors.csv`,
+		{
+			download: true,
+			dynamicTyping: true,
+			header: true,
+			skipEmptyLines: true,
+			complete: function (results) {
+				if (results) {
+					thgPathDe = results.data.map((d) => {
+						return { year: d.year, thg: d.total_co2e_t / 1000000 };
+					});
+					console.log('thgPathDe', thgPathDe);
 				}
 			}
 		}
@@ -167,7 +188,7 @@
 </div>
 
 {#if dataHistoric && dataPaths}
-	<Chart {dataHistoric} {dataPaths} {chosenBudget} {selectedStartYear} {showKSGGoal} />
+	<Chart {dataHistoric} {dataPaths} {chosenBudget} {selectedStartYear} {showKSGGoal} {thgPathDe} />
 {/if}
 
 <div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
