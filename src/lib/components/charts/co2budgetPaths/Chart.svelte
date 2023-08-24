@@ -188,7 +188,7 @@
 				on:blur={() => (chosenPath = 2)}
 			>
 				<div class="pl-1" style="border-left: 4px solid {selectedKey.color}">
-					{@html selectedKey.label.replace('{value}', getReductionRate(key))}
+					{@html selectedKey.label.replace('{value}', chosenBudget.tonsPerYear || getReductionRate(key))}
 				</div>
 			</div>
 		{/each}
