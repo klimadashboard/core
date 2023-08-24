@@ -42,14 +42,14 @@
 				probability: 66,
 				temperature: 1.5,
 				type: 'THG',
-				percentPerYear: '-25% pro Jahr'
+				percentPerYear: '-33% pro Jahr'
 			},
 			{
 				value: 2443,
 				probability: 50,
 				temperature: 1.5,
 				type: 'THG',
-				percentPerYear: '-25% pro Jahr'
+				percentPerYear: '-21% pro Jahr'
 			},
 			{
 				value: 5443,
