@@ -410,7 +410,7 @@
 							class="text-sm fill-current uppercase font-semibold tracking-wide"
 						>
 							<tspan x="0" dy="1.2em">{chosenBudget.value} Mio. t</tspan>
-							<tspan x="0" dy="1.2em">THG Budget</tspan>
+							<tspan x="0" dy="1.2em">CO₂ Budget</tspan>
 						</text>
 					</g>
 				</g>
