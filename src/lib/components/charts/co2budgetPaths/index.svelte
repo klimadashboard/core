@@ -42,21 +42,24 @@
 				probability: 66,
 				temperature: 1.5,
 				type: 'THG',
-				percentPerYear: '-25% pro Jahr'
+				percentPerYear: '-33% pro Jahr',
+				tonsPerYear: '129'
 			},
 			{
 				value: 2443,
 				probability: 50,
 				temperature: 1.5,
 				type: 'THG',
-				percentPerYear: '-25% pro Jahr'
+				percentPerYear: '-21% pro Jahr',
+				tonsPerYear: '78'
 			},
 			{
 				value: 5443,
 				probability: 66,
 				temperature: 1.75,
 				type: 'THG',
-				percentPerYear: '-10% pro Jahr'
+				percentPerYear: '-10% pro Jahr',
+				tonsPerYear: '37'
 			}
 		]
 	};
