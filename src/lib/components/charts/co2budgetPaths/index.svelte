@@ -43,7 +43,7 @@
 				temperature: 1.5,
 				type: 'THG',
 				percentPerYear: '-33% pro Jahr',
-				tonsPerYear: '129'
+				tonsPerYear: '129 Mio t CO₂'
 			},
 			{
 				value: 2443,
@@ -51,7 +51,7 @@
 				temperature: 1.5,
 				type: 'THG',
 				percentPerYear: '-21% pro Jahr',
-				tonsPerYear: '78'
+				tonsPerYear: '78 Mio t CO₂'
 			},
 			{
 				value: 5443,
@@ -59,7 +59,7 @@
 				temperature: 1.75,
 				type: 'THG',
 				percentPerYear: '-10% pro Jahr',
-				tonsPerYear: '37'
+				tonsPerYear: '37 Mio t CO₂'
 			}
 		]
 	};
