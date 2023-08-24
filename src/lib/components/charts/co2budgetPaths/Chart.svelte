@@ -246,7 +246,7 @@
 									>{tick}
 									<tspan dx="2" />
 									{#if index == 5}
-										<tspan dx="1">Mio. t Treibhausgase</tspan>
+										<tspan dx="1">Mio. t CO₂</tspan>
 									{/if}
 								</text>
 							</g>
