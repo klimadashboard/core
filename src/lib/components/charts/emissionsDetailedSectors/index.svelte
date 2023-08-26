@@ -7,7 +7,7 @@
 	let dataset = null;
 	let explanations = null;
 
-	let maxYear = PUBLIC_VERSION == "at" ? 2021 : 2020;
+	let maxYear = PUBLIC_VERSION == "at" ? 2021 : 2021;
 
 	let years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
 
@@ -221,8 +221,8 @@
 	};
 
 	const datasetPromise = fetch(
-		// `../data/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
+		// `../data/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
 	)
 		// const datasetPromise = fetch('../data/at/emissions/emissions_crf_at.json')
 		// const datasetPromise = fetch('../data/de/emissions/emissions_crf_de.json')
