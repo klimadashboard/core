@@ -10,6 +10,22 @@
 
 	const wetterdienst = PUBLIC_VERSION == 'at' ? 'zamg' : 'impact';
 
+	function stateLongFormat(state) {
+		const states = {
+			OOE: 'Oberösterreich',
+			KNT: 'Kärnten',
+			WIE: 'Wien',
+			NOE: 'Niederösterreich',
+			BGL: 'Burgenland',
+			SAL: 'Salzburg',
+			TIR: 'Tirol',
+			VBG: 'Vorarlberg',
+			STMK: 'Steiermark'
+		};
+		if (state in states) return states[state];
+		return state;
+	}
+
 	// Papa.parse('https://data.klimadashboard.org/at/zamg/stations.csv', {
 	// Papa.parse(`../data/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
 	Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
@@ -27,6 +43,20 @@
 			}
 		}
 	});
+
+	$: metaDataStationsGroupedByState = metaDataStations
+		?.reduce((states, station) => {
+			if (states.indexOf(station.Bundesland) == -1) return [...states, station.Bundesland];
+			return states;
+		}, [])
+		.map((state) => {
+			return {
+				name: state,
+				stations: metaDataStations.filter((station) => station.Bundesland == state)
+			};
+		});
+
+	$: console.log(metaDataStationsGroupedByState);
 
 	$: getDistance = function (currentPosition, station) {
 		return Math.sqrt(
@@ -84,8 +114,12 @@
 					class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 					bind:value={$selectedStation}
 				>
-					{#each [...metaDataStations].sort((a, b) => a.name.localeCompare(b.name)) as station}
-						<option value={station.id}>{station.name} ({station.height}m)</option>
+					{#each [...metaDataStationsGroupedByState].sort( (a, b) => a.name.localeCompare(b.name) ) as state}
+						<optgroup label={stateLongFormat(state.name)}>
+							{#each [...state.stations].sort((a, b) => a.name.localeCompare(b.name)) as station}
+								<option value={station.id}>{station.name} ({station.height}m)</option>
+							{/each}
+						</optgroup>
 					{/each}
 				</select>
 			</div>
