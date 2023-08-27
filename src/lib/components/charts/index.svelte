@@ -3,6 +3,8 @@
 	import domtoimage from 'dom-to-image';
 	import Loader from '$lib/components/Loader.svelte';
 	import { chartsData } from '../../stores/charts';
+	import { PUBLIC_VERSION } from '$env/static/public';
+
 	const chartComponents = import.meta.glob('./*/index.svelte', { import: 'default', eager: true });
 
 	export let id;
@@ -70,7 +72,17 @@
 				try {
 					await navigator.share(shareData);
 				} catch (err) {
-					console.log('Cannot share data: ' + err);
+					console.log(`Cannot share data: ${err}, downloading instead.`);
+
+					// BACKUP: download image
+					await getChart().then((chart) => {
+						console.log('downloading', chart.content.title);
+						let url = window.URL.createObjectURL(blob);
+						let a = document.createElement('a');
+						a.href = url;
+						a.download = `${chart.content.title}.png`;
+						a.click();
+					});
 				}
 			});
 	};
@@ -169,7 +181,11 @@
 								<line x1="14" y1="4" x2="10" y2="20" />
 							</svg>
 						</button>
-						<a href="https://klimadashboard.at" class="ml-2" aria-label="Klimadashboard.at">
+						<a
+							href="https://klimadashboard.{PUBLIC_VERSION}"
+							class="ml-2"
+							aria-label="Klimadashboard.{PUBLIC_VERSION}"
+						>
 							<svg
 								width="256"
 								height="256"
@@ -260,7 +276,7 @@
 				{#if chart.content.methods}
 					<div
 						id="tab-switcher"
-						class="absolute rounded-b bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100  text-sm md:text-base"
+						class="absolute rounded-b bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 text-sm md:text-base"
 					>
 						<button
 							on:mousedown={() => (showNotices = !showNotices)}
