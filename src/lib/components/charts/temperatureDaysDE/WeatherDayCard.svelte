@@ -1,5 +1,6 @@
 <script>
 	import dayjs from 'dayjs';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let selectedStation;
 	export let selectedStationName;
@@ -103,7 +104,7 @@
 				text-anchor="end"
 				class="text-xs opacity-50 fill-gray-700"
 				style="font-size: 0.7em;"
-				>{selectedStationName} – {selectedStation} – {timestamp} – ZAMG</text
+				>{selectedStationName} – {selectedStation} {PUBLIC_VERSION == 'at' ? `– ${timestamp}` : ''} – {PUBLIC_VERSION == 'at' ? 'ZAMG' : 'DWD'}</text
 			>
 		</svg>
 	{/if}
