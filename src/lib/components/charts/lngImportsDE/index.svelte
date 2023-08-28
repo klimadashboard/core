@@ -30,8 +30,6 @@
 			label: e['periodFrom']
 		};
 	});
-
-	$: console.log(data);
 </script>
 
 <div class="h-80">

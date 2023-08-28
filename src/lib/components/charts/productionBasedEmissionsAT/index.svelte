@@ -146,8 +146,6 @@
 
 	$: dataset = [];
 
-	$: console.log(dataset);
-
 	$: regions = [...new Set(rawData?.map((d) => d.region))];
 
 	// variables for dynamic text generation
