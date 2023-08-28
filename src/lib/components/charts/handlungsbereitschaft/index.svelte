@@ -66,7 +66,7 @@
 					{#each willingness.options as option}
 						{@const radius = (option.percent / 100) * 300}
 						{@const percentSize = Math.min((radius * 2) / 3, 60)}
-						<svg viewBox="0 0 600 700">
+						<svg viewBox="0 0 600 700" class="w-full">
 							<circle cx="300" cy="300" fill="navy" r={radius} />
 							<text
 								x="300"
