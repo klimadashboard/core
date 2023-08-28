@@ -68,12 +68,18 @@
 			label: e['.']
 		};
 	});
-
-	$: console.log(data);
 </script>
 
 <div class="h-80">
 	{#if data}
-		<ChartLine {data} {labels} {keys} {colors} xTicksInterval={52} unit={'GWh/Tag'} />
+		<ChartLine
+			showZeroValuesInLegend={false}
+			{data}
+			{labels}
+			{keys}
+			{colors}
+			xTicksInterval={52}
+			unit={'GWh/Tag'}
+		/>
 	{/if}
 </div>

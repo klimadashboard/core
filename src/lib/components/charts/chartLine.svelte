@@ -15,6 +15,7 @@
 	export let showAreas = false;
 	export let showDots = false;
 	export let showTotal = true;
+	export let showZeroValuesInLegend = true;
 	export let lineWidth = 3;
 	export let circleRadius = 5;
 	export let marginLeft = 20;
@@ -299,12 +300,12 @@
 
 	{#if showLegend}
 		<div
-			class="absolute top-0 left-4 flex flex-wrap gap-2 px-4 md:px-0"
+			class="absolute top-0 left-0 flex flex-wrap gap-2 px-4 md:px-0"
 			bind:clientHeight={legendHeight}
 		>
-			{#each keys as key, i}
+			{#each keys.filter( (d) => (showZeroValuesInLegend ? true : data[selectedIndex][d] > 0) ) as key, i}
 				<div
-					class="font-semibold tracking-wide px-3 py-1 text-white text-xs rounded-full"
+					class="font-semibold tracking-wide px-2 pt-1 text-white text-xs rounded-full"
 					style="background-color:{colors[i]}"
 				>
 					<span class="uppercase">{labels[i]}</span>
