@@ -4,10 +4,15 @@
 		{
 			"type": "Feature",
 			"properties": {
-				"Hambach": "",
-				"Profen": "6000 Menschen",
-				"Inden": "7400  Menschen",
-				"Amsdorf": "."
+				"id": 0,
+				"type": "mine",
+				"label": "Tagebau",
+				"villages": {
+					"Hambach": "",
+					"Profen": "6000 Menschen",
+					"Inden": "7400  Menschen",
+					"Amsdorf": "."
+				}
 			},
 			"geometry": {
 				"coordinates": [
@@ -37,6 +42,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 1,
 				"Garzweiler": "23,7 km2",
 				"Profen": "22,84 km2",
 				"Inden": "16,39 km2",
@@ -89,6 +95,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 2,
 				"Inden": 2030,
 				"Profen": 2035,
 				"Garzweiler": 2030,
@@ -151,6 +158,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 3,
 				"Amsdorf": "Mitteldeutsches Revier",
 				"Profen": "Mitteldeutsches Revier",
 				"Jänschwalde": "Lausitzer Braunkohlerevier",
@@ -196,6 +204,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 4,
 				"Jänschwalde": "13 mio t/Jahr",
 				"Profen": "7,5 Mio t/Jahr",
 				"Hambach": "40 mio t/Jahr",
@@ -234,7 +243,7 @@
 		},
 		{
 			"type": "Feature",
-			"properties": { "Welzow-Süd": "" },
+			"properties": { "id": 5, "Welzow-Süd": "" },
 			"geometry": {
 				"coordinates": [
 					[
@@ -262,7 +271,7 @@
 		},
 		{
 			"type": "Feature",
-			"properties": { "Nochten": "", "Inden": "" },
+			"properties": { "id": 6, "Nochten": "", "Inden": "" },
 			"geometry": {
 				"coordinates": [
 					[
@@ -293,6 +302,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 7,
 				"Profen": "",
 				"Amsdorf": "",
 				"Jänschwalde": "",
@@ -367,6 +377,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 8,
 				"Vereinigtes Schleenhain": "3+ Orte/Ortsteile",
 				"Profen": ".",
 				"Inden": "11 Orte/Ortsteile",
@@ -425,6 +436,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 9,
 				"Betreiber": "RWE, EnBW, MVV RHE GmbH",
 				"Blockname": "Großkraftwerk Mannheim",
 				"CO2 [t] im Jahr 2016": "7880000",
@@ -439,6 +451,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 10,
 				"Betreiber": "STEAG, EVN AG",
 				"Blockname": "Kraftwerk Duisburg-Walsum",
 				"CO2 [t] im Jahr 2016": "4850000",
@@ -453,6 +466,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 11,
 				"Betreiber": "ThyssenKrupp Steel Europe",
 				"Blockname": "Kraftwerk Werk Ruhrort",
 				"CO2 [t] im Jahr 2016": "4400000",
@@ -467,6 +481,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 12,
 				"Betreiber": "Uniper",
 				"Blockname": "Kraftwerk Scholven",
 				"CO2 [t] im Jahr 2016": "4120000",
@@ -481,6 +496,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 13,
 				"Betreiber": "STEAG",
 				"Blockname": "Kraftwerk Lünen-Stummhafen",
 				"CO2 [t] im Jahr 2016": "3430000",
@@ -495,6 +511,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 14,
 				"Betreiber": "RWE",
 				"Blockname": "Kraftwerk Westfalen",
 				"CO2 [t] im Jahr 2016": "3410000",
@@ -509,6 +526,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 15,
 				"Betreiber": "Uniper",
 				"Blockname": "Kraftwerk Heyden",
 				"CO2 [t] im Jahr 2016": "3000000",
@@ -523,6 +541,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 16,
 				"Betreiber": "EnBW",
 				"Blockname": "Rheinhafen-Dampfkraftwerk Karlsruhe",
 				"CO2 [t] im Jahr 2016": "2970000",
@@ -537,6 +556,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 17,
 				"Betreiber": "RWE",
 				"Blockname": "Kraftwerk Bergkamen",
 				"CO2 [t] im Jahr 2016": "2840000",
@@ -551,6 +571,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 18,
 				"Betreiber": "EnBW (50,4 %) Rheinenergie (49,6 %)",
 				"Blockname": "Kraftwerk Rostock",
 				"CO2 [t] im Jahr 2016": "2640000",
@@ -565,6 +586,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 19,
 				"Betreiber": "VW AG",
 				"Blockname": "Kraftwerk Wolfsburg",
 				"CO2 [t] im Jahr 2016": "2600000",
@@ -579,6 +601,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 20,
 				"Betreiber": "Vattenfall",
 				"Blockname": "Heizkraftwerk Reuter West",
 				"CO2 [t] im Jahr 2016": "2530000",
@@ -593,6 +616,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 21,
 				"Betreiber": "Stadtwerke München, Abfallwirtschaftsbetrieb München",
 				"Blockname": "Heizkraftwerk Nord (München)",
 				"CO2 [t] im Jahr 2016": "2520000",
@@ -607,6 +631,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 22,
 				"Betreiber": "Uniper",
 				"Blockname": "Kraftwerk Staudinger",
 				"CO2 [t] im Jahr 2016": "2430000",
@@ -621,6 +646,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 23,
 				"Betreiber": "EnBW",
 				"Blockname": "Kraftwerk Heilbronn",
 				"CO2 [t] im Jahr 2016": "2360000",
@@ -635,6 +661,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 24,
 				"Betreiber": "STEAG",
 				"Blockname": "Kraftwerk Herne",
 				"CO2 [t] im Jahr 2016": "2210000",
@@ -649,6 +676,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 25,
 				"Betreiber": "EnBW Energie Baden-Württemberg",
 				"Blockname": "Kraftwerk Altbach",
 				"CO2 [t] im Jahr 2016": "",
@@ -663,6 +691,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 26,
 				"Betreiber": "EnBW Energie Baden-Württemberg",
 				"Blockname": "Kraftwerk Walheim",
 				"CO2 [t] im Jahr 2016": "",
@@ -677,6 +706,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 27,
 				"Betreiber": "STEAG",
 				"Blockname": "Kraftwerk Bexbach",
 				"CO2 [t] im Jahr 2016": "2900000",
@@ -691,6 +721,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 28,
 				"Betreiber": "STEAG",
 				"Blockname": "Kraftwerk Weiher",
 				"CO2 [t] im Jahr 2016": "",
@@ -705,6 +736,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 29,
 				"Betreiber": "STEAG",
 				"Blockname": "Kraftwerk Völklingen-Fenne",
 				"CO2 [t] im Jahr 2016": "",
@@ -719,6 +751,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 30,
 				"Betreiber": "Engie",
 				"Blockname": "Kraftwerk Zolling",
 				"CO2 [t] im Jahr 2016": "",
@@ -733,6 +766,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 31,
 				"Betreiber": "enercity, VWK",
 				"Blockname": "Kohlekraftwerk Stöcken",
 				"CO2 [t] im Jahr 2016": "",
@@ -747,6 +781,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 32,
 				"Betreiber": "EPH",
 				"Blockname": "Kraftwerk Mehrum",
 				"CO2 [t] im Jahr 2016": "",
@@ -761,6 +796,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 33,
 				"Betreiber": "Onyx Power",
 				"Blockname": "Kraftwerk Farge",
 				"CO2 [t] im Jahr 2016": "",
@@ -775,6 +811,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 34,
 				"Betreiber": "Onyx Power",
 				"Blockname": "Kraftwerk Wilhelmshaven",
 				"CO2 [t] im Jahr 2016": "",
@@ -789,6 +826,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 35,
 				"Betreiber": "Wärme Hamburg GmbH",
 				"Blockname": "Heizkraftwerk Wedel",
 				"CO2 [t] im Jahr 2016": "",
@@ -803,6 +841,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 36,
 				"Betreiber": "Pruna Betreiber GmbH",
 				"Blockname": "Kokerei, Werk Schwelgern",
 				"CO2 [t] im Jahr 2016": "2050000",
@@ -817,6 +856,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 37,
 				"Betreiber": "",
 				"Blockname": "",
 				"CO2 [t] im Jahr 2016": "",
@@ -831,6 +871,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 38,
 				"Betreiber": "stillgelegt",
 				"Blockname": "",
 				"CO2 [t] im Jahr 2016": "",
@@ -845,6 +886,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 39,
 				"Betreiber": "Vattenfall Heizkraftwerk Moorburg GmbH",
 				"Blockname": "Kohlekraftwerk Moorburg",
 				"CO2 [t] im Jahr 2016": "5.550.000",
@@ -859,6 +901,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 40,
 				"Betreiber": "STEAG",
 				"Blockname": "Kraftwerk Voerde",
 				"CO2 [t] im Jahr 2016": "4.560.000",
@@ -873,6 +916,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 41,
 				"Betreiber": "RWE",
 				"Blockname": "Kraftwerk Ibbenbüren",
 				"CO2 [t] im Jahr 2016": "3.920.000",
@@ -887,6 +931,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 42,
 				"Betreiber": "RWE",
 				"Blockname": "Kraftwerk Werne",
 				"CO2 [t] im Jahr 2016": "2.950.000",
@@ -901,6 +946,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 43,
 				"Betreiber": "Uniper",
 				"Blockname": "Kraftwerk Wilhelmshaven",
 				"CO2 [t] im Jahr 2016": "2.810.000",
@@ -915,6 +961,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 44,
 				"Betreiber": "VW AG",
 				"Blockname": "Kraftwerk Wolfsburg",
 				"CO2 [t] im Jahr 2016": "2.600.000",
@@ -929,6 +976,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 45,
 				"Betreiber": "RWE Power",
 				"Blockname": "Niederaußem D",
 				"Nettonennleistung [MWel]": "297",
@@ -942,6 +990,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 46,
 				"Betreiber": "RWE Power",
 				"Blockname": "Niederaußem C",
 				"Nettonennleistung [MWel]": "295",
@@ -955,6 +1004,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 47,
 				"Betreiber": "RWE Power",
 				"Blockname": "Niederaußem G oder H",
 				"Nettonennleistung [MWel]": "628 oder 648",
@@ -968,6 +1018,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 48,
 				"Betreiber": "RWE Power",
 				"Blockname": "Niederaußem G oder H",
 				"Nettonennleistung [MWel]": "628 oder 648",
@@ -981,6 +1032,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 49,
 				"Betreiber": "RWE Power",
 				"Blockname": "Niederaußem E",
 				"Nettonennleistung [MWel]": "295",
@@ -994,6 +1046,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 50,
 				"Betreiber": "RWE Power",
 				"Blockname": "Niederaußem F",
 				"Nettonennleistung [MWel]": "299",
@@ -1007,6 +1060,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 51,
 				"Betreiber": "RWE Power",
 				"Blockname": "Niederaußem K (BoA 1)",
 				"Nettonennleistung [MWel]": "944",
@@ -1020,6 +1074,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 52,
 				"Betreiber": "RWE Power",
 				"Blockname": "Neurath A",
 				"Nettonennleistung [MWel]": "294",
@@ -1033,6 +1088,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 53,
 				"Betreiber": "RWE Power",
 				"Blockname": "Neurath B",
 				"Nettonennleistung [MWel]": "294",
@@ -1046,6 +1102,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 54,
 				"Betreiber": "RWE Power",
 				"Blockname": "Neurath C",
 				"Nettonennleistung [MWel]": "292",
@@ -1059,6 +1116,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 55,
 				"Betreiber": "RWE Power",
 				"Blockname": "Neurath D und E",
 				"Nettonennleistung [MWel]": "607 und 604",
@@ -1072,6 +1130,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 56,
 				"Betreiber": "RWE Power",
 				"Blockname": "Neurath F (BoA 2)",
 				"Nettonennleistung [MWel]": "1060",
@@ -1085,6 +1144,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 57,
 				"Betreiber": "RWE Power",
 				"Blockname": "Neurath G (BoA 3)",
 				"Nettonennleistung [MWel]": "1060",
@@ -1098,6 +1158,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 58,
 				"Betreiber": "RWE Power",
 				"Blockname": "Weisweiler F oder E",
 				"Nettonennleistung [MWel]": "321",
@@ -1111,6 +1172,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 59,
 				"Betreiber": "RWE Power",
 				"Blockname": "Weisweiler E oder F",
 				"Nettonennleistung [MWel]": "321",
@@ -1124,6 +1186,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 60,
 				"Betreiber": "RWE Power",
 				"Blockname": "Weisweiler G oder H",
 				"Nettonennleistung [MWel]": "663 oder 656",
@@ -1137,6 +1200,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 61,
 				"Betreiber": "RWE Power",
 				"Blockname": "Weisweiler G oder H",
 				"Nettonennleistung [MWel]": "663 oder 656",
@@ -1150,6 +1214,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 62,
 				"Betreiber": "RWE Power",
 				"Blockname": "Frechen / Wachtberg (Brikettierung)",
 				"Nettonennleistung [MWel]": "120 (von 176)",
@@ -1163,6 +1228,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 63,
 				"Betreiber": "LEAG KW",
 				"Blockname": "Jänschwalde A",
 				"Nettonennleistung [MWel]": "465",
@@ -1176,6 +1242,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 64,
 				"Betreiber": "LEAG KW",
 				"Blockname": "Jänschwalde B",
 				"Nettonennleistung [MWel]": "465",
@@ -1189,6 +1256,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 65,
 				"Betreiber": "LEAG KW",
 				"Blockname": "Jänschwalde C und D",
 				"Nettonennleistung [MWel]": "2 x 465",
@@ -1202,6 +1270,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 66,
 				"Betreiber": "LEAG",
 				"Blockname": "Jänschwalde E",
 				"Nettonennleistung [MWel]": "465",
@@ -1215,6 +1284,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 67,
 				"Betreiber": "LEAG",
 				"Blockname": "Jänschwalde F",
 				"Nettonennleistung [MWel]": "465",
@@ -1228,6 +1298,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 68,
 				"Betreiber": "LEAG KW",
 				"Blockname": "Boxberg N und P",
 				"Nettonennleistung [MWel]": "2 x 465",
@@ -1241,6 +1312,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 69,
 				"Betreiber": "LEAG",
 				"Blockname": "Boxberg Q",
 				"Nettonennleistung [MWel]": "857",
@@ -1254,6 +1326,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 70,
 				"Betreiber": "LEAG",
 				"Blockname": "Boxberg R",
 				"Nettonennleistung [MWel]": "640",
@@ -1267,6 +1340,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 71,
 				"Betreiber": "Saale Energie (Tochter Uniper)",
 				"Blockname": "Schkopau A und B",
 				"Nettonennleistung [MWel]": "2 x 450",
@@ -1280,6 +1354,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 72,
 				"Betreiber": "MIBRAG",
 				"Blockname": "Buschhaus",
 				"Nettonennleistung [MWel]": "392",
@@ -1293,6 +1368,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 73,
 				"Betreiber": "RWE Power",
 				"Blockname": "Frimmersdorf P",
 				"Nettonennleistung [MWel]": "284",
@@ -1306,6 +1382,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 74,
 				"Betreiber": "RWE Power",
 				"Blockname": "Frimmersdorf Q",
 				"Nettonennleistung [MWel]": "278",
@@ -1319,6 +1396,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 75,
 				"Betreiber": "LEAG",
 				"Blockname": "Lippendorf R",
 				"Nettonennleistung [MWel]": "875",
@@ -1332,6 +1410,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 76,
 				"Betreiber": "EnBW",
 				"Blockname": "Lippendorf S",
 				"Nettonennleistung [MWel]": "875",
@@ -1345,6 +1424,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 77,
 				"Betreiber": "LEAG",
 				"Blockname": "Schwarze Pumpe A",
 				"Nettonennleistung [MWel]": "750",
@@ -1358,6 +1438,7 @@
 		{
 			"type": "Feature",
 			"properties": {
+				"id": 78,
 				"Betreiber": "LEAG",
 				"Blockname": "Schwarze Pumpe B",
 				"Nettonennleistung [MWel]": "750",

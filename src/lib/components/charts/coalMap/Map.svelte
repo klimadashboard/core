@@ -2,8 +2,11 @@
 	import { onMount } from 'svelte';
 	import mapboxgl from 'mapbox-gl';
 	import { PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
+	import { browser } from '$app/environment';
 
 	export let data;
+
+	$: selectedElement = false;
 
 	let mapElement;
 	let map;
@@ -12,13 +15,26 @@
 		createMap();
 	});
 
+	$: if (selectedElement && browser) {
+		map.flyTo({
+			center:
+				selectedElement.geometry.type == 'Point'
+					? selectedElement.geometry.coordinates
+					: selectedElement.geometry.coordinates[0][0],
+			zoom: 9
+		});
+		document
+			.getElementById('coal-item-' + selectedElement.properties.id)
+			?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+	}
+
 	const createMap = function () {
 		map = new mapboxgl.Map({
 			accessToken: PUBLIC_MAPBOX_TOKEN,
 			container: mapElement,
 			interactive: true,
 			style: 'mapbox://styles/davidjablonski/cllkz3m0801c401plbd0y9r8x',
-			center: [12.454, 51.368],
+			center: [10.454, 51.368],
 			zoom: 5
 		});
 
@@ -40,7 +56,7 @@
 				type: 'circle',
 				source: 'coal',
 				paint: {
-					'circle-radius': 4,
+					'circle-radius': 5,
 					'circle-stroke-width': 2,
 					'circle-color': '#B7722E',
 					'circle-stroke-color': 'white'
@@ -49,7 +65,7 @@
 
 			// add fill for polygons
 			map.addLayer({
-				id: 'coal-sources',
+				id: 'coal-mines',
 				source: 'coal',
 				filter: ['==', ['geometry-type'], 'Polygon'],
 				type: 'fill',
@@ -62,7 +78,7 @@
 
 			// add lines for polygons
 			map.addLayer({
-				id: 'coal-sources-b',
+				id: 'coal-mines-b',
 				source: 'coal',
 				filter: ['==', ['geometry-type'], 'Polygon'],
 				type: 'line',
@@ -74,31 +90,25 @@
 			});
 
 			// add click handler
-			map.on('click', 'coal-plants', (e) => {
-				// Copy coordinates array.
-				const coordinates = e.features[0].geometry.coordinates.slice();
-				const description = e.features[0].properties.description;
-
-				// Ensure that if the map is zoomed out such that multiple
-				// copies of the feature are visible, the popup appears
-				// over the copy being pointed to.
-				while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-					coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-				}
-
-				new mapboxgl.Popup().setLngLat(coordinates).setHTML(description).addTo(map);
+			map.on('click', ['coal-plants', 'coal-mines'], (e) => {
+				console.log(e.features);
+				selectedElement = e.features[0];
 			});
 		});
 	};
 </script>
 
-<div class="relative">
-	<div id="map" bind:this={mapElement} class="w-full bg-gray-100" />
+<div class="grid md:grid-cols-3 map-wrapper mb-16">
+	<div id="map" bind:this={mapElement} class="col-span-2 h-full" />
 
-	<div class="bg-white absolute right-4 top-4 bottom-4 p-4 overflow-scroll w-80 shadow-lg">
+	<div class="overflow-scroll h-full">
 		<ul>
 			{#each data.features as item}
-				<li class="border-y py-2">
+				<li
+					class="border-y py-2 hover:bg-gray-100 cursor-pointer p-4"
+					id="coal-item-{item.properties.id}"
+					on:mousedown={() => (selectedElement = item)}
+				>
 					{#if item.geometry.type == 'Polygon'}
 						<h3 class="font-bold">
 							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#71665B]" />
@@ -124,7 +134,11 @@
 </div>
 
 <style>
-	#map {
+	.map-wrapper {
 		height: 70vh;
+	}
+
+	:global(.mapboxgl-ctrl-attrib) {
+		@apply text-sm text-gray-700;
 	}
 </style>
