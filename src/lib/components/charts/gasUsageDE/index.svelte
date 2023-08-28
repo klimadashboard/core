@@ -29,8 +29,6 @@
 			label: 'KW' + e['.']
 		};
 	});
-
-	$: console.log(data);
 </script>
 
 <div class="h-80">
@@ -43,6 +41,7 @@
 			preselectedIndex={32}
 			unit={'GWh/Tag'}
 			showTotal={false}
+			showPulse={'2023'}
 		/>
 	{/if}
 </div>

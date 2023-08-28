@@ -21,6 +21,7 @@
 	export let xTicksInterval = 10;
 	export let minValue = 0;
 	export let preselectedIndex;
+	export let showPulse = false;
 
 	let chartHeight;
 	let chartWidth;
@@ -135,6 +136,19 @@
 	const handleMouseLeave = function () {
 		selectedIndex = data[data.length - 1].x;
 	};
+
+	// calculate pulse
+	$: pulseCoordinates = showPulse
+		? [
+				xScale(data.map((d) => d[showPulse]).filter((d) => d !== null).length),
+				yScale(
+					data
+						.map((d) => d[showPulse])
+						.filter((d) => d !== null)
+						.slice(-1)
+				)
+		  ]
+		: [];
 </script>
 
 <div class="h-full relative" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
@@ -209,6 +223,33 @@
 								/>
 							{/each}
 						{/each}
+					</g>
+				{/if}
+
+				{#if showPulse}
+					<g
+						transform="translate({pulseCoordinates[0] - margin.left},{pulseCoordinates[1]})"
+						style="color: {colors[keys.indexOf(showPulse)]}"
+					>
+						<circle r="5" class="fill-current" />
+						<circle r="5" class="fill-current">
+							<animate
+								attributeName="r"
+								from="5"
+								to="10"
+								dur="1.5s"
+								begin="0s"
+								repeatCount="indefinite"
+							/>
+							<animate
+								attributeName="opacity"
+								from="1"
+								to="0.5"
+								dur="1.5s"
+								begin="0s"
+								repeatCount="indefinite"
+							/>
+						</circle>
 					</g>
 				{/if}
 				<rect
