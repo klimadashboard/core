@@ -20,6 +20,7 @@
 	export let marginLeft = 20;
 	export let xTicksInterval = 10;
 	export let minValue = 0;
+	export let preselectedIndex;
 
 	let chartHeight;
 	let chartWidth;
@@ -123,7 +124,7 @@
 		return formatNumber(tick);
 	};
 
-	$: selectedIndex = data[data.length - 1].x;
+	$: selectedIndex = preselectedIndex ? preselectedIndex : data[data.length - 1].x;
 
 	const handleMouseMove = function (event) {
 		const [currentXPosition] = pointer(event);
