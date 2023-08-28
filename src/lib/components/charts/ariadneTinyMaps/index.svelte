@@ -2,6 +2,7 @@
 	import Papa from 'papaparse';
 	import Map from './Map.svelte';
 	import Loader from '$lib/components/Loader.svelte';
+	import { scaleApproval } from '$lib/stores/scales';
 
 	let dataset;
 
@@ -26,7 +27,16 @@
 	const policies = ['ice', 'gas_furnace', 'speedlimit', 'onshore', 'opnv', 'solar'];
 </script>
 
-<div class="max-w-6xl mx-auto">
+<div class="max-w-6xl mx-auto relative">
+	<div class="flex rounded-lg overflow-hidden absolute -bottom-12 right-0">
+		{#each Array.from(Array(11).keys()) as i}
+			<div class="w-6 h-6 grid" style="background: {scaleApproval(i * 10)}">
+				{#if i < 2 || i > 8}
+					<p class="text-white m-auto font-bold" style="font-size: 0.6em;">{i * 10}%</p>
+				{/if}
+			</div>
+		{/each}
+	</div>
 	{#await promise}
 		<Loader />
 	{:then topo}
