@@ -18,7 +18,7 @@
 			container: mapElement,
 			interactive: true,
 			style: 'mapbox://styles/davidjablonski/cllkz3m0801c401plbd0y9r8x',
-			center: [10.454, 51.368],
+			center: [12.454, 51.368],
 			zoom: 5
 		});
 
@@ -42,7 +42,7 @@
 				paint: {
 					'circle-radius': 4,
 					'circle-stroke-width': 2,
-					'circle-color': 'red',
+					'circle-color': '#B7722E',
 					'circle-stroke-color': 'white'
 				}
 			});
@@ -55,7 +55,7 @@
 				type: 'fill',
 				layout: {},
 				paint: {
-					'fill-color': '#0080ff', // blue color fill
+					'fill-color': '#71665B', // blue color fill
 					'fill-opacity': 0.5
 				}
 			});
@@ -68,7 +68,7 @@
 				type: 'line',
 				layout: {},
 				paint: {
-					'line-color': '#000',
+					'line-color': '#71665B',
 					'line-width': 2
 				}
 			});
@@ -95,10 +95,31 @@
 <div class="relative">
 	<div id="map" bind:this={mapElement} class="w-full bg-gray-100" />
 
-	<div class="bg-white absolute right-4 top-4 bottom-4 p-4 overflow-scroll">
-		{#each data.features as item}
-			<h3>{item.properties.Blockname}</h3>
-		{/each}
+	<div class="bg-white absolute right-4 top-4 bottom-4 p-4 overflow-scroll w-80 shadow-lg">
+		<ul>
+			{#each data.features as item}
+				<li class="border-y py-2">
+					{#if item.geometry.type == 'Polygon'}
+						<h3 class="font-bold">
+							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#71665B]" />
+							Tagebau
+						</h3>
+					{:else}
+						<h3 class="font-bold">
+							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#B7722E]" />
+							{item.properties.Blockname}
+							<span class="font-normal">{item.properties.Brennstoff}</span>
+						</h3>
+						<p>{item.properties['Nettonennleistung [MWel]']}MWel</p>
+						<p>{item.properties.Betreiber}</p>
+						{#if item.properties['CO2 [t] im Jahr 2016']}
+							<p>{item.properties['CO2 [t] im Jahr 2016']}CO2-Emissionen im Jahr 2016</p>
+						{/if}
+						<p>Stilllegung {item.properties.Stilllegung}</p>
+					{/if}
+				</li>
+			{/each}
+		</ul>
 	</div>
 </div>
 
