@@ -1,5 +1,6 @@
 <script>
 	import { page } from '$app/stores';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let data;
 
@@ -12,7 +13,7 @@
 
 <section
 	id="page-header"
-	class="bg-gradient-green shadow-inner text-white pt-20 pb-4 mb-8 relative"
+	class="bg-{PUBLIC_VERSION} shadow-inner text-white pt-20 pb-4 mb-8 relative"
 	style={data.cover_styles}
 >
 	{#if data.cover_background}

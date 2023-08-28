@@ -140,6 +140,14 @@ body {
 	background: linear-gradient(90deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
 }
 
+.bg-at {
+	background: linear-gradient(to right, #11998e, #38ef7d);
+}
+
+.bg-de {
+	background: linear-gradient(to right, #22c1c3, #fdbb2d);
+}
+
 summary {
 	display: inline !important;
 	cursor: pointer;

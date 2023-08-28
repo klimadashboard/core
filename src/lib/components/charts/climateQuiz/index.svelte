@@ -122,7 +122,7 @@
 
 {#if quizQuestions != null}
 	<div
-		class="w-full flex justify-center bg-gradient-green bg-opacity-50 text-white py-8 overflow-hidden"
+		class="w-full flex justify-center bg-{PUBLIC_VERSION} bg-opacity-50 text-white py-8 overflow-hidden"
 	>
 		<div class="container max-w-prose">
 			{#if questionIndex < quizQuestions.length}
