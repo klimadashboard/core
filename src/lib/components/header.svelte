@@ -95,7 +95,7 @@
 
 								{#if navigation.filter((c) => item.id == c.parent && c !== item).length > 0}
 									<div
-										class="md:fixed left-0 md:top-18 w-screen md:bg-white md:bg-opacity-80 md:backdrop-blur-md md:shadow-sm transition"
+										class="md:fixed left-0 md:top-18 w-screen md:bg-white md:bg-opacity-50 md:backdrop-blur-md md:shadow-sm transition"
 									>
 										<ul
 											class="md:container flex gap-6 md:py-3 {!$page.params.slug.includes(item.slug)
