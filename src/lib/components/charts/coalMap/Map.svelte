@@ -8,15 +8,15 @@
 
 	$: selectedElement = false;
 
-	let mapElement;
-	let map;
+	let coalMapElement;
+	let coalMap;
 
 	onMount(() => {
 		createMap();
 	});
 
 	$: if (selectedElement && browser) {
-		map.flyTo({
+		coalMap.flyTo({
 			center:
 				selectedElement.geometry.type == 'Point'
 					? selectedElement.geometry.coordinates
@@ -29,28 +29,28 @@
 	}
 
 	const createMap = function () {
-		map = new mapboxgl.Map({
+		coalMap = new mapboxgl.Map({
 			accessToken: PUBLIC_MAPBOX_TOKEN,
-			container: mapElement,
+			container: coalMapElement,
 			interactive: true,
 			style: 'mapbox://styles/davidjablonski/cllkz3m0801c401plbd0y9r8x',
 			center: [10.454, 51.368],
 			zoom: 5
 		});
 
-		map.on('load', () => {
+		coalMap.on('load', () => {
 			const nav = new mapboxgl.NavigationControl({
 				visualizePitch: true
 			});
-			map.addControl(nav, 'top-left');
+			coalMap.addControl(nav, 'top-left');
 
-			map.addSource('coal', {
+			coalMap.addSource('coal', {
 				type: 'geojson',
 				// Use a URL for the value for the `data` property.
 				data: data
 			});
 
-			map.addLayer({
+			coalMap.addLayer({
 				id: 'coal-plants',
 				filter: ['==', ['geometry-type'], 'Point'],
 				type: 'circle',
@@ -64,7 +64,7 @@
 			});
 
 			// add fill for polygons
-			map.addLayer({
+			coalMap.addLayer({
 				id: 'coal-mines',
 				source: 'coal',
 				filter: ['==', ['geometry-type'], 'Polygon'],
@@ -77,7 +77,7 @@
 			});
 
 			// add lines for polygons
-			map.addLayer({
+			coalMap.addLayer({
 				id: 'coal-mines-b',
 				source: 'coal',
 				filter: ['==', ['geometry-type'], 'Polygon'],
@@ -90,13 +90,13 @@
 			});
 
 			// add click handler
-			map.on('click', ['coal-plants', 'coal-mines'], (e) => {
+			coalMap.on('click', ['coal-plants', 'coal-mines'], (e) => {
 				selectedElement = data?.features.find(
 					(d) => d.properties.id == e.features[0].properties.id
 				);
 			});
 
-			map.on('drag', (e) => {
+			coalMap.on('drag', (e) => {
 				selectedElement = false;
 			});
 		});
@@ -104,7 +104,7 @@
 </script>
 
 <div class="grid md:grid-cols-3 map-wrapper mb-16">
-	<div id="map" bind:this={mapElement} class="col-span-2 h-full" />
+	<div id="map-coal" bind:this={coalMapElement} class="col-span-2 h-full" />
 
 	<div class="overflow-scroll h-full">
 		<ul>
