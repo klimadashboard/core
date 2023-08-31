@@ -1,6 +1,7 @@
 <script>
 	import Maps from './Maps.svelte';
 	import Table from './Table.svelte';
+	import Search from './Search.svelte';
 	import Papa from 'papaparse';
 	import { scaleApproval } from '$lib/stores/scales';
 
@@ -35,17 +36,16 @@
 		  ]
 		: [dataset?.filter((e) => e.level == 2 && e.policy == selectedPolicy)[0].year];
 
-	$: console.log(years);
 	$: showAllYears = false;
 
 	$: policies = [...new Set(dataset?.filter((e) => e.level == 2).map((e) => e.policy))];
-	$: console.log(policies);
 
 	$: data = dataset?.filter(
 		(e) => e.level == 2 && e.policy == selectedPolicy && years.indexOf(e.year) > -1
 	);
 
 	$: selectedFeature = false;
+	$: console.log(selectedFeature);
 </script>
 
 <div class="flex space-x-4 items-center mb-4">
@@ -71,6 +71,8 @@
 			</div>
 		{/each}
 	</div>
+
+	<Search bind:selectedFeature />
 </div>
 
 <div class="flex">

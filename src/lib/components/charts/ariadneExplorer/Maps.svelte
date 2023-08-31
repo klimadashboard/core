@@ -26,15 +26,12 @@
 					{#if selectedFeature}
 						<p class="text-4xl">
 							{data.find(
-								(d) =>
-									d.year == year &&
-									d.code == selectedFeature.properties.RS &&
-									d.policy == selectedPolicy
+								(d) => d.year == year && d.code == selectedFeature && d.policy == selectedPolicy
 							)['support.rd']}%
 						</p>
 						<p>
 							Zustimmung in
-							{selectedFeature.properties.GEN}
+							{data.find((d) => d.code == selectedFeature).name}
 						</p>
 					{/if}
 				</div>

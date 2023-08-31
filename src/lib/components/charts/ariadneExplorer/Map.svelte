@@ -36,14 +36,16 @@
 				{#each topo.features as feature}
 					<path
 						d={path(feature)}
-						on:mouseover={() => (selectedFeature = feature)}
-						on:focus={() => (selectedFeature = feature)}
+						on:mouseover={() => (selectedFeature = parseInt(feature.properties.RS))}
+						on:focus={() => (selectedFeature = parseInt(feature.properties.RS))}
 						on:mouseout={() => (selectedFeature = false)}
 						on:blur={() => (selectedFeature = false)}
 						fill={getColor(feature)}
 						stroke="#000"
-						stroke-width={selectedFeature == feature ? 1 : 0}
-						class={selectedFeature && selectedFeature !== feature ? 'opacity-70' : 'opacity-100'}
+						stroke-width={selectedFeature == parseInt(feature.properties.RS) ? 1 : 0}
+						class={selectedFeature && selectedFeature !== parseInt(feature.properties.RS)
+							? 'opacity-70'
+							: 'opacity-100'}
 						id={feature.properties.DEBKG_ID}
 					/>
 				{/each}

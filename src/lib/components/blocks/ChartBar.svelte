@@ -7,11 +7,9 @@
 	$: maxSumOfValues = block.content.charts
 		.map((e) => e.values.reduce((a, b) => a + b.value, 0))
 		.sort((a, b) => b - a)[0];
-	$: console.log(maxSumOfValues);
 	$: xScale = scaleLinear().range([0, chartWidth]).domain([0, maxSumOfValues]);
 
 	export let block;
-	console.log(block);
 </script>
 
 <div class="container my-8">

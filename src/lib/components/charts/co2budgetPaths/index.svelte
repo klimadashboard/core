@@ -99,7 +99,6 @@
 			complete: function (results) {
 				if (results) {
 					dataHistoric = results.data;
-					console.log(dataHistoric);
 				}
 			}
 		}
@@ -119,7 +118,6 @@
 					thgPathDe = results.data.map((d) => {
 						return { year: d.year, thg: d.total_co2e_t / 1000000 };
 					});
-					console.log('thgPathDe', thgPathDe);
 				}
 			}
 		}
