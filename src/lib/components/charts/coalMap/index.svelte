@@ -3,7 +3,9 @@
 	import Loader from '$lib/components/Loader.svelte';
 
 	async function getData() {
-		let response = await fetch(`/data_temp/coal.json`);
+		let response = await fetch(
+			`https://data.klimadashboard.org/de/energy/fossil/coal_mines_plants.json`
+		);
 		let data = await response.json();
 		if (response.ok) {
 			return data;

@@ -21,7 +21,7 @@
 				selectedElement.geometry.type == 'Point'
 					? selectedElement.geometry.coordinates
 					: selectedElement.geometry.coordinates[0][0],
-			zoom: 9
+			zoom: 10
 		});
 		document
 			.getElementById('coal-item-' + selectedElement.properties.id)
@@ -115,8 +115,9 @@
 					{#if item.geometry.type == 'Polygon'}
 						<h3 class="font-bold">
 							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#71665B]" />
-							Tagebau
+							{item.properties.label}
 						</h3>
+						<p>{item.properties.region}</p>
 					{:else}
 						<h3 class="font-bold">
 							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#B7722E]" />
