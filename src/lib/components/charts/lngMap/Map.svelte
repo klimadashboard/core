@@ -21,7 +21,7 @@
 				selectedElement.geometry.type == 'Point'
 					? selectedElement.geometry.coordinates
 					: selectedElement.geometry.coordinates[0][0],
-			zoom: 10
+			zoom: 9
 		});
 		document
 			.getElementById('coal-item-' + selectedElement.properties.id)
@@ -34,8 +34,10 @@
 			container: mapElement,
 			interactive: true,
 			style: 'mapbox://styles/davidjablonski/cllkz3m0801c401plbd0y9r8x',
-			center: [10.454, 51.368],
-			zoom: 5
+			center: [10.454, 54.368],
+			zoom: 6,
+			maxZoom: 9,
+			minZoom: 5
 		});
 
 		map.on('load', () => {
@@ -44,53 +46,40 @@
 			});
 			map.addControl(nav, 'top-left');
 
-			map.addSource('coal', {
+			map.addSource('lng', {
 				type: 'geojson',
 				// Use a URL for the value for the `data` property.
 				data: data
 			});
 
 			map.addLayer({
-				id: 'coal-plants',
-				filter: ['==', ['geometry-type'], 'Point'],
+				id: 'markers-planned',
+				filter: ['==', 'already_in_use', 'FALSE'],
 				type: 'circle',
-				source: 'coal',
+				source: 'lng',
 				paint: {
 					'circle-radius': 5,
 					'circle-stroke-width': 2,
-					'circle-color': '#B7722E',
+					'circle-color': '#9CB5B8',
 					'circle-stroke-color': 'white'
 				}
 			});
 
-			// add fill for polygons
 			map.addLayer({
-				id: 'coal-mines',
-				source: 'coal',
-				filter: ['==', ['geometry-type'], 'Polygon'],
-				type: 'fill',
-				layout: {},
+				id: 'markers-inuse',
+				filter: ['==', 'already_in_use', 'TRUE'],
+				type: 'circle',
+				source: 'lng',
 				paint: {
-					'fill-color': '#71665B', // blue color fill
-					'fill-opacity': 0.5
-				}
-			});
-
-			// add lines for polygons
-			map.addLayer({
-				id: 'coal-mines-b',
-				source: 'coal',
-				filter: ['==', ['geometry-type'], 'Polygon'],
-				type: 'line',
-				layout: {},
-				paint: {
-					'line-color': '#71665B',
-					'line-width': 2
+					'circle-radius': 8,
+					'circle-stroke-width': 2,
+					'circle-color': '#347C86',
+					'circle-stroke-color': 'white'
 				}
 			});
 
 			// add click handler
-			map.on('click', ['coal-plants', 'coal-mines'], (e) => {
+			map.on('click', ['markers-inuse', 'markers-planned'], (e) => {
 				selectedElement = data?.features.find(
 					(d) => d.properties.id == e.features[0].properties.id
 				);
@@ -116,25 +105,27 @@
 					id="coal-item-{item.properties.id}"
 					on:mousedown={() => (selectedElement = item)}
 				>
-					{#if item.geometry.type == 'Polygon'}
-						<h3 class="font-bold">
-							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#71665B]" />
-							{item.properties.label}
-						</h3>
-						<p>{item.properties.region}</p>
-					{:else}
-						<h3 class="font-bold">
-							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#B7722E]" />
-							{item.properties.Blockname}
-							<span class="font-normal">{item.properties.Brennstoff}</span>
-						</h3>
-						<p>{item.properties['Nettonennleistung [MWel]']}MWel</p>
-						<p>{item.properties.Betreiber}</p>
-						{#if item.properties['CO2 [t] im Jahr 2016']}
-							<p>{item.properties['CO2 [t] im Jahr 2016']}CO2-Emissionen im Jahr 2016</p>
+					<h3 class="font-bold">
+						<span
+							class="w-3 h-3 mr-1 inline-block rounded-full {item.properties.already_in_use ==
+							'TRUE'
+								? 'bg-[#347C86]'
+								: 'bg-[#9CB5B8]'}"
+						/>
+						{item.properties.place}
+						<span class="font-normal">{item.properties.operator}</span>
+					</h3>
+					<p>{item.properties.type == 'floating' ? 'Schwimmterminal' : 'Landterminal'}</p>
+					<p>
+						{item.properties.already_in_use == 'TRUE' ? 'seit ' : 'voraussichtlich '}{item
+							.properties.completion} in Betrieb
+					</p>
+					<p>
+						{#if item.properties.min_capacity !== item.properties.max_capacity}
+							{item.properties.min_capacity} –
 						{/if}
-						<p>Stilllegung {item.properties.Stilllegung}</p>
-					{/if}
+						{item.properties.max_capacity} Milliarden Kubikmeter/Jahr
+					</p>
 				</li>
 			{/each}
 		</ul>
