@@ -12,7 +12,7 @@
 		skipEmptyLines: true,
 		complete: function (results) {
 			if (results) {
-				rawData = results.data;
+				rawData = results.data.sort((a, b) => a.Jahr - b.Jahr);
 			}
 		}
 	});
@@ -32,6 +32,14 @@
 
 <div class="h-80">
 	{#if data}
-		<ChartLine {data} {labels} {keys} {colors} xTicksInterval={10} unit={'Tonnen'} />
+		<ChartLine
+			{data}
+			{labels}
+			{keys}
+			{colors}
+			xTicksInterval={10}
+			unit={'Tonnen'}
+			showTotal={false}
+		/>
 	{/if}
 </div>
