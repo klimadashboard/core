@@ -91,8 +91,9 @@
 
 			// add click handler
 			map.on('click', ['coal-plants', 'coal-mines'], (e) => {
-				console.log(e.features);
-				selectedElement = e.features[0];
+				selectedElement = data?.features.find(
+					(d) => d.properties.id == e.features[0].properties.id
+				);
 			});
 		});
 	};
@@ -105,7 +106,9 @@
 		<ul>
 			{#each data.features as item}
 				<li
-					class="border-y py-2 hover:bg-gray-100 cursor-pointer p-4"
+					class="border-y py-2 hover:bg-gray-100 {selectedElement && selectedElement !== item
+						? 'opacity-60'
+						: 'opacity-100'} cursor-pointer p-4"
 					id="coal-item-{item.properties.id}"
 					on:mousedown={() => (selectedElement = item)}
 				>
