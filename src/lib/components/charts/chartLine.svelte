@@ -279,7 +279,7 @@
 			</g>
 
 			<g
-				class="chart-selected-index text-gray-600  selection-indicator"
+				class="chart-selected-index text-gray-600 selection-indicator"
 				transform={`translate(${margin.left + xScale(selectedIndex)},${margin.top})`}
 			>
 				<line
@@ -291,7 +291,7 @@
 					stroke-opacity="0.7"
 				/>
 				<g class="text-xs" transform={`translate(0, ${innerChartHeight + circleRadius})`}>
-					<rect class="text-white  fill-current" width="40" x="-20" height={margin.bottom} />
+					<rect class="text-white fill-current" width="40" x="-20" height={margin.bottom} />
 					<text fill="currentColor" text-anchor="middle" y="10">{data[selectedIndex].label}</text>
 				</g>
 			</g>
@@ -303,17 +303,19 @@
 			class="absolute top-0 left-0 flex flex-wrap gap-2 px-4 md:px-0"
 			bind:clientHeight={legendHeight}
 		>
-			{#each keys.filter( (d) => (showZeroValuesInLegend ? true : data[selectedIndex][d] > 0) ) as key, i}
-				<div
-					class="font-semibold tracking-wide px-2 pt-1 text-white text-xs rounded-full"
-					style="background-color:{colors[i]}"
-				>
-					<span class="uppercase">{labels[i]}</span>
-					<span class="">{formatNumber(data[selectedIndex][key])}</span>
-					{#if unit.length < 8}
-						<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
-					{/if}
-				</div>
+			{#each keys as key, i}
+				{#if showZeroValuesInLegend || data[selectedIndex][key] > 0}
+					<div
+						class="font-semibold tracking-wide px-2 pt-1 text-white text-xs rounded-full"
+						style="background-color:{colors[i]}"
+					>
+						<span class="uppercase">{labels[i]}</span>
+						<span class="">{formatNumber(data[selectedIndex][key])}</span>
+						{#if unit.length < 8}
+							<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
+						{/if}
+					</div>
+				{/if}
 			{/each}
 			{#if showTotal}
 				<div

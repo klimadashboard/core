@@ -80,6 +80,7 @@
 			{colors}
 			xTicksInterval={52}
 			unit={'GWh/Tag'}
+			showTotal={false}
 		/>
 	{/if}
 </div>
