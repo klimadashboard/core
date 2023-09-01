@@ -28,7 +28,7 @@
 	$: selectedPolicy = false;
 
 	$: if (!selectedPolicy) {
-		selectedPolicy = policies[0];
+		selectedPolicy = 'onshore';
 	}
 
 	$: years = showAllYears
