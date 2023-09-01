@@ -1,5 +1,6 @@
 <script>
 	export let block;
+	console.log(block);
 </script>
 
 <section class="my-4 container">
@@ -15,12 +16,13 @@
 				{/if}
 
 				<div class="text-7xl font-light tabular-nums flex items-end">
+					{@html number.icon}
 					{@html number.value}
 					<span class="text-2xl font-normal">{@html number.unit}</span>
 				</div>
 
 				{#if number.text}
-					<div class="text-lg ">
+					<div class="text-lg">
 						{@html number.text}
 					</div>
 				{/if}
