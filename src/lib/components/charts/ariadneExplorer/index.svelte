@@ -19,6 +19,12 @@
 		}
 	});
 
+	$: policies = [...new Set(dataset?.filter((e) => e.level == 2).map((e) => e.policy))];
+
+	const getNameForPolicy = function (policy) {
+		return dataset?.find((f) => f.policy == policy)['policy.name.de'];
+	};
+
 	$: selectedPolicy = false;
 
 	$: if (!selectedPolicy) {
@@ -38,8 +44,6 @@
 
 	$: showAllYears = false;
 
-	$: policies = [...new Set(dataset?.filter((e) => e.level == 2).map((e) => e.policy))];
-
 	$: data = dataset?.filter(
 		(e) => e.level == 2 && e.policy == selectedPolicy && years.indexOf(e.year) > -1
 	);
@@ -51,8 +55,8 @@
 <div class="flex space-x-4 items-center mb-4">
 	{#if dataset}
 		<select bind:value={selectedPolicy}>
-			{#each policies as policy}
-				<option value={policy}>{dataset?.find((f) => f.policy == policy)['policy.name.de']}</option>
+			{#each policies.sort( (a, b) => getNameForPolicy(a).localeCompare(getNameForPolicy(b)) ) as policy}
+				<option value={policy}>{getNameForPolicy(policy)}</option>
 			{/each}
 		</select>
 	{/if}
