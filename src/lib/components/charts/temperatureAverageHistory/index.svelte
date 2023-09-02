@@ -33,9 +33,7 @@
 						(entry) => entry.totalPrecipitation >= 0
 					);
 					// console.log(results.data);
-					historicalDataset = results.data.filter(
-						(d) => d.averageTemperature !== 'null' && d.averageTemperature > -999
-					);
+					historicalDataset = results.data.filter((d) => d.averageTemperature !== 'null' && d.averageTemperature > -999);
 				}
 			}
 		}
@@ -44,13 +42,13 @@
 	$: rollingAverageSum = 0;
 
 	$: historicalData = historicalDataset?.map((entry, index) => {
-		// TODO: use arrays for the last 30 years, not containing null values, for less-error-prone averaging
 		const lowerBoundYear = Math.max(historicalDataset[0].year, entry.year - yearInterval);
 		const lowerBoundIndex = historicalDataset.findIndex((d) => d.year == lowerBoundYear);
 		const upperBoundYear = Math.min(entry.year, lowerBoundYear + yearInterval);
 		const upperBoundIndex = historicalDataset.findIndex((d) => d.year == upperBoundYear);
 
-		const rollingAverageDataset = [...historicalDataset].slice(lowerBoundIndex, upperBoundIndex);
+		// const rollingAverageDataset = [...historicalDataset].slice(lowerBoundIndex, upperBoundIndex);
+		const rollingAverageDataset = [...historicalDataset].slice(Math.max(0, index-yearInterval), index-yearInterval < 0 ? 0 : index);
 		rollingAverageSum = 0;
 		for (var i = 0; i < rollingAverageDataset.length; i++) {
 			rollingAverageSum += rollingAverageDataset[i].averageTemperature;
