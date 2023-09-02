@@ -67,7 +67,7 @@
 					>{totalForKeyHistoricalAverage}</text
 				>
 				<g transform="translate({totalForKeyHistoricalAverage.toString().length * 36},0)">
-					<text class="font-semibold fill-current" y="-18">{title} bis {timestamp} im</text>
+					<text class="font-semibold fill-current" y="-18">{title} im</text>
 					<text class="font-semibold fill-current">Durchschnitt {firstYear} – {lastYear}</text>
 				</g>
 			</g>
@@ -104,7 +104,10 @@
 				text-anchor="end"
 				class="text-xs opacity-50 fill-gray-700"
 				style="font-size: 0.7em;"
-				>{selectedStationName} – {selectedStation} {PUBLIC_VERSION == 'at' ? `– ${timestamp}` : ''} – {PUBLIC_VERSION == 'at' ? 'ZAMG' : 'DWD'}</text
+				>{selectedStationName} – {selectedStation}
+				{PUBLIC_VERSION == 'at' ? `– ${timestamp}` : ''} – {PUBLIC_VERSION == 'at'
+					? 'ZAMG'
+					: 'DWD'}</text
 			>
 		</svg>
 	{/if}
