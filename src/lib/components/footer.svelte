@@ -1,3 +1,7 @@
+<script>
+	import { PUBLIC_VERSION } from '$env/static/public';
+</script>
+
 <footer class="text-white bg-gray-800">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
 		<div class="">
@@ -28,7 +32,7 @@
 				</form>
 				<a
 					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
-					href="https://instagram.com/klimadashboard"
+					href="https://instagram.com/klimadashboard{PUBLIC_VERSION == 'de' ? '_de' : ''}"
 					aria-label="Instagram"
 				>
 					<svg
@@ -103,8 +107,40 @@
 			<p class="opacity-50 text-sm leading-tight mt-2">
 				Du erhältst nicht mehr als 12 Newsletter pro Jahr.<br />Wir verwenden Buttondown als
 				Newsletter-Tool. <br />Mehr in unserer
-				<a href="https://klimadashboard.org/impressum" class="underline">Datenschutzvereinbarung</a>.
+				<a href="https://klimadashboard.org/impressum" class="underline">Datenschutzvereinbarung</a
+				>.
 			</p>
+		</div>
+		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
+			<h2 class="font-bold">Unterstütze unseren Verein</h2>
+			<p>
+				Das Klimadashboard ist unabhängig und frei zugänglich für alle. Dank deiner Spende können
+				wir laufend neue Visualisierungen bauen.
+			</p>
+			<a
+				class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
+				href="https://opencollective.com/klimadashboard"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="icon icon-tabler icon-tabler-credit-card"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<rect x="3" y="5" width="18" height="14" rx="3" />
+					<line x1="3" y1="10" x2="21" y2="10" />
+					<line x1="7" y1="15" x2="7.01" y2="15" />
+					<line x1="11" y1="15" x2="13" y2="15" />
+				</svg>
+				<span>Spenden auf OpenCollective</span>
+			</a>
 		</div>
 		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
 			<h2 class="font-bold">Feedback</h2>
@@ -112,7 +148,7 @@
 			<div class="flex items-center space-x-2 flex-wrap">
 				<a
 					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
-					href="mailto:team@klimadashboard.at"
+					href="mailto:team@klimadashboard.org"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -156,37 +192,6 @@
 					</svg>
 				</a>
 			</div>
-		</div>
-		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0  border-gray-700">
-			<h2 class="font-bold">Unterstütze unsere Arbeit</h2>
-			<p>
-				Das Klimadashboard wird von einem gemeinnützigen Verein mit vielen Stunden ehrenamtlicher
-				Arbeit gebaut.
-			</p>
-			<a
-				class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
-				href="https://klimadashboard.org/spenden"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-credit-card"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<rect x="3" y="5" width="18" height="14" rx="3" />
-					<line x1="3" y1="10" x2="21" y2="10" />
-					<line x1="7" y1="15" x2="7.01" y2="15" />
-					<line x1="11" y1="15" x2="13" y2="15" />
-				</svg>
-				<span>Spenden</span>
-			</a>
 		</div>
 	</div>
 	<div class="bg-gray-900 py-4 flex">
