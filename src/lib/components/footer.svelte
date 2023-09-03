@@ -1,3 +1,7 @@
+<script>
+	import { PUBLIC_VERSION } from '$env/static/public';
+</script>
+
 <footer class="text-white bg-gray-800">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
 		<div class="">
@@ -28,7 +32,7 @@
 				</form>
 				<a
 					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
-					href="https://instagram.com/klimadashboard"
+					href="https://instagram.com/klimadashboard{PUBLIC_VERSION == 'de' ? '_de' : ''}"
 					aria-label="Instagram"
 				>
 					<svg
@@ -103,7 +107,8 @@
 			<p class="opacity-50 text-sm leading-tight mt-2">
 				Du erhältst nicht mehr als 12 Newsletter pro Jahr.<br />Wir verwenden Buttondown als
 				Newsletter-Tool. <br />Mehr in unserer
-				<a href="https://klimadashboard.org/impressum" class="underline">Datenschutzvereinbarung</a>.
+				<a href="https://klimadashboard.org/impressum" class="underline">Datenschutzvereinbarung</a
+				>.
 			</p>
 		</div>
 		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
@@ -157,7 +162,7 @@
 				</a>
 			</div>
 		</div>
-		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0  border-gray-700">
+		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
 			<h2 class="font-bold">Unterstütze unsere Arbeit</h2>
 			<p>
 				Das Klimadashboard wird von einem gemeinnützigen Verein mit vielen Stunden ehrenamtlicher
