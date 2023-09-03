@@ -43,7 +43,7 @@
 		}
 	);
 
-	$: chosenBudget = budgets[1];
+	$: chosenBudget = budgets[0];
 	$: totalHistoricalEmissions = historicalEmissions
 		.filter((d) => d.year <= endYear && d.year >= startYear)
 		.reduce((a, b) => a + b.co2_excl_LULUCF, 0);
@@ -205,7 +205,7 @@
 	</div>
 
 	<p class="mt-6 text-budgetDefault leading-tight">
-		Ab 2022 verbleiben nur noch {remainingBudget} Millionen Tonnen, um das Pariser Klimaabkommen mit
+		Ab 2023 verbleiben nur noch {remainingBudget} Millionen Tonnen, um das Pariser Klimaabkommen mit
 		einer Erderhitzung von +1.5°C einzuhalten.
 	</p>
 
