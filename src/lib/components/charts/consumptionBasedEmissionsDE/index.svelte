@@ -47,9 +47,8 @@
 			{colors}
 			unit={'t ' + unit}
 			showPulse={'consumption_based'}
-			showTotal={'false'}
+			showTotal={false}
 			preselectedIndex={30}
-            showTotal={false}
 			showZeroValuesInLegend={false}
 		/>
 	{:else}
