@@ -2,10 +2,10 @@
 	export let attrs;
 </script>
 
-<div class="container pt-16">
+<div class="container pt-4">
 	<a
 		href={attrs.link ? attrs.link : '#'}
-		class="flex gap-2 items-center border-b border-gray-200 mb-8 py-4"
+		class="flex gap-2 items-center border-b border-gray-200 py-4"
 	>
 		{@html attrs.icon}
 		<h2 class="uppercase tracking-wide text-base font-semibold">{attrs.headline}</h2>
