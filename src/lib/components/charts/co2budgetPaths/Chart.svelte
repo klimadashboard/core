@@ -120,7 +120,9 @@
 	$: selectedKeys = Object.keys(dataPaths[0]).filter((d) => d.includes(chosenBudget.value));
 
 	$: getZeroYear = function (key) {
-		if (key.replace(chosenBudget.value + '_', '') == 'nochange') {
+		if (chosenBudget.usedUp) {
+			return chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year
+		} else if (key.replace(chosenBudget.value + '_', '') == 'nochange') {
 			var selectedRow = dataPaths.reduce((last, d) => (d[key] > 0 ? d : last), null);
 			var year = selectedRow.year;
 			var selectedValue = selectedRow[key];
@@ -363,7 +365,10 @@
 							].color}"
 						>
 							<text class="fill-current text-xs" text-anchor="middle">
-								{#if getZeroYear(key) % 1 !== 0}
+								{#if chosenBudget.usedUp}
+									<tspan x="1" y="0">{chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].season}</tspan>
+									<tspan x="0" y="14">{chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year}</tspan>
+								{:else if getZeroYear(key) % 1 !== 0}
 									<tspan x="1" y="0">Mitte</tspan>
 									<tspan x="0" y="14">{Math.floor(getZeroYear(key))}</tspan>
 								{:else}
