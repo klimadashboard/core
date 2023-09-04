@@ -20,14 +20,14 @@
 	<div class="bg-white md:shadow-sm">
 		<div class="container flex gap-4 items-center text-lg">
 			<a href="/" class="flex gap-4 font-bold items-center text-[#11998e]">
-				<div class="bg-current h-12 w-12 relative rounded">
+				<div class="bg-current h-10 w-10 relative rounded">
 					<svg
 						width="256"
 						height="256"
 						viewBox="0 0 256 256"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-12 w-12 absolute inset-0"
+						class="h-10 w-10 absolute inset-0"
 					>
 						<path
 							d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
@@ -48,7 +48,7 @@
 				<span>Klimadashboard.{PUBLIC_VERSION}</span>
 			</a>
 			<button
-				class="md:hidden flex items-center gap-1 leading-[5rem] px-2 ml-auto"
+				class="md:hidden flex items-center gap-1 leading-[4rem] px-2 ml-auto"
 				on:mousedown={() => (showNav = !showNav)}
 			>
 				<svg
@@ -87,7 +87,7 @@
 							>
 								<a
 									href={item.uri.replace('klimadashboard-' + PUBLIC_VERSION, '')}
-									class="md:leading-[5rem] font-bold {$page.params.slug.includes(item.slug)
+									class="md:leading-[4rem] font-bold {$page.params.slug.includes(item.slug)
 										? ''
 										: 'md:font-normal'} hover:underline underline-offset-2"
 									on:mouseup={() => (showNav = false)}>{item.content.title}</a
@@ -95,13 +95,9 @@
 
 								{#if navigation.filter((c) => item.id == c.parent && c !== item).length > 0}
 									<div
-										class="md:fixed left-0 md:top-18 w-screen md:bg-white md:bg-opacity-50 md:backdrop-blur-md md:shadow-sm transition"
+										class="md:fixed left-0 md:top-18 w-screen md:bg-white md:bg-opacity-90 md:backdrop-blur-md md:shadow-sm transition"
 									>
-										<ul
-											class="md:container flex gap-6 md:py-3 {!$page.params.slug.includes(item.slug)
-												? 'md:hidden'
-												: ''} group-hover:flex"
-										>
+										<ul class="md:container flex gap-6 md:py-3 md:hidden group-hover:flex">
 											{#each navigation.filter((c) => item.id == c.parent && c !== item) as child}
 												<li>
 													<a
@@ -126,7 +122,7 @@
 					<li class="opacity-70 hover:opacity-100 transition md:ml-auto">
 						<a
 							href="https://klimadashboard.org"
-							class="leading-[5rem] text-sm font-bold uppercase tracking-wide">Über uns</a
+							class="leading-[4rem] text-sm font-bold uppercase tracking-wide">Über uns</a
 						>
 					</li>
 				</ul>
@@ -141,9 +137,10 @@
 		content: '';
 		position: absolute;
 		z-index: 1000;
+		top: 30px;
 		bottom: 0;
 		width: 300%;
-		height: 2.5rem;
+		height: 1rem;
 		animation: hoverHelpFade 2s;
 	}
 

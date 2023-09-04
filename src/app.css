@@ -42,8 +42,12 @@
 @tailwind utilities;
 
 body {
-	scroll-behavior: smooth;
 	font-family: 'Barlow', sans-serif;
+}
+
+html,
+main {
+	scroll-behavior: smooth;
 }
 
 .glossary-label {

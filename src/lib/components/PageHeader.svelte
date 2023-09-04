@@ -1,6 +1,7 @@
 <script>
 	import { page } from '$app/stores';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { browser } from '$app/environment';
 
 	export let data;
 
@@ -9,11 +10,18 @@
 		text: data.intro,
 		url: $page.url
 	};
+
+	console.log(data);
+
+	let scrollY;
+	let innerHeight;
+
+	$: console.log(innerHeight);
 </script>
 
 <section
 	id="page-header"
-	class="bg-{PUBLIC_VERSION} shadow-inner text-white pt-24 pb-4 mb-8 relative"
+	class="bg-{PUBLIC_VERSION} shadow-inner text-white pt-20 pb-4 relative"
 	style={data.cover_styles}
 >
 	{#if data.cover_background}
@@ -62,6 +70,21 @@
 		</div>
 	</div>
 </section>
+
+{#if data.pagelayout && data.showtableofcontents == 'true'}
+	<div class="sticky top-[4rem] w-screen text-lg bg-white bg-opacity-80 backdrop-blur-lg z-30">
+		<div class="bg-{PUBLIC_VERSION} h-0.5" style="width: {(scrollY / innerHeight) * 10}%" />
+		<p class="container flex gap-4 py-3">
+			{#each JSON.parse(data.pagelayout) as section}
+				<a href="#{section.id}" class="flex {true == false ? 'font-semibold' : 'font-normal'}">
+					{section.attrs.headline}
+				</a>
+			{/each}
+		</p>
+	</div>
+{/if}
+
+<svelte:window bind:scrollY bind:innerHeight />
 
 <style>
 	:global(.page-intro ul) {
