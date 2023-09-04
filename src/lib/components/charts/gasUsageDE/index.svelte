@@ -38,7 +38,7 @@
 			{labels}
 			{keys}
 			{colors}
-			preselectedIndex={32}
+			preselectedIndex={data.filter((d) => d[2023] !== null).slice(-1)[0].x}
 			unit={'GWh/Tag'}
 			showTotal={false}
 			showPulse={'2023'}
