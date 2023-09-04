@@ -12,6 +12,7 @@ export async function GET (request) {
 
 export async function POST ({ request }) {
     const req = await request.json()
+    req.postAnswer.timestamp = Date.now()
     const result = await saveQuizAnswerToDb(req.postAnswer)
     return json(result)
 }
