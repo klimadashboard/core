@@ -141,7 +141,7 @@
 	// calculate pulse
 	$: pulseCoordinates = showPulse
 		? [
-				xScale(data.map((d) => d[showPulse]).filter((d) => d !== null).length),
+				xScale(data.map((d) => d[showPulse]).filter((d) => d !== null).length - 1),
 				yScale(
 					data
 						.map((d) => d[showPulse])
@@ -229,7 +229,7 @@
 
 				{#if showPulse}
 					<g
-						transform="translate({pulseCoordinates[0] - margin.left},{pulseCoordinates[1]})"
+						transform="translate({pulseCoordinates[0]},{pulseCoordinates[1]})"
 						style="color: {colors[keys.indexOf(showPulse)]}"
 					>
 						<circle r="5" class="fill-current" />
