@@ -49,7 +49,6 @@
 	);
 
 	$: selectedFeature = false;
-	$: console.log(selectedFeature);
 </script>
 
 <div class="flex gap-4 flex-wrap items-center mb-4">

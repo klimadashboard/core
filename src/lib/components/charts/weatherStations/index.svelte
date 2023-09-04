@@ -56,8 +56,6 @@
 			};
 		});
 
-	$: console.log(metaDataStationsGroupedByState);
-
 	$: getDistance = function (currentPosition, station) {
 		return Math.sqrt(
 			Math.pow(currentPosition.coords.latitude - station.latitude, 2) +

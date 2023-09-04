@@ -1,6 +1,5 @@
 <script>
 	export let block;
-	console.log(block);
 </script>
 
 <div class="container grid md:grid-cols-3 gap-4">
