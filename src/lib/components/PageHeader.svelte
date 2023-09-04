@@ -11,12 +11,26 @@
 		url: $page.url
 	};
 
-	console.log(data);
-
 	let scrollY;
 	let innerHeight;
 
-	$: console.log(innerHeight);
+	$: activeSection = false;
+
+	const onScroll = function () {
+		let sections = JSON.parse(data.pagelayout).map((d) => document.getElementById(d.id));
+		let observer = new IntersectionObserver(onIntersection);
+
+		function onIntersection(entries, opts) {
+			let intersectingEntries = entries.filter((d) => d.isIntersecting);
+			if (intersectingEntries.length > 0) {
+				activeSection = intersectingEntries[0].target.id;
+			}
+		}
+
+		for (let i = 0; i < sections.length; i++) {
+			observer.observe(sections[i]);
+		}
+	};
 </script>
 
 <section
@@ -76,7 +90,10 @@
 		<div class="bg-{PUBLIC_VERSION} h-0.5" style="width: {(scrollY / innerHeight) * 10}%" />
 		<p class="container flex gap-4 py-3">
 			{#each JSON.parse(data.pagelayout) as section}
-				<a href="#{section.id}" class="flex {true == false ? 'font-semibold' : 'font-normal'}">
+				<a
+					href="#{section.id}"
+					class="flex {activeSection == section.id ? 'font-semibold' : 'font-normal'}"
+				>
 					{section.attrs.headline}
 				</a>
 			{/each}
@@ -84,7 +101,7 @@
 	</div>
 {/if}
 
-<svelte:window bind:scrollY bind:innerHeight />
+<svelte:window bind:scrollY bind:innerHeight on:scroll={onScroll} />
 
 <style>
 	:global(.page-intro ul) {
