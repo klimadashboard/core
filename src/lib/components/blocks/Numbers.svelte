@@ -14,7 +14,7 @@
 					<h3>{@html number.heading}</h3>
 				{/if}
 
-				<div class="text-7xl font-light tabular-nums flex items-end">
+				<div class="text-5xl md:text-7xl font-light tabular-nums flex items-end">
 					{#if number.icon}
 						{@html number.icon}
 					{/if}

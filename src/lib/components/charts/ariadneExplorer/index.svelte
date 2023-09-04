@@ -52,9 +52,9 @@
 	$: console.log(selectedFeature);
 </script>
 
-<div class="flex space-x-4 items-center mb-4">
+<div class="flex gap-4 flex-wrap items-center mb-4">
 	{#if dataset}
-		<select bind:value={selectedPolicy}>
+		<select bind:value={selectedPolicy} class="w-full sm:w-auto">
 			{#each policies.sort( (a, b) => getNameForPolicy(a).localeCompare(getNameForPolicy(b)) ) as policy}
 				<option value={policy}>{getNameForPolicy(policy)}</option>
 			{/each}
@@ -65,16 +65,6 @@
 		<input type="checkbox" bind:checked={showAllYears} />
 		<span>Alle Jahre zeigen</span>
 	</label>
-
-	<div class="flex rounded-lg overflow-hidden">
-		{#each Array.from(Array(11).keys()) as i}
-			<div class="w-6 h-6 grid" style="background: {scaleApproval(i * 10)}">
-				{#if i < 2 || i > 8}
-					<p class="text-white m-auto font-bold" style="font-size: 0.6em;">{i * 10}%</p>
-				{/if}
-			</div>
-		{/each}
-	</div>
 
 	<Search bind:selectedFeature />
 </div>
@@ -92,6 +82,16 @@
 			/>
 		{/if}
 	{/if}
+</div>
+
+<div class="flex rounded-lg overflow-hidden mt-4">
+	{#each Array.from(Array(11).keys()) as i}
+		<div class="w-6 h-6 grid" style="background: {scaleApproval(i * 10)}">
+			{#if i < 2 || i > 8}
+				<p class="text-white m-auto font-bold" style="font-size: 0.6em;">{i * 10}%</p>
+			{/if}
+		</div>
+	{/each}
 </div>
 
 <style>

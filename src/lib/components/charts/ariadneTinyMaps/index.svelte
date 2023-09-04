@@ -28,7 +28,7 @@
 </script>
 
 <div class="max-w-6xl mx-auto relative">
-	<div class="flex rounded-lg overflow-hidden absolute -bottom-12 right-0">
+	<div class="flex rounded-lg overflow-hidden mb-2 md:absolute -bottom-12 right-0">
 		{#each Array.from(Array(11).keys()) as i}
 			<div class="w-6 h-6 grid" style="background: {scaleApproval(i * 10)}">
 				{#if i < 2 || i > 8}

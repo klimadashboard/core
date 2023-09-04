@@ -24,7 +24,7 @@
 		<h2 class="text-2xl">
 			{block.content.heading}
 		</h2>
-		<div class="flex space-x-4 mt-2">
+		<div class="flex gap-2 mt-2 flex-wrap">
 			{#each categories as value}
 				<div class="flex items-center space-x-1" style="color: {value.color}">
 					<div class="h-2 w-2 rounded-full bg-current" />
