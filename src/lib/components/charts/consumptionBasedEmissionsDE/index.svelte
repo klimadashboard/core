@@ -49,6 +49,7 @@
 			showPulse={'consumption_based'}
 			showTotal={'false'}
 			preselectedIndex={30}
+            showTotal={false}
 			showZeroValuesInLegend={false}
 		/>
 	{:else}
