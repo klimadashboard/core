@@ -6,6 +6,7 @@
 	import dayjs from 'dayjs';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { glossaryItem } from '$lib/stores/glossary';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let v;
 
@@ -255,7 +256,7 @@
 	$: selectedMark = marks[1];
 </script>
 
-<div class="w-screen bg-gradient-green bg-opacity-50 text-white py-8 overflow-hidden">
+<div class="w-screen bg-{PUBLIC_VERSION} bg-opacity-50 text-white py-8 overflow-hidden">
 	<div class="container">
 		<h2 class="text-3xl tracking-tight mb-6 md:mb-4 max-w-2xl text-white">{v.heading}</h2>
 		<div class="grid md:grid-cols-3 gap-8">

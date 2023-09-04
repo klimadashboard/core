@@ -114,7 +114,7 @@
 	};
 </script>
 
-<div class="bg-gradient-green py-8" id="temperature-shareable">
+<div class="bg-{PUBLIC_VERSION} py-8" id="temperature-shareable">
 	<div class="container flex flex-col items-center">
 		<div class="flex flex-col md:flex-row items-center gap-8">
 			<div
