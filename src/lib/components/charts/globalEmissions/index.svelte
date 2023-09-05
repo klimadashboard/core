@@ -52,7 +52,7 @@
 		if (selectedCountries.includes(entry.state_iso)) {
 			result.push({
 				label: getCountryName(entry.state_iso),
-				value: entry.co2_percapita,
+				value: entry.co2e_percapita,
 				highlight: entry.state_iso == PUBLIC_VERSION.toUpperCase() ? true : false,
 				icon: getIconString(entry.state_iso)
 			});
@@ -61,9 +61,11 @@
 	}, []);
 
 	$: worldwideAverage =
-		Math.round(countryData?.find((d) => d.state_name == 'World').co2_percapita * 10) / 10;
+		Math.round(countryData?.find((d) => d.state_name == 'World').co2e_percapita * 10) / 10;
 	$: lastYear = 2018;
-	$: lastYearEmissions = countryData?.find((d) => d.state_iso == PUBLIC_VERSION.toUpperCase()).co2_percapita;
+	$: lastYearEmissions = countryData?.find(
+		(d) => d.state_iso == PUBLIC_VERSION.toUpperCase()
+	).co2e_percapita;
 
 	$: lines = [
 		{
