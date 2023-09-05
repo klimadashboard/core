@@ -279,17 +279,27 @@
 		</div>
 	</div>
 
-	<div class="border-t pt-1 mt-6 text-gray-600 border-current text-sm">
+	<div class="border-t pt-1 mt-6 text-gray-600 border-current text-sm sources">
 		<p>
-			Quellen:
-			<br />
-			Historische Emissionen:
-			<a
+			Historische Emissionen: <a
 				href="https://www.icos-cp.eu/science-and-impact/global-carbon-budget/2022"
-				class="underline">Global Carbon Project</a
+				>Global Carbon Project (2022)</a
+			> <br />CO₂-Emissionen 2022:
+			<a
+				href="https://www.umweltbundesamt.de/daten/klima/treibhausgas-emissionen-in-deutschland#emissionsentwicklung"
+				>Umweltbundesamt (2023)</a
+			><br />Verbleibendes CO₂-Budget:
+			<a
+				href="https://www.umweltrat.de/SharedDocs/Downloads/DE/04_Stellungnahmen/2020_2024/2022_06_fragen_und_antworten_zum_co2_budget.html"
+				>Sachverständigenrat für Umweltfragen (SRU)</a
+			><br />Eigene Berechnung<br /><br />Datensätze:
+			<br /><a
+				href="https://github.com/klimadashboard/data/blob/main/de/emissions/emissions_co2_historical_without_LULUCF.csv"
+				>Historische CO₂-Emissionen inkl. CO₂-Emissionen 2022</a
+			><br /><a
+				href="https://github.com/klimadashboard/data/blob/main/de/emissions/emissions_co2budget_scenarios_DE.csv"
+				>Verbleibendes CO₂-Budget</a
 			>
-			<br />
-			Daten 2022: Umweltbundesamt – Sachverständigenrat für Umweltfragen (SRU)
 		</p>
 	</div>
 </section>
@@ -315,5 +325,9 @@
 		.budget-grid {
 			grid-template-columns: repeat(18, minmax(0, 1fr));
 		}
+	}
+
+	.sources a {
+		@apply underline;
 	}
 </style>
