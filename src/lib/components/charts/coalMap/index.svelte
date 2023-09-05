@@ -8,6 +8,7 @@
 		);
 		let data = await response.json();
 		if (response.ok) {
+			console.log(data);
 			return data;
 		} else {
 			throw new Error(data);

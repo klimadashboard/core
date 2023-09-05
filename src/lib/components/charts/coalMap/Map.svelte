@@ -108,7 +108,7 @@
 
 	<div class="overflow-scroll h-full">
 		<ul>
-			{#each data.features as item}
+			{#each data.features.sort((a, b) => b.geometry.type.localeCompare(a.geometry.type)) as item}
 				<li
 					class="border-y py-2 hover:bg-gray-100 {selectedElement && selectedElement !== item
 						? 'opacity-60'
@@ -122,6 +122,16 @@
 							{item.properties.label}
 						</h3>
 						<p>{item.properties.region}</p>
+						<p>{item.properties.size} | {item.properties.output} Fördermenge</p>
+						{#if item.properties.plannedClosing}
+							<p>Stilllegung geplant für {item.properties.plannedClosing}</p>
+						{/if}
+						{#if item.properties.villagesAffected}
+							<p>{item.properties.villagesAffected} Ortschaften/Ortsteile abgebaggert</p>
+						{/if}
+						{#if item.properties.peopleAffected}
+							<p>{item.properties.peopleAffected} Menschen umgesiedelt</p>
+						{/if}
 					{:else}
 						<h3 class="font-bold">
 							<span class="w-3 h-3 mr-1 inline-block rounded-full bg-[#B7722E]" />
