@@ -280,9 +280,8 @@
 					</g>
 					<g id="historic">
 						<path
-							d="{lineHistoric}L{xScaleOffset(
-								currentYear
-							)},{innerChartHeight}L0,{innerChartHeight}Z"
+							d="{lineHistoric}L{xScaleOffset(currentYear)},{innerChartHeight}L{margin.left +
+								xScaleOffset(1990)},{innerChartHeight}Z"
 							fill={'#268EA5'}
 							fill-opacity="0.2"
 							transition:fade
