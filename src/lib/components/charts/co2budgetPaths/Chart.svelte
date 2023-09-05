@@ -86,11 +86,11 @@
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScaleOffset(getZeroYear(key)) +
+			  xScale(getZeroYear(key)) +
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScaleOffset(getZeroYear(key)) +
+			  xScale(getZeroYear(key)) +
 			  ',' +
 			  yScale(0) +
 			  'L' +
@@ -107,11 +107,11 @@
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScaleOffset(getZeroYear(key)) +
+			  xScale(getZeroYear(key)) +
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScaleOffset(getZeroYear(key)) +
+			  xScale(getZeroYear(key)) +
 			  ',' +
 			  yScale(0)
 			: generateLine(key)(dataPaths.filter((d) => d.year >= currentYear))
