@@ -52,13 +52,13 @@
 		}, 0) / thgFactor;
 	let lastTHG = dataHistoric[dataHistoric.length - 1].total_co2e_t / thgFactor;
 	let maxAxis = Math.ceil((maxTHG * 1.1) / 100) * 100;
-	let maxYear = dataPaths[dataPaths.length - 1].year;
+	let maxYear = dataPaths[dataPaths.length - 1].year + 5;
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
 	$: xScale = scaleLinear().range([0, innerChartWidth]).domain([selectedStartYear, maxYear]);
-	$: xScaleOffset = (x) => xScale(x+1);
+	$: xScaleOffset = (x) => xScale(x + 1);
 
 	$: yScale = scaleLinear().range([innerChartHeight, 0]).domain([0, maxAxis]);
 	let offsetX = 0;
@@ -169,7 +169,9 @@
 		return string;
 	};
 
-	$: ksgDottedLine = showKSGGoal ? generateLine('ksg')(dataPaths.filter(d => d.year >= currentYear)) : null;
+	$: ksgDottedLine = showKSGGoal
+		? generateLine('ksg')(dataPaths.filter((d) => d.year >= currentYear))
+		: null;
 	$: ksgTHGLine = showKSGGoal ? generateLine('thg')(thgPathDe) : null;
 </script>
 
@@ -190,7 +192,10 @@
 				on:blur={() => (chosenPath = 2)}
 			>
 				<div class="pl-1" style="border-left: 4px solid {selectedKey.color}">
-					{@html selectedKey.label.replace('{value}', chosenBudget.tonsPerYear || getReductionRate(key))}
+					{@html selectedKey.label.replace(
+						'{value}',
+						chosenBudget.tonsPerYear || getReductionRate(key)
+					)}
 				</div>
 			</div>
 		{/each}
@@ -275,7 +280,9 @@
 					</g>
 					<g id="historic">
 						<path
-							d="{lineHistoric}L{xScaleOffset(currentYear)},{innerChartHeight}L0,{innerChartHeight}Z"
+							d="{lineHistoric}L{xScaleOffset(
+								currentYear
+							)},{innerChartHeight}L0,{innerChartHeight}Z"
 							fill={'#268EA5'}
 							fill-opacity="0.2"
 							transition:fade
@@ -326,9 +333,9 @@
 								<g id="area">
 									<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 									<path
-										d="{areas[i]}L{xScaleOffset(currentYear)},{yScale(0)}L{xScaleOffset(currentYear)},{yScale(
-											lastTHG
-										)}z"
+										d="{areas[i]}L{xScaleOffset(currentYear)},{yScale(0)}L{xScaleOffset(
+											currentYear
+										)},{yScale(lastTHG)}z"
 										fill={selectedKey.color}
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
 										transition:fade
