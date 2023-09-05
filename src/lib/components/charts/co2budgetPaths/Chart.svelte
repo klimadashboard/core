@@ -52,26 +52,28 @@
 		}, 0) / thgFactor;
 	let lastTHG = dataHistoric[dataHistoric.length - 1].total_co2e_t / thgFactor;
 	let maxAxis = Math.ceil((maxTHG * 1.1) / 100) * 100;
-	let maxYear = dataPaths[dataPaths.length - 1].year;
+	let maxYear = dataPaths[dataPaths.length - 1].year + 5;
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
 	$: xScale = scaleLinear().range([0, innerChartWidth]).domain([selectedStartYear, maxYear]);
+	$: xScaleOffset = (x) => xScale(x + 1);
 
 	$: yScale = scaleLinear().range([innerChartHeight, 0]).domain([0, maxAxis]);
+	let offsetX = 0;
 
 	$: generateLine = (key) => {
 		return (
 			line()
-				.x((d) => xScale(d.year || 0))
+				.x((d) => xScaleOffset((d.year || 0) + offsetX))
 				.y((d) => yScale(key == 'total_co2e_t' ? d[key] / thgFactor : d[key])) || 0
 		);
 	};
 
 	$: generateArea = (key) => {
 		return line()
-			.x((d) => xScale(d.year || currentYear))
+			.x((d) => xScaleOffset((d.year || currentYear) + offsetX))
 			.y((d) => yScale(d[key] || 0));
 	};
 
@@ -80,19 +82,19 @@
 	$: areas = selectedKeys.map((key) =>
 		key.replace(chosenBudget.value + '_', '') == 'nochange'
 			? 'M' +
-			  xScale(currentYear) +
+			  xScaleOffset(currentYear) +
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScale(getZeroYear(key)) +
+			  xScaleOffset(getZeroYear(key)) +
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScale(getZeroYear(key)) +
+			  xScaleOffset(getZeroYear(key)) +
 			  ',' +
 			  yScale(0) +
 			  'L' +
-			  xScale(currentYear) +
+			  xScaleOffset(currentYear) +
 			  ',' +
 			  yScale(0) +
 			  'Z'
@@ -101,15 +103,15 @@
 	$: lines = selectedKeys.map((key) =>
 		key.replace(chosenBudget.value + '_', '') == 'nochange'
 			? 'M' +
-			  xScale(currentYear) +
+			  xScaleOffset(currentYear) +
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScale(getZeroYear(key)) +
+			  xScaleOffset(getZeroYear(key)) +
 			  ',' +
 			  yScale(lastTHG) +
 			  'L' +
-			  xScale(getZeroYear(key)) +
+			  xScaleOffset(getZeroYear(key)) +
 			  ',' +
 			  yScale(0)
 			: generateLine(key)(dataPaths.filter((d) => d.year >= currentYear))
@@ -169,7 +171,9 @@
 		return string;
 	};
 
-	$: ksgDottedLine = showKSGGoal ? generateLine('ksg')(dataPaths) : null;
+	$: ksgDottedLine = showKSGGoal
+		? generateLine('ksg')(dataPaths.filter((d) => d.year >= currentYear))
+		: null;
 	$: ksgTHGLine = showKSGGoal ? generateLine('thg')(thgPathDe) : null;
 </script>
 
@@ -190,7 +194,10 @@
 				on:blur={() => (chosenPath = 2)}
 			>
 				<div class="pl-1" style="border-left: 4px solid {selectedKey.color}">
-					{@html selectedKey.label.replace('{value}', chosenBudget.tonsPerYear || getReductionRate(key))}
+					{@html selectedKey.label.replace(
+						'{value}',
+						chosenBudget.tonsPerYear || getReductionRate(key)
+					)}
 				</div>
 			</div>
 		{/each}
@@ -209,10 +216,10 @@
 	<div class="h-72 w-full mt-4" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
 		<svg width={'100%'} height={'100%'}>
 			{#if chartWidth && chartHeight && lines && areas}
-				{#if selectedStartYear < 2016 && xScale(currentYear) > 250}
+				{#if selectedStartYear < 2016 && xScaleOffset(currentYear) > 250}
 					<line
-						x1={xScale(currentYear)}
-						x2={xScale(currentYear)}
+						x1={xScaleOffset(currentYear)}
+						x2={xScaleOffset(currentYear)}
 						y1={0}
 						y2={chartHeight - margin.bottom}
 						class="stroke-gray-400"
@@ -220,12 +227,12 @@
 					<text
 						text-anchor="end"
 						dominant-baseline="hanging"
-						x={xScale(currentYear) - 5}
+						x={xScaleOffset(currentYear) - 5}
 						y="5"
 						class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Vergangenheit</text
 					>
 					<text
-						x={xScale(currentYear) + 5}
+						x={xScaleOffset(currentYear) + 5}
 						y="5"
 						dominant-baseline="hanging"
 						class="text-xs uppercase fill-gray-300 font-semibold tracking-wide">Zukunft</text
@@ -275,7 +282,8 @@
 					</g>
 					<g id="historic">
 						<path
-							d="{lineHistoric}L{xScale(currentYear)},{innerChartHeight}L0,{innerChartHeight}Z"
+							d="{lineHistoric}L{xScaleOffset(currentYear)},{innerChartHeight}L{margin.left +
+								xScaleOffset(1990)},{innerChartHeight}Z"
 							fill={'#268EA5'}
 							fill-opacity="0.2"
 							transition:fade
@@ -302,7 +310,7 @@
 							<text
 								text-anchor="end"
 								dominant-baseline="hanging"
-								x={xScale(2018)}
+								x={xScaleOffset(2018)}
 								y="40"
 								class="text-m uppercase font-semibold tracking-wide"
 								fill="navy">THG</text
@@ -310,7 +318,7 @@
 							<text
 								text-anchor="end"
 								dominant-baseline="hanging"
-								x={xScale(2018)}
+								x={xScaleOffset(2018)}
 								y="100"
 								class="text-m uppercase font-semibold tracking-wide"
 								fill="#268EA5">CO₂</text
@@ -326,9 +334,9 @@
 								<g id="area">
 									<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 									<path
-										d="{areas[i]}L{xScale(currentYear)},{yScale(0)}L{xScale(currentYear)},{yScale(
-											lastTHG
-										)}z"
+										d="{areas[i]}L{xScaleOffset(currentYear)},{yScale(0)}L{xScaleOffset(
+											currentYear
+										)},{yScale(lastTHG)}z"
 										fill={selectedKey.color}
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
 										transition:fade
@@ -357,7 +365,7 @@
 
 					{#each selectedKeys as key, i}
 						<g
-							transform="translate({xScale(getZeroYear(key))},{innerChartHeight + 16})"
+							transform="translate({xScaleOffset(getZeroYear(key))},{innerChartHeight + 16})"
 							style="color: {keys[
 								keys.findIndex(
 									(d) => d.key == selectedKeys[i].replace(chosenBudget.value + '_', '')
@@ -379,7 +387,7 @@
 						</g>
 					{/each}
 
-					<g transform="translate({xScale(currentYear)},{yScale(lastTHG)})">
+					<g transform="translate({xScaleOffset(currentYear)},{yScale(lastTHG)})">
 						<circle r="5" fill="#268EA5" />
 						<circle r="5" fill="#268EA5">
 							<animate
@@ -402,7 +410,7 @@
 					</g>
 
 					<g
-						transform="translate({xScale(currentYear) +
+						transform="translate({xScaleOffset(currentYear) +
 							(selectedStartYear < 2020 ? 5 : 20)},{innerChartHeight - 45})"
 						class="hidden md:block"
 					>
