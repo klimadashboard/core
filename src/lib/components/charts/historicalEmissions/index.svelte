@@ -17,7 +17,7 @@
 			skipEmptyLines: true,
 			complete: function (results) {
 				if (results) {
-					rawData = results.data.filter((d) => d.year > 1799);
+					rawData = results.data;
 				}
 			}
 		}
