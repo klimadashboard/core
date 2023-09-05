@@ -45,9 +45,9 @@
 				percentPerYear: '-33% pro Jahr',
 				tonsPerYear: '129 Mio t CO₂',
 				usedUp: {
-					nochange: { season: "Anfang", year: 2025 },
-					linear: { season: "Anfang", year: 2027 },
-					percentage: { season: "Anfang", year: 2045 },
+					nochange: { season: 'Anfang', year: 2025 },
+					linear: { season: 'Anfang', year: 2027 },
+					percentage: { season: 'Anfang', year: 2045 }
 				}
 			},
 			{
@@ -58,9 +58,9 @@
 				percentPerYear: '-21% pro Jahr',
 				tonsPerYear: '78 Mio t CO₂',
 				usedUp: {
-					nochange: { season: "Herbst", year: 2026 },
-					linear: { season: "Mitte", year: 2031 },
-					percentage: { season: "Anfang", year: 2045 },
+					nochange: { season: 'Herbst', year: 2026 },
+					linear: { season: 'Mitte', year: 2031 },
+					percentage: { season: 'Anfang', year: 2045 }
 				}
 			},
 			{
@@ -71,9 +71,9 @@
 				percentPerYear: '-10% pro Jahr',
 				tonsPerYear: '37 Mio t CO₂',
 				usedUp: {
-					nochange: { season: "April", year: 2031 },
-					linear: { season: "Mitte", year: 2039 },
-					percentage: { season: "Anfang", year: 2045 },
+					nochange: { season: 'April', year: 2031 },
+					linear: { season: 'Mitte', year: 2039 },
+					percentage: { season: 'Anfang', year: 2045 }
 				}
 			}
 		]
@@ -121,7 +121,7 @@
 
 	// DE THG
 	Papa.parse(
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_by_sectors.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2_historical_with_LULUCF.csv`,
 		// `../data/${PUBLIC_VERSION}/emissions/emissions_by_sectors.csv`,
 		{
 			download: true,
@@ -131,7 +131,7 @@
 			complete: function (results) {
 				if (results) {
 					thgPathDe = results.data.map((d) => {
-						return { year: d.year, thg: d.total_co2e_t / 1000000 };
+						return { year: d.year, thg: d.co2e_mio_t_incl_LULUCF };
 					});
 				}
 			}
