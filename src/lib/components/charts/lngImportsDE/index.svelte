@@ -18,7 +18,7 @@
 	});
 
 	const keys = ['wilhelmshaven', 'brunsbuettel', 'balticEnergyGate'];
-	const labels = ['Wilhelmshaven', 'Brunsbüttel', 'Baltic Energy Gate'];
+	const labels = ['Wilhelmshaven', 'Brunsbüttel', 'Lubmin (Baltic Energy Gate)'];
 	const colors = ['#347C86', '#575C75', '#CF6317'];
 
 	$: data = rawData?.map((e, i) => {
