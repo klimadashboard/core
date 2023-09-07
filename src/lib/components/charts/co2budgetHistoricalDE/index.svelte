@@ -37,7 +37,6 @@
 			complete: function (results) {
 				if (results) {
 					historicalEmissions = results.data;
-					console.log('historicalEmissions', historicalEmissions);
 				}
 			}
 		}
