@@ -73,7 +73,7 @@
 			<nav
 				class="{showNav
 					? ''
-					: 'hidden'} absolute bg-white top-20 w-screen left-0 p-4 md:p-0 h-screen md:h-auto md:top-0 md:relative md:flex items-center"
+					: 'hidden'} absolute bg-white top-16 w-screen left-0 p-4 md:p-0 h-screen md:h-auto md:top-0 md:relative md:flex items-center"
 			>
 				<ul class="flex flex-col space-y-4 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full">
 					{#await promise}
@@ -95,7 +95,7 @@
 
 								{#if navigation.filter((c) => item.id == c.parent && c !== item).length > 0}
 									<div
-										class="md:fixed left-0 md:top-18 w-screen md:bg-white md:bg-opacity-90 md:backdrop-blur-md md:shadow-sm transition"
+										class="md:fixed left-0 md:top-18 w-screen md:bg-white md:bg-opacity-80 md:backdrop-blur-md md:shadow-sm transition"
 									>
 										<ul class="md:container flex gap-6 md:py-3 md:hidden group-hover:flex">
 											{#each navigation.filter((c) => item.id == c.parent && c !== item) as child}
