@@ -8,6 +8,7 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/stores';
 
 	/** @type {import('./$types').PageData} */
 	export let data = [];
@@ -22,6 +23,27 @@
 		>{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}</title
 	>
 	<meta name="description" content={data.meta_description} />
+
+	<!-- Facebook Meta Tags -->
+	<meta property="og:url" content={$page.url.href} />
+	<meta property="og:type" content="website" />
+	<meta
+		property="og:title"
+		content="{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}"
+	/>
+	<meta property="og:description" content={data.meta_description} />
+	<meta property="og:image" content="https://klimadashboard.{PUBLIC_VERSION}/social.jpg" />
+
+	<!-- Twitter Meta Tags -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta property="twitter:url" content={$page.url.href} />
+	<meta property="twitter:site" content="@klimadashboard" />
+	<meta
+		name="twitter:title"
+		content="{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}"
+	/>
+	<meta name="twitter:description" content={data.meta_description} />
+	<meta name="twitter:image" content="https://klimadashboard.{PUBLIC_VERSION}/social.jpg" />
 </svelte:head>
 
 {#key data}
