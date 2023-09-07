@@ -41,7 +41,7 @@
 		<Loader />
 	{:then topo}
 		{#if dataset}
-			<div class="grid grid-cols-3 md:grid-cols-6 gap-4">
+			<div class="text-sm sm:text-base grid grid-cols-3 md:grid-cols-6 gap-4">
 				{#each policies as policy}
 					<div class="text-center leading-tight">
 						<h3 class="font-bold h-8">
@@ -49,7 +49,7 @@
 						</h3>
 
 						<Map data={dataset.filter((d) => d.year == 2021 && d.policy == policy)} {topo} />
-						<p class="text-5xl font-light">
+						<p class="text-3xl sm:text-5xl font-light">
 							{dataset.find((d) => d.policy == policy)['support.rd']}%
 						</p>
 						<p>Bundesweite Zustimmung</p>
