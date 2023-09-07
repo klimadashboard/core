@@ -22,6 +22,7 @@
 	let searchBox;
 
 	export function reset() {
+		selectedFeature = false;
 		searchBox?.reset();
 	}
 
@@ -40,9 +41,10 @@
 		bind:this={searchBox}
 		items={searchItems}
 		placeholder={selectedFeature ? selectedFeature : 'PLZ eingeben...'}
-		on:selectItem={(e) => (selectedFeature = e.detail.item.region_code)}
+		on:selectItem={(e) =>
+			e.detail ? (selectedFeature = e.detail.item.region_code) : (selectedFeature = false)}
 	/>
 	{#if selectedFeature}
-		<button on:mousedown={() => (selectedFeature = false)}>Reset</button>
+		<button on:mousedown={reset}>Reset</button>
 	{/if}
 {/if}

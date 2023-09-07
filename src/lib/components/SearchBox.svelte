@@ -13,7 +13,7 @@
 		searchString = '';
 	}
 
-	let searchString;
+	$: searchString = '';
 	let prevSearchString = null;
 
 	let displayItems = false;
@@ -25,9 +25,11 @@
 		displayItems = false;
 		searchString = item?.title;
 		selectedItem = item;
-		dispatch('selectItem', {
-			item
-		});
+		if (item) {
+			dispatch('selectItem', {
+				item
+			});
+		}
 	}
 
 	$: {
@@ -121,7 +123,7 @@
 		icon="assets/icons/search.svg"
 		bind:value={searchString}
 		on:input={() => (displayItems = true)}
-		{placeholder}
+		placeholder="PLZ oder Ort eingeben..."
 	/>
 	{#if matchingItems !== null && !selectedItem && displayItems}
 		<div style="z-index: 10000" class="absolute shadow-md bg-white left-0 right-0">
