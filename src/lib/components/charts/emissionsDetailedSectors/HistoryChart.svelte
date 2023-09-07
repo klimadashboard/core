@@ -1,4 +1,5 @@
 <script>
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import ChartAxes from './ChartAxes.svelte';
 
 	import { scaleLinear } from 'd3-scale';
@@ -18,7 +19,7 @@
 	$: chartHeight = clientHeight;
 	$: chartWidth = clientWidth;
 	$: baseline = chartHeight - 40;
-	$: startline = 80;
+	$: startline = PUBLIC_VERSION == 'at' ? 80 : 95;
 	$: dx = (chartWidth - startline) / years.length;
 
 	$: yAxisMax = years.reduce((max, y, yi) => Math.max(max, ksgSectorSum(0, yi)), 0);

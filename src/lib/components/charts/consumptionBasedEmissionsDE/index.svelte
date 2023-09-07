@@ -50,6 +50,7 @@
 			showTotal={false}
 			preselectedIndex={30}
 			showZeroValuesInLegend={false}
+			marginTop={PUBLIC_VERSION == 'at' ? 0 : 10}
 		/>
 	{:else}
 		<Loader />

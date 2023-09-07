@@ -334,6 +334,7 @@
 			unit={'t THG'}
 			visualisation={'stacked'}
 			{freezeYAxis}
+			marginLeft={PUBLIC_VERSION == 'at' ? 20 : 33}
 		/>
 	{:else}
 		<Loader />

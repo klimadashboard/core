@@ -131,7 +131,7 @@
 					class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition"
 				>
 					<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
-						{chart.content.title}
+						{chart.content.title.replace(/^DE: /, "")}
 					</h2>
 					<div class="flex items-center gap-3 transition">
 						<button
