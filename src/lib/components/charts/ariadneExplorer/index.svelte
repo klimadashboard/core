@@ -68,7 +68,7 @@
 	<Search bind:selectedFeature />
 </div>
 
-<div class="flex">
+<div class="flex flex-col sm:flex-row">
 	{#if data}
 		<Maps {data} {years} {selectedPolicy} bind:selectedFeature />
 		{#if !showAllYears}
