@@ -1,7 +1,9 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import FAQs from '$lib/components/FAQs.svelte';
 </script>
 
+<FAQs />
 <footer class="text-white bg-gray-800">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
 		<div class="">

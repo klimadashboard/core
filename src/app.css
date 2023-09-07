@@ -169,6 +169,10 @@ details[open] summary:before {
 	margin-right: 0.65em;
 }
 
+details a {
+	@apply border-b;
+}
+
 .text-prose a {
 	@apply border-b hover:text-gray-900 transition;
 }
