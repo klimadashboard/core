@@ -1,17 +1,19 @@
 export default function formatNumber(number, unit, decimals) {
+	const millionNumber = number > 1000000;
+	let value = millionNumber ? number / 1000000 : number;
+
 	if (decimals == 0) {
-		var roundedValue = Math.round(number);
+		var roundedValue = Math.round(value);
 	} else {
-		var roundedValue = Number(Math.round(number + 'e' + (decimals || 2)) + 'e-' + (decimals || 2));
+		var roundedValue = Number(Math.round(value + 'e' + (decimals || 2)) + 'e-' + (decimals || 2));
 	}
 
 	if (roundedValue == 0) {
-		roundedValue = number;
+		roundedValue = value;
 	}
 	var valueString = roundedValue.toLocaleString('de-AT');
-	if (unit) {
-		valueString += ' ' + unit;
-	}
+	if (millionNumber) valueString += ' Mio. ';
+	if (unit) valueString += ' ' + unit;
 
 	return valueString;
 }
