@@ -19,6 +19,7 @@
 	export let lineWidth = 3;
 	export let circleRadius = 5;
 	export let marginLeft = 20;
+	export let marginTop = 0;
 	export let xTicksInterval = 10;
 	export let minValue = 0;
 	export let preselectedIndex;
@@ -28,7 +29,7 @@
 	let chartWidth;
 	let legendHeight;
 
-	$: margin = { top: legendHeight + 10, right: 15, bottom: 20, left: marginLeft };
+	$: margin = { top: legendHeight + 10 + marginTop, right: 15, bottom: 20, left: marginLeft };
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 

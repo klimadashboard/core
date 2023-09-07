@@ -15,10 +15,11 @@
 	export let unit = '';
 	export let show0ValuesInLegend = false;
 	export let freezeYAxis = false;
+	export let marginLeft = 20;
 
 	let chartHeight;
 	let chartWidth;
-	const margin = { top: 20, right: 0, bottom: 50, left: 20 };
+	$: margin = { top: 20, right: 0, bottom: 50, left: marginLeft };
 
 	$: padding = Math.min(3, Math.round(chartWidth / data.length / 5));
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
