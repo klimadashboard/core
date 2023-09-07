@@ -77,8 +77,8 @@
 					</button>
 				</div>
 			{/if}
-			<h1 class="text-4xl sm:text-5xl tracking-tight my-2">{data.heading}</h1>
-			<div class="text-xl mt-4 page-intro">
+			<h1 class="text-3xl sm:text-4xl md:text-5xl tracking-tight my-2">{data.heading}</h1>
+			<div class="text-lg sm:text-xl mt-4 page-intro">
 				{@html data.intro}
 			</div>
 		</div>
