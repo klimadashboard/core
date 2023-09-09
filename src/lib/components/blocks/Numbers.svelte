@@ -7,7 +7,7 @@
 		<h2 class="uppercase font-semibold tracking-wider mb-2">{@html block.content.heading}</h2>
 	{/if}
 
-	<div class="max-w-4xl grid gap-4 {block.content.layout == 'two' ? 'grid-cols-2' : ''}">
+	<div class="max-w-4xl grid gap-4 {block.content.layout == 'two' ? 'md:grid-cols-2' : ''}">
 		{#each block.content.structure as number}
 			<div>
 				{#if number.heading}
