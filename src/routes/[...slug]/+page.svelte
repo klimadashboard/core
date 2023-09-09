@@ -16,6 +16,8 @@
 	$: if (browser && data.redirecturl) {
 		goto(data.redirecturl);
 	}
+
+	$: itemtype = data.pagelayout.includes('"type":"toggle"') ? 'https://schema.org/FAQPage' : '';
 </script>
 
 <svelte:head>
@@ -50,7 +52,7 @@
 	{#if data.redirecturl}
 		<Loader />
 	{:else}
-		<main class="mb-24">
+		<main class="mb-24 min-h-screen pt-16" itemscope {itemtype}>
 			<PageHeader {data} />
 			{#if data.pagelayout}
 				{#each JSON.parse(data.pagelayout) as layout}
