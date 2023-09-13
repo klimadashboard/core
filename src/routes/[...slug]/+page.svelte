@@ -17,7 +17,11 @@
 		goto(data.redirecturl);
 	}
 
-	$: itemtype = data.pagelayout.includes('"type":"toggle"') ? 'https://schema.org/FAQPage' : '';
+	$: itemtype = data.pagelayout
+		? data.pagelayout.includes('"type":"toggle"')
+			? 'https://schema.org/FAQPage'
+			: ''
+		: '';
 </script>
 
 <svelte:head>
