@@ -216,7 +216,7 @@
 			categories: [
 				{
 					label: 'Prognose 2022',
-					value: 73600000,
+					value: 72600000,
 					estimate: true,
 					color: '#4DB263'
 				}
@@ -257,7 +257,7 @@
 		</svg>
 		<select
 			bind:value={selectedRegion}
-			class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+			class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 			disabled={selectedClassification == 'Emissionshandel Abgrenzung ab 2013'}
 		>
 			{#each regions as region}
@@ -286,7 +286,7 @@
 			</svg>
 			<select
 				bind:value={selectedClassification}
-				class="block appearance-none w-full bg-gray-200 border border-gray-100   py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+				class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 			>
 				{#each classifications as classification}
 					<option value={classification.key}>{classification.label}</option>

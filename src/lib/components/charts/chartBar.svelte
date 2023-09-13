@@ -151,7 +151,7 @@
 							{#each datapoint.categories as category, j}
 								<g style="color: {category.color}">
 									<linearGradient
-										id="grad-{category.color.replace("#","")}-{i}-{j}"
+										id="grad-{category.color.replace('#', '')}-{i}-{j}"
 										x1="0%"
 										y1="0%"
 										x2="0%"
@@ -169,7 +169,7 @@
 										fill={category.estimate
 											? 'transparent'
 											: category.color
-											? 'url(#grad-' + category.color.replace("#","") + '-' + i + '-' + j + ')'
+											? 'url(#grad-' + category.color.replace('#', '') + '-' + i + '-' + j + ')'
 											: 'currentColor'}
 										stroke={category.estimate
 											? 'currentColor'
@@ -235,17 +235,14 @@
 									width={barWidth}
 									height={margin.bottom}
 									x={-4}
-									class="text-white  fill-current"
+									class="text-white fill-current"
 								/>
 								<text fill="currentColor" dominant-baseline="hanging">{datapoint.label}</text>
 							</g>
 						{/if}
 
 						{#if datapoint.annotation}
-							<g
-								transform="translate({-barWidth / 2},{innerChartHeight * 0.15})"
-								class="text-gray-700"
-							>
+							<g transform="translate({0},{innerChartHeight * 0.15})" class="text-gray-700">
 								<text
 									class="text-sm fill-current font-semibold"
 									text-anchor="end"
@@ -253,7 +250,7 @@
 									y="-1em"
 								>
 									{#each datapoint.annotation.match(/.{1,30}/g) as text}
-										<tspan x="0" dy="1em">{text}</tspan>
+										<tspan x="0" dy="1.5em">{text}</tspan>
 									{/each}
 								</text>
 								<svg
@@ -279,7 +276,7 @@
 
 				{#each lines as line}
 					<g
-						class="text-gray-500 hover:text-gray-600   transition"
+						class="text-gray-500 hover:text-gray-600 transition"
 						transform={`translate(0, ${innerChartHeight - yScale(line.value) || 0})`}
 					>
 						<line
