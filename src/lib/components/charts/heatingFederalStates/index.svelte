@@ -3,6 +3,7 @@
 	import Papa from 'papaparse';
 
 	let rawData;
+	let maxYear;
 
 	Papa.parse(
 		'https://data.klimadashboard.org/at/heating-systems/klimadashboard_AT_heatingSystems_timeline.csv',
@@ -14,12 +15,13 @@
 			complete: function (results) {
 				if (results) {
 					rawData = results.data;
+					maxYear = rawData.sort((a, b) => b.year - a.year)[0].year;
 				}
 			}
 		}
 	);
 
-	$: selectedYear = 2020;
+	$: selectedYear = maxYear;
 	$: showPerHousehold = false;
 
 	$: dataset = rawData
@@ -79,7 +81,7 @@
 		<input
 			type="range"
 			min="2004"
-			max="2020"
+			max={maxYear}
 			step="2"
 			bind:value={selectedYear}
 			aria-label={'Jahr auswählen'}
