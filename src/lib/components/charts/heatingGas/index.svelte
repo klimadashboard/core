@@ -1,7 +1,7 @@
 <script>
 	export let v;
 
-	$: gasDaily = 131;
+	$: gasDaily = 142;
 </script>
 
 <div class="flex flex-col">
