@@ -9,7 +9,7 @@
 		at: [
 			{
 				value: 280,
-				probability: 66,
+				probability: 67,
 				temperature: 1.5,
 				type: 'THG',
 				percentPerYear: '-22% pro Jahr'
@@ -23,7 +23,7 @@
 			},
 			{
 				value: 340,
-				probability: 66,
+				probability: 67,
 				temperature: 1.65,
 				type: 'THG',
 				percentPerYear: '-22% pro Jahr'
@@ -39,7 +39,7 @@
 		de: [
 			{
 				value: 1343,
-				probability: 66,
+				probability: 67,
 				temperature: 1.5,
 				type: 'THG',
 				percentPerYear: '-33% pro Jahr',
@@ -65,7 +65,7 @@
 			},
 			{
 				value: 5443,
-				probability: 66,
+				probability: 67,
 				temperature: 1.75,
 				type: 'THG',
 				percentPerYear: '-10% pro Jahr',
@@ -144,7 +144,7 @@
 		(d) => d.temperature == chosenTemperature && d.probability == chosenProbability
 	);
 	$: chosenTemperature = 1.5;
-	$: chosenProbability = 66;
+	$: chosenProbability = 67;
 
 	$: containerWidth = 0;
 </script>
@@ -155,9 +155,9 @@
 		class="flex flex-wrap gap-4 items-center text-sm {PUBLIC_VERSION == 'at' ? 'hidden' : ''}"
 	>
 		<div class="flex gap-2 items-center bg-gray-100 rounded-full py-1 px-3">
-			<label class="flex items-center gap-1 {chosenProbability == 66 ? 'font-bold' : ''}">
-				<input type="radio" value={66} bind:group={chosenProbability} />
-				<span>66%</span>
+			<label class="flex items-center gap-1 {chosenProbability == 67 ? 'font-bold' : ''}">
+				<input type="radio" value={67} bind:group={chosenProbability} />
+				<span>67%</span>
 			</label>
 			{#if chosenTemperature == 1.5}
 				<label class="flex items-center gap-1 {chosenProbability == 50 ? 'font-bold' : ''}">
@@ -184,7 +184,7 @@
 						value={1.75}
 						bind:group={chosenTemperature}
 						on:click={() => {
-							chosenProbability = 66;
+							chosenProbability = 67;
 						}}
 					/>
 					<span>+1,75°C</span>
