@@ -18,9 +18,8 @@
 		};
 	});
 
-	const wetterdienst = PUBLIC_VERSION == 'at' ? 'zamg' : 'impact';
+	const wetterdienst = PUBLIC_VERSION == 'at' ? 'geosphere' : 'impact';
 	$: Papa.parse(
-		// `https://data.klimadashboard.org/${PUBLIC_VERSION}/zamg/stations/${$selectedStation}/yearly.csv`,
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations/${$selectedStation}/yearly.csv`,
 		{
 			download: true,
@@ -50,7 +49,10 @@
 		const upperBoundIndex = historicalDataset.findIndex((d) => d.year == upperBoundYear);
 
 		// const rollingAverageDataset = [...historicalDataset].slice(lowerBoundIndex, upperBoundIndex);
-		const rollingAverageDataset = [...historicalDataset].slice(Math.max(0, index-yearInterval), index-yearInterval < 0 ? 0 : index);
+		const rollingAverageDataset = [...historicalDataset].slice(
+			Math.max(0, index - yearInterval),
+			index - yearInterval < 0 ? 0 : index
+		);
 		rollingAverageSum = 0;
 		for (var i = 0; i < rollingAverageDataset.length; i++) {
 			rollingAverageSum += rollingAverageDataset[i].averageTemperature;

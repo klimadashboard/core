@@ -106,7 +106,7 @@
 				style="font-size: 0.7em;"
 				>{selectedStationName} – {selectedStation}
 				{PUBLIC_VERSION == 'at' ? `– ${timestamp}` : ''} – {PUBLIC_VERSION == 'at'
-					? 'ZAMG'
+					? 'Geosphere'
 					: 'DWD'}</text
 			>
 		</svg>

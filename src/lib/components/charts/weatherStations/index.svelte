@@ -8,7 +8,7 @@
 	let metaDataStations;
 	$: geoLocationStatus = '';
 
-	const wetterdienst = PUBLIC_VERSION == 'at' ? 'zamg' : 'impact';
+	const wetterdienst = PUBLIC_VERSION == 'at' ? 'geosphere' : 'impact';
 
 	function stateLongFormat(state) {
 		const states = {
@@ -26,8 +26,6 @@
 		return state;
 	}
 
-	// Papa.parse('https://data.klimadashboard.org/at/zamg/stations.csv', {
-	// Papa.parse(`../data/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
 	Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
 		download: true,
 		dynamicTyping: true,
@@ -180,7 +178,7 @@
 							class="glossary-label"
 							on:mousedown={() => glossaryItem.set('wetterstationen-der-zamg')}
 						/>
-						Wetterstationen der ZAMG
+						Wetterstationen der Geosphere
 						<span class="glossary-label" on:mousedown={() => glossaryItem.set('zamg')} /> aus, um das
 						laufende Jahr mit vergangenen Jahren zu vergleichen.
 					</p>

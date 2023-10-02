@@ -9,7 +9,9 @@
 	$: selectedStationData = [];
 
 	$: Papa.parse(
-		'https://data.klimadashboard.org/at/zamg/stations/' + selectedStation + '/yearly-today.csv',
+		'https://data.klimadashboard.org/at/geosphere/stations/' +
+			selectedStation +
+			'/yearly-today.csv',
 		{
 			download: true,
 			dynamicTyping: true,
@@ -26,7 +28,7 @@
 
 	$: selectedStationName = 'station';
 
-	$: Papa.parse('https://data.klimadashboard.org/at/zamg/stations.csv', {
+	$: Papa.parse('https://data.klimadashboard.org/at/geosphere/stations.csv', {
 		download: true,
 		dynamicTyping: true,
 		skipEmptyLines: true,

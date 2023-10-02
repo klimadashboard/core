@@ -3,7 +3,7 @@
 </script>
 
 {#if block.content.level == 'h1'}
-	<h1 id={block.id} class="mt-20 text-4xl  tracking-tight container">
+	<h1 id={block.id} class="mt-20 text-4xl tracking-tight container">
 		{@html block.content.text}
 	</h1>
 {:else if block.content.level == 'h2'}
