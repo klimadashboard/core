@@ -61,7 +61,7 @@
 			<Chart
 				{type}
 				{unifiedScaling}
-				maxX={PUBLIC_VERSION == 'at' ? '2031-04-01' : '2040-07-01'}
+				maxX={PUBLIC_VERSION == 'at' ? '2031-04-01' : '2041-12-31'}
 				maxY={PUBLIC_VERSION == 'at' ? 50 : 500}
 			/>
 		{/each}
