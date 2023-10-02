@@ -83,7 +83,7 @@
 	{/if}
 </div>
 
-<div class="flex rounded-lg overflow-hidden mt-4">
+<div class="inline-flex rounded-lg overflow-hidden mt-4">
 	{#each Array.from(Array(11).keys()) as i}
 		<div class="w-6 h-6 grid" style="background: {scaleApproval(i * 10)}">
 			{#if i < 2 || i > 8}

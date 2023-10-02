@@ -36,7 +36,7 @@
 >
 	{#if chartWidth && chartHeight}
 		<svg width={'100%'} height={'100%'}>
-			<rect width={chartWidth} height={chartHeight} class="text-gray-100  fill-current" />
+			<rect width={chartWidth} height={chartHeight} class="text-gray-100 fill-current" />
 
 			<rect width={chartWidth} height={70} class="fill-current" />
 
@@ -103,7 +103,7 @@
 				text-anchor="end"
 				class="text-xs opacity-50 fill-gray-700"
 				style="font-size: 0.7em;"
-				>{selectedStationName} – {selectedStation} – {timestamp} – ZAMG</text
+				>{selectedStationName} – {selectedStation} – {timestamp} – Geosphere</text
 			>
 		</svg>
 	{/if}

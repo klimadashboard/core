@@ -8,9 +8,8 @@
 
 	Papa.parse(
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${
-			PUBLIC_VERSION == 'at' ? 'zamg' : 'impact'
+			PUBLIC_VERSION == 'at' ? 'geosphere' : 'impact'
 		}/historic_mean_temperatures_${PUBLIC_VERSION}.csv`,
-		// `../data/${PUBLIC_VERSION}/${PUBLIC_VERSION == 'at' ? 'zamg' : 'impact'}/historic_mean_temperatures_${PUBLIC_VERSION}.csv`,
 		{
 			download: true,
 			dynamicTyping: true,

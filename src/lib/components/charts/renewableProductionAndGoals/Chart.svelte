@@ -106,7 +106,7 @@
 	$: selected = false;
 </script>
 
-<div class="bg-gray-100  rounded overflow-hidden">
+<div class="bg-gray-100 rounded overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
 		<h3 class="text-xl"><b>{type.label}</b> {title}</h3>
 		{@html type.icon}
@@ -124,7 +124,7 @@
 										y={-chartHeight - margin.top}
 										width={chartWidth / 15}
 										height={chartHeight}
-										class="fill-gray-200  opacity-50"
+										class="fill-gray-200 opacity-50"
 									/>
 									<text class="text-sm text-gray-600 fill-current" x="6" y={-margin.top - 4}
 										>{tick.getFullYear()}</text

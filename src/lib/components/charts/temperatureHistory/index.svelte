@@ -10,7 +10,7 @@
 
 	async function getDataForSelectedStation(stationId) {
 		let response = await fetch(
-			`https://data.klimadashboard.org/at/zamg/stations/${stationId}/data-processed.json`
+			`https://data.klimadashboard.org/at/geosphere/stations/${stationId}/data-processed.json`
 		);
 		let data = await response.json();
 		if (response.ok) {
@@ -26,7 +26,7 @@
 
 	$: selectedStationName = 'station';
 
-	$: Papa.parse('https://data.klimadashboard.org/at/zamg/stations.csv', {
+	$: Papa.parse('https://data.klimadashboard.org/at/geosphere/stations.csv', {
 		download: true,
 		dynamicTyping: true,
 		skipEmptyLines: true,

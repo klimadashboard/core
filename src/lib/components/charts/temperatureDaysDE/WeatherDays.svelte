@@ -6,14 +6,11 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let selectedStation = 427;
-	const wetterdienst = PUBLIC_VERSION == 'at' ? 'zamg' : 'impact';
+	const wetterdienst = PUBLIC_VERSION == 'at' ? 'geosphere' : 'impact';
 
 	$: selectedStationData = [];
 
 	$: Papa.parse(
-		// 'https://data.klimadashboard.org/at/zamg/stations/' + selectedStation + '/yearly-today.csv',
-		// 'https://data.klimadashboard.org/at/zamg/stations/' + selectedStation + '/yearly.csv',
-		// `../data/${PUBLIC_VERSION}/${wetterdienst}/stations/${selectedStation}/yearly.csv`,
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations/${selectedStation}/yearly.csv`,
 		{
 			download: true,
@@ -31,8 +28,6 @@
 
 	$: selectedStationName = 'station';
 
-	// $: Papa.parse('https://data.klimadashboard.org/de/zamg/stations.csv', {
-	// $: Papa.parse(`../data/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
 	$: Papa.parse(`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations.csv`, {
 		download: true,
 		dynamicTyping: true,

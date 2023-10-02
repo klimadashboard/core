@@ -3,6 +3,7 @@
 	import mapboxgl from 'mapbox-gl';
 	import { PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
 	import { browser } from '$app/environment';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	export let data;
 
@@ -141,9 +142,14 @@
 						<p>{item.properties['Nettonennleistung [MWel]']}MWel</p>
 						<p>{item.properties.Betreiber}</p>
 						{#if item.properties['CO2 [t] im Jahr 2016']}
-							<p>{item.properties['CO2 [t] im Jahr 2016']}CO2-Emissionen im Jahr 2016</p>
+							<p>
+								{formatNumber(item.properties['CO2 [t] im Jahr 2016'])}CO<sub>2</sub>-Emissionen im
+								Jahr 2016
+							</p>
 						{/if}
-						<p>Stilllegung {item.properties.Stilllegung}</p>
+						{#if item.properties.Stilllegung}
+							<p>Stilllegung {item.properties.Stilllegung}</p>
+						{/if}
 					{/if}
 				</li>
 			{/each}
