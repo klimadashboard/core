@@ -55,6 +55,7 @@
 	// selected ksg sector
 	$: selection = ksgSelection != null ? sortedData[ksgSelection] : null;
 	$: fixedSelection = ksgSelection != null ? sectorlyData[ksgSelection] : null;
+	$: sortedSelection = ksgSelection != null ? sortedData[ksgSelection] : null;
 	const area = tweened([-150, 0, 1150, 1150], { easing: cubicInOut, duration: 800 });
 	$: selection != null
 		? area.set([selection.x, selection.y, selection.w, selection.h])
@@ -254,7 +255,7 @@
 				{/if}
 			{/each}
 			{#if ksgSelection != null && crfSelection != null}
-				{@const detailSector = fixedSelection?.sectors[crfSelection]}
+				{@const detailSector = sortedSelection?.sectors[crfSelection]}
 				<foreignObject height={HEIGHT} width={1000} x={0} y={0}>
 					<div
 						class="w-full h-full flex flex-col p-8"
