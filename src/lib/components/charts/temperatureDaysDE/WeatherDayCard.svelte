@@ -55,7 +55,7 @@
 					>{totalForKeyCurrentYear}</text
 				>
 				<g transform="translate({totalForKeyCurrentYear.toString().length * 36},0)">
-					<text class="font-semibold fill-current" y="-18">{title} <!-- bisher --></text>
+					<text class="font-semibold fill-current" y="-18">{title} bisher</text>
 					<text class="font-semibold fill-current">im Jahr {currentYear}</text>
 				</g>
 			</g>
