@@ -6,7 +6,7 @@
 	let budgets = [
 		{
 			value: 1343,
-			probability: 66,
+			probability: 67,
 			temperature: 1.5,
 			type: 'CO2'
 		},
@@ -18,7 +18,7 @@
 		},
 		{
 			value: 5443,
-			probability: 66,
+			probability: 67,
 			temperature: 1.75,
 			type: 'CO2'
 		}
