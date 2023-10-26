@@ -15,7 +15,7 @@
 	$: selectedStationData = [];
 
 	$: Papa.parse(
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations/${selectedStation}/yearly.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations/${selectedStation}/yearly-today.csv`,
 		{
 			download: true,
 			dynamicTyping: true,

@@ -76,7 +76,7 @@
 					>{totalForKeyHistoricalAverage}</text
 				>
 				<g transform="translate({totalForKeyHistoricalAverage.toString().length * 36},0)">
-					<text class="font-semibold fill-current" y="-18">{title} im</text>
+					<text class="font-semibold fill-current" y="-18">{title} bis {timestamp} im</text>
 					<text class="font-semibold fill-current">Durchschnitt {firstYear} – {lastYear}</text>
 				</g>
 			</g>
