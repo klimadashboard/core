@@ -16,27 +16,29 @@
 				viewBox="0 0 16 14"
 				fill="none"
 				xmlns="http://www.w3.org/2000/svg"
-				class="ml-auto"
-				><path
+			>
+				<path
 					d="M1 7H15"
 					stroke="black"
 					stroke-width="2"
 					stroke-linecap="round"
 					stroke-linejoin="round"
-				/><path
+				/>
+				<path
 					d="M9 13L15 7"
 					stroke="black"
 					stroke-width="2"
 					stroke-linecap="round"
 					stroke-linejoin="round"
-				/><path
+				/>
+				<path
 					d="M9 1L15 7"
 					stroke="black"
 					stroke-width="2"
 					stroke-linecap="round"
 					stroke-linejoin="round"
-				/></svg
-			>
+				/>
+			</svg>
 		{/if}
 	</a>
 </div>
