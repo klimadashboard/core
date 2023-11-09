@@ -22,6 +22,8 @@
 			? 'https://schema.org/FAQPage'
 			: ''
 		: '';
+
+	console.log(data);
 </script>
 
 <svelte:head>

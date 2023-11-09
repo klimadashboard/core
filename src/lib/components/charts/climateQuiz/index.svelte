@@ -27,11 +27,8 @@
 
 		// randomise questions
 		shuffleArray(quizQuestions);
-		console.log(quizQuestions);
 
 		// possible TODO: randomise answers?
-
-		console.log(PUBLIC_VERSION);
 	});
 
 	function shuffleArray(arr: QuizQuestion[]) {
@@ -58,7 +55,6 @@
 		// 		count: Math.random() > 0.3 ? Math.floor(Math.random() * 100) : clicked == a ? 1 : 0
 		// 	};
 		// });
-		console.log(answerCounts);
 		quizQuestions[questionIndex].clickedCount = answerCounts.reduce(
 			(sum, ans) => sum + ans.count,
 			0

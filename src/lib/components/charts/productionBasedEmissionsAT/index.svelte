@@ -194,8 +194,6 @@
 			.reduce(reducer, []);
 	}
 
-	$: console.log(rawData?.filter((d) => d.classification == selectedClassification));
-
 	$: if (rawData?.length > 0) {
 		lastYear = rawData[rawData.length - 1]['year'];
 		firstYearEmissions = Math.round(rawData[0]['total_co2e_t']);
