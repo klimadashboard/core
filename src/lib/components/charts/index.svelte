@@ -9,6 +9,7 @@
 
 	export let id;
 	export let hideWrapper = false;
+	export let showText = true;
 
 	let Chart;
 	let chartId;
@@ -131,7 +132,7 @@
 					class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition"
 				>
 					<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
-						{chart.content.title.replace(/^DE: /, "")}
+						{chart.content.title.replace(/^DE: /, '')}
 					</h2>
 					<div class="flex items-center gap-3 transition">
 						<button
@@ -229,7 +230,7 @@
 						<svelte:component this={Chart} v={createVariables(chart.content.variables)} />
 					</div>
 					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-						{#if chart.content.text}
+						{#if chart.content.text && showText}
 							<p class="text-lg text col-span-2">{@html chart.content.text}</p>
 						{/if}
 						{#if chart.content.source}
