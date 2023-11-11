@@ -1,7 +1,7 @@
 <script>
-	import companies from '$lib/stores/companies';
+	import atxCompanies from '$lib/stores/companies';
 
-	console.log(companies);
+	const companies = atxCompanies.sort((a, b) => (a.sector < b.sector ? -1 : +1));
 
 	function computeWedgeCenter({ radius, angle, angleSpan } = {}) {
 		const c = { x: 500, y: 500 };
@@ -14,7 +14,6 @@
 		const v_a2 = add(rotate({ x: radiusOuter, y: 0 }, angle), c);
 		const v_b1 = add(rotate({ x: radiusInner, y: 0 }, angle + angleSpan), c);
 		const v_b2 = add(rotate({ x: radiusOuter, y: 0 }, angle + angleSpan), c);
-		console.log(angle, '->', angle + angleSpan);
 		const path = [
 			['M', v_a1.x, v_a1.y],
 			['L', v_a2.x, v_a2.y],
@@ -41,35 +40,33 @@
 </script>
 
 <div />
-<svg viewBox="0 0 1000 1000">
+<svg viewBox="0 0 1000 1000" style="max-width: 900px;">
 	{#each companies as company, c}
 		{@const summedShares = companies.reduce((sum, comp, i) => {
 			if (i < c) return sum + comp.weight;
-			else if (i == c) {
-				console.log(comp.name);
-				return sum;
-			} else return sum;
+			else return sum;
 		}, 0)}
 		{@const wedge = computeWedgePath({
 			radiusInner: 600 / 2,
 			radiusOuter: 800 / 2,
-			angle: (summedShares / 100) * 360,
+			angle: 100 + (summedShares / 100) * 360,
 			angleSpan: (company.weight / 100) * 360
 		})}
 		{@const wedgeCenter = computeWedgeCenter({
 			radius: 900 / 2,
-			angle: (summedShares / 100) * 360,
+			angle: 100 + (summedShares / 100) * 360,
+			angleSpan: (company.weight / 100) * 360
+		})}
+		{@const textCenter = computeWedgeCenter({
+			radius: 700 / 2,
+			angle: 100 + (summedShares / 100) * 360,
 			angleSpan: (company.weight / 100) * 360
 		})}
 		<path d={wedge} fill="rgba(0,0,0,{c / 20})" stroke="red" />
-		<rect
-			stroke="black"
-			fill="none"
-			x={wedgeCenter.x - 50 / 2}
-			y={wedgeCenter.y - 50 / 2}
-			width="50"
-			height="50"
-		/>
+		<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
+			>{company.weight}%</text
+		>
+		<circle stroke="black" fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
 		<image
 			href="../icons/atx-companies/{company.logo}.svg"
 			x={wedgeCenter.x - 50 / 2}
