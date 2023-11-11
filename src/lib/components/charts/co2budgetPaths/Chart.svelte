@@ -175,6 +175,17 @@
 		? generateLine('ksg')(dataPaths.filter((d) => d.year >= currentYear))
 		: null;
 	$: ksgTHGLine = showKSGGoal ? generateLine('thg')(thgPathDe) : null;
+
+	$: getAlternateForKey = function (key) {
+		if (chosenBudget.usedUp) {
+			return (
+				chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year == 2027 &&
+				chartWidth < 600
+			);
+		} else {
+			return false;
+		}
+	};
 </script>
 
 <div class="relative">
@@ -366,12 +377,7 @@
 					{#each selectedKeys as key, i}
 						<g
 							transform="translate({xScaleOffset(getZeroYear(key)) +
-								(i == 2 ? -20 : 0)},{innerChartHeight +
-								25 +
-								(chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year == 2027 &&
-								chartWidth < 600
-									? -10
-									: 0)})"
+								(i == 2 ? -20 : 0)},{innerChartHeight + 25 + (getAlternateForKey(key) ? 0 : -10)})"
 							style="color: {keys[
 								keys.findIndex(
 									(d) => d.key == selectedKeys[i].replace(chosenBudget.value + '_', '')
