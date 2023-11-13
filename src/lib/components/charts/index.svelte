@@ -185,6 +185,7 @@
 						<a
 							href="https://klimadashboard.{PUBLIC_VERSION}"
 							class="ml-2"
+							target="_blank"
 							aria-label="Klimadashboard.{PUBLIC_VERSION}"
 						>
 							<svg
