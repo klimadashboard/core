@@ -128,6 +128,7 @@
 					<li class="opacity-100 hover:opacity-80 transition md:ml-4">
 						<a
 							href="https://opencollective.com/klimadashboard"
+							target="_blank"
 							class="leading-[4rem] text-sm font-bold uppercase tracking-wide bg-gradient-blue px-2 py-1 text-white rounded"
 							>Spenden</a
 						>
