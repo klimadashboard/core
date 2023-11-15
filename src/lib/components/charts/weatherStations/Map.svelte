@@ -9,7 +9,9 @@
 
 	async function getDataForSelectedStation(stationId) {
 		let response = await fetch(
-			`https://data.klimadashboard.org/${PUBLIC_VERSION}/${PUBLIC_VERSION == 'at' ? 'austria' : 'germany'}.json`
+			`https://data.klimadashboard.org/${PUBLIC_VERSION}/${
+				PUBLIC_VERSION == 'at' ? 'austria' : 'germany'
+			}.json`
 			// `../data/${PUBLIC_VERSION}/${PUBLIC_VERSION == 'at' ? 'austria' : 'germany'}.json`
 		);
 		let data = await response.json();
@@ -35,6 +37,7 @@
 	$: projection = geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo);
 
 	const colors = ['#209857', '#5774DB']; // from green to blue
+	const selectedColor = '#C7495C';
 
 	$: getColor = function (station) {
 		const colorScale = scaleLinear().range(colors).domain([0, 3100]);
@@ -48,6 +51,10 @@
 			.range(radi)
 			.domain([min(data, (d) => d.height), max(data, (d) => d.height)]);
 		return radiusScale(station.height);
+	};
+
+	$: isSelected = function (station) {
+		return $selectedStation == station.id;
 	};
 </script>
 
@@ -69,13 +76,17 @@
 			</g>
 			<g>
 				{#each data as station}
-					<!-- svelte-ignore a11y-mouse-events-have-key-events -->
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
 					<g
 						transform="translate({projection([station.longitude, station.latitude])})"
-						on:mouseover={() => selectedStation.set(station.id)}
+						on:click={() => selectedStation.set(station.id)}
+						cursor="pointer"
 					>
 						{#if $selectedStation == station.id}
-							<circle r={getRadius(station)} fill={getColor(station)}>
+							<circle
+								r={getRadius(station)}
+								fill={isSelected(station) ? selectedColor : getColor(station)}
+							>
 								<animate
 									attributeName="r"
 									from="5"
@@ -94,7 +105,11 @@
 								/>
 							</circle>
 						{/if}
-						<circle r={getRadius(station)} fill={getColor(station)} class="opacity-70" />
+						<circle
+							r={getRadius(station)}
+							fill={isSelected(station) ? selectedColor : getColor(station)}
+							class="opacity-70"
+						/>
 					</g>
 				{/each}
 			</g>
