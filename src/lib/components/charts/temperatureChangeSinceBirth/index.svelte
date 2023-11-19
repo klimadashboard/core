@@ -21,7 +21,6 @@
 						.map((entry, index) => {
 							const lowerBound = Math.max(0, index - yearInterval);
 							const upperBound = lowerBound + yearInterval;
-							// console.log(lowerBound);
 							const boundYears = [...results.data]
 								.filter(
 									(item) =>
@@ -33,7 +32,6 @@
 								});
 							const average =
 								boundYears.length > 1 ? boundYears.reduce((a, b) => a + b) / boundYears.length : 0;
-							// console.log(average);
 							return {
 								year: entry.year,
 								temperature:

@@ -31,7 +31,6 @@
 					historicalPrecipitationData = results.data.filter(
 						(entry) => entry.totalPrecipitation >= 0
 					);
-					// console.log(results.data);
 					historicalDataset = results.data
 						.filter((d) => d.averageTemperature !== 'null' && d.averageTemperature > -999)
 						.filter((d) => d.year < new Date().getFullYear());
