@@ -13,7 +13,6 @@
 	const canShare =
 		true || (navigator.canShare && navigator.canShare({ files: [new File([], 'test.png')] }));
 
-	// $: console.log(canShare);
 	onMount(() => {
 		if (debug) {
 			setTimeout(() => {
@@ -65,7 +64,7 @@
 				try {
 					await navigator.share(shareData);
 				} catch (err) {
-					console.log(`Cannot share data: ${err}, downloading instead.`);
+					// console.log(`Cannot share data: ${err}, downloading instead.`);
 
 					// BACKUP: download image
 					let url = window.URL.createObjectURL(blob);
@@ -240,7 +239,9 @@
 					/>
 				</label>
 				{#if error}
-					<p class="mt-2">Bitte gib ein Jahr zwischen {PUBLIC_VERSION == 'at' ? 1800 : 1911} und 2010 ein.</p>
+					<p class="mt-2">
+						Bitte gib ein Jahr zwischen {PUBLIC_VERSION == 'at' ? 1800 : 1911} und 2010 ein.
+					</p>
 				{/if}
 			</div>
 		</div>

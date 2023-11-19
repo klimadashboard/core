@@ -7,7 +7,6 @@
 			return response;
 		});
 		const json = await res.json();
-		console.log(json);
 		return json;
 		throw error(500, 'Timeout when loading glossary.');
 	};
