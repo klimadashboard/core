@@ -9,8 +9,6 @@
 	export let topo;
 	export let selectedFeature = false;
 
-	// $: console.log(data);
-
 	$: bounds = [
 		[0, 0],
 		[mapWidth - 10, mapHeight - 10]
