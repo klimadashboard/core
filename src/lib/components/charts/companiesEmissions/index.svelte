@@ -1,5 +1,8 @@
 <script>
 	import atxCompanies from '$lib/stores/companies';
+	import Papa from 'papaparse';
+	import { PUBLIC_VERSION } from '$env/static/public';
+	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
 
 	// use companies data with `selected: true` as defaul
 	$: companies = atxCompanies.map((company) => {
@@ -28,6 +31,26 @@
 		(deselected, company) => deselected && !company.selected,
 		true
 	);
+
+	let emissions_scope_1_2_3;
+
+	Papa.parse(
+		`../../data/${PUBLIC_VERSION}/company-emissions/Emissionpaths_Scope1_2_3_ATX_Companies.csv`,
+		{
+			download: true,
+			dynamicTyping: true,
+			header: true,
+			skipEmptyLines: true,
+			complete: function (results) {
+				console.log('🚀 ~ file: index.svelte:44 ~ results:', results);
+				if (results) {
+					emissions_scope_1_2_3 = results.data;
+				}
+			}
+		}
+	);
+
+	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', emissions_scope_1_2_3);
 </script>
 
 <div>
@@ -63,6 +86,10 @@
 	<br />
 
 	<mark>Line-Chart mit bisherigen Emissionen</mark>
+
+	{#if emissions_scope_1_2_3}
+		<CompanyEmissionsChart data={emissions_scope_1_2_3} />
+	{/if}
 
 	<div style="border: 1px solid black">
 		<strong>Ausgewählte Unternehmen:</strong>
