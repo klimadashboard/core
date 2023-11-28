@@ -1,7 +1,24 @@
 <script>
+	import Chart from '$lib/components/blocks/Chart.svelte';
 	import atxCompanies from '$lib/stores/companies';
 
-	const companies = atxCompanies.sort((a, b) => (a.sector < b.sector ? -1 : +1));
+	const temp = {"weight": 0};
+	const companies = atxCompanies
+		.sort((a, b) => (a.sector < b.sector ? -1 : +1))
+		.map((value, i) => {
+			const cum_sum = temp["weight"];
+			temp["weight"] += value.weight;
+			return {...value, idx: i, cummulated_weight: cum_sum}
+		});
+	console.log(companies);
+
+	console.log([...new Set(companies.map((value) => value.sector))], companies.length); // 20 companies; 15 different sectors -> too many categorical values for color scale
+	const grouped_companies = Object.groupBy(companies, (company) => company.sector);
+	console.log(grouped_companies);
+	const sectors = Object.keys(grouped_companies).map((key) => {
+		return {sector: key, weight: grouped_companies[key].reduce((sum, company) => sum + company.weight, 0), cummulated_weight: grouped_companies[key][0].cummulated_weight};
+	});
+	console.log(sectors)
 
 	function computeWedgeCenter({ radius, angle, angleSpan } = {}) {
 		const c = { x: 500, y: 500 };
@@ -41,38 +58,92 @@
 
 <div />
 <svg viewBox="0 0 1000 1000" style="max-width: 900px;">
-	{#each companies as company, c}
-		{@const summedShares = companies.reduce((sum, comp, i) => {
-			if (i < c) return sum + comp.weight;
-			else return sum;
-		}, 0)}
-		{@const wedge = computeWedgePath({
-			radiusInner: 600 / 2,
-			radiusOuter: 800 / 2,
-			angle: 100 + (summedShares / 100) * 360,
-			angleSpan: (company.weight / 100) * 360
-		})}
-		{@const wedgeCenter = computeWedgeCenter({
-			radius: 900 / 2,
-			angle: 100 + (summedShares / 100) * 360,
-			angleSpan: (company.weight / 100) * 360
-		})}
-		{@const textCenter = computeWedgeCenter({
-			radius: 700 / 2,
-			angle: 100 + (summedShares / 100) * 360,
-			angleSpan: (company.weight / 100) * 360
-		})}
-		<path d={wedge} fill="rgba(0,0,0,{c / 20})" stroke="red" />
-		<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
-			>{company.weight}%</text
-		>
-		<circle stroke="black" fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
-		<image
-			href="../icons/atx-companies/{company.logo}.svg"
-			x={wedgeCenter.x - 50 / 2}
-			y={wedgeCenter.y - 50 / 2}
-			width="50"
-			height="50"
-		/>
+	{#each sectors as sector}
+
+		{#if grouped_companies[sector.sector].length > 1}
+			{@const wedge = computeWedgePath({
+				radiusInner: 550 / 2,
+				radiusOuter: 570 / 2,
+				angle: 100 + (sector.cummulated_weight / 100) * 360,
+				angleSpan: (sector.weight / 100) * 360
+			})}
+			{@const wedgeCenter = computeWedgeCenter({
+				radius: 900 / 2,
+				angle: 100 + (sector.cummulated_weight / 100) * 360,
+				angleSpan: (sector.weight / 100) * 360
+			})}
+			{@const textCenter = computeWedgeCenter({
+				radius: 450 / 2,
+				angle: 100 + (sector.cummulated_weight / 100) * 360,
+				angleSpan: (sector.weight / 100) * 360
+			})}
+			<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
+			<path d={wedge} fill="grey" stroke="black" />
+			<text x={textCenter.x} y={textCenter.y} fill="black" text-anchor="middle">{Math.round(sector.weight*100)/100}%</text>
+			<text x={textCenter.x} y={textCenter.y+15} fill="black" text-anchor="middle">{sector.sector}</text>
+		{/if}
+		{#each grouped_companies[sector.sector] as company}
+			{#if company.weight > 3}
+				{@const wedge = computeWedgePath({
+					radiusInner: 600 / 2,
+					radiusOuter: 800 / 2,
+					angle: 100 + (company.cummulated_weight / 100) * 360,
+					angleSpan: (company.weight / 100) * 360
+				})}
+				{@const wedgeCenter = computeWedgeCenter({
+					radius: 900 / 2,
+					angle: 100 + (company.cummulated_weight / 100) * 360,
+					angleSpan: (company.weight / 100) * 360
+				})}
+				{@const textCenter = computeWedgeCenter({
+					radius: 700 / 2,
+					angle: 100 + (company.cummulated_weight / 100) * 360,
+					angleSpan: (company.weight / 100) * 360
+				})}
+				<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
+				<path d={wedge} fill="grey" stroke="black" />
+				<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
+					>{Math.round(company.weight*100)/100}%</text
+				>
+				<circle stroke="black" fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
+				<image
+					href="../icons/atx-companies/{company.logo}.svg"
+					x={wedgeCenter.x - 50 / 2}
+					y={wedgeCenter.y - 50 / 2}
+					width="50"
+					height="50"
+				/>
+			{:else}
+				{@const wedge = computeWedgePath({
+					radiusInner: 600 / 2,
+					radiusOuter: 800 / 2,
+					angle: 100 + (company.cummulated_weight / 100) * 360,
+					angleSpan: (company.weight / 100) * 360
+				})}
+				{@const wedgeCenter = computeWedgeCenter({
+					radius: 900 / 2,
+					angle: 100 + (company.cummulated_weight / 100) * 360,
+					angleSpan: (company.weight / 100) * 360
+				})}
+				{@const textCenter = computeWedgeCenter({
+					radius: 700 / 2,
+					angle: 100 + (company.cummulated_weight / 100) * 360,
+					angleSpan: (company.weight / 100) * 360
+				})}
+				<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
+				<path d={wedge} fill="grey" stroke="black" />
+				<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
+					>{Math.round(company.weight*100)/100}%</text
+				>
+				<!-- <circle stroke="black" fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
+				<image
+					href="../icons/atx-companies/{company.logo}.svg"
+					x={wedgeCenter.x - 50 / 2}
+					y={wedgeCenter.y - 50 / 2}
+					width="50"
+					height="50"
+				/> -->
+			{/if}
+		{/each}
 	{/each}
 </svg>
