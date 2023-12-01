@@ -4,7 +4,7 @@
 
 	const wedge_fill_color = "#4A81A9";
 	const stroke_color = "#393B4B";
-	const highlight_color = "#B76A3E";
+	const highlight_color = "#F5AF4B";
 
 	const temp = {"weight": 0};
 	const companies = atxCompanies
@@ -115,7 +115,7 @@
 					<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
 						>{Math.round(company.weight*100)/100}%</text
 					>
-					<circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
+					<!-- <circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} /> -->
 					<image
 						href="../icons/atx-companies/{company.logo}.svg"
 						x={wedgeCenter.x - 50 / 2}
@@ -154,7 +154,7 @@
 						<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
 							>{Math.round(company.weight*100)/100}%</text
 						>
-						<circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
+						<!-- <circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} /> -->
 						<image
 							href="../icons/atx-companies/{company.logo}.svg"
 							x={wedgeCenter.x - 50 / 2}
