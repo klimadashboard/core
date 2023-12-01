@@ -2,6 +2,10 @@
 	import Chart from '$lib/components/blocks/Chart.svelte';
 	import atxCompanies from '$lib/stores/companies';
 
+	const wedge_fill_color = "#4A81A9";
+	const stroke_color = "#393B4B";
+	const highlight_color = "#B76A3E";
+
 	const temp = {"weight": 0};
 	const companies = atxCompanies
 		.sort((a, b) => (a.sector < b.sector ? -1 : +1))
@@ -10,15 +14,14 @@
 			temp["weight"] += value.weight;
 			return {...value, idx: i, cummulated_weight: cum_sum}
 		});
-	console.log(companies);
-
 	console.log([...new Set(companies.map((value) => value.sector))], companies.length); // 20 companies; 15 different sectors -> too many categorical values for color scale
+	
 	const grouped_companies = Object.groupBy(companies, (company) => company.sector);
-	console.log(grouped_companies);
 	const sectors = Object.keys(grouped_companies).map((key) => {
 		return {sector: key, weight: grouped_companies[key].reduce((sum, company) => sum + company.weight, 0), cummulated_weight: grouped_companies[key][0].cummulated_weight};
 	});
-	console.log(sectors)
+
+	let hover_company = -1;
 
 	function computeWedgeCenter({ radius, angle, angleSpan } = {}) {
 		const c = { x: 500, y: 500 };
@@ -73,12 +76,12 @@
 				angleSpan: (sector.weight / 100) * 360
 			})}
 			{@const textCenter = computeWedgeCenter({
-				radius: 450 / 2,
+				radius: 420 / 2,
 				angle: 100 + (sector.cummulated_weight / 100) * 360,
 				angleSpan: (sector.weight / 100) * 360
 			})}
 			<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
-			<path d={wedge} fill="grey" stroke="black" />
+			<path d={wedge} fill={wedge_fill_color} stroke={stroke_color} />
 			<text x={textCenter.x} y={textCenter.y} fill="black" text-anchor="middle">{Math.round(sector.weight*100)/100}%</text>
 			<text x={textCenter.x} y={textCenter.y+15} fill="black" text-anchor="middle">{sector.sector}</text>
 		{/if}
@@ -100,19 +103,27 @@
 					angle: 100 + (company.cummulated_weight / 100) * 360,
 					angleSpan: (company.weight / 100) * 360
 				})}
-				<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
-				<path d={wedge} fill="grey" stroke="black" />
-				<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
-					>{Math.round(company.weight*100)/100}%</text
-				>
-				<circle stroke="black" fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
-				<image
-					href="../icons/atx-companies/{company.logo}.svg"
-					x={wedgeCenter.x - 50 / 2}
-					y={wedgeCenter.y - 50 / 2}
-					width="50"
-					height="50"
-				/>
+				<g 
+					on:mouseenter={() => {
+						hover_company = company.idx;
+					}}
+					on:mouseleave={() => {
+						hover_company = -1;
+					}} >
+					<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
+					<path d={wedge} fill={hover_company == company.idx ? highlight_color : wedge_fill_color} stroke={stroke_color} />
+					<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
+						>{Math.round(company.weight*100)/100}%</text
+					>
+					<circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
+					<image
+						href="../icons/atx-companies/{company.logo}.svg"
+						x={wedgeCenter.x - 50 / 2}
+						y={wedgeCenter.y - 50 / 2}
+						width="50"
+						height="50"
+					/>
+				</g>
 			{:else}
 				{@const wedge = computeWedgePath({
 					radiusInner: 600 / 2,
@@ -121,7 +132,7 @@
 					angleSpan: (company.weight / 100) * 360
 				})}
 				{@const wedgeCenter = computeWedgeCenter({
-					radius: 900 / 2,
+					radius: 900/2, //(company.idx)%2==1 ? 1000 / 2 : 1150/2,
 					angle: 100 + (company.cummulated_weight / 100) * 360,
 					angleSpan: (company.weight / 100) * 360
 				})}
@@ -130,19 +141,29 @@
 					angle: 100 + (company.cummulated_weight / 100) * 360,
 					angleSpan: (company.weight / 100) * 360
 				})}
-				<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
-				<path d={wedge} fill="grey" stroke="black" />
-				<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
-					>{Math.round(company.weight*100)/100}%</text
-				>
-				<!-- <circle stroke="black" fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
-				<image
-					href="../icons/atx-companies/{company.logo}.svg"
-					x={wedgeCenter.x - 50 / 2}
-					y={wedgeCenter.y - 50 / 2}
-					width="50"
-					height="50"
-				/> -->
+				<g 
+					on:mouseenter={() => {
+						hover_company = company.idx;
+					}}
+					on:mouseleave={() => {
+						hover_company = -1;
+					}} >
+					<!-- <path d={wedge} fill="rgba(0,0,0,{company.idx / 20})" stroke="red" /> -->
+					<path d={wedge} fill={hover_company == company.idx ? highlight_color : wedge_fill_color} stroke={stroke_color} />
+					{#if hover_company == company.idx}
+						<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
+							>{Math.round(company.weight*100)/100}%</text
+						>
+						<circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} />
+						<image
+							href="../icons/atx-companies/{company.logo}.svg"
+							x={wedgeCenter.x - 50 / 2}
+							y={wedgeCenter.y - 50 / 2}
+							width="50"
+							height="50"
+						/>
+					{/if}
+				</g>
 			{/if}
 		{/each}
 	{/each}
