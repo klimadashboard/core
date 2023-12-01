@@ -3,43 +3,52 @@ export default [
       name: 'OMV AG',
       sector: 'Erdöl und Erdgas',
       logo: 'omv',
-      weight: 15.70
+      weight: 15.70,
    },
    {
       name: 'Verbund AG',
       sector: 'Stromversorger',
       logo: 'verbund',
-      weight: 15.29
+      weight: 15.29,
+      minLogoWidth: 70,
+      aspectRatio: 0.25,
    },
    {
       name: 'Erste Group Bank AG',
       sector: 'Banken',
       logo: 'erste-bank',
-      weight: 13.88
+      weight: 13.88,
+      minLogoWidth: 90,
    },
    {
       name: 'Andritz AG',
       sector: 'Produktionstechnik und Maschinen',
       logo: 'andritz',
-      weight: 6.52
+      weight: 6.52,
+      minLogoWidth: 70,
+      aspectRatio: 0.3,
    },
    {
       name: 'Voestalpine AG',
       sector: 'Bergbau und Metalle',
       logo: 'voestalpine',
-      weight: 5.88
+      weight: 5.88,
+      minLogoWidth: 100,
    },
    {
       name: 'Raiffeisen Bank International AG',
       sector: 'Banken',
       logo: 'raiffeisen',
-      weight: 5.19
+      weight: 5.19,
+      minLogoWidth: 100,
    },
    {
       name: 'STRABAG SE',
       sector: 'Konstruktion',
       logo: 'strabag',
-      weight: 4.38
+      weight: 4.38,
+      minLogoWidth: 70,
+      aspectRatio: 0.3,
    },
    {
       name: 'EVN AG',
@@ -51,13 +60,16 @@ export default [
       name: 'BAWAG Group AG',
       sector: 'Banken',
       logo: 'bawag',
-      weight: 3.92
+      weight: 3.92,
+      minLogoWidth: 80,
    },
    {
       name: 'Vienna Insurance Group AG',
       sector: 'Versicherungen',
       logo: 'vienna',
-      weight: 3.60
+      weight: 3.60,
+      minLogoWidth: 80,
+      aspectRatio: 0.5,
    },
    {
       name: 'Mayr-Melnhof Karton AG',
@@ -69,13 +81,15 @@ export default [
       name: 'Wienerberger AG',
       sector: 'Baustoffe',
       logo: 'wienerberger',
-      weight: 3.21
+      weight: 3.21,
+      minLogoWidth: 100,
    },
    {
       name: 'CA Immobilien Anlagen AG',
       sector: 'Immobilien',
       logo: 'ca',
-      weight: 2.73
+      weight: 2.73,
+      minLogoWidth: 100,
    },
    {
       name: 'Uniqa Insurance Group AG',
@@ -87,36 +101,42 @@ export default [
       name: 'Österreichische Post AG',
       sector: 'Transport',
       logo: 'post',
-      weight: 2.52
+      weight: 2.52,
+      minLogoWidth: 80,
    },
    {
       name: 'Immofinanz AG',
       sector: 'Immobilien',
       logo: 'immofinanz',
-      weight: 1.98
+      weight: 1.98,
+      minLogoWidth: 100,
    },
    {
       name: 'Lenzing AG',
       sector: 'Chemie',
       logo: 'lenzing',
-      weight: 1.80
+      weight: 1.80,
+      minLogoWidth: 70,
    },
    {
       name: 'Austria Technologie & Systemtechnik AG',
       sector: 'Hardware und Ausrüstung',
       logo: 'ats',
-      weight: 1.17
+      weight: 1.17,
+      aspectRatio: 0.7,
    },
    {
       name: 'Do & Co AG',
       sector: 'Lebensmittel, Getränke und Tabak',
       logo: 'do+co',
-      weight: 1.16
+      weight: 1.16,
+      aspectRatio: 0.7,
    },
    {
       name: 'Schoeller-Bleckmann Oilfield Equipment AG',
       sector: 'Erdöl und Erdgas',
       logo: 'schoeller-bleckmann',
-      weight: 1.05
+      weight: 1.05,
+      minLogoWidth: 100,
    },
 ];
