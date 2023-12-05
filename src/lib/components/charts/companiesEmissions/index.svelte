@@ -4,7 +4,11 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
 
-	// use companies data with `selected: true` as defaul
+	let selectedScope = '1';
+	let selectedYear = 2020;
+	let emissions_scope_1_2_3;
+
+	// use companies data with `selected: true` as default
 	$: companies = atxCompanies.map((company) => {
 		return {
 			...company,
@@ -12,17 +16,19 @@
 		};
 	});
 
-	$: console.log(companies.map((c) => c.selected));
+	// $: console.log(companies.map((c) => c.selected));
 
 	function selectAll() {
-		for (let [c] of companies.entries()) {
-			companies[c].selected = true;
-		}
+		companies = companies.map((company) => ({ ...company, selected: true }));
 	}
+
 	function deselectAll() {
-		for (let [c] of companies.entries()) {
-			companies[c].selected = false;
-		}
+		companies = companies.map((company) => ({ ...company, selected: false }));
+	}
+
+	function handleSelectChange(event) {
+		selectedScope = event.target.value;
+		console.log(selectedScope); // You can log or use the value as needed
 	}
 
 	// Filter
@@ -32,23 +38,18 @@
 		true
 	);
 
-	let emissions_scope_1_2_3;
-
-	Papa.parse(
-		`../../data/${PUBLIC_VERSION}/company-emissions/Emissionpaths_Scope1_2_3_ATX_Companies.csv`,
-		{
-			download: true,
-			dynamicTyping: true,
-			header: true,
-			skipEmptyLines: true,
-			complete: function (results) {
-				console.log('🚀 ~ file: index.svelte:44 ~ results:', results);
-				if (results) {
-					emissions_scope_1_2_3 = results.data;
-				}
+	Papa.parse(`../../data/${PUBLIC_VERSION}/company-emissions/v5_Emissionpaths_Scope1_2_3.csv`, {
+		download: true,
+		dynamicTyping: true,
+		header: true,
+		skipEmptyLines: true,
+		complete: function (results) {
+			console.log('🚀 ~ file: index.svelte:44 ~ results:', results);
+			if (results) {
+				emissions_scope_1_2_3 = results.data;
 			}
 		}
-	);
+	});
 
 	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', emissions_scope_1_2_3);
 </script>
@@ -76,7 +77,7 @@
 
 	<br />
 	Auswahl der Scopes
-	<select>
+	<select bind:value={selectedScope} on:change={handleSelectChange}>
 		<option>Scope 1</option>
 		<option>Scope 2</option>
 		<option>Scope 3</option>
@@ -85,10 +86,15 @@
 	</select>
 	<br />
 
-	<mark>Line-Chart mit bisherigen Emissionen</mark>
+	<mark>Bar-Chart mit bisherigen Emissionen</mark>
 
 	{#if emissions_scope_1_2_3}
-		<CompanyEmissionsChart data={emissions_scope_1_2_3} />
+		<CompanyEmissionsChart
+			data={emissions_scope_1_2_3}
+			selectedCompanies={companies}
+			{selectedScope}
+			{selectedYear}
+		/>
 	{/if}
 
 	<div style="border: 1px solid black">
