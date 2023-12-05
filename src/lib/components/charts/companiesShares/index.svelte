@@ -2,27 +2,31 @@
 	import Chart from '$lib/components/blocks/Chart.svelte';
 	import atxCompanies from '$lib/stores/companies';
 
-	const wedge_fill_color = "#4A81A9";
-	const stroke_color = "#393B4B";
-	const highlight_color = "#F5AF4B";
+	const wedge_fill_color = '#4A81A9';
+	const stroke_color = '#393B4B';
+	const highlight_color = '#F5AF4B';
 
-	const temp = {"weight": 0};
+	const temp = { weight: 0 };
 	const companies = atxCompanies
 		.sort((a, b) => (a.sector < b.sector ? -1 : +1))
 		.map((value, i) => {
-			const cum_sum = temp["weight"];
-			temp["weight"] += value.weight;
-			return {...value, idx: i, cummulated_weight: cum_sum}
+			const cum_sum = temp['weight'];
+			temp['weight'] += value.weight;
+			return { ...value, idx: i, cummulated_weight: cum_sum };
 		});
 	console.log([...new Set(companies.map((value) => value.sector))], companies.length); // 20 companies; 15 different sectors -> too many categorical values for color scale
-	
+
 	const grouped_companies = Object.groupBy(companies, (company) => company.sector);
 	const sectors = Object.keys(grouped_companies).map((key) => {
-		return {sector: key, weight: grouped_companies[key].reduce((sum, company) => sum + company.weight, 0), cummulated_weight: grouped_companies[key][0].cummulated_weight};
+		return {
+			sector: key,
+			weight: grouped_companies[key].reduce((sum, company) => sum + company.weight, 0),
+			cummulated_weight: grouped_companies[key][0].cummulated_weight
+		};
 	});
 
 	let hover_company_idx = -1;
-	let hover_sector = "";
+	let hover_sector = '';
 
 	function computeWedgeCenter({ radius, angle, angleSpan } = {}) {
 		const c = { x: 500, y: 500 };
@@ -63,7 +67,6 @@
 <div />
 <svg viewBox="0 0 1000 1000" style="max-width: 900px;">
 	{#each sectors as sector}
-
 		<!-- plot sectors if they comprise of more than 1 company -->
 		{#if grouped_companies[sector.sector].length > 1}
 			{@const angle = 100 + (sector.cummulated_weight / 100) * 360}
@@ -80,22 +83,41 @@
 				angleSpan: angle_span
 			})}
 			{@const font_size = hover_sector == sector.sector ? 20 : 16}
-			<g 
+			<g
 				on:mouseenter={() => {
 					hover_sector = sector.sector;
 				}}
 				on:mouseleave={() => {
-					hover_sector = "";
-				}} >
-				<path d={wedge} fill={hover_sector == sector.sector ? highlight_color : wedge_fill_color} stroke={stroke_color} />
-				<text font-size={font_size} x={textCenter.x} y={textCenter.y} fill="black" text-anchor="middle">{Math.round(sector.weight*100)/100}%</text>
-				<text font-size={font_size} x={textCenter.x} y={textCenter.y+font_size} fill="black" text-anchor="middle">{sector.sector}</text>
+					hover_sector = '';
+				}}
+			>
+				<path
+					d={wedge}
+					fill={hover_sector == sector.sector ? highlight_color : wedge_fill_color}
+					stroke={stroke_color}
+				/>
+				<text
+					font-size={font_size}
+					x={textCenter.x}
+					y={textCenter.y}
+					fill="black"
+					text-anchor="middle">{Math.round(sector.weight * 100) / 100}%</text
+				>
+				<text
+					font-size={font_size}
+					x={textCenter.x}
+					y={textCenter.y + font_size}
+					fill="black"
+					text-anchor="middle">{sector.sector}</text
+				>
 			</g>
 		{/if}
 
 		<!-- plot companies -->
 		{#each grouped_companies[sector.sector] as company}
-			{@const logo_width = Math.max(50, company.minLogoWidth ? company.minLogoWidth : 0) + (hover_company_idx == company.idx ? 20 : 0)}
+			{@const logo_width =
+				Math.max(50, company.minLogoWidth ? company.minLogoWidth : 0) +
+				(hover_company_idx == company.idx ? 20 : 0)}
 			{@const logo_aspect_ratio = company.aspectRatio ? company.aspectRatio : 1}
 			{@const logo_height = logo_width * logo_aspect_ratio}
 			{@const angle = 100 + (company.cummulated_weight / 100) * 360}
@@ -116,24 +138,31 @@
 				angle: angle,
 				angleSpan: angle_span
 			})}
-			<g 
+			<g
 				on:mouseenter={() => {
 					hover_company_idx = company.idx;
 				}}
 				on:mouseleave={() => {
 					hover_company_idx = -1;
-				}} >
-				<path d={wedge} fill={hover_company_idx == company.idx ? highlight_color : wedge_fill_color} stroke={stroke_color} />
+				}}
+			>
+				<path
+					d={wedge}
+					fill={hover_company_idx == company.idx ? highlight_color : wedge_fill_color}
+					stroke={stroke_color}
+				/>
 				<!-- only show logo, if the share is big enough or if the company is hovered -->
 				{#if company.weight > 3 || hover_company_idx == company.idx}
-					<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle">{Math.round(company.weight*100)/100}%</text>
+					<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
+						>{Math.round(company.weight * 100) / 100}%</text
+					>
 					<!-- <circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} /> -->
 					<image
 						href="../icons/atx-companies/{company.logo}.svg"
 						x={wedgeCenter.x - logo_width / 2}
 						y={wedgeCenter.y - logo_height / 2}
-						width="{logo_width}"
-						height="{logo_height}"
+						width={logo_width}
+						height={logo_height}
 					/>
 				{/if}
 			</g>

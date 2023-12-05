@@ -24,7 +24,7 @@ We’d love to expand Klimadashboard beyond Austria, but we need data research, 
 
 ## Branches & Deployment 🧭
 
-The [main] branch of this repository is automatically deployed to our server via ploi.io. 
+The [main] branch of this repository is automatically deployed to our server via ploi.io.
 
 ## Development & Build
 

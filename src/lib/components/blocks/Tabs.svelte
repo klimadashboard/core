@@ -23,7 +23,7 @@
 			{/if}
 			<span>{tab.label}</span>
 			{#if tab == selectedTab}
-				<div class="text-[#2e9c5c] ">
+				<div class="text-[#2e9c5c]">
 					<div class="hidden md:block arrow-right absolute top-1/2 bottom-0 right-0" />
 				</div>
 			{/if}

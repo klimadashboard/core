@@ -9,7 +9,9 @@
 
 	async function getDataForSelectedStation(stationId) {
 		let response = await fetch(
-			`https://data.klimadashboard.org/${PUBLIC_VERSION}/${PUBLIC_VERSION == 'at' ? 'austria' : 'germany'}.json`
+			`https://data.klimadashboard.org/${PUBLIC_VERSION}/${
+				PUBLIC_VERSION == 'at' ? 'austria' : 'germany'
+			}.json`
 			// `../data/${PUBLIC_VERSION}/${PUBLIC_VERSION == 'at' ? 'austria' : 'germany'}.json`
 		);
 		let data = await response.json();

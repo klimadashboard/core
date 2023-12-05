@@ -100,7 +100,7 @@
 	$: gap = nationalGoal - totalGoalsAndProduction;
 </script>
 
-<div class="bg-gray-100  rounded overflow-hidden">
+<div class="bg-gray-100 rounded overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
 		<h3 class="text-xl">
 			<b>{type.label}</b> Nationales Ausbauziel zu {Math.round(percentage)}% abgedeckt
@@ -113,7 +113,7 @@
 			Ausbauziele für Biomasse stehen noch nicht zu Verfügung.
 		{:else}
 			<div
-				class="w-full h-24 border-2 border-gray-300  bg-white"
+				class="w-full h-24 border-2 border-gray-300 bg-white"
 				bind:clientHeight={chartHeight}
 				bind:clientWidth={chartWidth}
 			>
@@ -178,7 +178,7 @@
 				</svg>
 			</div>
 			<div
-				class="flex justify-between pt-2 border-r-2 border-gray-300  text-gray-700 text-sm md:text-base"
+				class="flex justify-between pt-2 border-r-2 border-gray-300 text-gray-700 text-sm md:text-base"
 			>
 				{#if selectedState}
 					<p class="" style="color: {type.color}">

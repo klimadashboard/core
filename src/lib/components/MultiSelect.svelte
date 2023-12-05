@@ -108,7 +108,7 @@
 	}
 </script>
 
-<div class="multiselect bg-gray-100  rounded-full" class:readonly>
+<div class="multiselect bg-gray-100 rounded-full" class:readonly>
 	<div class="tokens overflow-scroll" class:showOptions on:click={handleTokenClick}>
 		{#each Object.values(selected).splice(1) as s}
 			<div
@@ -184,7 +184,7 @@
 			{#each filtered as option}
 				<li
 					data-value={option.value}
-					class="bg-white  {selected[option.value] ? 'bg-gradient-green text-white' : ''}"
+					class="bg-white {selected[option.value] ? 'bg-gradient-green text-white' : ''}"
 				>
 					{option.name}
 				</li>

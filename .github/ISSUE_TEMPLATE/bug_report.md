@@ -4,7 +4,6 @@ about: Report errors and technical issues on our online projects
 title: 'Fix: Add concise description here'
 labels: bug
 assignees: ''
-
 ---
 
 **Describe the bug**
@@ -17,7 +16,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Browser & Device Information**
- Please add your browser version, if not obvious from screenshots.
+Please add your browser version, if not obvious from screenshots.
 
 **Additional context**
 Add any other context about the problem here.

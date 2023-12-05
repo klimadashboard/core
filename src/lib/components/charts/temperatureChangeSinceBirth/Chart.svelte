@@ -240,7 +240,9 @@
 					/>
 				</label>
 				{#if error}
-					<p class="mt-2">Bitte gib ein Jahr zwischen {PUBLIC_VERSION == 'at' ? 1800 : 1911} und 2010 ein.</p>
+					<p class="mt-2">
+						Bitte gib ein Jahr zwischen {PUBLIC_VERSION == 'at' ? 1800 : 1911} und 2010 ein.
+					</p>
 				{/if}
 			</div>
 		</div>
