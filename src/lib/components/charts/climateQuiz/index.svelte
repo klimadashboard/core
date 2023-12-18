@@ -27,11 +27,8 @@
 
 		// randomise questions
 		shuffleArray(quizQuestions);
-		console.log(quizQuestions);
 
 		// possible TODO: randomise answers?
-
-		console.log(PUBLIC_VERSION);
 	});
 
 	function shuffleArray(arr: QuizQuestion[]) {
@@ -58,7 +55,6 @@
 		// 		count: Math.random() > 0.3 ? Math.floor(Math.random() * 100) : clicked == a ? 1 : 0
 		// 	};
 		// });
-		console.log(answerCounts);
 		quizQuestions[questionIndex].clickedCount = answerCounts.reduce(
 			(sum, ans) => sum + ans.count,
 			0
@@ -69,13 +65,6 @@
 		);
 		quizQuestions[questionIndex].answers.forEach((ans, a) => {
 			const count = answerCounts.find((answer) => answer.answerId == String(a))?.count || 0;
-			console.log(
-				ans,
-				count,
-				a,
-				quizQuestions[questionIndex].clickedCount,
-				quizQuestions[questionIndex].maxClicked
-			);
 
 			quizQuestions[questionIndex].answers[a].percent =
 				(count / quizQuestions[questionIndex].clickedCount) * 100;

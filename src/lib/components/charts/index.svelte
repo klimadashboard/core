@@ -73,11 +73,11 @@
 				try {
 					await navigator.share(shareData);
 				} catch (err) {
-					console.log(`Cannot share data: ${err}, downloading instead.`);
+					// console.log(`Cannot share data: ${err}, downloading instead.`);
 
 					// BACKUP: download image
 					await getChart().then((chart) => {
-						console.log('downloading', chart.content.title);
+						// console.log('downloading', chart.content.title);
 						let url = window.URL.createObjectURL(blob);
 						let a = document.createElement('a');
 						a.href = url;
