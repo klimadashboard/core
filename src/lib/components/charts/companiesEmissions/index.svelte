@@ -40,7 +40,8 @@
 
 	// TODO: remove scope12 from data structure
 	// TODO: align company names in atxCompanies and in csv data
-	Papa.parse(`../../data/${PUBLIC_VERSION}/company-emissions/v5_Emissionpaths_Scope1_2_3.csv`, {
+	// Papa.parse(`../../data/${PUBLIC_VERSION}/company-emissions/v5_Emissionpaths_Scope1_2_3.csv`, { // this link does not work
+	Papa.parse(`v5_Emissionpaths_Scope1_2_3.csv`, {
 		download: true,
 		dynamicTyping: true,
 		header: true,
