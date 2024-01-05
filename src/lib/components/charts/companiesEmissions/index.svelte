@@ -4,7 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
 
-	let selectedScope = '1';
+	let selectedScope = 'Scope 1';
 	let selectedYear = 2020;
 	let emissions_scope_1_2_3;
 
@@ -28,7 +28,6 @@
 
 	function handleSelectChange(event) {
 		selectedScope = event.target.value;
-		console.log(selectedScope); // You can log or use the value as needed
 	}
 
 	// Filter
@@ -38,10 +37,7 @@
 		true
 	);
 
-	// TODO: remove scope12 from data structure
-	// TODO: align company names in atxCompanies and in csv data
-	// Papa.parse(`../../data/${PUBLIC_VERSION}/company-emissions/v5_Emissionpaths_Scope1_2_3.csv`, { // this link does not work
-	Papa.parse(`v5_Emissionpaths_Scope1_2_3.csv`, {
+	Papa.parse(`../../data/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3.csv`, {
 		download: true,
 		dynamicTyping: true,
 		header: true,
@@ -92,12 +88,14 @@
 	<mark>Bar-Chart mit bisherigen Emissionen</mark>
 
 	{#if emissions_scope_1_2_3}
-		<CompanyEmissionsChart
-			data={emissions_scope_1_2_3}
-			selectedCompanies={companies}
-			{selectedScope}
-			{selectedYear}
-		/>
+		<div class="h-80">
+			<CompanyEmissionsChart
+				data={emissions_scope_1_2_3}
+				selectedCompanies={companies.filter((company) => company.selected)}
+				{selectedScope}
+				{selectedYear}
+			/>
+		</div>
 	{/if}
 
 	<div style="border: 1px solid black">

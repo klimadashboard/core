@@ -17,19 +17,28 @@
 	const categoryColors = {
 		scope1: '#E59E1A',
 		scope2: '#4DB263',
-		scope3: '#8C8C8C',
-		scope12: '#cd34b5'
+		scope3: '#8C8C8C'
 	};
 
-	data.forEach((entry) => {
+	// TODO: Filter by scope
+	// Restructure data
+	$: data.forEach((entry) => {
 		const [year, scope] = entry.Year_Scope.split('_');
+		console.log(
+			'🚀 ~ file: CompanyEmissionsChart.svelte:34 ~ data.forEach ~ scope:',
+			parseInt(scope.match(/\d+/)[0])
+		);
 
 		if (!dataset[year]) {
 			dataset[year] = [];
 		}
 
+		// if (selectedScopes.includes(parseInt(scope.match(/\d+/)[0]))) {
+		// 	return;
+		// }
+
 		Object.keys(entry).forEach((key) => {
-			if (key !== 'Year_Scope' && scope !== 'scope12') {
+			if (key !== 'Year_Scope') {
 				// && entry[key] !== 'na'
 
 				const category = {
@@ -56,7 +65,17 @@
 	});
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:60 ~ dataset:', dataset);
 
-	const chartData = dataset[selectedYear];
+	let chartData = dataset[selectedYear];
+	$: {
+		let selectedCompanyNames = selectedCompanies.map((company) => company.name);
+
+		// filter by selectedCompanies
+		chartData = dataset[selectedYear].filter((entry) => {
+			return selectedCompanyNames.includes(entry.label);
+		});
+
+		console.log('ChartData filtered:', chartData);
+	}
 </script>
 
 <BarChart data={chartData} visualisation="stacked" />
