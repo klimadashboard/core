@@ -91,12 +91,19 @@
 	<div class="flex gap-2 mt-4 flex-wrap">
 		{#each companies as company}
 			<button
-				class="bg-gray-700 flex space-x-2 items-center rounded-full font-semibold uppercase tracking-wide px-4 py-2 text-white text-sm {company.selected
-					? 'opacity-100'
-					: 'opacity-70'}"
+				class=" flex space-x-2 items-center rounded-full font-semibold tracking-wide px-4 py-2 text-black text-xs {company.selected
+					? 'border-2 border-black'
+					: 'border-2 border-gray-300'}"
 				on:mousedown={() => (company.selected = !company.selected)}
 				aria-label={company.name}
 			>
+				<img
+					src="../icons/atx-companies/{company.logo}.svg"
+					alt={company.logo}
+					width="50"
+					height="50"
+					style="display: inline-block; height: 2em; object-fit: contain;"
+				/>
 				<span>{company.name}</span>
 			</button>
 		{/each}
