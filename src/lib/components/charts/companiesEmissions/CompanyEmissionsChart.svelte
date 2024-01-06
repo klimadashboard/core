@@ -3,7 +3,7 @@
 
 	export let data;
 	export let selectedCompanies;
-	export let selectedScope;
+	export let selectedScope = '1';
 	export let selectedYear;
 	$: console.log(
 		'🚀 ~ file: CompanyEmissionsChart.svelte:9 ~ selectedCompanies:',
@@ -13,7 +13,7 @@
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:11 ~ selectedYear:', selectedYear);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:3 ~ data:', data);
 
-	const dataset = {};
+	let dataset = {};
 	const categoryColors = {
 		scope1: '#E59E1A',
 		scope2: '#4DB263',
@@ -22,48 +22,50 @@
 
 	// TODO: Filter by scope
 	// Restructure data
-	$: data.forEach((entry) => {
-		const [year, scope] = entry.Year_Scope.split('_');
-		console.log(
-			'🚀 ~ file: CompanyEmissionsChart.svelte:34 ~ data.forEach ~ scope:',
-			parseInt(scope.match(/\d+/)[0])
-		);
+	$: {
+		if (data && selectedScope) {
+			dataset = {};
 
-		if (!dataset[year]) {
-			dataset[year] = [];
-		}
-
-		// if (selectedScopes.includes(parseInt(scope.match(/\d+/)[0]))) {
-		// 	return;
-		// }
-
-		Object.keys(entry).forEach((key) => {
-			if (key !== 'Year_Scope') {
-				// && entry[key] !== 'na'
-
-				const category = {
-					label: key,
-					categories: [
-						{
-							label: scope,
-							value: entry[key] ? parseFloat(entry[key]) : 0,
-							color: categoryColors[scope]
-						}
-					]
-				};
-
-				// Check if the company is already in restructuredData for the current year
-				const existingCompany = dataset[year].find((company) => company.label === key);
-
-				if (existingCompany) {
-					existingCompany.categories.push(category.categories[0]);
-				} else {
-					dataset[year].push(category);
+			data.forEach((entry) => {
+				const [year, scope] = entry.Year_Scope.split('_');
+				if (!selectedScope.includes(scope[scope.length - 1])) {
+					console.log(`Don't include ${scope} into dataset.`);
+					return;
 				}
-			}
-		});
-	});
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:60 ~ dataset:', dataset);
+
+				if (!dataset[year]) {
+					dataset[year] = [];
+				}
+
+				Object.keys(entry).forEach((key) => {
+					if (key !== 'Year_Scope') {
+						// && entry[key] !== 'na'
+
+						const category = {
+							label: key,
+							categories: [
+								{
+									label: scope,
+									value: entry[key] ? parseFloat(entry[key]) : 0,
+									color: categoryColors[scope]
+								}
+							]
+						};
+
+						// Check if the company is already in restructuredData for the current year
+						const existingCompany = dataset[year].find((company) => company.label === key);
+
+						if (existingCompany) {
+							existingCompany.categories.push(category.categories[0]);
+						} else {
+							dataset[year].push(category);
+						}
+					}
+				});
+			});
+		}
+		console.log('🚀 ~ file: CompanyEmissionsChart.svelte:60 ~ dataset:', dataset);
+	}
 
 	let chartData = dataset[selectedYear];
 	$: {

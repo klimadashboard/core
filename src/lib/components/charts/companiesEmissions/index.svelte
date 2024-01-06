@@ -4,7 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
 
-	let selectedScope = 'Scope 1';
+	let selectedScope = '1';
 	let selectedYear = 2020;
 	let emissions_scope_1_2_3;
 
@@ -75,17 +75,16 @@
 	<br />
 
 	<br />
-	Auswahl der Scopes
+	<mark>Bar-Chart mit bisherigen Emissionen</mark>
+	<br />
 	<select bind:value={selectedScope} on:change={handleSelectChange}>
-		<option>Scope 1</option>
-		<option>Scope 2</option>
-		<option>Scope 3</option>
-		<option>Scope 1+2</option>
-		<option>Scope 1+2+3</option>
+		<option value="1">Scope 1</option>
+		<option value="2">Scope 2</option>
+		<option value="3">Scope 3</option>
+		<option value="12">Scope 1+2</option>
+		<option value="123">Scope 1+2+3</option>
 	</select>
 	<br />
-
-	<mark>Bar-Chart mit bisherigen Emissionen</mark>
 
 	{#if emissions_scope_1_2_3}
 		<div class="h-80">
