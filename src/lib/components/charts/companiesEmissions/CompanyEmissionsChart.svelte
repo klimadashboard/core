@@ -5,13 +5,13 @@
 	export let selectedCompanies;
 	export let selectedScopes = '1';
 	export let selectedYear;
+	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', data);
 	$: console.log(
 		'🚀 ~ file: CompanyEmissionsChart.svelte:9 ~ selectedCompanies:',
 		selectedCompanies
 	);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:11 ~ selectedYear:', selectedYear);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:3 ~ data:', data);
 
 	let dataset = {};
 	const categoryColors = {

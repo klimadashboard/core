@@ -5,8 +5,9 @@
 	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
 
 	let selectedScopes = '1';
-	let selectedYear = 2020;
+	let selectedYear = '2020';
 	let emissions_scope_1_2_3;
+	let availableYears;
 
 	// use companies data with `selected: true` as default
 	$: companies = atxCompanies.map((company) => {
@@ -26,8 +27,12 @@
 		companies = companies.map((company) => ({ ...company, selected: false }));
 	}
 
-	function handleSelectChange(event) {
+	function handleSelectScope(event) {
 		selectedScopes = event.target.value;
+	}
+
+	function handleSelectYear(event) {
+		selectedYear = event.target.value;
 	}
 
 	// Filter
@@ -37,6 +42,7 @@
 		true
 	);
 
+	// Load emissions data
 	Papa.parse(`../../data/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3.csv`, {
 		download: true,
 		dynamicTyping: true,
@@ -50,6 +56,15 @@
 		}
 	});
 
+	$: {
+		if (emissions_scope_1_2_3) {
+			// get unique available years
+			availableYears = [
+				...new Set(emissions_scope_1_2_3.map((entry) => entry.Year_Scope.split('_')[0]))
+			];
+			console.log('🚀 ~ file: index.svelte:60 ~ availableYears:', availableYears);
+		}
+	}
 	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', emissions_scope_1_2_3);
 </script>
 
@@ -77,13 +92,23 @@
 	<br />
 	<mark>Bar-Chart mit bisherigen Emissionen</mark>
 	<br />
-	<select bind:value={selectedScopes} on:change={handleSelectChange}>
+	<!-- Scope Selector -->
+	<select bind:value={selectedScopes} on:change={handleSelectScope}>
 		<option value="1">Scope 1</option>
 		<option value="2">Scope 2</option>
 		<option value="3">Scope 3</option>
 		<option value="12">Scope 1+2</option>
 		<option value="123">Scope 1+2+3</option>
 	</select>
+
+	<!-- Year Selector -->
+	{#if availableYears}
+		<select bind:value={selectedYear} on:change={handleSelectYear}>
+			{#each availableYears as year}
+				<option value={year}>{year}</option>
+			{/each}
+		</select>
+	{/if}
 	<br />
 
 	{#if emissions_scope_1_2_3}
