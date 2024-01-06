@@ -6,8 +6,9 @@
 
 	let selectedScopes = '1';
 	let selectedYear = '2020';
-	let emissions_scope_1_2_3;
+	let rawData;
 	let availableYears;
+	let freezeYAxis;
 
 	// use companies data with `selected: true` as default
 	$: companies = atxCompanies.map((company) => {
@@ -51,21 +52,19 @@
 		complete: function (results) {
 			console.log('🚀 ~ file: index.svelte:44 ~ results:', results);
 			if (results) {
-				emissions_scope_1_2_3 = results.data;
+				rawData = results.data;
 			}
 		}
 	});
 
 	$: {
-		if (emissions_scope_1_2_3) {
+		if (rawData) {
 			// get unique available years
-			availableYears = [
-				...new Set(emissions_scope_1_2_3.map((entry) => entry.Year_Scope.split('_')[0]))
-			];
+			availableYears = [...new Set(rawData.map((entry) => entry.Year_Scope.split('_')[0]))];
 			console.log('🚀 ~ file: index.svelte:60 ~ availableYears:', availableYears);
 		}
 	}
-	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', emissions_scope_1_2_3);
+	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', rawData);
 </script>
 
 <div>
@@ -85,13 +84,11 @@
 	><br />
 	{#each companies as company}
 		<input type="checkbox" id="company-filter-{company.logo}" bind:checked={company.selected} />
-		<label for="company-filter-{company.logo}">{company.name}</label><br />
+		<label for="company-filter-{company.logo}">{company.name}</label>
+		<br />
 	{/each}
 	<br />
 
-	<br />
-	<mark>Bar-Chart mit bisherigen Emissionen</mark>
-	<br />
 	<!-- Scope Selector -->
 	<select bind:value={selectedScopes} on:change={handleSelectScope}>
 		<option value="1">Scope 1</option>
@@ -109,20 +106,63 @@
 			{/each}
 		</select>
 	{/if}
+
+	<!-- Freeze Y-Axis -->
+	<label
+		class="flex gap-1 text-sm items-center {freezeYAxis ? 'text-gray-700' : 'text-gray-400'}"
+		transition:fade
+	>
+		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<path
+				d="M4 7L7 4L10 7"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M7 20V4"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M17 14.4444H12C11.4477 14.4444 11 14.9419 11 15.5556V18.8889C11 19.5025 11.4477 20 12 20H17C17.5523 20 18 19.5025 18 18.8889V15.5556C18 14.9419 17.5523 14.4444 17 14.4444Z"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M12.5 14.4444V12.2222C12.5 11.6329 12.7107 11.0676 13.0858 10.6509C13.4609 10.2341 13.9696 10 14.5 10C15.0304 10 15.5391 10.2341 15.9142 10.6509C16.2893 11.0676 16.5 11.6329 16.5 12.2222V14.4444"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		</svg>
+		<span>Y-Achse fixieren?</span>
+		<input type="checkbox" bind:checked={freezeYAxis} />
+	</label>
+
 	<br />
 
-	{#if emissions_scope_1_2_3}
+	<!-- Chart -->
+	{#if rawData}
 		<div class="h-80">
 			<CompanyEmissionsChart
-				data={emissions_scope_1_2_3}
+				data={rawData}
 				selectedCompanies={companies.filter((company) => company.selected)}
 				{selectedScopes}
 				{selectedYear}
+				{freezeYAxis}
 			/>
 		</div>
 	{/if}
 
-	<div style="border: 1px solid black">
+	<!-- Selected Companies List -->
+	<!-- <div style="border: 1px solid black">
 		<strong>Ausgewählte Unternehmen:</strong>
 		<ul>
 			{#each companies as company}
@@ -131,5 +171,5 @@
 				{/if}
 			{/each}
 		</ul>
-	</div>
+	</div> -->
 </div>

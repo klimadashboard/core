@@ -5,6 +5,7 @@
 	export let selectedCompanies;
 	export let selectedScopes = '1';
 	export let selectedYear;
+	export let freezeYAxis;
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', data);
 	$: console.log(
 		'🚀 ~ file: CompanyEmissionsChart.svelte:9 ~ selectedCompanies:',
@@ -72,4 +73,4 @@
 	}
 </script>
 
-<BarChart data={dataset} visualisation="stacked" />
+<BarChart data={dataset} visualisation="stacked" {freezeYAxis} />
