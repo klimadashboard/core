@@ -69,12 +69,12 @@
 
 <div>
 	<button
-		class="text-blue underline disabled:opacity-50"
+		class="text-blue underline disabled:opacity-50 mr-2"
 		disabled={allSelected}
 		on:click={() => {
 			selectAll();
 		}}>Alle auswählen</button
-	><br />
+	>
 	<button
 		class="text-blue underline disabled:opacity-50"
 		disabled={allDeselected}
@@ -82,11 +82,26 @@
 			deselectAll();
 		}}>Alle abwählen</button
 	><br />
-	{#each companies as company}
+	<!-- {#each companies as company}
 		<input type="checkbox" id="company-filter-{company.logo}" bind:checked={company.selected} />
 		<label for="company-filter-{company.logo}">{company.name}</label>
 		<br />
-	{/each}
+	{/each} -->
+
+	<div class="flex gap-2 mt-4 flex-wrap">
+		{#each companies as company}
+			<button
+				class="bg-gray-700 flex space-x-2 items-center rounded-full font-semibold uppercase tracking-wide px-4 py-2 text-white text-sm {company.selected
+					? 'opacity-100'
+					: 'opacity-70'}"
+				on:mousedown={() => (company.selected = !company.selected)}
+				aria-label={company.name}
+			>
+				<span>{company.name}</span>
+			</button>
+		{/each}
+	</div>
+
 	<br />
 
 	<!-- Scope Selector -->
@@ -109,7 +124,7 @@
 
 	<!-- Freeze Y-Axis -->
 	<label
-		class="flex gap-1 text-sm items-center {freezeYAxis ? 'text-gray-700' : 'text-gray-400'}"
+		class="h-10 flex gap-1 text-sm items-center {freezeYAxis ? 'text-gray-700' : 'text-gray-400'}"
 		transition:fade
 	>
 		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
