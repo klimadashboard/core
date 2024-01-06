@@ -4,7 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
 
-	let selectedScope = '1';
+	let selectedScopes = '1';
 	let selectedYear = 2020;
 	let emissions_scope_1_2_3;
 
@@ -27,7 +27,7 @@
 	}
 
 	function handleSelectChange(event) {
-		selectedScope = event.target.value;
+		selectedScopes = event.target.value;
 	}
 
 	// Filter
@@ -77,7 +77,7 @@
 	<br />
 	<mark>Bar-Chart mit bisherigen Emissionen</mark>
 	<br />
-	<select bind:value={selectedScope} on:change={handleSelectChange}>
+	<select bind:value={selectedScopes} on:change={handleSelectChange}>
 		<option value="1">Scope 1</option>
 		<option value="2">Scope 2</option>
 		<option value="3">Scope 3</option>
@@ -91,7 +91,7 @@
 			<CompanyEmissionsChart
 				data={emissions_scope_1_2_3}
 				selectedCompanies={companies.filter((company) => company.selected)}
-				{selectedScope}
+				{selectedScopes}
 				{selectedYear}
 			/>
 		</div>
