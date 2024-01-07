@@ -44,18 +44,21 @@
 	);
 
 	// Load emissions data
-	Papa.parse(`../../data/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3.csv`, {
-		download: true,
-		dynamicTyping: true,
-		header: true,
-		skipEmptyLines: true,
-		complete: function (results) {
-			console.log('🚀 ~ file: index.svelte:44 ~ results:', results);
-			if (results) {
-				rawData = results.data;
+	Papa.parse(
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3.csv`,
+		{
+			download: true,
+			dynamicTyping: true,
+			header: true,
+			skipEmptyLines: true,
+			complete: function (results) {
+				console.log('🚀 ~ file: index.svelte:44 ~ results:', results);
+				if (results) {
+					rawData = results.data;
+				}
 			}
 		}
-	});
+	);
 
 	$: {
 		if (rawData) {
