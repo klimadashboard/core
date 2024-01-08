@@ -10,6 +10,9 @@
 	import { fade } from 'svelte/transition';
 	import formatPercentage from '$lib/stores/formatPercentage';
 
+	export let maxYear;
+	export let data;
+
 	$: sectors = [
 		{
 			key: 'energy_co2e_t_percapita',
@@ -55,8 +58,6 @@
 		}
 	];
 
-	export let data;
-
 	$: height = 200;
 	$: width = 400;
 
@@ -83,7 +84,7 @@
 	let chartWidth;
 	let chartHeight;
 
-	$: selectedYear = 2020;
+	$: selectedYear = maxYear;
 
 	$: selectedStates = data
 		.filter((d) => d.year == selectedYear)
@@ -236,11 +237,11 @@
 			<input
 				type="range"
 				min="1990"
-				max="2020"
+				max={maxYear}
 				bind:value={selectedYear}
 				aria-label="Jahr auswählen"
 			/>
-			<p class="text-sm text-gray-600 ">{selectedYear}</p>
+			<p class="text-sm text-gray-600">{selectedYear}</p>
 			{#if !playing}
 				<button on:mousedown={() => playAnimation(false)} aria-label="Play">
 					<svg
@@ -438,7 +439,7 @@
 										padding) /
 										2})"
 								>
-									<text dominant-baseline="auto" class="text-sm text-black  fill-current"
+									<text dominant-baseline="auto" class="text-sm text-black fill-current"
 										>{state}</text
 									>
 									<g class="text-gray-400 text-xs fill-current">
@@ -463,7 +464,7 @@
 										padding) /
 										2 || 0})"
 								>
-									<text dominant-baseline="middle" class="text-sm text-black  fill-current"
+									<text dominant-baseline="middle" class="text-sm text-black fill-current"
 										>{state}</text
 									>
 									{#if activeState == state}
@@ -492,7 +493,7 @@
 
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-map cursor-pointer "
+					class="icon icon-tabler icon-tabler-map cursor-pointer"
 					x={chartWidth - 24 || 0}
 					width="24"
 					height="24"

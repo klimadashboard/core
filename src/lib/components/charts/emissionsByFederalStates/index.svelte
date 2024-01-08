@@ -5,6 +5,7 @@
 
 	$: dataset = null;
 	$: readMore = false;
+	let maxYear;
 
 	Papa.parse(
 		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
@@ -15,14 +16,16 @@
 			complete: function (results) {
 				if (results) {
 					dataset = results.data.filter(
-						(d) => d.region !== 'Austria' && d.classification == 'Gesamt' && d.year < 2021
+						(d) => d.region !== 'Austria' && d.classification == 'Gesamt' && d.total_co2e_t
 					);
+					maxYear = [...dataset].sort((a, b) => b.year - a.year)[0].year;
+					console.log(maxYear);
 				}
 			}
 		}
 	);
 </script>
 
-{#if dataset}
-	<Chart data={dataset} />
+{#if dataset && maxYear}
+	<Chart data={dataset} {maxYear} />
 {/if}

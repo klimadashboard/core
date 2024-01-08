@@ -208,12 +208,12 @@
 		!showPerCapita
 	) {
 		dataset.push({
-			label: 2022,
-			annotation: 'Prognose 2022',
+			label: 2023,
+			annotation: 'Prognose 2023',
 			categories: [
 				{
-					label: 'Prognose 2022',
-					value: 72600000,
+					label: 'Prognose 2023',
+					value: 67600000,
 					estimate: true,
 					color: '#4DB263'
 				}
