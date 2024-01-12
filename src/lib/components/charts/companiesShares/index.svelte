@@ -1,10 +1,8 @@
 <script>
 	import Chart from '$lib/components/blocks/Chart.svelte';
 	import atxCompanies from '$lib/stores/companies';
+	import * as d3 from 'd3';
 
-	const wedge_fill_color = '#4A81A9';
-	const stroke_color = 'white';//'#393B4B';
-	const highlight_color = '#F5AF4B';
 
 	const radius_main_circle = 500;
 	const margin_main_circle = 70;
@@ -33,6 +31,14 @@
 			cummulated_weight: grouped_companies[key][0].cummulated_weight
 		};
 	});
+	
+	const stroke_color = 'white';//'#393B4B';
+	const text_color = 'black'; //'white';
+	const highlight_color = '#F5AF4B';
+	const wedge_fill_color = '#4A81A9';
+	const sector_colors = d3.scaleOrdinal().domain(sectors.keys()).range(d3.schemeSet3);
+	// const sector_colors = () => wedge_fill_color;
+	// console.log(myColor("Banken"))
 
 	let hover_company_idx = -1;
 	let hover_sector = '';
@@ -75,7 +81,8 @@
 <svg viewBox="0 0 {c.x*2} {c.y*2}" style="max-width: 700px;">
 	{#each sectors as sector}
 		<!-- plot sectors if they comprise of more than 1 company -->
-		{#if grouped_companies[sector.sector].length > 1}
+		<!-- TODO: do we want to plot all sectors, or just with more than 1 company? -->
+		{#if grouped_companies[sector.sector].length > 0}
 			{@const angle = 100 + (sector.cummulated_weight / 100) * 360}
 			{@const angle_span = (sector.weight / 100) * 360}
 			{@const wedge = computeWedgePath({
@@ -85,7 +92,7 @@
 				angleSpan: angle_span
 			})}
 			{@const textCenter = computeWedgeCenter({
-				radius: (radius_inner_circle-1.5*margin_main_circle) / 2,
+				radius: (radius_inner_circle-1.1*margin_main_circle) / 2,
 				angle: angle,
 				angleSpan: angle_span
 			})}
@@ -100,7 +107,7 @@
 			>
 				<path
 					d={wedge}
-					fill={hover_sector == sector.sector ? highlight_color : wedge_fill_color}
+					fill={hover_sector == sector.sector ? highlight_color : sector_colors(sector.sector)}
 					stroke={stroke_color}
 				/>
 				<text
@@ -110,6 +117,7 @@
 					fill="black"
 					text-anchor="middle">{Math.round(sector.weight * 100) / 100}%</text
 				>
+				{#if hover_sector == sector.sector}
 				<text
 					font-size={font_size}
 					x={textCenter.x}
@@ -117,13 +125,15 @@
 					fill="black"
 					text-anchor="middle">{sector.sector}</text
 				>
+				{/if}
 			</g>
 		{/if}
 
 		<!-- plot companies -->
 		{#each grouped_companies[sector.sector] as company}
 			{@const compute_logo_dimensions = () => {
-				const area = hover_company_idx == company.idx ? 4000 : 3000;
+				// give all logos the same area and calculate height and width based on the area and aspect ratio of the logo
+				const area = hover_company_idx == company.idx ? 3000 : 2000;
 				const aspect_ratio = company.aspectRatio ? company.aspectRatio : 1;
 				const width = Math.sqrt(area * aspect_ratio);
 				const height = width / aspect_ratio;
@@ -145,7 +155,7 @@
 				angleSpan: angle_span
 			})}
 			{@const logoCenter = computeWedgeCenter({
-				radius: ((radius_main_circle + margin_main_circle*2) + (
+				radius: ((radius_main_circle + margin_main_circle * (company.weight > weight_threshold ? 1.5 : 2.0 + logo_circle_aspect_ratio*logo_dimensions.width/200)) + (
 					logo_dimensions.width * logo_circle_aspect_ratio +
 					logo_dimensions.height * (1-logo_circle_aspect_ratio) 
 					)) / 2,
@@ -159,8 +169,6 @@
 			})}
 			<g
 				on:mouseenter={() => {
-					console.log(angle, angle_span, Math.sin(((angle+angle_span/2) * Math.PI) / 180), Math.cos(((angle+angle_span/2) * Math.PI) / 180))
-					console.log(logo_circle_aspect_ratio)
 					hover_company_idx = company.idx;
 				}}
 				on:mouseleave={() => {
@@ -169,12 +177,12 @@
 			>
 				<path
 					d={wedge}
-					fill={hover_company_idx == company.idx ? highlight_color : wedge_fill_color}
+					fill={hover_company_idx == company.idx || hover_sector == company.sector ? highlight_color : sector_colors(company.sector)}
 					stroke={stroke_color}
 				/>
 				<!-- only show logo, if the share is big enough or if the company is hovered -->
-				{#if company.weight > weight_threshold || hover_company_idx == company.idx}
-					<text x={textCenter.x} y={textCenter.y} fill="white" text-anchor="middle"
+				{#if company.weight > weight_threshold || hover_company_idx == company.idx }
+					<text x={textCenter.x} y={textCenter.y} fill={text_color} text-anchor="middle"
 						>{Math.round(company.weight * 100) / 100}%</text
 					>
 					<!-- <circle stroke={stroke_color} fill="none" cx={wedgeCenter.x} cy={wedgeCenter.y} r={40} /> -->
