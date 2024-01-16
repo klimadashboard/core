@@ -9,6 +9,7 @@
 
 	export let id;
 	export let hideWrapper = false;
+	export let showText = true;
 
 	let Chart;
 	let chartId;
@@ -72,11 +73,11 @@
 				try {
 					await navigator.share(shareData);
 				} catch (err) {
-					console.log(`Cannot share data: ${err}, downloading instead.`);
+					// console.log(`Cannot share data: ${err}, downloading instead.`);
 
 					// BACKUP: download image
 					await getChart().then((chart) => {
-						console.log('downloading', chart.content.title);
+						// console.log('downloading', chart.content.title);
 						let url = window.URL.createObjectURL(blob);
 						let a = document.createElement('a');
 						a.href = url;
@@ -131,7 +132,7 @@
 					class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition"
 				>
 					<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
-						{chart.content.title.replace(/^DE: /, "")}
+						{chart.content.title.replace(/^DE: /, '')}
 					</h2>
 					<div class="flex items-center gap-3 transition">
 						<button
@@ -141,7 +142,7 @@
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
-								class="icon icon-tabler icon-tabler-photo"
+								class="icon icon-tabler icon-tabler-photo-share"
 								width="24"
 								height="24"
 								viewBox="0 0 24 24"
@@ -150,13 +151,12 @@
 								fill="none"
 								stroke-linecap="round"
 								stroke-linejoin="round"
+								><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 8h.01" /><path
+									d="M12 21h-6a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v7"
+								/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l3 3" /><path
+									d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0"
+								/><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg
 							>
-								<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-								<line x1="15" y1="8" x2="15.01" y2="8" />
-								<rect x="4" y="4" width="16" height="16" rx="3" />
-								<path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5" />
-								<path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2" />
-							</svg>
 						</button>
 						<button
 							on:mousedown={() => copyEmbedCode()}
@@ -184,6 +184,7 @@
 						<a
 							href="https://klimadashboard.{PUBLIC_VERSION}"
 							class="ml-2"
+							target="_blank"
 							aria-label="Klimadashboard.{PUBLIC_VERSION}"
 						>
 							<svg
@@ -229,7 +230,7 @@
 						<svelte:component this={Chart} v={createVariables(chart.content.variables)} />
 					</div>
 					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-						{#if chart.content.text}
+						{#if chart.content.text && showText}
 							<p class="text-lg text col-span-2">{@html chart.content.text}</p>
 						{/if}
 						{#if chart.content.source}

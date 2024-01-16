@@ -4,10 +4,11 @@
 
 	$: id = $page.params.slug.replace('charts/', '');
 	const bgColor = $page.url.searchParams.get('bgcolor');
+	const showText = $page.url.searchParams.get('showtext');
 </script>
 
 <main style="background: #{bgColor}" class="w-screen h-screen">
 	{#if $page.params.slug}
-		<Chart {id} />
+		<Chart {id} showText={showText == 'false' ? false : true} />
 	{/if}
 </main>

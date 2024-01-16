@@ -40,7 +40,7 @@
 
 	let chartWidth;
 	let chartHeight;
-	let margin = { top: 20, right: 15, bottom: 30, left: 0 };
+	let margin = { top: 20, right: 15, bottom: 40, left: 0 };
 
 	const thgFactor = PUBLIC_VERSION == 'at' ? 1000 * 1000 : 1;
 
@@ -123,7 +123,7 @@
 
 	$: getZeroYear = function (key) {
 		if (chosenBudget.usedUp) {
-			return chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year
+			return chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year;
 		} else if (key.replace(chosenBudget.value + '_', '') == 'nochange') {
 			var selectedRow = dataPaths.reduce((last, d) => (d[key] > 0 ? d : last), null);
 			var year = selectedRow.year;
@@ -175,6 +175,17 @@
 		? generateLine('ksg')(dataPaths.filter((d) => d.year >= currentYear))
 		: null;
 	$: ksgTHGLine = showKSGGoal ? generateLine('thg')(thgPathDe) : null;
+
+	$: getAlternateForKey = function (key) {
+		if (chosenBudget.usedUp) {
+			return (
+				chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year == 2027 &&
+				chartWidth < 600
+			);
+		} else {
+			return false;
+		}
+	};
 </script>
 
 <div class="relative">
@@ -365,7 +376,8 @@
 
 					{#each selectedKeys as key, i}
 						<g
-							transform="translate({xScaleOffset(getZeroYear(key))},{innerChartHeight + 16})"
+							transform="translate({xScaleOffset(getZeroYear(key)) +
+								(i == 2 ? -20 : 0)},{innerChartHeight + 25 + (getAlternateForKey(key) ? 0 : -10)})"
 							style="color: {keys[
 								keys.findIndex(
 									(d) => d.key == selectedKeys[i].replace(chosenBudget.value + '_', '')
@@ -374,8 +386,12 @@
 						>
 							<text class="fill-current text-xs" text-anchor="middle">
 								{#if chosenBudget.usedUp}
-									<tspan x="1" y="0">{chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].season}</tspan>
-									<tspan x="0" y="14">{chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year}</tspan>
+									<tspan x="1" y="0"
+										>{chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].season}</tspan
+									>
+									<tspan x="0" y="14"
+										>{chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year}</tspan
+									>
 								{:else if getZeroYear(key) % 1 !== 0}
 									<tspan x="1" y="0">Mitte</tspan>
 									<tspan x="0" y="14">{Math.floor(getZeroYear(key))}</tspan>
