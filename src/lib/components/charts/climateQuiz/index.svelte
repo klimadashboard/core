@@ -65,13 +65,6 @@
 		);
 		quizQuestions[questionIndex].answers.forEach((ans, a) => {
 			const count = answerCounts.find((answer) => answer.answerId == String(a))?.count || 0;
-			console.log(
-				ans,
-				count,
-				a,
-				quizQuestions[questionIndex].clickedCount,
-				quizQuestions[questionIndex].maxClicked
-			);
 
 			quizQuestions[questionIndex].answers[a].percent =
 				(count / quizQuestions[questionIndex].clickedCount) * 100;

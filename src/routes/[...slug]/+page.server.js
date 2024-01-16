@@ -7,18 +7,18 @@ locale.subscribe((value) => {
 	localeString = value;
 });
 
-console.log(localeString);
-
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
 	const url =
-		'https://cms.klimadashboard.org/' +
+		'https://klimadashboard.org/' +
 		localeString +
 		'/klimadashboard-' +
 		PUBLIC_VERSION +
 		(params.slug !== '' ? '/' : '') +
 		params.slug +
 		'.json';
+
+	console.log(url);
 
 	const promise = await fetch(url)
 		.then((x) => x.json())

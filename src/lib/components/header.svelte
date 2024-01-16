@@ -5,9 +5,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Loader from './Loader.svelte';
 	import { page } from '$app/stores';
-	import { invalidateAll } from '$app/navigation';
-
-	$: console.log($locale);
+	import { goto, invalidateAll } from '$app/navigation';
 
 	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
 		.then((x) => x.json())
@@ -18,9 +16,9 @@
 
 	$: showNav = false;
 
-	const switchLanguage = function () {
+	$: switchLanguage = function () {
 		$locale = $locales.find((d) => d != $locale);
-		invalidateAll();
+		goto('/', { replaceState: true, noScroll: true });
 	};
 </script>
 
