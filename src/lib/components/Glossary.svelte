@@ -8,14 +8,14 @@
 	import Blocks from '$lib/components/blocks/index.svelte';
 
 	const getGlossary = async function () {
-		const res = await fetch('https://cms.klimadashboard.org/de/glossary.json').then(function (
-			response
-		) {
-			if (!response.ok) {
-				throw error(500, response.statusText);
+		const res = await fetch('https://klimadashboard.org/' + $locale + '/glossary.json').then(
+			function (response) {
+				if (!response.ok) {
+					throw error(500, response.statusText);
+				}
+				return response;
 			}
-			return response;
-		});
+		);
 		const json = await res.json();
 
 		if (json) {
@@ -33,7 +33,7 @@
 		transition:fade={{ duration: 200 }}
 	>
 		<div
-			class="bg-white  m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll"
+			class="bg-white m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll"
 			style="max-height: 70vh;"
 			use:clickOutside
 			on:click_outside={() => glossaryItem.set(false)}

@@ -18,8 +18,6 @@ export async function load({ params }) {
 		params.slug +
 		'.json';
 
-	console.log(url);
-
 	const promise = await fetch(url)
 		.then((x) => x.json())
 		.catch(function (err) {

@@ -7,7 +7,9 @@
 	import { page } from '$app/stores';
 	import { goto, invalidateAll } from '$app/navigation';
 
-	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
+	$: promise = fetch(
+		'https://klimadashboard.org/' + $locale + '/get/navigation/' + PUBLIC_VERSION + '.json'
+	)
 		.then((x) => x.json())
 		.then((x) => Object.values(x.data).filter((d) => d.num))
 		.catch(function (err) {
@@ -18,7 +20,6 @@
 
 	$: switchLanguage = function () {
 		$locale = $locales.find((d) => d != $locale);
-		goto('/', { replaceState: true, noScroll: true });
 	};
 </script>
 

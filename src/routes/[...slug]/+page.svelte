@@ -1,14 +1,14 @@
 <script>
-	import { onMount } from 'svelte';
 	import Blocks from '$lib/components/blocks/index.svelte';
 	import PageHeader from '$lib/components/PageHeader.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import { fade } from 'svelte/transition';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
+	import { locale } from '$lib/stores/i18n';
 
 	/** @type {import('./$types').PageData} */
 	export let data = [];
@@ -22,6 +22,10 @@
 			? 'https://schema.org/FAQPage'
 			: ''
 		: '';
+
+	$: if ($locale && browser) {
+		invalidateAll();
+	}
 </script>
 
 <svelte:head>
