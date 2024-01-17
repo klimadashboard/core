@@ -40,7 +40,6 @@
 		header: true,
 		complete: function (results) {
 			if (results) {
-				// console.log('dwd data', results.data, selectedStation);
 				selectedStationName = results.data.find((d) => d.id == selectedStation).name;
 			}
 		}
@@ -49,26 +48,26 @@
 
 {#if selectedStationData.length > 0 && selectedStationName !== 'station'}
 	<div class="flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max">
-		<span class="font-bold">Referenzzeitraum</span>
-		<label
+		<span class="font-bold">Klimareferenzperiode</span>
+		<!-- <label
 			class="flex items-center gap-1 w-max {selectedReferenceYears == earliestPossibleYear
 				? 'font-bold'
 				: ''}"
 		>
 			<input type="radio" value={earliestPossibleYear} bind:group={selectedReferenceYears} />
 			<span>langjähriger Schnitt ({earliestPossibleYear}-{latestPossibleYear})</span>
-		</label>
+		</label> -->
 		<label
 			class="flex items-center gap-1 w-max {selectedReferenceYears == 1961 ? 'font-bold' : ''}"
 		>
 			<input type="radio" value={1961} bind:group={selectedReferenceYears} />
-			<span>Klimareferenzperiode 1961-1990</span>
+			<span>1961-1990</span>
 		</label>
 		<label
 			class="flex items-center gap-1 w-max {selectedReferenceYears == 1991 ? 'font-bold' : ''}"
 		>
 			<input type="radio" value={1991} bind:group={selectedReferenceYears} />
-			<span>Klimareferenzperiode 1991-2020</span>
+			<span>1991-2020</span>
 		</label>
 	</div>
 
