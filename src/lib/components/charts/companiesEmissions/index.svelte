@@ -3,12 +3,15 @@
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
+	import ViewSwitch from './ViewSwitch.svelte';
+	import { fade } from 'svelte/transition';
 
 	let selectedScopes = '1';
 	let selectedYear = '2020';
 	let rawData;
 	let availableYears;
-	let freezeYAxis;
+	let freezeYAxis = false;
+	let isFocusView = false;
 
 	// use companies data with `selected: true` as default
 	$: companies = atxCompanies.map((company) => {
@@ -18,6 +21,15 @@
 		};
 	});
 
+	$: if (isFocusView) {
+		deselectAll();
+		companies[1].selected = true;
+	}
+
+	$: if (!isFocusView) {
+		selectAll();
+	}
+
 	// $: console.log(companies.map((c) => c.selected));
 
 	function selectAll() {
@@ -26,6 +38,24 @@
 
 	function deselectAll() {
 		companies = companies.map((company) => ({ ...company, selected: false }));
+	}
+
+	function onClickCompany(company) {
+		if (isFocusView) {
+			companies = companies.map((c) => {
+				if (c.name === company.name) {
+					return { ...c, selected: true };
+				}
+				return { ...c, selected: false };
+			});
+		} else {
+			companies = companies.map((c) => {
+				if (c.name === company.name) {
+					return { ...c, selected: !c.selected };
+				}
+				return c;
+			});
+		}
 	}
 
 	function handleSelectScope(event) {
@@ -52,7 +82,7 @@
 			header: true,
 			skipEmptyLines: true,
 			complete: function (results) {
-				console.log('🚀 ~ file: index.svelte:44 ~ results:', results);
+				console.log('🚀 ~ file: index.svelte:44 ~ raw data:', results);
 				if (results) {
 					rawData = results.data;
 				}
@@ -71,16 +101,17 @@
 </script>
 
 <div>
+	<ViewSwitch bind:isChecked={isFocusView} />
 	<button
 		class="text-blue underline disabled:opacity-50 mr-2"
-		disabled={allSelected}
+		disabled={allSelected || isFocusView}
 		on:click={() => {
 			selectAll();
 		}}>Alle auswählen</button
 	>
 	<button
 		class="text-blue underline disabled:opacity-50"
-		disabled={allDeselected}
+		disabled={allDeselected || isFocusView}
 		on:click={() => {
 			deselectAll();
 		}}>Alle abwählen</button
@@ -97,7 +128,7 @@
 				class=" flex space-x-2 items-center rounded-full font-semibold tracking-wide px-4 py-2 text-black text-xs {company.selected
 					? 'border-2 border-black'
 					: 'border-2 border-gray-300'}"
-				on:mousedown={() => (company.selected = !company.selected)}
+				on:mousedown={() => onClickCompany(company)}
 				aria-label={company.name}
 			>
 				<img
@@ -124,7 +155,7 @@
 	</select>
 
 	<!-- Year Selector -->
-	{#if availableYears}
+	{#if availableYears && !isFocusView}
 		<select bind:value={selectedYear} on:change={handleSelectYear}>
 			{#each availableYears as year}
 				<option value={year}>{year}</option>
@@ -182,6 +213,7 @@
 				{selectedScopes}
 				{selectedYear}
 				{freezeYAxis}
+				{isFocusView}
 			/>
 		</div>
 	{/if}

@@ -6,6 +6,8 @@
 	export let selectedScopes = '1';
 	export let selectedYear;
 	export let freezeYAxis;
+	export let isFocusView = false;
+	$: console.log('🚀 ~ isFocusView:', isFocusView);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', data);
 	$: console.log(
 		'🚀 ~ file: CompanyEmissionsChart.svelte:9 ~ selectedCompanies:',
@@ -14,13 +16,13 @@
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:11 ~ selectedYear:', selectedYear);
 
-	let dataset = {};
 	const categoryColors = {
 		scope1: '#E59E1A',
 		scope2: '#4DB263',
 		scope3: '#8C8C8C'
 	};
 
+	let dataset = [];
 	// Restructure and filter data
 	$: {
 		if (data && selectedScopes && selectedYear && selectedCompanies) {
@@ -30,7 +32,7 @@
 			data.forEach((entry) => {
 				const [year, scope] = entry.Year_Scope.split('_');
 				// only include selected year
-				if (year !== String(selectedYear)) {
+				if (!isFocusView && year !== String(selectedYear)) {
 					return;
 				}
 				// only include selected scopes
@@ -47,7 +49,7 @@
 						}
 
 						const category = {
-							label: key,
+							label: isFocusView ? year : key,
 							categories: [
 								{
 									label: scope,
@@ -58,10 +60,15 @@
 						};
 
 						// Check if the company is already in restructuredData for the current year
-						const existingCompany = dataset.find((company) => company.label === key);
+						let existingEntry;
+						if (isFocusView) {
+							existingEntry = dataset.find((y) => y.label === year);
+						} else {
+							existingEntry = dataset.find((company) => company.label === key);
+						}
 
-						if (existingCompany) {
-							existingCompany.categories.push(category.categories[0]);
+						if (existingEntry) {
+							existingEntry.categories.push(category.categories[0]);
 						} else {
 							dataset.push(category);
 						}
@@ -69,7 +76,7 @@
 				});
 			});
 		}
-		console.log('🚀 ~ file: CompanyEmissionsChart.svelte:60 ~ dataset:', dataset);
+		console.log('🚀 ~ file: CompanyEmissionsChart.svelte:80 ~ dataset:', dataset);
 	}
 </script>
 
