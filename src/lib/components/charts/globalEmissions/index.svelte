@@ -2,7 +2,7 @@
 	import Papa from 'papaparse';
 	import { locale } from '$lib/stores/i18n';
 	import MultiSelect from '$lib/components/MultiSelect.svelte';
-	import BarChart from '../chartBar.svelte';
+	import Chart from './Chart.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let countryData;
@@ -33,85 +33,64 @@
 		}
 	});
 
-	$: selectedCountries = [PUBLIC_VERSION.toUpperCase(), 'CN', 'US', 'UK', 'SE', 'IT'];
+	$: selectedCountries = [PUBLIC_VERSION, 'cn', 'us', 'gb', 'se', 'it'];
 
-	$: getIconString = function (iso) {
-		var string = '';
-		for (var i = 0; i < iso.length / 2; i++) {
-			string +=
-				'<image x=' +
-				i * 30 +
-				" height=15 href='https://data.klimadashboard.org/global/flags/" +
-				iso.substring(i * 2, i * 2 + 2).toLowerCase() +
-				".svg' class='shadow' />";
-		}
-		return string;
+	$: data = selectedCountries.map((c) => {
+		return {
+			label: getCountryName(c),
+			value: countryData?.find((d) => d.state_iso == c.toUpperCase())
+				? countryData?.find((d) => d.state_iso == c.toUpperCase()).co2e_percapita
+				: false,
+			code: c
+		};
+	});
+
+	$: getCountryName = function (code) {
+		return countryNames?.find((d) => d.alpha2 == code)
+			? countryNames?.find((d) => d.alpha2 == code)[$locale]
+			: code;
 	};
 
-	$: dataset = countryData?.reduce((result, entry) => {
-		if (selectedCountries.includes(entry.state_iso)) {
-			result.push({
-				label: getCountryName(entry.state_iso),
-				value: entry.co2e_percapita,
-				highlight: entry.state_iso == PUBLIC_VERSION.toUpperCase() ? true : false,
-				icon: getIconString(entry.state_iso)
-			});
-		}
-		return result;
-	}, []);
+	$: selectedCountry = 'false';
+	$: console.log(selectedCountry);
 
-	$: worldwideAverage =
-		Math.round(countryData?.find((d) => d.state_name == 'World').co2e_percapita * 10) / 10;
-	$: lastYear = 2018;
-	$: lastYearEmissions = countryData?.find(
-		(d) => d.state_iso == PUBLIC_VERSION.toUpperCase()
-	).co2e_percapita;
-
-	$: lines = [
-		{
-			label: 'Weltweiter Durchschnitt' + ' ' + worldwideAverage + 't',
-			value: worldwideAverage
-		}
-	];
-
-	$: currentLocale = $locale;
-
-	$: getCountryName = function (name, selectedLocale) {
-		var countryName = name;
-
-		if (countryData && countryNames && selectedLocale !== 'en') {
-			if (countryNames.find((d) => d.en == name)) {
-				countryName = countryNames.find((d) => d.en == name)[selectedLocale];
-			}
-		}
-		return countryName;
-	};
+	$: console.log(selectedCountries);
 </script>
 
 {#if countryData && countryNames}
-	<MultiSelect id="countries" bind:value={selectedCountries}>
-		<option value="" />
-		{#each countryData.sort(function (a, b) {
-			var nameA = getCountryName(a.state_name, currentLocale).toLowerCase(),
-				nameB = getCountryName(b.state_name, currentLocale).toLowerCase();
-			if (nameA < nameB) //sort string ascending
-				return -1;
-			if (nameA > nameB) return 1;
-			return 0; //default return value (no sorting)
-		}) as country}
-			<option value={country.state_iso}>{getCountryName(country.state_name, currentLocale)}</option>
-		{/each}
-	</MultiSelect>
-
-	<div class="h-80">
-		{#if dataset}
-			<BarChart
-				data={dataset}
-				sort={'descending'}
-				label={'Pro-Kopf-Emissionen'}
-				{lines}
-				unit={'t THG'}
-			/>
+	<div class="mt-4 relative">
+		{#if data}
+			<Chart bind:selectedCountries data={data.sort((a, b) => b.value - a.value)} />
 		{/if}
+
+		<div class="left-40 absolute bottom-4 flex items-center space-x-2">
+			<button on:mousedown={() => selectedCountries.push(selectedCountry)}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="icon icon-tabler icon-tabler-square-rounded-plus-filled"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+						d="M12 2l.324 .001l.318 .004l.616 .017l.299 .013l.579 .034l.553 .046c4.785 .464 6.732 2.411 7.196 7.196l.046 .553l.034 .579c.005 .098 .01 .198 .013 .299l.017 .616l.005 .642l-.005 .642l-.017 .616l-.013 .299l-.034 .579l-.046 .553c-.464 4.785 -2.411 6.732 -7.196 7.196l-.553 .046l-.579 .034c-.098 .005 -.198 .01 -.299 .013l-.616 .017l-.642 .005l-.642 -.005l-.616 -.017l-.299 -.013l-.579 -.034l-.553 -.046c-4.785 -.464 -6.732 -2.411 -7.196 -7.196l-.046 -.553l-.034 -.579a28.058 28.058 0 0 1 -.013 -.299l-.017 -.616c-.003 -.21 -.005 -.424 -.005 -.642l.001 -.324l.004 -.318l.017 -.616l.013 -.299l.034 -.579l.046 -.553c.464 -4.785 2.411 -6.732 7.196 -7.196l.553 -.046l.579 -.034c.098 -.005 .198 -.01 .299 -.013l.616 -.017c.21 -.003 .424 -.005 .642 -.005zm0 6a1 1 0 0 0 -1 1v2h-2l-.117 .007a1 1 0 0 0 .117 1.993h2v2l.007 .117a1 1 0 0 0 1.993 -.117v-2h2l.117 -.007a1 1 0 0 0 -.117 -1.993h-2v-2l-.007 -.117a1 1 0 0 0 -.993 -.883z"
+						fill="currentColor"
+						stroke-width="0"
+					/></svg
+				>
+			</button>
+			<select bind:value={selectedCountry}>
+				<option value="null">Select a country...</option>
+				{#each countryNames as country}
+					<option value={country.alpha2} class="background-transparent bg-opacity-0 appearance-none"
+						>{country.en}</option
+					>
+				{/each}
+			</select>
+		</div>
 	</div>
 {/if}
