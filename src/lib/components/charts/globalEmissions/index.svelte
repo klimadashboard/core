@@ -35,15 +35,23 @@
 
 	$: selectedCountries = [PUBLIC_VERSION, 'cn', 'us', 'gb', 'se', 'it'];
 
-	$: data = selectedCountries.map((c) => {
-		return {
-			label: getCountryName(c),
-			value: countryData?.find((d) => d.state_iso == c.toUpperCase())
-				? countryData?.find((d) => d.state_iso == c.toUpperCase()).co2e_percapita
-				: false,
-			code: c
-		};
-	});
+	$: data = [...selectedCountries]
+		.map((c) => {
+			return {
+				label: getCountryName(c),
+				value: countryData?.find((d) => d.state_iso == c.toUpperCase())
+					? countryData?.find((d) => d.state_iso == c.toUpperCase()).co2e_percapita
+					: false,
+				code: c
+			};
+		})
+		.sort((a, b) => b.value - a.value);
+
+	const addToSelectedCountries = function (code) {
+		selectedCountries = selectedCountries.concat([code]);
+		console.log(data);
+		console.log(selectedCountries);
+	};
 
 	$: getCountryName = function (code) {
 		return countryNames?.find((d) => d.alpha2 == code)
@@ -52,19 +60,16 @@
 	};
 
 	$: selectedCountry = 'false';
-	$: console.log(selectedCountry);
 
-	$: console.log(selectedCountries);
+	$: worldAverage = countryData?.find((d) => d.state_iso == 'WORLD').co2e_percapita;
 </script>
 
-{#if countryData && countryNames}
+{#if countryData && countryNames && selectedCountries && data.length > 0}
 	<div class="mt-4 relative">
-		{#if data}
-			<Chart bind:selectedCountries data={data.sort((a, b) => b.value - a.value)} />
-		{/if}
+		<Chart bind:selectedCountries bind:data {worldAverage} />
 
 		<div class="left-40 absolute bottom-4 flex items-center space-x-2">
-			<button on:mousedown={() => selectedCountries.push(selectedCountry)}>
+			<button on:mousedown={addToSelectedCountries(selectedCountry)}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="icon icon-tabler icon-tabler-square-rounded-plus-filled"
