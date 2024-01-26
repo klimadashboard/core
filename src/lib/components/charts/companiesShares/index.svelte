@@ -1,8 +1,8 @@
 <script>
 	import Chart from '$lib/components/blocks/Chart.svelte';
-	import atxCompanies from '$lib/stores/companies';
-	import * as d3 from 'd3';
+	import atxCompanies, { companyId } from '$lib/stores/companies';
 
+	import * as d3 from 'd3';
 
 	const radius_main_circle = 500;
 	const margin_main_circle = 70;
@@ -31,8 +31,8 @@
 			cummulated_weight: grouped_companies[key][0].cummulated_weight
 		};
 	});
-	
-	const stroke_color = 'white';//'#393B4B';
+
+	const stroke_color = 'white'; //'#393B4B';
 	const text_color = 'black'; //'white';
 	const highlight_color = '#F5AF4B';
 	const wedge_fill_color = '#4A81A9';
@@ -78,7 +78,7 @@
 </script>
 
 <div />
-<svg viewBox="0 0 {c.x*2} {c.y*2}" style="max-width: 700px;">
+<svg viewBox="0 0 {c.x * 2} {c.y * 2}" style="max-width: 700px;">
 	{#each sectors as sector}
 		<!-- plot sectors if they comprise of more than 1 company -->
 		<!-- TODO: do we want to plot all sectors, or just with more than 1 company? -->
@@ -86,13 +86,13 @@
 			{@const angle = 100 + (sector.cummulated_weight / 100) * 360}
 			{@const angle_span = (sector.weight / 100) * 360}
 			{@const wedge = computeWedgePath({
-				radiusInner: (radius_inner_circle-margin_inner_circle) / 2,
-				radiusOuter: (radius_inner_circle+margin_inner_circle) / 2,
+				radiusInner: (radius_inner_circle - margin_inner_circle) / 2,
+				radiusOuter: (radius_inner_circle + margin_inner_circle) / 2,
 				angle: angle,
 				angleSpan: angle_span
 			})}
 			{@const textCenter = computeWedgeCenter({
-				radius: (radius_inner_circle-1.1*margin_main_circle) / 2,
+				radius: (radius_inner_circle - 1.1 * margin_main_circle) / 2,
 				angle: angle,
 				angleSpan: angle_span
 			})}
@@ -118,13 +118,13 @@
 					text-anchor="middle">{Math.round(sector.weight * 100) / 100}%</text
 				>
 				{#if hover_sector == sector.sector}
-				<text
-					font-size={font_size}
-					x={textCenter.x}
-					y={textCenter.y + font_size}
-					fill="black"
-					text-anchor="middle">{sector.sector}</text
-				>
+					<text
+						font-size={font_size}
+						x={textCenter.x}
+						y={textCenter.y + font_size}
+						fill="black"
+						text-anchor="middle">{sector.sector}</text
+					>
 				{/if}
 			</g>
 		{/if}
@@ -137,28 +137,33 @@
 				const aspect_ratio = company.aspectRatio ? company.aspectRatio : 1;
 				const width = Math.sqrt(area * aspect_ratio);
 				const height = width / aspect_ratio;
-				return {width: width, height: height};
+				return { width: width, height: height };
 			}}
 			{@const logo_dimensions = compute_logo_dimensions()}
 			{@const angle = 100 + (company.cummulated_weight / 100) * 360}
 			{@const angle_span = (company.weight / 100) * 360}
 			{@const compute_logo_circle_aspect_ratio = () => {
-				const width_weight = Math.abs(Math.sin(((angle+angle_span/2) * Math.PI) / 180));
-				const height_weight = Math.abs(Math.cos(((angle+angle_span/2) * Math.PI) / 180));
-				return width_weight / (height_weight+width_weight);
+				const width_weight = Math.abs(Math.sin(((angle + angle_span / 2) * Math.PI) / 180));
+				const height_weight = Math.abs(Math.cos(((angle + angle_span / 2) * Math.PI) / 180));
+				return width_weight / (height_weight + width_weight);
 			}}
 			{@const logo_circle_aspect_ratio = compute_logo_circle_aspect_ratio()}
 			{@const wedge = computeWedgePath({
-				radiusInner: (radius_main_circle-margin_main_circle) / 2,
-				radiusOuter: (radius_main_circle+margin_main_circle) / 2,
+				radiusInner: (radius_main_circle - margin_main_circle) / 2,
+				radiusOuter: (radius_main_circle + margin_main_circle) / 2,
 				angle: angle,
 				angleSpan: angle_span
 			})}
 			{@const logoCenter = computeWedgeCenter({
-				radius: ((radius_main_circle + margin_main_circle * (company.weight > weight_threshold ? 1.5 : 2.0 + logo_circle_aspect_ratio*logo_dimensions.width/200)) + (
-					logo_dimensions.width * logo_circle_aspect_ratio +
-					logo_dimensions.height * (1-logo_circle_aspect_ratio) 
-					)) / 2,
+				radius:
+					(radius_main_circle +
+						margin_main_circle *
+							(company.weight > weight_threshold
+								? 1.5
+								: 2.0 + (logo_circle_aspect_ratio * logo_dimensions.width) / 200) +
+						(logo_dimensions.width * logo_circle_aspect_ratio +
+							logo_dimensions.height * (1 - logo_circle_aspect_ratio))) /
+					2,
 				angle: angle,
 				angleSpan: angle_span
 			})}
@@ -170,6 +175,7 @@
 			<g
 				on:mouseenter={() => {
 					hover_company_idx = company.idx;
+					companyId.set(company.id);
 				}}
 				on:mouseleave={() => {
 					hover_company_idx = -1;
@@ -177,11 +183,13 @@
 			>
 				<path
 					d={wedge}
-					fill={hover_company_idx == company.idx || hover_sector == company.sector ? highlight_color : sector_colors(company.sector)}
+					fill={hover_company_idx == company.idx || hover_sector == company.sector
+						? highlight_color
+						: sector_colors(company.sector)}
 					stroke={stroke_color}
 				/>
 				<!-- only show logo, if the share is big enough or if the company is hovered -->
-				{#if company.weight > weight_threshold || hover_company_idx == company.idx }
+				{#if company.weight > weight_threshold || hover_company_idx == company.idx}
 					<text x={textCenter.x} y={textCenter.y} fill={text_color} text-anchor="middle"
 						>{Math.round(company.weight * 100) / 100}%</text
 					>

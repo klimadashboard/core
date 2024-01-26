@@ -1,5 +1,5 @@
 <script>
-	import atxCompanies from '$lib/stores/companies';
+	import atxCompanies, { companyId } from '$lib/stores/companies';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
@@ -12,6 +12,8 @@
 	let availableYears;
 	let freezeYAxis = false;
 	let isFocusView = false;
+
+	// $: console.log('companyId', $companyId);
 
 	// use companies data with `selected: true` as default
 	$: companies = atxCompanies.map((company) => {

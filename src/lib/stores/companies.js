@@ -1,21 +1,28 @@
+import { writable } from 'svelte/store';
+
+export const companyId = writable(1);
+
 export default [
 	{
+		id: 1,
 		name: 'OMV AG',
-      	sector: 'Energie und Öl',
+		sector: 'Energie und Öl',
 		sector_old: 'Erdöl und Erdgas',
 		logo: 'omv',
 		weight: 15.7,
 		aspectRatio: 1.36
 	},
 	{
+		id: 2,
 		name: 'Verbund AG',
-      	sector: 'Energie und Öl',
+		sector: 'Energie und Öl',
 		sector_old: 'Stromversorger',
 		logo: 'verbund',
 		weight: 15.29,
 		aspectRatio: 4.6
 	},
 	{
+		id: 3,
 		name: 'Erste Group Bank AG',
 		sector: 'Banken',
 		logo: 'erste-bank',
@@ -23,14 +30,16 @@ export default [
 		aspectRatio: 2.27
 	},
 	{
+		id: 4,
 		name: 'Andritz AG',
-      	sector: 'Technik und Maschinen',
+		sector: 'Technik und Maschinen',
 		sector_old: 'Produktionstechnik und Maschinen',
 		logo: 'andritz',
 		weight: 6.52,
 		aspectRatio: 4.15
 	},
 	{
+		id: 5,
 		name: 'Voestalpine AG',
 		sector: 'Bergbau und Metalle',
 		logo: 'voestalpine',
@@ -38,6 +47,7 @@ export default [
 		aspectRatio: 4.61
 	},
 	{
+		id: 6,
 		name: 'Raiffeisen Bank International AG',
 		sector: 'Banken',
 		logo: 'raiffeisen',
@@ -45,6 +55,7 @@ export default [
 		aspectRatio: 3.57
 	},
 	{
+		id: 7,
 		name: 'STRABAG SE',
 		sector: 'Immobilien',
 		sector_old: 'Konstruktion',
@@ -53,6 +64,7 @@ export default [
 		aspectRatio: 3.24
 	},
 	{
+		id: 8,
 		name: 'EVN AG',
 		sector: 'Energie und Öl',
 		sector_old: 'Energieversorgung',
@@ -61,6 +73,7 @@ export default [
 		aspectRatio: 2.7
 	},
 	{
+		id: 9,
 		name: 'BAWAG Group AG',
 		sector: 'Banken',
 		logo: 'bawag',
@@ -68,6 +81,7 @@ export default [
 		aspectRatio: 1.74
 	},
 	{
+		id: 10,
 		name: 'Vienna Insurance Group AG',
 		sector: 'Versicherungen',
 		logo: 'vienna',
@@ -75,6 +89,7 @@ export default [
 		aspectRatio: 2.16
 	},
 	{
+		id: 11,
 		name: 'Mayr-Melnhof Karton AG',
 		sector: 'Verpackung',
 		logo: 'mayr-melnhof',
@@ -82,6 +97,7 @@ export default [
 		aspectRatio: 1.0
 	},
 	{
+		id: 12,
 		name: 'Wienerberger AG',
 		sector: 'Baustoffe',
 		logo: 'wienerberger',
@@ -89,6 +105,7 @@ export default [
 		aspectRatio: 6.38
 	},
 	{
+		id: 13,
 		name: 'CA Immobilien Anlagen AG',
 		sector: 'Immobilien',
 		logo: 'ca',
@@ -96,6 +113,7 @@ export default [
 		aspectRatio: 5.1
 	},
 	{
+		id: 14,
 		name: 'Uniqa Insurance Group AG',
 		sector: 'Versicherungen',
 		logo: 'uniqa',
@@ -103,6 +121,7 @@ export default [
 		aspectRatio: 1.28
 	},
 	{
+		id: 15,
 		name: 'Österreichische Post AG',
 		sector: 'Sonstige',
 		sector_old: 'Transport',
@@ -111,6 +130,7 @@ export default [
 		aspectRatio: 3.55
 	},
 	{
+		id: 16,
 		name: 'Immofinanz AG',
 		sector: 'Immobilien',
 		logo: 'immofinanz',
@@ -118,6 +138,7 @@ export default [
 		aspectRatio: 12.5
 	},
 	{
+		id: 17,
 		name: 'Lenzing AG',
 		sector: 'Baustoffe',
 		sector_old: 'Chemie',
@@ -126,24 +147,27 @@ export default [
 		aspectRatio: 2.2
 	},
 	{
+		id: 18,
 		name: 'Austria Technologie & Systemtechnik AG',
-      	sector: 'Technik und Maschinen',
+		sector: 'Technik und Maschinen',
 		sector_old: 'Hardware und Ausrüstung',
 		logo: 'ats',
 		weight: 1.17,
 		aspectRatio: 1.75
 	},
 	{
+		id: 19,
 		name: 'Do & Co AG',
-      	sector: 'Sonstige',
+		sector: 'Sonstige',
 		sector_old: 'Lebensmittel, Getränke und Tabak',
 		logo: 'do+co',
 		weight: 1.16,
 		aspectRatio: 1.53
 	},
 	{
+		id: 20,
 		name: 'Schoeller-Bleckmann Oilfield Equipment AG',
-      	sector: 'Energie und Öl',
+		sector: 'Energie und Öl',
 		sector_old: 'Erdöl und Erdgas',
 		logo: 'schoeller-bleckmann',
 		weight: 1.05,
