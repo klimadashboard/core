@@ -65,7 +65,7 @@
 		return {
 			...e,
 			x: i,
-			label: e['.']
+			label: e['                     .']
 		};
 	});
 </script>
