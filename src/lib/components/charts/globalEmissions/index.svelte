@@ -33,7 +33,7 @@
 		}
 	});
 
-	$: selectedCountries = [PUBLIC_VERSION, 'cn', 'us', 'gb', 'se', 'it'];
+	$: selectedCountries = [PUBLIC_VERSION, 'us', 'cn', 'in', 'ng'];
 
 	$: data = [...selectedCountries]
 		.map((c) => {
