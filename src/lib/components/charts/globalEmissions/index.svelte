@@ -88,7 +88,7 @@
 					/></svg
 				>
 			</button>
-			<select bind:value={selectedCountry}>
+			<select bind:value={selectedCountry} class="border rounded-full appearance-none bg-gray-100">
 				<option value="null">Select a country...</option>
 				{#each countryData
 					.sort( (a, b) => getCountryName(a.state_iso.toLowerCase()).localeCompare(getCountryName(b.state_iso.toLowerCase())) )

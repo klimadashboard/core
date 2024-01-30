@@ -13,7 +13,7 @@
 
 	$: chartHeight = (data.length + 1) * yHeight + margin.top + margin.bottom;
 
-	$: maxValue = Math.max(max(data, (d) => d.value) * 1.2, 20);
+	$: maxValue = Math.max(max(data, (d) => d.value) * 1.25, 0);
 
 	$: xScale = scaleLinear()
 		.range([0, chartWidth - margin.left - margin.right])
@@ -28,16 +28,40 @@
 <div class="" style="height: {chartHeight}px" bind:clientWidth={chartWidth}>
 	{#if chartWidth && chartHeight}
 		<svg width="100%" height="100%">
-			{#each xScale.ticks() as tick}
+			{#each xScale.ticks() as tick, i}
 				<g transform={`translate(${margin.left + xScale(tick)}, 4)`} class="text-xs text-gray-500">
-					<text fill="currentColor" text-anchor="middle" dominant-baseline="hanging">{tick}t</text>
+					<text fill="currentColor" text-anchor="middle" dominant-baseline="hanging"
+						>{tick}
+						{i + 1 == xScale.ticks().length ? 't THG' : ''}</text
+					>
 					<line x1={0} x2={0} y1={14} y2={chartHeight} class="stroke-gray-200 stroke-1" />
 				</g>
 			{/each}
 			{#if worldAverage > 0}
 				<g transform="translate({xScale(worldAverage) + margin.left},4)">
-					<text dominant-baseline="hanging" text-anchor="middle" class="text-sm font-bold">🌍</text>
-					<line x1={0} x2={0} y1={10} y2={chartHeight} class="stroke-gray-600 stroke-1" />
+					<rect width={62} height={10} class="fill-white" />
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width={20}
+						height={20}
+						x={-10}
+						y={-4}
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						stroke="currentColor"
+						fill="none"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+							d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"
+						/><path d="M3.6 9h16.8" /><path d="M3.6 15h16.8" /><path
+							d="M11.5 3a17 17 0 0 0 0 18"
+						/><path d="M12.5 3a17 17 0 0 1 0 18" /></svg
+					>
+					<text class="text-xs text-gray-800 font-bold" dominant-baseline="hanging" x={12}
+						>{worldAverage}t THG</text
+					>
+					<line x1={0} x2={0} y1={14} y2={chartHeight} class="stroke-gray-600 stroke-1" />
 				</g>
 			{/if}
 			<g transform="translate(0,{margin.top})">
