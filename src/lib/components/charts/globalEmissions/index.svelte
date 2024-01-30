@@ -33,7 +33,7 @@
 		}
 	});
 
-	$: selectedCountries = [PUBLIC_VERSION, 'cn', 'us', 'gb', 'se', 'it'];
+	$: selectedCountries = [PUBLIC_VERSION, 'us', 'cn', 'in', 'ng'];
 
 	$: data = [...selectedCountries]
 		.map((c) => {
@@ -68,7 +68,7 @@
 	<div class="mt-4 relative">
 		<Chart bind:selectedCountries bind:data {worldAverage} />
 
-		<div class="left-40 absolute bottom-4 flex items-center space-x-2">
+		<div class="left-4 absolute bottom-4 flex items-center space-x-2">
 			<button on:mousedown={addToSelectedCountries(selectedCountry)}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -90,9 +90,13 @@
 			</button>
 			<select bind:value={selectedCountry}>
 				<option value="null">Select a country...</option>
-				{#each countryNames as country}
-					<option value={country.alpha2} class="background-transparent bg-opacity-0 appearance-none"
-						>{country.en}</option
+				{#each countryData
+					.sort( (a, b) => getCountryName(a.state_iso.toLowerCase()).localeCompare(getCountryName(b.state_iso.toLowerCase())) )
+					.filter((d) => selectedCountries.indexOf(d.state_iso.toLowerCase()) < 0) as country}
+					<option
+						value={country.state_iso.toLowerCase()}
+						class="background-transparent bg-opacity-0 appearance-none"
+						>{getCountryName(country.state_iso.toLowerCase())}</option
 					>
 				{/each}
 			</select>
