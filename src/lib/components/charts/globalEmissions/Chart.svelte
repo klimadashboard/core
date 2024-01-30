@@ -40,11 +40,28 @@
 			{#if worldAverage > 0}
 				<g transform="translate({xScale(worldAverage) + margin.left},4)">
 					<rect width={62} height={10} class="fill-white" />
-					<text dominant-baseline="hanging" text-anchor="middle" class="text-sm font-bold">🌍</text>
-					<text class="text-xs text-gray-800 font-bold" dominant-baseline="hanging" x={10}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width={20}
+						height={20}
+						x={-10}
+						y={-4}
+						viewBox="0 0 24 24"
+						stroke-width="2"
+						stroke="currentColor"
+						fill="none"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+							d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"
+						/><path d="M3.6 9h16.8" /><path d="M3.6 15h16.8" /><path
+							d="M11.5 3a17 17 0 0 0 0 18"
+						/><path d="M12.5 3a17 17 0 0 1 0 18" /></svg
+					>
+					<text class="text-xs text-gray-800 font-bold" dominant-baseline="hanging" x={12}
 						>{worldAverage}t THG</text
 					>
-					<line x1={0} x2={0} y1={10} y2={chartHeight} class="stroke-gray-600 stroke-1" />
+					<line x1={0} x2={0} y1={14} y2={chartHeight} class="stroke-gray-600 stroke-1" />
 				</g>
 			{/if}
 			<g transform="translate(0,{margin.top})">
