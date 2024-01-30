@@ -68,7 +68,7 @@
 								y={yHeight / 2 - 4}
 								dominant-baseline="middle"
 								text-anchor="end"
-								class="fill-white text-sm">{country.value}t</text
+								class="fill-white text-sm font-bold">{country.value}</text
 							>
 						{:else}
 							<text x={margin.left + 10} y={8} dominant-baseline="hanging">No data available</text>
