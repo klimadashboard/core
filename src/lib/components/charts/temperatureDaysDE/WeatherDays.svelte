@@ -31,7 +31,6 @@
 			header: true,
 			complete: function (results) {
 				if (results) {
-					console.log(results);
 					selectedStationData = results.data;
 					earliestPossibleYear = results.data[0].year;
 					latestPossibleYear = selectedYearDefinition == 'last-full' ? results.data[results.data.length - 1].year-1 : results.data[results.data.length - 1].year;
