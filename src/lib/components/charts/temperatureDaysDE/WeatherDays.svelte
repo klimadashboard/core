@@ -8,14 +8,22 @@
 	export let selectedStation = 427;
 	const wetterdienst = PUBLIC_VERSION == 'at' ? 'geosphere' : 'impact';
 
+	let selectedYearDefinition = 'last-full';
+
 	$: earliestPossibleYear = 1961;
-	$: latestPossibleYear = 2022;
+	$: currentYear = new Date().getFullYear();
+	let latestPossibleYear = selectedYearDefinition == 'last-full' ? new Date().getFullYear()-1 : new Date().getFullYear();
 	$: selectedReferenceYears = 1961;
 
 	$: selectedStationData = [];
 
 	$: Papa.parse(
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations/${selectedStation}/yearly-today.csv`,
+		// `../data/${PUBLIC_VERSION}/${wetterdienst}/stations/${selectedStation}/${
+		// 	selectedYearDefinition == 'last-full' ? 'yearly' : 'yearly-today'
+		// }.csv`,
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/${wetterdienst}/stations/${selectedStation}/${
+			selectedYearDefinition == 'last-full' ? 'yearly' : 'yearly-today'
+		}.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
@@ -25,7 +33,7 @@
 				if (results) {
 					selectedStationData = results.data;
 					earliestPossibleYear = results.data[0].year;
-					latestPossibleYear = results.data[results.data.length - 1].year;
+					latestPossibleYear = selectedYearDefinition == 'last-full' ? results.data[results.data.length - 1].year-1 : results.data[results.data.length - 1].year;
 				}
 			}
 		}
@@ -47,16 +55,30 @@
 </script>
 
 {#if selectedStationData.length > 0 && selectedStationName !== 'station'}
-	<div class="flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max">
-		<span class="font-bold">Klimareferenzperiode</span>
-		<!-- <label
-			class="flex items-center gap-1 w-max {selectedReferenceYears == earliestPossibleYear
+	<div
+		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
+	>
+		<span class="font-bold">Jahr</span>
+		<label
+			class="flex items-center gap-1 w-max {selectedYearDefinition == 'last-full'
 				? 'font-bold'
 				: ''}"
 		>
-			<input type="radio" value={earliestPossibleYear} bind:group={selectedReferenceYears} />
-			<span>langjähriger Schnitt ({earliestPossibleYear}-{latestPossibleYear})</span>
-		</label> -->
+			<input type="radio" value={'last-full'} bind:group={selectedYearDefinition} />
+			<span>{currentYear - 1}</span>
+		</label>
+		<label
+			class="flex items-center gap-1 w-max {selectedYearDefinition == 'current' ? 'font-bold' : ''}"
+		>
+			<input type="radio" value={'current'} bind:group={selectedYearDefinition} />
+			<span>{currentYear} bisher</span>
+		</label>
+	</div>
+
+	<div
+		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
+	>
+		<span class="font-bold">Klimareferenzperiode</span>
 		<label
 			class="flex items-center gap-1 w-max {selectedReferenceYears == 1961 ? 'font-bold' : ''}"
 		>
