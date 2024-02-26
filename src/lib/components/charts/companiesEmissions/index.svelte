@@ -2,7 +2,8 @@
 	import atxCompanies, { companyId } from '$lib/stores/companies';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import CompanyEmissionsChart from './CompanyEmissionsChart.svelte';
+	import CompanyEmissionsBarChart from './CompanyEmissionsBarChart.svelte';
+	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
 	import ViewSwitch from './ViewSwitch.svelte';
 	import { fade } from 'svelte/transition';
 
@@ -11,7 +12,7 @@
 	let rawData;
 	let availableYears;
 	let freezeYAxis = false;
-	let isFocusView = false;
+	let isFocusView = true;
 
 	// $: console.log('companyId', $companyId);
 
@@ -208,9 +209,19 @@
 
 	<!-- Chart -->
 	{#if rawData}
-		<div class="h-80">
-			<CompanyEmissionsChart
+		<!-- <div class="h-80"> -->
+		<!-- <CompanyEmissionsBarChart
 				data={rawData}
+				selectedCompanies={companies.filter((company) => company.selected)}
+				{selectedScopes}
+				{selectedYear}
+				{freezeYAxis}
+				{isFocusView}
+			/>
+		</div> -->
+		<div class="h-80">
+			<CompanyEmissionsLineChart
+				{rawData}
 				selectedCompanies={companies.filter((company) => company.selected)}
 				{selectedScopes}
 				{selectedYear}
