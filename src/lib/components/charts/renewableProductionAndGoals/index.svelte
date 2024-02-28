@@ -1,6 +1,7 @@
 <script>
 	import Chart from './Chart.svelte';
 	import GapIndicator from './GapIndicator.svelte';
+	import Potentiale from './Potentiale.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	const energyTypes = [
@@ -73,5 +74,14 @@
 				<GapIndicator {gap} icon={icons[i]} />
 			{/each}
 		</div>
+
+
+		<hr style="margin-top: 100px;">
+		<h3 class="flex gap-1 text-gray-700 items-center">Potentiale pro Bundesland</h3>
+		<div class="">
+			<Potentiale energyTypes={energyTypes}></Potentiale>
+		</div>
 	{/if}
+
+	
 </section>
