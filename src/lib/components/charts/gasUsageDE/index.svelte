@@ -16,17 +16,17 @@
 		}
 	});
 
-	const keys = ['2021', '2022', '2023'];
-	const labels = ['2021', '2022', '2023'];
+	const keys = ['2022', '2023', '2024'];
+	const labels = ['2022', '2023', '2024'];
 	const colors = ['#BBE5CC', '#7CBAB3', '#347C86'];
 
 	$: data = rawData?.map((e) => {
 		return {
-			x: e['.'] - 1,
-			2021: e['2021'],
+			x: e['                     .'] - 1,
 			2022: e['2022'],
 			2023: e['2023'],
-			label: 'KW' + e['.']
+			2024: e['2024'],
+			label: 'KW' + e['                     .']
 		};
 	});
 </script>
@@ -38,10 +38,10 @@
 			{labels}
 			{keys}
 			{colors}
-			preselectedIndex={data.filter((d) => d[2023] !== null).slice(-1)[0].x}
+			preselectedIndex={data.filter((d) => d[2024] !== null).slice(-1)[0].x}
 			unit={'GWh/Tag'}
 			showTotal={false}
-			showPulse={'2023'}
+			showPulse={'2024'}
 		/>
 	{/if}
 </div>
