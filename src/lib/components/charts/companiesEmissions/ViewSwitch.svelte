@@ -24,7 +24,7 @@
 			class:dot-checked={isChecked}
 		/>
 	</div>
-	<span class="ml-3">{isChecked ? 'Fokus' : 'Vergleich'}</span>
+	<span class="ml-3">{isChecked ? 'Ein Unternehmen im Fokus' : 'Mehrere Unternehmen im Vergleich'}</span>
 </label>
 
 <style>
