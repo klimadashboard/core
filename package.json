@@ -30,6 +30,8 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@algolia/autocomplete-js": "^1.17.0",
+		"@algolia/autocomplete-theme-classic": "^1.17.0",
 		"@types/lodash": "^4.14.202",
 		"d3": "^7.6.1",
 		"dayjs": "^1.11.3",
