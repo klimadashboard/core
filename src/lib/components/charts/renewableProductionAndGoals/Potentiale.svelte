@@ -22,7 +22,7 @@
 	let chartWidth;
 	let chartHeight;
 
-	const margin = { top: 20, right: 0, left: 0, bottom: 0 };
+	const margin = { top: 20, right: 20, left: 20, bottom: 20 };
     const margin_bars = { left: 10, right: 10};
 
 
