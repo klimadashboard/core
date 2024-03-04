@@ -1,5 +1,11 @@
 <script>
 	import Chart from './Chart.svelte';
+	import Papa from 'papaparse';
+	import _ from 'lodash';
+	import Details from './Details.svelte';
+
+	let dataset;
+	let selectedBundesland;
 
 	const energyTypes = [
 		{
@@ -29,20 +35,43 @@
 			regions: ['at'],
 			icon: "<svg xmlns='http://www.w3.org/2000/svg' class='w-8 h-8 icon icon-tabler icon-tabler-ripple' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M3 7c3 -2 6 -2 9 0s6 2 9 0'></path><path d='M3 17c3 -2 6 -2 9 0s6 2 9 0'></path><path d='M3 12c3 -2 6 -2 9 0s6 2 9 0'></path></svg>"
 		},
-		{
-			key: 'Biomasse',
-			label: 'Biomasse',
-			dataKey: 'biomasse',
-			color: '#00441B',
-			colorScale: ['#00441B', '#66997A'],
-			regions: ['at'],
-			icon: "<svg xmlns='http://www.w3.org/2000/svg' class='w-8 h-8 icon icon-tabler icon-tabler-growth' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M16.5 15a4.5 4.5 0 0 0 -4.5 4.5m4.5 -8.5a4.5 4.5 0 0 0 -4.5 4.5m4.5 -8.5a4.5 4.5 0 0 0 -4.5 4.5m-4 3.5c2.21 0 4 2.015 4 4.5m-4 -8.5c2.21 0 4 2.015 4 4.5m-4 -8.5c2.21 0 4 2.015 4 4.5m0 -7.5v6'></path></svg>"
-		}
+		// {
+		// 	key: 'Biomasse',
+		// 	label: 'Biomasse',
+		// 	dataKey: 'biomasse',
+		// 	color: '#00441B',
+		// 	colorScale: ['#00441B', '#66997A'],
+		// 	regions: ['at'],
+		// 	icon: "<svg xmlns='http://www.w3.org/2000/svg' class='w-8 h-8 icon icon-tabler icon-tabler-growth' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M16.5 15a4.5 4.5 0 0 0 -4.5 4.5m4.5 -8.5a4.5 4.5 0 0 0 -4.5 4.5m4.5 -8.5a4.5 4.5 0 0 0 -4.5 4.5m-4 3.5c2.21 0 4 2.015 4 4.5m-4 -8.5c2.21 0 4 2.015 4 4.5m-4 -8.5c2.21 0 4 2.015 4 4.5m0 -7.5v6'></path></svg>"
+		// }
 	];
+	
+	// https://docs.google.com/spreadsheets/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/edit#gid=271008028
+	Papa.parse(
+		'https://docs.google.com/spreadsheets/u/8/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/export?format=csv&id=1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ&gid=271008028',
+		{
+			download: true,
+			dynamicTyping: true,
+			skipEmptyLines: true,
+			header: true,
+			complete: function (results) {
+				if (results) {
+					dataset = results.data;
+				}
+			}
+		}
+	);
+
+	$: energyByBundesland = _.groupBy(dataset?.sort((row) => row.year), (row) => row.region);
+	
 </script>
 
-<hr style="margin-top: 100px;" />
-<h3 class="flex gap-1 text-gray-700 items-center">Potentiale pro Bundesland</h3>
-<div class="">
-	<Chart {energyTypes} />
+<div class="grid md:grid-cols-2 gap-4 my-4">
+	<Chart {energyTypes} {energyByBundesland} bind:selectedBundesland={selectedBundesland} />
+	<Details {energyTypes} dataset={energyByBundesland[selectedBundesland]?.map((row) => {
+		return {
+			year: row.year,
+			value: row["wasserkraft"]
+		};
+	}).filter((row) => !isNaN(row.value) && row.value != null)} />
 </div>

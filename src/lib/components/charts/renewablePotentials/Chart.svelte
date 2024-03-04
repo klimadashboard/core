@@ -1,12 +1,13 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import Papa from 'papaparse';
-	import _, { includes, toInteger, toNumber } from 'lodash';
 	import { scaleLinear } from 'd3-scale';
+	import _, { toNumber } from 'lodash';
 
 	export let energyTypes;
+	export let energyByBundesland;
+	export let selectedBundesland;
 
-	let dataset;
+
 	let potentiale_2030 = {
 		Kärnten: { wasserkraft: 4472700.4, windkraft: 28067.5, pv: 376485.8 },
 		Burgenland: { wasserkraft: 3605.2, windkraft: 3552028.4, pv: 376485.8 },
@@ -22,49 +23,36 @@
 	let chartWidth;
 	let chartHeight;
 
-	const margin = { top: 20, right: 20, left: 20, bottom: 20 };
+	const margin = { top: 10, right: 10, left: 10, bottom: 10 };
 	const margin_bars = { left: 10, right: 10 };
 
-	// https://docs.google.com/spreadsheets/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/edit#gid=271008028
-	Papa.parse(
-		'https://docs.google.com/spreadsheets/u/8/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/export?format=csv&id=1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ&gid=271008028',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataset = results.data;
-					console.log(dataset);
-				}
-			}
-		}
-	);
 
 	function getValuesOfLastYear(bundesland) {
-		const sorted = energyByBundesland[bundesland].sort((row) => row.year);
-		return sorted[sorted.length - 1];
+		const bundesland_energy = energyByBundesland[bundesland];
+		return bundesland_energy[bundesland_energy.length - 1];
 	}
+	
 
-	$: energyByBundesland = _.groupBy(dataset, (row) => row.region);
+	$: selectedBundesland = Object.keys(energyByBundesland)[0];
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
-	$: xScale = scaleLinear().range([0, chartWidth]).domain([0, 3]);
+	$: xScale = scaleLinear().range([0, chartWidth]).domain([0, energyTypes.length]);
 
 	$: yScale = scaleLinear().range([innerChartHeight, 0]).domain([0, 1]);
 
-	$: barWidth = chartWidth / 3;
+	$: barWidth = chartWidth / energyTypes.length;
 </script>
 
 <div class="grid md:grid-cols-3 gap-4 my-4">
 	{#each Object.keys(energyByBundesland) as bundesland, index}
 		{@const lastYear = getValuesOfLastYear(bundesland)}
-		<div class="bg-gray-100 rounded overflow-hidden">
-			<div class="relative w-full h-5">{bundesland} {lastYear.year}</div>
+		<div class="bg-gray-100 rounded overflow-hidden div-bundesland {selectedBundesland === bundesland ? "selected" : ""}" 
+			on:click={() => { selectedBundesland = bundesland }}
+			on:keydown={() => { selectedBundesland = bundesland }}>
+			<div class="relative w-full h-5" style="padding-left: {margin.left}px;">{bundesland} {lastYear.year}</div>
 			<div
-				class="relative w-full h-64"
+				class="relative w-full h-32"
 				bind:clientWidth={chartWidth}
 				bind:clientHeight={chartHeight}
 			>
@@ -86,7 +74,6 @@
 										if (isNaN(last_year_val)) {
 											last_year_val = toNumber(last_year_val.replaceAll(',', ''));
 										}
-										console.log(bundesland, type.dataKey, last_year_val);
 										return last_year_val / potentiale_2030[bundesland][type.dataKey];
 									}}
 									<rect
@@ -107,3 +94,13 @@
 		</div>
 	{/each}
 </div>
+
+<style>
+	.div-bundesland{
+		border: 5px solid #ffffff00;
+		cursor: pointer;
+	}
+	.selected {
+		border-color: #11998e;
+	}
+</style>
