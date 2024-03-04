@@ -1,4 +1,5 @@
 <script>
+	// @ts-nocheck
 	import atxCompanies, { companyId } from '$lib/stores/companies';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -223,10 +224,9 @@
 			<CompanyEmissionsLineChart
 				{rawData}
 				selectedCompanies={companies.filter((company) => company.selected)}
-				{selectedScopes}
+				selectedScopes={Array.from(selectedScopes).map((scope) => `scope${scope}`)}
 				{selectedYear}
 				{freezeYAxis}
-				{isFocusView}
 			/>
 		</div>
 	{/if}

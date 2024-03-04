@@ -1,11 +1,14 @@
 <script>
+	// @ts-nocheck
 	import LineChart from '../chartLine.svelte';
 
 	export let rawData;
 	export let selectedCompanies;
-	export let selectedScopes = '1';
+	export let selectedScopes = ['scope1'];
 	export let selectedYear;
 	export let freezeYAxis;
+	let isFocusView;
+	let selectedCompanyNames
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', rawData);
 	$: console.log(
 		'🚀 ~ file: CompanyEmissionsChart.svelte:9 ~ selectedCompanies:',
@@ -13,6 +16,8 @@
 	);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:11 ~ selectedYear:', selectedYear);
+	$: isFocusView = selectedCompanies.length === 1;
+	$: selectedCompanyNames = selectedCompanies.map((company) => company.name);
 
 	const rawColors = ['#7CBAB3', '#575C75', '#71665B', '#B28834', '#8CAED9', '#E0A906', '#CF6317'];
 	const rawLabels = ['Scope 1', 'Scope 2', 'Scope 3'];
@@ -38,7 +43,7 @@
 			const { year, scope } = parseYearScope(Year_Scope);
 
 			// only include selected scopes
-			if (!selectedScopes.includes(scope[scope.length - 1])) {
+			if (!selectedScopes.includes(scope)) {
 				return;
 			}
 
@@ -61,46 +66,94 @@
 			});
 	};
 
+// Function to aggregate the emissions for selected companies and scopes
+const aggregateEmissions = (data, companies, selectedScopes) => {
+  const emissionsPerYear = {};
+  data.forEach(item => {
+    const { Year_Scope, ...emissions } = item;
+    const { year } = parseYearScope(Year_Scope);
+    
+    // Initialize the emissions data object for the year if it does not exist
+    if (!emissionsPerYear[year]) {
+      emissionsPerYear[year] = { year, unit: 'CO2', label: year };
+    }
+
+    companies.forEach(company => {
+      if (emissions[company]) {
+        // Aggregate emission data for the company and selected scopes
+        selectedScopes.forEach(scope => {
+          if (!emissionsPerYear[year][company]) {
+            emissionsPerYear[year][company] = 0;
+          }
+          if (Year_Scope.includes(scope)) {
+            emissionsPerYear[year][company] += parseInt(emissions[company]);
+          }					
+        });
+      }
+    });
+  });
+
+	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
+	return Object.values(emissionsPerYear).sort((a, b) => a.year - b.year).map((item, index) => {
+		console.log('🚀 ~ item:', item);
+		return {
+			...item,
+			x: index // Set x to current index, starting at 0
+		};
+	});
+}
+
+
 	let dataset = [];
 	let keys;
 	let labels;
 	let colors;
 	$: {
 		if (rawData && companyName && selectedScopes && selectedYear) {
-			// Specify the company name to filter for
-			const companyName = selectedCompanies[0].name;
 
-			dataset = transformAndMergeData(rawData, companyName, selectedScopes);
+			if (isFocusView) {
+				// Specify the company name to filter for
+				const companyName = selectedCompanies[0].name;
+				dataset = transformAndMergeData(rawData, companyName, selectedScopes);
+			} else {
+				dataset = aggregateEmissions(rawData, selectedCompanyNames, selectedScopes);
+				console.log("🚀 ~ dataset:", dataset)
+			}
+
 
 			// Select keys, colors and labels
 			if (selectedScopes.length === 1) {
-				keys = [`scope${selectedScopes[0]}`];
-				labels = [`Scope ${selectedScopes[0]}`];
-				colors = [rawColors[selectedScopes[0] - 1]];
+				keys = isFocusView ? selectedScopes : selectedCompanyNames;
+				labels = isFocusView ? [`Scope ${selectedScopes[0].slice(-1)}`] : selectedCompanyNames;
+				colors = isFocusView ? [rawColors[parseInt(selectedScopes[0].slice(-1)) - 1]] : rawColors.slice(0, selectedCompanyNames.length);
 			} else {
-				keys = rawKeys.slice(0, selectedScopes.length);
-				labels = rawLabels.slice(0, selectedScopes.length);
-				colors = rawColors.slice(0, selectedScopes.length);
+				keys = isFocusView ? rawKeys.slice(0, selectedScopes.length) : selectedCompanyNames;
+				labels = isFocusView ? rawLabels.slice(0, selectedScopes.length) : selectedCompanyNames;
+				colors = isFocusView ? rawColors.slice(0, selectedScopes.length) : rawColors.slice(0, selectedCompanyNames.length);
 			}
 
 			console.log('🚀 ~ keys:', keys);
 			console.log('🚀 ~ labels:', labels);
 			console.log('🚀 ~ colors:', colors);
-			console.log('🚀 ~ companyEmissions:', dataset);
+			console.log('🚀 ~ dataset:', dataset);
 		}
 	}
 </script>
 
-{#if dataset}
+{#if dataset && selectedCompanies.length > 0 && selectedCompanies.length < 8}
 	<LineChart
 		data={dataset}
 		{colors}
 		{keys}
 		{labels}
-		showTotal={true}
-		showAreas={true}
-		visualisation={'stacked'}
+		showTotal={isFocusView}
+		showAreas={isFocusView}
+		visualisation={isFocusView ? 'stacked' : 'non-stacked'}
 	/>
+{:else if selectedCompanies.length === 0}
+	<p style="text-align: center;">No company selected. Select up to 7 companies.</p>
+{:else if selectedCompanies.length > 6}
+	<p style="text-align: center;">Too many companies selected. Select up to 7 companies.</p>
 {:else}
-	<p>Loading...</p>
+	<p style="text-align: center;">Loading...</p>
 {/if}
