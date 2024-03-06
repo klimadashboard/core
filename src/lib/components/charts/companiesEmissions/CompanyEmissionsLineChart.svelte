@@ -7,7 +7,7 @@
 	export let selectedScopes = ['scope1'];
 	export let selectedYear;
 	export let freezeYAxis;
-	let isFocusView;
+	let isSingleCompanySelected;
 	let selectedCompanyNames
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', rawData);
 	$: console.log(
@@ -16,8 +16,8 @@
 	);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:11 ~ selectedYear:', selectedYear);
-	$: isFocusView = selectedCompanies.length === 1;
-	$: selectedCompanyNames = selectedCompanies.map((company) => company.name);
+	$: isSingleCompanySelected = selectedCompanies.length === 1;
+	$: selectedCompanyNames = [...selectedCompanies].map((company) => company.name);
 
 	const rawColors = ['#7CBAB3', '#575C75', '#71665B', '#B28834', '#8CAED9', '#E0A906', '#CF6317'];
 	const rawLabels = ['Scope 1', 'Scope 2', 'Scope 3'];
@@ -111,7 +111,7 @@ const aggregateEmissions = (data, companies, selectedScopes) => {
 	$: {
 		if (rawData && companyName && selectedScopes && selectedYear) {
 
-			if (isFocusView) {
+			if (isSingleCompanySelected) {
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
 				dataset = transformAndMergeData(rawData, companyName, selectedScopes);
@@ -123,13 +123,13 @@ const aggregateEmissions = (data, companies, selectedScopes) => {
 
 			// Select keys, colors and labels
 			if (selectedScopes.length === 1) {
-				keys = isFocusView ? selectedScopes : selectedCompanyNames;
-				labels = isFocusView ? [`Scope ${selectedScopes[0].slice(-1)}`] : selectedCompanyNames;
-				colors = isFocusView ? [rawColors[parseInt(selectedScopes[0].slice(-1)) - 1]] : rawColors.slice(0, selectedCompanyNames.length);
+				keys = isSingleCompanySelected ? selectedScopes : selectedCompanyNames;
+				labels = isSingleCompanySelected ? [`Scope ${selectedScopes[0].slice(-1)}`] : selectedCompanyNames;
+				colors = isSingleCompanySelected ? [rawColors[parseInt(selectedScopes[0].slice(-1)) - 1]] : rawColors.slice(0, selectedCompanyNames.length);
 			} else {
-				keys = isFocusView ? rawKeys.slice(0, selectedScopes.length) : selectedCompanyNames;
-				labels = isFocusView ? rawLabels.slice(0, selectedScopes.length) : selectedCompanyNames;
-				colors = isFocusView ? rawColors.slice(0, selectedScopes.length) : rawColors.slice(0, selectedCompanyNames.length);
+				keys = isSingleCompanySelected ? rawKeys.slice(0, selectedScopes.length) : selectedCompanyNames;
+				labels = isSingleCompanySelected ? rawLabels.slice(0, selectedScopes.length) : selectedCompanyNames;
+				colors = isSingleCompanySelected ? rawColors.slice(0, selectedScopes.length) : rawColors.slice(0, selectedCompanyNames.length);
 			}
 
 			console.log('🚀 ~ keys:', keys);
@@ -146,9 +146,9 @@ const aggregateEmissions = (data, companies, selectedScopes) => {
 		{colors}
 		{keys}
 		{labels}
-		showTotal={isFocusView}
-		showAreas={isFocusView}
-		visualisation={isFocusView ? 'stacked' : 'non-stacked'}
+		showTotal={isSingleCompanySelected}
+		showAreas={isSingleCompanySelected}
+		visualisation={isSingleCompanySelected ? 'stacked' : 'non-stacked'}
 	/>
 {:else if selectedCompanies.length === 0}
 	<p style="text-align: center;">No company selected. Select up to 7 companies.</p>
