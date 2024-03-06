@@ -74,7 +74,7 @@
 
 {#if historicalDataset}
 	<div class="w-full my-4 relative" style="height: 50vh;">
-		<div class="flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max">
+		<!-- <div class="flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max">
 			<span class="font-bold">Klimareferenzperiode</span>
 			<label
 				class="flex items-center gap-1 w-max {selectedReferenceYears == 1900 ? 'font-bold' : ''}"
@@ -94,7 +94,7 @@
 				<input type="radio" value={1991} bind:group={selectedReferenceYears} />
 				<span>1991-2020</span>
 			</label>
-		</div>
+		</div> -->
 
 		<div class="flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max">
 			<span class="font-bold">Vergleich</span>
