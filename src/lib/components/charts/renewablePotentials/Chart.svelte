@@ -6,19 +6,7 @@
 	export let energyTypes;
 	export let energyByBundesland;
 	export let selectedBundesland;
-
-
-	let potentiale_2030 = {
-		Kärnten: { wasserkraft: 4472700.4, windkraft: 28067.5, pv: 376485.8 },
-		Burgenland: { wasserkraft: 3605.2, windkraft: 3552028.4, pv: 376485.8 },
-		Niederösterreich: { wasserkraft: 7468411, windkraft: 5067009.7, pv: 1016531 },
-		Oberösterreich: { wasserkraft: 9958764.1, windkraft: 92487.4, pv: 1020865.7 },
-		Salzburg: { wasserkraft: 4472700.4, windkraft: 50.6, pv: 376485.8 },
-		Steiermark: { wasserkraft: 4472700.4, windkraft: 615476.5, pv: 841770.3 },
-		Tirol: { wasserkraft: 6730807.6, windkraft: 31, pv: 349151.5 },
-		Vorarlberg: { wasserkraft: 4472700.4, windkraft: 2.2, pv: 376485.8 },
-		Wien: { wasserkraft: 4472700.4, windkraft: 28067.5, pv: 376485.8 }
-	};
+	export let potentiale_2030;
 
 	let chartWidth;
 	let chartHeight;

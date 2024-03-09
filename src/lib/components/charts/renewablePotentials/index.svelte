@@ -4,8 +4,6 @@
 	import _ from 'lodash';
 	import Details from './Details.svelte';
 
-	let dataset;
-	let selectedBundesland;
 
 	const energyTypes = [
 		{
@@ -45,6 +43,21 @@
 		// 	icon: "<svg xmlns='http://www.w3.org/2000/svg' class='w-8 h-8 icon icon-tabler icon-tabler-growth' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M16.5 15a4.5 4.5 0 0 0 -4.5 4.5m4.5 -8.5a4.5 4.5 0 0 0 -4.5 4.5m4.5 -8.5a4.5 4.5 0 0 0 -4.5 4.5m-4 3.5c2.21 0 4 2.015 4 4.5m-4 -8.5c2.21 0 4 2.015 4 4.5m-4 -8.5c2.21 0 4 2.015 4 4.5m0 -7.5v6'></path></svg>"
 		// }
 	];
+
+	let potentiale_2030 = {
+		Kärnten: { wasserkraft: 4472700.4, windkraft: 28067.5, pv: 376485.8 },
+		Burgenland: { wasserkraft: 3605.2, windkraft: 3552028.4, pv: 376485.8 },
+		Niederösterreich: { wasserkraft: 7468411, windkraft: 5067009.7, pv: 1016531 },
+		Oberösterreich: { wasserkraft: 9958764.1, windkraft: 92487.4, pv: 1020865.7 },
+		Salzburg: { wasserkraft: 4472700.4, windkraft: 50.6, pv: 376485.8 },
+		Steiermark: { wasserkraft: 4472700.4, windkraft: 615476.5, pv: 841770.3 },
+		Tirol: { wasserkraft: 6730807.6, windkraft: 31, pv: 349151.5 },
+		Vorarlberg: { wasserkraft: 4472700.4, windkraft: 2.2, pv: 376485.8 },
+		Wien: { wasserkraft: 4472700.4, windkraft: 28067.5, pv: 376485.8 }
+	};
+	
+	let dataset;
+	let selectedBundesland = Object.keys(potentiale_2030)[0];
 	
 	// https://docs.google.com/spreadsheets/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/edit#gid=271008028
 	Papa.parse(
@@ -63,15 +76,24 @@
 	);
 
 	$: energyByBundesland = _.groupBy(dataset?.sort((row) => row.year), (row) => row.region);
+	$: console.log(potentiale_2030)
 	
 </script>
 
 <div class="grid md:grid-cols-2 gap-4 my-4">
-	<Chart {energyTypes} {energyByBundesland} bind:selectedBundesland={selectedBundesland} />
-	<Details {energyTypes} dataset={energyByBundesland[selectedBundesland]?.map((row) => {
-		return {
-			year: row.year,
-			value: row["wasserkraft"]
-		};
-	}).filter((row) => !isNaN(row.value) && row.value != null)} />
+	<Chart {energyTypes} {energyByBundesland} {potentiale_2030} bind:selectedBundesland={selectedBundesland} />
+	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland}
+	<div class="grid">
+		{#each energyTypes as type}
+			<Details {type}
+				potential={potentiale_2030[selectedBundesland][type.dataKey]}
+				dataset={energyByBundesland[selectedBundesland]?.map((row) => {
+				return {
+					year: row.year,
+					value: row[type.dataKey]
+				};
+			}).filter((row) => !isNaN(row.value) && row.value != null)} />
+		{/each}
+	</div>
+	{/if}
 </div>
