@@ -8,7 +8,8 @@
 
     export let type;
     export let dataset;
-    export let potential;
+    export let potential_2030;
+    export let potential_techn;
 
     
 	const margin = { top: 20, right: 10, left: 10, bottom: 10 };
@@ -19,8 +20,8 @@
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
-	$: xScale = dataset ? d3.scaleTime().range([0, innerChartWidth]).domain([new Date(dataset[0].year, 1, 1), new Date(2030, 1, 1)]) : null;
-	$: yScale = dataset ? d3.scaleLinear().range([innerChartHeight, 0]).domain([0, potential]): null;
+	$: xScale = dataset ? d3.scaleTime().range([0, innerChartWidth]).domain([new Date(dataset[0].year, 1, 1), new Date(2030, 12, 31)]) : null;
+	$: yScale = dataset ? d3.scaleLinear().range([innerChartHeight, 0]).domain([0, potential_techn]): null;
     $: line = d3
         .line()
         .x((d) => xScale(new Date(d.year, 1, 1)))
@@ -31,17 +32,17 @@
 </script>
 
 <div class="bg-gray-100 rounded overflow-hidden">
-	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
+	<div class="text-white p-1 flex justify-between items-center" style="background: {type.color}; padding-left: 1rem; padding-right: 1rem;">
 		<h3 class="text-xl"><b>{type.label}</b> </h3>
 		{@html type.icon}
 	</div>
 	<div class="h-auto">
 		<div class="relative w-full h-32" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
-			{#if chartWidth && chartHeight && dataset != null && type != null && potential != null}
+			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
 						<g>
-							{#each xScale.ticks() as tick, index}
+							{#each xScale.ticks(6) as tick, index}
 								<g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-gray-200">
 									<rect
 										x={0}
@@ -121,11 +122,7 @@
                                 {' ' + unit + ' '}
                                 Produktion im Zeitraum
                                 <tspan x="16" y="16"
-                                    >{dayjs(dataset[dataset.length - 1].year)
-                                        .subtract(364, 'day')
-                                        .format('D.M.YYYY')} – {dayjs(
-                                            dataset[dataset.length - 1].year
-                                    ).format('D.M.YYYY')}</tspan
+                                    >{dataset[0].year} - {dataset[dataset.length - 1].year}</tspan
                                 >
                             </text>
 						</g>
@@ -161,7 +158,7 @@
         bind:clientWidth={chartWidth}
         bind:clientHeight={chartHeight}
     >
-        {#if chartWidth && chartHeight && dataset != null && energyType != null && potential != null}
+        {#if chartWidth && chartHeight && dataset != null && energyType != null && potential_techn != null}
             <svg width={'100%'} height={'100%'}>
                 <g transform="translate(0,{margin.top})">
                     <path

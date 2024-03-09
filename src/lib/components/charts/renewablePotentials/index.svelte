@@ -3,6 +3,7 @@
 	import Papa from 'papaparse';
 	import _ from 'lodash';
 	import Details from './Details.svelte';
+	import { onMount } from 'svelte';
 
 
 	const energyTypes = [
@@ -44,20 +45,108 @@
 		// }
 	];
 
-	let potentiale_2030 = {
-		Kärnten: { wasserkraft: 4472700.4, windkraft: 28067.5, pv: 376485.8 },
-		Burgenland: { wasserkraft: 3605.2, windkraft: 3552028.4, pv: 376485.8 },
-		Niederösterreich: { wasserkraft: 7468411, windkraft: 5067009.7, pv: 1016531 },
-		Oberösterreich: { wasserkraft: 9958764.1, windkraft: 92487.4, pv: 1020865.7 },
-		Salzburg: { wasserkraft: 4472700.4, windkraft: 50.6, pv: 376485.8 },
-		Steiermark: { wasserkraft: 4472700.4, windkraft: 615476.5, pv: 841770.3 },
-		Tirol: { wasserkraft: 6730807.6, windkraft: 31, pv: 349151.5 },
-		Vorarlberg: { wasserkraft: 4472700.4, windkraft: 2.2, pv: 376485.8 },
-		Wien: { wasserkraft: 4472700.4, windkraft: 28067.5, pv: 376485.8 }
-	};
+	
+	let bundeslaender = {
+		Kärnten: 'KTN',
+		Burgenland: 'BU',
+		Niederösterreich: 'NÖ',
+		Oberösterreich: 'OÖ',
+		Salzburg: 'SBG',
+		Steiermark: 'STMK',
+		Tirol: 'T',
+		Vorarlberg: 'VBG',
+		Wien: 'W'
+	}
+
+	// TODO: remove the dummy values
+	const dummy_values = {
+		Kärnten: { wasserkraft: 6472700.4, windkraft: 28067.5, pv: 376485.8 },
+		Burgenland: { wasserkraft: 5605.2, windkraft: 3552028.4, pv: 376485.8 },
+		Niederösterreich: { wasserkraft: 8468411, windkraft: 5067009.7, pv: 1016531 },
+		Oberösterreich: { wasserkraft: 10958764.1, windkraft: 92487.4, pv: 1020865.7 },
+		Salzburg: { wasserkraft: 5472700.4, windkraft: 50.6, pv: 376485.8 },
+		Steiermark: { wasserkraft: 5472700.4, windkraft: 615476.5, pv: 841770.3 },
+		Tirol: { wasserkraft: 76730807.6, windkraft: 31, pv: 349151.5 },
+		Vorarlberg: { wasserkraft: 5472700.4, windkraft: 2.2, pv: 376485.8 },
+		Wien: { wasserkraft: 5472700.4, windkraft: 28067.5, pv: 376485.8 }
+	}
+
+	let potentiale_2030;
+	let potentiale_techn;
+
 	
 	let dataset;
-	let selectedBundesland = Object.keys(potentiale_2030)[0];
+	let selectedBundesland = "Kärnten";
+
+	onMount(() => {
+		
+	// https://docs.google.com/spreadsheets/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/edit?usp=drive_link
+	Papa.parse(
+		'https://docs.google.com/spreadsheets/u/8/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/export?format=csv&id=16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs&gid=0',
+		{
+			download: true,
+			dynamicTyping: true,
+			skipEmptyLines: true,
+			header: true,
+			complete: function (results) {
+				// TODO: load potentiale data
+				if (results) {
+					let potentiale_techn_temp = {}
+					let potentiale_2030_temp = {}
+					Object.keys(bundeslaender).forEach((bundesland) => {
+						potentiale_techn_temp[bundesland] = {};
+						potentiale_2030_temp[bundesland] = {};
+
+						const water = +results.data.find((row) => row.region === bundesland && row.energy === "water" && row.potential_class == "technical").value_TWh;
+						if(water>0) {
+							potentiale_techn_temp[bundesland]["wasserkraft"] = water;
+						}
+						else{
+							potentiale_techn_temp[bundesland]["wasserkraft"] = dummy_values[bundesland]["wasserkraft"];
+						}
+						const wind = +results.data.find((row) => row.region === bundesland && row.energy === "wind" && row.potential_class == "technical").value_TWh;
+						if(wind>0) {
+							potentiale_techn_temp[bundesland]["windkraft"] = wind;
+						}
+						else{
+							potentiale_techn_temp[bundesland]["windkraft"] = dummy_values[bundesland]["windkraft"];
+						}
+						const pv = +results.data.find((row) => row.region === bundesland && row.energy === "pv_area" && row.potential_class == "technical").value_TWh +results.data.find((row) => row.region === bundesland && row.energy === "pv_roof" && row.potential_class == "technical").value_TWh;
+						if(pv>0){
+							potentiale_techn_temp[bundesland]["pv"] = pv;
+						}
+						else{
+							potentiale_techn_temp[bundesland]["pv"] = dummy_values[bundesland]["pv"];
+						}
+						
+						const water_2030 = +results.data.find((row) => row.region === bundesland && row.energy === "water" && row.potential_class == "until_2030").value_TWh;
+						if(water_2030>0) {
+							potentiale_2030_temp[bundesland]["wasserkraft"] = water_2030;
+						}
+						else{
+							potentiale_2030_temp[bundesland]["wasserkraft"] = dummy_values[bundesland]["wasserkraft"];
+						}
+						const wind_2030 = +results.data.find((row) => row.region === bundesland && row.energy === "wind" && row.potential_class == "until_2030").value_TWh;
+						if(wind_2030>0) {
+							potentiale_2030_temp[bundesland]["windkraft"] = wind_2030;
+						}
+						else{
+							potentiale_2030_temp[bundesland]["windkraft"] = dummy_values[bundesland]["windkraft"];
+						}
+						const pv_2030 = +results.data.find((row) => row.region === bundesland && row.energy === "pv_area" && row.potential_class == "until_2030").value_TWh +results.data.find((row) => row.region === bundesland && row.energy === "pv_roof" && row.potential_class == "until_2030").value_TWh;
+						if(pv_2030>0){
+							potentiale_2030_temp[bundesland]["pv"] = pv_2030;
+						}
+						else{
+							potentiale_2030_temp[bundesland]["pv"] = dummy_values[bundesland]["pv"];
+						}
+					});
+					potentiale_2030 = potentiale_2030_temp;
+					potentiale_techn = potentiale_techn_temp;
+				}
+			}
+		}
+	);
 	
 	// https://docs.google.com/spreadsheets/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/edit#gid=271008028
 	Papa.parse(
@@ -74,26 +163,41 @@
 			}
 		}
 	);
+	})
+
 
 	$: energyByBundesland = _.groupBy(dataset?.sort((row) => row.year), (row) => row.region);
-	$: console.log(potentiale_2030)
 	
 </script>
 
-<div class="grid md:grid-cols-2 gap-4 my-4">
-	<Chart {energyTypes} {energyByBundesland} {potentiale_2030} bind:selectedBundesland={selectedBundesland} />
+<div id="renewablePotentialsDiv" class="grid gap-4 my-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland}
-	<div class="grid">
-		{#each energyTypes as type}
-			<Details {type}
-				potential={potentiale_2030[selectedBundesland][type.dataKey]}
-				dataset={energyByBundesland[selectedBundesland]?.map((row) => {
-				return {
-					year: row.year,
-					value: row[type.dataKey]
-				};
-			}).filter((row) => !isNaN(row.value) && row.value != null)} />
-		{/each}
-	</div>
+		<div class="grid grid-cols-3 gap-4 my-4">
+			<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} bind:selectedBundesland={selectedBundesland} />
+		</div>
+		<div class="grid gap-4 p-2">
+			{#each energyTypes as type}
+				<Details {type}
+					potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
+					potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
+					dataset={energyByBundesland[selectedBundesland]?.map((row) => {
+					return {
+						year: row.year,
+						value: row[type.dataKey]
+					};
+				}).filter((row) => !isNaN(row.value) && row.value != null)} />
+			{/each}
+		</div>
 	{/if}
 </div>
+
+
+<style>
+	
+	@media screen and (min-width: 1024px) {
+		#renewablePotentialsDiv{
+			/* grid-template-areas: 'overview overview overview overview details details details'; */
+			grid-template-columns: 60% 40%;
+		}
+	}
+</style>
