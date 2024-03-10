@@ -89,9 +89,22 @@
 									opacity={1.0}
 								/>
 								<!-- <div>{type.dataKey}: {lastYear[type.dataKey]}</div> -->
+								
+								<g
+									transform="translate({xScale(index) + margin_bars.left},{yScale(ratio_current_potential())})"
+									class="text-white text-sm uppercase cursor-help"
+								>
+									<text x="2" y="-10" fill="currentColor" class="font-thin" dominant-baseline="middle">
+										{
+											Math.round(ratio_current_potential()*10000)/100 + "% "
+										}
+									</text>
+								</g>
 							{/if}
 						{/each}
+						
 					</g>
+					
 				</svg>
 			{/if}
 		</div>

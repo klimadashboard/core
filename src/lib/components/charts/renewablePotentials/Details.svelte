@@ -15,7 +15,7 @@
 	const margin = { top: 20, right: 10, left: 10, bottom: 10 };
 	let chartWidth;
 	let chartHeight;
-	let unit = 'MWh';
+	let unit = 'TWh';
 
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
