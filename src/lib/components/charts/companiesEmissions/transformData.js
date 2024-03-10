@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-export const transformDataSingleCompany = (data, company) => {
+export const transformDataSingleCompany = (data, company, selectedScopes) => {
 	// Object to hold emissions data per year with merged scopes
 	const emissionsPerYear = {};
 
@@ -62,13 +62,13 @@ const parseYearScope = (yearScope) => {
 };
 
 const convertObjectToArray = (emissionsPerYear) => {
-	Object.values(emissionsPerYear)
+	return Object.values(emissionsPerYear)
 		.sort((a, b) => a.year - b.year)
 		.map((item, index) => {
 			console.log('🚀 ~ item:', item);
 			return {
 				...item,
-				x: index // Set x to current index, starting at 0
+				x: index
 			};
 		});
 };
