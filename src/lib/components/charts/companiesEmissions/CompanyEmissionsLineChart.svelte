@@ -6,13 +6,13 @@
 	export let rawData;
 	export let selectedCompanies;
 	export let selectedScopes = ['scope1'];
-	
+
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', rawData);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart ~ selectedCompanies:', selectedCompanies);
 	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
 
 	let isSingleCompanySelected;
-	let selectedCompanyNames
+	let selectedCompanyNames;
 	$: isSingleCompanySelected = selectedCompanies.length === 1;
 	$: selectedCompanyNames = [...selectedCompanies].map((company) => company.name);
 
@@ -29,26 +29,34 @@
 	let colors;
 	$: {
 		if (rawData && companyName && selectedScopes) {
-
 			if (isSingleCompanySelected) {
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
 				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
 			} else {
 				dataset = transformDataMultiCompanies(rawData, selectedCompanyNames, selectedScopes);
-				console.log("🚀 ~ dataset:", dataset)
+				console.log('🚀 ~ dataset:', dataset);
 			}
-
 
 			// Select keys, colors and labels
 			if (selectedScopes.length === 1) {
 				keys = isSingleCompanySelected ? selectedScopes : selectedCompanyNames;
-				labels = isSingleCompanySelected ? [`Scope ${selectedScopes[0].slice(-1)}`] : selectedCompanyNames;
-				colors = isSingleCompanySelected ? [rawColors[parseInt(selectedScopes[0].slice(-1)) - 1]] : rawColors.slice(0, selectedCompanyNames.length);
+				labels = isSingleCompanySelected
+					? [`Scope ${selectedScopes[0].slice(-1)}`]
+					: selectedCompanyNames;
+				colors = isSingleCompanySelected
+					? [rawColors[parseInt(selectedScopes[0].slice(-1)) - 1]]
+					: rawColors.slice(0, selectedCompanyNames.length);
 			} else {
-				keys = isSingleCompanySelected ? rawKeys.slice(0, selectedScopes.length) : selectedCompanyNames;
-				labels = isSingleCompanySelected ? rawLabels.slice(0, selectedScopes.length) : selectedCompanyNames;
-				colors = isSingleCompanySelected ? rawColors.slice(0, selectedScopes.length) : rawColors.slice(0, selectedCompanyNames.length);
+				keys = isSingleCompanySelected
+					? rawKeys.slice(0, selectedScopes.length)
+					: selectedCompanyNames;
+				labels = isSingleCompanySelected
+					? rawLabels.slice(0, selectedScopes.length)
+					: selectedCompanyNames;
+				colors = isSingleCompanySelected
+					? rawColors.slice(0, selectedScopes.length)
+					: rawColors.slice(0, selectedCompanyNames.length);
 			}
 
 			console.log('🚀 ~ keys:', keys);
@@ -67,8 +75,9 @@
 		{labels}
 		showTotal={isSingleCompanySelected}
 		showAreas={isSingleCompanySelected}
+		showDots={!isSingleCompanySelected}
 		visualisation={isSingleCompanySelected ? 'stacked' : 'non-stacked'}
-		marginLeft={40}
+		marginLeft={50}
 		xTicksInterval={1}
 	/>
 {:else if selectedCompanies.length === 0}
