@@ -105,28 +105,29 @@
 </script>
 
 <div>
-	<ViewSwitch bind:isChecked={isFocusView} />
-	<button
-		class="text-blue underline disabled:opacity-50 mr-2"
-		disabled={allSelected || isFocusView}
-		on:click={() => {
-			selectAll();
-		}}>Alle auswählen</button
-	>
-	<button
-		class="text-blue underline disabled:opacity-50"
-		disabled={allDeselected || isFocusView}
-		on:click={() => {
-			deselectAll();
-		}}>Alle abwählen</button
-	><br />
-	<!-- {#each companies as company}
-		<input type="checkbox" id="company-filter-{company.logo}" bind:checked={company.selected} />
-		<label for="company-filter-{company.logo}">{company.name}</label>
-		<br />
-	{/each} -->
+	<div class="flex">
+		
+		<button
+			class="text-blue underline disabled:opacity-50 mr-2"
+			disabled={allSelected || isFocusView}
+			on:click={() => {
+				selectAll();
+			}}>Alle auswählen</button
+		>
+		<button
+			class="text-blue underline disabled:opacity-50"
+			disabled={allDeselected || isFocusView}
+			on:click={() => {
+				deselectAll();
+			}}>Alle abwählen
+		</button>
+		<div class="ml-auto">
+			<ViewSwitch bind:isChecked={isFocusView} />
+		</div>
+	</div>
+	<br />
 
-	<div class="flex gap-2 mt-4 flex-wrap">
+	<div class="flex gap-2 flex-wrap">
 		{#each companies as company}
 			<button
 				class=" flex space-x-2 items-center rounded-full font-semibold tracking-wide px-4 py-2 text-black text-xs {company.selected
@@ -231,15 +232,4 @@
 		</div>
 	{/if}
 
-	<!-- Selected Companies List -->
-	<!-- <div style="border: 1px solid black">
-		<strong>Ausgewählte Unternehmen:</strong>
-		<ul>
-			{#each companies as company}
-				{#if company.selected}
-					<li>{company.name}</li>
-				{/if}
-			{/each}
-		</ul>
-	</div> -->
 </div>
