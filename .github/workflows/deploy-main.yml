@@ -16,16 +16,16 @@ jobs:
         uses: actions/checkout@v4
 
       # Trigger klimadashboard.at
-      - name: Deploy
+      - name: Deploy Klimadashboard.at
         uses: Glennmen/ploi-deploy-action@v1.2.0
         with:
-          api_token: ${{ secrets.PLOI_API_TOKEN }}
+          api_token: ${{ secrets.PLOI_API_KEY }}
           server_id: 47649
           site_id: 141772
       # Trigger klimadashboard.de
-      - name: Deploy
+      - name: Deploy Klimadashboard.de
         uses: Glennmen/ploi-deploy-action@v1.2.0
         with:
-          api_token: ${{ secrets.PLOI_API_TOKEN }}
+          api_token: ${{ secrets.PLOI_API_KEY }}
           server_id: 47649
           site_id: 175139
