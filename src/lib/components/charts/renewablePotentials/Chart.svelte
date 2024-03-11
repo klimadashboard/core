@@ -71,7 +71,7 @@
 									width={barWidth - (margin_bars.left + margin_bars.right)}
 									height={yScale(0) - yScale(potentiale_2030[bundesland][type.dataKey]/potentiale_techn[bundesland][type.dataKey])}
 									fill={type.color}
-									opacity={0.3}
+									opacity={0.5}
 								/>
 								{@const ratio_current_potential = () => {
 									let last_year_val = lastYear[type.dataKey];
@@ -94,9 +94,9 @@
 									transform="translate({xScale(index) + margin_bars.left},{yScale(ratio_current_potential())})"
 									class="text-white text-sm uppercase cursor-help"
 								>
-									<text x="2" y="-10" fill="currentColor" class="font-thin" dominant-baseline="middle">
+									<text x={(barWidth - (margin_bars.left + margin_bars.right))/2} y="-10" fill="currentColor" class="font-thin" dominant-baseline="middle" text-anchor="middle">
 										{
-											Math.round(ratio_current_potential()*10000)/100 + "% "
+											"~" + Math.round(ratio_current_potential()*10000)/100 + "%"
 										}
 									</text>
 								</g>
