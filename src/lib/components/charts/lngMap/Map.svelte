@@ -97,7 +97,9 @@
 
 	<div class="overflow-scroll h-full">
 		<ul>
-			{#each data.features as item}
+			{#each data.features.sort((a, b) => {
+				return a.properties.already_in_use < b.properties.already_in_use;
+			}) as item}
 				<li
 					class="border-y py-2 hover:bg-gray-100 {selectedElement && selectedElement !== item
 						? 'opacity-60'
@@ -117,8 +119,7 @@
 					</h3>
 					<p>{item.properties.type == 'floating' ? 'Schwimmterminal' : 'Landterminal'}</p>
 					<p>
-						{item.properties.already_in_use == 'TRUE' ? 'seit ' : 'voraussichtlich '}{item
-							.properties.completion} in Betrieb
+						{item.properties.already_in_use == 'TRUE' ? 'In Betrieb ' : '(Noch) nicht in Betrieb'}
 					</p>
 					<p>
 						{#if item.properties.min_capacity !== item.properties.max_capacity}
