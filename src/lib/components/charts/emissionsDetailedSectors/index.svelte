@@ -221,7 +221,7 @@
 	};
 
 	const datasetPromise = fetch(
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}${PUBLIC_VERSION == 'at' ? '_2022' : ''}.json`
+		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
 		// `../data/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
 	)
 		// const datasetPromise = fetch('../data/at/emissions/emissions_crf_at.json')
