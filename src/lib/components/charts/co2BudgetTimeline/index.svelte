@@ -5,8 +5,21 @@
 
 	let index, offset, progress;
 
-	let historicalEmissions;
+	let historicalEmissions; // old
+	let historicalData; // new
 	let blockValue = 50;
+
+	Papa.parse('../data_temp/01o_emissions_co2_historical_incl_LULUCF_UPDATE.csv', {
+		download: true,
+		dynamicTyping: true,
+		header: true,
+		skipEmptyLines: true,
+		complete: function (results) {
+			if (results) {
+				historicalData = results.data;
+			}
+		}
+	});
 
 	Papa.parse('../data_temp/01j_emissions_co2_incl_LULUCF_UPDATE.csv', {
 		download: true,
@@ -111,8 +124,17 @@
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
-			{#if data && chartWidth && chartHeight}
-				<Chart {data} {index} {offset} {progress} {chartWidth} {chartHeight} />
+			{#if data && historicalData && chartWidth && chartHeight}
+				<Chart
+					{data}
+					{historicalData}
+					{blockValue}
+					{index}
+					{offset}
+					{progress}
+					{chartWidth}
+					{chartHeight}
+				/>
 			{:else}
 				Loading...
 			{/if}

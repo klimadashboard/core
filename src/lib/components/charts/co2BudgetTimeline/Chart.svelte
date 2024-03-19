@@ -1,7 +1,10 @@
 <script>
 	import { fade, fly } from 'svelte/transition';
+	import { scaleLinear } from 'd3-scale';
 
 	export let data;
+	export let historicalData;
+	export let blockValue;
 	export let index;
 	export let offset;
 	export let progress;
@@ -26,46 +29,74 @@
 		}
 	];
 
+	$: totalHistoricalEmissions = historicalData.reduce((a, b) => a + b.co2_Mt_incl_LULUCF, 0);
 	$: totalBudget = 1000;
-	$: startYear = 1990;
+	$: startYear = index > 2 ? 2016 : 1880;
+	$: endYear = index > 2 ? 2050 : 2024;
+	$: maxValue = 1000;
+	$: circleSize = 5;
+
+	$: xScale = scaleLinear().range([0, chartWidth]).domain([startYear, endYear]);
+	$: yScale = scaleLinear()
+		.range([chartHeight, chartHeight / 2])
+		.domain([0, maxValue / blockValue]);
 
 	const pointForRatio = (p1, p2, ratio) => [
-		(p2.x - p1.x) * ratio + p1.x,
-		(p2.y - p1.y) * ratio + p1.y
+		(p2[0] - p1[0]) * ratio + p1[0],
+		(p2[1] - p1[1]) * ratio + p1[1]
 	];
 
-	$: randomPositions = Array.from(Array(totalBudget), (_, x) => {
-		return {
-			x: Math.random() * chartWidth,
-			y: Math.random() * chartHeight
-		};
+	$: randomPositions = [...historicalArray].map((d) => {
+		return [Math.random() * chartWidth, chartHeight / 2 + (Math.random() * chartHeight) / 2];
 	});
 
-	$: circles = Array.from(Array(totalBudget), (_, x) => {
-		const p1 = randomPositions[x];
-		const p2 = { x: 0, y: 0 };
-		let position = pointForRatio(p1, p2, Math.min(1, progress));
-		if (index < 3) {
-			x = position[0];
-			y = position[1];
-		} else {
-			x = 0;
-			y = 0;
+	let historicalArray = historicalData
+		.map((e) => {
+			const arr = Array.from(Array(Math.round(e.co2_Mt_incl_LULUCF / blockValue)).keys()).map(
+				(d) => {
+					return {
+						year: e.year,
+						index: d
+					};
+				}
+			);
+			return arr;
+		})
+		.flat();
+
+	$: console.log(historicalArray);
+
+	$: circles = [...historicalArray].map((e, i) => {
+		const p1 = randomPositions[i];
+		const p2 = [xScale(e.year), yScale(e.index)];
+		let position;
+		if (index < 1) {
+			position = p1;
+		} else if (index < 2) {
+			position = pointForRatio(p1, p2, Math.min(1, offset));
+		} else if (index > 1) {
+			position = p2;
 		}
 		return {
-			x: x,
-			y: y
+			x: position[0],
+			y: position[1],
+			i: i,
+			year: e.year
 		};
 	});
-
-	// $: console.log(circles);
-	// $: console.log(offset);
 </script>
 
 <div class="w-full h-full">
 	<svg width={'100%'} height={'100%'}>
 		{#each circles as circle}
-			<circle r={5} cx={circle.x} cy={circle.y} class="fill-black" transition:fly />
+			<circle
+				r={circleSize}
+				cx={circle.x}
+				cy={circle.y}
+				class="fill-black"
+				in:fade={{ delay: circle.year }}
+				out:fly
+			/>
 		{/each}
 	</svg>
 	<div class="flex h-80 items-end space-x-2.5 w-max">
