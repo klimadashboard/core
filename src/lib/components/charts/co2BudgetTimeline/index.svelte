@@ -34,7 +34,7 @@
 	};
 
 	$: usedBudget = 0;
-	$: if (selectedScenario && selectedProjection) {
+	$: if (currentScenario && selectedProjection) {
 		usedBudget = 0;
 	}
 	$: data = years.map((year) => {
@@ -59,7 +59,7 @@
 			}
 
 			projectedValueForYear = Math.max(0, projectedValueForYear);
-			console.log('year: ' + year + ' projection: ' + projectedValueForYear);
+			// console.log('year: ' + year + ' projection: ' + projectedValueForYear);
 			data = Array.from(Array(Math.min(Math.round(projectedValueForYear), 12)), (_, x) => {
 				usedBudget += blockValue;
 				return {
@@ -95,56 +95,72 @@
 		}
 	];
 
-	$: currentScenario = scenarios.find((d) => d.key == selectedScenario) || scenarios[0];
-	let selectedScenario;
-	$: console.log(selectedScenario);
+	$: currentScenario = scenarios[Math.max(index - 3 || 0, 0)];
 
 	let selectedProjection = 'steady';
+
+	let chartWidth;
+	let chartHeight;
 </script>
 
-<Scroller bind:index bind:offset bind:progress>
-	<div slot="background" class="w-screen relative bg-gray-100 grid background">
-		<div class="absolute right-0 bottom-0 text-xs opacity-50 z-50">
-			<select bind:value={selectedProjection}>
-				<option value="steady">"steady"</option>
-				<option value="percentage">"percentage"</option>
-				<option value="linear">"linear"</option>
-			</select>
-
-			<select bind:value={selectedScenario}>
-				{#each scenarios as scenario}
-					<option value={scenario.key}>{scenario.key}</option>
-				{/each}
-			</select>
+<div class="-my-8">
+	<Scroller bind:index bind:offset bind:progress>
+		<div
+			slot="background"
+			class="p-4 w-screen relative bg-gray-100 grid background"
+			bind:clientHeight={chartHeight}
+			bind:clientWidth={chartWidth}
+		>
+			{#if data && chartWidth && chartHeight}
+				<Chart {data} {index} {offset} {progress} {chartWidth} {chartHeight} />
+			{:else}
+				Loading...
+			{/if}
 		</div>
-
-		<div class="p-4">
-			<div class="flex space-x-2 items-center">
+		<div slot="foreground" class="foreground">
+			<section>
+				<h1 class="text-4xl font-serif">Deutschland CO2-Budget aufgebraucht</h1>
+				<p class="text-lg mt-2 leading-snug">
+					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
+					ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+					ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+					reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+				</p>
+				<p class="font-bold mt-4">Start scrolling...</p>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="mx-auto"
+					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M6 9l6 6l6 -6" /></svg
+				>
+			</section>
+			<section>
+				<h2 class="text-xl">Seit XX hat XX ausgestoßen.</h2>
 				<div class="w-3 h-3 rounded-xl bg-industry" />
-				<p>1 Kugel entspricht 50 Millionen Tonnen CO2</p>
-			</div>
+				<p>Eine Kugel entspricht {blockValue}.</p>
+			</section>
+			<section>
+				<h2 class="text-xl">2016 wurde das Pariser Klimaabkommen verabschiedet.</h2>
+			</section>
+			<section>
+				<h2 class="text-xl">Das 1,5 Grad Budget ist XX aufgebraucht.</h2>
+			</section>
+			<section>
+				<h2 class="text-xl">Mit nur 50% Wahrscheinlichkeit ist das Budget 2024 aufgebraucht.</h2>
+			</section>
+			<section>
+				<h2 class="text-xl">Für 1,75 Grad verbleiben noch XX Tonnen.</h2>
+			</section>
 		</div>
-
-		{#if data}
-			<Chart {data} />
-		{:else}
-			Loading...
-		{/if}
-	</div>
-	<div slot="foreground" class="foreground">
-		<section>
-			<h1 class="text-4xl font-serif">Deutschland CO2-Budget aufgebraucht</h1>
-			<p class="text-lg mt-2 leading-snug">
-				Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-				labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-				laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
-				voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-			</p>
-			<p class="font-bold">Start scrolling...</p>
-		</section>
-		<section>Second section</section>
-	</div>
-</Scroller>
+	</Scroller>
+</div>
 
 <style>
 	.background {
