@@ -1,6 +1,9 @@
 <script>
 	import Papa from 'papaparse';
-	import { fade } from 'svelte/transition';
+	import Scroller from '@sveltejs/svelte-scroller';
+	import Chart from './Chart.svelte';
+
+	let index, offset, progress;
 
 	let historicalEmissions;
 	let blockValue = 50;
@@ -96,75 +99,60 @@
 	let selectedScenario;
 	$: console.log(selectedScenario);
 
-	let types = [
-		{
-			key: 'overused',
-			classes: 'bg-energy'
-		},
-		{
-			key: 'historical',
-			classes: 'bg-industry'
-		},
-		{
-			key: 'projection',
-			classes: 'bg-none border-industry border-2'
-		}
-	];
-
 	let selectedProjection = 'steady';
 </script>
 
-<div class="w-screen h-[90vh] relative bg-gray-50 grid">
-	<div class="absolute right-0 bottom-0 text-xs opacity-50 z-50">
-		<select bind:value={selectedProjection}>
-			<option value="steady">"steady"</option>
-			<option value="percentage">"percentage"</option>
-			<option value="linear">"linear"</option>
-		</select>
+<Scroller bind:index bind:offset bind:progress>
+	<div slot="background" class="w-screen relative bg-gray-100 grid background">
+		<div class="absolute right-0 bottom-0 text-xs opacity-50 z-50">
+			<select bind:value={selectedProjection}>
+				<option value="steady">"steady"</option>
+				<option value="percentage">"percentage"</option>
+				<option value="linear">"linear"</option>
+			</select>
 
-		<select bind:value={selectedScenario}>
-			{#each scenarios as scenario}
-				<option value={scenario.key}>{scenario.key}</option>
-			{/each}
-		</select>
-	</div>
-
-	<div class="p-4">
-		<div class="flex space-x-2 items-center">
-			<div class="w-3 h-3 rounded-xl bg-industry" />
-			<p>1 Kugel entspricht 50 Millionen Tonnen CO2</p>
-		</div>
-
-		<div>
-			<h3 class="text-4xl mt-16">
-				{currentScenario.heading}
-			</h3>
-		</div>
-	</div>
-
-	{#if data}
-		<div class="relative mt-auto p-4">
-			<div class="flex h-80 items-end space-x-2.5 w-max">
-				{#each data as year, i}
-					<div class="relative w-3" transition:fade={{ delay: i * 10 }}>
-						{#if i % 10 == 0 || year.year == 2023}
-							<p class="text-xs text-gray-600 absolute -bottom-4 left-1 -translate-x-1/2">
-								{year.year}
-							</p>
-						{/if}
-
-						<div class="flex flex-col-reverse">
-							{#each year.data as a, j}
-								<div
-									class="w-3 h-3 {types.find((d) => d.key == a.type).classes} mb-0.5 rounded-xl"
-								/>
-							{/each}
-						</div>
-					</div>
+			<select bind:value={selectedScenario}>
+				{#each scenarios as scenario}
+					<option value={scenario.key}>{scenario.key}</option>
 				{/each}
+			</select>
+		</div>
+
+		<div class="p-4">
+			<div class="flex space-x-2 items-center">
+				<div class="w-3 h-3 rounded-xl bg-industry" />
+				<p>1 Kugel entspricht 50 Millionen Tonnen CO2</p>
 			</div>
 		</div>
-	{:else}
-		Loading...
-	{/if}
-</div>
+
+		{#if data}
+			<Chart {data} />
+		{:else}
+			Loading...
+		{/if}
+	</div>
+	<div slot="foreground" class="foreground">
+		<section>
+			<h1 class="text-4xl font-serif">Deutschland CO2-Budget aufgebraucht</h1>
+			<p class="text-lg mt-2 leading-snug">
+				Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+				labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+				laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
+				voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+			</p>
+			<p class="font-bold">Start scrolling...</p>
+		</section>
+		<section>Second section</section>
+	</div>
+</Scroller>
+
+<style>
+	.background {
+		height: calc(100vh - 6rem);
+	}
+
+	.foreground section {
+		height: calc(100vh - 6rem);
+		@apply text-center p-16 max-w-xl mx-auto;
+	}
+</style>
