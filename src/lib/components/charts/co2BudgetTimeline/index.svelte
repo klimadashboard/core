@@ -165,8 +165,8 @@
 		<div slot="foreground" class="foreground">
 			<section>
 				<h1 class="text-4xl font-serif">
-					Bis {currentYear} hat Deutschland {currentYearTotalEmissions} ausgestoßen. Deutschland CO2-Budget
-					aufgebraucht
+					Bis {currentYear} hat Deutschland {currentYearTotalEmissions} Millionen Tonnen CO2 ausgestoßen.
+					Deutschland CO2-Budget aufgebraucht
 				</h1>
 				<p class="text-lg mt-2 leading-snug">
 					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
