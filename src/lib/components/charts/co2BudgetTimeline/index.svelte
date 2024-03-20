@@ -3,6 +3,7 @@
 	import Scroller from '@sveltejs/svelte-scroller';
 	import Chart from './Chart.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
 	let index, offset, progress;
@@ -166,34 +167,44 @@
 		<div slot="foreground" class="foreground">
 			<section>
 				<h1 class="text-4xl font-serif">
-					Bis {currentYear} hat Deutschland {formatNumber(currentYearTotalEmissions)} Millionen Tonnen
-					CO2 ausgestoßen. Deutschland CO2-Budget aufgebraucht
+					Von 1850 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
+					<nobr
+						><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen Tonnen
+						CO2</nobr
+					> ausgestoßen.
 				</h1>
-				<p class="text-lg mt-2 leading-snug">
-					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-					ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-					ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-					reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-				</p>
-				<p class="font-bold mt-4">Start scrolling...</p>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="mx-auto"
-					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M6 9l6 6l6 -6" /></svg
-				>
+				<h2 class="text-4xl font-serif" in:fade={{ delay: 6200 }}>
+					Jetzt ist das deutsche CO2-Budget aufgebraucht.
+				</h2>
+				<div in:fade={{ delay: 6500 }}>
+					<p class="font-bold mt-4">Start scrolling...</p>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="mx-auto"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M6 9l6 6l6 -6" /></svg
+					>
+				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">Seit XX hat XX ausgestoßen.</h2>
-				<div class="w-3 h-3 rounded-xl bg-industry" />
-				<p>Eine Kugel entspricht {blockValue}.</p>
+				<h2 class="text-xl">
+					CO2 entsteht in der Industrie, beim Verbrenner, in der Landwirtscaft – XXX.
+					<br />
+					<span class="w-2 h-2 rounded-xl bg-industry inline-block -translate-y-1 -translate-x-1" />
+					Eine Kugel entspricht {blockValue} Millionen Tonnen CO2.
+				</h2>
+			</section>
+			<section>
+				<h2 class="text-xl">
+					Den Höhepunkt der Emissionen gab es XXX, seitdem sinken die Emissionen wieder.
+				</h2>
 			</section>
 			<section>
 				<h2 class="text-xl">2016 wurde das Pariser Klimaabkommen verabschiedet.</h2>
@@ -218,6 +229,6 @@
 
 	.foreground section {
 		height: calc(100vh - 6rem);
-		@apply text-center p-16 max-w-xl mx-auto;
+		@apply text-center p-16 max-w-4xl mx-auto;
 	}
 </style>
