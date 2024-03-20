@@ -87,14 +87,14 @@
 		</div>
 		<div slot="foreground" class="foreground">
 			<section>
-				<h1 class="text-4xl font-light">
+				<h1 class="text-2xl md:text-4xl font-light">
 					Von 1850 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
 					<nobr
 						><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen Tonnen
 						CO2</nobr
 					> ausgestoßen.
 				</h1>
-				<h2 class="text-4xl text-energy" in:fade={{ delay: 5600 }}>
+				<h2 class="text-2xl md:text-4xl text-energy" in:fade={{ delay: 5600 }}>
 					Jetzt hat Deutschland sein faires CO₂-Budget für einen 1,5°C-Pfad aufgebraucht.
 				</h2>
 				<div in:fade={{ delay: 6000 }}>

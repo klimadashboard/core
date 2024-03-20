@@ -33,7 +33,7 @@
 	];
 
 	const startYear1 = 1850;
-	const startYear2 = 1990;
+	$: startYear2 = chartWidth > 600 ? 1990 : 2010;
 	const maxValue = 1000;
 	const circleSize = 5;
 
