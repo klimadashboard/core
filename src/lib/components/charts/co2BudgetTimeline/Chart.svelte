@@ -176,7 +176,7 @@
 					r={circleSize}
 					cx={circle.x}
 					cy={circle.y}
-					class={circle.year > 2020 && index == 4 ? 'fill-energy' : 'fill-black'}
+					class={circle.year > 2020 && index <= 4 ? 'fill-energy' : 'fill-black'}
 					in:fade
 					out:fly
 				/>

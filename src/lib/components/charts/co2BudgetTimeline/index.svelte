@@ -61,7 +61,7 @@
 	}
 </script>
 
-<div class="-my-8">
+<div class="-mt-24">
 	<Scroller bind:index bind:offset bind:progress>
 		<div
 			slot="background"
@@ -87,18 +87,18 @@
 		</div>
 		<div slot="foreground" class="foreground">
 			<section>
-				<h1 class="text-4xl font-serif">
+				<h1 class="text-4xl font-light">
 					Von 1850 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
 					<nobr
 						><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen Tonnen
 						CO2</nobr
 					> ausgestoßen.
 				</h1>
-				<h2 class="text-4xl font-serif" in:fade={{ delay: 6200 }}>
-					Jetzt ist das deutsche CO2-Budget aufgebraucht.
+				<h2 class="text-4xl text-energy" in:fade={{ delay: 5600 }}>
+					Jetzt hat Deutschland sein faires CO₂-Budget für einen 1,5°C-Pfad aufgebraucht.
 				</h2>
-				<div in:fade={{ delay: 6500 }}>
-					<p class="font-bold mt-4">Start scrolling...</p>
+				<div in:fade={{ delay: 6000 }}>
+					<p class="font-bold mt-4">Scrolle, um mehr zu erfahren</p>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -127,26 +127,39 @@
 				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">
-					Den Höhepunkt der Emissionen gab es XXX, seitdem sinken die Emissionen wieder.
-				</h2>
+				<div class="section-background">
+					<h2 class="text-xl">
+						1979 hat Deutschland am meisten CO₂ ausgestoßen. Seitdem ist, bis auf ein paar
+						Ausnahmen, eine stetige Emissionsreduktion zu beobachten.
+					</h2>
+				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">2016 wurde das Pariser Klimaabkommen verabschiedet.</h2>
+				<div class="section-background">
+					<h2 class="text-xl">2016 wurde das Pariser Klimaabkommen verabschiedet.</h2>
+				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">Das 1,5 Grad Budget ist XX aufgebraucht.</h2>
+				<div class="section-background">
+					<h2 class="text-xl">Das 1,5 Grad Budget ist XX aufgebraucht.</h2>
+				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">Mit nur 50% Wahrscheinlichkeit ist das Budget 2024 aufgebraucht.</h2>
+				<div class="section-background">
+					<h2 class="text-xl">Wenn wir höheres Risiko (50%) eingehen, dann bleiben uns noch XXX</h2>
+				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">
-					Für 1,75 Grad verbleiben noch XX Tonnen. Bei gleichbleibenden Emissionen...
-				</h2>
+				<div class="section-background">
+					<h2 class="text-xl">
+						Für 1,75 Grad verbleiben noch XX Tonnen. Bei gleichbleibenden Emissionen...
+					</h2>
+				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">Wenn wir jedes Jahr X reduzieren, dannn...</h2>
+				<div class="section-background">
+					<h2 class="text-xl">Wenn wir jedes Jahr X reduzieren, dannn...</h2>
+				</div>
 			</section>
 			<section>
 				<h2 class="text-xl">Prozentual müssten wir...</h2>
@@ -157,15 +170,15 @@
 
 <style>
 	.background {
-		height: calc(100vh - 6rem);
+		@apply h-screen;
 	}
 
 	.section-background {
-		@apply bg-white bg-opacity-20 backdrop-blur-lg p-4;
+		@apply bg-white bg-opacity-20 backdrop-blur-lg p-4 inline-block;
 	}
 
 	.foreground section {
 		height: calc(100vh - 6rem);
-		@apply text-center p-16 max-w-4xl mx-auto;
+		@apply text-center p-16 pt-32 max-w-4xl mx-auto;
 	}
 </style>
