@@ -7,7 +7,7 @@
 	let dataset = null;
 	let explanations = null;
 
-	let maxYear = PUBLIC_VERSION == 'at' ? 2021 : 2021;
+	let maxYear = PUBLIC_VERSION == 'at' ? 2022 : 2021;
 
 	let years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
 
