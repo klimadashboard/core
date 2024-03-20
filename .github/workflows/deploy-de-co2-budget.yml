@@ -15,8 +15,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Trigger klimadashboard.at
-      - name: Deploy staging-renewables.klimadashboard.at
+      # Trigger klimadashboard.de
+      - name: Deploy staging-co2budget.klimadashboard.de
         uses: Glennmen/ploi-deploy-action@v1.2.0
         with:
           api_token: ${{ secrets.PLOI_API_KEY }}
