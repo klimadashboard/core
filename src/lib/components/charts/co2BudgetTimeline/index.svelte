@@ -117,13 +117,17 @@
 			<section>
 				<div class="section-background">
 					<h2 class="text-xl">
-						CO2 entsteht in der Industrie, beim Verbrenner, in der Landwirtscaft – XXX.
-						<br />
-						<span
-							class="w-2 h-2 rounded-xl bg-industry inline-block -translate-y-1 -translate-x-1"
-						/>
-						Eine Kugel entspricht {blockValue} Millionen Tonnen CO2.
+						CO2 entsteht hauptsächlich durch die Verbrennung von fossilen Brennstoffen wie Kohle, Öl
+						und Gas, z.B. in der Industrie, Energieerzeugung, Verkehr oder Landwirtschaft.
 					</h2>
+					<div
+						class="flex items-center text-sm mx-auto w-max font-bold space-x-1 text-gray-600 mt-2"
+					>
+						<div class="w-2 h-2 rounded-xl bg-current" />
+						<p class="">
+							entspricht {blockValue} Millionen Tonnen CO2.
+						</p>
+					</div>
 				</div>
 			</section>
 			<section>
@@ -136,33 +140,66 @@
 			</section>
 			<section>
 				<div class="section-background">
-					<h2 class="text-xl">2016 wurde das Pariser Klimaabkommen verabschiedet.</h2>
-				</div>
-			</section>
-			<section>
-				<div class="section-background">
-					<h2 class="text-xl">Das 1,5 Grad Budget ist XX aufgebraucht.</h2>
-				</div>
-			</section>
-			<section>
-				<div class="section-background">
-					<h2 class="text-xl">Wenn wir höheres Risiko (50%) eingehen, dann bleiben uns noch XXX</h2>
+					<h2 class="text-xl">
+						2016 wurde das Pariser Klimaabkommen verabschiedet. Darin haben sich die Staaten der
+						Welt, auch Deutschland, völkerrechtlich bindend geeinigt, die Erderhitzung auf 1,5 Grad
+						bzw. weit unter 2 Grad zu begrenzen.
+					</h2>
+					<p class="mt-2">
+						Für Deutschland wurden ab 2016 neue CO2-Budgets berechnet, also jene Menge an
+						Treibhausgasen, die wir noch ausstoßen dürfen, um das 1,5-Grad-Limit international nicht
+						zu gefähren.
+					</p>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
 					<h2 class="text-xl">
-						Für 1,75 Grad verbleiben noch XX Tonnen. Bei gleichbleibenden Emissionen...
+						Aktuelle Daten des Sachverständigenrats für Umweltfragen zeigen: <span
+							class="text-energy"
+							>Deutschland hat sein 1,5 Grad Budget bereits mit den Emissionen des Jahres 2023
+							überschritten.</span
+						>
+					</h2>
+					<p class="mt-2">bei 67% Wahrscheinlichkeit</p>
+				</div>
+			</section>
+			<section>
+				<div class="section-background">
+					<h2 class="text-xl">
+						Wenn wir eine 50/50 Wette und damit ein höheres Risiko eingehen wollen, das
+						1,5-Grad-Limit zu halten, verbleiben uns noch XXX Tonnen ab 2024. Bereits im April
+						werden wir diese Menge ausgestoßen haben.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
-					<h2 class="text-xl">Wenn wir jedes Jahr X reduzieren, dannn...</h2>
+					<h2 class="text-xl">
+						Das CO2-Budget Deutschlands steigt, wenn wir nur 1,75 Grad erreichen wollen – mit
+						katastrophalen Folgen für Inselstaaten und besonders betroffene Regionen, aber auch mehr
+						Hitzetoten in Deutschland.
+					</h2>
+					<h2 class="text-xl">
+						Wenn wir weiterhin so viel emmittieren wie im Jahr 2023, reicht dieses Budget noch bis
+						2030.
+					</h2>
 				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">Prozentual müssten wir...</h2>
+				<div class="section-background">
+					<h2 class="text-xl">
+						Mehr Zeit bleibt uns, wenn wir Jahr für Jahr XXX Tonnen weniger ausstoßen – dann reicht
+						das Budget bis 2037.
+					</h2>
+				</div>
+			</section>
+			<section>
+				<h2 class="text-xl">
+					Wenn wir jetzt schneller reduzieren, kann das Budget bis zur anvisierten Klimaneutralität
+					2045 gestreckt werden. Dann sind aber -XX% Emissionsreduktion in den nächsten Jahren
+					notwendig, 2023 waren es -10%.
+				</h2>
 			</section>
 		</div>
 	</Scroller>
