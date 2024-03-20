@@ -2,6 +2,7 @@
 	import Papa from 'papaparse';
 	import Scroller from '@sveltejs/svelte-scroller';
 	import Chart from './Chart.svelte';
+	import formatNumber from '$lib/stores/formatNumber';
 	import { onMount } from 'svelte';
 
 	let index, offset, progress;
@@ -165,8 +166,8 @@
 		<div slot="foreground" class="foreground">
 			<section>
 				<h1 class="text-4xl font-serif">
-					Bis {currentYear} hat Deutschland {currentYearTotalEmissions} Millionen Tonnen CO2 ausgestoßen.
-					Deutschland CO2-Budget aufgebraucht
+					Bis {currentYear} hat Deutschland {formatNumber(currentYearTotalEmissions)} Millionen Tonnen
+					CO2 ausgestoßen. Deutschland CO2-Budget aufgebraucht
 				</h1>
 				<p class="text-lg mt-2 leading-snug">
 					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
