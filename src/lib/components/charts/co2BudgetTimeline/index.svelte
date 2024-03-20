@@ -8,8 +8,8 @@
 
 	let index, offset, progress;
 
-	let historicalEmissions; // old
-	let historicalData; // new
+	let historicalData;
+	let futureData;
 	let blockValue = 50;
 
 	Papa.parse('../data_temp/01o_emissions_co2_historical_incl_LULUCF_UPDATE.csv', {
@@ -24,96 +24,17 @@
 		}
 	});
 
-	Papa.parse('../data_temp/01j_emissions_co2_incl_LULUCF_UPDATE.csv', {
+	Papa.parse('../data_temp/01m_emissions_co2eq_incl_LULUCF_projection_WEM_UPDATE.csv', {
 		download: true,
 		dynamicTyping: true,
 		header: true,
 		skipEmptyLines: true,
 		complete: function (results) {
 			if (results) {
-				historicalEmissions = results.data;
-				// console.log(historicalEmissions);
+				futureData = results.data;
 			}
 		}
 	});
-
-	const years = Array.from(Array(60), (_, x) => 1990 + x);
-	$: getSumForYear = function (year) {
-		let historical = historicalEmissions?.find((d) => d.year == year)
-			? historicalEmissions.find((d) => d.year == year).co2_Mt_incl_LULUCF
-			: 0;
-		let projection = 0;
-
-		// console.log(historical);
-
-		return Math.round((historical + projection) / blockValue);
-	};
-
-	$: usedBudget = 0;
-	$: if (currentScenario && selectedProjection) {
-		usedBudget = 0;
-	}
-	$: data = years.map((year) => {
-		let data = [];
-		if (getSumForYear(year) > 0) {
-			data = Array.from(Array(getSumForYear(year)), (_, x) => {
-				usedBudget += blockValue;
-				// console.log(usedBudget);
-				return {
-					x: x,
-					type: usedBudget > currentScenario.value ? 'overused' : 'historical'
-				};
-			});
-		} else {
-			let projectedValueForYear = Math.max(0, (currentScenario.value - usedBudget) / blockValue);
-
-			if (selectedProjection == 'percentage') {
-				projectedValueForYear = projectedValueForYear / Math.max(1, year - 2023);
-			} else if (selectedProjection == 'linear') {
-				projectedValueForYear = projectedValueForYear - 1 * Math.max(1, year - 2023);
-				// remainignBugdet * 2 / budgetLastYear;
-			}
-
-			projectedValueForYear = Math.max(0, projectedValueForYear);
-			// console.log('year: ' + year + ' projection: ' + projectedValueForYear);
-			data = Array.from(Array(Math.min(Math.round(projectedValueForYear), 12)), (_, x) => {
-				usedBudget += blockValue;
-				return {
-					x: x,
-					type: 'projection'
-				};
-			});
-		}
-		return {
-			year: year,
-			data: data
-		};
-	});
-
-	// $: console.log(data);
-
-	$: scenarios = [
-		{
-			key: '15-67',
-			heading:
-				'Deutschland hat sein faires CO2-Budget für 1,5 Grad mit 67% Wahrscheinlichkeit 2023 aufgebraucht. Seitdem lebt es auf Kosten anderer Länder.',
-			value: 27828 // -530
-		},
-		{
-			key: '15-50',
-			heading: 'FÜr 1,5 Grad mit 50% Wahrscheinlichkeit ver',
-			value: 28528 // 170
-		},
-		{
-			key: '175-67',
-			heading: 'Für XX verbleiben ab 2024 noch XX Tonnen.',
-			value: 32258 // 3900
-		}
-	];
-
-	$: currentScenario = scenarios[Math.max(index - 3 || 0, 0)];
-
-	let selectedProjection = 'steady';
 
 	let chartWidth;
 	let chartHeight;
@@ -148,10 +69,10 @@
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
-			{#if data && historicalData && chartWidth && chartHeight}
+			{#if historicalData && chartWidth && chartHeight}
 				<Chart
-					{data}
 					{historicalData}
+					{futureData}
 					{blockValue}
 					{index}
 					{offset}
@@ -194,12 +115,16 @@
 				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">
-					CO2 entsteht in der Industrie, beim Verbrenner, in der Landwirtscaft – XXX.
-					<br />
-					<span class="w-2 h-2 rounded-xl bg-industry inline-block -translate-y-1 -translate-x-1" />
-					Eine Kugel entspricht {blockValue} Millionen Tonnen CO2.
-				</h2>
+				<div class="section-background">
+					<h2 class="text-xl">
+						CO2 entsteht in der Industrie, beim Verbrenner, in der Landwirtscaft – XXX.
+						<br />
+						<span
+							class="w-2 h-2 rounded-xl bg-industry inline-block -translate-y-1 -translate-x-1"
+						/>
+						Eine Kugel entspricht {blockValue} Millionen Tonnen CO2.
+					</h2>
+				</div>
 			</section>
 			<section>
 				<h2 class="text-xl">
@@ -216,7 +141,15 @@
 				<h2 class="text-xl">Mit nur 50% Wahrscheinlichkeit ist das Budget 2024 aufgebraucht.</h2>
 			</section>
 			<section>
-				<h2 class="text-xl">Für 1,75 Grad verbleiben noch XX Tonnen.</h2>
+				<h2 class="text-xl">
+					Für 1,75 Grad verbleiben noch XX Tonnen. Bei gleichbleibenden Emissionen...
+				</h2>
+			</section>
+			<section>
+				<h2 class="text-xl">Wenn wir jedes Jahr X reduzieren, dannn...</h2>
+			</section>
+			<section>
+				<h2 class="text-xl">Prozentual müssten wir...</h2>
 			</section>
 		</div>
 	</Scroller>
@@ -225,6 +158,10 @@
 <style>
 	.background {
 		height: calc(100vh - 6rem);
+	}
+
+	.section-background {
+		@apply bg-white bg-opacity-20 backdrop-blur-lg p-4;
 	}
 
 	.foreground section {

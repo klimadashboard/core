@@ -3,8 +3,8 @@
 	import { scaleLinear } from 'd3-scale';
 	import { onMount } from 'svelte';
 
-	export let data;
 	export let historicalData;
+	export let futureData;
 	export let blockValue;
 	export let index;
 	export let offset;
@@ -15,6 +15,7 @@
 
 	let x;
 	let y;
+	let margin = { top: 0, right: 5, bottom: 50, left: 5 };
 
 	let types = [
 		{
@@ -31,17 +32,34 @@
 		}
 	];
 
-	$: totalHistoricalEmissions = historicalData.reduce((a, b) => a + b.co2_Mt_incl_LULUCF, 0);
-	$: totalBudget = 1000;
-	$: startYear = index > 2 ? 2016 : 1880;
-	$: endYear = index > 2 ? 2050 : 2024;
+	const startYear1 = 1880;
+	const startYear2 = 2016;
+	const endYear1 = 2024;
+	const endYear2 = 2050;
+
+	$: startYear = startYear1;
+	$: endYear = endYear1;
 	$: maxValue = 1000;
 	$: circleSize = 5;
 
-	$: xScaleHistorical = scaleLinear().range([0, chartWidth]).domain([1880, 2024]);
-	$: xScaleFuture = scaleLinear().range([0, chartWidth]).domain([2016, 2050]);
+	// interpolate x-axis move
+
+	$: if (index > 2) {
+		if (index == 3) {
+			startYear = startYear1 + (startYear2 - startYear1) * offset;
+			endYear = endYear1 + (endYear2 - endYear1) * offset;
+		} else {
+			startYear = startYear2;
+			endYear = endYear2;
+		}
+	}
+
+	$: innerChartWidth = chartWidth - margin.left - margin.right;
+	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
+
+	$: xScale = scaleLinear().range([0, innerChartWidth]).domain([startYear, endYear]);
 	$: yScale = scaleLinear()
-		.range([chartHeight, chartHeight / 2])
+		.range([innerChartHeight, innerChartHeight - (maxValue / blockValue) * circleSize * 3])
 		.domain([0, maxValue / blockValue]);
 
 	const pointForRatio = (p1, p2, ratio) => [
@@ -50,7 +68,10 @@
 	];
 
 	$: randomPositions = [...historicalArray].map((d) => {
-		return [Math.random() * chartWidth, chartHeight / 2 + (Math.random() * chartHeight) / 2];
+		return [
+			Math.random() * innerChartWidth,
+			innerChartHeight / 2 + (Math.random() * innerChartHeight) / 2
+		];
 	});
 
 	let historicalArray = historicalData
@@ -70,19 +91,14 @@
 	$: circles = [...historicalArray]
 		.map((e, i) => {
 			const p1 = randomPositions[i];
-			const p2 = [xScaleHistorical(e.year), yScale(e.index)];
-			const p3 = [xScaleFuture(e.year), yScale(e.index)];
+			const p2 = [xScale(e.year), yScale(e.index)];
 			let position;
 			if (index == 0) {
 				position = p1;
 			} else if (index == 1) {
 				position = pointForRatio(p1, p2, Math.min(1, offset));
-			} else if (index == 2) {
-				position = p2;
-			} else if (index == 3) {
-				position = pointForRatio(p2, p3, Math.min(1, offset));
 			} else {
-				position = p3;
+				position = p2;
 			}
 			return {
 				x: position[0],
@@ -92,32 +108,87 @@
 			};
 		})
 		.filter((d) => d.year <= currentYear);
+
+	const projections = [
+		{
+			index: 5,
+			key: '15_50'
+		},
+		{
+			index: 6,
+			key: '3902_nochange'
+		},
+		{
+			index: 7,
+			key: '3902_linear'
+		},
+		{
+			index: 8,
+			key: '3902_percentage'
+		}
+	];
+
+	$: circlesFuture = projections.find((d) => d.index == index)
+		? futureData
+				.filter((d) => d[projections.find((d) => d.index == index).key] > 0)
+				.map((e) => {
+					const arr = Array.from(
+						Array(Math.round(e[projections.find((d) => d.index == index).key] / blockValue)).keys()
+					).map((d) => {
+						return {
+							x: xScale(e.year),
+							y: yScale(d),
+							year: e.year,
+							index: d
+						};
+					});
+					return arr;
+				})
+				.flat()
+		: [];
+
+	$: console.log(circlesFuture);
+	$: console.log(futureData);
 </script>
 
 <div class="w-full h-full">
 	<svg width={'100%'} height={'100%'}>
-		{#each circles as circle}
-			<circle r={circleSize} cx={circle.x} cy={circle.y} class="fill-black" in:fade out:fly />
-		{/each}
-	</svg>
-	<div class="flex h-80 items-end space-x-2.5 w-max">
-		{#each data as year, i}
-			<div class="relative w-3" transition:fade={{ delay: i * 10 }}>
-				{#if i % 10 == 0 || year.year == 2023}
-					<p class="text-xs text-gray-600 absolute -bottom-4 left-1 -translate-x-1/2">
-						{year.year}
-					</p>
-				{/if}
+		<g id="circles" transform="translate({margin.left},{margin.top})">
+			{#each circles as circle}
+				<circle
+					r={circleSize}
+					cx={circle.x}
+					cy={circle.y}
+					class={circle.year > 2020 && index == 4 ? 'fill-energy' : 'fill-black'}
+					in:fade
+					out:fly
+				/>
+			{/each}
 
-				<div class="flex flex-col-reverse">
-					{#each year.data as a, j}
-						<div
-							class="w-3 h-3 {types.find((d) => d.key == a.type).classes} mb-0.5 rounded-xl"
-							transition:fade={{ delay: j * 10 }}
-						/>
-					{/each}
-				</div>
-			</div>
-		{/each}
-	</div>
+			{#each circlesFuture as circle}
+				<circle
+					r={circleSize}
+					cx={circle.x}
+					cy={circle.y}
+					class="stroke-black stroke-2 fill-none"
+					transition:fade
+				/>
+			{/each}
+		</g>
+		{#if index > 1}
+			<g
+				id="xScale"
+				class="text-xs text-gray-600"
+				transform="translate(0,{innerChartHeight + 18})"
+				in:fade
+			>
+				{#each xScale.ticks() as tick}
+					<g transform="translate({xScale(tick)},0)">
+						<line x1={0} x2={0} y1={0} y2={10} class="stroke-current" />
+						<text class="fill-current">{tick}</text>
+					</g>
+				{/each}
+			</g>
+		{/if}
+	</svg>
 </div>
