@@ -1,6 +1,7 @@
 <script>
 	import { fade, fly } from 'svelte/transition';
 	import { scaleLinear } from 'd3-scale';
+	import { onMount } from 'svelte';
 
 	export let data;
 	export let historicalData;
@@ -10,6 +11,7 @@
 	export let progress;
 	export let chartWidth;
 	export let chartHeight;
+	export let currentYear;
 
 	let x;
 	let y;
@@ -36,7 +38,8 @@
 	$: maxValue = 1000;
 	$: circleSize = 5;
 
-	$: xScale = scaleLinear().range([0, chartWidth]).domain([startYear, endYear]);
+	$: xScaleHistorical = scaleLinear().range([0, chartWidth]).domain([1880, 2024]);
+	$: xScaleFuture = scaleLinear().range([0, chartWidth]).domain([2016, 2050]);
 	$: yScale = scaleLinear()
 		.range([chartHeight, chartHeight / 2])
 		.domain([0, maxValue / blockValue]);
@@ -64,39 +67,37 @@
 		})
 		.flat();
 
-	$: console.log(historicalArray);
-
-	$: circles = [...historicalArray].map((e, i) => {
-		const p1 = randomPositions[i];
-		const p2 = [xScale(e.year), yScale(e.index)];
-		let position;
-		if (index < 1) {
-			position = p1;
-		} else if (index < 2) {
-			position = pointForRatio(p1, p2, Math.min(1, offset));
-		} else if (index > 1) {
-			position = p2;
-		}
-		return {
-			x: position[0],
-			y: position[1],
-			i: i,
-			year: e.year
-		};
-	});
+	$: circles = [...historicalArray]
+		.map((e, i) => {
+			const p1 = randomPositions[i];
+			const p2 = [xScaleHistorical(e.year), yScale(e.index)];
+			const p3 = [xScaleFuture(e.year), yScale(e.index)];
+			let position;
+			if (index == 0) {
+				position = p1;
+			} else if (index == 1) {
+				position = pointForRatio(p1, p2, Math.min(1, offset));
+			} else if (index == 2) {
+				position = p2;
+			} else if (index == 3) {
+				position = pointForRatio(p2, p3, Math.min(1, offset));
+			} else {
+				position = p3;
+			}
+			return {
+				x: position[0],
+				y: position[1],
+				i: i,
+				year: e.year
+			};
+		})
+		.filter((d) => d.year <= currentYear);
 </script>
 
 <div class="w-full h-full">
 	<svg width={'100%'} height={'100%'}>
 		{#each circles as circle}
-			<circle
-				r={circleSize}
-				cx={circle.x}
-				cy={circle.y}
-				class="fill-black"
-				in:fade={{ delay: circle.year }}
-				out:fly
-			/>
+			<circle r={circleSize} cx={circle.x} cy={circle.y} class="fill-black" in:fade out:fly />
 		{/each}
 	</svg>
 	<div class="flex h-80 items-end space-x-2.5 w-max">

@@ -2,6 +2,7 @@
 	import Papa from 'papaparse';
 	import Scroller from '@sveltejs/svelte-scroller';
 	import Chart from './Chart.svelte';
+	import { onMount } from 'svelte';
 
 	let index, offset, progress;
 
@@ -114,6 +115,27 @@
 
 	let chartWidth;
 	let chartHeight;
+
+	$: currentYear = 1850;
+
+	$: currentYearTotalEmissions = 0;
+
+	let timer;
+
+	onMount(() => {
+		timer = setInterval(() => {
+			currentYear++;
+			currentYearTotalEmissions = Math.round(
+				historicalData
+					.filter((d) => d.year <= currentYear)
+					.reduce((a, b) => a + b.co2_Mt_incl_LULUCF, 0)
+			);
+		}, 20);
+	});
+
+	$: if (currentYear > 2022) {
+		clearInterval(timer);
+	}
 </script>
 
 <div class="-my-8">
@@ -134,6 +156,7 @@
 					{progress}
 					{chartWidth}
 					{chartHeight}
+					{currentYear}
 				/>
 			{:else}
 				Loading...
@@ -141,7 +164,10 @@
 		</div>
 		<div slot="foreground" class="foreground">
 			<section>
-				<h1 class="text-4xl font-serif">Deutschland CO2-Budget aufgebraucht</h1>
+				<h1 class="text-4xl font-serif">
+					Bis {currentYear} hat Deutschland {currentYearTotalEmissions} ausgestoßen. Deutschland CO2-Budget
+					aufgebraucht
+				</h1>
 				<p class="text-lg mt-2 leading-snug">
 					Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
 					ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
