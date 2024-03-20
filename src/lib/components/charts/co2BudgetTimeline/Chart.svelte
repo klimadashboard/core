@@ -15,7 +15,7 @@
 
 	let x;
 	let y;
-	let margin = { top: 0, right: 5, bottom: 50, left: 5 };
+	let margin = { top: 0, right: 5, bottom: 70, left: 5 };
 
 	let types = [
 		{
@@ -32,27 +32,26 @@
 		}
 	];
 
-	const startYear1 = 1880;
-	const startYear2 = 2016;
-	const endYear1 = 2024;
-	const endYear2 = 2050;
+	const startYear1 = 1850;
+	const startYear2 = 1990;
+	const maxValue = 1000;
+	const circleSize = 5;
 
+	$: yearWindow = chartWidth / circleSize / 3;
+	$: console.log(yearWindow);
 	$: startYear = startYear1;
-	$: endYear = endYear1;
-	$: maxValue = 1000;
-	$: circleSize = 5;
+	$: endYear = startYear + yearWindow;
 
 	// interpolate x-axis move
+	$: if (index == 2) {
+		startYear = startYear1 + (startYear2 - startYear1) * offset;
+	}
 
 	$: if (index > 2) {
-		if (index == 3) {
-			startYear = startYear1 + (startYear2 - startYear1) * offset;
-			endYear = endYear1 + (endYear2 - endYear1) * offset;
-		} else {
-			startYear = startYear2;
-			endYear = endYear2;
-		}
+		startYear = startYear2;
 	}
+
+	$: console.log(offset);
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -146,13 +145,31 @@
 				})
 				.flat()
 		: [];
-
-	$: console.log(circlesFuture);
-	$: console.log(futureData);
 </script>
 
 <div class="w-full h-full">
 	<svg width={'100%'} height={'100%'}>
+		<g id="annotations">
+			{#if index == 3}
+				<g transform="translate({xScale(2016)},{chartHeight / 2})" transition:fade>
+					<text x={50} y={2} dominant-baseline="middle" class="font-bold"
+						>2016 Pariser Klimaabkommen</text
+					>
+					<svg
+						width="46"
+						height="31"
+						viewBox="0 0 46 31"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							d="M4.07265 29.8742C4.27931 30.3864 4.86203 30.634 5.37419 30.4274L13.7203 27.0596C14.2325 26.8529 14.4802 26.2702 14.2735 25.7581C14.0668 25.2459 13.4841 24.9982 12.972 25.2049L5.55316 28.1985L2.5596 20.7797C2.35294 20.2675 1.77022 20.0198 1.25806 20.2265C0.745898 20.4332 0.498242 21.0159 0.704903 21.528L4.07265 29.8742ZM44.5 2.5C45.0523 2.5 45.5 2.05228 45.5 1.5C45.5 0.947715 45.0523 0.5 44.5 0.5V2.5ZM5.92033 29.8911C10.2032 19.8137 13.0912 13.0786 18.2303 8.76602C23.3125 4.50126 30.7583 2.5 44.5 2.5V0.5C30.6417 0.5 22.5875 2.49874 16.9447 7.23398C11.3588 11.9214 8.29676 19.1863 4.07967 29.1089L5.92033 29.8911Z"
+							fill="black"
+						/>
+					</svg>
+				</g>
+			{/if}
+		</g>
 		<g id="circles" transform="translate({margin.left},{margin.top})">
 			{#each circles as circle}
 				<circle
@@ -179,13 +196,13 @@
 			<g
 				id="xScale"
 				class="text-xs text-gray-600"
-				transform="translate(0,{innerChartHeight + 18})"
+				transform="translate(0,{innerChartHeight + 25})"
 				in:fade
 			>
 				{#each xScale.ticks() as tick}
 					<g transform="translate({xScale(tick)},0)">
-						<line x1={0} x2={0} y1={0} y2={10} class="stroke-current" />
-						<text class="fill-current">{tick}</text>
+						<line x1="-12" x2="12" y1="-14" y2="-14" class="stroke-current" />
+						<text class="fill-current" text-anchor="middle">{tick}</text>
 					</g>
 				{/each}
 			</g>
