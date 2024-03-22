@@ -8,8 +8,8 @@
 
 	let index, offset, progress;
 
-	let historicalData;
-	let futureData;
+	let historicalData = [];
+	let futureData = [];
 	let blockValue = 25;
 
 	Papa.parse('../data_temp/01o_emissions_co2_historical_incl_LULUCF_UPDATE.csv', {
@@ -60,6 +60,43 @@
 		clearInterval(timer);
 	}
 
+	const budgets = [
+		{
+			year: 2016,
+			budget: 5012
+		},
+		{
+			year: 2017,
+			budget: 4231
+		},
+		{
+			year: 2018,
+			budget: 3460
+		},
+		{
+			year: 2019,
+			budget: 2707
+		},
+		{
+			year: 2020,
+			budget: 2007
+		},
+		{
+			year: 2021,
+			budget: 1361
+		},
+		{
+			year: 2022,
+			budget: 687
+		},
+		{
+			year: 2023,
+			budget: 19
+		}
+	];
+
+	let yearsHighlighted = [];
+
 	const sources = [
 		{
 			index: 2,
@@ -82,7 +119,7 @@
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
-			{#if historicalData && chartWidth && chartHeight}
+			{#if historicalData.length > 0 && chartWidth && chartHeight}
 				<Chart
 					{historicalData}
 					{futureData}
@@ -93,12 +130,13 @@
 					{chartWidth}
 					{chartHeight}
 					{currentYear}
+					{yearsHighlighted}
 				/>
 			{:else}
 				Loading...
 			{/if}
 			<div class="absolute bottom-2 left-0 right-0">
-				<p class="text-xs left-4 absolute">{index}</p>
+				<p class="text-xs left-4 absolute" />
 				<div class="max-w-3xl mx-auto flex justify-between text-sm text-gray-600">
 					<div class="flex items-center space-x-1">
 						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
@@ -174,28 +212,31 @@
 						Deutschland – völkerrechtlich bindend geeinigt, die Erderhitzung auf 1,5 Grad bzw. weit
 						unter 2 Grad zu begrenzen.
 					</h2>
-					<p>
+				</div>
+			</section>
+			<section>
+				<div class="section-background">
+					<p class="text-xl">
 						Der Weltklimarat (IPCC) hat ermittelt, wie viel CO₂ weltweit noch maximal ausgestoßen
 						werden darf, um die 1,5-Grad-Grenze mit einer Wahrscheinlichkeit von 67% einzuhalten.
 						Der Sachverständigenrat für Umweltfragen (SRU) hat wiederum den fairen Anteil
 						Deutschlands am globalen CO₂-Budget berechnet.
 					</p>
-					<p>
+					<p class="text-xl my-2">
 						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy bg-opacity-50 p-1"
 							>5 012 Millionen Tonnen CO₂</strong
 						> ausstoßen.
 					</p>
-				</div>
-			</section>
-			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
-						Aktuelle Daten des Sachverständigenrats für Umweltfragen zeigen: <span
-							class="text-energy"
-							>Deutschland hat sein 1,5 Grad Budget bereits mit den Emissionen des Jahres 2023
-							überschritten.</span
-						>
-					</h2>
+					<div class="my-2">
+						<p class="text-4xl font-light">{formatNumber(budgets[0].budget)}</p>
+						<p>
+							Verbleibendes Budget im Jahr {budgets[0].year}
+						</p>
+					</div>
+					<p class="text-xl text-energy my-2">
+						Deutschland hat Anfang 2023 sein faires 1,5-Grad-Budget überschritten. (67%
+						Wahrscheinlichkeit)
+					</p>
 				</div>
 			</section>
 			<section>
@@ -227,25 +268,27 @@
 						bis 2100 nicht bei 1,5 Grad, sondern bei 1,75 Grad liegt.
 					</h2>
 					<h2 class="text-xl">
-						Wenn wir weiterhin so viel emmittieren wie im Jahr 2023, reicht dieses Budget noch bis
-						2030.
+						Wenn wir weiterhin so viel emittieren wie im Jahr 2023 (594 Millionen Tonnen CO₂)
+						überschreiten wir das Budget bereits Mitte 2030.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
 					<h2 class="text-xl">
-						Mehr Zeit bleibt uns, wenn wir Jahr für Jahr XXX Tonnen weniger ausstoßen – dann reicht
-						das Budget bis 2037.
+						Reduzieren wir jedes Jahr dieselbe Menge an CO₂, nämlich 46 Millionen Tonnen, wird das
+						Budget in 12 Jahren - 2036 - überschritten.
 					</h2>
 				</div>
 			</section>
 			<section>
-				<h2 class="text-xl">
-					Wenn wir jetzt schneller reduzieren, kann das Budget bis zur anvisierten Klimaneutralität
-					2045 gestreckt werden. Dann sind aber -XX% Emissionsreduktion in den nächsten Jahren
-					notwendig, 2023 waren es -10%.
-				</h2>
+				<div class="section-background">
+					<h2 class="text-xl">
+						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Um das
+						verbleibende Budget bis 2045 zu strecken, müssten die CO₂-Emissionen jedes Jahr um 12.7%
+						im Vergleich zum Vorjahr sinken.
+					</h2>
+				</div>
 			</section>
 		</div>
 	</Scroller>

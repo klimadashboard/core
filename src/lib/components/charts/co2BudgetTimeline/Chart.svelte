@@ -12,6 +12,7 @@
 	export let chartWidth;
 	export let chartHeight;
 	export let currentYear;
+	export let yearsHighlighted;
 
 	let margin = { top: 0, right: 5, bottom: 80, left: 5 };
 
@@ -22,7 +23,6 @@
 	const padding = 3;
 
 	$: yearWindow = chartWidth / circleSize / padding;
-	$: console.log(yearWindow);
 	$: startYear = startYear1;
 	$: endYear = startYear + yearWindow;
 
@@ -34,8 +34,6 @@
 	$: if (index > 2) {
 		startYear = startYear2;
 	}
-
-	$: console.log(offset);
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -87,7 +85,14 @@
 				x: position[0],
 				y: position[1],
 				i: i,
-				year: e.year
+				year: e.year,
+				highlighted:
+					index == 4 || (index == 3 && offset > 0.5)
+						? yearsHighlighted.indexOf(e.year) > -1
+							? true
+							: false
+						: true,
+				overflow: index == 4 ? (e.year == 2023 ? true : false) : false
 			};
 		})
 		.filter((d) => d.year <= currentYear);
@@ -182,7 +187,9 @@
 					r={circleSize}
 					cx={circle.x}
 					cy={circle.y}
-					class={circle.year > 2022 && index == 4 ? 'fill-energy' : 'fill-black'}
+					class="{circle.highlighted ? 'opacity-100' : 'opacity-50'} {circle.overflow
+						? 'fill-energy'
+						: 'fill-industry'}"
 					in:fade
 					out:fly
 				/>
