@@ -98,15 +98,15 @@
 			key: '1.5_50'
 		},
 		{
-			index: 6,
+			index: 7,
 			key: '3860_nochange'
 		},
 		{
-			index: 7,
+			index: 8,
 			key: '3860_linear'
 		},
 		{
-			index: 8,
+			index: 9,
 			key: '3860_percentage'
 		}
 	];
@@ -182,7 +182,7 @@
 					r={circleSize}
 					cx={circle.x}
 					cy={circle.y}
-					class={circle.year > 2022 && index <= 4 ? 'fill-energy' : 'fill-black'}
+					class={circle.year > 2022 && index == 4 ? 'fill-energy' : 'fill-black'}
 					in:fade
 					out:fly
 				/>
@@ -207,8 +207,8 @@
 			>
 				{#each xScale.ticks() as tick}
 					<g transform="translate({xScale(tick)},0)">
-						<line x1="-12" x2="12" y1="-14" y2="-14" class="stroke-current" />
-						<text class="fill-current" text-anchor="middle">{tick}</text>
+						<line x1={circleSize * 2} x2={circleSize * 2} y1="-14" y2="0" class="stroke-current" />
+						<text class="fill-current" text-anchor="left" x={circleSize * 2 + 3}>{tick}</text>
 					</g>
 				{/each}
 			</g>

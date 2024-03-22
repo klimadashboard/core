@@ -53,12 +53,25 @@
 					.filter((d) => d.year <= currentYear)
 					.reduce((a, b) => a + b.co2_Mt_incl_LULUCF, 0)
 			);
-		}, 20);
+		}, 10);
 	});
 
 	$: if (currentYear > 2022) {
 		clearInterval(timer);
 	}
+
+	const sources = [
+		{
+			index: 2,
+			label:
+				"Emissionen: Gütschow et al. (2023) PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
+		},
+		{
+			index: 3,
+			label:
+				"Emissionen: Gütschow et al. (2023) PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
+		}
+	];
 </script>
 
 <div class="-mt-24">
@@ -84,13 +97,23 @@
 			{:else}
 				Loading...
 			{/if}
-			<div
-				class="flex items-center text-sm mx-auto w-max font-bold space-x-1 text-gray-600 mt-2 absolute bottom-2 left-4"
-			>
-				<div class="w-1.5 h-1.5 rounded-xl bg-current" />
-				<p class="">
-					entspricht {blockValue} Millionen Tonnen CO2.
-				</p>
+			<div class="absolute bottom-2 left-0 right-0">
+				<p class="text-xs left-4 absolute">{index}</p>
+				<div class="max-w-3xl mx-auto flex justify-between text-sm text-gray-600">
+					<div class="flex items-center space-x-1">
+						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
+						<p class="">
+							entspricht {blockValue} Millionen Tonnen CO2.
+						</p>
+					</div>
+					<div>
+						{#if sources.find((d) => d.index == index)}
+							{#key index}
+								<p transition:fade>{@html sources.find((d) => d.index == index).label}</p>
+							{/key}
+						{/if}
+					</div>
+				</div>
 			</div>
 		</div>
 		<div slot="foreground" class="foreground">
@@ -173,24 +196,35 @@
 							überschritten.</span
 						>
 					</h2>
-					<p class="mt-2">bei 67% Wahrscheinlichkeit</p>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
 					<h2 class="text-xl">
-						Wenn wir eine 50/50 Wette und damit ein höheres Risiko eingehen wollen, das
-						1,5-Grad-Limit zu halten, verbleiben uns noch XXX Tonnen ab 2024. Bereits im April
-						werden wir diese Menge ausgestoßen haben.
+						Wenn die Wahrscheinlichkeit, die 1,5-Grad-Grenze einzuhalten, auf 50% reduziert wird,
+						vergrößert sich Deutschlands CO₂-Budget geringfügig. In 2 von 4 Fällen würde die Grenze
+						überschritten werden, was verheerende Folgen nach sich ziehen würde.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
+					<p>
+						Deutschlands maximales CO2-Budget für die Einhaltung der 1,5 °C-Grenze ist
+						überschritten. Was bedeutet das konkret? Es wäre falsch zu behaupten, Deutschland könne
+						nun klimapolitisch den Kopf in den Sand stecken, weil das eigene 1,5°C-Budget bereits
+						überschritten ist. Gerade jetzt hat die Bundesregierung eine besondere Verantwortung,
+						den Klimaschutz auf nationaler und internationaler Ebene deutlich voranzutreiben. Jedes
+						Zehntelgrad zählt. Mit jedem Zehntelgrad Temperaturanstieg nehmen Extremwetterereignisse
+						zu. XXX mehr davon
+					</p>
+				</div>
+			</section>
+			<section>
+				<div class="section-background">
 					<h2 class="text-xl">
-						Das CO2-Budget Deutschlands steigt, wenn wir nur 1,75 Grad erreichen wollen – mit
-						katastrophalen Folgen für Inselstaaten und besonders betroffene Regionen, aber auch mehr
-						Hitzetoten in Deutschland.
+						Das maximale deutsche CO₂-Budget wird größer, wenn der Grenzwert für die Erderhitzung
+						bis 2100 nicht bei 1,5 Grad, sondern bei 1,75 Grad liegt.
 					</h2>
 					<h2 class="text-xl">
 						Wenn wir weiterhin so viel emmittieren wie im Jahr 2023, reicht dieses Budget noch bis
