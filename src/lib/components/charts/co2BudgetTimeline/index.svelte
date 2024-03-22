@@ -10,7 +10,7 @@
 
 	let historicalData;
 	let futureData;
-	let blockValue = 50;
+	let blockValue = 25;
 
 	Papa.parse('../data_temp/01o_emissions_co2_historical_incl_LULUCF_UPDATE.csv', {
 		download: true,
@@ -24,7 +24,7 @@
 		}
 	});
 
-	Papa.parse('../data_temp/01m_emissions_co2eq_incl_LULUCF_projection_WEM_UPDATE.csv', {
+	Papa.parse('../data_temp/01n_emissions_co2_budget_scenarios_UPDATE.csv', {
 		download: true,
 		dynamicTyping: true,
 		header: true,
@@ -84,21 +84,34 @@
 			{:else}
 				Loading...
 			{/if}
+			<div
+				class="flex items-center text-sm mx-auto w-max font-bold space-x-1 text-gray-600 mt-2 absolute bottom-2 left-4"
+			>
+				<div class="w-1.5 h-1.5 rounded-xl bg-current" />
+				<p class="">
+					entspricht {blockValue} Millionen Tonnen CO2.
+				</p>
+			</div>
 		</div>
 		<div slot="foreground" class="foreground">
 			<section>
-				<h1 class="text-2xl md:text-4xl font-light">
-					Von 1850 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
+				<h1 class="text-2xl md:text-3xl font-light">
+					Von 1750 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
 					<nobr
 						><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen Tonnen
 						CO2</nobr
 					> ausgestoßen.
 				</h1>
-				<h2 class="text-2xl md:text-4xl text-energy" in:fade={{ delay: 5600 }}>
-					Jetzt hat Deutschland sein faires CO₂-Budget für einen 1,5°C-Pfad aufgebraucht.
+				<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 5000 }}>
+					Deutschlands faires CO₂-Budget für die Einhaltung der <nobr>1,5 °C-Grenze</nobr> wurde jetzt
+					überschritten.
 				</h2>
-				<div in:fade={{ delay: 6000 }}>
-					<p class="font-bold mt-4">Scrolle, um mehr zu erfahren</p>
+				<div in:fade={{ delay: 5200 }} class="flex mt-4">
+					<p class="font-bold leading-tight">
+						Scrolle, um mehr zu erfahren <br /><span class="font-normal opacity-60"
+							>oder drücke die Leertaste</span
+						>
+					</p>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -109,7 +122,7 @@
 						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						class="mx-auto"
+						class=""
 						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M6 9l6 6l6 -6" /></svg
 					>
 				</div>
@@ -117,38 +130,37 @@
 			<section>
 				<div class="section-background">
 					<h2 class="text-xl">
-						CO2 entsteht hauptsächlich durch die Verbrennung von fossilen Brennstoffen wie Kohle, Öl
-						und Gas, z.B. in der Industrie, Energieerzeugung, Verkehr oder Landwirtschaft.
-					</h2>
-					<div
-						class="flex items-center text-sm mx-auto w-max font-bold space-x-1 text-gray-600 mt-2"
-					>
-						<div class="w-2 h-2 rounded-xl bg-current" />
-						<p class="">
-							entspricht {blockValue} Millionen Tonnen CO2.
-						</p>
-					</div>
-				</div>
-			</section>
-			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
-						1979 hat Deutschland am meisten CO₂ ausgestoßen. Seitdem ist, bis auf ein paar
-						Ausnahmen, eine stetige Emissionsreduktion zu beobachten.
+						Kohlenstoffdioxid (CO₂) entsteht hauptsächlich durch die Verbrennung von fossilen
+						Brennstoffen wie Kohle, Öl und Gas. Dies geschieht bspw. Bei der Energieerzeugung, in
+						der Industrie oder im Verkehr.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
 					<h2 class="text-xl">
-						2016 wurde das Pariser Klimaabkommen verabschiedet. Darin haben sich die Staaten der
-						Welt, auch Deutschland, völkerrechtlich bindend geeinigt, die Erderhitzung auf 1,5 Grad
-						bzw. weit unter 2 Grad zu begrenzen.
+						Deutschland stößt seit dem 18. Jahrhundert CO₂ aus. Der Höhepunkt wurde 1979 erreicht.
+						Seitdem sind die Emissionen gesunken, zuletzt 2023 um -11% gegenüber dem Vorjahr.
 					</h2>
-					<p class="mt-2">
-						Für Deutschland wurden ab 2016 neue CO2-Budgets berechnet, also jene Menge an
-						Treibhausgasen, die wir noch ausstoßen dürfen, um das 1,5-Grad-Limit international nicht
-						zu gefähren.
+				</div>
+			</section>
+			<section>
+				<div class="section-background">
+					<h2 class="text-xl">
+						2015 wurde das Pariser Klimaabkommen verabschiedet. Darin haben sich 197 Staaten – auch
+						Deutschland – völkerrechtlich bindend geeinigt, die Erderhitzung auf 1,5 Grad bzw. weit
+						unter 2 Grad zu begrenzen.
+					</h2>
+					<p>
+						Der Weltklimarat (IPCC) hat ermittelt, wie viel CO₂ weltweit noch maximal ausgestoßen
+						werden darf, um die 1,5-Grad-Grenze mit einer Wahrscheinlichkeit von 67% einzuhalten.
+						Der Sachverständigenrat für Umweltfragen (SRU) hat wiederum den fairen Anteil
+						Deutschlands am globalen CO₂-Budget berechnet.
+					</p>
+					<p>
+						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy bg-opacity-50 p-1"
+							>5 012 Millionen Tonnen CO₂</strong
+						> ausstoßen.
 					</p>
 				</div>
 			</section>
@@ -216,6 +228,6 @@
 
 	.foreground section {
 		height: calc(100vh - 6rem);
-		@apply text-center p-16 pt-32 max-w-4xl mx-auto;
+		@apply p-16 pt-32 max-w-4xl mx-auto;
 	}
 </style>

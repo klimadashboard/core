@@ -13,31 +13,15 @@
 	export let chartHeight;
 	export let currentYear;
 
-	let x;
-	let y;
-	let margin = { top: 0, right: 5, bottom: 70, left: 5 };
-
-	let types = [
-		{
-			key: 'overused',
-			classes: 'bg-energy'
-		},
-		{
-			key: 'historical',
-			classes: 'bg-industry'
-		},
-		{
-			key: 'projection',
-			classes: 'bg-none border-industry border-2'
-		}
-	];
+	let margin = { top: 0, right: 5, bottom: 80, left: 5 };
 
 	const startYear1 = 1850;
-	$: startYear2 = chartWidth > 600 ? 1990 : 2010;
+	$: startYear2 = chartWidth > 600 ? 1960 : 1990;
 	const maxValue = 1000;
-	const circleSize = 5;
+	const circleSize = 3;
+	const padding = 3;
 
-	$: yearWindow = chartWidth / circleSize / 3;
+	$: yearWindow = chartWidth / circleSize / padding;
 	$: console.log(yearWindow);
 	$: startYear = startYear1;
 	$: endYear = startYear + yearWindow;
@@ -58,7 +42,7 @@
 
 	$: xScale = scaleLinear().range([0, innerChartWidth]).domain([startYear, endYear]);
 	$: yScale = scaleLinear()
-		.range([innerChartHeight, innerChartHeight - (maxValue / blockValue) * circleSize * 3])
+		.range([innerChartHeight, innerChartHeight - (maxValue / blockValue) * circleSize * padding])
 		.domain([0, maxValue / blockValue]);
 
 	const pointForRatio = (p1, p2, ratio) => [
@@ -111,19 +95,19 @@
 	const projections = [
 		{
 			index: 5,
-			key: '15_50'
+			key: '1.5_50'
 		},
 		{
 			index: 6,
-			key: '3902_nochange'
+			key: '3860_nochange'
 		},
 		{
 			index: 7,
-			key: '3902_linear'
+			key: '3860_linear'
 		},
 		{
 			index: 8,
-			key: '3902_percentage'
+			key: '3860_percentage'
 		}
 	];
 
@@ -145,29 +129,51 @@
 				})
 				.flat()
 		: [];
+
+	const highlightedYears = [
+		{
+			year: 2016,
+			label: 'Pariser Klimaabkommen'
+		},
+		{
+			year: 1997,
+			label: 'Kyoto-Protokoll'
+		},
+		{
+			year: 1995,
+			label: 'Erste UN-Weltklimakonferenz (COP 1)'
+		}
+	];
 </script>
 
 <div class="w-full h-full">
 	<svg width={'100%'} height={'100%'}>
 		<g id="annotations">
-			{#if index == 3}
-				<g transform="translate({xScale(2016)},{chartHeight / 2})" transition:fade>
-					<text x={50} y={2} dominant-baseline="middle" class="font-bold"
-						>2016 Pariser Klimaabkommen</text
+			{#if index == 2 || index == 3}
+				{#each highlightedYears as highlightedYear, i}
+					<g
+						transform="translate({xScale(highlightedYear.year) + 5},{yScale(
+							historicalArray.findLast((d) => d.year == highlightedYear.year).index
+						) - (i == 1 ? 40 : 60)})"
+						transition:fade
 					>
-					<svg
-						width="46"
-						height="31"
-						viewBox="0 0 46 31"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path
-							d="M4.07265 29.8742C4.27931 30.3864 4.86203 30.634 5.37419 30.4274L13.7203 27.0596C14.2325 26.8529 14.4802 26.2702 14.2735 25.7581C14.0668 25.2459 13.4841 24.9982 12.972 25.2049L5.55316 28.1985L2.5596 20.7797C2.35294 20.2675 1.77022 20.0198 1.25806 20.2265C0.745898 20.4332 0.498242 21.0159 0.704903 21.528L4.07265 29.8742ZM44.5 2.5C45.0523 2.5 45.5 2.05228 45.5 1.5C45.5 0.947715 45.0523 0.5 44.5 0.5V2.5ZM5.92033 29.8911C10.2032 19.8137 13.0912 13.0786 18.2303 8.76602C23.3125 4.50126 30.7583 2.5 44.5 2.5V0.5C30.6417 0.5 22.5875 2.49874 16.9447 7.23398C11.3588 11.9214 8.29676 19.1863 4.07967 29.1089L5.92033 29.8911Z"
-							fill="black"
-						/>
-					</svg>
-				</g>
+						<text x={50} y={2} dominant-baseline="middle" class="font-bold text-sm"
+							>{highlightedYear.label}</text
+						>
+						<svg
+							width="46"
+							height="31"
+							viewBox="0 0 46 31"
+							fill="none"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M4.07265 29.8742C4.27931 30.3864 4.86203 30.634 5.37419 30.4274L13.7203 27.0596C14.2325 26.8529 14.4802 26.2702 14.2735 25.7581C14.0668 25.2459 13.4841 24.9982 12.972 25.2049L5.55316 28.1985L2.5596 20.7797C2.35294 20.2675 1.77022 20.0198 1.25806 20.2265C0.745898 20.4332 0.498242 21.0159 0.704903 21.528L4.07265 29.8742ZM44.5 2.5C45.0523 2.5 45.5 2.05228 45.5 1.5C45.5 0.947715 45.0523 0.5 44.5 0.5V2.5ZM5.92033 29.8911C10.2032 19.8137 13.0912 13.0786 18.2303 8.76602C23.3125 4.50126 30.7583 2.5 44.5 2.5V0.5C30.6417 0.5 22.5875 2.49874 16.9447 7.23398C11.3588 11.9214 8.29676 19.1863 4.07967 29.1089L5.92033 29.8911Z"
+								fill="black"
+							/>
+						</svg>
+					</g>
+				{/each}
 			{/if}
 		</g>
 		<g id="circles" transform="translate({margin.left},{margin.top})">
@@ -187,7 +193,7 @@
 					r={circleSize}
 					cx={circle.x}
 					cy={circle.y}
-					class="stroke-black stroke-2 fill-none"
+					class="stroke-black stroke-1 fill-none"
 					transition:fade
 				/>
 			{/each}
