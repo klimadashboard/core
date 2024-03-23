@@ -12,7 +12,7 @@
 	export let chartWidth;
 	export let chartHeight;
 	export let currentYear;
-	export let yearsHighlighted;
+	export let selectedBudgetYear;
 
 	let margin = { top: 0, right: 5, bottom: 80, left: 5 };
 
@@ -87,31 +87,36 @@
 				i: i,
 				year: e.year,
 				highlighted:
-					index == 4 || (index == 3 && offset > 0.5)
-						? yearsHighlighted.indexOf(e.year) > -1
+					index > 3 && index < 6
+						? index == 5 && offset > 0.25 && selectedBudgetYear.year >= e.year && e.year > 2015
 							? true
 							: false
 						: true,
-				overflow: index == 4 ? (e.year == 2023 ? true : false) : false
+				overflow:
+					index == 5
+						? e.year == 2023 && selectedBudgetYear.year > 2022 && e.index > 0
+							? true
+							: false
+						: false
 			};
 		})
 		.filter((d) => d.year <= currentYear);
 
 	const projections = [
 		{
-			index: 5,
+			index: 6,
 			key: '1.5_50'
 		},
 		{
-			index: 7,
+			index: 8,
 			key: '3860_nochange'
 		},
 		{
-			index: 8,
+			index: 9,
 			key: '3860_linear'
 		},
 		{
-			index: 9,
+			index: 10,
 			key: '3860_percentage'
 		}
 	];
@@ -137,7 +142,11 @@
 
 	const highlightedYears = [
 		{
-			year: 2016,
+			year: 1979,
+			label: 'Peak der Emissionen'
+		},
+		{
+			year: 2015,
 			label: 'Pariser Klimaabkommen'
 		},
 		{
@@ -154,16 +163,24 @@
 <div class="w-full h-full">
 	<svg width={'100%'} height={'100%'}>
 		<g id="annotations">
+			{#if index > 3}
+				<g transform="translate({xScale(2016)},{chartHeight / 2})">
+					<line x1={0} x2={0} y1={0} y2={30} class="stroke-2 stroke-industry" />
+					<text x={5} class="text-sm font-bold fill-industry" dominant-baseline="hanging"
+						>2016 – Start des CO2-Budgets</text
+					>
+				</g>
+			{/if}
 			{#if index == 2 || index == 3}
 				{#each highlightedYears as highlightedYear, i}
 					<g
 						transform="translate({xScale(highlightedYear.year) + 5},{yScale(
 							historicalArray.findLast((d) => d.year == highlightedYear.year).index
-						) - (i == 1 ? 40 : 60)})"
+						) - (i == 2 ? 40 : 60)})"
 						transition:fade
 					>
 						<text x={50} y={2} dominant-baseline="middle" class="font-bold text-sm"
-							>{highlightedYear.label}</text
+							>{highlightedYear.year} – {highlightedYear.label}</text
 						>
 						<svg
 							width="46"

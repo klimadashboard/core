@@ -63,39 +63,54 @@
 	const budgets = [
 		{
 			year: 2016,
-			budget: 5012
+			budget: 5012,
+			offset: 0.25
 		},
 		{
 			year: 2017,
-			budget: 4231
+			budget: 4231,
+			offset: 0.27
 		},
 		{
 			year: 2018,
-			budget: 3460
+			budget: 3460,
+			offset: 0.3
 		},
 		{
 			year: 2019,
-			budget: 2707
+			budget: 2707,
+			offset: 0.33
 		},
 		{
 			year: 2020,
-			budget: 2007
+			budget: 2007,
+			offset: 0.36
 		},
 		{
 			year: 2021,
-			budget: 1361
+			budget: 1361,
+			offset: 0.39
 		},
 		{
 			year: 2022,
-			budget: 687
+			budget: 687,
+			offset: 0.42
 		},
 		{
 			year: 2023,
-			budget: 19
-		}
+			budget: 19,
+			offset: 0.45
+		},
+		{ year: 2024, budget: -575, offset: 0.47 }
 	];
 
-	let yearsHighlighted = [];
+	let selectedBudgetYear = budgets[0];
+
+	$: if (index == 5) {
+		selectedBudgetYear = budgets.reduce((prev, curr) => {
+			return Math.abs(curr.offset - offset) < Math.abs(prev.offset - offset) ? curr : prev;
+		});
+	}
 
 	const sources = [
 		{
@@ -130,13 +145,13 @@
 					{chartWidth}
 					{chartHeight}
 					{currentYear}
-					{yearsHighlighted}
+					{selectedBudgetYear}
 				/>
 			{:else}
 				Loading...
 			{/if}
 			<div class="absolute bottom-2 left-0 right-0">
-				<p class="text-xs left-4 absolute" />
+				<p class="text-xs left-4 absolute">{index} {offset}</p>
 				<div class="max-w-3xl mx-auto flex justify-between text-sm text-gray-600">
 					<div class="flex items-center space-x-1">
 						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
@@ -192,8 +207,8 @@
 				<div class="section-background">
 					<h2 class="text-xl">
 						Kohlenstoffdioxid (CO₂) entsteht hauptsächlich durch die Verbrennung von fossilen
-						Brennstoffen wie Kohle, Öl und Gas. Dies geschieht bspw. Bei der Energieerzeugung, in
-						der Industrie oder im Verkehr.
+						Brennstoffen wie Kohle, Öl und Gas, zum Beispiel um Energie zu erzeugen, Gebäude zu
+						heizen oder Autos und LKWs anzutreiben.
 					</h2>
 				</div>
 			</section>
@@ -224,40 +239,67 @@
 					</p>
 					<p class="text-xl my-2">
 						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy bg-opacity-50 p-1"
-							>5 012 Millionen Tonnen CO₂</strong
+							>5.012 Millionen Tonnen CO₂</strong
 						> ausstoßen.
-					</p>
-					<div class="my-2">
-						<p class="text-4xl font-light">{formatNumber(budgets[0].budget)}</p>
-						<p>
-							Verbleibendes Budget im Jahr {budgets[0].year}
-						</p>
-					</div>
-					<p class="text-xl text-energy my-2">
-						Deutschland hat Anfang 2023 sein faires 1,5-Grad-Budget überschritten. (67%
-						Wahrscheinlichkeit)
 					</p>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
-					<h2 class="text-xl">
-						Wenn die Wahrscheinlichkeit, die 1,5-Grad-Grenze einzuhalten, auf 50% reduziert wird,
-						vergrößert sich Deutschlands CO₂-Budget geringfügig. In 2 von 4 Fällen würde die Grenze
-						überschritten werden, was verheerende Folgen nach sich ziehen würde.
-					</h2>
+					<div class={selectedBudgetYear.budget < 0 ? 'text-energy' : 'text-industry'}>
+						<p class="text-6xl font-light tabular-nums">
+							{formatNumber(selectedBudgetYear.budget)}
+						</p>
+						<p>
+							Verbleibendes Budget im Jahr {selectedBudgetYear.year}
+						</p>
+					</div>
+					{#if selectedBudgetYear == budgets[budgets.length - 1]}
+						<div class="text-energy" transition:fade>
+							<p class="text-xl mt-4">
+								Anfang 2023 hat Deutschland sein faires 1,5-Grad-Budget bei überschritten.
+							</p>
+							<p>bei 67% Wahrscheinlichkeit, dass das Temperaturziel erreicht wird</p>
+						</div>
+					{/if}
+				</div>
+			</section>
+			<section>
+				<div class="section-background">
+					<p class="text-xl">
+						Wenn man das Risiko erhöht, das Temperaturziel zu verfehlen, vergrößert sich
+						Deutschlands CO₂-Budget etwas.
+					</p>
+					<div class="grid grid-cols-2 my-4 gap-4 leading-tight">
+						<div class="text-energy">
+							<h3 class="font-bold">1,5-Grad-Budget bei <br />67% Wahrscheinlichkeit</h3>
+
+							<p class="text-6xl font-light tabular-nums">{formatNumber(-575)}</p>
+							<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
+						</div>
+						<div>
+							<h3 class="font-bold">1,5-Grad-Budget bei <br />50% Wahrscheinlichkeit</h3>
+
+							<p class="text-6xl font-light tabular-nums">{formatNumber(125)}</p>
+							<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
+						</div>
+					</div>
+					<p class="text-xl">
+						Das Budget mit mehr Risiko (50%) werden wir in der ersten Hälfte des Jahres 2024
+						ebenfalls überschreiten.
+					</p>
 				</div>
 			</section>
 			<section>
 				<div class="section-background">
 					<p>
-						Deutschlands maximales CO2-Budget für die Einhaltung der 1,5 °C-Grenze ist
-						überschritten. Was bedeutet das konkret? Es wäre falsch zu behaupten, Deutschland könne
-						nun klimapolitisch den Kopf in den Sand stecken, weil das eigene 1,5°C-Budget bereits
-						überschritten ist. Gerade jetzt hat die Bundesregierung eine besondere Verantwortung,
-						den Klimaschutz auf nationaler und internationaler Ebene deutlich voranzutreiben. Jedes
-						Zehntelgrad zählt. Mit jedem Zehntelgrad Temperaturanstieg nehmen Extremwetterereignisse
-						zu. XXX mehr davon
+						[PLATZHALTER TEXT; TO BE FINALISED] Deutschlands maximales CO2-Budget für die Einhaltung
+						der 1,5 °C-Grenze ist überschritten. Was bedeutet das konkret? Es wäre falsch zu
+						behaupten, Deutschland könne nun klimapolitisch den Kopf in den Sand stecken, weil das
+						eigene 1,5°C-Budget bereits überschritten ist. Gerade jetzt hat die Bundesregierung eine
+						besondere Verantwortung, den Klimaschutz auf nationaler und internationaler Ebene
+						deutlich voranzutreiben. Jedes Zehntelgrad zählt. Mit jedem Zehntelgrad
+						Temperaturanstieg nehmen Extremwetterereignisse zu. XXX mehr davon
 					</p>
 				</div>
 			</section>
@@ -267,6 +309,12 @@
 						Das maximale deutsche CO₂-Budget wird größer, wenn der Grenzwert für die Erderhitzung
 						bis 2100 nicht bei 1,5 Grad, sondern bei 1,75 Grad liegt.
 					</h2>
+					<div class="my-4 leading-tight">
+						<h3 class="font-bold">1,75-Grad-Budget bei <br />50% Wahrscheinlichkeit</h3>
+
+						<p class="text-6xl font-light tabular-nums">{formatNumber(3859)}</p>
+						<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
+					</div>
 					<h2 class="text-xl">
 						Wenn wir weiterhin so viel emittieren wie im Jahr 2023 (594 Millionen Tonnen CO₂)
 						überschreiten wir das Budget bereits Mitte 2030.
