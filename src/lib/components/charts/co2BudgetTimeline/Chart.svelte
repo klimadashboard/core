@@ -164,7 +164,11 @@
 	<svg width={'100%'} height={'100%'}>
 		<g id="annotations">
 			{#if index > 3}
-				<g transform="translate({xScale(2016)},{chartHeight / 2})">
+				<g
+					transform="translate({xScale(2016)},{yScale(
+						historicalArray.findLast((d) => d.year == 2016).index
+					) - 40})"
+				>
 					<line x1={0} x2={0} y1={0} y2={30} class="stroke-2 stroke-industry" />
 					<text x={5} class="text-sm font-bold fill-industry" dominant-baseline="hanging"
 						>2016 – Start des CO2-Budgets</text
