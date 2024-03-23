@@ -151,7 +151,7 @@
 				Loading...
 			{/if}
 			<div class="absolute bottom-2 left-0 right-0">
-				<p class="text-xs left-4 absolute">{index} {offset}</p>
+				<p class="text-xs left-4 absolute" />
 				<div class="max-w-3xl mx-auto flex justify-between text-sm text-gray-600">
 					<div class="flex items-center space-x-1">
 						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
