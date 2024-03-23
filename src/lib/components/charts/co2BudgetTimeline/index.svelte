@@ -137,15 +137,15 @@
 		},
 		{
 			index: 8,
-			label: 'Daten: SRU (1,75 Grad, 50%)'
+			label: 'Daten: SRU (1,75 Grad, 67%)'
 		},
 		{
 			index: 9,
-			label: 'Daten: SRU (1,75 Grad, 50%)'
+			label: 'Daten: SRU (1,75 Grad, 67%)'
 		},
 		{
 			index: 10,
-			label: 'Daten: SRU (1,75 Grad, 50%)'
+			label: 'Daten: SRU (1,75 Grad, 67%)'
 		}
 	];
 </script>
@@ -272,59 +272,67 @@
 				</div>
 			</section>
 			<section>
-				<div class="co2b-section-background">
+				<div class="co2b-section-background w-full">
 					<div class={selectedBudgetYear.budget < 0 ? 'text-energy' : 'text-industry'}>
 						<p class="text-6xl font-light tabular-nums">
 							{formatNumber(selectedBudgetYear.budget)}
 						</p>
 						<p>
-							Verbleibendes Budget im Jahr {selectedBudgetYear.year}
+							Millionen Tonnen CO<sub>2</sub><br />
+							verbleibendes Budget ab {selectedBudgetYear.year}
 						</p>
 					</div>
-					{#if selectedBudgetYear == budgets[budgets.length - 1]}
-						<div class="text-energy" transition:fade>
-							<p class="text-lg mt-4">
-								Anfang 2023 hat Deutschland sein faires 1,5-Grad-Budget überschritten.
-							</p>
-							<p>bei 67% Wahrscheinlichkeit, dass das Temperaturziel erreicht wird</p>
-						</div>
-					{/if}
+					<div
+						class="text-energy transition {selectedBudgetYear == budgets[budgets.length - 1]
+							? 'opacity-100'
+							: 'opacity-0'}"
+					>
+						<p class="text-lg mt-4">
+							Anfang 2023 hat Deutschland sein faires CO₂-Budget überschritten.
+						</p>
+						<p>bei 67% Wahrscheinlichkeit, dass das 1,5-Grad-Limit eingehalten wird</p>
+					</div>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<p class="text-lg">
-						Wenn man das Risiko erhöht, das Temperaturziel zu verfehlen, vergrößert sich
-						Deutschlands CO₂-Budget etwas.
+						Wenn man das Risiko erhöht und einen Münzwurf über die Einhaltung des 1,5-Grad-Limits
+						entscheiden lässt, vergrößert sich Deutschlands CO₂-Budget etwas.
 					</p>
 					<div class="grid grid-cols-2 my-4 gap-4 leading-snug">
 						<div class="text-energy">
 							<h3 class="font-bold">
-								1,5-Grad-Budget bei <br /><span class="bg-energy text-white p-0.5">67%</span>
-								Wahrscheinlichkeit,<br />das Temperaturziel zu erreichen
+								CO₂-Budget bei <br /><span class="bg-energy text-white px-0.5">67%</span>
+								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
 							<p class="text-6xl font-light tabular-nums">{formatNumber(-575)}</p>
-							<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
+							<p>Millionen Tonnen CO₂ <br />verbleibend ab 2024</p>
 						</div>
 						<div>
 							<h3 class="font-bold">
-								1,5-Grad-Budget bei <br /><span class="bg-industry text-white p-0.5">50%</span>
-								Wahrscheinlichkeit,<br />das Temperaturziel zu erreichen
+								CO₂-Budget bei <br /><span class="bg-industry text-white px-0.5">50%</span>
+								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
 							<p class="text-6xl font-light tabular-nums">{formatNumber(125)}</p>
-							<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
+							<p>Millionen Tonnen CO₂ <br />verbleibend ab 2024</p>
 						</div>
 					</div>
+				</div>
+				<div class="co2b-section-background mt-8">
 					<p class="text-lg">
-						Das Budget mit mehr Risiko (50%) werden wir in der ersten Hälfte des Jahres 2024
-						ebenfalls überschreiten.
+						Auch das risikoreichere CO₂-Budget (50%) haben wir im Frühling 2024 bereits
+						aufgebraucht. <span class="text-energy"
+							>Damit hat Deutschland seine fairen 1,5-Grad-Budgets endgültig überschritten.</span
+						>
 					</p>
 				</div>
 			</section>
 			<section>
-				<div class="co2b-section-background text-lg space-y-2">
+				<div class="co2b-section-background text-lg space-y-2 mb-80">
+					<h2 class="text-2xl">Was bedeutet das für Deutschland?</h2>
 					<p>
 						Mit der Überschreitung des nationalen CO₂-Budgets ist es wichtig, <strong
 							>Deutschlands Rolle in der Welt</strong
@@ -338,19 +346,21 @@
 						Haftungsrisiko wird.
 					</p>
 					<p>
-						Manche sagen, das nationale CO₂-Budget könnte noch einhaltbar sein, wenn man z.B. in
-						einigen Jahrzehnten durch technologische Lösungen Negativemissionen erreicht, also mehr
-						CO₂ speichert als ausstößt. Oder wenn man Emissionsminderungen im Ausland finanziert und
-						dadurch die zu hohen Emissionen Deutschlands ausgleicht. Diese Wege werden in der
-						Wissenschaft kontrovers diskutiert, da sie teils auf sehr unsicheren technologischen
-						Annahmen beruhen und von sinnvollen und bereits umsetzbaren Klimaschutzmaßnahmen
-						ablenken.
+						Kontrovers diskutiert werden <strong>alternative Mechanismen</strong>, um das nationale
+						CO₂-Budget noch einzuhalten. Durch technologische Lösungen wie Carbon Capture and
+						Storage (CCS) sollen Negativemissionen ermöglicht werden, also mehr CO<sub>2</sub>
+						gespeichert als ausgestoßen werden. Diese Technologien haben allerdings noch keinen Reifegrad
+						erreicht, der großflächige Anwendung sinnvoll machen würde. Ein anderer Vorschlag ist, Emissionsminderungen
+						im Ausland quasi als Ausgleich für Deutschlands Überschreitungen zu finanzieren. Oft dienen
+						diese Argumente als
+						<strong>Ablenkung von wirksamen und bereits umsetzbaren Klimaschutzmaßnahmen</strong> und
+						widersprechen den Grundsätzen der Klimagerechtigkeit.
 					</p>
 					<p>
 						Die Überschreitung des 1,5 °C-Budgets bedeutet nicht, dass alles verloren wäre. Es ist
 						umso wichtiger, dass der Klimaschutz auf nationaler und internationaler Ebene weiter
 						vorangetrieben wird. Denn: <strong>mit jedem Zehntel Grad</strong> wird die Anpassung an
-						die Erhitzung zunehmend schwieriger, die Anzahl der überschreiteten Kipppunkte steigt und
+						die Erhitzung zunehmend schwieriger, die Anzahl der überschrittenen Kipppunkte steigt und
 						die unbewohnbaren Bereiche des Planeten (durch Meeresspiegelanstieg, Dürre oder andere Faktoren)
 						werden größer.
 					</p>
@@ -364,33 +374,43 @@
 					</h2>
 					<div class="my-4 leading-tight">
 						<h3 class="font-bold">
-							1,75-Grad-Budget bei <br /><span class="bg-industry text-white p-0.5">50%</span> Wahrscheinlichkeit
+							1,75-Grad-Budget bei <br /><span class="bg-industry text-white p-0.5">67%</span> Wahrscheinlichkeit
 						</h3>
 
 						<p class="text-6xl font-light tabular-nums">{formatNumber(3859)}</p>
-						<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
+						<p>Millionen Tonnen CO₂ <br />verbleibend ab 2024</p>
 					</div>
 					<h2 class="text-lg">
 						Wenn Deutschland weiterhin so viel emittiert wie im Jahr 2023 (594 Millionen Tonnen CO₂)
-						hätten wir dieses Budget im Jahr 2030 aufgebraucht.
+						hätten wir dieses Budget <strong class="bg-economy bg-opacity-50 p-1"
+							>im Jahr 2030 aufgebraucht</strong
+						>.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Reduzieren wir jedes Jahr dieselbe Menge an CO₂, nämlich 46 Millionen Tonnen, reicht das
-						Budget noch 12 Jahre bis 2036.
+						Reduzieren wir jedes Jahr dieselbe Menge an CO₂, nämlich 46 Millionen Tonnen, ist das
+						Budget <strong class="bg-economy bg-opacity-50 p-1">im Jahr 2036</strong> aufgebraucht.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
-					<h2 class="text-lg">
-						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Um das
-						verbleibende Budget bis 2045 zu strecken, müssten die CO₂-Emissionen jedes Jahr um 12.7%
+					<p class="text-lg">
+						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Somit müssten
+						die CO₂-Emissionen <strong class="bg-economy bg-opacity-50 p-1"
+							>jedes Jahr bis 2045 um 12,7%</strong
+						>
 						im Vergleich zum Vorjahr sinken.
-					</h2>
+					</p>
+					<p class="text-lg mt-4">
+						Seit 1990 gab es keinen so starken Emissionsrückgang. 2023 gab es einen Rückgang von
+						11,1%, ein Rekordwert in den vergangenen Jahrzehnten. Es sind also mehr politische
+						Maßnahmen notwendig, um auf einen Pfad zu kommen, der mit dem 1,75-Grad-Budget
+						kompatibel ist.
+					</p>
 				</div>
 			</section>
 		</div>

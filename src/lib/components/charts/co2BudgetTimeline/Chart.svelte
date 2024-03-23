@@ -146,16 +146,16 @@
 			label: 'Peak der Emissionen'
 		},
 		{
-			year: 2015,
-			label: 'Pariser Klimaabkommen'
+			year: 1995,
+			label: 'Erste UN-Weltklimakonferenz (COP 1)'
 		},
 		{
 			year: 1997,
 			label: 'Kyoto-Protokoll'
 		},
 		{
-			year: 1995,
-			label: 'Erste UN-Weltklimakonferenz (COP 1)'
+			year: 2015,
+			label: 'Pariser Klimaabkommen'
 		}
 	];
 </script>
@@ -178,24 +178,25 @@
 			{#if index == 2 || index == 3}
 				{#each highlightedYears as highlightedYear, i}
 					<g
-						transform="translate({xScale(highlightedYear.year) + 5},{yScale(
+						transform="translate({xScale(highlightedYear.year) - 1},{yScale(
 							historicalArray.findLast((d) => d.year == highlightedYear.year).index
-						) - (i == 2 ? 40 : 60)})"
+						) - (i == 1 ? 50 : 40)})"
+						class="text-industry"
 						transition:fade
 					>
-						<text x={50} y={2} dominant-baseline="middle" class="font-bold text-sm"
+						<text x={40} y={2} dominant-baseline="middle" class="font-bold text-sm fill-current"
 							>{highlightedYear.year} – {highlightedYear.label}</text
 						>
 						<svg
-							width="46"
-							height="31"
-							viewBox="0 0 46 31"
+							width="38"
+							height="30"
+							viewBox="0 0 38 30"
 							fill="none"
 							xmlns="http://www.w3.org/2000/svg"
 						>
 							<path
-								d="M4.07265 29.8742C4.27931 30.3864 4.86203 30.634 5.37419 30.4274L13.7203 27.0596C14.2325 26.8529 14.4802 26.2702 14.2735 25.7581C14.0668 25.2459 13.4841 24.9982 12.972 25.2049L5.55316 28.1985L2.5596 20.7797C2.35294 20.2675 1.77022 20.0198 1.25806 20.2265C0.745898 20.4332 0.498242 21.0159 0.704903 21.528L4.07265 29.8742ZM44.5 2.5C45.0523 2.5 45.5 2.05228 45.5 1.5C45.5 0.947715 45.0523 0.5 44.5 0.5V2.5ZM5.92033 29.8911C10.2032 19.8137 13.0912 13.0786 18.2303 8.76602C23.3125 4.50126 30.7583 2.5 44.5 2.5V0.5C30.6417 0.5 22.5875 2.49874 16.9447 7.23398C11.3588 11.9214 8.29676 19.1863 4.07967 29.1089L5.92033 29.8911Z"
-								fill="black"
+								d="M6.22604 29.6332C6.57577 30.0607 7.20579 30.1237 7.63324 29.774L14.5989 24.0748C15.0263 23.7251 15.0893 23.0951 14.7396 22.6676C14.3898 22.2402 13.7598 22.1772 13.3324 22.5269L7.14072 27.5928L2.07482 21.4011C1.72509 20.9737 1.09507 20.9107 0.667622 21.2604C0.240177 21.6102 0.177175 22.2402 0.526903 22.6676L6.22604 29.6332ZM36.5 2C37.0523 2 37.5 1.55228 37.5 1C37.5 0.447715 37.0523 0 36.5 0V2ZM7.99504 29.0995C8.73752 21.6746 10.5818 14.9226 14.8185 10.0296C19.0186 5.17875 25.7089 2 36.5 2V0C25.2911 0 17.9814 3.32125 13.3065 8.72042C8.66817 14.0774 6.76248 21.3254 6.00496 28.9005L7.99504 29.0995Z"
+								class="fill-current"
 							/>
 						</svg>
 					</g>
