@@ -160,7 +160,7 @@
 	];
 </script>
 
-<div class="w-full h-full">
+<div class="w-full h-full {index == 7 ? 'opacity-20' : 'opacity-100'} transition">
 	<svg width={'100%'} height={'100%'}>
 		<g id="annotations">
 			{#if index > 3}

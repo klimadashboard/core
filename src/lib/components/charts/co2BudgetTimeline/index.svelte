@@ -200,12 +200,12 @@
 						Von 1750 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
 						<nobr
 							><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen
-							Tonnen CO2</nobr
-						> ausgestoßen.
+							Tonnen CO<sub>2</sub> ausgestoßen.</nobr
+						>
 					</h1>
 					<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 5000 }}>
-						Deutschlands faires CO₂-Budget für die Einhaltung der <nobr>1,5 °C-Grenze</nobr> wurde jetzt
-						überschritten.
+						Deutschlands faires CO<sub>2</sub>-Budget für die Einhaltung der
+						<nobr>1,5 °C-Grenze</nobr> wurde jetzt überschritten.
 					</h2>
 					<div in:fade={{ delay: 5200 }} class="flex mt-4">
 						<p class="font-bold leading-tight">
@@ -283,7 +283,7 @@
 					{#if selectedBudgetYear == budgets[budgets.length - 1]}
 						<div class="text-energy" transition:fade>
 							<p class="text-lg mt-4">
-								Anfang 2023 hat Deutschland sein faires 1,5-Grad-Budget bei überschritten.
+								Anfang 2023 hat Deutschland sein faires 1,5-Grad-Budget überschritten.
 							</p>
 							<p>bei 67% Wahrscheinlichkeit, dass das Temperaturziel erreicht wird</p>
 						</div>
@@ -296,15 +296,21 @@
 						Wenn man das Risiko erhöht, das Temperaturziel zu verfehlen, vergrößert sich
 						Deutschlands CO₂-Budget etwas.
 					</p>
-					<div class="grid grid-cols-2 my-4 gap-4 leading-tight">
+					<div class="grid grid-cols-2 my-4 gap-4 leading-snug">
 						<div class="text-energy">
-							<h3 class="font-bold">1,5-Grad-Budget bei <br />67% Wahrscheinlichkeit</h3>
+							<h3 class="font-bold">
+								1,5-Grad-Budget bei <br /><span class="bg-energy text-white p-0.5">67%</span>
+								Wahrscheinlichkeit,<br />das Temperaturziel zu erreichen
+							</h3>
 
 							<p class="text-6xl font-light tabular-nums">{formatNumber(-575)}</p>
 							<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
 						</div>
 						<div>
-							<h3 class="font-bold">1,5-Grad-Budget bei <br />50% Wahrscheinlichkeit</h3>
+							<h3 class="font-bold">
+								1,5-Grad-Budget bei <br /><span class="bg-industry text-white p-0.5">50%</span>
+								Wahrscheinlichkeit,<br />das Temperaturziel zu erreichen
+							</h3>
 
 							<p class="text-6xl font-light tabular-nums">{formatNumber(125)}</p>
 							<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
@@ -317,23 +323,43 @@
 				</div>
 			</section>
 			<section>
-				<div class="co2b-section-background">
+				<div class="co2b-section-background text-lg space-y-2">
 					<p>
-						[PLATZHALTER TEXT; TO BE FINALISED] Deutschlands maximales CO2-Budget für die Einhaltung
-						der 1,5 °C-Grenze ist überschritten. Was bedeutet das konkret? Es wäre falsch zu
-						behaupten, Deutschland könne nun klimapolitisch den Kopf in den Sand stecken, weil das
-						eigene 1,5°C-Budget bereits überschritten ist. Gerade jetzt hat die Bundesregierung eine
-						besondere Verantwortung, den Klimaschutz auf nationaler und internationaler Ebene
-						deutlich voranzutreiben. Jedes Zehntelgrad zählt. Mit jedem Zehntelgrad
-						Temperaturanstieg nehmen Extremwetterereignisse zu. XXX mehr davon
+						Mit der Überschreitung des nationalen CO₂-Budgets ist es wichtig, <strong
+							>Deutschlands Rolle in der Welt</strong
+						>
+						kritisch zu beleuchten. Als Land mit besonders starker
+						<strong>historischer Verantwortung</strong> sollte Deutschland und die gesamte
+						europäische Union die eigene Verantwortung für Schäden und Verlusten klar anerkennen. Im
+						Sinne der Klimagerechtigkeit sollte eine
+						<strong>Erhöhung internationaler Klimafinanzierung</strong> angedacht werden. Zukünftig könnte
+						sich auch das Völkerrecht weiterentwickeln, wodurch eine Überschreitung des CO₂-Budgets zum
+						Haftungsrisiko wird.
+					</p>
+					<p>
+						Manche sagen, das nationale CO₂-Budget könnte noch einhaltbar sein, wenn man z.B. in
+						einigen Jahrzehnten durch technologische Lösungen Negativemissionen erreicht, also mehr
+						CO₂ speichert als ausstößt. Oder wenn man Emissionsminderungen im Ausland finanziert und
+						dadurch die zu hohen Emissionen Deutschlands ausgleicht. Diese Wege werden in der
+						Wissenschaft kontrovers diskutiert, da sie teils auf sehr unsicheren technologischen
+						Annahmen beruhen und von sinnvollen und bereits umsetzbaren Klimaschutzmaßnahmen
+						ablenken.
+					</p>
+					<p>
+						Die Überschreitung des 1,5 °C-Budgets bedeutet nicht, dass alles verloren wäre. Es ist
+						umso wichtiger, dass der Klimaschutz auf nationaler und internationaler Ebene weiter
+						vorangetrieben wird. Denn: <strong>mit jedem Zehntel Grad</strong> wird die Anpassung an
+						die Erhitzung zunehmend schwieriger, die Anzahl der überschreiteten Kipppunkte steigt und
+						die unbewohnbaren Bereiche des Planeten (durch Meeresspiegelanstieg, Dürre oder andere Faktoren)
+						werden größer.
 					</p>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Das maximale deutsche CO₂-Budget wird größer, wenn der Grenzwert für die Erderhitzung
-						bis 2100 nicht bei 1,5 Grad, sondern bei 1,75 Grad liegt.
+						Wenn nur 1,75 Grad statt 1,5 Grad bis 2100 erreicht werden sollen, wird das deutsche
+						CO₂-Budget größer, die Auswirkungen der globalen Erhitzung aber auch schwerwiegender.
 					</h2>
 					<div class="my-4 leading-tight">
 						<h3 class="font-bold">1,75-Grad-Budget bei <br />50% Wahrscheinlichkeit</h3>
@@ -342,16 +368,16 @@
 						<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
 					</div>
 					<h2 class="text-lg">
-						Wenn wir weiterhin so viel emittieren wie im Jahr 2023 (594 Millionen Tonnen CO₂)
-						überschreiten wir das Budget bereits Mitte 2030.
+						Wenn Deutschland weiterhin so viel emittiert wie im Jahr 2023 (594 Millionen Tonnen CO₂)
+						hätten wir dieses Budget im Jahr 2030 aufgebraucht.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Reduzieren wir jedes Jahr dieselbe Menge an CO₂, nämlich 46 Millionen Tonnen, wird das
-						Budget in 12 Jahren - 2036 - überschritten.
+						Reduzieren wir jedes Jahr dieselbe Menge an CO₂, nämlich 46 Millionen Tonnen, reicht das
+						Budget noch 12 Jahre bis 2036.
 					</h2>
 				</div>
 			</section>
