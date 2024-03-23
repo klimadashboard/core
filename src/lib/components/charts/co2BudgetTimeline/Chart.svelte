@@ -17,7 +17,7 @@
 	let margin = { top: 0, right: 5, bottom: 80, left: 5 };
 
 	const startYear1 = 1850;
-	$: startYear2 = chartWidth > 600 ? 1960 : 1990;
+	$: startYear2 = chartWidth > 600 ? 1960 : 2010;
 	const maxValue = 1000;
 	const circleSize = 3;
 	const padding = 3;

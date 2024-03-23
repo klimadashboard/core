@@ -3,7 +3,7 @@
 	import Scroller from '@sveltejs/svelte-scroller';
 	import Chart from './Chart.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
-	import { fade } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
 	let index, offset, progress;
@@ -69,7 +69,7 @@
 		{
 			year: 2017,
 			budget: 4231,
-			offset: 0.27
+			offset: 0.28
 		},
 		{
 			year: 2018,
@@ -79,27 +79,27 @@
 		{
 			year: 2019,
 			budget: 2707,
-			offset: 0.33
+			offset: 0.32
 		},
 		{
 			year: 2020,
 			budget: 2007,
-			offset: 0.36
+			offset: 0.34
 		},
 		{
 			year: 2021,
 			budget: 1361,
-			offset: 0.39
+			offset: 0.36
 		},
 		{
 			year: 2022,
 			budget: 687,
-			offset: 0.42
+			offset: 0.38
 		},
 		{
 			year: 2023,
 			budget: 19,
-			offset: 0.45
+			offset: 0.4
 		},
 		{ year: 2024, budget: -575, offset: 0.47 }
 	];
@@ -116,12 +116,36 @@
 		{
 			index: 2,
 			label:
-				"Emissionen: Gütschow et al. (2023) PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
+				"Daten: Gütschow et al. PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
 		},
 		{
 			index: 3,
 			label:
-				"Emissionen: Gütschow et al. (2023) PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
+				"Daten: Gütschow et al. PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
+		},
+		{
+			index: 4,
+			label: 'Daten: SRU (1,5 Grad, 67%)'
+		},
+		{
+			index: 5,
+			label: 'Daten: SRU (1,5 Grad, 67%)'
+		},
+		{
+			index: 6,
+			label: 'Daten: SRU (1,5 Grad, 50%)'
+		},
+		{
+			index: 8,
+			label: 'Daten: SRU (1,75 Grad, 50%)'
+		},
+		{
+			index: 9,
+			label: 'Daten: SRU (1,75 Grad, 50%)'
+		},
+		{
+			index: 10,
+			label: 'Daten: SRU (1,75 Grad, 50%)'
 		}
 	];
 </script>
@@ -150,19 +174,19 @@
 			{:else}
 				Loading...
 			{/if}
-			<div class="absolute bottom-2 left-0 right-0">
-				<p class="text-xs left-4 absolute" />
-				<div class="max-w-3xl mx-auto flex justify-between text-sm text-gray-600">
-					<div class="flex items-center space-x-1">
+			<div class="absolute bottom-0 w-full">
+				<div class="max-w-3xl mx-auto flex items-center text-xs text-gray-600 p-2">
+					<div class="flex items-center space-x-1 font-bold">
 						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
 						<p class="">
-							entspricht {blockValue} Millionen Tonnen CO2.
+							entspricht
+							{blockValue} Mio. t CO₂
 						</p>
 					</div>
-					<div>
+					<div class="ml-auto">
 						{#if sources.find((d) => d.index == index)}
 							{#key index}
-								<p transition:fade>{@html sources.find((d) => d.index == index).label}</p>
+								<p transition:slide>{@html sources.find((d) => d.index == index).label}</p>
 							{/key}
 						{/if}
 					</div>
