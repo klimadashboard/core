@@ -196,12 +196,13 @@
 		<div slot="foreground" class="co2b-foreground">
 			<section>
 				<div class="co2b-section-background">
-					<h1 class="text-2xl md:text-3xl font-light">
+					<h1 class="text-2xl md:text-3xl font-light max-w-xl">
 						Von 1750 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
 						<nobr
 							><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen
-							Tonnen CO<sub>2</sub> ausgestoßen.</nobr
+							Tonnen CO<sub>2</sub></nobr
 						>
+						ausgestoßen.
 					</h1>
 					<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 5000 }}>
 						Deutschlands faires CO<sub>2</sub>-Budget für die Einhaltung der
