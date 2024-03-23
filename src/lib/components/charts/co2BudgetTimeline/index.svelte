@@ -130,7 +130,7 @@
 	<Scroller bind:index bind:offset bind:progress>
 		<div
 			slot="background"
-			class="p-4 w-screen relative bg-gray-100 grid background"
+			class="p-4 w-screen relative bg-gray-100 grid co2b-background"
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
@@ -169,7 +169,7 @@
 				</div>
 			</div>
 		</div>
-		<div slot="foreground" class="foreground">
+		<div slot="foreground" class="co2b-foreground">
 			<section>
 				<h1 class="text-2xl md:text-3xl font-light">
 					Von 1750 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
@@ -204,8 +204,8 @@
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
+				<div class="co2b-section-background">
+					<h2 class="text-lg">
 						Kohlenstoffdioxid (CO₂) entsteht hauptsächlich durch die Verbrennung von fossilen
 						Brennstoffen wie Kohle, Öl und Gas, zum Beispiel um Energie zu erzeugen, Gebäude zu
 						heizen oder Autos und LKWs anzutreiben.
@@ -213,16 +213,16 @@
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
+				<div class="co2b-section-background">
+					<h2 class="text-lg">
 						Deutschland stößt seit dem 18. Jahrhundert CO₂ aus. Der Höhepunkt wurde 1979 erreicht.
 						Seitdem sind die Emissionen gesunken, zuletzt 2023 um -11% gegenüber dem Vorjahr.
 					</h2>
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
+				<div class="co2b-section-background">
+					<h2 class="text-lg">
 						2015 wurde das Pariser Klimaabkommen verabschiedet. Darin haben sich 197 Staaten – auch
 						Deutschland – völkerrechtlich bindend geeinigt, die Erderhitzung auf 1,5 Grad bzw. weit
 						unter 2 Grad zu begrenzen.
@@ -230,14 +230,14 @@
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<p class="text-xl">
+				<div class="co2b-section-background">
+					<p class="text-lg">
 						Der Weltklimarat (IPCC) hat ermittelt, wie viel CO₂ weltweit noch maximal ausgestoßen
 						werden darf, um die 1,5-Grad-Grenze mit einer Wahrscheinlichkeit von 67% einzuhalten.
 						Der Sachverständigenrat für Umweltfragen (SRU) hat wiederum den fairen Anteil
 						Deutschlands am globalen CO₂-Budget berechnet.
 					</p>
-					<p class="text-xl my-2">
+					<p class="text-lg my-2">
 						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy bg-opacity-50 p-1"
 							>5.012 Millionen Tonnen CO₂</strong
 						> ausstoßen.
@@ -245,7 +245,7 @@
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
+				<div class="co2b-section-background">
 					<div class={selectedBudgetYear.budget < 0 ? 'text-energy' : 'text-industry'}>
 						<p class="text-6xl font-light tabular-nums">
 							{formatNumber(selectedBudgetYear.budget)}
@@ -256,7 +256,7 @@
 					</div>
 					{#if selectedBudgetYear == budgets[budgets.length - 1]}
 						<div class="text-energy" transition:fade>
-							<p class="text-xl mt-4">
+							<p class="text-lg mt-4">
 								Anfang 2023 hat Deutschland sein faires 1,5-Grad-Budget bei überschritten.
 							</p>
 							<p>bei 67% Wahrscheinlichkeit, dass das Temperaturziel erreicht wird</p>
@@ -265,8 +265,8 @@
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<p class="text-xl">
+				<div class="co2b-section-background">
+					<p class="text-lg">
 						Wenn man das Risiko erhöht, das Temperaturziel zu verfehlen, vergrößert sich
 						Deutschlands CO₂-Budget etwas.
 					</p>
@@ -284,14 +284,14 @@
 							<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
 						</div>
 					</div>
-					<p class="text-xl">
+					<p class="text-lg">
 						Das Budget mit mehr Risiko (50%) werden wir in der ersten Hälfte des Jahres 2024
 						ebenfalls überschreiten.
 					</p>
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
+				<div class="co2b-section-background">
 					<p>
 						[PLATZHALTER TEXT; TO BE FINALISED] Deutschlands maximales CO2-Budget für die Einhaltung
 						der 1,5 °C-Grenze ist überschritten. Was bedeutet das konkret? Es wäre falsch zu
@@ -304,8 +304,8 @@
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
+				<div class="co2b-section-background">
+					<h2 class="text-lg">
 						Das maximale deutsche CO₂-Budget wird größer, wenn der Grenzwert für die Erderhitzung
 						bis 2100 nicht bei 1,5 Grad, sondern bei 1,75 Grad liegt.
 					</h2>
@@ -315,23 +315,23 @@
 						<p class="text-6xl font-light tabular-nums">{formatNumber(3859)}</p>
 						<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>
 					</div>
-					<h2 class="text-xl">
+					<h2 class="text-lg">
 						Wenn wir weiterhin so viel emittieren wie im Jahr 2023 (594 Millionen Tonnen CO₂)
 						überschreiten wir das Budget bereits Mitte 2030.
 					</h2>
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
+				<div class="co2b-section-background">
+					<h2 class="text-lg">
 						Reduzieren wir jedes Jahr dieselbe Menge an CO₂, nämlich 46 Millionen Tonnen, wird das
 						Budget in 12 Jahren - 2036 - überschritten.
 					</h2>
 				</div>
 			</section>
 			<section>
-				<div class="section-background">
-					<h2 class="text-xl">
+				<div class="co2b-section-background">
+					<h2 class="text-lg">
 						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Um das
 						verbleibende Budget bis 2045 zu strecken, müssten die CO₂-Emissionen jedes Jahr um 12.7%
 						im Vergleich zum Vorjahr sinken.
@@ -341,18 +341,3 @@
 		</div>
 	</Scroller>
 </div>
-
-<style>
-	.background {
-		@apply h-screen;
-	}
-
-	.section-background {
-		@apply bg-white bg-opacity-20 backdrop-blur-lg p-4 inline-block;
-	}
-
-	.foreground section {
-		height: calc(100vh - 6rem);
-		@apply p-16 pt-32 max-w-4xl mx-auto;
-	}
-</style>

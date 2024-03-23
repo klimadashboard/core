@@ -184,3 +184,15 @@ details a {
 .text-prose h3 {
 	@apply text-xl mt-4 mb-1;
 }
+.co2b-background {
+	@apply h-screen;
+}
+
+.co2b-section-background {
+	@apply bg-white bg-opacity-20 backdrop-blur-lg p-4 inline-block;
+}
+
+.co2b-foreground section {
+	height: calc(100vh - 6rem);
+	@apply p-4 md:p-16 pt-32 md:pt-32 max-w-4xl mx-auto;
+}
