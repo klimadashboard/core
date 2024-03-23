@@ -363,7 +363,9 @@
 						CO₂-Budget größer, die Auswirkungen der globalen Erhitzung aber auch schwerwiegender.
 					</h2>
 					<div class="my-4 leading-tight">
-						<h3 class="font-bold">1,75-Grad-Budget bei <br />50% Wahrscheinlichkeit</h3>
+						<h3 class="font-bold">
+							1,75-Grad-Budget bei <br /><span class="bg-industry text-white p-0.5">50%</span> Wahrscheinlichkeit
+						</h3>
 
 						<p class="text-6xl font-light tabular-nums">{formatNumber(3859)}</p>
 						<p>Millionen Tonnen CO₂ <br />verbleibend 2024</p>

@@ -189,7 +189,7 @@ details a {
 }
 
 .co2b-section-background {
-	@apply bg-white bg-opacity-20 backdrop-blur-lg p-4 inline-block;
+	@apply bg-white bg-opacity-20 backdrop-blur-lg p-4 inline-block shadow-2xl rounded-xl;
 }
 
 .co2b-foreground section {
