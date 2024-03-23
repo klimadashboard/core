@@ -194,5 +194,5 @@ details a {
 
 .co2b-foreground section {
 	height: calc(100vh - 6rem);
-	@apply p-4 md:p-16 pt-32 md:pt-32 max-w-4xl mx-auto;
+	@apply p-4 md:p-16 pt-24 md:pt-24 max-w-4xl mx-auto;
 }

@@ -171,36 +171,38 @@
 		</div>
 		<div slot="foreground" class="co2b-foreground">
 			<section>
-				<h1 class="text-2xl md:text-3xl font-light">
-					Von 1750 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
-					<nobr
-						><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen Tonnen
-						CO2</nobr
-					> ausgestoßen.
-				</h1>
-				<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 5000 }}>
-					Deutschlands faires CO₂-Budget für die Einhaltung der <nobr>1,5 °C-Grenze</nobr> wurde jetzt
-					überschritten.
-				</h2>
-				<div in:fade={{ delay: 5200 }} class="flex mt-4">
-					<p class="font-bold leading-tight">
-						Scrolle, um mehr zu erfahren <br /><span class="font-normal opacity-60"
-							>oder drücke die Leertaste</span
+				<div class="co2b-section-background">
+					<h1 class="text-2xl md:text-3xl font-light">
+						Von 1750 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
+						<nobr
+							><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen
+							Tonnen CO2</nobr
+						> ausgestoßen.
+					</h1>
+					<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 5000 }}>
+						Deutschlands faires CO₂-Budget für die Einhaltung der <nobr>1,5 °C-Grenze</nobr> wurde jetzt
+						überschritten.
+					</h2>
+					<div in:fade={{ delay: 5200 }} class="flex mt-4">
+						<p class="font-bold leading-tight">
+							Scrolle, um mehr zu erfahren <br /><span class="font-normal opacity-60"
+								>oder drücke die Leertaste</span
+							>
+						</p>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class=""
+							><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M6 9l6 6l6 -6" /></svg
 						>
-					</p>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						class=""
-						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M6 9l6 6l6 -6" /></svg
-					>
+					</div>
 				</div>
 			</section>
 			<section>

@@ -125,7 +125,7 @@
 							class="leading-[4rem] text-sm font-bold uppercase tracking-wide">Über uns</a
 						>
 					</li>
-					<li class="opacity-100 hover:opacity-80 transition md:ml-4">
+					<li class="opacity-100 hover:opacity-80 transition md:ml-4 hidden lg:block">
 						<a
 							href="https://opencollective.com/klimadashboard-spendenaufruf"
 							target="_blank"
