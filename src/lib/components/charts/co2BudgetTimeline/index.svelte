@@ -337,9 +337,9 @@
 						Mit der Überschreitung des nationalen CO₂-Budgets ist es wichtig, <strong
 							>Deutschlands Rolle in der Welt</strong
 						>
-						kritisch zu beleuchten. Als Land mit besonders starker
-						<strong>historischer Verantwortung</strong> sollte Deutschland und die gesamte
-						europäische Union die eigene Verantwortung für Schäden und Verlusten klar anerkennen. Im
+						kritisch zu beleuchten. Als Land mit besonderer
+						<strong>historischer Verantwortung</strong> sollte sich Deutschland und die gesamte
+						Europäische Union klar zu ihrer Verantwortung für Schäden und Verluste bekennen. Im
 						Sinne der Klimagerechtigkeit sollte eine
 						<strong>Erhöhung internationaler Klimafinanzierung</strong> angedacht werden. Zukünftig könnte
 						sich auch das Völkerrecht weiterentwickeln, wodurch eine Überschreitung des CO₂-Budgets zum
