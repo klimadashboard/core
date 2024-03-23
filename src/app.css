@@ -193,5 +193,5 @@ details a {
 }
 
 .co2b-foreground section {
-	@apply md:p-8 pt-24 md:pt-24 max-w-4xl mx-auto leading-snug h-[120vh] md:h-screen;
+	@apply md:p-8 pt-24 md:pt-24 max-w-4xl mx-auto leading-snug min-h-[120vh] md:min-h-screen;
 }
