@@ -85,13 +85,13 @@
 				year: e.year,
 				highlighted:
 					index > 3 && index < 6
-						? index == 5 && offset > 0.25 && selectedBudgetYear.year >= e.year && e.year > 2015
+						? index == 5 && offset > 0.25 && selectedBudgetYear.year > e.year && e.year > 2015
 							? true
 							: false
 						: true,
 				overflow:
 					index == 5
-						? e.year == 2023 && selectedBudgetYear.year > 2022 && e.index > 0
+						? e.year == 2023 && selectedBudgetYear.year > 2023 && e.index > 0
 							? true
 							: false
 						: false
