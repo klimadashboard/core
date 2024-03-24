@@ -283,16 +283,14 @@
 							verbleibendes Budget ab {selectedBudgetYear.year}
 						</p>
 					</div>
-					<div
-						class="text-energy transition {selectedBudgetYear == budgets[budgets.length - 1]
-							? 'opacity-100'
-							: 'opacity-0'}"
-					>
-						<p class="text-lg mt-4">
-							Anfang 2023 hat Deutschland sein faires CO<sub>2</sub>-Budget überschritten.
-						</p>
-						<p>bei 67% Wahrscheinlichkeit, dass das 1,5-Grad-Limit eingehalten wird</p>
-					</div>
+					{#if selectedBudgetYear == budgets[budgets.length - 1]}
+						<div class="text-energy transition">
+							<p class="text-lg mt-4">
+								Anfang 2023 hat Deutschland sein faires CO<sub>2</sub>-Budget überschritten.
+							</p>
+							<p>bei 67% Wahrscheinlichkeit, dass das 1,5-Grad-Limit eingehalten wird</p>
+						</div>
+					{/if}
 				</div>
 			</section>
 			<section>
