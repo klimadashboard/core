@@ -45,14 +45,14 @@
 <div class="container mb-4">
 	<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 grid-flow-row news-grid">
 		<a class="row-span-2 flex flex-col" href={firstItem.url}>
-			<h3 class="text-4xl leading-none">{firstItem.title}</h3>
+			<h3 class="text-4xl leading-9">{firstItem.title}</h3>
 			<p class="mt-auto leading-tight text-xl">
 				{firstItem.text} <span class="opacity-70">{dayjs().to(firstItem.date)}</span>
 			</p>
 		</a>
 		{#each items.splice(1) as item}
 			<a href={item.url} class="border-t pt-4">
-				<h3 class="text-xl leading-none">{item.title}</h3>
+				<h3 class="text-xl leading-6">{item.title}</h3>
 				<p class="mt-1 leading-tight">
 					{item.text} <span class="opacity-70">{dayjs().to(item.date)}</span>
 				</p>
