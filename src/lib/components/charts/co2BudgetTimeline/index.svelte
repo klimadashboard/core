@@ -179,12 +179,14 @@
 			{:else}
 				Loading...
 			{/if}
-			<img
-				src="/images/co2b-illustration.png"
-				alt="CO2-Emissionen haben vielfältige Quellen, vom Flugzeug zur Fabrik, vom Auto bis zum Kraftwerk."
-				class="absolute w-full max-w-4xl left-0 md:left-1/2 md:-translate-x-1/2"
-				style="bottom: {illustrationPosition || 0}px;"
-			/>
+			{#if index < 3}
+				<img
+					src="/images/co2b-illustration.png"
+					alt="CO2-Emissionen haben vielfältige Quellen, vom Flugzeug zur Fabrik, vom Auto bis zum Kraftwerk."
+					class="absolute w-full max-w-4xl left-0 md:left-1/2 md:-translate-x-1/2"
+					style="bottom: {illustrationPosition || 0}px;"
+				/>
+			{/if}
 			<div class="absolute bottom-0 w-full">
 				<div
 					class="max-w-3xl mx-auto flex items-center text-xs {index == 0
