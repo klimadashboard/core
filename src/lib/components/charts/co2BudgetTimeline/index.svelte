@@ -180,7 +180,7 @@
 						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
 						<p class="">
 							entspricht
-							{blockValue} Mio. t CO₂
+							{blockValue} Mio. t CO<sub>2</sub>
 						</p>
 					</div>
 					<div class="ml-auto">
@@ -233,17 +233,18 @@
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Kohlenstoffdioxid (CO₂) entsteht hauptsächlich durch die Verbrennung von fossilen
-						Brennstoffen wie Kohle, Öl und Gas, zum Beispiel um Energie zu erzeugen, Gebäude zu
-						heizen oder Autos und LKWs anzutreiben.
+						Kohlenstoffdioxid (CO<sub>2</sub>) entsteht hauptsächlich durch die Verbrennung von
+						fossilen Brennstoffen wie Kohle, Öl und Gas, zum Beispiel um Energie zu erzeugen,
+						Gebäude zu heizen oder Autos und LKWs anzutreiben.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Deutschland stößt seit dem 18. Jahrhundert CO₂ aus. Der Höhepunkt wurde 1979 erreicht.
-						Seitdem sind die CO₂-Emissionen gesunken, zuletzt 2023 um -11% gegenüber dem Vorjahr.
+						Deutschland stößt seit dem 18. Jahrhundert CO<sub>2</sub> aus. Der Höhepunkt wurde 1979
+						erreicht. Seitdem sind die CO<sub>2</sub>-Emissionen gesunken, zuletzt 2023 um -11%
+						gegenüber dem Vorjahr.
 					</h2>
 				</div>
 			</section>
@@ -259,14 +260,14 @@
 			<section>
 				<div class="co2b-section-background">
 					<p class="text-lg">
-						Der Weltklimarat (IPCC) hat ermittelt, wie viel CO₂ weltweit noch maximal ausgestoßen
-						werden darf, um die 1,5-Grad-Grenze mit einer Wahrscheinlichkeit von 67% einzuhalten.
-						Der Sachverständigenrat für Umweltfragen (SRU) hat wiederum den fairen Anteil
-						Deutschlands am globalen CO₂-Budget berechnet.
+						Der Weltklimarat (IPCC) hat ermittelt, wie viel CO<sub>2</sub> weltweit noch maximal
+						ausgestoßen werden darf, um die 1,5-Grad-Grenze mit einer Wahrscheinlichkeit von 67%
+						einzuhalten. Der Sachverständigenrat für Umweltfragen (SRU) hat wiederum den fairen
+						Anteil Deutschlands am globalen CO<sub>2</sub>-Budget berechnet.
 					</p>
 					<p class="text-lg my-2">
 						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy bg-opacity-50 p-1"
-							>5.012 Millionen Tonnen CO₂</strong
+							>5.012 Millionen Tonnen CO<sub>2</sub></strong
 						> ausstoßen.
 					</p>
 				</div>
@@ -288,7 +289,7 @@
 							: 'opacity-0'}"
 					>
 						<p class="text-lg mt-4">
-							Anfang 2023 hat Deutschland sein faires CO₂-Budget überschritten.
+							Anfang 2023 hat Deutschland sein faires CO<sub>2</sub>-Budget überschritten.
 						</p>
 						<p>bei 67% Wahrscheinlichkeit, dass das 1,5-Grad-Limit eingehalten wird</p>
 					</div>
@@ -298,33 +299,36 @@
 				<div class="co2b-section-background">
 					<p class="text-lg">
 						Wenn man das Risiko erhöht und einen Münzwurf über die Einhaltung des 1,5-Grad-Limits
-						entscheiden lässt, vergrößert sich Deutschlands CO₂-Budget etwas.
+						entscheiden lässt, vergrößert sich Deutschlands CO<sub>2</sub>-Budget etwas.
 					</p>
 					<div class="grid grid-cols-2 my-4 gap-4 leading-snug">
 						<div class="text-energy">
 							<h3 class="font-bold">
-								CO₂-Budget bei <br /><span class="bg-energy text-white px-0.5">67%</span>
+								CO<sub>2</sub>-Budget bei <br /><span class="bg-energy text-white px-0.5">67%</span>
 								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
 							<p class="text-6xl font-light tabular-nums">{formatNumber(-575)}</p>
-							<p>Millionen Tonnen CO₂ <br />verbleibend ab 2024</p>
+							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2024</p>
 						</div>
 						<div>
 							<h3 class="font-bold">
-								CO₂-Budget bei <br /><span class="bg-industry text-white px-0.5">50%</span>
+								CO<sub>2</sub>-Budget bei <br /><span class="bg-industry text-white px-0.5"
+									>50%</span
+								>
 								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
 							<p class="text-6xl font-light tabular-nums">{formatNumber(125)}</p>
-							<p>Millionen Tonnen CO₂ <br />verbleibend ab 2024</p>
+							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2024</p>
 						</div>
 					</div>
 				</div>
 				<div class="co2b-section-background mt-8">
 					<p class="text-lg">
-						Auch das risikoreichere CO₂-Budget (50%) haben wir im Frühling 2024 bereits
-						aufgebraucht. <span class="text-energy"
+						Auch das risikoreichere CO<sub>2</sub>-Budget (50%) haben wir im Frühling 2024 bereits
+						aufgebraucht.
+						<span class="text-energy"
 							>Damit hat Deutschland seine fairen 1,5-Grad-Budgets endgültig überschritten.</span
 						>
 					</p>
@@ -334,21 +338,21 @@
 				<div class="co2b-section-background text-lg space-y-2 mb-80">
 					<h2 class="text-2xl">Was bedeutet das für Deutschland?</h2>
 					<p>
-						Mit der Überschreitung des nationalen CO₂-Budgets ist es wichtig, <strong
-							>Deutschlands Rolle in der Welt</strong
-						>
+						Mit der Überschreitung des nationalen CO<sub>2</sub>-Budgets ist es wichtig,
+						<strong>Deutschlands Rolle in der Welt</strong>
 						kritisch zu beleuchten. Als Land mit besonderer
 						<strong>historischer Verantwortung</strong> sollte sich Deutschland und die gesamte
 						Europäische Union klar zu ihrer Verantwortung für Schäden und Verluste bekennen. Im
 						Sinne der Klimagerechtigkeit sollte eine
-						<strong>Erhöhung internationaler Klimafinanzierung</strong> angedacht werden. Zukünftig könnte
-						sich auch das Völkerrecht weiterentwickeln, wodurch eine Überschreitung des CO₂-Budgets zum
-						Haftungsrisiko wird.
+						<strong>Erhöhung internationaler Klimafinanzierung</strong> angedacht werden. Zukünftig
+						könnte sich auch das Völkerrecht weiterentwickeln, wodurch eine Überschreitung des CO<sub
+							>2</sub
+						>-Budgets zum Haftungsrisiko wird.
 					</p>
 					<p>
 						Kontrovers diskutiert werden <strong>alternative Mechanismen</strong>, um das nationale
-						CO₂-Budget noch einzuhalten. Durch technologische Lösungen wie Carbon Capture and
-						Storage (CCS) sollen Negativemissionen ermöglicht werden, also mehr CO<sub>2</sub>
+						CO<sub>2</sub>-Budget noch einzuhalten. Durch technologische Lösungen wie Carbon Capture
+						and Storage (CCS) sollen Negativemissionen ermöglicht werden, also mehr CO<sub>2</sub>
 						gespeichert als ausgestoßen werden. Diese Technologien haben allerdings noch keinen Reifegrad
 						erreicht, der großflächige Anwendung sinnvoll machen würde. Ein anderer Vorschlag ist, Emissionsminderungen
 						im Ausland quasi als Ausgleich für Deutschlands Überschreitungen zu finanzieren. Oft dienen
@@ -369,8 +373,9 @@
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Wenn nur 1,75 Grad statt 1,5 Grad bis 2100 erreicht werden sollen, wird das deutsche
-						CO₂-Budget größer, die Auswirkungen der globalen Erhitzung aber auch schwerwiegender.
+						Wenn nur 1,75 Grad statt 1,5 Grad bis 2100 erreicht werden sollen, wird das deutsche CO<sub
+							>2</sub
+						>-Budget größer, die Auswirkungen der globalen Erhitzung aber auch schwerwiegender.
 					</h2>
 					<div class="my-4 leading-tight">
 						<h3 class="font-bold">
@@ -378,21 +383,21 @@
 						</h3>
 
 						<p class="text-6xl font-light tabular-nums">{formatNumber(3859)}</p>
-						<p>Millionen Tonnen CO₂ <br />verbleibend ab 2024</p>
+						<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2024</p>
 					</div>
 					<h2 class="text-lg">
-						Wenn Deutschland weiterhin so viel emittiert wie im Jahr 2023 (594 Millionen Tonnen CO₂)
-						hätten wir dieses Budget <strong class="bg-economy bg-opacity-50 p-1"
-							>im Jahr 2030 aufgebraucht</strong
-						>.
+						Wenn Deutschland weiterhin so viel emittiert wie im Jahr 2023 (594 Millionen Tonnen CO<sub
+							>2</sub
+						>) hätten wir dieses Budget
+						<strong class="bg-economy bg-opacity-50 p-1">im Jahr 2030 aufgebraucht</strong>.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Reduzieren wir jedes Jahr dieselbe Menge an CO₂, nämlich 46 Millionen Tonnen, ist das
-						Budget <strong class="bg-economy bg-opacity-50 p-1">im Jahr 2036</strong> aufgebraucht.
+						Reduzieren wir jedes Jahr dieselbe Menge an CO<sub>2</sub>, nämlich 46 Millionen Tonnen,
+						ist das Budget <strong class="bg-economy bg-opacity-50 p-1">im Jahr 2036</strong> aufgebraucht.
 					</h2>
 				</div>
 			</section>
@@ -400,9 +405,8 @@
 				<div class="co2b-section-background">
 					<p class="text-lg">
 						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Somit müssten
-						die CO₂-Emissionen <strong class="bg-economy bg-opacity-50 p-1"
-							>jedes Jahr bis 2045 um 12,7%</strong
-						>
+						die CO<sub>2</sub>-Emissionen
+						<strong class="bg-economy bg-opacity-50 p-1">jedes Jahr bis 2045 um 12,7%</strong>
 						im Vergleich zum Vorjahr sinken.
 					</p>
 					<p class="text-lg mt-4">
