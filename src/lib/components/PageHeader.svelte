@@ -12,8 +12,6 @@
 		url: $page.url
 	};
 
-	$: console.log(data);
-
 	let scrollY;
 	let innerHeight;
 

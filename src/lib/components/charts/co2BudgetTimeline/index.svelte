@@ -158,6 +158,9 @@
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
+			<div class="absolute top-16 left-0 right-0 w-screen z-[1200]">
+				<div class="bg-de h-1" style="width: {progress * 100}%" />
+			</div>
 			{#if historicalData.length > 0 && chartWidth && chartHeight}
 				<Chart
 					{historicalData}

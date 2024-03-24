@@ -49,10 +49,7 @@
 	];
 
 	$: randomPositions = [...historicalArray].map((d) => {
-		return [
-			Math.random() * innerChartWidth,
-			innerChartHeight / 2 + (Math.random() * innerChartHeight) / 2
-		];
+		return [Math.random() * innerChartWidth, Math.random() * innerChartHeight];
 	});
 
 	let historicalArray = historicalData
