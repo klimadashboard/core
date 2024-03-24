@@ -243,7 +243,7 @@
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
 						Deutschland stößt seit dem 18. Jahrhundert CO₂ aus. Der Höhepunkt wurde 1979 erreicht.
-						Seitdem sind die Emissionen gesunken, zuletzt 2023 um -11% gegenüber dem Vorjahr.
+						Seitdem sind die CO₂-Emissionen gesunken, zuletzt 2023 um -11% gegenüber dem Vorjahr.
 					</h2>
 				</div>
 			</section>
