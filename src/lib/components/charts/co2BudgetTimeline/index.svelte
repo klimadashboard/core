@@ -156,7 +156,7 @@
 	<Scroller bind:index bind:offset bind:progress>
 		<div
 			slot="background"
-			class="p-4 w-screen relative bg-gray-100 grid co2b-background"
+			class="p-4 w-screen relative bg-gray-100 grid co2b-background overflow-hidden"
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
@@ -182,9 +182,7 @@
 			<img
 				src="/images/co2b-illustration.png"
 				alt="CO2-Emissionen haben vielfältige Quellen, vom Flugzeug zur Fabrik, vom Auto bis zum Kraftwerk."
-				class="{index < 3
-					? 'block'
-					: 'hidden'} absolute w-full max-w-4xl left-0 md:left-1/2 md:-translate-x-1/2"
+				class="absolute w-full max-w-4xl left-0 md:left-1/2 md:-translate-x-1/2"
 				style="bottom: {illustrationPosition || 0}px;"
 			/>
 			<div class="absolute bottom-0 w-full">
@@ -216,8 +214,8 @@
 					<h1 class="text-2xl md:text-3xl font-light max-w-xl">
 						Von 1750 bis <span class="tabular-nums">{currentYear}</span> hat Deutschland
 						<nobr
-							><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span> Millionen
-							Tonnen CO<sub>2</sub></nobr
+							><span class="tabular-nums">{formatNumber(currentYearTotalEmissions)}</span>
+							Millionen Tonnen CO<sub>2</sub></nobr
 						>
 						ausgestoßen.
 					</h1>
@@ -408,7 +406,8 @@
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
 						Reduzieren wir jedes Jahr dieselbe Menge an CO<sub>2</sub>, nämlich 46 Millionen Tonnen,
-						ist das Budget <strong class="bg-economy bg-opacity-50 p-1">im Jahr 2036</strong> aufgebraucht.
+						ist das Budget
+						<strong class="bg-economy bg-opacity-50 p-1">im Jahr 2036</strong> aufgebraucht.
 					</h2>
 				</div>
 			</section>
