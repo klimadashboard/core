@@ -148,6 +148,8 @@
 			label: 'Daten: SRU (1,75 Grad, 67%)'
 		}
 	];
+
+	$: illustrationPosition = progress > 0 ? progress * -2500 : 0;
 </script>
 
 <div class="-mt-24">
@@ -159,7 +161,7 @@
 			bind:clientWidth={chartWidth}
 		>
 			<div class="absolute top-16 left-0 right-0 w-screen z-[1200]">
-				<div class="bg-de h-1" style="width: {progress * 100}%" />
+				<div class="bg-de h-1" style="width: {progress > 0 ? progress * 100 : 0}%" />
 			</div>
 			{#if historicalData.length > 0 && chartWidth && chartHeight}
 				<Chart
@@ -177,8 +179,18 @@
 			{:else}
 				Loading...
 			{/if}
+			<img
+				src="/images/co2b-illustration.png"
+				alt="CO2-Emissionen haben vielfältige Quellen, vom Flugzeug zur Fabrik, vom Auto bis zum Kraftwerk."
+				class="absolute w-full max-w-4xl left-0 md:left-1/2 md:-translate-x-1/2"
+				style="bottom: {illustrationPosition || 0}px;"
+			/>
 			<div class="absolute bottom-0 w-full">
-				<div class="max-w-3xl mx-auto flex items-center text-xs text-gray-600 p-2">
+				<div
+					class="max-w-3xl mx-auto flex items-center text-xs {index == 0
+						? 'text-white'
+						: 'text-gray-600'} p-2 transition"
+				>
 					<div class="flex items-center space-x-1 font-bold">
 						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
 						<p class="">
