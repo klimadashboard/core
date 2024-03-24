@@ -335,7 +335,7 @@
 				</div>
 			</section>
 			<section>
-				<div class="co2b-section-background text-lg space-y-2 mb-80">
+				<div class="co2b-section-background text-lg space-y-2 mb-80 mt-80 md:mt-0">
 					<h2 class="text-2xl">Was bedeutet das für Deutschland?</h2>
 					<p>
 						Mit der Überschreitung des nationalen CO<sub>2</sub>-Budgets ist es wichtig,
