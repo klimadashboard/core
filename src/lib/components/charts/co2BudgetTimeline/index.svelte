@@ -209,11 +209,7 @@
 						<nobr>1,5 °C-Grenze</nobr> wurde jetzt überschritten.
 					</h2>
 					<div in:fade={{ delay: 5200 }} class="flex mt-4">
-						<p class="font-bold leading-tight">
-							Scrolle, um mehr zu erfahren <br /><span class="font-normal opacity-60"
-								>oder drücke die Leertaste</span
-							>
-						</p>
+						<p class="font-bold leading-tight">Scrolle, um mehr zu erfahren</p>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="24"
