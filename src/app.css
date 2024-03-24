@@ -196,6 +196,10 @@ details a {
 	@apply md:p-8 pt-24 md:pt-24 max-w-4xl mx-auto leading-snug min-h-[120vh] md:min-h-screen;
 }
 
+.news-grid a {
+	@apply hover:underline underline-offset-4 transition;
+}
+
 sub {
 	font-variant-position: sub;
 	font-size: 0.6em;
