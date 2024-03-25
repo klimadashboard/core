@@ -231,7 +231,7 @@
 				transform="translate(0,{innerChartHeight + 25})"
 				in:fade
 			>
-				{#each xScale.ticks() as tick}
+				{#each xScale.ticks().filter((d) => d < 2101) as tick}
 					<g transform="translate({xScale(tick)},0)">
 						<line x1={circleSize * 2} x2={circleSize * 2} y1="-14" y2="0" class="stroke-current" />
 						<text class="fill-current" text-anchor="left" x={circleSize * 2 + 3}>{tick}</text>
