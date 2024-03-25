@@ -8,7 +8,7 @@
 
 	const items = [
 		{
-			date: dayjs('2024-03-25T11:00:00'),
+			date: dayjs('2024-03-25T09:00:00'),
 			title: 'Faires 1,5°C-CO₂-Budget für Deutschland überschritten',
 			text: 'Neue Daten des Sachverständigenrats für Umweltfragen, visualisiert vom Klimadashboard',
 			url: '/emissionen/co2-budget'
