@@ -11,7 +11,7 @@
 			date: dayjs('2024-03-25T11:00:00'),
 			title: 'Faires 1,5°C-CO₂-Budget für Deutschland überschritten',
 			text: 'Neue Daten des Sachverständigenrats für Umweltfragen, visualisiert vom Klimadashboard',
-			url: '/co2-budget'
+			url: '/emissionen/co2-budget'
 		},
 		{
 			date: dayjs('2024-03-23'),
