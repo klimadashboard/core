@@ -267,10 +267,9 @@
 			<section>
 				<div class="co2b-section-background">
 					<p class="text-lg">
-						Der Weltklimarat (IPCC) hat ermittelt, wie viel CO<sub>2</sub> weltweit noch maximal
-						ausgestoßen werden darf, um die 1,5-Grad-Grenze mit einer Wahrscheinlichkeit von 67%
-						einzuhalten. Der Sachverständigenrat für Umweltfragen (SRU) hat wiederum den fairen
-						Anteil Deutschlands am globalen CO<sub>2</sub>-Budget berechnet.
+						Auf Grundlage des weltweit verbleibenden CO<sub>2</sub>-Budgets für die 1,5-Grad-Grenze
+						hat der Sachverständigenrat für Umweltfragen (SRU) den fairen Anteil Deutschlands
+						berechnet.
 					</p>
 					<p class="text-lg my-2">
 						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy bg-opacity-50 p-1"
@@ -334,7 +333,7 @@
 						Auch das risikoreichere CO<sub>2</sub>-Budget (50%) haben wir im Frühling 2024 bereits
 						aufgebraucht.
 						<span class="text-energy"
-							>Damit hat Deutschland seine fairen 1,5-Grad-Budgets endgültig überschritten.</span
+							>Damit hat Deutschland seine fairen 1,5-Grad-Budgets überschritten.</span
 						>
 					</p>
 				</div>
@@ -366,8 +365,9 @@
 						widersprechen den Grundsätzen der Klimagerechtigkeit.
 					</p>
 					<p>
-						Die Überschreitung des 1,5 °C-Budgets bedeutet nicht, dass alles verloren wäre. Es ist
-						umso wichtiger, dass der Klimaschutz auf nationaler und internationaler Ebene weiter
+						Die Überschreitung des deutschen 1,5 °C-Budgets bedeutet nicht, dass alles verloren
+						wäre. Global ist das 1,5 °C-Budget noch nicht überschritten. Es ist deswegen umso
+						wichtiger, dass der Klimaschutz auf nationaler und internationaler Ebene weiter
 						vorangetrieben wird. Denn: <strong>mit jedem Zehntel Grad</strong> wird die Anpassung an
 						die Erhitzung zunehmend schwieriger, die Anzahl der überschrittenen Kipppunkte steigt und
 						die unbewohnbaren Bereiche des Planeten (durch Meeresspiegelanstieg, Dürre oder andere Faktoren)
@@ -378,9 +378,9 @@
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Wenn nur 1,75 Grad statt 1,5 Grad bis 2100 erreicht werden sollen, wird das deutsche CO<sub
-							>2</sub
-						>-Budget größer, die Auswirkungen der globalen Erhitzung aber auch schwerwiegender.
+						Wenn 1,75 Grad statt 1,5 Grad bis 2100 nicht überschritten werden sollen, ist das
+						deutsche CO<sub>2</sub>-Budget größer, die Auswirkungen der globalen Erhitzung aber auch
+						schwerwiegender.
 					</h2>
 					<div class="my-4 leading-tight">
 						<h3 class="font-bold">
