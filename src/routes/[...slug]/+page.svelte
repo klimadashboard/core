@@ -57,7 +57,9 @@
 		<Loader />
 	{:else}
 		<main class="mb-24 min-h-screen pt-16" itemscope {itemtype}>
-			<PageHeader {data} />
+			{#if data.showpageheader !== 'false'}
+				<PageHeader {data} />
+			{/if}
 			{#if data.pagelayout}
 				{#each JSON.parse(data.pagelayout) as layout}
 					<section id={layout.id} class="{layout.attrs.class} my-8" transition:fade>
