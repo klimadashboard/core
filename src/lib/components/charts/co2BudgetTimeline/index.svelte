@@ -156,7 +156,7 @@
 	<Scroller bind:index bind:offset bind:progress>
 		<div
 			slot="background"
-			class="p-4 w-screen relative bg-gray-100 grid co2b-background overflow-hidden"
+			class="p-4 relative bg-gray-100 grid co2b-background overflow-hidden"
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
