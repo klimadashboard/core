@@ -3,6 +3,7 @@
 	import SectorsTreeChart from './SectorsTreeChart.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import Loader from '$lib/components/Loader.svelte';
 
 	let dataset = null;
 	let explanations = null;
@@ -601,6 +602,8 @@
 			bind:crfHover
 		/>
 	</div>
+{:else}
+	<Loader />
 {/if}
 
 <style>
