@@ -167,8 +167,8 @@
 
 	$: dataToday = [
 		{
-			year: 2022,
-			concentration: 421
+			year: 2024,
+			concentration: 424
 		}
 	];
 
@@ -356,13 +356,7 @@
 				>
 					<div class="flex items-end space-x-2">
 						<p class="text-6xl font-extralight">{formatNumber(selectedMark.y)}</p>
-						<p
-							class={[4, 7, 9].includes(+selectedMark.y.toString().slice(-1))
-								? '-translate-x-4'
-								: '-translate-x-2'}
-						>
-							PPM
-						</p>
+						<p class="-translate-x-2">PPM</p>
 					</div>
 					<div class="flex items-center space-x-1 -mt-1">
 						<p class="font-semibold">{v.CO2ConcentrationLabel}</p>
