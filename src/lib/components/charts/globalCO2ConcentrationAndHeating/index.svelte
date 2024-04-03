@@ -10,25 +10,6 @@
 
 	export let v;
 
-	$: dataset = [];
-
-	Papa.parse('https://data.klimadashboard.org/global/emissions/co2_mlo_weekly.csv', {
-		download: true,
-		dynamicTyping: true,
-		skipEmptyLines: true,
-		header: true,
-		complete: function (results) {
-			if (results) {
-				dataset = results.data.filter((d) => {
-					return d.day !== null;
-				});
-			}
-		}
-	});
-
-	$: CO2Concentration = dataset.length > 0 ? dataset.slice(-1)[0].day : 0;
-	$: CO2ConcentrationPreIndustrial = 280;
-	$: CO2Concentration15 = 430;
 	$: globalWarming = 1.1;
 
 	let chartHeight;
