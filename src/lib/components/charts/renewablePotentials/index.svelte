@@ -4,6 +4,7 @@
 	import _ from 'lodash';
 	import Details from './Details.svelte';
 	import { onMount } from 'svelte';
+	import Switch from '$lib/components/Switch.svelte';
 
 
 	const energyTypes = [
@@ -168,27 +169,59 @@
 
 
 	$: energyByBundesland = _.groupBy(dataset?.sort((row) => row.year), (row) => row.region);
+
+	$: views = [
+		{
+			key: 'overview',
+			label: 'Übersicht',
+			icon: null,
+			color: '#4DB263'
+		},
+		{
+			key: 'details',
+			label: 'Details',
+			icon: null,
+			color: '#4DB263'
+		}
+	];
+	
+	$: activeView = 'overview';
 	
 </script>
 
+<Switch
+	{views}
+	{activeView}
+	on:itemClick={(event) => {
+		activeView = event.detail;
+	}}
+/>
+
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset}
-		<div class="grid grid-cols-3 gap-4 my-4">
-			<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} bind:selectedBundesland={selectedBundesland} />
-		</div>
-		<div class="grid gap-4 p-2">
-			{#each energyTypes as type}
-				<Details {type}
-					potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
-					potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
-					dataset={energyByBundesland[selectedBundesland]?.map((row) => {
-					return {
-						year: row.year,
-						value: row[type.dataKey]
-					};
-				}).filter((row) => !isNaN(row.value) && row.value != null)} />
-			{/each}
-		</div>
+		{#if activeView==="overview"}
+			<div class="grid grid-cols-3 gap-3 my-3">
+				<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} do_select={false} />
+			</div>
+		{/if}
+		{#if activeView==="details"}
+			<div class="grid grid-cols-9 gap-2 my-2">
+				<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} bind:selectedBundesland={selectedBundesland} />
+			</div>
+			<div class="grid gap-4 p-2">
+				{#each energyTypes as type}
+					<Details {type}
+						potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
+						potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
+						dataset={energyByBundesland[selectedBundesland]?.map((row) => {
+						return {
+							year: row.year,
+							value: row[type.dataKey]
+						};
+					}).filter((row) => !isNaN(row.value) && row.value != null)} />
+				{/each}
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -198,7 +231,9 @@
 	@media screen and (min-width: 1024px) {
 		#renewablePotentialsDiv{
 			/* grid-template-areas: 'overview overview overview overview details details details'; */
-			grid-template-columns: 60% 40%;
+			/*grid-template-columns: 60% 40%;*/
+			padding-left: 10%;
+			padding-right: 10%;
 		}
 	}
 </style>
