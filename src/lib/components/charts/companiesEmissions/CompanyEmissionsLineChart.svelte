@@ -1,7 +1,7 @@
 <script>
 	// @ts-nocheck
 	import LineChart from '../chartLine.svelte';
-	import { transformDataSingleCompany, transformDataMultiCompanies } from './transformData';
+	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
 
 	export let rawData;
 	export let selectedCompanies;
@@ -19,6 +19,31 @@
 	const rawColors = ['#7CBAB3', '#575C75', '#71665B', '#B28834', '#8CAED9', '#E0A906', '#CF6317'];
 	const rawLabels = ['Scope 1', 'Scope 2', 'Scope 3'];
 	const rawKeys = ['scope1', 'scope2', 'scope3'];
+	const maxCompanies = 7;
+
+	// // Magazine Visuation Companies & Colors
+	// const rawColors = [
+	// 	'#19A6E2',
+	// 	'#08779A',
+	// 	'#910505',
+	// 	'#000000',
+	// 	'#036041',
+	// 	'#31B159',
+	// 	'#F2380F',
+	// 	'#0F469A',
+	// 	'#6787A6'
+	// ];
+	// selectedCompanyNames = [
+	// 	'Voestalpine AG',
+	// 	'OMV AG',
+	// 	'Wienerberger AG',
+	// 	'EVN AG',
+	// 	'Mayr-Melnhof Karton AG',
+	// 	'Lenzing AG',
+	// 	'STRABAG SE',
+	// 	'Verbund AG',
+	// 	'Austria Technologie & Systemtechnik AG'
+	// ];
 
 	// Specify the company name to filter for
 	const companyName = selectedCompanies[0].name;
@@ -34,7 +59,7 @@
 				const companyName = selectedCompanies[0].name;
 				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
 			} else {
-				dataset = transformDataMultiCompanies(rawData, selectedCompanyNames, selectedScopes);
+				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
 				console.log('🚀 ~ dataset:', dataset);
 			}
 
@@ -67,7 +92,7 @@
 	}
 </script>
 
-{#if dataset && selectedCompanies.length > 0 && selectedCompanies.length < 8}
+{#if dataset && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
 	<LineChart
 		data={dataset}
 		{colors}
@@ -75,14 +100,15 @@
 		{labels}
 		showTotal={isSingleCompanySelected}
 		showAreas={isSingleCompanySelected}
-		showDots={!isSingleCompanySelected}
+		showDots={isSingleCompanySelected}
 		visualisation={isSingleCompanySelected ? 'stacked' : 'non-stacked'}
 		marginLeft={50}
-		xTicksInterval={1}
+		xTicksInterval={2}
+		preselectedIndex={4}
 	/>
 {:else if selectedCompanies.length === 0}
 	<p class="text-center">No company selected. Select up to 7 companies.</p>
-{:else if selectedCompanies.length > 6}
+{:else if selectedCompanies.length > maxCompanies}
 	<p class="text-center">Too many companies selected. Select up to 7 companies.</p>
 {:else}
 	<p class="text-center">Loading...</p>

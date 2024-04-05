@@ -25,7 +25,7 @@ export const transformDataSingleCompany = (data, company, selectedScopes) => {
 	return convertObjectToArray(emissionsPerYear);
 };
 
-export const transformDataMultiCompanies = (data, companies, selectedScopes) => {
+export const transformDataMultipleCompanies = (data, companies, selectedScopes) => {
 	const emissionsPerYear = {};
 	data.forEach((item) => {
 		const { Year_Scope, ...emissions } = item;
@@ -37,7 +37,7 @@ export const transformDataMultiCompanies = (data, companies, selectedScopes) => 
 		}
 
 		companies.forEach((company) => {
-			if (emissions[company]) {
+			if (emissions[company] !== undefined && emissions[company] !== null) {
 				// Aggregate emission data for the company and selected scopes
 				selectedScopes.forEach((scope) => {
 					if (!emissionsPerYear[year][company]) {
@@ -65,7 +65,6 @@ const convertObjectToArray = (emissionsPerYear) => {
 	return Object.values(emissionsPerYear)
 		.sort((a, b) => a.year - b.year)
 		.map((item, index) => {
-			console.log('🚀 ~ item:', item);
 			return {
 				...item,
 				x: index

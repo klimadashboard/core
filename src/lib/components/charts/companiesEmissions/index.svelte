@@ -3,10 +3,8 @@
 	import atxCompanies, { companyId } from '$lib/stores/companies';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import CompanyEmissionsBarChart from './CompanyEmissionsBarChart.svelte';
 	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
 	import ViewSwitch from './ViewSwitch.svelte';
-	import { fade } from 'svelte/transition';
 
 	let selectedScopes = '1';
 	let selectedYear = '2020';
@@ -24,16 +22,16 @@
 		};
 	});
 
-	// $: sectors = Array.from(new Set(atxCompanies.map((company) => company.sector)));
+	$: sectors = Array.from(new Set(atxCompanies.map((company) => company.sector)));
 
 	$: if (isFocusView) {
 		deselectAll();
 		companies[1].selected = true;
 	}
 
-	$: if (!isFocusView) {
-		selectAll();
-	}
+	// $: if (!isFocusView) {
+	// 	selectAll();
+	// }
 
 	// $: console.log(companies.map((c) => c.selected));
 
@@ -80,7 +78,8 @@
 
 	// Load emissions data
 	Papa.parse(
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3.csv`,
+		`../../data/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3_PathTo2040.csv`,
+		// `https://data.klimadashboard.org/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3.csv`,
 		{
 			download: true,
 			dynamicTyping: true,
@@ -128,33 +127,37 @@
 	</div>
 	<br />
 
-	<div>
-		<!-- {#each sectors as sector} -->
-		<div class="flex gap-2 flex-wrap my-2">
-			<!-- <span class="font-semibold tracking-wide text-gray-600">{sector}</span> -->
-			{#each companies as company}
-				<!-- {#if company.sector === sector} -->
-				<button
-					class=" flex items-center rounded-full font-semibold tracking-wide px-4 py-2 text-black text-xs {company.selected
-						? 'border-2 border-black'
-						: 'border-2 border-gray-300'}"
-					on:mousedown={() => onClickCompany(company)}
-					aria-label={company.name}
-					title={company.name}
-				>
-					<img
-						src="../icons/atx-companies/{company.logo}.svg"
-						alt={company.logo}
-						width="50"
-						height="50"
-						style="display: inline-block; height: 2em; object-fit: contain;"
-					/>
-					<!-- <span>{company.name}</span> -->
-				</button>
-				<!-- {/if} -->
-			{/each}
-		</div>
-		<!-- {/each} -->
+	<div class="flex flex-wrap">
+		{#each sectors as sector}
+			<div
+				class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2"
+				aria-label={sector}
+				title={sector}
+			>
+				<span class="font-semibold tracking-wide text-gray-600">{sector}</span>
+				{#each companies as company}
+					{#if company.sector === sector}
+						<button
+							class="flex items-center rounded-full font-semibold tracking-wide px-4 py-2 text-black text-xs {company.selected
+								? 'border-2 border-black'
+								: 'border-2 border-gray-300'}"
+							on:mousedown={() => onClickCompany(company)}
+							aria-label={company.name}
+							title={company.name}
+						>
+							<img
+								src="../icons/atx-companies/{company.logo}.svg"
+								alt={company.logo}
+								width="60"
+								height="60"
+								class="inline-block h-6 object-contain"
+							/>
+							<!-- <span class="ml-2">{company.name}</span> -->
+						</button>
+					{/if}
+				{/each}
+			</div>
+		{/each}
 	</div>
 
 	<!-- Scope Selector -->
@@ -170,7 +173,7 @@
 
 	<!-- Chart -->
 	{#if rawData}
-		<div class="h-80">
+		<div class="h-96">
 			<CompanyEmissionsLineChart
 				{rawData}
 				selectedCompanies={companies.filter((company) => company.selected)}

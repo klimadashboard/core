@@ -24,7 +24,7 @@ export default [
 	{
 		id: 3,
 		name: 'Erste Group Bank AG',
-		sector: 'Banken',
+		sector: 'Banken und Versicherungen',
 		logo: 'erste-bank',
 		weight: 13.88,
 		aspectRatio: 2.27
@@ -49,7 +49,7 @@ export default [
 	{
 		id: 6,
 		name: 'Raiffeisen Bank International AG',
-		sector: 'Banken',
+		sector: 'Banken und Versicherungen',
 		logo: 'raiffeisen',
 		weight: 5.19,
 		aspectRatio: 3.57
@@ -75,7 +75,7 @@ export default [
 	{
 		id: 9,
 		name: 'BAWAG Group AG',
-		sector: 'Banken',
+		sector: 'Banken und Versicherungen',
 		logo: 'bawag',
 		weight: 3.92,
 		aspectRatio: 1.74
@@ -83,7 +83,7 @@ export default [
 	{
 		id: 10,
 		name: 'Vienna Insurance Group AG',
-		sector: 'Versicherungen',
+		sector: 'Banken und Versicherungen',
 		logo: 'vienna',
 		weight: 3.6,
 		aspectRatio: 2.16
@@ -115,7 +115,7 @@ export default [
 	{
 		id: 14,
 		name: 'Uniqa Insurance Group AG',
-		sector: 'Versicherungen',
+		sector: 'Banken und Versicherungen',
 		logo: 'uniqa',
 		weight: 2.7,
 		aspectRatio: 1.28
