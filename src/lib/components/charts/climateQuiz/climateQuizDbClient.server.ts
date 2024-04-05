@@ -6,10 +6,10 @@ export async function saveQuizAnswerToDb(answer: DbQuizAnswer) {
 		const dbClient = await getDb();
 		const collection = dbClient.collection(MONGODB_COLLECTION_ANSWER_API);
 		await collection.insertOne(answer);
-		console.log('saved to db: ', answer);
+		// console.log('saved to db: ', answer);
 		return { success: true };
 	} catch (error) {
-		console.log('error: while saving new status to db \n', error);
+		// console.log('error: while saving new status to db \n', error);
 		return { success: false };
 	}
 }
@@ -29,10 +29,10 @@ export async function getQuizAnswersFromDb(questionUuid: string) {
 			}
 		];
 		const result = await collection.aggregate(aggregation).toArray();
-		console.log('retrieved from db: ', result);
+		// console.log('retrieved from db: ', result);
 		return result;
 	} catch (error) {
-		console.log('error: while fatching from collection: %s db \n', error);
+		// console.log('error: while fatching from collection: %s db \n', error);
 		return {};
 	}
 }

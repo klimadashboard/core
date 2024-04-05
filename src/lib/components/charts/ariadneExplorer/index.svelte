@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/stores';
 	import Maps from './Maps.svelte';
 	import Table from './Table.svelte';
 	import Search from './Search.svelte';
@@ -6,6 +7,8 @@
 	import { scaleApproval } from '$lib/stores/scales';
 
 	let dataset;
+
+	const showAllYearsPreset = $page.url.searchParams.get('showAllYears') == 'true' ? true : false;
 
 	Papa.parse('/data_temp/ariadne-dataset.csv', {
 		download: true,
@@ -42,7 +45,7 @@
 		  ]
 		: [dataset?.filter((e) => e.level == 2 && e.policy == selectedPolicy)[0].year];
 
-	$: showAllYears = false;
+	$: showAllYears = showAllYearsPreset;
 
 	$: data = dataset?.filter(
 		(e) => e.level == 2 && e.policy == selectedPolicy && years.indexOf(e.year) > -1

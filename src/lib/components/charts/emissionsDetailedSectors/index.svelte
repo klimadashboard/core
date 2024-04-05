@@ -3,11 +3,12 @@
 	import SectorsTreeChart from './SectorsTreeChart.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import Loader from '$lib/components/Loader.svelte';
 
 	let dataset = null;
 	let explanations = null;
 
-	let maxYear = PUBLIC_VERSION == 'at' ? 2021 : 2021;
+	let maxYear = PUBLIC_VERSION == 'at' ? 2022 : 2021;
 
 	let years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
 
@@ -232,7 +233,6 @@
 			return responseData;
 		});
 
-	$: console.log(selectedGhGas, dataset?.[selectedGhGas]);
 	$: data = dataset?.[selectedGhGas].sort(
 		(a, b) => b.absolute[maxYear - 1990] - a.absolute[maxYear - 1990]
 	);
@@ -343,11 +343,8 @@
 			y
 		};
 	});
-	// $: console.log('sortedData', sortedData);
 
 	// TODO: compare totals to Klimaschutzbericht
-	// console.log('1990', total1990 / 10 ** 6);
-	// $: console.log('2020', totalSelectedYear / 10 ** 6);
 
 	$: totalForYear = (year) =>
 		sectorlyData?.reduce((sum, entry) => sum + entry.absolute[year - 1990], 0);
@@ -605,6 +602,8 @@
 			bind:crfHover
 		/>
 	</div>
+{:else}
+	<Loader />
 {/if}
 
 <style>

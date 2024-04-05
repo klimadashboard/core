@@ -10,6 +10,8 @@
 	import Numbers from './Numbers.svelte';
 	import ChartPeople from './ChartPeople.svelte';
 	import ChartBar from './ChartBar.svelte';
+	import Quote from './Quote.svelte';
+	import List from './List.svelte';
 
 	export let content;
 
@@ -57,6 +59,14 @@
 		{
 			type: 'chartBars',
 			component: ChartBar
+		},
+		{
+			type: 'quote',
+			component: Quote
+		},
+		{
+			type: 'list',
+			component: List
 		}
 	];
 </script>

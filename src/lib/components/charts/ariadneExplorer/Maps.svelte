@@ -18,9 +18,9 @@
 	loading...
 {:then topo}
 	{#if data}
-		<div class="flex space-x-2">
+		<div class="grid gap-4 grid-cols-2 md:grid-cols-4">
 			{#each years as year}
-				<div class="text-center">
+				<div class="text-center md:w-64">
 					<Map data={data.filter((d) => d.year == year)} {topo} bind:selectedFeature />
 					<p class="text-gray-700">{year}</p>
 					{#if selectedFeature}

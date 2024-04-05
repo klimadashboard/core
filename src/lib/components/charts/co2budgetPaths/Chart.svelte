@@ -40,7 +40,7 @@
 
 	let chartWidth;
 	let chartHeight;
-	let margin = { top: 20, right: 15, bottom: 30, left: 0 };
+	let margin = { top: 20, right: 15, bottom: 40, left: 0 };
 
 	const thgFactor = PUBLIC_VERSION == 'at' ? 1000 * 1000 : 1;
 
@@ -175,6 +175,17 @@
 		? generateLine('ksg')(dataPaths.filter((d) => d.year >= currentYear))
 		: null;
 	$: ksgTHGLine = showKSGGoal ? generateLine('thg')(thgPathDe) : null;
+
+	$: getAlternateForKey = function (key) {
+		if (chosenBudget.usedUp) {
+			return (
+				chosenBudget.usedUp[key.replace(chosenBudget.value + '_', '')].year == 2027 &&
+				chartWidth < 600
+			);
+		} else {
+			return false;
+		}
+	};
 </script>
 
 <div class="relative">
@@ -365,7 +376,8 @@
 
 					{#each selectedKeys as key, i}
 						<g
-							transform="translate({xScaleOffset(getZeroYear(key))},{innerChartHeight + 16})"
+							transform="translate({xScaleOffset(getZeroYear(key)) +
+								(i == 2 ? -20 : 0)},{innerChartHeight + 25 + (getAlternateForKey(key) ? 0 : -10)})"
 							style="color: {keys[
 								keys.findIndex(
 									(d) => d.key == selectedKeys[i].replace(chosenBudget.value + '_', '')

@@ -2,7 +2,7 @@
 	import Papa from 'papaparse';
 	import { locale } from '$lib/stores/i18n';
 	import MultiSelect from '$lib/components/MultiSelect.svelte';
-	import BarChart from '../chartBar.svelte';
+	import Chart from './Chart.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let countryData;
@@ -33,85 +33,72 @@
 		}
 	});
 
-	$: selectedCountries = [PUBLIC_VERSION.toUpperCase(), 'CN', 'US', 'UK', 'SE', 'IT'];
+	$: selectedCountries = [PUBLIC_VERSION, 'us', 'cn', 'in', 'ng'];
 
-	$: getIconString = function (iso) {
-		var string = '';
-		for (var i = 0; i < iso.length / 2; i++) {
-			string +=
-				'<image x=' +
-				i * 30 +
-				" height=15 href='https://data.klimadashboard.org/global/flags/" +
-				iso.substring(i * 2, i * 2 + 2).toLowerCase() +
-				".svg' class='shadow' />";
-		}
-		return string;
+	$: data = [...selectedCountries]
+		.map((c) => {
+			return {
+				label: getCountryName(c),
+				value: countryData?.find((d) => d.state_iso == c.toUpperCase())
+					? countryData?.find((d) => d.state_iso == c.toUpperCase()).co2e_percapita
+					: false,
+				code: c
+			};
+		})
+		.sort((a, b) => b.value - a.value);
+
+	const addToSelectedCountries = function (code) {
+		selectedCountries = selectedCountries.concat([code]);
 	};
 
-	$: dataset = countryData?.reduce((result, entry) => {
-		if (selectedCountries.includes(entry.state_iso)) {
-			result.push({
-				label: getCountryName(entry.state_iso),
-				value: entry.co2e_percapita,
-				highlight: entry.state_iso == PUBLIC_VERSION.toUpperCase() ? true : false,
-				icon: getIconString(entry.state_iso)
-			});
-		}
-		return result;
-	}, []);
-
-	$: worldwideAverage =
-		Math.round(countryData?.find((d) => d.state_name == 'World').co2e_percapita * 10) / 10;
-	$: lastYear = 2018;
-	$: lastYearEmissions = countryData?.find(
-		(d) => d.state_iso == PUBLIC_VERSION.toUpperCase()
-	).co2e_percapita;
-
-	$: lines = [
-		{
-			label: 'Weltweiter Durchschnitt' + ' ' + worldwideAverage + 't',
-			value: worldwideAverage
-		}
-	];
-
-	$: currentLocale = $locale;
-
-	$: getCountryName = function (name, selectedLocale) {
-		var countryName = name;
-
-		if (countryData && countryNames && selectedLocale !== 'en') {
-			if (countryNames.find((d) => d.en == name)) {
-				countryName = countryNames.find((d) => d.en == name)[selectedLocale];
-			}
-		}
-		return countryName;
+	$: getCountryName = function (code) {
+		return countryNames?.find((d) => d.alpha2 == code)
+			? countryNames?.find((d) => d.alpha2 == code)[$locale]
+			: code;
 	};
+
+	$: selectedCountry = 'false';
+
+	$: worldAverage = countryData?.find((d) => d.state_iso == 'WORLD').co2e_percapita;
 </script>
 
-{#if countryData && countryNames}
-	<MultiSelect id="countries" bind:value={selectedCountries}>
-		<option value="" />
-		{#each countryData.sort(function (a, b) {
-			var nameA = getCountryName(a.state_name, currentLocale).toLowerCase(),
-				nameB = getCountryName(b.state_name, currentLocale).toLowerCase();
-			if (nameA < nameB) //sort string ascending
-				return -1;
-			if (nameA > nameB) return 1;
-			return 0; //default return value (no sorting)
-		}) as country}
-			<option value={country.state_iso}>{getCountryName(country.state_name, currentLocale)}</option>
-		{/each}
-	</MultiSelect>
+{#if countryData && countryNames && selectedCountries && data.length > 0}
+	<div class="mt-4 relative">
+		<Chart bind:selectedCountries bind:data {worldAverage} />
 
-	<div class="h-80">
-		{#if dataset}
-			<BarChart
-				data={dataset}
-				sort={'descending'}
-				label={'Pro-Kopf-Emissionen'}
-				{lines}
-				unit={'t THG'}
-			/>
-		{/if}
+		<div class="left-4 absolute bottom-4 flex items-center space-x-2">
+			<button on:mousedown={addToSelectedCountries(selectedCountry)}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="icon icon-tabler icon-tabler-circle-plus"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+						d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"
+					/><path d="M9 12h6" /><path d="M12 9v6" /></svg
+				>
+			</button>
+			<select
+				bind:value={selectedCountry}
+				class="border rounded-full appearance-none bg-gray-100 px-2 text-sm"
+			>
+				<option value="" disabled selected>Select a country</option>
+				{#each countryData
+					.sort( (a, b) => getCountryName(a.state_iso.toLowerCase()).localeCompare(getCountryName(b.state_iso.toLowerCase())) )
+					.filter((d) => selectedCountries.indexOf(d.state_iso.toLowerCase()) < 0) as country}
+					<option
+						value={country.state_iso.toLowerCase()}
+						class="background-transparent bg-opacity-0 appearance-none"
+						>{getCountryName(country.state_iso.toLowerCase())}</option
+					>
+				{/each}
+			</select>
+		</div>
 	</div>
 {/if}

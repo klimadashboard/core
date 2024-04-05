@@ -193,9 +193,6 @@
 			?.filter((d) => d.classification == selectedClassification)
 			.reduce(reducer, []);
 	}
-
-	$: console.log(rawData?.filter((d) => d.classification == selectedClassification));
-
 	$: if (rawData?.length > 0) {
 		lastYear = rawData[rawData.length - 1]['year'];
 		firstYearEmissions = Math.round(rawData[0]['total_co2e_t']);
@@ -211,12 +208,12 @@
 		!showPerCapita
 	) {
 		dataset.push({
-			label: 2022,
-			annotation: 'Prognose 2022',
+			label: 2023,
+			annotation: 'Prognose 2023',
 			categories: [
 				{
-					label: 'Prognose 2022',
-					value: 72600000,
+					label: 'Prognose 2023',
+					value: 69000000,
 					estimate: true,
 					color: '#4DB263'
 				}

@@ -3,7 +3,6 @@
 	import Papa from 'papaparse';
 	import 'dayjs/locale/de-at';
 	import formatNumber from '$lib/stores/formatNumber';
-	import { glossaryItem } from '$lib/stores/glossary';
 
 	export let v;
 
@@ -20,8 +19,6 @@
 		}
 	});
 
-	let priceAustria = 32.5;
-
 	$: priceETS = 0;
 	$: dateETS = dayjs();
 
@@ -33,19 +30,16 @@
 		dateETS = dayjs(dataETS[dataETS.length - 1][0]).format('D.M.YYYY; HH:mm');
 	}
 
-	let priceNoGenerationalJustice = 201;
-	let priceGenerationalJustice = 698;
+	const parser = new DOMParser();
 </script>
 
 <div class="grid sm:grid-cols-2 gap-4">
 	<div>
-		<span class="text-6xl font-extralight tracking-tighter">{formatNumber(priceAustria)}€</span>
-		<p>{@html v.descriptionAustria}</p>
+		<span class="text-6xl font-extralight tracking-tighter">{v.nationalPrice}€</span>
+		<p>{@html v.nationalPriceDescription}</p>
 		<p class="text-sm text-gray-400 mt-2">
 			{v.source}:
-			<a href="https://www.parlament.gv.at/PAKT/VHG/XXVII/ME/ME_00158/" class="underline"
-				>{v.sourceAustria}</a
-			>
+			{@html v.nationalPriceSource}
 		</p>
 	</div>
 
@@ -54,37 +48,26 @@
 		<p>{@html v.descriptionETS.replace('{date}', dateETS)}</p>
 		<p class="text-sm text-gray-400 mt-2">
 			{v.source}:
-			<a href="https://tradingeconomics.com/commodity/carbon" class="underline">Trading Economics</a
-			>
+			{@html v.sourceETS}
 		</p>
 	</div>
 
 	<div>
-		<span class="text-6xl font-extralight tracking-tighter"
-			>{formatNumber(priceNoGenerationalJustice)}€</span
-		>
-		<p>{v.descriptionNoGenerationalJustice}</p>
-		<p class="text-sm">{v.descriptionNoGenerationalJusticeSmall}</p>
+		<span class="text-6xl font-extralight tracking-tighter">{v.priceNoGenerationalJustice}€</span>
+		<p>{@html v.descriptionNoGenerationalJustice}</p>
+		<p class="text-sm">{@html v.descriptionNoGenerationalJusticeSmall}</p>
 		<p class="text-sm text-gray-400 mt-2">
 			{v.source}:
-			<a
-				href="https://www.umweltbundesamt.de/bild/tab-uba-empfehlung-zu-den-klimakosten"
-				class="underline">Umweltbundesamt.de</a
-			>
+			{@html v.sourceNoGenerationalJustice}
 		</p>
 	</div>
 
 	<div>
-		<span class="text-6xl font-extralight tracking-tighter"
-			>{formatNumber(priceGenerationalJustice)}€</span
-		>
-		<p>{v.descriptionGenerationalJustice}</p>
+		<span class="text-6xl font-extralight tracking-tighter">{v.priceGenerationalJustice}€</span>
+		<p>{@html v.descriptionGenerationalJustice}</p>
 		<p class="text-sm text-gray-400 mt-2">
 			{v.source}:
-			<a
-				href="https://www.umweltbundesamt.de/bild/tab-uba-empfehlung-zu-den-klimakosten"
-				class="underline">Umweltbundesamt.de</a
-			>
+			{@html v.sourceGenerationalJustice}
 		</p>
 	</div>
 </div>

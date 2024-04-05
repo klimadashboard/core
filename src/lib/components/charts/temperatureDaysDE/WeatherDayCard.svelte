@@ -10,15 +10,24 @@
 	export let icon;
 	export let color;
 	export let key;
+	export let selectedReferenceYears;
+	export let earliestPossibleYear;
+	export let latestPossibleYear;
 
 	let chartHeight;
 	let chartWidth;
 
-	$: totalForKeyCurrentYear = selectedStationData[selectedStationData.length - 1][key];
-	$: currentYear = selectedStationData[selectedStationData.length - 1].year;
+	$: totalForKeyCurrentYear = !selectedStationData?.length ? 0 : selectedStationData.find(data => data.year == latestPossibleYear)[key];
+	$: currentYear = latestPossibleYear;
 	$: timestamp = dayjs(selectedStationData[selectedStationData.length - 1].endDate).format('DD.MM');
-	const firstYear = 1961;
-	const lastYear = 1990;
+	$: firstYear =
+		[1961, 1991].indexOf(selectedReferenceYears) == -1
+			? earliestPossibleYear
+			: selectedReferenceYears;
+	$: lastYear =
+		[1961, 1991].indexOf(selectedReferenceYears) == -1
+			? latestPossibleYear
+			: selectedReferenceYears + 29;
 	$: totalDays = selectedStationData
 		// .filter((d) => dayjs(d.endDate).year() >= firstYear && dayjs(d.endDate).year() <= lastYear)
 		.filter((d) => d.year >= firstYear && d.year <= lastYear)
@@ -55,8 +64,12 @@
 					>{totalForKeyCurrentYear}</text
 				>
 				<g transform="translate({totalForKeyCurrentYear.toString().length * 36},0)">
+					{#if latestPossibleYear == new Date().getFullYear()}
 					<text class="font-semibold fill-current" y="-18">{title} bisher</text>
-					<text class="font-semibold fill-current">im Jahr {currentYear}</text>
+					{:else}
+					<text class="font-semibold fill-current" y="-18">{title}</text>
+					{/if}
+					<text class="font-semibold fill-current">im Jahr {latestPossibleYear}</text>
 				</g>
 			</g>
 
@@ -67,7 +80,11 @@
 					>{totalForKeyHistoricalAverage}</text
 				>
 				<g transform="translate({totalForKeyHistoricalAverage.toString().length * 36},0)">
+					{#if latestPossibleYear == new Date().getFullYear()}
+					<text class="font-semibold fill-current" y="-18">{title} bis {timestamp} im</text>
+					{:else}
 					<text class="font-semibold fill-current" y="-18">{title} im</text>
+					{/if}
 					<text class="font-semibold fill-current">Durchschnitt {firstYear} – {lastYear}</text>
 				</g>
 			</g>

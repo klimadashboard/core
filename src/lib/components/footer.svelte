@@ -198,7 +198,6 @@
 	</div>
 	<div class="bg-gray-900 py-4 flex">
 		<div class="mx-auto flex items-center space-x-8 opacity-50 hover:opacity-80 transition">
-			<a href="https://klimadashboard.org" class="ml-2" target="_blank">Über uns</a>
 			<svg
 				width="159"
 				height="80"
@@ -222,7 +221,10 @@
 					fill="#F5F5F5"
 				/>
 			</svg>
+			<a href="https://klimadashboard.org" class="ml-2" target="_blank">Über uns</a>
+
 			<a href="https://klimadashboard.org/impressum" target="_blank">Impressum</a>
+			<a href="https://klimadashboard.org/datenschutz" target="_blank">Datenschutz</a>
 		</div>
 	</div>
 </footer>

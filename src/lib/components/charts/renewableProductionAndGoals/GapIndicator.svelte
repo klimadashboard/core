@@ -63,7 +63,7 @@
 			count = (gap * 1000000) / 20;
 			area = count * 200;
 		} else if (key == 'windkraft') {
-			count = (gap * 1000000000) / 11250000;
+			count = (gap * 1000000000) / 12500000;
 			area = count * 2500;
 		}
 		return [Math.round(count / monthsLeftUntil2030), Math.round(area), Math.round(count)];

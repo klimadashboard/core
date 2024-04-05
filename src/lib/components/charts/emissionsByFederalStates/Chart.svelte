@@ -10,6 +10,9 @@
 	import { fade } from 'svelte/transition';
 	import formatPercentage from '$lib/stores/formatPercentage';
 
+	export let maxYear;
+	export let data;
+
 	$: sectors = [
 		{
 			key: 'energy_co2e_t_percapita',
@@ -55,8 +58,6 @@
 		}
 	];
 
-	export let data;
-
 	$: height = 200;
 	$: width = 400;
 
@@ -83,7 +84,7 @@
 	let chartWidth;
 	let chartHeight;
 
-	$: selectedYear = 2020;
+	$: selectedYear = maxYear;
 
 	$: selectedStates = data
 		.filter((d) => d.year == selectedYear)
@@ -236,7 +237,7 @@
 			<input
 				type="range"
 				min="1990"
-				max="2020"
+				max={maxYear}
 				bind:value={selectedYear}
 				aria-label="Jahr auswählen"
 			/>
