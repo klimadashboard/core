@@ -138,7 +138,7 @@
 				{#each companies as company}
 					{#if company.sector === sector}
 						<button
-							class="flex items-center rounded-full font-semibold tracking-wide px-4 py-2 text-black text-xs {company.selected
+							class="flex items-center rounded-xl font-semibold tracking-wide px-4 py-2 gap-2 text-black text-xs {company.selected
 								? 'border-2 border-black'
 								: 'border-2 border-gray-300'}"
 							on:mousedown={() => onClickCompany(company)}
@@ -146,13 +146,18 @@
 							title={company.name}
 						>
 							<img
+								src="../icons/emission-sectors/{company.icon}.svg"
+								alt="Energy"
+								height="60"
+								class="h-4"
+							/>
+							<img
 								src="../icons/atx-companies/{company.logo}.svg"
 								alt={company.logo}
 								width="60"
 								height="60"
 								class="inline-block h-6 object-contain"
 							/>
-							<!-- <span class="ml-2">{company.name}</span> -->
 						</button>
 					{/if}
 				{/each}

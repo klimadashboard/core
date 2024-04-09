@@ -9,6 +9,7 @@ export default [
 		sector: 'Energie und Öl',
 		sector_old: 'Erdöl und Erdgas',
 		logo: 'omv',
+		icon: 'GasStationIcon',
 		weight: 15.7,
 		aspectRatio: 1.36
 	},
@@ -18,6 +19,7 @@ export default [
 		sector: 'Energie und Öl',
 		sector_old: 'Stromversorger',
 		logo: 'verbund',
+		icon: 'GasStationIcon',
 		weight: 15.29,
 		aspectRatio: 4.6
 	},
@@ -26,6 +28,7 @@ export default [
 		name: 'Erste Group Bank AG',
 		sector: 'Banken und Versicherungen',
 		logo: 'erste-bank',
+		icon: 'BankBuildingIcon',
 		weight: 13.88,
 		aspectRatio: 2.27
 	},
@@ -35,6 +38,7 @@ export default [
 		sector: 'Technik und Maschinen',
 		sector_old: 'Produktionstechnik und Maschinen',
 		logo: 'andritz',
+		icon: 'SettingsCogIcon',
 		weight: 6.52,
 		aspectRatio: 4.15
 	},
@@ -43,6 +47,7 @@ export default [
 		name: 'Voestalpine AG',
 		sector: 'Bergbau und Metalle',
 		logo: 'voestalpine',
+		icon: 'BulldozerIcon',
 		weight: 5.88,
 		aspectRatio: 4.61
 	},
@@ -51,6 +56,7 @@ export default [
 		name: 'Raiffeisen Bank International AG',
 		sector: 'Banken und Versicherungen',
 		logo: 'raiffeisen',
+		icon: 'BankBuildingIcon',
 		weight: 5.19,
 		aspectRatio: 3.57
 	},
@@ -60,6 +66,7 @@ export default [
 		sector: 'Immobilien',
 		sector_old: 'Konstruktion',
 		logo: 'strabag',
+		icon: 'RealEstateIcon',
 		weight: 4.38,
 		aspectRatio: 3.24
 	},
@@ -69,6 +76,7 @@ export default [
 		sector: 'Energie und Öl',
 		sector_old: 'Energieversorgung',
 		logo: 'evn',
+		icon: 'GasStationIcon',
 		weight: 4.01,
 		aspectRatio: 2.7
 	},
@@ -77,6 +85,7 @@ export default [
 		name: 'BAWAG Group AG',
 		sector: 'Banken und Versicherungen',
 		logo: 'bawag',
+		icon: 'BankBuildingIcon',
 		weight: 3.92,
 		aspectRatio: 1.74
 	},
@@ -85,6 +94,7 @@ export default [
 		name: 'Vienna Insurance Group AG',
 		sector: 'Banken und Versicherungen',
 		logo: 'vienna',
+		icon: 'BankBuildingIcon',
 		weight: 3.6,
 		aspectRatio: 2.16
 	},
@@ -93,6 +103,7 @@ export default [
 		name: 'Mayr-Melnhof Karton AG',
 		sector: 'Verpackung',
 		logo: 'mayr-melnhof',
+		icon: 'PackageIcon',
 		weight: 3.28,
 		aspectRatio: 1.0
 	},
@@ -101,6 +112,7 @@ export default [
 		name: 'Wienerberger AG',
 		sector: 'Baustoffe',
 		logo: 'wienerberger',
+		icon: 'BrickIcon',
 		weight: 3.21,
 		aspectRatio: 6.38
 	},
@@ -109,6 +121,7 @@ export default [
 		name: 'CA Immobilien Anlagen AG',
 		sector: 'Immobilien',
 		logo: 'ca',
+		icon: 'RealEstateIcon',
 		weight: 2.73,
 		aspectRatio: 5.1
 	},
@@ -117,6 +130,7 @@ export default [
 		name: 'Uniqa Insurance Group AG',
 		sector: 'Banken und Versicherungen',
 		logo: 'uniqa',
+		icon: 'BankBuildingIcon',
 		weight: 2.7,
 		aspectRatio: 1.28
 	},
@@ -126,6 +140,7 @@ export default [
 		sector: 'Sonstige',
 		sector_old: 'Transport',
 		logo: 'post',
+		icon: 'DotsIcon',
 		weight: 2.52,
 		aspectRatio: 3.55
 	},
@@ -134,6 +149,7 @@ export default [
 		name: 'Immofinanz AG',
 		sector: 'Immobilien',
 		logo: 'immofinanz',
+		icon: 'RealEstateIcon',
 		weight: 1.98,
 		aspectRatio: 12.5
 	},
@@ -143,6 +159,7 @@ export default [
 		sector: 'Baustoffe',
 		sector_old: 'Chemie',
 		logo: 'lenzing',
+		icon: 'BrickIcon',
 		weight: 1.8,
 		aspectRatio: 2.2
 	},
@@ -152,6 +169,7 @@ export default [
 		sector: 'Technik und Maschinen',
 		sector_old: 'Hardware und Ausrüstung',
 		logo: 'ats',
+		icon: 'SettingsCogIcon',
 		weight: 1.17,
 		aspectRatio: 1.75
 	},
@@ -161,6 +179,7 @@ export default [
 		sector: 'Sonstige',
 		sector_old: 'Lebensmittel, Getränke und Tabak',
 		logo: 'do+co',
+		icon: 'DotsIcon',
 		weight: 1.16,
 		aspectRatio: 1.53
 	},
@@ -170,6 +189,7 @@ export default [
 		sector: 'Energie und Öl',
 		sector_old: 'Erdöl und Erdgas',
 		logo: 'schoeller-bleckmann',
+		icon: 'GasStationIcon',
 		weight: 1.05,
 		aspectRatio: 2.85
 	}
