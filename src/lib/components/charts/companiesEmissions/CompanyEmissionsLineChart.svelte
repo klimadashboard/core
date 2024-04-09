@@ -100,7 +100,7 @@
 		{labels}
 		showTotal={isSingleCompanySelected}
 		showAreas={isSingleCompanySelected}
-		showDots={isSingleCompanySelected}
+		showDots={!isSingleCompanySelected}
 		visualisation={isSingleCompanySelected ? 'stacked' : 'non-stacked'}
 		marginLeft={50}
 		xTicksInterval={2}

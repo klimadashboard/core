@@ -6,7 +6,7 @@ export default [
 	{
 		id: 1,
 		name: 'OMV AG',
-		sector: 'Energie und Öl',
+		sector: 'Energie & Öl',
 		sector_old: 'Erdöl und Erdgas',
 		logo: 'omv',
 		icon: 'GasStationIcon',
@@ -16,7 +16,7 @@ export default [
 	{
 		id: 2,
 		name: 'Verbund AG',
-		sector: 'Energie und Öl',
+		sector: 'Energie & Öl',
 		sector_old: 'Stromversorger',
 		logo: 'verbund',
 		icon: 'GasStationIcon',
@@ -26,7 +26,7 @@ export default [
 	{
 		id: 3,
 		name: 'Erste Group Bank AG',
-		sector: 'Banken und Versicherungen',
+		sector: 'Banken & Versicherungen',
 		logo: 'erste-bank',
 		icon: 'BankBuildingIcon',
 		weight: 13.88,
@@ -35,7 +35,7 @@ export default [
 	{
 		id: 4,
 		name: 'Andritz AG',
-		sector: 'Technik und Maschinen',
+		sector: 'Technik & Maschinen',
 		sector_old: 'Produktionstechnik und Maschinen',
 		logo: 'andritz',
 		icon: 'SettingsCogIcon',
@@ -45,7 +45,7 @@ export default [
 	{
 		id: 5,
 		name: 'Voestalpine AG',
-		sector: 'Bergbau und Metalle',
+		sector: 'Bergbau & Metalle',
 		logo: 'voestalpine',
 		icon: 'BulldozerIcon',
 		weight: 5.88,
@@ -54,7 +54,7 @@ export default [
 	{
 		id: 6,
 		name: 'Raiffeisen Bank International AG',
-		sector: 'Banken und Versicherungen',
+		sector: 'Banken & Versicherungen',
 		logo: 'raiffeisen',
 		icon: 'BankBuildingIcon',
 		weight: 5.19,
@@ -73,7 +73,7 @@ export default [
 	{
 		id: 8,
 		name: 'EVN AG',
-		sector: 'Energie und Öl',
+		sector: 'Energie & Öl',
 		sector_old: 'Energieversorgung',
 		logo: 'evn',
 		icon: 'GasStationIcon',
@@ -83,7 +83,7 @@ export default [
 	{
 		id: 9,
 		name: 'BAWAG Group AG',
-		sector: 'Banken und Versicherungen',
+		sector: 'Banken & Versicherungen',
 		logo: 'bawag',
 		icon: 'BankBuildingIcon',
 		weight: 3.92,
@@ -92,7 +92,7 @@ export default [
 	{
 		id: 10,
 		name: 'Vienna Insurance Group AG',
-		sector: 'Banken und Versicherungen',
+		sector: 'Banken & Versicherungen',
 		logo: 'vienna',
 		icon: 'BankBuildingIcon',
 		weight: 3.6,
@@ -128,7 +128,7 @@ export default [
 	{
 		id: 14,
 		name: 'Uniqa Insurance Group AG',
-		sector: 'Banken und Versicherungen',
+		sector: 'Banken & Versicherungen',
 		logo: 'uniqa',
 		icon: 'BankBuildingIcon',
 		weight: 2.7,
@@ -166,7 +166,7 @@ export default [
 	{
 		id: 18,
 		name: 'Austria Technologie & Systemtechnik AG',
-		sector: 'Technik und Maschinen',
+		sector: 'Technik & Maschinen',
 		sector_old: 'Hardware und Ausrüstung',
 		logo: 'ats',
 		icon: 'SettingsCogIcon',
@@ -186,7 +186,7 @@ export default [
 	{
 		id: 20,
 		name: 'Schoeller-Bleckmann Oilfield Equipment AG',
-		sector: 'Energie und Öl',
+		sector: 'Energie & Öl',
 		sector_old: 'Erdöl und Erdgas',
 		logo: 'schoeller-bleckmann',
 		icon: 'GasStationIcon',

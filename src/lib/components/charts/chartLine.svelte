@@ -307,7 +307,7 @@
 			{#each keys as key, i}
 				{#if showZeroValuesInLegend || data[selectedIndex][key] > 0}
 					<div
-						class="font-semibold tracking-wide px-2 pt-1 text-white text-xs rounded-full"
+						class="font-semibold tracking-wide px-2 py-1 text-white text-xs rounded-full"
 						style="background-color:{colors[i]}"
 					>
 						<span class="uppercase">{labels[i]}</span>

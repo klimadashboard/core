@@ -8,6 +8,7 @@
 
 	let selectedScopes = '1';
 	let selectedYear = '2020';
+	let selectedSector = '';
 	let rawData;
 	let availableYears;
 	let isFocusView = true;
@@ -22,7 +23,13 @@
 		};
 	});
 
-	$: sectors = Array.from(new Set(atxCompanies.map((company) => company.sector)));
+	// $: sectors = Array.from(new Set(atxCompanies.map((company) => [company.sector)));
+	$: sectors = atxCompanies.reduce((accumulator, company) => {
+		if (!accumulator.some((item) => item.name === company.sector && item.icon === company.icon)) {
+			accumulator.push({ name: company.sector, icon: company.icon });
+		}
+		return accumulator;
+	}, []);
 
 	$: if (isFocusView) {
 		deselectAll();
@@ -129,39 +136,58 @@
 
 	<div class="flex flex-wrap">
 		{#each sectors as sector}
-			<div
+			<button
 				class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2"
 				aria-label={sector}
-				title={sector}
+				title={sector.name}
+				on:click={() => (selectedSector = sector.name)}
 			>
-				<span class="font-semibold tracking-wide text-gray-600">{sector}</span>
-				{#each companies as company}
-					{#if company.sector === sector}
-						<button
-							class="flex items-center rounded-xl font-semibold tracking-wide px-4 py-2 gap-2 text-black text-xs {company.selected
-								? 'border-2 border-black'
-								: 'border-2 border-gray-300'}"
-							on:mousedown={() => onClickCompany(company)}
-							aria-label={company.name}
-							title={company.name}
-						>
-							<img
-								src="../icons/emission-sectors/{company.icon}.svg"
-								alt="Energy"
-								height="60"
-								class="h-4"
-							/>
-							<img
-								src="../icons/atx-companies/{company.logo}.svg"
-								alt={company.logo}
-								width="60"
-								height="60"
-								class="inline-block h-6 object-contain"
-							/>
-						</button>
-					{/if}
-				{/each}
-			</div>
+				<img
+					src="../icons/emission-sectors/{sector.icon}.svg"
+					alt="Energy"
+					height="60"
+					class="h-4"
+				/>
+				<span class="font-semibold tracking-wide text-gray-600">{sector.name}</span>
+			</button>
+		{/each}
+		<button
+			class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2"
+			aria-label="all"
+			title="All Sectors"
+			on:click={() => (selectedSector = '')}
+		>
+			<img src="../icons/emission-sectors/DotsIcon.svg" alt="Energy" height="60" class="h-4" />
+			<span class="font-semibold tracking-wide text-gray-600">All</span>
+		</button>
+	</div>
+	<br />
+	<div class="flex flex-wrap gap-2">
+		{#each companies as company}
+			{#if company.sector === selectedSector || selectedSector === ''}
+				<button
+					class="flex items-center rounded-xl font-semibold tracking-wide px-4 py-1.5 gap-2 text-black text-xs {company.selected
+						? 'border-2 border-black'
+						: 'border-2 border-gray-300'}"
+					on:mousedown={() => onClickCompany(company)}
+					aria-label={company.name}
+					title={company.name}
+				>
+					<img
+						src="../icons/emission-sectors/{company.icon}.svg"
+						alt="Energy"
+						height="60"
+						class="h-4"
+					/>
+					<img
+						src="../icons/atx-companies/{company.logo}.svg"
+						alt={company.logo}
+						width="60"
+						height="60"
+						class="inline-block h-6 object-contain"
+					/>
+				</button>
+			{/if}
 		{/each}
 	</div>
 
