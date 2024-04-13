@@ -7,6 +7,7 @@
 </script>
 
 <label class="flex items-center cursor-pointer">
+	<span class="mr-2">Quick Switch</span>
 	<div class="relative">
 		<input
 			type="checkbox"
@@ -24,7 +25,6 @@
 			class:dot-checked={isChecked}
 		/>
 	</div>
-	<span class="ml-3">{isChecked ? 'Ein Unternehmen im Fokus' : 'Mehrere Unternehmen im Vergleich'}</span>
 </label>
 
 <style>

@@ -9,11 +9,10 @@
 	let selectedScopes = '1';
 	let selectedYear = '2020';
 	let selectedSector = '';
+	let isAllSectorSelected = false;
 	let rawData;
 	let availableYears;
 	let isFocusView = true;
-
-	// $: console.log('companyId', $companyId);
 
 	// use companies data with `selected: true` as default
 	$: companies = atxCompanies.map((company) => {
@@ -31,23 +30,24 @@
 		return accumulator;
 	}, []);
 
-	$: if (isFocusView) {
-		deselectAll();
-		companies[1].selected = true;
-	}
-
-	// $: if (!isFocusView) {
-	// 	selectAll();
-	// }
-
-	// $: console.log(companies.map((c) => c.selected));
-
 	function selectAll() {
-		companies = companies.map((company) => ({ ...company, selected: true }));
+		companies = companies.map((company) => {
+			if (company.sector === selectedSector || selectedSector === '') {
+				return { ...company, selected: true };
+			} else {
+				return company;
+			}
+		});
 	}
 
 	function deselectAll() {
-		companies = companies.map((company) => ({ ...company, selected: false }));
+		companies = companies.map((company) => {
+			if (company.sector === selectedSector || selectedSector === '') {
+				return { ...company, selected: false };
+			} else {
+				return company;
+			}
+		});
 	}
 
 	function onClickCompany(company) {
@@ -118,7 +118,7 @@
 			disabled={allSelected || isFocusView}
 			on:click={() => {
 				selectAll();
-			}}>Alle auswählen</button
+			}}>Alle sichtbaren auswählen</button
 		>
 		<button
 			class="text-blue underline disabled:opacity-50"
@@ -126,7 +126,7 @@
 			on:click={() => {
 				deselectAll();
 			}}
-			>Alle abwählen
+			>Alle sichtbaren abwählen
 		</button>
 		<div class="ml-auto">
 			<ViewSwitch bind:isChecked={isFocusView} />
@@ -137,10 +137,16 @@
 	<div class="flex flex-wrap">
 		{#each sectors as sector}
 			<button
-				class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2"
+				class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2 {selectedSector ===
+				sector.name
+					? 'bg-gray-300'
+					: 'bg-gray-100'}"
 				aria-label={sector}
 				title={sector.name}
-				on:click={() => (selectedSector = sector.name)}
+				on:click={() => {
+					selectedSector = sector.name;
+					isAllSectorSelected = false;
+				}}
 			>
 				<img
 					src="../icons/emission-sectors/{sector.icon}.svg"
@@ -152,10 +158,15 @@
 			</button>
 		{/each}
 		<button
-			class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2"
+			class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2 {isAllSectorSelected
+				? 'bg-gray-300'
+				: 'bg-gray-100'}"
 			aria-label="all"
 			title="All Sectors"
-			on:click={() => (selectedSector = '')}
+			on:click={() => {
+				selectedSector = '';
+				isAllSectorSelected = !isAllSectorSelected;
+			}}
 		>
 			<img src="../icons/emission-sectors/DotsIcon.svg" alt="Energy" height="60" class="h-4" />
 			<span class="font-semibold tracking-wide text-gray-600">All</span>
