@@ -39,7 +39,6 @@
 		if (getSumForYear(year) > 0) {
 			data = Array.from(Array(getSumForYear(year)), (_, x) => {
 				usedBudget += blockValue;
-				console.log(usedBudget);
 				return {
 					x: x,
 					type: usedBudget > currentScenario.value ? 'overused' : 'historical'
@@ -84,7 +83,6 @@
 
 	$: currentScenario = scenarios.find((d) => d.key == selectedScenario) || scenarios[0];
 	let selectedScenario;
-	$: console.log(selectedScenario);
 
 	let types = [
 		{

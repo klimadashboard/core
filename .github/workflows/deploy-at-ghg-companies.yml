@@ -3,7 +3,7 @@ name: 'Deploy at-ghg-companies branch'
 on:
   push:
     branches:
-      - at-ghg-companies
+      - feat/at-ghg-companies
 
 jobs:
   ploi-deploy:

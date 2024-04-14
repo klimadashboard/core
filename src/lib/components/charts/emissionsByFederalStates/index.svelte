@@ -19,7 +19,6 @@
 						(d) => d.region !== 'Austria' && d.classification == 'Gesamt' && d.total_co2e_t
 					);
 					maxYear = [...dataset].sort((a, b) => b.year - a.year)[0].year;
-					console.log(maxYear);
 				}
 			}
 		}

@@ -1,6 +1,5 @@
 <script>
 	export let block;
-	console.log(block);
 </script>
 
 <div class="container my-8">

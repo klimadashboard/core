@@ -88,7 +88,6 @@
 
 	const createVariables = function (input) {
 		if (input) {
-			console.log(input);
 			const variable = {};
 			for (var i = 0; i < input.length; i++) {
 				variable[input[i].label] = input[i].text;

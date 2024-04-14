@@ -205,3 +205,20 @@ sub {
 	font-size: 0.6em;
 	@apply font-medium;
 }
+
+.block-list {
+	@apply text-lg container;
+}
+
+.block-list ul {
+	@apply list-outside max-w-2xl space-y-2 -translate-x-1.5;
+	list-style-type: '- ';
+}
+
+.block-list li {
+	@apply pl-1;
+}
+
+.block-list li::marker {
+	@apply text-gray-400;
+}
