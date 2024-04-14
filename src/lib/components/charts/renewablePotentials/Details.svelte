@@ -5,11 +5,13 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	import dayjs from 'dayjs';
 	import { fade } from 'svelte/transition';
+	import Papa from 'papaparse';
 
     export let type;
     export let dataset;
     export let potential_2030;
     export let potential_techn;
+	export let goals;
 
     
 	const margin = { top: 20, right: 10, left: 10, bottom: 10 };
@@ -18,10 +20,15 @@
 	let unit = 'TWh';
 
 
+	$: minYear = dataset[0].year;
+	$: maxYear = Math.max(Math.max(...goals.map(g => +g.goal_year).filter(x => !isNaN(x))), 2030);
+	$: minValue = 0;
+	$: maxValue = Math.max(Math.max(...goals.map(g => +g.goal_amount).filter(x => !isNaN(x))), potential_2030);
+
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
-	$: xScale = dataset ? d3.scaleTime().range([0, innerChartWidth]).domain([new Date(dataset[0].year, 1, 1), new Date(2030, 12, 31)]) : null;
-	$: yScale = dataset ? d3.scaleLinear().range([innerChartHeight, 0]).domain([0, potential_techn]): null;
+	$: xScale = dataset ? d3.scaleTime().range([0, innerChartWidth]).domain([new Date(minYear, 1, 1), new Date(maxYear, 12, 31)]) : null;
+	$: yScale = dataset ? d3.scaleLinear().range([innerChartHeight, 0]).domain([minValue, maxValue]): null;
     $: line = d3
         .line()
         .x((d) => xScale(new Date(d.year, 1, 1)))
@@ -37,7 +44,7 @@
 		{@html type.icon}
 	</div>
 	<div class="h-auto">
-		<div class="relative w-full h-32" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
+		<div class="relative w-full h-48" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
@@ -144,6 +151,26 @@
 
 							<circle r="5" fill={"grey"} />
 						</g> -->
+						
+						{#if goals != null}
+							<g>
+								{#each goals as goal, index}
+									{@const sourceYear = index > 0 ? +goals[index-1].goal_year : +goal.source_year} <!--take last goal's year and value if there are several goals defined-->
+									{@const sourceAmount = index > 0 ? +goals[index-1].goal_amount : +dataset.find(d => +d.year === sourceYear)?.value}
+									{@const goalYear = +goal.goal_year}
+									{@const goalAmount = +goal.goal_amount}
+									{@const asdf = console.log(sourceYear, sourceAmount, goalYear, goalAmount, "TODO: remove log")}
+									{#if !isNaN(sourceYear) && !isNaN(sourceAmount) && !isNaN(goalYear) && !isNaN(goalAmount)}
+										<line x1={xScale(new Date(sourceYear, 1, 1))} y1={yScale(sourceAmount)} x2={xScale(new Date(goalYear, 1, 1))} y2={yScale(goalAmount)} style="stroke:grey; stroke-width:2" />
+										<circle cx={xScale(new Date(goalYear, 1, 1))} cy={yScale(goalAmount)} r="5" style="fill: grey;" />
+									{/if}
+								{/each}
+							</g>
+						{/if}
+						{#if potential_2030 != null}
+							<line x1={xScale(new Date(minYear, 1, 1))} y1={yScale(potential_2030)} x2={xScale(new Date(2030+1, 1, 1))} y2={yScale(potential_2030)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" />
+							<line x1={xScale(new Date(2030, 1, 1))} y1={yScale(minValue)} x2={xScale(new Date(2030, 1, 1))} y2={yScale(potential_2030*1.12)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" />
+						{/if}
 					</g>
 				</svg>
 			{/if}

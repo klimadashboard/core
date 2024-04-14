@@ -79,8 +79,11 @@
 	let dataset;
 	let selectedBundesland = "Kärnten";
 
+	let goals;
+
 	// onMount(() => {
 		// https://docs.google.com/spreadsheets/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/edit?usp=drive_link
+		// Potentiale
 		Papa.parse(
 			// '/data_temp/EE-Potentiale.csv',
 			'https://docs.google.com/spreadsheets/u/8/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/export?format=csv&id=16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs&gid=0',
@@ -150,6 +153,7 @@
 		);
 		
 		// https://docs.google.com/spreadsheets/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/edit#gid=271008028
+		// Energieerzeugung
 		Papa.parse(
 			// '/data_temp/pvWindWasser_alleBundeslaender_ab1988.csv',
 			'https://docs.google.com/spreadsheets/u/8/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/export?format=csv&id=1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ&gid=271008028',
@@ -161,6 +165,23 @@
 				complete: function (results) {
 					if (results) {
 						dataset = results.data;
+					}
+				}
+			}
+		);
+		
+		// https://docs.google.com/spreadsheets/d/1PxvyOSjPAl_5UikGPQpqqMyDPxF1GRpV8gb4mUfG9TQ/edit#gid=1951802472
+		// Ziele
+		Papa.parse(
+			'https://docs.google.com/spreadsheets/u/8/d/1PxvyOSjPAl_5UikGPQpqqMyDPxF1GRpV8gb4mUfG9TQ/export?format=csv&id=1PxvyOSjPAl_5UikGPQpqqMyDPxF1GRpV8gb4mUfG9TQ&gid=1951802472',
+			{
+				download: true,
+				dynamicTyping: true,
+				skipEmptyLines: true,
+				header: true,
+				complete: function (results) {
+					if (results) {
+						goals = results.data;
 					}
 				}
 			}
@@ -213,12 +234,13 @@
 					<Details {type}
 						potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
 						potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
+						goals={goals.filter((row) => row.state_name === selectedBundesland && row.energy_data_key === type.dataKey)}
 						dataset={energyByBundesland[selectedBundesland]?.map((row) => {
-						return {
-							year: row.year,
-							value: row[type.dataKey]
-						};
-					}).filter((row) => !isNaN(row.value) && row.value != null)} />
+							return {
+								year: row.year,
+								value: row[type.dataKey]
+							};
+						}).filter((row) => !isNaN(row.value) && row.value != null)} />
 				{/each}
 			</div>
 		{/if}
