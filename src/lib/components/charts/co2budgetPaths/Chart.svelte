@@ -51,7 +51,7 @@
 			return max;
 		}, 0) / thgFactor;
 	let lastTHG = dataHistoric[dataHistoric.length - 1].total_co2e_t / thgFactor;
-	let maxAxis = Math.ceil((maxTHG * 1.1) / 100) * 100;
+	let maxAxis = PUBLIC_VERSION == 'at' ? maxTHG * 1.1 : Math.ceil((maxTHG * 1.1) / 100) * 100;
 	let maxYear = dataPaths[dataPaths.length - 1].year + 5;
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;

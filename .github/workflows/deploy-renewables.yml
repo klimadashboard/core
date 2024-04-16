@@ -3,7 +3,7 @@ name: 'Deploy renewables branch'
 on:
   push:
     branches:
-      - at-renewables
+      - feat/at-renewables
 
 jobs:
   ploi-deploy:
