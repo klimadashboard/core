@@ -1,5 +1,6 @@
 <script>
 	// @ts-nocheck
+	import { onMount } from 'svelte';
 	import atxCompanies, { companyId } from '$lib/stores/companies';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -15,6 +16,7 @@
 	let availableYears;
 	let isFocusView = false;
 	let initialCompany = 'Erste Group Bank AG';
+	let isCompanyButtonHovered = false;
 
 	// use companies data with `selected: true` as default
 	$: companies = atxCompanies.map((company) => {
@@ -114,6 +116,11 @@
 		}
 	}
 	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', rawData);
+
+	onMount(() => {
+		// Add a 'hovered' property to each company
+		companies = companies.map((company) => ({ ...company, isButtonHovered: false }));
+	});
 </script>
 
 <div>
@@ -140,22 +147,22 @@
 
 	<!-- Sector Selector -->
 	<details>
-		<summary class="block font-semibold text-sm mb-1">Filter nach Kategorie</summary>
+		<summary class="flex block font-semibold text-sm mb-1">
+			<span class="mb-1">Filter nach Kategorie</span>
+			{#if selectedSector}
+				<button
+					class="inline-flex items-center justify-center font-semibold text-black text-xs"
+					aria-label="Clear Filter"
+					title="Clear Filter"
+					on:click={() => {
+						selectedSector = '';
+					}}
+				>
+					<span class="font-semibold tracking-wide text-red-800 pl-1">Clear</span>
+				</button>
+			{/if}
+		</summary>
 		<div class="flex flex-wrap">
-			<button
-				class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2 {isAllSectorSelected
-					? 'bg-gray-300'
-					: 'bg-gray-100'}"
-				aria-label="all"
-				title="All Sectors"
-				on:click={() => {
-					selectedSector = '';
-					isAllSectorSelected = !isAllSectorSelected;
-				}}
-			>
-				<img src="../icons/emission-sectors/DotsIcon.svg" alt="Energy" height="60" class="h-4" />
-				<span class="font-semibold tracking-wide text-gray-600">All</span>
-			</button>
 			{#each sectors as sector}
 				<button
 					class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2 {selectedSector ===
@@ -166,7 +173,6 @@
 					title={sector.name}
 					on:click={() => {
 						selectedSector = sector.name;
-						isAllSectorSelected = false;
 					}}
 				>
 					<img
@@ -195,6 +201,12 @@
 					on:mousedown={() => onClickCompany(company)}
 					aria-label={company.name}
 					title="{company.name} ({company.sector})"
+					on:mouseenter={() => {
+						company.isButtonHovered = true;
+					}}
+					on:mouseleave={() => {
+						company.isButtonHovered = false;
+					}}
 				>
 					<img
 						src="../icons/emission-sectors/{company.icon}.svg"
@@ -210,23 +222,43 @@
 						class="inline-block h-6 object-contain"
 					/>
 					{#if company.selected}
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="icon icon-tabler icons-tabler-outline icon-tabler-trash-x h-4"
-							><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7h16" /><path
-								d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"
-							/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /><path
-								d="M10 12l4 4m0 -4l-4 4"
-							/></svg
-						>
+						{#if company.isButtonHovered}
+							<!-- Delete Icon -->
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="darkred"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="icon icon-tabler icons-tabler-outline icon-tabler-trash-x h-4"
+								><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7h16" /><path
+									d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"
+								/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /><path
+									d="M10 12l4 4m0 -4l-4 4"
+								/>
+							</svg>
+						{:else}
+							<!-- Pin Icon -->
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="icon icon-tabler icons-tabler-outline icon-tabler-pin"
+								><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+									d="M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4"
+								/><path d="M9 15l-4.5 4.5" /><path d="M14.5 4l5.5 5.5" /></svg
+							>
+						{/if}
 					{/if}
 				</button>
 			{/if}
