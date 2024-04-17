@@ -17,11 +17,11 @@
 		/>
 		<div
 			class={isChecked
-				? 'block bg-blue-700 w-14 h-8 rounded-full'
-				: 'block bg-gray-300 w-14 h-8 rounded-full'}
+				? 'block bg-blue-700 w-10 h-6 rounded-full'
+				: 'block bg-gray-300 w-10 h-6 rounded-full'}
 		/>
 		<div
-			class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"
+			class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"
 			class:dot-checked={isChecked}
 		/>
 	</div>
