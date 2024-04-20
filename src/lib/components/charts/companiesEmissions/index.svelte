@@ -1,14 +1,16 @@
 <script>
 	// @ts-nocheck
-	import { onMount } from 'svelte';
+	// import { onMount } from 'svelte';
 	import atxCompanies, { companyId } from '$lib/stores/companies';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
-	import ViewSwitch from './ViewSwitch.svelte';
+	// import ViewSwitch from './ViewSwitch.svelte';
 	import CompanyClimateGoals from './CompanyClimateGoals.svelte';
+	import Chart from '../co2BudgetTimeline/Chart.svelte';
 
-	let selectedScopes = '1';
+	let scopes = ['1', '2', '3'];
+	let selectedScopes = ['1'];
 	let selectedYear = '2020';
 	let selectedSector = '';
 	let rawData;
@@ -115,6 +117,18 @@
 	}
 	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', rawData);
 
+	function toggleScope(scope) {
+		if (selectedScopes.length === 1 && selectedScopes[0] === scope) return;
+		const index = selectedScopes.indexOf(scope);
+		if (index === -1) {
+			selectedScopes = [...selectedScopes, scope];
+		} else {
+			selectedScopes.splice(index, 1);
+			selectedScopes = selectedScopes;
+			console.log('🚀 ~ toggleScope ~ selectedScopes:', selectedScopes);
+		}
+	}
+
 	// onMount(() => {
 	// 	// Add a 'hovered' property to each company
 	// 	companies = companies.map((company) => ({ ...company, isButtonHovered: false }));
@@ -122,88 +136,93 @@
 </script>
 
 <div>
+	<!-- Sector Selector -->
+	<!-- <details>
+		<summary> -->
+	<div class="flex block font-semibold text-sm mb-1">
+		<span class="mb-1">Filter nach Kategorie</span>
+		{#if selectedSector}
+			<button
+				class="inline-flex items-center justify-center font-semibold text-black text-xs"
+				aria-label="Clear Filter"
+				title="Clear Filter"
+				on:click={() => {
+					selectedSector = '';
+				}}
+			>
+				<span class="font-semibold tracking-wide text-red-800 pl-1">Clear</span>
+			</button>
+		{/if}
+	</div>
+	<!-- </summary> -->
+	<div class="flex flex-wrap mb-2">
+		{#each sectors as sector}
+			<button
+				class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
+					{selectedSector === sector.name ? 'text-black bg-gray-300' : 'text-gray-600 bg-gray-100'}"
+				aria-label={sector}
+				title={sector.name}
+				on:click={() => {
+					if (selectedSector === sector.name) {
+						selectedSector = '';
+					} else {
+						selectedSector = sector.name;
+					}
+				}}
+			>
+				<img
+					src="../icons/emission-sectors/{sector.icon}.svg"
+					alt="Energy"
+					height="60"
+					class="h-4"
+				/>
+				<span class="font-semibold tracking-wide">{sector.name}</span>
+			</button>
+		{/each}
+	</div>
+	<!-- </details> -->
+
+	<!-- Company Heading -->
 	<div class="flex mb-2">
-		<button
-			class="text-sm text-blue underline disabled:opacity-50 mr-2"
-			disabled={allSelected || isFocusView}
-			on:click={() => {
-				selectAll();
-			}}>Alle auswählen</button
-		>
-		<button
-			class="text-sm text-blue underline disabled:opacity-50"
-			disabled={allDeselected || isFocusView}
-			on:click={() => {
-				deselectAll();
-			}}
-			>Auswahl löschen
-		</button>
+		<p class="font-semibold text-sm">Unternehmen wählen</p>
+		<div class="flex text-sm underline disabled:opacity-50 text-underline gap-2 ml-6">
+			<button
+				disabled={allSelected || isFocusView}
+				on:click={() => {
+					selectAll();
+				}}
+			>
+				Alle auswählen
+			</button>
+			<button
+				disabled={allDeselected || isFocusView}
+				on:click={() => {
+					deselectAll();
+				}}
+			>
+				Auswahl löschen
+			</button>
+			<button
+				class="ml-6 {isFocusView ? 'text-agriculture' : 'text-energy'}"
+				on:click={() => (isFocusView = !isFocusView)}
+			>
+				{isFocusView ? 'Schnell wechseln ein' : 'Schnell wechseln aus'}
+			</button>
+		</div>
 		<div class="ml-auto">
-			<ViewSwitch bind:isChecked={isFocusView} />
+			<!-- <ViewSwitch bind:isChecked={isFocusView} /> -->
 		</div>
 	</div>
-
-	<!-- Sector Selector -->
-	<details>
-		<summary class="flex block font-semibold text-sm mb-1">
-			<span class="mb-1">Filter nach Kategorie</span>
-			{#if selectedSector}
-				<button
-					class="inline-flex items-center justify-center font-semibold text-black text-xs"
-					aria-label="Clear Filter"
-					title="Clear Filter"
-					on:click={() => {
-						selectedSector = '';
-					}}
-				>
-					<span class="font-semibold tracking-wide text-red-800 pl-1">Clear</span>
-				</button>
-			{/if}
-		</summary>
-		<div class="flex flex-wrap">
-			{#each sectors as sector}
-				<button
-					class="inline-flex items-center justify-center rounded-full font-semibold px-4 py-1 text-black text-xs bg-gray-100 mr-2 gap-2 mb-2 {selectedSector ===
-					sector.name
-						? 'bg-gray-300'
-						: 'bg-gray-100'}"
-					aria-label={sector}
-					title={sector.name}
-					on:click={() => {
-						selectedSector = sector.name;
-					}}
-				>
-					<img
-						src="../icons/emission-sectors/{sector.icon}.svg"
-						alt="Energy"
-						height="60"
-						class="h-4"
-					/>
-					<span class="font-semibold tracking-wide text-gray-600">{sector.name}</span>
-				</button>
-			{/each}
-		</div>
-	</details>
-
-	<br />
-
-	<!-- Company Selector -->
-	<!-- <p class="block font-semibold text-sm mb-1">Wähle Unternehmen:</p> -->
-	<div class="flex flex-wrap gap-2">
+	<!-- Companies -->
+	<div class="flex flex-wrap gap-2 mb-4">
 		{#each companies as company}
 			{#if company.sector === selectedSector || company.selected || selectedSector === ''}
 				<button
-					class="flex items-center rounded-xl font-semibold tracking-wide px-4 py-1.5 gap-2 text-black text-xs
+					class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
 					{company.selected ? 'border-2 border-black' : 'border-2 border-gray-300'}"
 					on:mousedown={() => onClickCompany(company)}
 					aria-label={company.name}
 					title="{company.name} ({company.sector})"
-					on:mouseenter={() => {
-						company.isButtonHovered = true;
-					}}
-					on:mouseleave={() => {
-						company.isButtonHovered = false;
-					}}
 				>
 					<img
 						src="../icons/emission-sectors/{company.icon}.svg"
@@ -218,10 +237,10 @@
 						height="60"
 						class="inline-block h-6 object-contain"
 					/>
-					{#if company.selected}
-						<!-- {#if company.isButtonHovered} -->
-						<!-- Delete Icon -->
-						<svg
+					<!-- {#if company.selected} -->
+					<!-- {#if company.isButtonHovered} -->
+					<!-- Delete Icon -->
+					<!-- <svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="24"
 							height="24"
@@ -237,10 +256,10 @@
 							/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /><path
 								d="M10 12l4 4m0 -4l-4 4"
 							/>
-						</svg>
-						<!-- {:else} -->
-						<!-- Pin Icon -->
-						<!-- <svg
+						</svg> -->
+					<!-- {:else} -->
+					<!-- Pin Icon -->
+					<!-- <svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="24"
 								height="24"
@@ -256,14 +275,14 @@
 								/><path d="M9 15l-4.5 4.5" /><path d="M14.5 4l5.5 5.5" /></svg
 							>
 						{/if} -->
-					{/if}
+					<!-- {/if} -->
 				</button>
 			{/if}
 		{/each}
 	</div>
 
 	<!-- Scope Selector -->
-	<div class="flex my-3 gap-1">
+	<!-- <div class="flex my-3 gap-1">
 		<label for="scopes" class="block font-semibold text-sm">Wähle den Scope:</label>
 		<select bind:value={selectedScopes} on:change={handleSelectScope}>
 			<option value="1">Scope 1</option>
@@ -272,15 +291,31 @@
 			<option value="12">Scope 1+2</option>
 			<option value="123">Scope 1+2+3</option>
 		</select>
+	</div> -->
+
+	<div class="flex flex-wrap mb-2">
+		<p class="font-semibold text-sm mr-4">Scopes wählen</p>
+		{#each scopes as scope}
+			<button
+				class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
+                {selectedScopes.includes(scope)
+					? 'text-black bg-gray-300'
+					: 'text-gray-600 bg-gray-100'}"
+				aria-label={scope}
+				on:click={() => toggleScope(scope)}
+			>
+				<span class="font-semibold tracking-wide">Scope {scope}</span>
+			</button>
+		{/each}
 	</div>
 
 	<!-- Chart -->
 	{#if rawData}
-		<div class="h-96">
+		<div class="h-72">
 			<CompanyEmissionsLineChart
 				{rawData}
 				selectedCompanies={companies.filter((company) => company.selected)}
-				selectedScopes={Array.from(selectedScopes).map((scope) => `scope${scope}`)}
+				selectedScopes={selectedScopes.map((scope) => `scope${scope}`)}
 				{selectedYear}
 			/>
 		</div>

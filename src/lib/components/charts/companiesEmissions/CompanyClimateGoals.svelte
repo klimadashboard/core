@@ -6,7 +6,7 @@
 
 	let companyGoalData = null;
 	let originalData = null;
-	const tableCellClasses = 'px-4 text-center';
+	const tableCellClasses = 'text-semibold text-sm px-4 text-center';
 
 	onMount(() => {
 		getData();
@@ -68,7 +68,7 @@
 							alt={companyMetaData.logo}
 							width="50"
 							height="50"
-							style="display: inline-block; width: 4em; height: 4em; padding: 0.5em; object-fit: contain;"
+							class="inline-block w-10 h-10 p-1 object-contain"
 							title={companyMetaData.name}
 						/>
 					</td>

@@ -7,8 +7,8 @@
 </script>
 
 <label class="flex items-center cursor-pointer">
-	<span class="mr-2">Quick Switch</span>
-	<div class="relative">
+	<label for="switch" class="text-sm mr-2">Quick Switch</label>
+	<div id="switch" class="relative">
 		<input
 			type="checkbox"
 			class="sr-only"

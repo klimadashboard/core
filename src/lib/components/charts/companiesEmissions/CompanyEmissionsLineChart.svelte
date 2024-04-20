@@ -74,7 +74,7 @@
 					: rawColors.slice(0, selectedCompanyNames.length);
 			} else {
 				keys = isSingleCompanySelected
-					? rawKeys.slice(0, selectedScopes.length)
+					? rawKeys.filter((key) => selectedScopes.includes(key))
 					: selectedCompanyNames;
 				labels = isSingleCompanySelected
 					? rawLabels.slice(0, selectedScopes.length)
