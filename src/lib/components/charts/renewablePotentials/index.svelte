@@ -77,9 +77,12 @@
 
 	
 	let dataset;
+	let minYear;
+	let maxYear;
 	let selectedBundesland = "Kärnten";
 
 	let goals;
+	let showTechn = false;
 
 	// onMount(() => {
 		// https://docs.google.com/spreadsheets/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/edit?usp=drive_link
@@ -165,6 +168,9 @@
 				complete: function (results) {
 					if (results) {
 						dataset = results.data;
+						const years = dataset?.map((row) => row.year)
+						minYear = Math.min(...years);
+						maxYear = Math.max(...years);
 					}
 				}
 			}
@@ -207,6 +213,8 @@
 	];
 	
 	$: activeView = 'overview';
+
+	$: selectedStartYear = minYear;
 	
 </script>
 
@@ -217,21 +225,30 @@
 		activeView = event.detail;
 	}}
 />
+<label
+	class="flex gap-1 text-sm items-center cursor-pointer {showTechn
+		? 'text-gray-700'
+		: 'text-gray-400'}"
+	style=""
+>
+	<span>Technisch mögliche Potentiale</span>
+	<input type="checkbox" bind:checked={showTechn} /></label
+>
 
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset}
 		{#if activeView==="overview"}
 			<div class="grid grid-cols-3 gap-3 my-3">
-				<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} do_select={false} />
+				<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} {showTechn} do_select={false} />
 			</div>
 		{/if}
 		{#if activeView==="details"}
 			<div class="grid grid-cols-9 gap-2 my-2">
-				<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} bind:selectedBundesland={selectedBundesland} />
+				<Chart {energyTypes} {energyByBundesland} {potentiale_2030} {bundeslaender} {potentiale_techn} {showTechn} bind:selectedBundesland={selectedBundesland} />
 			</div>
 			<div class="grid gap-4 p-2">
 				{#each energyTypes as type}
-					<Details {type}
+					<Details {type} {selectedStartYear}  {showTechn}
 						potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
 						potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
 						goals={goals.filter((row) => row.state_name === selectedBundesland && row.energy_data_key === type.dataKey)}
@@ -242,6 +259,16 @@
 							};
 						}).filter((row) => !isNaN(row.value) && row.value != null)} />
 				{/each}
+			</div>
+			<div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
+				<span>Startjahr auswählen</span>
+				<input
+					type="number"
+					min={minYear}
+					max={maxYear}
+					bind:value={selectedStartYear}
+					class="px-3 py-1 w-20 bg-gray-100 rounded-full"
+				/>
 			</div>
 		{/if}
 	{/if}

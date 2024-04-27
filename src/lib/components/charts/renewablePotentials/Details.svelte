@@ -12,6 +12,8 @@
     export let potential_2030;
     export let potential_techn;
 	export let goals;
+	export let selectedStartYear;
+	export let showTechn;
 
     
 	const margin = { top: 20, right: 10, left: 10, bottom: 10 };
@@ -20,10 +22,10 @@
 	let unit = 'TWh';
 
 
-	$: minYear = dataset[0].year;
-	$: maxYear = Math.max(Math.max(...goals.map(g => +g.goal_year).filter(x => !isNaN(x))), 2030);
-	$: minValue = 0;
-	$: maxValue = Math.max(Math.max(...goals.map(g => +g.goal_amount).filter(x => !isNaN(x))), potential_2030);
+	$: minYear = Math.max(dataset[0].year, selectedStartYear);
+	$: maxYear = Math.max(Math.max(...goals.map(g => +g.goal_year).filter(x => !isNaN(x))), 2035);
+	$: minValue = -0.2;
+	$: maxValue = showTechn ? potential_techn : Math.max(Math.max(...goals.map(g => +g.goal_amount).filter(x => !isNaN(x))), potential_2030);
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
@@ -122,15 +124,16 @@
 									repeatCount="indefinite"
 								/>
 							</circle>
-                            <text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade
+                            <text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade dy={5}
                                 >{formatNumber(
                                     Math.round(dataset[dataset.length - 1].value * 100) / 100
                                 )}
                                 {' ' + unit + ' '}
-                                Produktion im Zeitraum
+                                Produktion 
+								<!-- im Zeitraum
                                 <tspan x="16" y="16"
                                     >{dataset[0].year} - {dataset[dataset.length - 1].year}</tspan
-                                >
+                                > -->
                             </text>
 						</g>
 
@@ -163,13 +166,47 @@
 									{#if !isNaN(sourceYear) && !isNaN(sourceAmount) && !isNaN(goalYear) && !isNaN(goalAmount)}
 										<line x1={xScale(new Date(sourceYear, 1, 1))} y1={yScale(sourceAmount)} x2={xScale(new Date(goalYear, 1, 1))} y2={yScale(goalAmount)} style="stroke:grey; stroke-width:2" />
 										<circle cx={xScale(new Date(goalYear, 1, 1))} cy={yScale(goalAmount)} r="5" style="fill: grey;" />
+										
+										<text 
+											class="text-sm font-semibold text-gray-600 fill-current bg-white" 
+											x={xScale(new Date(goalYear, 1, 1))+16} 
+											y={yScale(goalAmount)} 
+											dy={5}
+											>{formatNumber(
+												Math.round(goalAmount * 100) / 100
+											)}
+											{' ' + unit + ' '}
+											Ziel bis {goalYear}
+											<!-- im Zeitraum
+											<tspan x="16" y="16"
+												>{dataset[0].year} - {dataset[dataset.length - 1].year}</tspan
+											> -->
+										</text>
 									{/if}
 								{/each}
 							</g>
 						{/if}
 						{#if potential_2030 != null}
-							<line x1={xScale(new Date(minYear, 1, 1))} y1={yScale(potential_2030)} x2={xScale(new Date(2030+1, 1, 1))} y2={yScale(potential_2030)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" />
-							<line x1={xScale(new Date(2030, 1, 1))} y1={yScale(minValue)} x2={xScale(new Date(2030, 1, 1))} y2={yScale(potential_2030*1.12)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" />
+							<text 
+								class="text-xl font-semibold text-gray-600 fill-current bg-white" 
+								x={xScale(new Date(2030, 1, 1))} 
+								y={yScale(potential_2030)}
+								dy={7}>
+								★ <tspan class="text-sm">Potential 2030</tspan>
+							</text>
+						{/if}
+						{#if potential_techn != null && showTechn}
+							<line x1={xScale(new Date(minYear, 1, 1))} y1={yScale(potential_techn)} x2={xScale(new Date(maxYear+5, 1, 1))} y2={yScale(potential_techn)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" />
+							<!-- <line x1={xScale(new Date(2030, 1, 1))} y1={yScale(minValue)} x2={xScale(new Date(2030, 1, 1))} y2={yScale(potential_techn*1.12)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" /> -->
+							
+							<text 
+								text-anchor="end"
+								class="text-sm text-gray-600 fill-current bg-white" 
+								x={xScale(new Date(maxYear+1, 1, 1))} 
+								y={yScale(potential_techn)}
+								dy={-3}>
+								Technisch möglich
+							</text>
 						{/if}
 					</g>
 				</svg>

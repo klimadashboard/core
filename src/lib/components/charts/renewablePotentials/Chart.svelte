@@ -10,6 +10,7 @@
 	export let potentiale_techn;
 	export let bundeslaender;
 	export let do_select = true;
+	export let showTechn;
 
 	let chartWidth;
 
@@ -34,6 +35,8 @@
 
 	$: chartHeight = chartWidth / 1.4;
 
+	$: ratio_data = showTechn ? potentiale_techn : potentiale_2030;
+
 	// $: hoverX = margin_bars.left;
 	// $: hoverY = margin.top;
 	let hoverType;
@@ -43,6 +46,13 @@
 
 {#each Object.keys(energyByBundesland) as bundesland, index}
 	{@const lastYear = getValuesOfLastYear(bundesland)}
+	{@const ratio_current_2030 = (ratio_to, dataKey) => {
+		let last_year_val = lastYear[dataKey];
+		if (isNaN(last_year_val)) {
+			last_year_val = toNumber(last_year_val.replaceAll(',', ''));
+		}
+		return last_year_val / ratio_to[bundesland][dataKey];
+	}}
 	<div class="rounded overflow-hidden div-bundesland {selectedBundesland === bundesland ? "selected" : ""}" 
 		on:click={() => { 
 			if(do_select)
@@ -59,6 +69,7 @@
 			<div class="relative w-full h-6" style="padding-left: {margin_bars.left}px;">{bundesland} {lastYear.year}</div>
 		{/if}
 		
+		
 		<div
 			class="bg-gray-100 relative w-full"
 			style="height: {chartHeight}px;"
@@ -70,11 +81,13 @@
 					<div class="absolute h-15 bg-gray-100" style="padding-left: {margin_bars.left}px; padding-right: {margin_bars.right}px; margin-left: {margin_bars.left}px; margin-right: {margin_bars.right}px; opacity:0.6;">
 						<b>{hoverType.label}</b>
 						<br>
-						{"Techn mögl: " + Math.round(potentiale_techn[hoverBundesland][hoverType.dataKey]*100)/100 + "TWh"}
+						{#if showTechn}
+							{"Techn mögl: " + Math.round(potentiale_techn[hoverBundesland][hoverType.dataKey]*100)/100 + "TWh"}
+							<br>
+						{/if}
+						{"Potential 2030: " + Math.round(potentiale_2030[hoverBundesland][hoverType.dataKey]*100)/100 + "TWh"}
 						<br>
-						{"Potentiale: " + Math.round(potentiale_2030[hoverBundesland][hoverType.dataKey]*100)/100 + "TWh"}
-						<br>
-						{"Derzeit: " + Math.round(lastYear[hoverType.dataKey]*100)/100 + "TWh"}
+						{"Derzeit: " + Math.round(lastYear[hoverType.dataKey]*100)/100 + "TWh (" + Math.round(ratio_current_2030(potentiale_2030, hoverType.dataKey)*1000)/10 + "%)"}
 					</div>
 				{/if}
 				<svg width={'100%'} height={'100%'}
@@ -113,7 +126,7 @@
 									}}
 								/>
 
-								{@const ratio_techn_2030 = potentiale_2030[bundesland][type.dataKey]/potentiale_techn[bundesland][type.dataKey]}
+								{@const ratio_techn_2030 = potentiale_2030[bundesland][type.dataKey]/ratio_data[bundesland][type.dataKey]}
 								<rect
 									x={xScale(index) + margin_bars.left}
 									y={yScale(ratio_techn_2030)}
@@ -132,18 +145,11 @@
 										event.stopPropagation()
 									}}
 								/>
-								{@const ratio_current_2030 = () => {
-									let last_year_val = lastYear[type.dataKey];
-									if (isNaN(last_year_val)) {
-										last_year_val = toNumber(last_year_val.replaceAll(',', ''));
-									}
-									return last_year_val / potentiale_techn[bundesland][type.dataKey];
-								}}
 								<rect
 									x={xScale(index) + margin_bars.left}
-									y={yScale(ratio_current_2030())}
+									y={yScale(ratio_current_2030(ratio_data, type.dataKey))}
 									width={barWidth - (margin_bars.left + margin_bars.right)}
-									height={yScale(0) - yScale(ratio_current_2030())}
+									height={yScale(0) - yScale(ratio_current_2030(ratio_data, type.dataKey))}
 									fill={type.color}
 									opacity={1.0}
 									on:focus={(event) => { 
