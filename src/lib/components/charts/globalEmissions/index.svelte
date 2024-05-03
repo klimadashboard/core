@@ -49,8 +49,6 @@
 
 	const addToSelectedCountries = function (code) {
 		selectedCountries = selectedCountries.concat([code]);
-		console.log(data);
-		console.log(selectedCountries);
 	};
 
 	$: getCountryName = function (code) {

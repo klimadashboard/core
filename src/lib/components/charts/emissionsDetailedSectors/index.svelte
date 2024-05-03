@@ -3,11 +3,12 @@
 	import SectorsTreeChart from './SectorsTreeChart.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import Loader from '$lib/components/Loader.svelte';
 
 	let dataset = null;
 	let explanations = null;
 
-	let maxYear = PUBLIC_VERSION == 'at' ? 2021 : 2021;
+	let maxYear = PUBLIC_VERSION == 'at' ? 2022 : 2021;
 
 	let years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
 
@@ -601,6 +602,8 @@
 			bind:crfHover
 		/>
 	</div>
+{:else}
+	<Loader />
 {/if}
 
 <style>

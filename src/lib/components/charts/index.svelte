@@ -18,12 +18,10 @@
 	$: getChart = async function () {
 		if ($chartsData.charts !== undefined) {
 			const dataForChart = Object.values($chartsData.charts).find(
-				(entry) => entry.content.uuid == id.toString()
+				(entry) => entry.uuid == id.toString()
 			);
-			Chart = await chartComponents[
-				'./' + dataForChart.content.identifier_string + '/index.svelte'
-			];
-			chartId = dataForChart.content.uuid;
+			Chart = await chartComponents['./' + dataForChart.identifier_string + '/index.svelte'];
+			chartId = dataForChart.uuid;
 			return dataForChart;
 		}
 	};
@@ -77,23 +75,22 @@
 
 					// BACKUP: download image
 					await getChart().then((chart) => {
-						// console.log('downloading', chart.content.title);
+						// console.log('downloading', chart.title);
 						let url = window.URL.createObjectURL(blob);
 						let a = document.createElement('a');
 						a.href = url;
-						a.download = `${chart.content.title}.png`;
+						a.download = `${chart.title}.png`;
 						a.click();
 					});
 				}
 			});
 	};
 
-	const createVariables = function (json) {
-		if (json) {
-			const input = JSON.parse(json);
+	const createVariables = function (input) {
+		if (input) {
 			const variable = {};
 			for (var i = 0; i < input.length; i++) {
-				variable[input[i].content.label] = input[i].content.text;
+				variable[input[i].label] = input[i].text;
 			}
 			return variable;
 		} else {
@@ -119,20 +116,18 @@
 {:then chart}
 	{#if chart !== undefined}
 		{#if hideWrapper}
-			<svelte:component this={Chart} v={createVariables(chart.content.variables)} />
+			<svelte:component this={Chart} v={createVariables(chart.variables)} />
 		{:else}
 			<div
-				class="bg-white p-4 border border-gray-200 rounded relative {chart.content.methods
-					? 'pb-16'
-					: ''}"
-				id={chart.content.identifier_string}
+				class="bg-white p-4 border border-gray-200 rounded relative {chart.methods ? 'pb-16' : ''}"
+				id={chart.identifier_string}
 				bind:this={item}
 			>
 				<div
 					class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition"
 				>
 					<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
-						{chart.content.title.replace(/^DE: /, '')}
+						{chart.title.replace(/^DE: /, '')}
 					</h2>
 					<div class="flex items-center gap-3 transition">
 						<button
@@ -224,16 +219,16 @@
 					</div>
 				</div>
 				{#if !showNotices}
-					<h3 class="text-2xl max-w-2xl tracking-tight">{chart.content.heading}</h3>
+					<h3 class="text-2xl max-w-2xl tracking-tight">{chart.heading}</h3>
 
 					<div class="my-4">
-						<svelte:component this={Chart} v={createVariables(chart.content.variables)} />
+						<svelte:component this={Chart} v={createVariables(chart.variables)} />
 					</div>
 					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-						{#if chart.content.text && showText}
-							<p class="text-lg text col-span-2">{@html chart.content.text}</p>
+						{#if chart.text && showText}
+							<p class="text-lg text col-span-2">{@html chart.text}</p>
 						{/if}
-						{#if chart.content.source}
+						{#if chart.source}
 							<div class="text-gray-700 text-sm">
 								<div class="flex items-center gap-0.5 font-bold -mb-4">
 									<svg
@@ -256,7 +251,7 @@
 									<h3 class="">Datenquellen</h3>
 								</div>
 								<p class="text">
-									{@html chart.content.source}
+									{@html chart.source}
 								</p>
 							</div>
 						{/if}
@@ -264,7 +259,7 @@
 				{:else}
 					<div class="text-lg relative overflow-hidden" style="max-height: 32rem">
 						<div class="overflow-scroll data-notices" style="max-height:32rem;">
-							{@html chart.content.methods}
+							{@html chart.methods}
 							<div class="bottom-hint" use:observeBottomInView />
 						</div>
 						<div
@@ -274,7 +269,7 @@
 						/>
 					</div>
 				{/if}
-				{#if chart.content.methods}
+				{#if chart.methods}
 					<div
 						id="tab-switcher"
 						class="absolute rounded-b bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 text-sm md:text-base"

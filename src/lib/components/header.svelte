@@ -1,6 +1,4 @@
 <script>
-	import { theme } from '../stores/theme';
-	import { locale } from '../stores/i18n';
 	import { error } from '@sveltejs/kit';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Loader from './Loader.svelte';
@@ -125,9 +123,9 @@
 							class="leading-[4rem] text-sm font-bold uppercase tracking-wide">Über uns</a
 						>
 					</li>
-					<li class="opacity-100 hover:opacity-80 transition md:ml-4">
+					<li class="opacity-100 hover:opacity-80 transition md:ml-4 hidden lg:block">
 						<a
-							href="https://opencollective.com/klimadashboard-spendenaufruf"
+							href="https://opencollective.com/klimadashboard"
 							target="_blank"
 							class="leading-[4rem] text-sm font-bold uppercase tracking-wide bg-gradient-blue px-2 py-1 text-white rounded"
 							>Spenden</a

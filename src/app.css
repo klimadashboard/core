@@ -184,3 +184,41 @@ details a {
 .text-prose h3 {
 	@apply text-xl mt-4 mb-1;
 }
+.co2b-background {
+	@apply h-screen;
+}
+
+.co2b-section-background {
+	@apply bg-white bg-opacity-20 backdrop-blur-lg p-4 inline-block shadow-2xl md:rounded-xl;
+}
+
+.co2b-foreground section {
+	@apply md:p-8 pt-24 md:pt-24 max-w-4xl mx-auto leading-snug min-h-[120vh] md:min-h-screen;
+}
+
+.news-grid a {
+	@apply hover:underline underline-offset-4 transition;
+}
+
+sub {
+	font-variant-position: sub;
+	font-size: 0.6em;
+	@apply font-medium;
+}
+
+.block-list {
+	@apply text-lg container;
+}
+
+.block-list ul {
+	@apply list-outside max-w-2xl space-y-2 -translate-x-1.5;
+	list-style-type: '- ';
+}
+
+.block-list li {
+	@apply pl-1;
+}
+
+.block-list li::marker {
+	@apply text-gray-400;
+}
