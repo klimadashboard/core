@@ -35,7 +35,7 @@ export default [
 	{
 		id: 4,
 		name: 'Andritz AG',
-		sector: 'Technik & Maschinen',
+		sector: 'Maschinen & Technik',
 		sector_old: 'Produktionstechnik und Maschinen',
 		logo: 'andritz',
 		icon: 'SettingsCogIcon',
@@ -101,9 +101,9 @@ export default [
 	{
 		id: 11,
 		name: 'Mayr-Melnhof Karton AG',
-		sector: 'Verpackung',
+		sector: 'Sonstige',
 		logo: 'mayr-melnhof',
-		icon: 'PackageIcon',
+		icon: 'DotsIcon',
 		weight: 3.28,
 		aspectRatio: 1.0
 	},
@@ -166,7 +166,7 @@ export default [
 	{
 		id: 18,
 		name: 'Austria Technologie & Systemtechnik AG',
-		sector: 'Technik & Maschinen',
+		sector: 'Maschinen & Technik',
 		sector_old: 'Hardware und Ausrüstung',
 		logo: 'ats',
 		icon: 'SettingsCogIcon',

@@ -63,7 +63,7 @@
 		<tbody>
 			{#if selectedCompanies.length === 0}
 				<tr>
-					<td class="text-center pt-3" colspan="5">Keine Unternehmen ausgewählt</td>
+					<td class="text-center text-sm pt-3" colspan="5">Keine Unternehmen ausgewählt</td>
 				</tr>
 			{/if}
 			{#each companyGoalData as company (company.name)}
@@ -75,7 +75,7 @@
 							alt={companyMetaData.logo}
 							width="64"
 							height="64"
-							class="inline-block w-10 h-10 p-1 object-contain"
+							class="inline-block w-12 h-8 p-1 object-contain"
 							title={companyMetaData.name}
 						/>
 					</td>

@@ -1,13 +1,10 @@
 <script>
 	// @ts-nocheck
-	// import { onMount } from 'svelte';
-	import atxCompanies, { companyId } from '$lib/stores/companies';
+	import atxCompanies from '$lib/stores/companies';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
-	// import ViewSwitch from './ViewSwitch.svelte';
 	import CompanyClimateGoals from './CompanyClimateGoals.svelte';
-	import Chart from '../co2BudgetTimeline/Chart.svelte';
 
 	let scopes = ['1', '2', '3'];
 	let selectedScopes = ['1'];
@@ -17,21 +14,32 @@
 	let availableYears;
 	let isFocusView = false;
 	let initialCompany = 'Erste Group Bank AG';
+	let sortBy = 'sector';
 
 	// use companies data with `selected: true` as default
-	$: companies = atxCompanies.map((company) => {
-		if (company.name === initialCompany) {
-			return {
-				...company,
-				selected: true
-			};
-		} else {
-			return {
-				...company,
-				selected: false
-			};
-		}
-	});
+	$: companies = atxCompanies
+		.sort((a, b) => {
+			if (a[sortBy] < b[sortBy]) {
+				return -1;
+			}
+			if (a[sortBy] > b[sortBy]) {
+				return 1;
+			}
+			return 0;
+		})
+		.map((company) => {
+			if (company.name === initialCompany) {
+				return {
+					...company,
+					selected: true
+				};
+			} else {
+				return {
+					...company,
+					selected: false
+				};
+			}
+		});
 
 	// $: sectors = Array.from(new Set(atxCompanies.map((company) => [company.sector)));
 	$: sectors = atxCompanies.reduce((accumulator, company) => {
@@ -77,10 +85,6 @@
 				return c;
 			});
 		}
-	}
-
-	function handleSelectScope(event) {
-		selectedScopes = event.target.value;
 	}
 
 	// Filter
