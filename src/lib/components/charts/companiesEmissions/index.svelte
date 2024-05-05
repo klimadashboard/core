@@ -202,10 +202,10 @@
 		</div>
 		<div class="ml-auto" />
 	</div>
-	<!-- Companies -->
-	<div class="flex flex-wrap gap-2 mb-4">
+	<!-- Companies v1 -->
+	<!-- <div class="flex flex-wrap gap-2 mb-4">
 		{#each companies as company}
-			<!-- {#if company.sector === selectedSector || company.selected || selectedSector === ''} -->
+			{#if company.sector === selectedSector || company.selected || selectedSector === ''}
 			<button
 				class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
 					{company.selected ? 'border-2 border-green-600' : 'border-2'}
@@ -229,8 +229,65 @@
 					class="inline-block h-6 object-contain"
 				/>
 			</button>
-			<!-- {/if} -->
+			{/if}
 		{/each}
+	</div> -->
+	<!-- Companies v2 -->
+	<div class="flex gap-2 mb-4">
+		<div class="flex flex-wrap gap-2 border-gray-200 pr-2">
+			{#each companies.filter((company) => company.selected) as company}
+				<button
+					class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100 border-2 border-green-600
+						{company.selected ? 'border-2 border-green-600' : 'border-2'}
+						{company.sector === selectedSector && !company.selected ? 'border-gray-600' : ''}"
+					on:mousedown={() => onClickCompany(company)}
+					aria-label={company.name}
+					title="{company.name} ({company.sector})"
+				>
+					<img
+						src="../icons/emission-sectors/{company.icon}.svg"
+						alt="Energy"
+						height="60"
+						class="h-4"
+					/>
+					<img
+						src="../icons/atx-companies/{company.logo}.svg"
+						alt={company.logo}
+						width="60"
+						height="60"
+						class="inline-block h-6 object-contain"
+					/>
+				</button>
+			{/each}
+			{#if companies.filter((company) => company.selected).length > 0}
+				<div class="border-r-2 border-gray-300" />
+			{/if}
+			{#each companies.filter((company) => !company.selected) as company}
+				<button
+					class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100 border-2
+						{company.selected ? 'border-2 border-green-600' : 'border-2'}
+						{company.sector === selectedSector || selectedSector === '' ? '' : 'opacity-50'}
+						{company.sector === selectedSector && !company.selected ? 'border-gray-600' : ''}"
+					on:mousedown={() => onClickCompany(company)}
+					aria-label={company.name}
+					title="{company.name} ({company.sector})"
+				>
+					<img
+						src="../icons/emission-sectors/{company.icon}.svg"
+						alt="Energy"
+						height="60"
+						class="h-4"
+					/>
+					<img
+						src="../icons/atx-companies/{company.logo}.svg"
+						alt={company.logo}
+						width="60"
+						height="60"
+						class="inline-block h-6 object-contain"
+					/>
+				</button>
+			{/each}
+		</div>
 	</div>
 
 	<!-- Scope Selector -->
