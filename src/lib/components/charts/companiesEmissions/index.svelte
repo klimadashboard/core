@@ -128,31 +128,12 @@
 			console.log('🚀 ~ toggleScope ~ selectedScopes:', selectedScopes);
 		}
 	}
-
-	// onMount(() => {
-	// 	// Add a 'hovered' property to each company
-	// 	companies = companies.map((company) => ({ ...company, isButtonHovered: false }));
-	// });
 </script>
 
 <div>
 	<!-- Sector Selector -->
-	<!-- <details>
-		<summary> -->
 	<div class="flex block font-semibold text-sm mb-1">
-		<span class="mb-1">Filter nach Kategorie</span>
-		{#if selectedSector}
-			<button
-				class="inline-flex items-center justify-center font-semibold text-black text-xs"
-				aria-label="Clear Filter"
-				title="Clear Filter"
-				on:click={() => {
-					selectedSector = '';
-				}}
-			>
-				<span class="font-semibold tracking-wide text-red-800 pl-1">Clear</span>
-			</button>
-		{/if}
+		<span class="mb-1">Kategorien</span>
 	</div>
 	<!-- </summary> -->
 	<div class="flex flex-wrap mb-2">
@@ -180,12 +161,11 @@
 			</button>
 		{/each}
 	</div>
-	<!-- </details> -->
 
 	<!-- Company Heading -->
 	<div class="flex mb-2">
-		<p class="font-semibold text-sm">Unternehmen wählen</p>
-		<div class="flex text-sm underline disabled:opacity-50 text-underline gap-2 ml-6">
+		<p class="font-semibold text-sm">Unternehmen</p>
+		<div class="flex text-sm disabled:opacity-50 text-underline gap-2 ml-6">
 			<button
 				disabled={allSelected || isFocusView}
 				on:click={() => {
@@ -203,15 +183,18 @@
 				Auswahl löschen
 			</button>
 			<button
-				class="ml-6 {isFocusView ? 'text-agriculture' : 'text-energy'}"
+				class="ml-6 flex items-center {isFocusView ? 'text-agriculture' : 'text-energy'}"
 				on:click={() => (isFocusView = !isFocusView)}
 			>
-				{isFocusView ? 'Schnell wechseln ein' : 'Schnell wechseln aus'}
+				<span
+					class="{isFocusView
+						? 'bg-agriculture'
+						: 'bg-energy'} h-3 w-3 inline-block rounded-full mr-1"
+				/>
+				{isFocusView ? 'Mehrfachauswahl: ein' : 'Mehrfachauswahl: aus'}
 			</button>
 		</div>
-		<div class="ml-auto">
-			<!-- <ViewSwitch bind:isChecked={isFocusView} /> -->
-		</div>
+		<div class="ml-auto" />
 	</div>
 	<!-- Companies -->
 	<div class="flex flex-wrap gap-2 mb-4">
@@ -237,45 +220,6 @@
 						height="60"
 						class="inline-block h-6 object-contain"
 					/>
-					<!-- {#if company.selected} -->
-					<!-- {#if company.isButtonHovered} -->
-					<!-- Delete Icon -->
-					<!-- <svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="darkred"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="icon icon-tabler icons-tabler-outline icon-tabler-trash-x h-4"
-							><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7h16" /><path
-								d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"
-							/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /><path
-								d="M10 12l4 4m0 -4l-4 4"
-							/>
-						</svg> -->
-					<!-- {:else} -->
-					<!-- Pin Icon -->
-					<!-- <svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="icon icon-tabler icons-tabler-outline icon-tabler-pin"
-								><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-									d="M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4"
-								/><path d="M9 15l-4.5 4.5" /><path d="M14.5 4l5.5 5.5" /></svg
-							>
-						{/if} -->
-					<!-- {/if} -->
 				</button>
 			{/if}
 		{/each}
@@ -294,7 +238,7 @@
 	</div> -->
 
 	<div class="flex flex-wrap mb-2">
-		<p class="font-semibold text-sm mr-4">Scopes wählen</p>
+		<p class="font-semibold text-sm mr-4">Scopes</p>
 		{#each scopes as scope}
 			<button
 				class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
@@ -323,29 +267,3 @@
 	<br />
 	<CompanyClimateGoals selectedCompanies={companies.filter((company) => company.selected)} />
 </div>
-
-<style>
-	details {
-		user-select: none;
-	}
-
-	details > summary span.icon {
-		width: 24px;
-		height: 24px;
-		transition: all 0.3s;
-		margin-left: auto;
-	}
-
-	details[open] summary span.icon {
-		transform: rotate(180deg);
-	}
-
-	summary {
-		display: flex;
-		cursor: pointer;
-	}
-
-	summary::-webkit-details-marker {
-		display: none;
-	}
-</style>

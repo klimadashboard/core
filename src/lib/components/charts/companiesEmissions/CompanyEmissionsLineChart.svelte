@@ -107,7 +107,9 @@
 		preselectedIndex={4}
 	/>
 {:else if selectedCompanies.length === 0}
-	<p class="text-center">No company selected. Select up to 7 companies.</p>
+	<br /><br /><br />
+	<p class="text-center">Keine Unternehmen ausgewählt.</p>
+	<p class="text-center">⬆ Wähle oben bis zu sieben Unternehmen aus! ⬆</p>
 {:else if selectedCompanies.length > maxCompanies}
 	<p class="text-center">Too many companies selected. Select up to 7 companies.</p>
 {:else}

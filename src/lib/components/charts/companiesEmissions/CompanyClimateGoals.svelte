@@ -1,12 +1,15 @@
 <script>
 	import companies from '$lib/stores/companies';
 	import { onMount } from 'svelte';
+	import CheckIcon from './CheckIcon.svelte';
+	import XIcon from './XIcon.svelte';
 
 	export let selectedCompanies = [];
+	$: console.log(selectedCompanies);
 
 	let companyGoalData = null;
 	let originalData = null;
-	const tableCellClasses = 'text-semibold text-sm px-4 text-center';
+	const tableCellClasses = 'text-semibold text-sm text-center px-1';
 
 	onMount(() => {
 		getData();
@@ -14,8 +17,8 @@
 
 	async function getData() {
 		let response = await fetch(
-			`https://data.klimadashboard.org/at/companies/atx_climate_goals.json`
-			// `../data/at/companies/atx_climate_goals.json`
+			`https://data.klimadashboard.org/at/companies/atx_climate_goals_v2.json`
+			// `../data/at/companies/atx_climate_goals_v2.json`
 		);
 		let data = await response.json();
 		if (response.ok) {
@@ -26,39 +29,43 @@
 		}
 	}
 	$: {
-		if (originalData && selectedCompanies.length > 0) {
+		if (originalData && selectedCompanies) {
 			const selectedCompanyNames = selectedCompanies.map((company) => company.name);
 			companyGoalData = originalData.filter((company) =>
 				selectedCompanyNames.includes(company.name)
 			);
-		} else {
-			companyGoalData = originalData;
 		}
 	}
 
 	function mapStatusToIcon(status) {
 		const mapping = {
-			Ja: '✅',
-			Nein: '❌'
+			Ja: CheckIcon,
+			Nein: XIcon
 		};
-		mapping['nicht definiert'] = '❓';
-		return mapping[status] || status; // Returns the original status if it's neither of the above
+		return mapping[status]; // Returns the original status if it's neither of the above
 	}
 </script>
 
-{#if companyGoalData}
+{#if !companyGoalData}
+	<p>Loading...</p>
+{:else if companyGoalData}
 	<table class="min-w-full">
 		<thead>
 			<tr class="border-b">
-				<th class="{tableCellClasses} text-left bg-white" />
-				<th class="{tableCellClasses} text-left">Climate Neutrality</th>
-				<th class="{tableCellClasses} text-left">Target Year</th>
-				<th class="{tableCellClasses} text-left">Scopes</th>
-				<th class="{tableCellClasses} text-left">Intermediate Goal</th>
-				<th class="{tableCellClasses} text-left">Member SBT</th>
+				<th class="{tableCellClasses} text-left bg-white text-white">Logo Images</th>
+				<th class="{tableCellClasses} text-left">Klimaneutralitätsziel</th>
+				<!-- <th class="{tableCellClasses} text-left">Target Year</th> -->
+				<th class="{tableCellClasses} text-left">Umfasste Scopes</th>
+				<th class="{tableCellClasses} text-left">Zwischenziel</th>
+				<th class="{tableCellClasses} text-left">Mitglied Science-Based-Target Initiative</th>
 			</tr>
 		</thead>
 		<tbody>
+			{#if selectedCompanies.length === 0}
+				<tr>
+					<td class="text-center pt-3" colspan="5">Keine Unternehmen ausgewählt</td>
+				</tr>
+			{/if}
 			{#each companyGoalData as company (company.name)}
 				{@const companyMetaData = companies.find((c) => c.name == company.name)}
 				<tr class="border-b">
@@ -66,24 +73,37 @@
 						<img
 							src="../icons/atx-companies/{companyMetaData.logo}.svg"
 							alt={companyMetaData.logo}
-							width="50"
-							height="50"
+							width="64"
+							height="64"
 							class="inline-block w-10 h-10 p-1 object-contain"
 							title={companyMetaData.name}
 						/>
 					</td>
-					<td class={tableCellClasses}>{mapStatusToIcon(company.climateNeutrality)}</td>
-					<td class={tableCellClasses} title={company.climateNeutralityYear}
-						>{mapStatusToIcon(company.climateNeutralityYear)}</td
+					<td class={tableCellClasses}>
+						{#if company.climateNeutrality === 'Nein'}
+							<XIcon additionalClasses="mx-auto" />
+						{:else}
+							{company.climateNeutrality}
+						{/if}
+					</td>
+					<td class={tableCellClasses} title={company.climateNeutralityScopes}
+						>{#if company.climateNeutralityScopes === 'nicht definiert'}
+							<XIcon additionalClasses="mx-auto" />
+						{:else}
+							{company.climateNeutralityScopes}
+						{/if}</td
 					>
-					<td class={tableCellClasses} title={company.climateNeutralityYear}
-						>{mapStatusToIcon(company.climateNeutralityScopes)}</td
-					>
-					<td class={tableCellClasses} title={company.intermediateGoal}
-						>{mapStatusToIcon(company.intermediateGoal)}</td
-					>
+					<td class={tableCellClasses} title={company.intermediateGoal}>
+						<svelte:component
+							this={mapStatusToIcon(company.intermediateGoal)}
+							additionalClasses="mx-auto"
+						/>
+					</td>
 					<td class={tableCellClasses} title={company.memberSBT}
-						>{mapStatusToIcon(company.memberSBT)}</td
+						><svelte:component
+							this={mapStatusToIcon(company.intermediateGoal)}
+							additionalClasses="mx-auto"
+						/></td
 					>
 				</tr>
 			{/each}
