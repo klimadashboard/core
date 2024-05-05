@@ -324,7 +324,7 @@
 			<CompanyEmissionsLineChart
 				{rawData}
 				selectedCompanies={companies.filter((company) => company.selected)}
-				selectedScopes={selectedScopes.map((scope) => `scope${scope}`)}
+				{selectedScopes}
 				{selectedYear}
 			/>
 		</div>

@@ -35,7 +35,13 @@
 
 	$: xScale = scaleLinear()
 		.range([0, innerChartWidth])
-		.domain([0, max(data, (d) => d.x)]);
+		.domain([
+			0,
+			max(
+				data.filter((d) => !isNaN(d.x)),
+				(d) => d.x
+			)
+		]);
 
 	$: yScale = scaleLinear()
 		.range([innerChartHeight, 0])
@@ -47,14 +53,18 @@
 						// get total of all values for keys
 						var total = 0;
 						for (var k = 0; k < shownKeys.length; k++) {
-							total += item[shownKeys[k]];
+							if (!isNaN(item[shownKeys[k]])) {
+								total += item[shownKeys[k]];
+							}
 						}
 						return total;
 					} else {
 						// get max of values
 						var values = [];
 						for (var k = 0; k < shownKeys.length; k++) {
-							values.push(item[shownKeys[k]]);
+							if (!isNaN(item[shownKeys[k]])) {
+								values.push(item[shownKeys[k]]);
+							}
 						}
 						var max = Math.max(...values);
 						return max;
@@ -71,8 +81,16 @@
 	$: generateLine = (key) => {
 		if (visualisation == 'stacked') {
 			return line()
-				.x((d) => xScale(d.x))
-				.y(function (d) {
+				.defined((d) => {
+					return !isNaN(d[key]);
+				})
+				.x((d) => {
+					return !isNaN(d[key]) ? xScale(d.x) : null;
+				})
+				.y((d) => {
+					if (d[key] === 'na') {
+						return null;
+					}
 					var total = 0;
 					for (var i = 0; i <= shownKeys.indexOf(key); i++) {
 						total += d[shownKeys[i]];
@@ -81,17 +99,24 @@
 				});
 		} else {
 			return line()
-				.x((d) => xScale(d.x))
-				.y((d) => yScale(d[key]));
+				.defined((d) => {
+					return !isNaN(d[key]);
+				})
+				.x((d) => (!isNaN(d[key]) ? xScale(d.x) : null))
+				.y((d) => (!isNaN(d[key]) ? yScale(d[key]) : null));
 		}
 	};
 
 	$: generateArea = (key) => {
 		if (visualisation == 'stacked') {
 			return area()
-				.x((d) => xScale(d.x))
-				.y0(innerChartHeight)
+				.defined((d) => !isNaN(d[key]))
+				.x((d) => (!isNaN(d[key]) ? xScale(d.x) : null))
+				.y0((d) => (!isNaN(d[key]) ? innerChartHeight : null))
 				.y1(function (d) {
+					if (d[key] === 'na') {
+						return null;
+					}
 					var total = 0;
 					for (var i = 0; i <= shownKeys.indexOf(key); i++) {
 						total += d[shownKeys[i]];
@@ -100,16 +125,17 @@
 				});
 		} else {
 			return area()
-				.x((d) => xScale(d.x))
-				.y0(innerChartHeight)
-				.y1(function (d) {
-					return yScale(d[key]);
-				});
+				.defined((d) => !isNaN(d[key]))
+				.x((d) => (!isNaN(d[key]) ? xScale(d.x) : null))
+				.y0((d) => (!isNaN(d[key]) ? innerChartHeight : null))
+				.y1((d) => (!isNaN(d[key]) ? yScale(d[key]) : null));
 		}
 	};
 
 	$: lines = keys.map((key) => generateLine(key)(data));
+	$: console.log('🚀 ~ lines:', lines);
 	$: areas = keys.map((key) => generateArea(key)(data));
+	$: console.log('🚀 ~ areas:', areas);
 	$: totals = data.map((datapoint) => getTotal(datapoint));
 
 	$: getTotal = function (datapoint) {
@@ -217,12 +243,14 @@
 					<g>
 						{#each data as datapoint}
 							{#each keys as key, i}
-								<circle
-									cx={xScale(datapoint.x) || 0}
-									cy={yScale(datapoint[key]) || 0}
-									r={circleRadius}
-									fill={shownColors[i]}
-								/>
+								{#if !isNaN(datapoint[key])}
+									<circle
+										cx={xScale(datapoint.x) || 0}
+										cy={yScale(datapoint[key]) || 0}
+										r={circleRadius}
+										fill={shownColors[i]}
+									/>
+								{/if}
 							{/each}
 						{/each}
 					</g>

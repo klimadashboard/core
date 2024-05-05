@@ -10,7 +10,7 @@ export const transformDataSingleCompany = (data, company, selectedScopes) => {
 		const { year, scope } = parseYearScope(Year_Scope);
 
 		// only include selected scopes
-		if (!selectedScopes.includes(scope)) {
+		if (!selectedScopes.includes(scope.replace('scope', ''))) {
 			return;
 		}
 
@@ -18,7 +18,7 @@ export const transformDataSingleCompany = (data, company, selectedScopes) => {
 		if (!emissionsPerYear[year]) {
 			emissionsPerYear[year] = { year, unit: 'CO2', label: year }; // Initialize if not present
 		}
-		emissionsPerYear[year][scope] = emissions[company] !== 'na' ? parseInt(emissions[company]) : 0; // Merge scope data
+		emissionsPerYear[year][scope] = emissions[company]; // Merge scope data
 	});
 
 	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
@@ -38,10 +38,11 @@ export const transformDataMultipleCompanies = (data, companies, selectedScopes) 
 
 		companies.forEach((company) => {
 			if (emissions[company] !== undefined && emissions[company] !== null) {
+				console.log('🚀 ~ companies.forEach ~ emissions[company]:', emissions[company]);
 				// Aggregate emission data for the company and selected scopes
 				selectedScopes.forEach((scope) => {
 					if (!emissionsPerYear[year][company]) {
-						emissionsPerYear[year][company] = 0;
+						emissionsPerYear[year][company] = emissions[company];
 					}
 					if (Year_Scope.includes(scope)) {
 						emissionsPerYear[year][company] += parseInt(emissions[company]);

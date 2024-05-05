@@ -17,8 +17,21 @@
 	$: selectedCompanyNames = [...selectedCompanies].map((company) => company.name);
 
 	const rawColors = ['#7CBAB3', '#575C75', '#71665B', '#B28834', '#8CAED9', '#E0A906', '#CF6317'];
-	const rawLabels = ['Scope 1', 'Scope 2', 'Scope 3'];
-	const rawKeys = ['scope1', 'scope2', 'scope3'];
+	const selectedScopesToColors = {
+		1: '#7CBAB3',
+		2: '#575C75',
+		3: '#71665B'
+	};
+	const selectedScopesToLabels = {
+		1: 'Scope 1',
+		2: 'Scope 2',
+		3: 'Scope 3'
+	};
+	const selectedScopesToKeys = {
+		1: 'scope1',
+		2: 'scope2',
+		3: 'scope3'
+	};
 	const maxCompanies = 7;
 
 	// // Magazine Visuation Companies & Colors
@@ -58,31 +71,22 @@
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
 				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
+				console.log('🚀 ~ dataset:', dataset);
 			} else {
 				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
 				console.log('🚀 ~ dataset:', dataset);
 			}
 
 			// Select keys, colors and labels
-			if (selectedScopes.length === 1) {
-				keys = isSingleCompanySelected ? selectedScopes : selectedCompanyNames;
-				labels = isSingleCompanySelected
-					? [`Scope ${selectedScopes[0].slice(-1)}`]
-					: selectedCompanyNames;
-				colors = isSingleCompanySelected
-					? [rawColors[parseInt(selectedScopes[0].slice(-1)) - 1]]
-					: rawColors.slice(0, selectedCompanyNames.length);
-			} else {
-				keys = isSingleCompanySelected
-					? rawKeys.filter((key) => selectedScopes.includes(key))
-					: selectedCompanyNames;
-				labels = isSingleCompanySelected
-					? rawLabels.slice(0, selectedScopes.length)
-					: selectedCompanyNames;
-				colors = isSingleCompanySelected
-					? rawColors.slice(0, selectedScopes.length)
-					: rawColors.slice(0, selectedCompanyNames.length);
-			}
+			keys = isSingleCompanySelected
+				? selectedScopes.map((scope) => selectedScopesToKeys[scope])
+				: selectedCompanyNames;
+			labels = isSingleCompanySelected
+				? selectedScopes.map((scope) => selectedScopesToLabels[scope])
+				: selectedCompanyNames;
+			colors = isSingleCompanySelected
+				? selectedScopes.map((scope) => selectedScopesToColors[scope])
+				: rawColors.slice(0, selectedCompanyNames.length);
 
 			console.log('🚀 ~ keys:', keys);
 			console.log('🚀 ~ labels:', labels);
