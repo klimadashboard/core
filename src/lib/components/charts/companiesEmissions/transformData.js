@@ -29,7 +29,7 @@ export const transformDataMultipleCompanies = (data, companies, selectedScopes) 
 	const emissionsPerYear = {};
 	data.forEach((item) => {
 		const { Year_Scope, ...emissions } = item;
-		const { year } = parseYearScope(Year_Scope);
+		const { year, scope } = parseYearScope(Year_Scope);
 
 		// Initialize the emissions data object for the year if it does not exist
 		if (!emissionsPerYear[year]) {
@@ -40,11 +40,11 @@ export const transformDataMultipleCompanies = (data, companies, selectedScopes) 
 			if (emissions[company] !== undefined && emissions[company] !== null) {
 				console.log('🚀 ~ companies.forEach ~ emissions[company]:', emissions[company]);
 				// Aggregate emission data for the company and selected scopes
-				selectedScopes.forEach((scope) => {
+				selectedScopes.forEach((selectedScope) => {
 					if (!emissionsPerYear[year][company]) {
 						emissionsPerYear[year][company] = emissions[company];
 					}
-					if (Year_Scope.includes(scope)) {
+					if (scope === `scope${selectedScope}`) {
 						emissionsPerYear[year][company] += parseInt(emissions[company]);
 					}
 				});
