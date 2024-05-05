@@ -169,8 +169,9 @@
 	<!-- Company Heading -->
 	<div class="flex mb-2">
 		<p class="font-semibold text-sm">Unternehmen</p>
-		<div class="flex text-sm disabled:opacity-50 text-underline gap-2 ml-6">
+		<div class="flex text-sm text-underline gap-2 ml-6">
 			<button
+				class="disabled:opacity-50"
 				disabled={allSelected || isFocusView}
 				on:click={() => {
 					selectAll();
@@ -179,6 +180,7 @@
 				Alle auswählen
 			</button>
 			<button
+				class="disabled:opacity-50"
 				disabled={allDeselected || isFocusView}
 				on:click={() => {
 					deselectAll();
@@ -203,29 +205,31 @@
 	<!-- Companies -->
 	<div class="flex flex-wrap gap-2 mb-4">
 		{#each companies as company}
-			{#if company.sector === selectedSector || company.selected || selectedSector === ''}
-				<button
-					class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
-					{company.selected ? 'border-2 border-black' : 'border-2 border-gray-300'}"
-					on:mousedown={() => onClickCompany(company)}
-					aria-label={company.name}
-					title="{company.name} ({company.sector})"
-				>
-					<img
-						src="../icons/emission-sectors/{company.icon}.svg"
-						alt="Energy"
-						height="60"
-						class="h-4"
-					/>
-					<img
-						src="../icons/atx-companies/{company.logo}.svg"
-						alt={company.logo}
-						width="60"
-						height="60"
-						class="inline-block h-6 object-contain"
-					/>
-				</button>
-			{/if}
+			<!-- {#if company.sector === selectedSector || company.selected || selectedSector === ''} -->
+			<button
+				class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
+					{company.selected ? 'border-2 border-green-600' : 'border-2'}
+					{company.sector === selectedSector || selectedSector === '' ? '' : 'opacity-50'}
+					{company.sector === selectedSector && !company.selected ? 'border-gray-600' : ''}"
+				on:mousedown={() => onClickCompany(company)}
+				aria-label={company.name}
+				title="{company.name} ({company.sector})"
+			>
+				<img
+					src="../icons/emission-sectors/{company.icon}.svg"
+					alt="Energy"
+					height="60"
+					class="h-4"
+				/>
+				<img
+					src="../icons/atx-companies/{company.logo}.svg"
+					alt={company.logo}
+					width="60"
+					height="60"
+					class="inline-block h-6 object-contain"
+				/>
+			</button>
+			<!-- {/if} -->
 		{/each}
 	</div>
 
