@@ -37,8 +37,6 @@
 
 	$: ratio_data = showTechn ? potentiale_techn : potentiale_2030;
 
-	$: console.log(energyByBundesland);
-
 	// $: hoverX = margin_bars.left;
 	// $: hoverY = margin.top;
 	let hoverType;
