@@ -172,7 +172,7 @@
 		<div class="flex text-sm text-underline gap-2 ml-6">
 			<button
 				class="disabled:opacity-50"
-				disabled={allSelected || isFocusView}
+				disabled={allSelected || !isFocusView}
 				on:click={() => {
 					selectAll();
 				}}
@@ -181,7 +181,7 @@
 			</button>
 			<button
 				class="disabled:opacity-50"
-				disabled={allDeselected || isFocusView}
+				disabled={allDeselected || !isFocusView}
 				on:click={() => {
 					deselectAll();
 				}}
