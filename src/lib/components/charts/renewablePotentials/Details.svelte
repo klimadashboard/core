@@ -20,16 +20,17 @@
 	let chartHeight;
 	let unit = 'TWh';
 	const grey = '#A3A3A3';
+	const green = '#4FB365';
 
-	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2038);
-	$: minValue = -0.2;
+	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxValue = showTechn
 		? potential_techn
 		: Math.max(
 				Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
-				potential_2030
+				potential_2030 //* 1.1
 		  );
+	$: minValue = -maxValue / 5;
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
@@ -60,16 +61,15 @@
 		<div class="relative w-full h-48" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				{@const last_datapoint = dataset[dataset.length - 1]}
-				{@const delta_values_normed =
-					goals == null
-						? 0
-						: (+goals[0].goal_amount - +last_datapoint.value) / +last_datapoint.value}
-				{@const text_production_offset =
-					Math.abs(delta_values_normed <= 0.15) && +goals[0].goal_year > 2000
-						? delta_values_normed > 0
+				{@const delta_values =
+					goals == null ? 0 : yScale(+goals[0].goal_amount) - yScale(+last_datapoint.value)}
+				{@const text_production_x_offset =
+					Math.abs(delta_values) <= 7 && +goals[0].goal_year > 2000
+						? delta_values < 0
 							? 10
 							: -10
 						: 0}
+
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
 						<g>
@@ -91,11 +91,11 @@
 						{#if goals != null}
 							<g>
 								{#each goals as goal, index}
-									{@const sourceYear = index > 0 ? +goals[index - 1].goal_year : +goal.source_year}
+									{@const sourceYear = index > 0 ? last_datapoint.goal_year : +goal.source_year}
 									<!--take last goal's year and value if there are several goals defined-->
 									{@const sourceAmount =
 										index > 0
-											? +goals[index - 1].goal_amount
+											? +last_datapoint.goal_amount
 											: +dataset.find((d) => +d.year === sourceYear)?.value}
 									{@const goalYear = +goal.goal_year}
 									{@const goalAmount = +goal.goal_amount}
@@ -107,6 +107,9 @@
 										'TODO: remove log'
 									)}
 									{#if !isNaN(sourceYear) && !isNaN(sourceAmount) && !isNaN(goalYear) && !isNaN(goalAmount)}
+										{@const delta_values_potential = yScale(potential_2030) - yScale(goalAmount)}
+										{@const text_potential_x_offset =
+											showTechn && Math.abs(delta_values_potential) <= 7 ? 10 : 0}
 										<line
 											x1={xScale(new Date(sourceYear, 1, 1))}
 											y1={yScale(sourceAmount)}
@@ -128,7 +131,7 @@
 											x={xScale(new Date(goalYear, 1, 1))}
 											y={yScale(goalAmount) + 5}
 											dx={anchor == 'end' ? -12 : 12}
-											dy={-1 * text_production_offset}
+											dy={text_potential_x_offset}
 											>{formatNumber(Math.round(goalAmount * 100) / 100)}
 											{' ' + unit + ' '}
 											Ziel bis {goalYear}
@@ -145,14 +148,21 @@
 							<text
 								text-anchor="start"
 								class="text-xl font-semibold fill-current bg-white"
-								style="fill: #4FB365"
+								style="fill: {green}"
 								x={xScale(new Date(2030, 1, 1))}
 								y={yScale(potential_2030)}
 								dy={4}
-								dx={0}
+								dx={0}>★</text
 							>
-								★ <tspan class="text-sm">Potential 2030</tspan>
-							</text>
+							<text
+								text-anchor="start"
+								class="text-sm font-semibold fill-current bg-white"
+								style="fill: {green}"
+								x={xScale(new Date(2030, 1, 1))}
+								y={yScale(potential_2030)}
+								dy={4}
+								dx={20}>Potential 2030</text
+							>
 						{/if}
 						{#if potential_techn != null && showTechn}
 							<line
@@ -161,14 +171,15 @@
 								x2={xScale(new Date(maxYear + 5, 1, 1))}
 								y2={yScale(potential_techn)}
 								stroke-dasharray="5,5"
-								style="stroke:grey; stroke-width:1"
+								style="stroke:{grey}; stroke-width:1"
 							/>
 							<!-- <line x1={xScale(new Date(2030, 1, 1))} y1={yScale(minValue)} x2={xScale(new Date(2030, 1, 1))} y2={yScale(potential_techn*1.12)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" /> -->
 
 							<text
-								text-anchor="end"
-								class="text-sm text-gray-600 fill-current bg-white"
-								x={xScale(new Date(maxYear + 1, 1, 1))}
+								text-anchor="middle"
+								style="fill:{grey};"
+								class="text-sm bg-white font-semibold"
+								x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
 								y={yScale(potential_techn)}
 								dy={-3}
 							>
@@ -238,7 +249,7 @@
 								x={12}
 								y={5}
 								transition:fade
-								dy={text_production_offset}
+								dy={text_production_x_offset}
 								>{formatNumber(Math.round(last_datapoint.value * 100) / 100)}
 								{' ' + unit + ' '}
 								Produktion
