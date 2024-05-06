@@ -12,7 +12,7 @@
 	let selectedSector = '';
 	let rawData;
 	let availableYears;
-	let isFocusView = false;
+	let isFocusView = true;
 	let initialCompany = 'Erste Group Bank AG';
 	let sortBy = 'sector';
 
@@ -70,7 +70,7 @@
 	}
 
 	function onClickCompany(company) {
-		if (isFocusView) {
+		if (!isFocusView) {
 			companies = companies.map((c) => {
 				if (c.name === company.name) {
 					return { ...c, selected: true };
