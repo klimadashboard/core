@@ -203,9 +203,9 @@
 		<div class="ml-auto" />
 	</div>
 	<!-- Companies v1 -->
-	<!-- <div class="flex flex-wrap gap-2 mb-4">
+	<div class="flex flex-wrap gap-2 mb-8">
 		{#each companies as company}
-			{#if company.sector === selectedSector || company.selected || selectedSector === ''}
+			<!-- {#if company.sector === selectedSector || company.selected || selectedSector === ''} -->
 			<button
 				class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
 					{company.selected ? 'border-2 border-green-600' : 'border-2'}
@@ -229,9 +229,9 @@
 					class="inline-block h-6 object-contain"
 				/>
 			</button>
-			{/if}
+			<!-- {/if} -->
 		{/each}
-	</div> -->
+	</div>
 	<!-- Companies v2 -->
 	<div class="flex gap-2 mb-4">
 		<div class="flex flex-wrap gap-2 border-gray-200 pr-2">
