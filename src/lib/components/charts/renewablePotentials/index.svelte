@@ -77,6 +77,7 @@
 
 	
 	let dataset;
+	let energyByBundesland;
 	let minYear;
 	let maxYear;
 	let selectedBundesland = "Kärnten";
@@ -171,6 +172,13 @@
 						const years = dataset?.map((row) => row.year)
 						minYear = Math.min(...years);
 						maxYear = Math.max(...years);
+						
+						energyByBundesland = _.groupBy(dataset, (row) => row.region);
+						Object.keys(energyByBundesland).forEach((bundesland) => {
+							energyByBundesland[bundesland] = energyByBundesland[bundesland].sort((a, b) => {
+								return a.year - b.year;
+							});
+						});
 					}
 				}
 			}
@@ -194,8 +202,6 @@
 		);
 	// });
 
-
-	$: energyByBundesland = _.groupBy(dataset?.sort((row) => row.year), (row) => row.region);
 
 	$: views = [
 		{
@@ -232,8 +238,8 @@
 	style=""
 >
 	<span>Technisch mögliche Potentiale</span>
-	<input type="checkbox" bind:checked={showTechn} /></label
->
+	<input type="checkbox" bind:checked={showTechn} />
+</label>
 
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset}
