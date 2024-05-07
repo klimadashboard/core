@@ -115,7 +115,7 @@
 	<p class="text-center">Keine Unternehmen ausgewählt.</p>
 	<p class="text-center">⬆ Wähle oben bis zu sieben Unternehmen aus! ⬆</p>
 {:else if selectedCompanies.length > maxCompanies}
-	<p class="text-center">Too many companies selected. Select up to 7 companies.</p>
+	<p class="text-center">Zu viele Unternehmen ausgewählt. Wähle maximal 7 Unternehmen.</p>
 {:else}
-	<p class="text-center">Loading...</p>
+	<p class="text-center">Laden...</p>
 {/if}

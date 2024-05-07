@@ -136,8 +136,8 @@
 
 <div>
 	<!-- Sector Selector -->
-	<div class="flex block font-semibold text-sm mb-1">
-		<span class="mb-1">Kategorien</span>
+	<div class="flex block font-normal font-semibold text-xs mb-1">
+		<span class="mb-1">Filter: Sektoren</span>
 	</div>
 	<!-- </summary> -->
 	<div class="flex flex-wrap mb-2">
@@ -169,15 +169,15 @@
 	<!-- Company Heading -->
 	<div class="flex mb-2">
 		<p class="font-semibold text-sm">Unternehmen</p>
-		<div class="flex text-sm text-underline gap-2 ml-6">
+		<div class="flex text-sm text-underline gap-3 ml-6">
 			<button
 				class="disabled:opacity-50"
-				disabled={allSelected || !isFocusView}
+				disabled={selectedSector === '' || !isFocusView}
 				on:click={() => {
 					selectAll();
 				}}
 			>
-				Alle auswählen
+				Sektor auswählen
 			</button>
 			<button
 				class="disabled:opacity-50"
@@ -203,9 +203,8 @@
 		<div class="ml-auto" />
 	</div>
 	<!-- Companies v1 -->
-	<div class="flex flex-wrap gap-2 mb-8">
+	<div class="flex flex-wrap gap-2 mb-4">
 		{#each companies as company}
-			<!-- {#if company.sector === selectedSector || company.selected || selectedSector === ''} -->
 			<button
 				class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
 					{company.selected ? 'border-2 border-green-600' : 'border-2'}
@@ -229,78 +228,8 @@
 					class="inline-block h-6 object-contain"
 				/>
 			</button>
-			<!-- {/if} -->
 		{/each}
 	</div>
-	<!-- Companies v2 -->
-	<div class="flex gap-2 mb-4">
-		<div class="flex flex-wrap gap-2 border-gray-200 pr-2">
-			{#each companies.filter((company) => company.selected) as company}
-				<button
-					class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100 border-2 border-green-600
-						{company.selected ? 'border-2 border-green-600' : 'border-2'}
-						{company.sector === selectedSector && !company.selected ? 'border-gray-600' : ''}"
-					on:mousedown={() => onClickCompany(company)}
-					aria-label={company.name}
-					title="{company.name} ({company.sector})"
-				>
-					<img
-						src="../icons/emission-sectors/{company.icon}.svg"
-						alt="Energy"
-						height="60"
-						class="h-4"
-					/>
-					<img
-						src="../icons/atx-companies/{company.logo}.svg"
-						alt={company.logo}
-						width="60"
-						height="60"
-						class="inline-block h-6 object-contain"
-					/>
-				</button>
-			{/each}
-			{#if companies.filter((company) => company.selected).length > 0}
-				<div class="border-r-2 border-gray-300" />
-			{/if}
-			{#each companies.filter((company) => !company.selected) as company}
-				<button
-					class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100 border-2
-						{company.selected ? 'border-2 border-green-600' : 'border-2'}
-						{company.sector === selectedSector || selectedSector === '' ? '' : 'opacity-50'}
-						{company.sector === selectedSector && !company.selected ? 'border-gray-600' : ''}"
-					on:mousedown={() => onClickCompany(company)}
-					aria-label={company.name}
-					title="{company.name} ({company.sector})"
-				>
-					<img
-						src="../icons/emission-sectors/{company.icon}.svg"
-						alt="Energy"
-						height="60"
-						class="h-4"
-					/>
-					<img
-						src="../icons/atx-companies/{company.logo}.svg"
-						alt={company.logo}
-						width="60"
-						height="60"
-						class="inline-block h-6 object-contain"
-					/>
-				</button>
-			{/each}
-		</div>
-	</div>
-
-	<!-- Scope Selector -->
-	<!-- <div class="flex my-3 gap-1">
-		<label for="scopes" class="block font-semibold text-sm">Wähle den Scope:</label>
-		<select bind:value={selectedScopes} on:change={handleSelectScope}>
-			<option value="1">Scope 1</option>
-			<option value="2">Scope 2</option>
-			<option value="3">Scope 3</option>
-			<option value="12">Scope 1+2</option>
-			<option value="123">Scope 1+2+3</option>
-		</select>
-	</div> -->
 
 	<div class="flex flex-wrap mb-2">
 		<p class="font-semibold text-sm mr-4">Scopes</p>

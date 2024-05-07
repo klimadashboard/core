@@ -54,7 +54,6 @@
 			<tr class="border-b">
 				<th class="{tableCellClasses} text-left bg-white text-white">Logo Images</th>
 				<th class="{tableCellClasses} text-left">Klimaneutralitätsziel</th>
-				<!-- <th class="{tableCellClasses} text-left">Target Year</th> -->
 				<th class="{tableCellClasses} text-left">Umfasste Scopes</th>
 				<th class="{tableCellClasses} text-left">Zwischenziel</th>
 				<th class="{tableCellClasses} text-left">Mitglied Science-Based-Target Initiative</th>
