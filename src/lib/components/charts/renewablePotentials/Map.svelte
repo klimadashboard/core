@@ -10,8 +10,6 @@
 
 	let chartWidth;
 	let chartHeight;
-	$: console.log(data);
-	$: console.log(Object.values(data).map((d) => d[key]));
 
 	$: projection = geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo);
 
@@ -20,13 +18,15 @@
 		[chartWidth, chartHeight]
 	];
 
-	$: domain = extent(Object.values(data).map((d) => d[key]));
+	$: domain = extent(data.map((d) => d['value_TWh']));
 
 	$: colorScale = scaleLinear().range(colorRange).domain(domain);
 
 	$: getColor = (feature) => {
-		const dataForFeature = data[feature.properties['name']][key];
-		if (dataForFeature) return colorScale(dataForFeature);
+		const dataForFeature = data.find(
+			(d) => d.region == feature.properties['name'] && d.energy == key
+		);
+		if (dataForFeature) return colorScale(dataForFeature['value_TWh']);
 	};
 </script>
 

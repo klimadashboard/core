@@ -1,12 +1,15 @@
 <script>
 	import Map from './Map.svelte';
 	import Papa from 'papaparse';
+	import _ from 'lodash';
 
-	let data = [];
+	let data;
 
+	// https://docs.google.com/spreadsheets/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/edit#gid=271008028
+	// Energieerzeugung
 	Papa.parse(
-		// '/data_temp/EE-Potentiale.csv',
-		'https://docs.google.com/spreadsheets/u/8/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/export?format=csv&id=16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs&gid=0',
+		// '/data_temp/pvWindWasser_alleBundeslaender_ab1988.csv',
+		'https://docs.google.com/spreadsheets/u/8/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/export?format=csv&id=1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ&gid=271008028',
 		{
 			download: true,
 			dynamicTyping: true,
@@ -14,13 +17,21 @@
 			header: true,
 			complete: function (results) {
 				if (results) {
-					data = results.data;
+					const dataset = results.data;
+					const energyByBundesland = _.groupBy(dataset, (row) => row.region);
+					Object.keys(energyByBundesland).forEach((bundesland) => {
+						const sorted = energyByBundesland[bundesland].sort((a, b) => {
+							return a.year - b.year;
+						});
+						energyByBundesland[bundesland] = sorted[sorted.length - 1];
+					});
+					data = energyByBundesland;
 				}
 			}
 		}
 	);
 
-	const keys = ['pv_area', 'water', 'wind'];
+	const keys = ['pv', 'wasserkraft', 'windkraft'];
 	const colorRanges = [
 		['#F6E5B4', '#E0A906'],
 		['#B5CBE1', '#08519C'],
