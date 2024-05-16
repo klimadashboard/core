@@ -43,8 +43,7 @@ export const transformDataMultipleCompanies = (data, companies, selectedScopes) 
 				selectedScopes.forEach((selectedScope) => {
 					if (!emissionsPerYear[year][company]) {
 						emissionsPerYear[year][company] = emissions[company];
-					}
-					if (scope === `scope${selectedScope}`) {
+					} else if (scope === `scope${selectedScope}`) {
 						emissionsPerYear[year][company] += parseInt(emissions[company]);
 					}
 				});
