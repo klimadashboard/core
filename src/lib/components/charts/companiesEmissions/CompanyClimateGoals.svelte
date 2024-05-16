@@ -55,7 +55,6 @@
 				<th class="{tableCellClasses} text-left bg-white text-white">Logo Images</th>
 				<th class="{tableCellClasses} text-left">Klimaneutralitätsziel</th>
 				<th class="{tableCellClasses} text-left">Umfasste Scopes</th>
-				<th class="{tableCellClasses} text-left">Zwischenziel</th>
 				<th class="{tableCellClasses} text-left">Mitglied Science-Based-Target Initiative</th>
 			</tr>
 		</thead>
@@ -92,12 +91,6 @@
 							{company.climateNeutralityScopes}
 						{/if}</td
 					>
-					<td class={tableCellClasses} title={company.intermediateGoal}>
-						<svelte:component
-							this={mapStatusToIcon(company.intermediateGoal)}
-							additionalClasses="mx-auto"
-						/>
-					</td>
 					<td class={tableCellClasses} title={company.memberSBT}
 						><svelte:component
 							this={mapStatusToIcon(company.intermediateGoal)}
