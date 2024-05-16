@@ -135,6 +135,7 @@
 </script>
 
 <div>
+	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Emissionen</h2>
 	<!-- Sector Selector -->
 	<div class="flex block font-normal font-semibold text-xs mb-1">
 		<span class="mb-1">Filter: Sektoren</span>
@@ -259,5 +260,6 @@
 		</div>
 	{/if}
 	<br />
+	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Klimaziele</h2>
 	<CompanyClimateGoals selectedCompanies={companies.filter((company) => company.selected)} />
 </div>
