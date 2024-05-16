@@ -9,7 +9,7 @@
 
 	let companyGoalData = null;
 	let originalData = null;
-	const tableCellClasses = 'text-semibold text-sm text-center px-1';
+	const tableCellClasses = 'text-semibold text-sm text-center px-1 leading-tight py-1';
 
 	onMount(() => {
 		getData();
@@ -49,13 +49,14 @@
 {#if !companyGoalData}
 	<p>Loading...</p>
 {:else if companyGoalData}
-	<table class="min-w-full">
+	<table class="mx-auto">
 		<thead>
 			<tr class="border-b">
 				<th class="{tableCellClasses} text-left bg-white text-white">Logo Images</th>
 				<th class="{tableCellClasses} text-left">Klimaneutralitätsziel</th>
-				<th class="{tableCellClasses} text-left">Umfasste Scopes</th>
-				<th class="{tableCellClasses} text-left">Mitglied Science-Based-Target Initiative</th>
+				<th class="{tableCellClasses} text-left"
+					>Mitglied der <br />Science-Based-Target Initiative</th
+				>
 			</tr>
 		</thead>
 		<tbody>
@@ -81,16 +82,15 @@
 						{#if company.climateNeutrality === 'Nein'}
 							<XIcon additionalClasses="mx-auto" />
 						{:else}
-							{company.climateNeutrality}
+							<CheckIcon additionalClasses="mx-auto" />
+							<b>{company.climateNeutrality}</b><br />
+							{#if company.climateNeutralityScopes === 'nicht definiert'}
+								ohne definierte Scopes
+							{:else}
+								für Scope {company.climateNeutralityScopes}
+							{/if}
 						{/if}
 					</td>
-					<td class={tableCellClasses} title={company.climateNeutralityScopes}
-						>{#if company.climateNeutralityScopes === 'nicht definiert'}
-							<XIcon additionalClasses="mx-auto" />
-						{:else}
-							{company.climateNeutralityScopes}
-						{/if}</td
-					>
 					<td class={tableCellClasses} title={company.memberSBT}
 						><svelte:component
 							this={mapStatusToIcon(company.intermediateGoal)}
