@@ -338,7 +338,7 @@
 						class="font-semibold tracking-wide px-2 py-1 text-white text-xs rounded-full"
 						style="background-color:{colors[i]}"
 					>
-						<span class="uppercase">{labels[i]}</span>
+						<span class="uppercase">{labels[i]}: </span>
 						<span class="">{formatNumber(data[selectedIndex][key])}</span>
 						{#if unit.length < 8}
 							<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
@@ -350,7 +350,7 @@
 				<div
 					class="font-semibold tracking-wide px-3 py-1 text-white text-xs rounded-full bg-gray-500"
 				>
-					<span class="uppercase">Gesamt</span>
+					<span class="uppercase">Gesamt: </span>
 					<span class="">{formatNumber(Math.round(totals[selectedIndex] * 100) / 100)}</span>
 					{#if unit.length < 8}
 						<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
