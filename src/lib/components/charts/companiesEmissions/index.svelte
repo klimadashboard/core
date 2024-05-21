@@ -233,7 +233,7 @@
 	</div>
 
 	<div class="flex flex-wrap mb-2">
-		<p class="font-semibold text-sm mr-4">Scopes</p>
+		<p class="font-semibold text-sm mr-4">Emissionsquellen</p>
 		{#each scopes as scope}
 			<button
 				class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
