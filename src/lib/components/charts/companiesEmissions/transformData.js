@@ -38,13 +38,15 @@ export const transformDataMultipleCompanies = (data, companies, selectedScopes) 
 
 		companies.forEach((company) => {
 			if (emissions[company] !== undefined && emissions[company] !== null) {
-				console.log('🚀 ~ companies.forEach ~ emissions[company]:', emissions[company]);
 				// Aggregate emission data for the company and selected scopes
+
 				selectedScopes.forEach((selectedScope) => {
-					if (!emissionsPerYear[year][company]) {
-						emissionsPerYear[year][company] = emissions[company];
-					} else if (scope === `scope${selectedScope}`) {
-						emissionsPerYear[year][company] += parseInt(emissions[company]);
+					if (scope === `scope${selectedScope}`) {
+						if (!emissionsPerYear[year][company]) {
+							emissionsPerYear[year][company] = emissions[company];
+						} else {
+							emissionsPerYear[year][company] += emissions[company];
+						}
 					}
 				});
 			}

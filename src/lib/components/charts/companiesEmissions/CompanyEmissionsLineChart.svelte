@@ -88,10 +88,10 @@
 				? selectedScopes.map((scope) => selectedScopesToColors[scope])
 				: rawColors.slice(0, selectedCompanyNames.length);
 
-			console.log('🚀 ~ keys:', keys);
-			console.log('🚀 ~ labels:', labels);
-			console.log('🚀 ~ colors:', colors);
-			console.log('🚀 ~ dataset:', dataset);
+			//	console.log('🚀 ~ keys:', keys);
+			//	console.log('🚀 ~ labels:', labels);
+			//	console.log('🚀 ~ colors:', colors);
+			//	console.log('🚀 ~ dataset:', dataset);
 		}
 	}
 </script>
@@ -103,8 +103,8 @@
 		{keys}
 		{labels}
 		showTotal={isSingleCompanySelected}
-		showAreas={isSingleCompanySelected}
-		showDots={!isSingleCompanySelected}
+		showAreas={false}
+		showDots={true}
 		visualisation={isSingleCompanySelected ? 'stacked' : 'non-stacked'}
 		marginLeft={50}
 		xTicksInterval={2}
