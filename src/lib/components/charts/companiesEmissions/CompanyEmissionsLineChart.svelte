@@ -109,6 +109,7 @@
 		marginLeft={50}
 		xTicksInterval={2}
 		preselectedIndex={4}
+		unit={'t'}
 	/>
 {:else if selectedCompanies.length === 0}
 	<br /><br /><br />
