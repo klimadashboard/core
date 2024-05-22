@@ -119,7 +119,6 @@
 			console.log('🚀 ~ file: index.svelte:60 ~ availableYears:', availableYears);
 		}
 	}
-	console.log('🚀 ~ file: index.svelte:34 ~ emissions_scope_1_2_3:', rawData);
 
 	function toggleScope(scope) {
 		if (selectedScopes.length === 1 && selectedScopes[0] === scope) return;
@@ -129,7 +128,6 @@
 		} else {
 			selectedScopes.splice(index, 1);
 			selectedScopes = selectedScopes;
-			console.log('🚀 ~ toggleScope ~ selectedScopes:', selectedScopes);
 		}
 	}
 </script>

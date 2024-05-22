@@ -67,10 +67,8 @@
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
 				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
-				console.log('🚀 ~ dataset:', dataset);
 			} else {
 				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
-				console.log('🚀 ~ dataset:', dataset);
 			}
 
 			// Select keys, colors and labels
@@ -83,11 +81,6 @@
 			colors = isSingleCompanySelected
 				? selectedScopes.map((scope) => selectedScopesToColors[scope])
 				: rawColors.slice(0, selectedCompanyNames.length);
-
-			//	console.log('🚀 ~ keys:', keys);
-			//	console.log('🚀 ~ labels:', labels);
-			//	console.log('🚀 ~ colors:', colors);
-			//	console.log('🚀 ~ dataset:', dataset);
 		}
 	}
 </script>

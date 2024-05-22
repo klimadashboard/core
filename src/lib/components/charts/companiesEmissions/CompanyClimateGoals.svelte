@@ -5,7 +5,6 @@
 	import XIcon from './XIcon.svelte';
 
 	export let selectedCompanies = [];
-	$: console.log(selectedCompanies);
 
 	let companyGoalData = null;
 	let originalData = null;
