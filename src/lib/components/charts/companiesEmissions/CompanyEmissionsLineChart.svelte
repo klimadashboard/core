@@ -7,10 +7,6 @@
 	export let selectedCompanies;
 	export let selectedScopes = ['scope1'];
 
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', rawData);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart ~ selectedCompanies:', selectedCompanies);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
-
 	let isSingleCompanySelected;
 	let selectedCompanyNames;
 	$: isSingleCompanySelected = selectedCompanies.length === 1;
@@ -105,7 +101,7 @@
 		showTotal={isSingleCompanySelected}
 		showAreas={false}
 		showDots={true}
-		visualisation={isSingleCompanySelected ? 'stacked' : 'non-stacked'}
+		visualisation={'non-stacked'}
 		marginLeft={50}
 		xTicksInterval={2}
 		preselectedIndex={4}
