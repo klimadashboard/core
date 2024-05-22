@@ -1,32 +1,32 @@
 interface QuizQuestion {
-    question: string
-    answers: QuizAnswer[]
-    showOnPages: ShowOnPages[] | null
-    showOnVersions: string
-    text_answer: string
-    text_question: string
-    uuid: string
+	question: string;
+	answers: QuizAnswer[];
+	showOnPages: ShowOnPages[] | null;
+	showOnVersions: string;
+	text_answer: string;
+	text_question: string;
+	uuid: string;
 }
 
 interface QuizAnswer {
-    help: string
-    id: number
-    istrue: string
-    label: string
-    count: number
+	help: string;
+	id: number;
+	istrue: string;
+	label: string;
+	count: number;
 }
 
 interface DbQuizAnswer {
-    answerId: number
-    questionUuid: string
+	answerId: number;
+	questionUuid: string;
 }
 
 interface DbCountQuizAnswer {
-    answerId: number
-    count: number
+	answerId: number;
+	count: number;
 }
 
 interface ShowOnPages {
-    uid: string
-    uuid: string
+	uid: string;
+	uuid: string;
 }

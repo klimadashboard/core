@@ -33,7 +33,7 @@
 		transition:fade={{ duration: 200 }}
 	>
 		<div
-			class="bg-white  m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll"
+			class="bg-white m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll"
 			style="max-height: 70vh;"
 			use:clickOutside
 			on:click_outside={() => glossaryItem.set(false)}

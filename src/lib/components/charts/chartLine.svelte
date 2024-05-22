@@ -35,7 +35,13 @@
 
 	$: xScale = scaleLinear()
 		.range([0, innerChartWidth])
-		.domain([0, max(data, (d) => d.x)]);
+		.domain([
+			0,
+			max(
+				data.filter((d) => !isNaN(d.x)),
+				(d) => d.x
+			)
+		]);
 
 	$: yScale = scaleLinear()
 		.range([innerChartHeight, 0])
@@ -47,14 +53,18 @@
 						// get total of all values for keys
 						var total = 0;
 						for (var k = 0; k < shownKeys.length; k++) {
-							total += item[shownKeys[k]];
+							if (!isNaN(item[shownKeys[k]])) {
+								total += item[shownKeys[k]];
+							}
 						}
 						return total;
 					} else {
 						// get max of values
 						var values = [];
 						for (var k = 0; k < shownKeys.length; k++) {
-							values.push(item[shownKeys[k]]);
+							if (!isNaN(item[shownKeys[k]])) {
+								values.push(item[shownKeys[k]]);
+							}
 						}
 						var max = Math.max(...values);
 						return max;
@@ -71,8 +81,16 @@
 	$: generateLine = (key) => {
 		if (visualisation == 'stacked') {
 			return line()
-				.x((d) => xScale(d.x))
-				.y(function (d) {
+				.defined((d) => {
+					return !isNaN(d[key]);
+				})
+				.x((d) => {
+					return !isNaN(d[key]) ? xScale(d.x) : null;
+				})
+				.y((d) => {
+					if (d[key] === 'na') {
+						return null;
+					}
 					var total = 0;
 					for (var i = 0; i <= shownKeys.indexOf(key); i++) {
 						total += d[shownKeys[i]];
@@ -81,17 +99,24 @@
 				});
 		} else {
 			return line()
-				.x((d) => xScale(d.x))
-				.y((d) => yScale(d[key]));
+				.defined((d) => {
+					return !isNaN(d[key]);
+				})
+				.x((d) => (!isNaN(d[key]) ? xScale(d.x) : null))
+				.y((d) => (!isNaN(d[key]) ? yScale(d[key]) : null));
 		}
 	};
 
 	$: generateArea = (key) => {
 		if (visualisation == 'stacked') {
 			return area()
-				.x((d) => xScale(d.x))
-				.y0(innerChartHeight)
+				.defined((d) => !isNaN(d[key]))
+				.x((d) => (!isNaN(d[key]) ? xScale(d.x) : null))
+				.y0((d) => (!isNaN(d[key]) ? innerChartHeight : null))
 				.y1(function (d) {
+					if (d[key] === 'na') {
+						return null;
+					}
 					var total = 0;
 					for (var i = 0; i <= shownKeys.indexOf(key); i++) {
 						total += d[shownKeys[i]];
@@ -100,16 +125,17 @@
 				});
 		} else {
 			return area()
-				.x((d) => xScale(d.x))
-				.y0(innerChartHeight)
-				.y1(function (d) {
-					return yScale(d[key]);
-				});
+				.defined((d) => !isNaN(d[key]))
+				.x((d) => (!isNaN(d[key]) ? xScale(d.x) : null))
+				.y0((d) => (!isNaN(d[key]) ? innerChartHeight : null))
+				.y1((d) => (!isNaN(d[key]) ? yScale(d[key]) : null));
 		}
 	};
 
 	$: lines = keys.map((key) => generateLine(key)(data));
+	$: console.log('🚀 ~ lines:', lines);
 	$: areas = keys.map((key) => generateArea(key)(data));
+	$: console.log('🚀 ~ areas:', areas);
 	$: totals = data.map((datapoint) => getTotal(datapoint));
 
 	$: getTotal = function (datapoint) {
@@ -151,6 +177,8 @@
 				)
 		  ]
 		: [];
+
+	$: console.log(totals);
 </script>
 
 <div class="h-full relative" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
@@ -217,12 +245,14 @@
 					<g>
 						{#each data as datapoint}
 							{#each keys as key, i}
-								<circle
-									cx={xScale(datapoint.x) || 0}
-									cy={yScale(datapoint[key]) || 0}
-									r={circleRadius}
-									fill={shownColors[i]}
-								/>
+								{#if !isNaN(datapoint[key])}
+									<circle
+										cx={xScale(datapoint.x) || 0}
+										cy={yScale(datapoint[key]) || 0}
+										r={circleRadius}
+										fill={shownColors[i]}
+									/>
+								{/if}
 							{/each}
 						{/each}
 					</g>
@@ -307,22 +337,26 @@
 			{#each keys as key, i}
 				{#if showZeroValuesInLegend || data[selectedIndex][key] > 0}
 					<div
-						class="font-semibold tracking-wide px-2 pt-1 text-white text-xs rounded-full"
+						class="font-semibold tracking-wide px-2 py-1 text-white text-xs rounded-full"
 						style="background-color:{colors[i]}"
 					>
-						<span class="uppercase">{labels[i]}</span>
-						<span class="">{formatNumber(data[selectedIndex][key])}</span>
-						{#if unit.length < 8}
-							<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
+						<span class="uppercase">{labels[i]}: </span>
+						{#if typeof data[selectedIndex][key] === 'number'}
+							<span class="">{formatNumber(data[selectedIndex][key])}</span>
+							{#if unit.length < 8}
+								<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
+							{/if}
+						{:else}
+							Keine Daten
 						{/if}
 					</div>
 				{/if}
 			{/each}
-			{#if showTotal}
+			{#if showTotal && typeof totals[selectedIndex] === 'number'}
 				<div
 					class="font-semibold tracking-wide px-3 py-1 text-white text-xs rounded-full bg-gray-500"
 				>
-					<span class="uppercase">Gesamt</span>
+					<span class="uppercase">Gesamt: </span>
 					<span class="">{formatNumber(Math.round(totals[selectedIndex] * 100) / 100)}</span>
 					{#if unit.length < 8}
 						<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>

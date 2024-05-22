@@ -36,7 +36,14 @@
 <g class="chart-x-axis">
 	{#each xAxisValues as year, i}
 		{@const x = startline + i * dx}
-		<line x1={x} x2={x} y1={baseline-7} y2={baseline+2} stroke-width="2" class="stroke-current opacity-30"></line>
+		<line
+			x1={x}
+			x2={x}
+			y1={baseline - 7}
+			y2={baseline + 2}
+			stroke-width="2"
+			class="stroke-current opacity-30"
+		/>
 		{#if (xAxisValues.length - 1 - i) % skipCount == 0}
 			<text {x} y={baseline + 20} font-size="15" text-anchor="middle"><tspan>{year}</tspan></text>
 		{/if}

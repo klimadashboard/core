@@ -84,7 +84,7 @@
 			<g
 				id="visualisation"
 				transform={`translate(${margin.left}, ${margin.top})`}
-				class="text-gray-500 "
+				class="text-gray-500"
 			>
 				{#if path}
 					<path class="path-line" d={path} transition:draw />
