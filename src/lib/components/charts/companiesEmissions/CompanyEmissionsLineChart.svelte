@@ -7,10 +7,6 @@
 	export let selectedCompanies;
 	export let selectedScopes = ['scope1'];
 
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', rawData);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart ~ selectedCompanies:', selectedCompanies);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
-
 	let isSingleCompanySelected;
 	let selectedCompanyNames;
 	$: isSingleCompanySelected = selectedCompanies.length === 1;
@@ -71,10 +67,8 @@
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
 				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
-				console.log('🚀 ~ dataset:', dataset);
 			} else {
 				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
-				console.log('🚀 ~ dataset:', dataset);
 			}
 
 			// Select keys, colors and labels
@@ -87,11 +81,6 @@
 			colors = isSingleCompanySelected
 				? selectedScopes.map((scope) => selectedScopesToColors[scope])
 				: rawColors.slice(0, selectedCompanyNames.length);
-
-			//	console.log('🚀 ~ keys:', keys);
-			//	console.log('🚀 ~ labels:', labels);
-			//	console.log('🚀 ~ colors:', colors);
-			//	console.log('🚀 ~ dataset:', dataset);
 		}
 	}
 </script>
@@ -105,7 +94,7 @@
 		showTotal={isSingleCompanySelected}
 		showAreas={false}
 		showDots={true}
-		visualisation={isSingleCompanySelected ? 'stacked' : 'non-stacked'}
+		visualisation={'non-stacked'}
 		marginLeft={50}
 		xTicksInterval={2}
 		preselectedIndex={4}

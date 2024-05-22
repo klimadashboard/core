@@ -7,14 +7,6 @@
 	export let selectedYear;
 	export let freezeYAxis;
 	export let isFocusView = false;
-	$: console.log('🚀 ~ isFocusView:', isFocusView);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:5 ~ data:', data);
-	$: console.log(
-		'🚀 ~ file: CompanyEmissionsChart.svelte:9 ~ selectedCompanies:',
-		selectedCompanies
-	);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:10 ~ selectedScope:', selectedScopes);
-	$: console.log('🚀 ~ file: CompanyEmissionsChart.svelte:11 ~ selectedYear:', selectedYear);
 
 	const categoryColors = {
 		scope1: '#E59E1A',
@@ -76,7 +68,6 @@
 				});
 			});
 		}
-		console.log('🚀 ~ file: CompanyEmissionsChart.svelte:80 ~ dataset:', dataset);
 	}
 </script>
 

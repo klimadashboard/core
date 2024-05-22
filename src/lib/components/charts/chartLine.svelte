@@ -133,9 +133,7 @@
 	};
 
 	$: lines = keys.map((key) => generateLine(key)(data));
-	$: console.log('🚀 ~ lines:', lines);
 	$: areas = keys.map((key) => generateArea(key)(data));
-	$: console.log('🚀 ~ areas:', areas);
 	$: totals = data.map((datapoint) => getTotal(datapoint));
 
 	$: getTotal = function (datapoint) {
