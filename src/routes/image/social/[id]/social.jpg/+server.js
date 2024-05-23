@@ -22,7 +22,7 @@ export async function GET({ params }) {
 			throw error(404, 'Timeout when loading page data. ' + err);
 		});
 
-	const image = await renderSocialImage({
+	const image = await renderSocialImage.default({
 		template: 'article',
 		templateParams: {
 			imageUrl: 'https://klimadashboard.at/social_background.jpg',
