@@ -38,7 +38,10 @@
 		content="{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}"
 	/>
 	<meta property="og:description" content={data.meta_description} />
-	<meta property="og:image" content="https://klimadashboard.{PUBLIC_VERSION}/social.jpg" />
+	<meta
+		property="og:image"
+		content="{$page.url}image/social/{$page.params.slug ? $page.params.slug : 'home'}/social.jpg"
+	/>
 
 	<!-- Twitter Meta Tags -->
 	<meta name="twitter:card" content="summary_large_image" />
@@ -49,7 +52,10 @@
 		content="{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}"
 	/>
 	<meta name="twitter:description" content={data.meta_description} />
-	<meta name="twitter:image" content="https://klimadashboard.{PUBLIC_VERSION}/social.jpg" />
+	<meta
+		name="twitter:image"
+		content="{$page.url}image/social/{$page.params.slug ? $page.params.slug : 'home'}/social.jpg"
+	/>
 </svelte:head>
 
 {#key data}
