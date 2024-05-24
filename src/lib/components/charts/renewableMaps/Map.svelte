@@ -10,8 +10,6 @@
 
 	let chartWidth;
 	let chartHeight;
-	$: console.log(data);
-	$: console.log(Object.values(data).map((d) => d[key]));
 
 	$: projection = geoAlbers().center([0, 47.8]).rotate([-13.5, 0]).fitExtent(bounds, topo);
 
@@ -26,7 +24,9 @@
 
 	$: getColor = (feature) => {
 		const dataForFeature = data[feature.properties['name']][key];
-		if (dataForFeature) return colorScale(dataForFeature);
+		if (!isNaN(dataForFeature)) {
+			return colorScale(dataForFeature);
+		}
 	};
 </script>
 
