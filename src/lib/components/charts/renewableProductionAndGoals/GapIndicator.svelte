@@ -44,8 +44,9 @@
 			header: true,
 			complete: function (results) {
 				if (results) {
-					lastUpdate = results.data[results.data.length - 1].DateTime.substring(0, 10);
-					currentProduction = results.data[results.data.length - 1].Jahresproduktion;
+					let d = results.data.filter((d) => d.Jahresproduktion > 0);
+					lastUpdate = d[d.length - 1].DateTime.substring(0, 10);
+					currentProduction = d[d.length - 1].Jahresproduktion;
 				}
 			}
 		}
