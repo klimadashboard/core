@@ -20,7 +20,7 @@
 		if (isNaN(last_year_val)) {
 			last_year_val = toNumber(last_year_val.replaceAll(',', ''));
 		}
-		return last_year_val / ratio_to[bundesland][dataKey];
+		return last_year_val / ratio_to[dataKey];
 	}
 
 	$: margin = { top: 0.02 * chartHeight, bottom: 0.02 * chartHeight };
@@ -38,6 +38,9 @@
 	$: chartHeight = chartWidth / 1.4;
 
 	$: ratio_data = showTechn ? potentiale_techn : potentiale_2030;
+
+	// $: console.log(hoverType);
+	$: console.log(potentiale_2030);
 
 	// $: hoverX = margin_bars.left;
 	// $: hoverY = margin.top;
@@ -60,7 +63,7 @@
 	bind:clientWidth={chartWidth}
 >
 	{#if chartWidth && chartHeight}
-		{#if hoverBundesland === bundesland && chartWidth >= 150}
+		{#if hoverBundesland === bundesland && chartWidth >= 150 && bundesland !== 'Legende'}
 			<!-- <span style="position: absolute; top: {hoverY}px; left: {hoverX}px">asdf</span> -->
 			<div
 				class="absolute h-15 bg-gray-100"
@@ -69,14 +72,10 @@
 				<b>{hoverType.label}</b>
 				<br />
 				{#if showTechn}
-					{'Techn mögl: ' +
-						Math.round(potentiale_techn[hoverBundesland][hoverType.dataKey] * 100) / 100 +
-						'TWh'}
+					{'Techn mögl: ' + Math.round(potentiale_techn[hoverType.dataKey] * 100) / 100 + 'TWh'}
 					<br />
 				{/if}
-				{'Potential 2030: ' +
-					Math.round(potentiale_2030[hoverBundesland][hoverType.dataKey] * 100) / 100 +
-					'TWh'}
+				{'Potential 2030: ' + Math.round(potentiale_2030[hoverType.dataKey] * 100) / 100 + 'TWh'}
 				<br />
 				{'Derzeit: ' +
 					Math.round(current_energy[hoverType.dataKey] * 100) / 100 +
@@ -124,8 +123,7 @@
 							}}
 						/>
 
-						{@const ratio_techn_2030 =
-							potentiale_2030[bundesland][type.dataKey] / ratio_data[bundesland][type.dataKey]}
+						{@const ratio_techn_2030 = potentiale_2030[type.dataKey] / ratio_data[type.dataKey]}
 						<rect
 							x={xScale(index) + margin_bars.left}
 							y={yScale(ratio_techn_2030)}

@@ -7,6 +7,7 @@
 	import Papa from 'papaparse';
 	import { last } from 'lodash';
 
+	export let bundesland;
 	export let type;
 	export let dataset;
 	export let potential_2030;
@@ -142,6 +143,18 @@
 										</text>
 									{/if}
 								{/each}
+							</g>
+						{:else}
+							<g>
+								<text
+									text-anchor={'start'}
+									class="text-sm font-semibold fill-current bg-white"
+									style="fill: {grey};"
+									x={xScale(new Date(maxYear, 1, 1))}
+									y={yScale(maxValue) + 5}
+								>
+									{bundesland} hat kein Ausbauziel für {type.label}
+								</text>
 							</g>
 						{/if}
 						{#if potential_2030 != null}

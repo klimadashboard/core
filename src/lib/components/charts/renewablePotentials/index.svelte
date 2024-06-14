@@ -262,22 +262,38 @@
 	$: selectedStartYear = minYear;
 </script>
 
-<Switch
-	{views}
-	{activeView}
-	on:itemClick={(event) => {
-		activeView = event.detail;
-	}}
-/>
-<label
-	class="flex gap-1 text-sm items-center cursor-pointer {showTechn
-		? 'text-gray-700'
-		: 'text-gray-400'}"
-	style=""
->
-	<span>Technisch mögliche Potentiale</span>
-	<input type="checkbox" bind:checked={showTechn} />
-</label>
+<div class="grid grid-cols-3 gap-3 my-3">
+	<div>
+		<Switch
+			{views}
+			{activeView}
+			on:itemClick={(event) => {
+				activeView = event.detail;
+			}}
+		/>
+		<label
+			class="flex gap-1 text-sm items-center cursor-pointer {showTechn
+				? 'text-gray-700'
+				: 'text-gray-400'}"
+			style=""
+		>
+			<span>Technisch mögliche Potentiale</span>
+			<input type="checkbox" bind:checked={showTechn} />
+		</label>
+	</div>
+	<div />
+	<!-- <div class="rounded overflow-hidden div-bundesland w-40">
+		<Chart
+			bundesland={'Legende'}
+			current_energy={{ wasserkraft: 50, windkraft: 70, pv: 40, year: '' }}
+			{energyTypes}
+			bundeslaender={{ Legende: 'Legende' }}
+			potentiale_2030={{ wasserkraft: 90, windkraft: 110, pv: 120, year: '' }}
+			potentiale_techn={{ wasserkraft: 150, windkraft: 150, pv: 150, year: '' }}
+			{showTechn}
+		/>
+	</div> -->
+</div>
 
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset}
@@ -291,9 +307,9 @@
 								energyByBundesland[bundesland].length - 1
 							]}
 							{energyTypes}
-							{potentiale_2030}
+							potentiale_2030={potentiale_2030[bundesland]}
 							{bundeslaender}
-							{potentiale_techn}
+							potentiale_techn={potentiale_techn[bundesland]}
 							{showTechn}
 							bind:hoverType
 							bind:hoverBundesland
@@ -322,9 +338,9 @@
 								energyByBundesland[bundesland].length - 1
 							]}
 							{energyTypes}
-							{potentiale_2030}
+							potentiale_2030={potentiale_2030[bundesland]}
 							{bundeslaender}
-							{potentiale_techn}
+							potentiale_techn={potentiale_techn[bundesland]}
 							{showTechn}
 						/>
 					</div>
@@ -333,13 +349,17 @@
 			<div class="grid gap-4 p-2">
 				{#each energyTypes as type}
 					<Details
+						bundesland={selectedBundesland}
 						{type}
 						{selectedStartYear}
 						{showTechn}
 						potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
 						potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
 						goals={goals.filter(
-							(row) => row.state_name === selectedBundesland && row.energy_data_key === type.dataKey
+							(row) => row.state_name === selectedBundesland && row.energy_data_key === type.dataKey //&&
+							// !isNaN(row.goal_amount) &&
+							// !isNaN(row.goal_year) &&
+							// !isNaN(row.source_year)
 						)}
 						dataset={energyByBundesland[selectedBundesland]
 							?.map((row) => {
