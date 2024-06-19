@@ -175,8 +175,6 @@
 				)
 		  ]
 		: [];
-
-	$: console.log(totals);
 </script>
 
 <div class="h-full relative" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
