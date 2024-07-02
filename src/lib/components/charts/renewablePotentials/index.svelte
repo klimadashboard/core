@@ -213,7 +213,7 @@
 					minYear = Math.min(...years);
 					maxYear = Math.max(...years);
 
-					energyByBundesland = _.groupBy(dataset, (row) => row.region);
+					energyByBundesland = _.groupBy(dataset, (row) => row.region);					
 					Object.keys(energyByBundesland).forEach((bundesland) => {
 						energyByBundesland[bundesland] = energyByBundesland[bundesland].sort((a, b) => {
 							return a.year - b.year;
@@ -242,35 +242,11 @@
 	);
 	// });
 
-	$: views = [
-		{
-			key: 'overview',
-			label: 'Übersicht',
-			icon: null,
-			color: '#4DB263'
-		},
-		{
-			key: 'details',
-			label: 'Details',
-			icon: null,
-			color: '#4DB263'
-		}
-	];
-
-	$: activeView = 'overview';
-
 	$: selectedStartYear = minYear;
 </script>
 
 <div class="grid grid-cols-3 gap-3 my-3">
 	<div>
-		<Switch
-			{views}
-			{activeView}
-			on:itemClick={(event) => {
-				activeView = event.detail;
-			}}
-		/>
 		<label
 			class="flex gap-1 text-sm items-center cursor-pointer {showTechn
 				? 'text-gray-700'
@@ -297,28 +273,6 @@
 
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset}
-		{#if activeView === 'overview'}
-			<div class="grid grid-cols-3 gap-3 my-3">
-				{#each Object.keys(energyByBundesland) as bundesland}
-					<div class="rounded overflow-hidden div-bundesland">
-						<Chart
-							{bundesland}
-							current_energy={energyByBundesland[bundesland][
-								energyByBundesland[bundesland].length - 1
-							]}
-							{energyTypes}
-							potentiale_2030={potentiale_2030[bundesland]}
-							{bundeslaender}
-							potentiale_techn={potentiale_techn[bundesland]}
-							{showTechn}
-							bind:hoverType
-							bind:hoverBundesland
-						/>
-					</div>
-				{/each}
-			</div>
-		{/if}
-		{#if activeView === 'details'}
 			<div class="grid grid-cols-9 gap-2 my-2">
 				{#each Object.keys(energyByBundesland) as bundesland}
 					<div
@@ -382,7 +336,6 @@
 					class="px-3 py-1 w-20 bg-gray-100 rounded-full"
 				/>
 			</div>
-		{/if}
 	{/if}
 </div>
 

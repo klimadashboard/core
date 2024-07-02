@@ -1,7 +1,6 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { scaleLinear } from 'd3-scale';
-	import _, { toNumber } from 'lodash';
 
 	export let energyTypes;
 	export let bundesland;
@@ -18,7 +17,7 @@
 	function ratio_current_2030(ratio_to, dataKey) {
 		let last_year_val = current_energy[dataKey];
 		if (isNaN(last_year_val)) {
-			last_year_val = toNumber(last_year_val.replaceAll(',', ''));
+			last_year_val = parseInt(last_year_val.replaceAll(',', ''));
 		}
 		return last_year_val / ratio_to[dataKey];
 	}

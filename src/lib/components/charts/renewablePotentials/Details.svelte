@@ -5,7 +5,6 @@
 	import dayjs from 'dayjs';
 	import { fade } from 'svelte/transition';
 	import Papa from 'papaparse';
-	import { last } from 'lodash';
 
 	export let bundesland;
 	export let type;
