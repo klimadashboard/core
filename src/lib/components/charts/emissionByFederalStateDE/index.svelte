@@ -6,6 +6,7 @@
 
 	let rawData;
 	let regions;
+	let gastypes;
 
 	Papa.parse('https://data.klimadashboard.org/de/emissions/udrdl_emissions_by_bundesland.csv', {
 		download: true,
@@ -23,22 +24,29 @@
 						})
 					)
 				];
+				gastypes = [
+					...new Set(
+						rawData.map((d) => {
+							return d.gastype;
+						})
+					)
+				];
 			}
 		}
 	});
 
 	$: selectedRegion = 'Bayern';
-	$: selectedGas = 'ghg';
+	$: selectedGas = 'GHG';
 
 	$: dataset = [];
 
 	$: if (rawData) {
 		dataset = rawData
-			.filter((d) => d.region == selectedRegion)
+			.filter((d) => d.region == selectedRegion && d.gastype == selectedGas && d.sector == 'total')
 			.map((e) => {
 				return {
 					label: e.year,
-					value: e[selectedGas]
+					value: e.value
 				};
 			});
 	}
@@ -47,7 +55,7 @@
 </script>
 
 {#if dataset.length > 0}
-	<Filter {regions} bind:selectedRegion />
+	<Filter {regions} bind:selectedRegion {gastypes} bind:selectedGas />
 	<div class="h-80">
 		<BarChart data={dataset} unit={'t ' + selectedGas} />
 	</div>
