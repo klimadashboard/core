@@ -1,5 +1,7 @@
 # SvelteKit Repository for klimadashboard.at
 
+[TOC]
+
 ## Welcome! 🌍
 
 This is the code that powers the frontend of Klimadashboard.at, a website visualising the climate crisis in Austria and beyond. Our website is built with [SvelteKit](https://kit.svelte.dev), a JS framework which performs calculations on our datasets and builds interactive visualisations. Our backend, including all of our datasets and data processing code, can be found [here](https://github.com/klimadashboard). This repository also does not include text and layout data, which is handled by our Klimadashboard CMS.
@@ -26,7 +28,7 @@ We’d love to expand Klimadashboard beyond Austria, but we need data research, 
 
 The [main] branch of this repository is automatically deployed to our server via ploi.io.
 
-## Development & Build
+## Development & Build ⚙️
 
 Run the Application in development mode:
 
@@ -54,7 +56,7 @@ We’re using Tailwind CSS for our CSS classes. To use the full set of utility c
 npx tailwindcss -i ./public/tailwind.css -o ./public/styles.css --watch
 ```
 
-## Further resources
+## Further resources 📚
 
 - [Klimadashboard Design System](https://figma.com/@klimadashboard) on Figma
 - [Twitter](https://twitter.com/klimadashboard)
