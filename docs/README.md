@@ -1,7 +1,5 @@
 # SvelteKit Repository for klimadashboard.at
 
-[TOC]
-
 ## Welcome! 🌍
 
 This is the code that powers the frontend of Klimadashboard.at, a website visualising the climate crisis in Austria and beyond. Our website is built with [SvelteKit](https://kit.svelte.dev), a JS framework which performs calculations on our datasets and builds interactive visualisations. Our backend, including all of our datasets and data processing code, can be found [here](https://github.com/klimadashboard). This repository also does not include text and layout data, which is handled by our Klimadashboard CMS.
