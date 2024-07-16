@@ -1,8 +1,8 @@
 <script>
-	import Papa from 'papaparse';
 	import BarChart from '$lib/components/charts/chartBar.svelte';
-	import Filter from './Filter.svelte';
 	import Loader from '$lib/components/Loader.svelte';
+	import Papa from 'papaparse';
+	import Filter from './Filter.svelte';
 
 	let rawData;
 	let regions;
@@ -72,7 +72,7 @@
 	$: if (rawData) {
 		dataset = createCompleteDataset(rawData, selectedRegion, selectedGas);
 	}
-
+	console.log("ich bin ein test");
 </script>
 
 {#if dataset.length > 0}
