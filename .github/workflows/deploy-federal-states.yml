@@ -1,4 +1,4 @@
-name: 'Deploy at-ghg-companies branch'
+name: 'Deploy emissions-federal-states branch'
 
 on:
   push:
