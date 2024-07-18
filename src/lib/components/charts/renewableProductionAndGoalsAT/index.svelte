@@ -1,6 +1,23 @@
 <script>
 	import Chart from './Chart.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import Papa from 'papaparse';
+
+	let dataGoals;
+	Papa.parse(
+		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_sceanrios_oenip_nekp_eag.csv',
+		{
+			download: true,
+			dynamicTyping: true,
+			skipEmptyLines: true,
+			header: true,
+			complete: function (results) {
+				if (results) {
+					dataGoals = results.data;
+				}
+			}
+		}
+	);
 
 	const energyTypes = [
 		{
@@ -55,14 +72,17 @@
 		<input type="checkbox" bind:checked={unifiedScaling} />
 		<span>Einheitliche Skalierung?</span>
 	</label>
-	<div class="grid md:grid-cols-2 gap-4 my-4">
-		{#each energyTypes.filter((d) => d.regions.indexOf(PUBLIC_VERSION) > -1) as type}
-			<Chart
-				{type}
-				{unifiedScaling}
-				maxX={PUBLIC_VERSION == 'at' ? '2031-04-01' : '2041-12-31'}
-				maxY={PUBLIC_VERSION == 'at' ? 50 : 500}
-			/>
-		{/each}
-	</div>
+	{#if dataGoals}
+		<div class="grid md:grid-cols-2 gap-4 my-4">
+			{#each energyTypes.filter((d) => d.regions.indexOf(PUBLIC_VERSION) > -1) as type}
+				<Chart
+					{type}
+					{unifiedScaling}
+					{dataGoals}
+					maxX={PUBLIC_VERSION == 'at' ? '2031-04-01' : '2041-12-31'}
+					maxY={PUBLIC_VERSION == 'at' ? 50 : 500}
+				/>
+			{/each}
+		</div>
+	{/if}
 </section>
