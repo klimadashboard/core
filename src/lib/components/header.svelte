@@ -125,7 +125,7 @@
 					</li>
 					<li class="opacity-100 hover:opacity-80 transition md:ml-4 hidden lg:block">
 						<a
-							href="https://opencollective.com/klimadashboard"
+							href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
 							target="_blank"
 							class="leading-[4rem] text-sm font-bold uppercase tracking-wide bg-gradient-blue px-2 py-1 text-white rounded"
 							>Spenden</a

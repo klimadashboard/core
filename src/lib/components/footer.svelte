@@ -121,7 +121,7 @@
 			</p>
 			<a
 				class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
-				href="https://opencollective.com/klimadashboard"
+				href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +141,7 @@
 					<line x1="7" y1="15" x2="7.01" y2="15" />
 					<line x1="11" y1="15" x2="13" y2="15" />
 				</svg>
-				<span>Spenden auf OpenCollective</span>
+				<span>Spenden</span>
 			</a>
 		</div>
 		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
