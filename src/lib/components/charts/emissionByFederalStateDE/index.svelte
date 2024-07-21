@@ -73,7 +73,7 @@
 
     // Append the specified elements if the selected region is Bayern
     if (selectedRegion === 'Bayern') {
-        for (let year = 2021; year <= 2040; year++) {
+        for (let year = 2021; year <= 2045; year++) {
             if (!result.find(d => d.label === year.toString())) {
                 result.push({ label: year.toString(), value: 'NA' });
             }
@@ -84,7 +84,11 @@
                 return { label: '2030', value: 3000, estimate: "#000000", stroke: "#000000"};
             } else if (d.label === '2040') {
                 return { label: '2040', value: 0, estimate: "#000000", stroke: "#000000"};
-            }
+
+            } else if(d.label === '2045') {
+								return { label: '2045', value: 0, estimate: "#000000", stroke: "#000000"};
+
+						}
             return d;
         });
     }
@@ -97,6 +101,7 @@
 
 	// Updating dataset
 	$: if (rawData) {
+		console.log(rawData);
 		dataset = createCompleteDataset(rawData, selectedRegion, selectedGas);
 	}
 </script>
@@ -106,6 +111,7 @@
 	<div class="h-80">
 		<BarChart 
 			data={dataset} 
+			xAxixInterval="5"
 			unit={'t ' + selectedGas} 
 		/>
 	</div>

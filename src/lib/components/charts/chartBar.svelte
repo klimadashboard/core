@@ -110,9 +110,13 @@
 	};
 
 	$: prettifyTick = function (tick, includeUnit = true) {
+
 		if (tick > 999999) {
-			return formatNumber(Math.round((tick / 1000000) * 100) / 100) + (includeUnit ? ' Mio' : '');
+			return formatNumber(Math.round((tick / 1000000) * 100) / 100) + (includeUnit ? ' Mio.' : '');
+		} else if (tick > 999) {
+			return formatNumber(Math.round((tick / 1000) * 100) / 100) + (includeUnit ? ' Tsd.' : '');
 		}
+
 		return formatNumber(tick);
 	};
 </script>
