@@ -66,7 +66,9 @@
 		// Mapping all years to the dataset
     let result = allYears.map((year) => ({
         label: year.toString(),
-        value: data[year] !== undefined ? data[year] : 'NA' 
+        value: data[year] !== undefined ? data[year] : 'NA',
+				estimate: "#000000",
+				stroke: "#000000"
     }));
 
     // Append the specified elements if the selected region is Bayern
@@ -79,9 +81,9 @@
         // Update specific values for 2030 and 2040
         result = result.map(d => {
             if (d.label === '2030') {
-                return { label: '2030', value: 3000 };
+                return { label: '2030', value: 3000, estimate: "#000000", stroke: "#000000"};
             } else if (d.label === '2040') {
-                return { label: '2040', value: 0 };
+                return { label: '2040', value: 0, estimate: "#000000", stroke: "#000000"};
             }
             return d;
         });
@@ -103,8 +105,9 @@
 	<Filter {regions} bind:selectedRegion {gastypes} bind:selectedGas />
 	<div class="h-80">
 		<BarChart 
-		data={dataset} 
-		unit={'t ' + selectedGas} />
+			data={dataset} 
+			unit={'t ' + selectedGas} 
+		/>
 	</div>
 {:else}
 	<Loader />

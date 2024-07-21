@@ -1,9 +1,9 @@
 <script>
-	import { min, max } from 'd3-array';
-	import { scaleLinear } from 'd3-scale';
-	import { fade } from 'svelte/transition';
-	import { pointer } from 'd3-selection';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { max } from 'd3-array';
+	import { scaleLinear } from 'd3-scale';
+	import { pointer } from 'd3-selection';
+	import { fade } from 'svelte/transition';
 
 	export let data;
 	export let sort = '';
@@ -194,7 +194,7 @@
 								width={barWidth || 0}
 								height={yScale(datapoint.value) || 0}
 								fill={datapoint.estimate ? 'estimate' : 'currentColor'}
-								stroke="currentColor"
+								stroke={datapoint.stroke ? 'stroke' : 'currentColor'}
 								stroke-width="2"
 								x="0"
 								y={innerChartHeight - yScale(datapoint.value) || 0}
