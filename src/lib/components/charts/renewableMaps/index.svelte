@@ -103,6 +103,7 @@
 	);
 
 	const keys = ['pv', 'wasserkraft', 'windkraft'];
+	const labels = ['Photovoltaik', 'Wasserkraft', 'Windkraft'];
 	const colorRanges = [
 		['#F6E5B4', '#E0A906'],
 		['#B5CBE1', '#08519C'],
@@ -110,13 +111,11 @@
 	];
 </script>
 
-<h3>Potentiale der Bundesländer im Vergleich</h3>
 <div class="grid md:grid-cols-3 gap-4">
 	{#if potentiale_2030}
 		{#each keys as key, i}
 			<div>
-				<p>{key}</p>
-				<Map data={potentiale_2030} {key} colorRange={colorRanges[i]} />
+				<Map data={potentiale_2030} {key} colorRange={colorRanges[i]} label={labels[i]} />
 			</div>
 		{/each}
 	{/if}
