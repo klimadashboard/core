@@ -213,7 +213,7 @@
 					minYear = Math.min(...years);
 					maxYear = Math.max(...years);
 
-					energyByBundesland = _.groupBy(dataset, (row) => row.region);					
+					energyByBundesland = _.groupBy(dataset, (row) => row.region);
 					Object.keys(energyByBundesland).forEach((bundesland) => {
 						energyByBundesland[bundesland] = energyByBundesland[bundesland].sort((a, b) => {
 							return a.year - b.year;
@@ -273,69 +273,57 @@
 
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset}
-			<div class="grid grid-cols-9 gap-2 my-2">
-				{#each Object.keys(energyByBundesland) as bundesland}
-					<div
-						class="rounded overflow-hidden div-bundesland {selectedBundesland === bundesland
-							? 'selected'
-							: ''}"
-						on:click={() => {
-							selectedBundesland = bundesland;
-						}}
-						on:keydown={() => {
-							selectedBundesland = bundesland;
-						}}
-					>
-						<Chart
-							{bundesland}
-							current_energy={energyByBundesland[bundesland][
-								energyByBundesland[bundesland].length - 1
-							]}
-							{energyTypes}
-							potentiale_2030={potentiale_2030[bundesland]}
-							{bundeslaender}
-							potentiale_techn={potentiale_techn[bundesland]}
-							{showTechn}
-						/>
-					</div>
-				{/each}
-			</div>
-			<div class="grid gap-4 p-2">
-				{#each energyTypes as type}
-					<Details
-						bundesland={selectedBundesland}
-						{type}
-						{selectedStartYear}
-						{showTechn}
-						potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
-						potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
-						goals={goals.filter(
-							(row) => row.state_name === selectedBundesland && row.energy_data_key === type.dataKey //&&
-							// !isNaN(row.goal_amount) &&
-							// !isNaN(row.goal_year) &&
-							// !isNaN(row.source_year)
-						)}
-						dataset={energyByBundesland[selectedBundesland]
-							?.map((row) => {
-								return {
-									year: row.year,
-									value: row[type.dataKey]
-								};
-							})
-							.filter((row) => !isNaN(row.value) && row.value != null)}
-					/>
-				{/each}
-			</div>
-			<div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
-				<span>Startjahr auswählen</span>
-				<input
-					type="number"
-					min={minYear}
-					max={maxYear}
-					bind:value={selectedStartYear}
-					class="px-3 py-1 w-20 bg-gray-100 rounded-full"
+		<div class="flex flex-wrap gap-2 justify-center items-center">
+			{#each Object.keys(energyByBundesland) as bundesland}
+				<button
+					class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-1 {selectedBundesland === bundesland
+						? 'stroke-2 bg-gray-200 font-bold'
+						: ''}"
+					on:click={() => {
+						selectedBundesland = bundesland;
+					}}
+					on:keydown={() => {
+						selectedBundesland = bundesland;
+					}}>{bundesland}</button
+				>
+			{/each}
+		</div>
+		<div class="grid gap-4 p-2">
+			{#each energyTypes as type}
+				<Details
+					bundesland={selectedBundesland}
+					{type}
+					{selectedStartYear}
+					{showTechn}
+					potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
+					potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
+					goals={goals.filter(
+						(row) => row.state_name === selectedBundesland && row.energy_data_key === type.dataKey //&&
+						// !isNaN(row.goal_amount) &&
+						// !isNaN(row.goal_year) &&
+						// !isNaN(row.source_year)
+					)}
+					dataset={energyByBundesland[selectedBundesland]
+						?.map((row) => {
+							return {
+								year: row.year,
+								value: row[type.dataKey]
+							};
+						})
+						.filter((row) => !isNaN(row.value) && row.value != null)}
 				/>
-			</div>
+			{/each}
+		</div>
+		<div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
+			<span>Startjahr auswählen</span>
+			<input
+				type="number"
+				min={minYear}
+				max={maxYear}
+				bind:value={selectedStartYear}
+				class="px-3 py-1 w-20 bg-gray-100 rounded-full"
+			/>
+		</div>
 	{/if}
 </div>
 
