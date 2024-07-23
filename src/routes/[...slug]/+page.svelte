@@ -10,34 +10,27 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
 
-	/** @type {import('./$types').PageData} */
-	export let data = [];
-
-	$: if (browser && data.redirecturl) {
-		goto(data.redirecturl);
-	}
-
-	$: itemtype = data.pagelayout
-		? data.pagelayout.includes('"type":"toggle"')
-			? 'https://schema.org/FAQPage'
-			: ''
-		: '';
+	export let data;
 </script>
 
 <svelte:head>
 	<title
-		>{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}</title
+		>{data.page.title} – Klimadashboard {PUBLIC_VERSION == 'de'
+			? 'Deutschland'
+			: 'Österreich'}</title
 	>
-	<meta name="description" content={data.meta_description} />
+	<meta name="description" content={'TODO'} />
 
 	<!-- Facebook Meta Tags -->
 	<meta property="og:url" content={$page.url.href} />
 	<meta property="og:type" content="website" />
 	<meta
 		property="og:title"
-		content="{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}"
+		content="{data.page.title} – Klimadashboard {PUBLIC_VERSION == 'de'
+			? 'Deutschland'
+			: 'Österreich'}"
 	/>
-	<meta property="og:description" content={data.meta_description} />
+	<meta property="og:description" content={'TODO'} />
 	<meta
 		property="og:image"
 		content="{$page.url}image/social/{$page.params.slug ? $page.params.slug : 'home'}/social.jpg"
@@ -49,38 +42,15 @@
 	<meta property="twitter:site" content="@klimadashboard" />
 	<meta
 		name="twitter:title"
-		content="{data.title} – Klimadashboard {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'}"
+		content="{data.page.title} – Klimadashboard {PUBLIC_VERSION == 'de'
+			? 'Deutschland'
+			: 'Österreich'}"
 	/>
-	<meta name="twitter:description" content={data.meta_description} />
+	<meta name="twitter:description" content={'TODO'} />
 	<meta
 		name="twitter:image"
 		content="{$page.url}image/social/{$page.params.slug ? $page.params.slug : 'home'}/social.jpg"
 	/>
 </svelte:head>
 
-{#key data}
-	{#if data.redirecturl}
-		<Loader />
-	{:else}
-		<main class="mb-24 min-h-screen pt-16" itemscope {itemtype}>
-			{#if data.showpageheader !== 'false'}
-				<PageHeader {data} />
-			{/if}
-			{#if data.pagelayout}
-				{#each JSON.parse(data.pagelayout) as layout}
-					<section id={layout.id} class="{layout.attrs.class} my-8" transition:fade>
-						{#if layout.attrs.headline}
-							<SectionHeader attrs={layout.attrs} />
-						{/if}
-						{#each layout.columns as column}
-							<Blocks content={column.blocks} />
-						{/each}
-					</section>
-				{/each}
-			{:else}
-				<Loader />
-				Content not found.
-			{/if}
-		</main>
-	{/if}
-{/key}
+<Blocks data={data.page.blocks} />

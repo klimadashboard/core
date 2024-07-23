@@ -1,28 +1,43 @@
-import { locale } from '$lib/stores/i18n';
+/** @type {import('./$types').PageLoad} */
 import { error } from '@sveltejs/kit';
-import { PUBLIC_VERSION } from '$env/static/public';
+import getDirectusInstance from '$lib/utils/directus';
+import { readItems } from '@directus/sdk';
 
-let localeString = 'de';
-locale.subscribe((value) => {
-	localeString = value;
-});
+export async function load({ fetch, params }) {
+	const directus = getDirectusInstance(fetch);
 
-/** @type {import('./$types').PageServerLoad} */
-export async function load({ params }) {
-	const url =
-		'https://cms.klimadashboard.org/' +
-		localeString +
-		'/klimadashboard-' +
-		PUBLIC_VERSION +
-		(params.slug !== '' ? '/' : '') +
-		params.slug +
-		'.json';
+	try {
+		const pages = await directus.request(
+			readItems('pages', {
+				filter: {
+					slug: {
+						_eq: params.slug
+					}
+				},
+				fields: [
+					'*',
+					{
+						blocks: [
+							'*',
+							{
+								item: {
+									block_toggle: ['*'],
+									charts: ['*'],
+									block_richtext: ['*']
+								}
+							}
+						]
+					}
+				],
+				limit: 1
+			})
+		);
 
-	const promise = await fetch(url)
-		.then((x) => x.json())
-		.catch(function (err) {
-			throw error(404, 'Timeout when loading page data. ' + err);
-		});
-
-	return promise;
+		const page = pages[0];
+		return {
+			page: page
+		};
+	} catch (err) {
+		throw error(404, 'Page not found');
+	}
 }

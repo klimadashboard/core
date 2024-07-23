@@ -13,11 +13,11 @@
 	import Quote from './Quote.svelte';
 	import List from './List.svelte';
 
-	export let content;
+	export let data;
 
 	const blocks = [
 		{
-			type: 'text',
+			type: 'block_richtext',
 			component: Text
 		},
 		{
@@ -29,7 +29,7 @@
 			component: Markdown
 		},
 		{
-			type: 'chart',
+			type: 'block_chart',
 			component: Chart
 		},
 		{
@@ -37,7 +37,7 @@
 			component: Tabs
 		},
 		{
-			type: 'toggle',
+			type: 'block_toggle',
 			component: Toggle
 		},
 		{
@@ -71,8 +71,9 @@
 	];
 </script>
 
-<div>
-	{#each content.filter((d) => !d.isHidden) as block}
-		<svelte:component this={blocks.find((d) => d.type == block.type).component} {block} />
-	{/each}
-</div>
+{#each data as block}
+	<svelte:component
+		this={blocks.find((d) => d.type == block.collection).component}
+		block={block.item}
+	/>
+{/each}
