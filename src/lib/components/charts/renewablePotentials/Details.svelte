@@ -22,6 +22,8 @@
 	const grey = '#A3A3A3';
 	const green = '#4FB365';
 
+	$: has_goals = goals != null && goals.length > 0;
+
 	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2038);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxValue = showTechn
@@ -30,7 +32,6 @@
 				Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
 				potential_2030 * 1.1
 		  );
-	$: console.log('maxValue', maxValue);
 	$: minValue = -maxValue / 5;
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -55,21 +56,26 @@
 		class="text-white p-1 flex justify-between items-center"
 		style="background: {type.color}; padding-left: 1rem; padding-right: 1rem;"
 	>
-		<h3 class="text-xl"><b>{type.label}</b></h3>
+		<h3 class="text-xl"><b>{type.label}</b> {has_goals ? '' : '(kein Ausbauziel definiert)'}</h3>
 		{@html type.icon}
 	</div>
 	<div class="h-auto">
 		<div class="relative w-full h-48" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				{@const last_datapoint = dataset[dataset.length - 1]}
-				{@const delta_values =
-					goals == null ? 0 : yScale(+goals[0].goal_amount) - yScale(+last_datapoint.value)}
-				{@const text_production_x_offset =
-					Math.abs(delta_values) <= 7 && +goals[0].goal_year > 2000
+				{@const delta_values = has_goals
+					? yScale(+goals[0].goal_amount) - yScale(+last_datapoint.value)
+					: 0}
+				{@const text_production_x_offset = has_goals
+					? Math.abs(delta_values) <= 7 && +goals[0].goal_year > 2000
 						? delta_values < 0
 							? 10
 							: -10
-						: 0}
+						: 0
+					: 0}
+
+				{@const text_potential_2030_y_offset =
+					has_goals && yScale(+goals[0].goal_amount) - yScale(potential_2030) < 0 ? +16 : -14}
 
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
@@ -106,7 +112,7 @@
 								</g>
 							{/each}
 						</g>
-						{#if goals != null}
+						{#if has_goals}
 							<g>
 								{#each goals as goal, index}
 									{@const sourceYear = index > 0 ? last_datapoint.goal_year : +goal.source_year}
@@ -117,17 +123,11 @@
 											: +dataset.find((d) => +d.year === sourceYear)?.value}
 									{@const goalYear = +goal.goal_year}
 									{@const goalAmount = +goal.goal_amount}
-									{@const asdf = console.log(
-										sourceYear,
-										sourceAmount,
-										goalYear,
-										goalAmount,
-										'TODO: remove log'
-									)}
 									{#if !isNaN(sourceYear) && !isNaN(sourceAmount) && !isNaN(goalYear) && !isNaN(goalAmount)}
-										{@const delta_values_potential = yScale(potential_2030) - yScale(goalAmount)}
-										{@const text_potential_x_offset =
-											showTechn && Math.abs(delta_values_potential) <= 7 ? 10 : 0}
+										<!-- {@const delta_values_potential = yScale(potential_2030) - yScale(goalAmount)} -->
+										<!-- {@const text_potential_x_offset =
+											showTechn && Math.abs(delta_values_potential) <= 7 ? 10 : 0} -->
+										{@const text_potential_x_offset = 0}
 										<line
 											x1={xScale(new Date(sourceYear, 1, 1))}
 											y1={yScale(sourceAmount)}
@@ -181,9 +181,11 @@
 								style="fill: {green}"
 								x={xScale(new Date(2030, 1, 1))}
 								y={yScale(potential_2030)}
-								dy={-14}
-								dx={0}>Potential 2030</text
-							>
+								dy={text_potential_2030_y_offset}
+								dx={0}
+								>{formatNumber(Math.round(potential_2030 * 100) / 100)}
+								{' ' + unit + ' '}Potential 2030
+							</text>
 							<text
 								text-anchor="middle"
 								class="text-xl font-semibold fill-current bg-white"
@@ -212,9 +214,9 @@
 								x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
 								y={yScale(potential_techn)}
 								dy={-3}
-							>
-								Technisch möglich: {potential_techn}
-								{unit}
+								>{formatNumber(Math.round(potential_techn * 100) / 100)}
+								{' ' + unit + ' '}
+								Technisch möglich
 							</text>
 						{/if}
 

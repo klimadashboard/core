@@ -232,7 +232,7 @@
 </div>
 
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">
-	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset}
+	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset && goals}
 		<div class="flex flex-wrap gap-2 justify-center items-center">
 			{#each Object.keys(energyByBundesland) as bundesland}
 				<button
@@ -250,6 +250,15 @@
 		</div>
 		<div class="grid gap-4 p-2">
 			{#each energyTypes as type}
+				{@const cur_goals = goals.filter(
+					(row) =>
+						row.state_name === selectedBundesland &&
+						row.energy_data_key === type.dataKey &&
+						row.goal_amount != 'keinZiel' //&&
+					// !isNaN(row.goal_amount) &&
+					// !isNaN(row.goal_year) &&
+					// !isNaN(row.source_year)
+				)}
 				<Details
 					bundesland={selectedBundesland}
 					{type}
@@ -257,12 +266,7 @@
 					{showTechn}
 					potential_techn={potentiale_techn[selectedBundesland][type.dataKey]}
 					potential_2030={potentiale_2030[selectedBundesland][type.dataKey]}
-					goals={goals.filter(
-						(row) => row.state_name === selectedBundesland && row.energy_data_key === type.dataKey //&&
-						// !isNaN(row.goal_amount) &&
-						// !isNaN(row.goal_year) &&
-						// !isNaN(row.source_year)
-					)}
+					goals={cur_goals}
 					dataset={energyByBundesland[selectedBundesland]
 						?.map((row) => {
 							return {
