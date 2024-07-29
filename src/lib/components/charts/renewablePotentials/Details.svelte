@@ -25,11 +25,12 @@
 	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2038);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxValue = showTechn
-		? potential_techn
+		? potential_techn * 1.1
 		: Math.max(
 				Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
-				potential_2030 //* 1.1
+				potential_2030 * 1.1
 		  );
+	$: console.log('maxValue', maxValue);
 	$: minValue = -maxValue / 5;
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -84,6 +85,23 @@
 									/>
 									<text class="text-sm text-gray-600 fill-current" x="6" y={-margin.top - 4}
 										>{tick.getFullYear()}</text
+									>
+								</g>
+							{/each}
+						</g>
+						<g>
+							{#each yScale.ticks(3) as tick, index}
+								<g transform={`translate(0, ${yScale(tick)})`} class="text-gray-400">
+									<line
+										x1="0"
+										x2={chartWidth}
+										y1="0"
+										y2="0"
+										stroke-width="1"
+										class="stroke-gray-200 opacity-50"
+									/>
+									<text class="text-sm text-gray-600 fill-current bg-white" x="10" y="-4"
+										>{tick} {index == yScale.ticks(3).length - 1 ? ' ' + unit : ''}</text
 									>
 								</g>
 							{/each}
@@ -143,7 +161,7 @@
 									{/if}
 								{/each}
 							</g>
-						{:else}
+							<!-- {:else}
 							<g>
 								<text
 									text-anchor={'start'}
@@ -154,26 +172,26 @@
 								>
 									{bundesland} hat kein Ausbauziel für {type.label}
 								</text>
-							</g>
+							</g> -->
 						{/if}
 						{#if potential_2030 != null}
 							<text
-								text-anchor="start"
+								text-anchor="middle"
+								class="text-sm font-semibold fill-current bg-white"
+								style="fill: {green}"
+								x={xScale(new Date(2030, 1, 1))}
+								y={yScale(potential_2030)}
+								dy={-14}
+								dx={0}>Potential 2030</text
+							>
+							<text
+								text-anchor="middle"
 								class="text-xl font-semibold fill-current bg-white"
 								style="fill: {green}"
 								x={xScale(new Date(2030, 1, 1))}
 								y={yScale(potential_2030)}
 								dy={4}
 								dx={0}>★</text
-							>
-							<text
-								text-anchor="start"
-								class="text-sm font-semibold fill-current bg-white"
-								style="fill: {green}"
-								x={xScale(new Date(2030, 1, 1))}
-								y={yScale(potential_2030)}
-								dy={4}
-								dx={20}>Potential 2030</text
 							>
 						{/if}
 						{#if potential_techn != null && showTechn}
@@ -195,27 +213,10 @@
 								y={yScale(potential_techn)}
 								dy={-3}
 							>
-								Technisch möglich
+								Technisch möglich: {potential_techn}
+								{unit}
 							</text>
 						{/if}
-
-						<g>
-							{#each yScale.ticks(3) as tick, index}
-								<g transform={`translate(0, ${yScale(tick)})`} class="text-gray-400">
-									<line
-										x1="0"
-										x2={chartWidth}
-										y1="0"
-										y2="0"
-										stroke-width="1"
-										class="stroke-gray-200 opacity-50"
-									/>
-									<text class="text-sm text-gray-600 fill-current bg-white" x="10" y="-4"
-										>{tick} {index == yScale.ticks(3).length - 1 ? ' ' + unit : ''}</text
-									>
-								</g>
-							{/each}
-						</g>
 
 						<g>
 							<linearGradient x1="0%" y1="0%" x2="0%" y2="100%">
