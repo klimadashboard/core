@@ -1,5 +1,5 @@
 <script>
-	import Loader from '../../Loader.svelte';
+	import Loader from '$lib/components/Loader.svelte';
 	import { scaleApproval } from '$lib/stores/scales';
 
 	export let selectedFeature;

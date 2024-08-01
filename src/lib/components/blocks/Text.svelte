@@ -4,7 +4,7 @@
 
 <div class="my-8 text-lg container text" id={block.id}>
 	<div class="max-w-4xl">
-		{@html block.content.text}
+		{@html block.content}
 	</div>
 </div>
 

@@ -1,5 +1,5 @@
 <script>
-	import LineChart from '../chartLine.svelte';
+	import LineChart from '$lib/components/charts/chartLine.svelte';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
 

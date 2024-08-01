@@ -1,5 +1,5 @@
 <script>
-	import BarChart from '../chartBar.svelte';
+	import BarChart from '$lib/components/charts/chartBar.svelte';
 	import Papa from 'papaparse';
 	import Switch from '$lib/components/Switch.svelte';
 	import Loader from '$lib/components/Loader.svelte';

@@ -1,6 +1,6 @@
 <script>
-	import ChartDots from '../chartDots.svelte';
-	import BarChart from '../chartBar.svelte';
+	import ChartDots from '$lib/components/charts/chartDots.svelte';
+	import BarChart from '$lib/components/charts/chartBar.svelte';
 	import { selectedStation } from '$lib/stores/weather';
 	import { theme } from '$lib/stores/theme';
 	import Papa from 'papaparse';

@@ -1,5 +1,5 @@
 <script>
-	import ChartLine from '../chartLine.svelte';
+	import LineChart from '$lib/components/charts/chartLine.svelte';
 	import Papa from 'papaparse';
 	import dayjs from 'dayjs';
 
@@ -32,7 +32,7 @@
 
 <div class="h-80">
 	{#if data}
-		<ChartLine
+		<LineChart
 			{data}
 			{labels}
 			{keys}

@@ -1,5 +1,5 @@
 <script>
-	import BarChart from '../chartBar.svelte';
+	import BarChart from '$lib/components/charts/chartBar.svelte';
 
 	export let data;
 	export let selectedCompanies;
