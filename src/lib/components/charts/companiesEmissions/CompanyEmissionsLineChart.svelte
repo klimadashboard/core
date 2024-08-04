@@ -2,6 +2,8 @@
 	// @ts-nocheck
 	import LineChart from '../chartLine.svelte';
 	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
+	import { clickOutside } from '$lib/utils/clickOutside';
+	import { fade } from 'svelte/transition';
 
 	export let rawData;
 	export let selectedCompanies;
@@ -11,6 +13,8 @@
 	let selectedCompanyNames;
 	$: isSingleCompanySelected = selectedCompanies.length === 1;
 	$: selectedCompanyNames = [...selectedCompanies].map((company) => company.name);
+
+	let showPopup = true;
 
 	const rawColors = ['#7CBAB3', '#575C75', '#71665B', '#B28834', '#8CAED9', '#E0A906', '#CF6317'];
 	const selectedScopesToColors = {
@@ -108,4 +112,20 @@
 	<p class="text-center">Zu viele Unternehmen ausgewählt. Wähle maximal 7 Unternehmen.</p>
 {:else}
 	<p class="text-center">Laden...</p>
+{/if}
+
+{#if showPopup}
+	<div
+		class="popup fixed inset-0 grid bg-black bg-opacity-50 p-4 z-50"
+		transition:fade={{ duration: 200 }}
+	>
+		<div
+			class="bg-white m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll"
+			style="max-height: 70vh;"
+			use:clickOutside
+			on:click_outside={() => (showPopup = false)}
+		>
+			Test!
+		</div>
+	</div>
 {/if}
