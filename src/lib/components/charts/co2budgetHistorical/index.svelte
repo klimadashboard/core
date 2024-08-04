@@ -50,7 +50,7 @@
 	$: chosenBudget = budgets[1];
 	$: totalHistoricalEmissions = historicalEmissions
 		.filter((d) => d.year <= endYear && d.year >= startYear)
-		.reduce((a, b) => a + b.total_AR4_Mt_CO2e, 0);
+		.reduce((a, b) => a + b.total_AR6_Mt_CO2e, 0);
 	$: chosenHistoricalEmissions = historicalEmissions.filter(
 		(d) => d.year <= endYear && d.year >= startYear
 	);
@@ -65,7 +65,7 @@
 	$: arrayHistorical = decades.map((key) => {
 		let values = chosenHistoricalEmissions
 			.filter((d) => d.year >= key && d.year < key + 10)
-			.reduce((a, b) => Math.round(a + b.total_AR4_Mt_CO2e), 0);
+			.reduce((a, b) => Math.round(a + b.total_AR6_Mt_CO2e), 0);
 		return values;
 	});
 

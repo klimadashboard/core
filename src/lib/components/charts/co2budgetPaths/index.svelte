@@ -119,25 +119,6 @@
 		}
 	);
 
-	// DE THG
-	Papa.parse(
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_co2_historical_with_LULUCF.csv`,
-		// `../data/${PUBLIC_VERSION}/emissions/emissions_by_sectors.csv`,
-		{
-			download: true,
-			dynamicTyping: true,
-			header: true,
-			skipEmptyLines: true,
-			complete: function (results) {
-				if (results) {
-					thgPathDe = results.data.map((d) => {
-						return { year: d.year, thg: d.co2e_mio_t_incl_LULUCF };
-					});
-				}
-			}
-		}
-	);
-
 	$: selectedStartYear = containerWidth > 1000 ? 1990 : 2000;
 
 	$: chosenBudget = budget.find(
