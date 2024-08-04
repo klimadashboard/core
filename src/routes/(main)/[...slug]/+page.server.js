@@ -28,37 +28,12 @@ export async function load({ fetch, params }) {
 						}
 					}
 				},
-				fields: [
-					'*',
-					{
-						blocks: [
-							'*',
-							{
-								item: {
-									block_toggle: ['*'],
-									block_chart: [
-										'*',
-										{
-											charts: [
-												'*',
-												{
-													chart: ['*']
-												}
-											]
-										}
-									],
-									block_richtext: ['*']
-								}
-							}
-						]
-					}
-				],
+				fields: ['*', { translations: '*' }],
 				limit: 1
 			})
 		);
-
 		const page = pages[0];
-		console.log(pages);
+		console.log(page);
 		return {
 			page: page
 		};
