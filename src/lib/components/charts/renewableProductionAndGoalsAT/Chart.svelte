@@ -143,7 +143,7 @@
 						</g>
 
 						<g style="color: {colors[0]}" class="opacity-70">
-							{#each dataGoals.filter((d) => d.energy_type == type.dataKey && d.scenario !== 'nekp_draft_wam') as goal}
+							{#each dataGoals.filter((d) => d.energy_type == type.dataKey && d.scenario == 'eag') as goal}
 								<g transform="translate({xScale(new Date(goal.year, 1, 1))},{yScale(goal.value)})">
 									<circle r={4} class="fill-none stroke-current stroke-2" />
 									<text
