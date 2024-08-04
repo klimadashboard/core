@@ -24,8 +24,6 @@
 		}
 	});
 
-	$: console.log(data);
-
 	const keys = ['etsPrice'];
 	const labels = ['ETS Preis'];
 	const colors = ['#575C75'];
