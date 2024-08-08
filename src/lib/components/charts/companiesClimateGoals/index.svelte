@@ -34,7 +34,7 @@
 
 	async function getData() {
 		let response = await fetch(
-			`https://data.klimadashboard.org/at/companies/atx_climate_goals.json`
+			`https://data.klimadashboard.org/at/companies/atx_climate_goals_v2.json`
 			// `../data/at/companies/atx_climate_goals.json`
 		);
 		let data = await response.json();
