@@ -92,7 +92,7 @@
 					</td>
 					<td class={tableCellClasses} title={company.memberSBT}
 						><svelte:component
-							this={mapStatusToIcon(company.intermediateGoal)}
+							this={mapStatusToIcon(company.memberSBT)}
 							additionalClasses="mx-auto"
 						/></td
 					>
