@@ -54,6 +54,6 @@
 	/>
 </svelte:head>
 
-<!--
-<Blocks data={data.page.blocks} />
--->
+<div class="py-16">
+	<Blocks data={data.page.blocks} />
+</div>

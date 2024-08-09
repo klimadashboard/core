@@ -3,6 +3,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Loader from './Loader.svelte';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 
 	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
 		.then((x) => x.json())
@@ -43,8 +44,65 @@
 						/>
 					</svg>
 				</div>
-				<span>Klimadashboard.{PUBLIC_VERSION}</span>
+				<span>Klimadashboard</span>
 			</a>
+			<button
+				class=" text-[#398F70] border-[#398F70] font-bold -ml-2 flex items-center gap-1"
+				on:mousedown={() => goto('/region')}
+			>
+				<span>Österreich</span>
+				<svg
+					width="22"
+					height="22"
+					viewBox="0 0 22 22"
+					fill="none"
+					class="w-4 h-4"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						d="M8 11C8 11.7956 8.31607 12.5587 8.87868 13.1213C9.44129 13.6839 10.2044 14 11 14C11.7956 14 12.5587 13.6839 13.1213 13.1213C13.6839 12.5587 14 11.7956 14 11C14 10.2044 13.6839 9.44129 13.1213 8.87868C12.5587 8.31607 11.7956 8 11 8C10.2044 8 9.44129 8.31607 8.87868 8.87868C8.31607 9.44129 8 10.2044 8 11Z"
+						stroke="#398F70"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+					<path
+						d="M3 11C3 13.1217 3.84285 15.1566 5.34315 16.6569C6.84344 18.1571 8.87827 19 11 19C13.1217 19 15.1566 18.1571 16.6569 16.6569C18.1571 15.1566 19 13.1217 19 11C19 8.87827 18.1571 6.84344 16.6569 5.34315C15.1566 3.84285 13.1217 3 11 3C8.87827 3 6.84344 3.84285 5.34315 5.34315C3.84285 6.84344 3 8.87827 3 11Z"
+						stroke="#398F70"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+					<path
+						d="M11 1V3"
+						stroke="#398F70"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+					<path
+						d="M11 19V21"
+						stroke="#398F70"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+					<path
+						d="M19 11H21"
+						stroke="#398F70"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+					<path
+						d="M1 11H3"
+						stroke="#398F70"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+				</svg>
+			</button>
 			<button
 				class="md:hidden flex items-center gap-1 leading-[4rem] px-2 ml-auto"
 				on:mousedown={() => (showNav = !showNav)}

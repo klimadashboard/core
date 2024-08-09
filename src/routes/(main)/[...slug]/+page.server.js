@@ -11,6 +11,7 @@ export async function load({ fetch, params }) {
 		language_code = value;
 	});
 	console.log(language_code);
+	console.log(params);
 	try {
 		const pages = await directus.request(
 			readItems('pages', {
@@ -22,20 +23,30 @@ export async function load({ fetch, params }) {
 									languages_code: { _eq: language_code }
 								},
 								{
-									slug: { _eq: params.slug ? params.slug : 'home' }
+									slug: { _eq: params.slug !== '' ? params.slug : 'home' }
 								}
 							]
 						}
 					}
 				},
-				fields: ['*', { translations: '*' }],
+				fields: [
+					'*',
+					{
+						translations: [
+							'*',
+							{
+								blocks: ['*']
+							}
+						]
+					}
+				],
 				limit: 1
 			})
 		);
 		const page = pages[0];
-		console.log(page);
+		const translation = page.translations[0];
 		return {
-			page: page
+			page: translation
 		};
 	} catch (err) {
 		throw error(404, 'Page not found');

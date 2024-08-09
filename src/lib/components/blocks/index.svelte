@@ -12,6 +12,8 @@
 	import ChartBar from './ChartBar.svelte';
 	import Quote from './Quote.svelte';
 	import List from './List.svelte';
+	import Grid from './Grid.svelte';
+	import Break from './Break.svelte';
 
 	export let data;
 
@@ -19,6 +21,14 @@
 		{
 			type: 'block_richtext',
 			component: Text
+		},
+		{
+			type: 'block_grid',
+			component: Grid
+		},
+		{
+			type: 'block_break',
+			component: Break
 		},
 		{
 			type: 'heading',
