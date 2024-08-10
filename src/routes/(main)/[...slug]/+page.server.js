@@ -10,8 +10,9 @@ export async function load({ fetch, params }) {
 	locale.subscribe((value) => {
 		language_code = value;
 	});
+	let slug = params.slug ? params.slug : 'home';
 	console.log(language_code);
-	console.log(params);
+	console.log(slug);
 	try {
 		const pages = await directus.request(
 			readItems('pages', {
@@ -23,7 +24,7 @@ export async function load({ fetch, params }) {
 									languages_code: { _eq: language_code }
 								},
 								{
-									slug: { _eq: params.slug !== '' ? params.slug : 'home' }
+									slug: { _eq: slug }
 								}
 							]
 						}
@@ -40,10 +41,11 @@ export async function load({ fetch, params }) {
 						]
 					}
 				],
-				limit: 1
+				limit: 2
 			})
 		);
 		const page = pages[0];
+		console.log(pages);
 		const translation = page.translations[0];
 		return {
 			page: translation
