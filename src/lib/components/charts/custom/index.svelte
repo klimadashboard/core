@@ -28,9 +28,7 @@
 	};
 </script>
 
-asdasd
 {#await promise then}
-	promise
 	<svelte:component this={ChartComponent} v={createVariables(chart.variables)} />
 {:catch error}
 	{error}

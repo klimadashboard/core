@@ -1,7 +1,7 @@
 /** @type {import('./$types').PageLoad} */
 import { error } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
-import { readItems } from '@directus/sdk';
+import { readItems, readItem } from '@directus/sdk';
 import { locale } from '$lib/stores/i18n';
 
 export async function load({ fetch, params }) {
@@ -14,41 +14,50 @@ export async function load({ fetch, params }) {
 	console.log(language_code);
 	console.log(slug);
 	try {
-		const pages = await directus.request(
-			readItems('pages', {
-				deep: {
-					translations: {
-						_filter: {
-							_and: [
-								{
-									languages_code: { _eq: language_code }
-								},
-								{
-									slug: { _eq: slug }
-								}
-							]
+		const translations = await directus.request(
+			readItems('pages_translations', {
+				filter: {
+					_and: [
+						{
+							languages_code: { _eq: language_code }
+						},
+						{
+							slug: { _eq: slug }
 						}
-					}
+					]
 				},
 				fields: [
 					'*',
 					{
-						translations: [
+						blocks: [
 							'*',
 							{
-								blocks: ['*']
+								item: [
+									'*',
+									{
+										charts: [
+											'*',
+											{
+												chart: ['*']
+											}
+										]
+									}
+								]
 							}
 						]
 					}
 				],
-				limit: 2
+				limit: 1
 			})
 		);
-		const page = pages[0];
-		console.log(pages);
-		const translation = page.translations[0];
+		const translation = translations[0];
+		const pages_id = translation.pages_id;
+		const page = await directus.request(readItem('pages', pages_id));
+		const seo = page.seo ? await directus.request(readItem('seo', page.seo)) : null;
 		return {
-			page: translation
+			content: translation,
+			page: page,
+			seo: seo
 		};
 	} catch (err) {
 		throw error(404, 'Page not found');
