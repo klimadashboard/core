@@ -12,11 +12,10 @@
 	export let data;
 	export let selectedStation;
 
-	console.log(data);
-
 	$: selectedYear = dayjs().month() > 4 ? dayjs().year() : dayjs().year() - 1;
-	$: compareFirstYear = 1961;
-	$: compareLastYear = 1990;
+	$: compareFirstYear = Math.max(1961, firstDate.year());
+	$: compareLastYear = Math.max(1990, firstDate.year() + 30);
+	$: firstDate = dayjs(data[0].date);
 	$: lastDate = dayjs(data[data.length - 1].date);
 
 	const isDay = function (key, d) {
@@ -137,7 +136,7 @@
 		class="inline"
 		bind:value={selectedYear}
 		min={dayjs(data[0].date).year()}
-		max={dayjs(data[data.length - 1].date).year()}
+		max={lastDate.year()}
 	/>
 	mit dem Zeitraum
 	<input
@@ -173,7 +172,7 @@
 <p class="text-sm mt-2 text-gray-700 border-t pt-2">
 	{selectedStation.name} (ID {selectedStation.id}); Daten von {dayjs(data[0].date).format(
 		'DD.MM.YYYY'
-	)} - {dayjs(data[data.length - 1].date).format('DD.MM.YYYY')}
+	)} - {lastDate.format('DD.MM.YYYY')}
 	{data.findIndex((d) => d.tlmax == null) > -1
 		? ' mit Datenlücken, die in diesen Auswertungen automatisch übersprungen werden'
 		: ''}

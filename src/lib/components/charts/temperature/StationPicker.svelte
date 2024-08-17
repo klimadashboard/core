@@ -2,6 +2,7 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems, readItem } from '@directus/sdk';
 	import WeatherStationMap from './WeatherStationMap.svelte';
+	import WeatherStationPicker from './WeatherStationPicker.svelte';
 
 	export let selectedStation;
 
@@ -21,13 +22,7 @@
 </script>
 
 {#await promise then data}
-	<div>
-		<select bind:value={selectedStation}>
-			{#each data.stations.sort((a, b) => a.name > b.name) as station}
-				<option value={station}>{station.name} ({station.height}m)</option>
-			{/each}
-		</select>
-	</div>
+	<WeatherStationPicker {data} bind:selectedStation />
 
-	<WeatherStationMap {data} {selectedStation} />
+	<WeatherStationMap {data} bind:selectedStation />
 {/await}

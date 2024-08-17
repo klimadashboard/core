@@ -20,7 +20,7 @@
 	</div>
 	<div class="p-3 pt-1 grid grid-cols-2 gap-2" style="color: {type.color}">
 		<div class="flex items-end space-x-1">
-			<p class="text-6xl font-extralight">
+			<p class="text-6xl font-extralight tracking-tight">
 				{current}
 			</p>
 			<p class="leading-none font-semibold">{type.label} im Jahr {selectedYear}</p>
