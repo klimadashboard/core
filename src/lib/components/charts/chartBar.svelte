@@ -17,6 +17,8 @@
 	export let freezeYAxis = false;
 	export let marginLeft = 20;
 
+	console.log(data);
+
 	let chartHeight;
 	let chartWidth;
 	$: margin = { top: 20, right: 0, bottom: 50, left: marginLeft };
