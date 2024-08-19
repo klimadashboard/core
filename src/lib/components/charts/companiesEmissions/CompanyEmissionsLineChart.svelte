@@ -98,8 +98,10 @@
 		visualisation={'non-stacked'}
 		marginLeft={50}
 		xTicksInterval={2}
-		preselectedIndex={4}
+		preselectedIndex={7}
 		unit={'t'}
+		invalidX={6}
+		invalidText={'Text zu invaliden Daten'}
 	/>
 {:else if selectedCompanies.length === 0}
 	<br /><br /><br />
