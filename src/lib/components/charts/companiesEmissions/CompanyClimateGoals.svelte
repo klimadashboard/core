@@ -71,9 +71,9 @@
 						<img
 							src="../icons/atx-companies/{companyMetaData.logo}.svg"
 							alt={companyMetaData.logo}
-							width="64"
-							height="64"
-							class="inline-block w-12 h-8 p-1 object-contain"
+							width="80"
+							height="80"
+							class="inline-block w-16 h-10 p-1 object-contain"
 							title={companyMetaData.name}
 						/>
 					</td>
