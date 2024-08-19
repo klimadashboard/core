@@ -73,7 +73,7 @@
 							alt={companyMetaData.logo}
 							width="80"
 							height="80"
-							class="inline-block w-16 h-10 p-1 object-contain"
+							class="inline-block w-24 h-16 p-1 object-contain"
 							title={companyMetaData.name}
 						/>
 					</td>
