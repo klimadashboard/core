@@ -208,7 +208,7 @@
 				class="flex items-center rounded-xl font-semibold p-1 md:px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
 					{company.selected ? 'border-2 border-green-600' : 'border-2'}
 					{company.sector === selectedSector || selectedSector === '' ? '' : 'opacity-50'}
-					{company.sector === selectedSector && !company.selected ? 'border-gray-600' : ''}"
+					{company.sector === selectedSector && !company.selected ? 'border-gray-300' : ''}"
 				on:mousedown={() => onClickCompany(company)}
 				aria-label={company.name}
 				title="{company.name} ({company.sector})"
