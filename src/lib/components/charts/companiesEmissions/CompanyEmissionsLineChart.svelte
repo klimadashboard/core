@@ -14,10 +14,11 @@
 
 	const rawColors = ['#7CBAB3', '#575C75', '#71665B', '#B28834', '#8CAED9', '#E0A906', '#CF6317'];
 	const selectedScopesToColors = {
-		1: '#7CBAB3',
-		2: '#575C75',
-		3: '#71665B'
+		1: '#4e79a7',
+		2: '#f28e2c',
+		3: '#e15759'
 	};
+
 	const selectedScopesToLabels = {
 		1: 'Scope 1',
 		2: 'Scope 2',
