@@ -100,7 +100,7 @@
 						{
 							label: 'Erneuerbarer Anteil ' + entry.interval,
 							value: entry.value,
-							color: '#7CBAB3'
+							color: entry.value >= 100 ? '#3FB375' : '#347C86'
 						}
 					]
 				};
