@@ -43,7 +43,7 @@
 						});
 					maxValue = results.data.map((d) => d.Jahresproduktion).sort((a, b) => b - a)[0] * 1.1;
 					if (type.dataKey !== 'wasserkraft') {
-						maxValue = maxValue * 2;
+						maxValue = maxValue * 3;
 					}
 				}
 			}

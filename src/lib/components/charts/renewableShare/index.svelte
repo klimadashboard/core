@@ -77,10 +77,9 @@
 </script>
 
 {#await promise then data}
-	<h2 class="text-2xl max-w-xl">
-		In den letzten 365 Tagen wurden {Math.round(
-			data.reduce((a, b) => a + b.renewable_share, 0) / data.length
-		)}% des Stroms durch erneuerbare Quellen erzeugt.
+	<h2 class="text-2xl max-w-2xl">
+		An {data.filter((d) => d.renewable_share >= 100).length} von den letzten 365 Tagen wurde mehr als
+		100% des Strombedarfs aus Erneuerbaren Energien entdeckt.
 	</h2>
 	<div class="h-80 mt-4">
 		<div class="relative text-gray-600 w-40 mb-4">
@@ -116,7 +115,7 @@
 						{
 							label: 'Erneuerbarer Anteil ' + entry.interval + '&nbsp&nbsp|&nbsp&nbsp',
 							value: entry.value,
-							color: entry.value >= 100 ? '#3FB375' : '#347C86'
+							color: entry.value >= 100 ? '#3FB375' : '#c1c1c1'
 						}
 					]
 				};
