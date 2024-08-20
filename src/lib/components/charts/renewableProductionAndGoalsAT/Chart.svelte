@@ -43,7 +43,7 @@
 						});
 					maxValue = results.data.map((d) => d.Jahresproduktion).sort((a, b) => b - a)[0] * 1.1;
 					if (type.dataKey !== 'wasserkraft') {
-						maxValue = maxValue * 1.8;
+						maxValue = maxValue * 2;
 					}
 				}
 			}
@@ -147,7 +147,7 @@
 						</g>
 
 						<g style="color: {colors[0]}" class="opacity-70">
-							{#each dataGoals.filter((d) => d.energy_type == type.dataKey && d.scenario == 'eag') as goal}
+							{#each dataGoals.filter((d) => d.energy_type == type.dataKey) as goal}
 								<g transform="translate({xScale(new Date(goal.year, 1, 1))},{yScale(goal.value)})">
 									<circle r={4} class="fill-none stroke-current stroke-2" />
 									<text

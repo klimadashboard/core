@@ -4,9 +4,11 @@
 	import ChartGrid from './ChartGrid.svelte';
 	import BarChart from '$lib/components/charts/chartBar.svelte';
 	import dayjs from 'dayjs';
+	import de from 'dayjs/locale/de-at';
 	import isoWeek from 'dayjs/plugin/isoWeek';
 
 	dayjs.extend(isoWeek);
+	dayjs.locale('de');
 
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
@@ -21,6 +23,20 @@
 	$: promise = getData();
 
 	let selectedPeriod = 'day';
+	let intervals = [
+		{
+			key: 'day',
+			interval: 30
+		},
+		{
+			key: 'week',
+			interval: 4
+		},
+		{
+			key: 'month',
+			interval: 1
+		}
+	];
 
 	function groupByInterval(data, interval) {
 		// Helper function to get the correct grouping key based on the interval
@@ -28,14 +44,14 @@
 			const d = dayjs(date);
 			switch (interval) {
 				case 'day':
-					return d.format('YYYY-MM-DD'); // Day format: 'YYYY-MM-DD'
+					return d.format('DD.MM.YY'); // Day format: 'YYYY-MM-DD'
 				case 'week':
 					// Get the ISO week year and week number
 					const weekYear = d.isoWeekYear();
 					const weekNumber = d.isoWeek(); // ISO week starts on Monday
-					return `${weekYear}-W${String(weekNumber).padStart(2, '0')}`; // Week format: 'YYYY-Www'
+					return `KW${String(weekNumber).padStart(2, '0')} ${weekYear}`; // Week format: 'YYYY-Www'
 				case 'month':
-					return d.format('YYYY-MM'); // Month format: 'YYYY-MM'
+					return d.format('MMM YYYY'); // Month format: 'YYYY-MM'
 				default:
 					throw new Error('Invalid interval. Use "day", "week", or "month".');
 			}
@@ -67,7 +83,7 @@
 		)}% des Stroms durch erneuerbare Quellen erzeugt.
 	</h2>
 	<div class="h-80 mt-4">
-		<div class="relative text-gray-600 w-40">
+		<div class="relative text-gray-600 w-40 mb-4">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				class="absolute pointer-events-none top-4 h-5 right-2 transform -translate-y-0.5 icon-tabler-selector"
@@ -98,7 +114,7 @@
 					label: entry.interval,
 					categories: [
 						{
-							label: 'Erneuerbarer Anteil ' + entry.interval,
+							label: 'Erneuerbarer Anteil ' + entry.interval + '&nbsp&nbsp|&nbsp&nbsp',
 							value: entry.value,
 							color: entry.value >= 100 ? '#3FB375' : '#347C86'
 						}
@@ -106,8 +122,15 @@
 				};
 			})}
 			visualisation={'stacked'}
-			xAxixInterval={selectedPeriod == 'day' ? 30 : 2}
+			xAxixInterval={intervals.find((d) => d.key == selectedPeriod).interval}
 			unit="%"
+			lines={[
+				{
+					value: 100,
+					label: '100%',
+					color: '3FB375'
+				}
+			]}
 		/>
 	</div>
 {:catch error}

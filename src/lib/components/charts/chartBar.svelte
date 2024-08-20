@@ -16,6 +16,7 @@
 	export let show0ValuesInLegend = false;
 	export let freezeYAxis = false;
 	export let marginLeft = 20;
+	export let highlightYLine = false;
 
 	console.log(data);
 
@@ -227,7 +228,7 @@
 
 						{#if i % xAxixInterval == 0}
 							<g
-								transform="translate(0, {innerChartHeight + 4})"
+								transform="translate(0, {innerChartHeight})"
 								class="text-xs {selectedBar == datapoint
 									? 'text-gray-700 '
 									: 'text-gray-500'} tracking-wide"
@@ -238,7 +239,12 @@
 									x={-4}
 									class="text-white fill-current"
 								/>
-								<text fill="currentColor" dominant-baseline="hanging">{datapoint.label}</text>
+								<g transform="translate({barWidth / 2},0)">
+									<line x1="0" x2="0" y1={0} y2={4} class="stroke-gray-500" />
+									<text fill="currentColor" dominant-baseline="hanging" y={6} text-anchor="middle"
+										>{@html datapoint.label}</text
+									>
+								</g>
 							</g>
 						{/if}
 
@@ -278,6 +284,7 @@
 				{#each lines as line}
 					<g
 						class="text-gray-500 hover:text-gray-600 transition"
+						style="color: {line.color}"
 						transform={`translate(0, ${innerChartHeight - yScale(line.value) || 0})`}
 					>
 						<line
@@ -286,7 +293,7 @@
 							x2={chartWidth}
 							y2="0"
 							stroke="currentColor"
-							stroke-dasharray="1,10"
+							stroke-dasharray="5,10"
 							stroke-linecap="round"
 							stroke-width="2"
 						/>
@@ -332,7 +339,7 @@
 						style="background-color:{category.color || '#41AB5D'}"
 						transition:fade={{ duration: 300 }}
 					>
-						<span class="uppercase">{category.label}</span>
+						<span class="uppercase">{@html category.label}</span>
 						<span class="">{prettifyTick(category.value)}</span>
 						{#if unit.length < 8}
 							<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
