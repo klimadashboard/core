@@ -215,14 +215,14 @@
 								/>
 							</circle>
 							{#if !unifiedScaling}
-								<text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade
+								<text class="text-sm font-semibold fill-current" x={5} y={20} transition:fade
 									>{formatNumber(
 										Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100
 									)}
 									{' ' + unit + ' '}
 									{#if PUBLIC_VERSION == 'at'}
 										Produktion im Zeitraum
-										<tspan x="16" y="16"
+										<tspan x="5" y="35"
 											>{dayjs(dataProduction[dataProduction.length - 1].x)
 												.subtract(364, 'day')
 												.format('D.M.YYYY')} – {dayjs(
