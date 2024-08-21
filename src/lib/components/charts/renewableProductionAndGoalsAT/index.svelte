@@ -5,7 +5,7 @@
 
 	let dataGoals;
 	Papa.parse(
-		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_sceanrios_oenip_nekp_eag.csv',
+		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_scenarios.csv',
 		{
 			download: true,
 			dynamicTyping: true,
