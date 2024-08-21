@@ -17,7 +17,9 @@
 	let title =
 		PUBLIC_VERSION == 'de' ? 'Installierte Leistung vs. Ziel' : 'Jahresproduktion vs. Ausbauziel';
 
-	$: maxValue = 50;
+	$: maxValue = dataGoals
+		.filter((d) => d.energy_type == type.dataKey)
+		.sort((a, b) => b.value - a.value)[0].value;
 
 	let dataProduction;
 	Papa.parse(
@@ -41,10 +43,6 @@
 								y: entry.Jahresproduktion
 							};
 						});
-					maxValue = results.data.map((d) => d.Jahresproduktion).sort((a, b) => b - a)[0] * 1.1;
-					if (type.dataKey !== 'wasserkraft') {
-						maxValue = maxValue * 3;
-					}
 				}
 			}
 		}
@@ -81,6 +79,7 @@
 	}
 
 	$: selected = false;
+	$: dataGoalsForType = dataGoals.filter((d) => d.energy_type == type.dataKey);
 </script>
 
 <div class="bg-gray-100 rounded overflow-hidden">
@@ -92,7 +91,7 @@
 		<div class="relative w-full h-64" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataProduction}
 				<svg width={'100%'} height={'100%'}>
-					<g transform="translate(0,{margin.top})">
+					<g transform="translate(0,{margin.top})" style="color: {type.color}">
 						<g>
 							{#each xScale.ticks(6) as tick, index}
 								<g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-gray-200">
@@ -127,6 +126,23 @@
 							{/each}
 						</g>
 
+						<line
+							x1={xScale(new Date(dataGoalsForType.find((d) => d.scenario == 'eag').release_date))}
+							y1={yScale(
+								dataProduction.find(
+									(e) =>
+										new Date(e.x) >
+										new Date(dataGoalsForType.find((d) => d.scenario == 'eag').release_date)
+								).y
+							)}
+							x2={xScale(
+								new Date(dataGoalsForType.find((d) => d.scenario == 'eag').year + '-01-01')
+							)}
+							y2={yScale(dataGoalsForType.find((d) => d.scenario == 'eag').value)}
+							class="stroke-2 stroke-current opacity-50"
+							stroke-dasharray="10 10"
+						/>
+
 						<g>
 							{#each [...areas] as area, i}
 								<g id="area-{i}">
@@ -147,17 +163,24 @@
 						</g>
 
 						<g style="color: {colors[0]}" class="opacity-70">
-							{#each dataGoals.filter((d) => d.energy_type == type.dataKey) as goal}
+							{#each dataGoalsForType as goal, i}
 								<g transform="translate({xScale(new Date(goal.year, 1, 1))},{yScale(goal.value)})">
-									<circle r={4} class="fill-none stroke-current stroke-2" />
-									<text
-										style="color:{colors[0]}"
-										class="text-sm font-semibold fill-current"
-										text-anchor="end"
-										x={-8}
-										y={4}
-										>{goal.scenario.toUpperCase()}-Ziel: {formatNumber(goal.value)} {unit}
-									</text>
+									{#if !(i > 0 && dataGoalsForType.every((d) => d.value == dataGoalsForType[0].value))}
+										<circle r={4} class="fill-none stroke-current stroke-2" />
+										<text
+											style="color:{colors[0]}"
+											class="text-sm font-semibold fill-current"
+											text-anchor="end"
+											x={-8}
+											y={4}
+										>
+											{#if dataGoalsForType.every((d) => d.value == dataGoalsForType[0].value)}
+												NEKP, EAG und ÖNIP-Ziel: {formatNumber(goal.value)} {unit}
+											{:else}
+												{goal.scenario.toUpperCase()}-Ziel: {formatNumber(goal.value)} {unit}
+											{/if}
+										</text>
+									{/if}
 								</g>
 							{/each}
 						</g>
