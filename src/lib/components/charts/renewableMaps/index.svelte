@@ -102,16 +102,15 @@
 		}
 	);
 
-	const keys = ['pv', 'wasserkraft', 'windkraft'];
-	const labels = ['Photovoltaik', 'Wasserkraft', 'Windkraft'];
+	const keys = ['pv', 'windkraft'];
+	const labels = ['Photovoltaik', 'Windkraft'];
 	const colorRanges = [
 		['#F6E5B4', '#E0A906'],
-		['#B5CBE1', '#08519C'],
 		['#C9DDE8', '#4C8EB3']
 	];
 </script>
 
-<div class="grid md:grid-cols-3 gap-4">
+<div class="grid md:grid-cols-2 gap-4">
 	{#if potentiale_2030}
 		{#each keys as key, i}
 			<div>
