@@ -183,8 +183,9 @@
 						laufende Jahr mit vergangenen Jahren zu vergleichen.
 					</p>
 					<p class="">
-						Die Daten werden gegen 12 Uhr aktualisiert und stammen jeweils vom Vortag. Eine frühere
-						Aktualisierung ist aufgrund der Datenquelle noch nicht möglich.
+						Die Daten des aktuellsten Tages werden gegen Mitternacht abgerufen. Hier kann es
+						nachträglich zu kleineren Korrekturen kommen, sobald die qualitätsgeprüften Messdaten
+						vollständig vorliegen.
 					</p>
 				{:else if PUBLIC_VERSION == 'de'}
 					<p>

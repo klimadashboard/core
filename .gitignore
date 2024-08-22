@@ -8,3 +8,4 @@ node_modules
 !.env.example
 static/data
 static/data-handler
+.vscode

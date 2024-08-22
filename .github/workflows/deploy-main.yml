@@ -1,0 +1,31 @@
+name: 'Deploy main branch'
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ploi-deploy:
+    name: 'Ploi Deploy'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Trigger klimadashboard.at
+      - name: Deploy Klimadashboard.at
+        uses: Glennmen/ploi-deploy-action@v1.2.0
+        with:
+          api_token: ${{ secrets.PLOI_API_KEY }}
+          server_id: 47649
+          site_id: 141772
+      # Trigger klimadashboard.de
+      - name: Deploy Klimadashboard.de
+        uses: Glennmen/ploi-deploy-action@v1.2.0
+        with:
+          api_token: ${{ secrets.PLOI_API_KEY }}
+          server_id: 47649
+          site_id: 175139

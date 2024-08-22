@@ -1,15 +1,10 @@
 <script>
-	import { theme } from '../stores/theme';
-	import { locale, locales } from '../stores/i18n';
 	import { error } from '@sveltejs/kit';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Loader from './Loader.svelte';
 	import { page } from '$app/stores';
-	import { goto, invalidateAll } from '$app/navigation';
 
-	$: promise = fetch(
-		'https://klimadashboard.org/' + $locale + '/get/navigation/' + PUBLIC_VERSION + '.json'
-	)
+	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
 		.then((x) => x.json())
 		.then((x) => Object.values(x.data).filter((d) => d.num))
 		.catch(function (err) {
@@ -17,10 +12,6 @@
 		});
 
 	$: showNav = false;
-
-	$: switchLanguage = function () {
-		$locale = $locales.find((d) => d != $locale);
-	};
 </script>
 
 <header class="fixed w-full z-50">
@@ -82,9 +73,7 @@
 					? ''
 					: 'hidden'} absolute bg-white top-16 w-screen left-0 p-4 md:p-0 h-screen md:h-auto md:top-0 md:relative md:flex items-center"
 			>
-				<ul
-					class="flex flex-col md:items-center space-y-4 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full"
-				>
+				<ul class="flex flex-col space-y-4 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full">
 					{#await promise}
 						<div class="translate-y-5">
 							<Loader />
@@ -134,9 +123,9 @@
 							class="leading-[4rem] text-sm font-bold uppercase tracking-wide">Über uns</a
 						>
 					</li>
-					<li class="opacity-100 hover:opacity-80 transition md:ml-4">
+					<li class="opacity-100 hover:opacity-80 transition md:ml-4 hidden lg:block">
 						<a
-							href="https://opencollective.com/klimadashboard-spendenaufruf"
+							href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
 							target="_blank"
 							class="leading-[4rem] text-sm font-bold uppercase tracking-wide bg-gradient-blue px-2 py-1 text-white rounded"
 							>Spenden</a
@@ -144,31 +133,6 @@
 					</li>
 				</ul>
 			</nav>
-
-			<button
-				on:mousedown={switchLanguage}
-				class="flex items-center space-x-1 text-sm uppercase font-bold"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-world-longitude"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-					<path d="M11.5 3a11.2 11.2 0 0 0 0 18" />
-					<path d="M12.5 3a11.2 11.2 0 0 1 0 18" />
-					<path d="M12 3l0 18" />
-				</svg>
-				<span>{$locale}</span>
-			</button>
 		</div>
 	</div>
 </header>

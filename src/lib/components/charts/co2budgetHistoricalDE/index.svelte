@@ -100,7 +100,7 @@
 				In den letzten {endYear - startYear + 1} Jahren hat Deutschland
 				<nobr>{formatNumber(Math.round(totalHistoricalEmissions))} Mio. Tonnen</nobr> CO₂ ausgestoßen.
 			{:else}
-				In den {endYear - startYear} Jahren zwischen {startYear} und {endYear} hat Österreich
+				In den {endYear - startYear} Jahren zwischen {startYear} und {endYear} hat Deutschland
 				<nobr>{formatNumber(Math.round(totalHistoricalEmissions))} Mio. Tonnen CO₂</nobr> ausgestoßen.
 			{/if}
 		</p>

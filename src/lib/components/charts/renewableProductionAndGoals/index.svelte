@@ -1,6 +1,5 @@
 <script>
 	import Chart from './Chart.svelte';
-	import GapIndicator from './GapIndicator.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	const energyTypes = [
@@ -66,12 +65,4 @@
 			/>
 		{/each}
 	</div>
-
-	{#if PUBLIC_VERSION == 'at'}
-		<div class="grid md:grid-cols-2 gap-4 mt-8 border-t-2 pt-4">
-			{#each expansionGaps as gap, i}
-				<GapIndicator {gap} icon={icons[i]} />
-			{/each}
-		</div>
-	{/if}
 </section>

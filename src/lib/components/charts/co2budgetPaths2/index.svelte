@@ -135,7 +135,7 @@
 		</svg>
 		<div class="max-w-2xl">
 			{#if chosenProbability == 50}
-				<p class="mt-2 ">{v.disclaimerProbability}</p>
+				<p class="mt-2">{v.disclaimerProbability}</p>
 			{/if}
 			{#if chosenTemperature == 1.65}
 				<p class="mt-2">{v.disclaimerTemperature}</p>

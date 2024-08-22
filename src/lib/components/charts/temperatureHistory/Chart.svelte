@@ -276,7 +276,7 @@
 									{:else}
 										<circle
 											r={circleRadius}
-											class="fill-gray-900  {commonClasses} {selectedDay && selectedDay !== index
+											class="fill-gray-900 {commonClasses} {selectedDay && selectedDay !== index
 												? 'opacity-50'
 												: 'opacity-100'}"
 										/>

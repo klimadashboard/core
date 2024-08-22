@@ -213,7 +213,7 @@
 			categories: [
 				{
 					label: 'Prognose 2023',
-					value: 67600000,
+					value: 69000000,
 					estimate: true,
 					color: '#4DB263'
 				}

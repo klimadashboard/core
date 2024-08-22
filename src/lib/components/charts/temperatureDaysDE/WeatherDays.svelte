@@ -12,7 +12,8 @@
 
 	$: earliestPossibleYear = 1961;
 	$: currentYear = new Date().getFullYear();
-	let latestPossibleYear = selectedYearDefinition == 'last-full' ? new Date().getFullYear()-1 : new Date().getFullYear();
+	let latestPossibleYear =
+		selectedYearDefinition == 'last-full' ? new Date().getFullYear() - 1 : new Date().getFullYear();
 	$: selectedReferenceYears = 1961;
 
 	$: selectedStationData = [];
@@ -33,7 +34,10 @@
 				if (results) {
 					selectedStationData = results.data;
 					earliestPossibleYear = results.data[0].year;
-					latestPossibleYear = selectedYearDefinition == 'last-full' ? results.data[results.data.length - 1].year-1 : results.data[results.data.length - 1].year;
+					latestPossibleYear =
+						selectedYearDefinition == 'last-full'
+							? results.data[results.data.length - 1].year - 1
+							: results.data[results.data.length - 1].year;
 				}
 			}
 		}
@@ -56,7 +60,8 @@
 </script>
 
 {#if selectedStationData.length > 0 && selectedStationName !== 'station'}
-	<div
+	<!--
+<div
 		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
 	>
 		<span class="font-bold">Jahr</span>
@@ -75,6 +80,7 @@
 			<span>{currentYear} bisher</span>
 		</label>
 	</div>
+	-->
 
 	<div
 		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
