@@ -209,11 +209,11 @@
 	) {
 		dataset.push({
 			label: 2023,
-			annotation: 'Prognose 2023',
+			annotation: 'Nowcast 2023',
 			categories: [
 				{
-					label: 'Prognose 2023',
-					value: 69000000,
+					label: 'Nowcast 2023',
+					value: 68200000,
 					estimate: true,
 					color: '#4DB263'
 				}
