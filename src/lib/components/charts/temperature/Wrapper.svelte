@@ -2,6 +2,7 @@
 	import WeatherDays from './WeatherDays.svelte';
 	import YearlyAverages from './YearlyAverages.svelte';
 	import Comparison from './Comparison.svelte';
+	import Records from './Records.svelte';
 
 	export let data;
 	export let selectedStation;
@@ -13,4 +14,6 @@
 	<YearlyAverages {data} {selectedStation} />
 
 	<Comparison {data} {selectedStation} />
+
+	<Records {data} {selectedStation} />
 {/if}

@@ -7,7 +7,7 @@
 	export let selectedStation;
 
 	const compareStartYear = Math.max(1961, dayjs(data[0].date).year());
-	const compareEndYear = Math.max(dayjs().year() - 2, compareStartYear + 30);
+	const compareEndYear = Math.min(dayjs().year() - 2, compareStartYear + 30);
 
 	$: activeView = 'months';
 
@@ -22,9 +22,9 @@
 
 		if (month === 11) return `Winter`; // December is Winter
 		if (month === 0 || month === 1) return `Winter`; // Jan and Feb are Winter
-		if (month >= 2 && month <= 4) return `Spring`;
-		if (month >= 5 && month <= 7) return `Summer`;
-		if (month >= 8 && month <= 10) return `Fall`;
+		if (month >= 2 && month <= 4) return `Frühling`;
+		if (month >= 5 && month <= 7) return `Sommer`;
+		if (month >= 8 && month <= 10) return `Herbst`;
 	}
 
 	// Function to calculate both historical averages and recent data
@@ -64,7 +64,7 @@
 		let recentPeriods;
 		if (activeView === 'months') {
 			recentPeriods = Array.from({ length: 12 }, (_, i) =>
-				currentDate.subtract(i, 'month').format('YYYY-MM')
+				currentDate.subtract(i, 'month').format('MMMM YYYY')
 			).reverse();
 		} else if (activeView === 'seasons') {
 			recentPeriods = Array.from({ length: 4 }, (_, i) =>
@@ -75,7 +75,7 @@
 		recentData = recentPeriods.map((period) => {
 			const periodData = data.filter((entry) => {
 				if (activeView === 'months') {
-					return dayjs(entry.date).format('YYYY-MM') === period;
+					return dayjs(entry.date).format('MMMM YYYY') === period;
 				} else if (activeView === 'seasons') {
 					return getSeason(entry.date) === period;
 				}
@@ -114,13 +114,18 @@
 </script>
 
 <div class="mt-16">
-	<Switch
-		{views}
-		{activeView}
-		on:itemClick={(event) => {
-			activeView = event.detail;
-		}}
-	/>
+	<div class="flex items-center gap-2">
+		<Switch
+			{views}
+			{activeView}
+			on:itemClick={(event) => {
+				activeView = event.detail;
+			}}
+		/>
+		<p class="text-sm text-gray-600">
+			im Vergleich zum historischen Durchschnitt {compareStartYear} - {compareEndYear}
+		</p>
+	</div>
 
 	<h2 class="text-2xl max-w-lg mt-4">
 		{#if activeView == 'months'}
