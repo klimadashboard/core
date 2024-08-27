@@ -41,7 +41,7 @@
 	});
 </script>
 
-<div class="overflow-scroll" bind:this={scrollableDiv}>
+<div class="overflow-scroll scrollbar-custom" bind:this={scrollableDiv}>
 	<div
 		class="h-80 mt-4 min-w-[1000px]"
 		bind:clientWidth={chartWidth}
