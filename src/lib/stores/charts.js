@@ -1,7 +1,13 @@
 import { writable, derived } from 'svelte/store';
+import { locale } from '$lib/stores/i18n';
 import { error } from '@sveltejs/kit';
 
-const uri = 'https://klimadashboard.org/de/charts.json';
+let localeString = 'de';
+locale.subscribe((value) => {
+	localeString = value;
+});
+
+const uri = 'https://klimadashboard.org/' + localeString + '/charts.json';
 export const chartsData = writable([]);
 
 let fetchCharts = async () => {

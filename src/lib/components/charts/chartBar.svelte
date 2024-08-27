@@ -9,6 +9,7 @@
 	export let sort = '';
 	export let source = '';
 	export let label = '';
+	export let color = '';
 	export let lines = [];
 	export let visualisation = 'standard'; // can also be »stacked« or »grouped«
 	export let xAxixInterval = 1;
@@ -147,6 +148,7 @@
 				{#each data as datapoint, i}
 					<g
 						class={datapoint.highlight ? 'text-green-700' : 'text-green-500 '}
+						style={color ? `color: ${color};` : ''}
 						transform={`translate(${i * (barWidth + padding) || 0} 0)`}
 					>
 						{#if datapoint.categories !== undefined}
