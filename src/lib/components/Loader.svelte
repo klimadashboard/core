@@ -5,7 +5,7 @@
 <div class="">
 	<div class="spinner bg-green-400 mx-auto" />
 	{#if showText}
-		<p class="text-sm mx-auto text-green-600 text-center">Daten werden geladen....</p>
+		<p class="text-sm mx-auto text-green-600 text-center">Daten werden geladen...</p>
 	{/if}
 </div>
 
