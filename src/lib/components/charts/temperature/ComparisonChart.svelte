@@ -32,13 +32,19 @@
 					historicalAverages.find((d) => d.period.slice(0, 3) == datapoint.period.slice(0, 3))
 						.averageTemperature}
 				<g transform="translate({xScale(i)},0)">
-					<text
-						x={barWidth / 2}
-						y={diff > 0 ? yScale(0) + 10 : yScale(0) - 25}
-						class="fill-gray-700 text-xs"
-						text-anchor="middle"
-						dominant-baseline="hanging">{datapoint.period}</text
-					>
+					<g transform="translate({barWidth / 2},{diff > 0 ? yScale(0) + 10 : yScale(0) - 25})">
+						<text class="fill-gray-700 text-xs" text-anchor="middle" dominant-baseline="hanging"
+							>{datapoint.period}</text
+						>
+						{#if datapoint.ongoing}
+							<text
+								y={12}
+								class="fill-gray-600 text-xs"
+								text-anchor="middle"
+								dominant-baseline="hanging">Unvollständige Daten</text
+							>
+						{/if}
+					</g>
 					<rect
 						x={0}
 						y={yScale(diff > 0 ? diff : 0)}

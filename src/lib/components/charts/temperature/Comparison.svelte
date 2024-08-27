@@ -84,9 +84,20 @@
 			const averageTemperature =
 				periodData.reduce((sum, entry) => sum + entry.tl_mittel, 0) / (periodData.length || 1); // Avoid division by zero
 
+			// Determine if this period is ongoing
+			let isOngoing = false;
+			if (activeView === 'months') {
+				// If it's the current month, it's ongoing
+				isOngoing = period === currentDate.format('MMMM YYYY');
+			} else if (activeView === 'seasons') {
+				// If it's the current season, it's ongoing
+				isOngoing = period === getSeason(currentDate);
+			}
+
 			return {
 				period,
-				averageTemperature: parseFloat(averageTemperature.toFixed(2))
+				averageTemperature: parseFloat(averageTemperature.toFixed(2)),
+				ongoing: isOngoing
 			};
 		});
 	};
