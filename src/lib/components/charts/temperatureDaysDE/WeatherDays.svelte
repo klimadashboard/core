@@ -52,6 +52,7 @@
 		header: true,
 		complete: function (results) {
 			if (results) {
+				// console.log('dwd data', results.data, selectedStation);
 				selectedStationName = results.data.find((d) => d.id == selectedStation).name;
 			}
 		}

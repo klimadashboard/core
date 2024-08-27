@@ -24,6 +24,8 @@
 	export let minValue = 0;
 	export let preselectedIndex;
 	export let showPulse = false;
+	export let invalidX;
+	export let invalidText;
 
 	let chartHeight;
 	let chartWidth;
@@ -278,6 +280,30 @@
 								repeatCount="indefinite"
 							/>
 						</circle>
+					</g>
+				{/if}
+				{#if invalidX}
+					<g>
+						<rect
+							y={-5}
+							width={xScale(invalidX)}
+							height={innerChartHeight + 5}
+							class="fill-gray-200 opacity-50"
+						/>
+						<line
+							x1={xScale(invalidX)}
+							x2={xScale(invalidX)}
+							y1={0}
+							y2={innerChartHeight}
+							stroke={'#000'}
+							stroke-dasharray="2 8"
+						/>
+						<text
+							class="text-sm fill-gray-600"
+							text-anchor="end"
+							x={xScale(invalidX) - 10}
+							y={innerChartHeight - 10}>{invalidText}</text
+						>
 					</g>
 				{/if}
 				<rect

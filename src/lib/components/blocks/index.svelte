@@ -12,6 +12,7 @@
 	import ChartBar from './ChartBar.svelte';
 	import Quote from './Quote.svelte';
 	import List from './List.svelte';
+	import Video from './Video.svelte';
 
 	export let content;
 
@@ -67,6 +68,10 @@
 		{
 			type: 'list',
 			component: List
+		},
+		{
+			type: 'video',
+			component: Video
 		}
 	];
 </script>
