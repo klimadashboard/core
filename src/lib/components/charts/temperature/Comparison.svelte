@@ -14,34 +14,42 @@
 	let historicalAverages = [];
 	let recentData = [];
 
-	// Function to determine the season based on the month and handle winter across years
 	function getSeason(date) {
 		const parsedDate = dayjs(date);
 		const month = parsedDate.month(); // month() returns 0 for January, 11 for December
 		const year = parsedDate.year();
 
-		if (month === 11) return `Winter`; // December is Winter
-		if (month === 0 || month === 1) return `Winter`; // Jan and Feb are Winter
-		if (month >= 2 && month <= 4) return `Frühling`;
-		if (month >= 5 && month <= 7) return `Sommer`;
-		if (month >= 8 && month <= 10) return `Herbst`;
+		if (month === 11) return `Winter ${year}-${year + 1}`; // December belongs to Winter crossing years
+		if (month === 0 || month === 1) return `Winter ${year - 1}-${year}`; // Jan and Feb belong to Winter crossing years
+		if (month >= 2 && month <= 4) return `Frühling ${year}`;
+		if (month >= 5 && month <= 7) return `Sommer ${year}`;
+		if (month >= 8 && month <= 10) return `Herbst ${year}`;
 	}
 
-	// Function to calculate both historical averages and recent data
+	// New function to get the season name without year
+	function getSeasonName(date) {
+		const month = dayjs(date).month();
+
+		if (month === 11 || month === 0 || month === 1) return 'Winter';
+		if (month >= 2 && month <= 4) return 'Frühling';
+		if (month >= 5 && month <= 7) return 'Sommer';
+		if (month >= 8 && month <= 10) return 'Herbst';
+	}
+
 	$: calculateAverages = function () {
-		// Filter data for the comparison period (historical averages)
+		// Filter the data to include only the historical range
 		const filteredHistoricalData = data.filter((entry) => {
 			const year = dayjs(entry.date).year();
 			return year >= compareStartYear && year <= compareEndYear;
 		});
 
-		// Group data either by month or by season
+		// Group data by the appropriate period, either months or seasons
 		const historicalGroupedData = filteredHistoricalData.reduce((acc, entry) => {
 			let key;
 			if (activeView === 'months') {
-				key = dayjs(entry.date).format('MMMM'); // Group by month name (e.g., "January")
+				key = dayjs(entry.date).format('MMMM'); // Group by month name only (e.g., "January")
 			} else if (activeView === 'seasons') {
-				key = getSeason(entry.date); // Group by season (e.g., "Winter")
+				key = getSeasonName(entry.date); // Group by season name only (e.g., "Winter")
 			}
 
 			if (!acc[key]) acc[key] = { key, temperatures: [] };
@@ -49,6 +57,7 @@
 			return acc;
 		}, {});
 
+		// Calculate historical averages for both months and seasons
 		historicalAverages = Object.values(historicalGroupedData).map((group) => {
 			const averageTemperature =
 				group.temperatures.reduce((sum, temp) => sum + temp, 0) / group.temperatures.length;
@@ -58,16 +67,21 @@
 			};
 		});
 
-		// Calculate recent data (last 12 months or last 4 seasons)
+		// Create a dictionary for easy lookup of historical averages by season or month name
+		const historicalAverageLookup = historicalAverages.reduce((acc, entry) => {
+			acc[entry.period] = entry.averageTemperature;
+			return acc;
+		}, {});
+
 		const currentDate = dayjs();
 
 		let recentPeriods;
 		if (activeView === 'months') {
-			recentPeriods = Array.from({ length: 12 }, (_, i) =>
+			recentPeriods = Array.from({ length: 13 }, (_, i) =>
 				currentDate.subtract(i, 'month').format('MMMM YYYY')
 			).reverse();
 		} else if (activeView === 'seasons') {
-			recentPeriods = Array.from({ length: 4 }, (_, i) =>
+			recentPeriods = Array.from({ length: 5 }, (_, i) =>
 				getSeason(currentDate.subtract(i * 3, 'month'))
 			).reverse();
 		}
@@ -87,30 +101,28 @@
 			// Determine if this period is ongoing
 			let isOngoing = false;
 			if (activeView === 'months') {
-				// If it's the current month, it's ongoing
 				isOngoing = period === currentDate.format('MMMM YYYY');
 			} else if (activeView === 'seasons') {
-				// If it's the current season, it's ongoing
 				isOngoing = period === getSeason(currentDate);
 			}
+
+			// Calculate the difference from the historical average for this specific season name
+			const seasonType = period.split(' ')[0]; // Get the season name without year (e.g., "Winter")
+			const historicalAverage = historicalAverageLookup[seasonType] || 0;
+			const differenceFromHistorical = averageTemperature - historicalAverage;
 
 			return {
 				period,
 				averageTemperature: parseFloat(averageTemperature.toFixed(2)),
-				ongoing: isOngoing
+				ongoing: isOngoing,
+				differenceFromHistorical: parseFloat(differenceFromHistorical.toFixed(2)) // Add the difference here
 			};
 		});
 	};
 
-	// Reactively calculate averages when relevant variables change
 	$: if (activeView) {
 		calculateAverages();
 	}
-
-	$: console.log(activeView);
-
-	$: console.log(historicalAverages);
-	$: console.log(recentData);
 
 	const views = [
 		{
@@ -122,6 +134,10 @@
 			label: 'Jahreszeiten'
 		}
 	];
+
+	$: overAveragePeriods = recentData.filter(
+		(d) => !d.ongoing && d.differenceFromHistorical > 0
+	).length;
 </script>
 
 <div class="mt-16">
@@ -134,15 +150,17 @@
 			}}
 		/>
 		<p class="text-sm text-gray-600">
-			im Vergleich zum historischen Durchschnitt {compareStartYear} - {compareEndYear}
+			im Vergleich zum Schnitt {compareStartYear} - {compareEndYear}
 		</p>
 	</div>
 
-	<h2 class="text-2xl max-w-lg mt-4">
+	<h2 class="text-2xl max-w-xl mt-4">
 		{#if activeView == 'months'}
-			Von den letzten 12 Monaten waren X Monate überdurchschnittlich warm.
+			Von den letzten 12 Monaten waren {overAveragePeriods} Monate bei der Wetterstation {selectedStation.name}
+			überdurchschnittlich warm.
 		{:else}
-			Von den letzten 4 Jahreszeiten waren X überdurchschnittlich warm.
+			Von den letzten 4 Jahreszeiten waren {overAveragePeriods} Jahreszeiten bei der Wetterstation {selectedStation.name}
+			überdurchschnittlich warm.
 		{/if}
 	</h2>
 

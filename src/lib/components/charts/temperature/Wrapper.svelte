@@ -11,9 +11,9 @@
 {#if data}
 	<WeatherDays {data} {selectedStation} />
 
-	<YearlyAverages {data} {selectedStation} />
-
 	<Comparison {data} {selectedStation} />
 
 	<Records {data} {selectedStation} />
+
+	<YearlyAverages {data} {selectedStation} />
 {/if}

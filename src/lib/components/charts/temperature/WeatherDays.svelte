@@ -37,16 +37,18 @@
 	};
 
 	$: dataCurrent = data.filter((d) => dayjs(d.date).year() == selectedYear);
-	$: dataComparison = data.filter(
-		(d) => dayjs(d.date).year() >= compareFirstYear && dayjs(d.date).year() <= compareLastYear
-	);
+	$: dataComparison = data
+		.filter(
+			(d) => dayjs(d.date).year() >= compareFirstYear && dayjs(d.date).year() <= compareLastYear
+		)
+		.filter((d) =>
+			selectedYear == lastDate.year()
+				? dayjs(d.date).year(lastDate.year()).isBefore(lastDate) ||
+				  dayjs(d.date).year(lastDate.year()).isSame(lastDate)
+				: true
+		);
 
-	// if current year is selected; only use dates up to today’s date for historic comparison
-	$: if (selectedYear == lastDate.year()) {
-		dataComparison = dataComparison.filter((d) => dayjs(d.date).year(lastDate.year()) <= lastDate);
-	} else {
-		dataComparison = dataComparison;
-	}
+	$: console.log(dataComparison);
 
 	$: resultCurrent = $types.map((d) => {
 		return {
@@ -111,7 +113,7 @@
 		{heatDaysThisYear}
 		Hitzetage.
 	</h3>
-{:else if heatDaysThisYear > 5}
+{:else if lastHeatDay && (dayjs(lastHeatDay.date).isAfter(dayjs(lastSummerDay.date)) || dayjs(lastHeatDay.date).isSame(dayjs(lastSummerDay.date)))}
 	<h3 class="text-2xl max-w-xl mb-4">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastHeatDay.date))} am {dayjs(lastHeatDay.date).format(
 			'DD. MMMM'
@@ -124,8 +126,8 @@
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastSummerDay.date))} am {dayjs(
 			lastSummerDay.date
 		).format('DD. MMMM')}
-		{formatNumber(lastHeatDay.tlmax)}°C gemessen, es war der {summerDaysThisYear}. Sommertag dieses
-		Jahr.
+		{formatNumber(lastSummerDay.tlmax)}°C gemessen, es war der {summerDaysThisYear}. Sommertag
+		dieses Jahr.
 	</h3>
 {/if}
 
@@ -165,12 +167,13 @@
 			{compareLastYear}
 			{compareFirstYear}
 			{selectedYear}
+			currentDate={selectedYear == lastDate.year() ? lastDate : false}
 		/>
 	{/each}
 </div>
 
 <p class="text-sm mt-2 text-gray-700 border-t pt-2">
-	{selectedStation.name} (ID {selectedStation.id}); Daten von {dayjs(data[0].date).format(
+	{selectedStation.name} (ID {selectedStation.id}); Daten verfügbar von {dayjs(data[0].date).format(
 		'DD.MM.YYYY'
 	)} - {lastDate.format('DD.MM.YYYY')}
 	{data.findIndex((d) => d.tlmax == null) > -1
@@ -181,56 +184,26 @@
 <div class="mt-8 grid md:grid-cols-2 gap-4">
 	{#if heatDaysThisYear > 5}
 		<div class="rounded border p-4">
-			<h3 class="uppercase tracking-wide font-bold text-sm">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="inline -translate-y-0.5"
-					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-						d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7"
-					/><path
-						d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3"
-					/><path d="M9.7 17l4.6 0" /></svg
-				>
-				Wusstest du schon?
-			</h3>
 			<p class="text-lg">
-				Hitze hat einen großen Einfluss auf die menschliche Gesundheit. XX und XX sind besonders
-				gefährdet. Im Jahr 2023 wurden allein in Österreich 486 Todesfälle auf Hitze zurückgeführt,
-				in ganz Europa sind es mehr als 47.000.
+				Mehr Hitzetage durch den Klimawandel führen zu <b>gesundheitlichen Problemen</b> wie
+				Hitzschlägen, Kreislaufbelastungen und einer Zunahme von Herz-Kreislauf-Erkrankungen,
+				insbesondere bei gefährdeten Gruppen wie älteren Menschen und Kindern. Allein in Europa
+				sterben jedes Jahr ca. 45.000 Menschen an extremer Hitze.
+				<sup
+					><a
+						href="https://www.nature.com/articles/s41591-024-03186-1"
+						class="text-gray-500 underline">Nature Medicine</a
+					></sup
+				>
 			</p>
-			<p class="text-sm">Quellen:</p>
 		</div>
 		<div class="rounded border p-4">
-			<h3 class="uppercase tracking-wide font-bold text-sm">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="inline -translate-y-0.5"
-					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-						d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7"
-					/><path
-						d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3"
-					/><path d="M9.7 17l4.6 0" /></svg
-				>
-				Was kann ich tun?
-			</h3>
-			<p class="text-lg">asdasd</p>
-			<p class="text-sm">Quellen:</p>
+			<p class="text-lg">
+				Leichte Kleidung, ausreichende Flüssigkeitszufuhr und das Vermeiden von Anstrengung bei
+				Hitze reduzieren die individuelle Hitzebelastung. Begrünung, mehr Schattenplätze und
+				angepasste Gebäude mit besserer Dämmung und Lüftung mildern langfristig die Auswirkungen von
+				Hitzewellen.
+			</p>
 		</div>
 	{/if}
 </div>

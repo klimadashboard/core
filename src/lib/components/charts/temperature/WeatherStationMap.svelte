@@ -14,8 +14,8 @@
 		.rotate([-13.5, 0])
 		.fitExtent(
 			[
-				[0, 0],
-				[mapWidth, mapHeight]
+				[10, 10],
+				[mapWidth - 20, mapHeight - 20]
 			],
 			data.geo
 		);
@@ -28,7 +28,7 @@
 		return colorScale(station.height);
 	};
 
-	const radi = [5, 8];
+	const radi = [5, 5];
 
 	$: getRadius = function (station) {
 		const radiusScale = scaleLinear()

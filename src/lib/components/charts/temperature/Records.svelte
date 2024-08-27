@@ -37,7 +37,7 @@
 			text:
 				'Mit ' +
 				hottestDay.tlmax +
-				'C war der ' +
+				'°C war der ' +
 				dayjs(hottestDay.date).format('D. MMMM YYYY') +
 				' der heißeste jemals gemessene Tag in ' +
 				selectedStation.name +
@@ -49,7 +49,7 @@
 		items.push({
 			heading: 'Frühester Hitzetag',
 			text:
-				'Der früheste Hitzetag (30 Grad oder mehr) in einem Jahr wurde am ' +
+				'Der früheste Hitzetag (30°C oder mehr) in einem Jahr wurde am ' +
 				dayjs(earliestHeatDay.date).format('D. MMMM YYYY') +
 				' gemessen.'
 		});

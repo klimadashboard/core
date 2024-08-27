@@ -36,8 +36,6 @@
 			return { year: parseInt(year), average: Math.round(average * 10) / 10 };
 		});
 
-	$: console.log(yearlyAverages);
-
 	$: xScale = scaleLinear()
 		.domain([yearlyAverages[0].year, yearlyAverages[yearlyAverages.length - 1].year])
 		.range([40, chartWidth - 40]);
@@ -54,14 +52,17 @@
 
 	$: lastYear = yearlyAverages[yearlyAverages.length - 1];
 
-	$: selectedYear = lastYear.year;
+	$: selectedYear = lastYear;
 </script>
 
 <h3 class="text-2xl mt-16 max-w-xl">
 	Die Jahresdurchschnittstemperatur 2023 bei der Wetterstation {selectedStation.name} betrug {formatNumber(
 		lastYear.average
-	)}°C und war damit um {formatNumber(lastYear.average - yearlyAverages[0].average)}°C höher als zu
-	Beginn der Messungen im Jahr {yearlyAverages[0].year} ({formatNumber(
+	)}°C und war damit um {formatNumber(lastYear.average - yearlyAverages[0].average)}°C {lastYear.average -
+		yearlyAverages[0].average >
+	0
+		? 'höher'
+		: 'niedriger'} als zu Beginn der Messungen im Jahr {yearlyAverages[0].year} ({formatNumber(
 		yearlyAverages[0].average
 	)}°C).
 </h3>
@@ -73,26 +74,63 @@
 >
 	{#if chartHeight && chartWidth && yearlyAverages}
 		<svg width={'100%'} height={'100%'}>
-			{#each yearlyAverages as year}
-				<g
-					transform="translate({xScale(year.year)}, {yScale(year.average)})"
-					style="color: {getColor(year.average)}"
-					on:mouseover={() => (selectedYear = year)}
-				>
-					<circle r={6} class="fill-current" />
-					{#if selectedYear == year}
-						<rect height={12} width={80} y={-6} class="fill-current" />
-						<text class="text-xs fill-white font-bold" dominant-baseline="middle"
-							>{year.year}: {year.average}°C</text
-						>
-					{/if}
+			<rect
+				width={chartWidth}
+				height={chartHeight}
+				on:mouseover={() => (selectedYear = false)}
+				fill="none"
+			/>
+			<g>
+				{#each yearlyAverages as year}
+					<g
+						transform="translate({xScale(year.year)}, {yScale(year.average)})"
+						style="color: {getColor(year.average)}"
+					>
+						<circle r={6} class="fill-current" />
+					</g>
+				{/each}
+			</g>
+			<g>
+				{#each yearlyAverages as year}
+					<rect
+						x={xScale(year.year)}
+						width={chartWidth / yearlyAverages.length}
+						height={chartHeight}
+						on:mouseover={() => (selectedYear = year)}
+						on:focus={() => (selectedYear = year)}
+						class="fill-white opacity-0"
+					/>
+				{/each}
+			</g>
+			{#if selectedYear}
+				<g transform="translate({xScale(selectedYear.year)},0)">
+					<line x1={0} x2={0} y1={20} y2={chartHeight} class="stroke-gray-400" />
+					<text
+						y={5}
+						class="text-xs fill-gray-400 font-bold"
+						dominant-baseline="hanging"
+						text-anchor="middle">{selectedYear.year}: {selectedYear.average}°C</text
+					>
 				</g>
-			{/each}
+			{/if}
 			<g>
 				{#each yScale.ticks(3) as tick}
 					<g transform="translate(0,{yScale(tick)})">
-						<line x1={0} x2={5} y1={0} y2={0} class="stroke-gray-400" />
-						<text x={7} class="text-xs fill-gray-400" dominant-baseline="middle">{tick}°C</text>
+						<line x1={0} x2={5} y1={0} y2={0} class="stroke-gray-200" />
+						<text x={7} class="text-sm fill-gray-400" dominant-baseline="middle">{tick}°C</text>
+					</g>
+				{/each}
+			</g>
+			<g>
+				{#each xScale.ticks(5) as tick}
+					<g transform="translate({xScale(tick)},{chartHeight})">
+						<line x1={0} x2={0} y1={-10} y2={0} class="stroke-gray-400" />
+						<text
+							y={-20}
+							class="text-xs fill-gray-400"
+							text-anchor="middle"
+							dominant-baseline="middle">{tick}</text
+						>
 					</g>
 				{/each}
 			</g>

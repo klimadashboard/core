@@ -48,7 +48,7 @@
 	}
 </script>
 
-<div class="flex items-center">
+<div class="flex items-center space-x-2">
 	<div class="relative">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
@@ -80,7 +80,7 @@
 
 	<button
 		aria-label="Nächste Wetterstation finden"
-		class="bg-gray-200 p-3 rounded"
+		class="bg-gray-200 p-2.5 rounded"
 		on:mousedown={getCurrentPosition()}
 	>
 		<svg
