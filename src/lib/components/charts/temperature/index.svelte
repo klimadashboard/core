@@ -22,7 +22,6 @@
 					limit: -1
 				})
 			);
-			console.log(data);
 			return data;
 		} else {
 			return false;
