@@ -13,10 +13,12 @@
 	export let selectedStation;
 
 	$: selectedYear = dayjs().month() > 4 ? dayjs().year() : dayjs().year() - 1;
-	$: compareFirstYear = Math.max(1961, firstDate.year());
-	$: compareLastYear = Math.max(1990, firstDate.year() + 30);
-	$: firstDate = dayjs(data[0].date);
-	$: lastDate = dayjs(data[data.length - 1].date);
+	let firstDate = dayjs(data[0].date);
+	let lastDate = dayjs(data[data.length - 1].date);
+	$: console.log(compareFirstYear);
+
+	let compareFirstYear = Math.max(1961, firstDate.year());
+	let compareLastYear = Math.max(1990, firstDate.year() + 30);
 
 	const isDay = function (key, d) {
 		if (key == 'iceDay') {
@@ -47,8 +49,6 @@
 				  dayjs(d.date).year(lastDate.year()).isSame(lastDate)
 				: true
 		);
-
-	$: console.log(dataComparison);
 
 	$: resultCurrent = $types.map((d) => {
 		return {
@@ -89,8 +89,6 @@
 	$: heatWaveLength = countFirstConsecutiveItemsFromStart([...data].reverse(), (d) =>
 		isDay('heatDay', d)
 	);
-
-	$: console.log(heatWaveLength);
 </script>
 
 {#if heatWaveLength > 2}
@@ -131,32 +129,37 @@
 	</h3>
 {/if}
 
-<p class="text-gray-700 mb-2 pb-2 border-b">
-	Vergleiche das Jahr
-	<input
-		type="number"
-		class="inline"
-		bind:value={selectedYear}
-		min={dayjs(data[0].date).year()}
-		max={lastDate.year()}
-	/>
-	mit dem Zeitraum
-	<input
-		type="number"
-		class="inline"
-		bind:value={compareFirstYear}
-		min={dayjs(data[0].date).year()}
-		max={compareLastYear - 10}
-	/>
-	-
-	<input
-		type="number"
-		class="inline"
-		bind:value={compareLastYear}
-		min={compareFirstYear + 10}
-		max={lastDate.year()}
-	/>
-</p>
+{#if compareFirstYear && compareLastYear}
+	<p class="text-gray-700 mb-2 pb-2 border-b">
+		Vergleiche das Jahr
+		<input
+			type="number"
+			class="inline"
+			bind:value={selectedYear}
+			min={dayjs(data[0].date).year()}
+			max={lastDate.year()}
+			id="selectedYear"
+		/>
+		mit dem Zeitraum
+		<input
+			type="number"
+			class="inline"
+			bind:value={compareFirstYear}
+			min={dayjs(data[0].date).year()}
+			max={compareLastYear - 10}
+			id="compareFirstYear"
+		/>
+		-
+		<input
+			type="number"
+			class="inline"
+			bind:value={compareLastYear}
+			min={compareFirstYear + 10}
+			max={lastDate.year()}
+			id="compareLastYear"
+		/>
+	</p>
+{/if}
 
 <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
 	{#each $types as type}
