@@ -149,7 +149,7 @@
 			max={compareLastYear - 10}
 			id="compareFirstYear"
 		/>
-		-
+		bis
 		<input
 			type="number"
 			class="inline"
