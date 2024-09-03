@@ -26,12 +26,13 @@
 
 	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2038);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
-	$: maxValue = showTechn
-		? potential_techn * 1.1
-		: Math.max(
-				Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
-				potential_2030 * 1.1
-		  );
+	$: maxValue =
+		(showTechn
+			? potential_techn
+			: Math.max(
+					Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
+					potential_2030
+			  )) * 1.1;
 	$: minValue = -maxValue / 5;
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -67,15 +68,26 @@
 					? yScale(+goals[0].goal_amount) - yScale(+last_datapoint.value)
 					: 0}
 				{@const text_production_x_offset = has_goals
-					? Math.abs(delta_values) <= 7 && +goals[0].goal_year > 2000
+					? Math.abs(delta_values) <= 8.1 && +goals[0].goal_year > 2000
 						? delta_values < 0
 							? 10
 							: -10
 						: 0
 					: 0}
 
-				{@const text_potential_2030_y_offset =
-					has_goals && yScale(+goals[0].goal_amount) - yScale(potential_2030) < 0 ? +16 : -14}
+				{@const delta_goal_potential_2030 = yScale(+goals[0]?.goal_amount) - yScale(potential_2030)}
+				{@const text_potential_2030_y_offset = has_goals
+					? Math.abs(delta_goal_potential_2030) < 25
+						? delta_goal_potential_2030 > -18
+							? -14
+							: +16
+						: -14
+					: -14}
+				{@const asdf = console.log(
+					bundesland,
+					text_potential_2030_y_offset,
+					delta_goal_potential_2030
+				)}
 
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
