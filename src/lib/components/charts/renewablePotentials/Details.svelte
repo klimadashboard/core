@@ -174,7 +174,7 @@
 								</text>
 							</g> -->
 						{/if}
-						{#if potential_2030 != null}
+						{#if potential_2030 != null && potential_2030 > 0}
 							<text
 								text-anchor="middle"
 								class="text-sm font-semibold fill-current bg-white"
