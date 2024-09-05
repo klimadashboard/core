@@ -31,7 +31,8 @@
 			? potential_techn
 			: Math.max(
 					Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
-					potential_2030
+					potential_2030,
+					Math.max(...dataset.map((g) => +g.value))
 			  )) * 1.1;
 	$: minValue = -maxValue / 5;
 
@@ -83,11 +84,6 @@
 							: +16
 						: -14
 					: -14}
-				{@const asdf = console.log(
-					bundesland,
-					text_potential_2030_y_offset,
-					delta_goal_potential_2030
-				)}
 
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
