@@ -124,7 +124,7 @@
 {:else if lastHeatDay && (dayjs(lastHeatDay.date).isAfter(dayjs(lastSummerDay.date)) || dayjs(lastHeatDay.date).isSame(dayjs(lastSummerDay.date)))}
 	<h3 class="text-2xl max-w-xl mb-4">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastHeatDay.date))} am {dayjs(lastHeatDay.date).format(
-			'DD. MMMM'
+			'D. MMMM'
 		)}
 		{formatNumber(lastHeatDay.tlmax)}°C gemessen, es war der {heatDaysThisYear}. Hitzetag dieses
 		Jahr.
@@ -133,7 +133,7 @@
 	<h3 class="text-2xl max-w-xl mb-4">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastSummerDay.date))} am {dayjs(
 			lastSummerDay.date
-		).format('DD. MMMM')}
+		).format('D. MMMM')}
 		{formatNumber(lastSummerDay.tlmax)}°C gemessen, es war der {summerDaysThisYear}. Sommertag
 		dieses Jahr.
 	</h3>
