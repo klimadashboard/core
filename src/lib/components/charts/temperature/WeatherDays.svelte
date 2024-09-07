@@ -144,14 +144,14 @@
 		Vergleiche das Jahr
 		<input
 			type="number"
-			class="inline bg-gray-100 px-3 py-1 mx-1 rounded-full"
+			class="inline k_input mx-1"
 			bind:value={selectedYear}
 			min={dayjs(data[0].date).year()}
 			max={lastDate.year()}
 			id="selectedYear"
 		/>
 		mit dem Zeitraum
-		<select bind:value={selectedComparisonDuration}>
+		<select bind:value={selectedComparisonDuration} class="k_input mx-1">
 			{#each comparisonDurations as duration}
 				<option value={duration}>
 					{duration[0]} - {duration[1]}
