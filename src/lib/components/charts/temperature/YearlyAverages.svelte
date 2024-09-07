@@ -101,6 +101,17 @@
 				on:mouseover={() => (selectedYear = false)}
 				fill="none"
 			/>
+			{#if selectedYear}
+				<g transform="translate({xScale(selectedYear.year)},0)">
+					<line x1={0} x2={0} y1={20} y2={chartHeight} class="stroke-gray-400" />
+					<text
+						y={5}
+						class="text-xs fill-gray-400 font-bold"
+						dominant-baseline="hanging"
+						text-anchor="middle">{selectedYear.year}: {selectedYear.average}°C</text
+					>
+				</g>
+			{/if}
 			<g>
 				<path
 					d={path}
@@ -134,17 +145,7 @@
 					/>
 				{/each}
 			</g>
-			{#if selectedYear}
-				<g transform="translate({xScale(selectedYear.year)},0)">
-					<line x1={0} x2={0} y1={20} y2={chartHeight} class="stroke-gray-400" />
-					<text
-						y={5}
-						class="text-xs fill-gray-400 font-bold"
-						dominant-baseline="hanging"
-						text-anchor="middle">{selectedYear.year}: {selectedYear.average}°C</text
-					>
-				</g>
-			{/if}
+
 			<g>
 				{#each yScale.ticks(3) as tick}
 					<g transform="translate(0,{yScale(tick)})">
