@@ -24,7 +24,7 @@
 	$: barScale = scaleLinear()
 		.domain([0, max(recentData, (d) => d.differenceFromHistorical) * 2 * 1.2])
 		.range([0, chartHeight]);
-	$: barWidth = chartWidth / recentData.length - chartWidth / 50;
+	$: barWidth = (chartWidth / recentData.length) * 0.7;
 
 	const colors = ['#2489B8', '#7148CF', '#BE2D43']; // from green to blue
 
@@ -43,7 +43,7 @@
 
 <div class="overflow-scroll scrollbar-custom" bind:this={scrollableDiv}>
 	<div
-		class="h-80 mt-4 min-w-[1000px]"
+		class="h-80 mt-4 {recentData.lenghth > 5 ? 'min-w-[1000px]' : 'min-w-[400px]'}"
 		bind:clientWidth={chartWidth}
 		bind:clientHeight={chartHeight}
 	>

@@ -7,7 +7,7 @@
 	export let selectedStation;
 
 	const compareStartYear = Math.max(1961, dayjs(data[0].date).year());
-	const compareEndYear = Math.min(dayjs().year() - 2, compareStartYear + 30);
+	const compareEndYear = Math.min(dayjs().year() - 2, compareStartYear + 29);
 
 	$: activeView = 'months';
 

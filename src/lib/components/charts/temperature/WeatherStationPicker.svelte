@@ -48,6 +48,7 @@
 	}
 </script>
 
+<p class="text-sm text-gray-700 mb-1 font-medium">Wähle deine Wetterstation</p>
 <div class="flex items-center space-x-2">
 	<div class="relative">
 		<svg
