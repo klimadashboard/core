@@ -15,10 +15,20 @@
 	$: selectedYear = dayjs().month() > 4 ? dayjs().year() : dayjs().year() - 1;
 	let firstDate = dayjs(data[0].date);
 	let lastDate = dayjs(data[data.length - 1].date);
-	$: console.log(compareFirstYear);
 
-	let compareFirstYear = Math.max(1961, firstDate.year());
-	let compareLastYear = Math.max(1990, firstDate.year() + 30);
+	let comparisonDurations = [
+		[1961, 1990],
+		[1971, 2000],
+		[1981, 2010],
+		[1991, 2020]
+	].filter((duration) => {
+		const [startYear, endYear] = duration;
+		return startYear > firstDate.year() && endYear > firstDate.year();
+	});
+	let selectedComparisonDuration = comparisonDurations[0];
+
+	$: compareFirstYear = selectedComparisonDuration[0];
+	$: compareLastYear = selectedComparisonDuration[1];
 
 	const isDay = function (key, d) {
 		if (key == 'iceDay') {
@@ -134,30 +144,20 @@
 		Vergleiche das Jahr
 		<input
 			type="number"
-			class="inline"
+			class="inline bg-gray-100 px-3 py-1 mx-1 rounded-full"
 			bind:value={selectedYear}
 			min={dayjs(data[0].date).year()}
 			max={lastDate.year()}
 			id="selectedYear"
 		/>
 		mit dem Zeitraum
-		<input
-			type="number"
-			class="inline"
-			bind:value={compareFirstYear}
-			min={dayjs(data[0].date).year()}
-			max={compareLastYear - 10}
-			id="compareFirstYear"
-		/>
-		bis
-		<input
-			type="number"
-			class="inline"
-			bind:value={compareLastYear}
-			min={compareFirstYear + 10}
-			max={lastDate.year()}
-			id="compareLastYear"
-		/>
+		<select bind:value={selectedComparisonDuration}>
+			{#each comparisonDurations as duration}
+				<option value={duration}>
+					{duration[0]} - {duration[1]}
+				</option>
+			{/each}
+		</select>
 	</p>
 {/if}
 
