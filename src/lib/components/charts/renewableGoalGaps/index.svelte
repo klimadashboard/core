@@ -74,7 +74,9 @@
 	);
 </script>
 
-<div class="flex flex-wrap gap-2 justify-center items-center">
+<!-- <div class="flex flex-wrap gap-2 justify-center items-center"> -->
+<div class="flex flex-wrap gap-2 items-center">
+	Wähle das Ausbauziel:
 	{#each Object.keys(goalScenarios) as goalScenario}
 		<button
 			class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-1 {selectedScenario === goalScenario
