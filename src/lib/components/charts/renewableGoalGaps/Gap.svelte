@@ -7,6 +7,7 @@
 	export let type;
 	export let dataset;
 	export let dataGoal;
+	export let goalScenario;
 
 	// let nationalGoal;
 	let unit = 'TWh';
@@ -105,7 +106,8 @@
 <div class="bg-gray-100 rounded overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
 		<h3 class="text-xl">
-			<b>{type.label}</b> Nationales Ausbauziel zu {Math.round(percentage)}% abgedeckt
+			<b>{type.label}</b> Nationales {goalScenario}-Ausbauziel zu {Math.round(percentage)}%
+			abgedeckt
 		</h3>
 		{@html type.icon}
 	</div>
@@ -216,7 +218,7 @@
 					</p>
 				{/if}
 				<p class="text-right pr-2">
-					Nationales Ziel: <br />{formatNumber(nationalGoal)}
+					Nationales {goalScenario}-Ziel: <br />{formatNumber(nationalGoal)}
 					{unit} bis 2030
 				</p>
 			</div>

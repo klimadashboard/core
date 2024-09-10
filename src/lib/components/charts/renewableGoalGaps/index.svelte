@@ -98,6 +98,7 @@
 				dataGoal={dataGoals.filter(
 					(d) => d.energy_type == type.dataKey && d.scenario == selectedScenario
 				)[0]}
+				goalScenario={goalScenarios[selectedScenario]}
 			/>
 		{/each}
 		<div class="bg-gray-100 p-4">
