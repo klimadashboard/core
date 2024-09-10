@@ -2,31 +2,48 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import ComparisonChart from './ComparisonChart.svelte';
 	import dayjs from 'dayjs';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	export let data;
 	export let selectedStation;
 
-	const compareStartYear = Math.max(1961, dayjs(data[0].date).year());
-	const compareEndYear = Math.min(dayjs().year() - 2, compareStartYear + 29);
+	const availableResolutions = [
+		{ key: 'months', label: 'Monate' },
+		{ key: 'seasons', label: 'Jahreszeiten' },
+		{ key: 'years', label: 'Jahre' }
+	];
 
-	$: activeView = 'months';
+	let selectedResolution = availableResolutions[0];
+
+	const availablePeriods = [
+		{ label: '1961-1990', start: 1961, end: 1990 },
+		{ label: '1981-2010', start: 1981, end: 2010 },
+		{ label: '1991-2020', start: 1991, end: 2020 }
+	];
+
+	let selectedPeriod = availablePeriods[0]; // Default to the first period
+
+	// Dynamically set comparison start and end year based on user selection
+	$: compareStartYear = selectedPeriod.start;
+	$: compareEndYear = selectedPeriod.end;
 
 	let historicalAverages = [];
 	let recentData = [];
+	let lastDatapoint;
 
+	// Function to get season name for grouping
 	function getSeason(date) {
 		const parsedDate = dayjs(date);
-		const month = parsedDate.month(); // month() returns 0 for January, 11 for December
+		const month = parsedDate.month();
 		const year = parsedDate.year();
 
-		if (month === 11) return `Winter ${year}-${year + 1}`; // December belongs to Winter crossing years
-		if (month === 0 || month === 1) return `Winter ${year - 1}-${year}`; // Jan and Feb belong to Winter crossing years
+		if (month === 11) return `Winter ${year}-${year + 1}`;
+		if (month === 0 || month === 1) return `Winter ${year - 1}-${year}`;
 		if (month >= 2 && month <= 4) return `Frühling ${year}`;
 		if (month >= 5 && month <= 7) return `Sommer ${year}`;
 		if (month >= 8 && month <= 10) return `Herbst ${year}`;
 	}
 
-	// New function to get the season name without year
 	function getSeasonName(date) {
 		const month = dayjs(date).month();
 
@@ -36,20 +53,21 @@
 		if (month >= 8 && month <= 10) return 'Herbst';
 	}
 
+	// Function to calculate historical averages and recent data
 	$: calculateAverages = function () {
-		// Filter the data to include only the historical range
 		const filteredHistoricalData = data.filter((entry) => {
 			const year = dayjs(entry.date).year();
 			return year >= compareStartYear && year <= compareEndYear;
 		});
 
-		// Group data by the appropriate period, either months or seasons
 		const historicalGroupedData = filteredHistoricalData.reduce((acc, entry) => {
 			let key;
-			if (activeView === 'months') {
-				key = dayjs(entry.date).format('MMMM'); // Group by month name only (e.g., "January")
-			} else if (activeView === 'seasons') {
-				key = getSeasonName(entry.date); // Group by season name only (e.g., "Winter")
+			if (selectedResolution.key === 'months') {
+				key = dayjs(entry.date).format('MMMM'); // Group by month
+			} else if (selectedResolution.key === 'seasons') {
+				key = getSeasonName(entry.date); // Group by season
+			} else if (selectedResolution.key === 'years') {
+				key = dayjs(entry.date).year().toString(); // Group by year (converted to string for consistency)
 			}
 
 			if (!acc[key]) acc[key] = { key, temperatures: [] };
@@ -57,7 +75,6 @@
 			return acc;
 		}, {});
 
-		// Calculate historical averages for both months and seasons
 		historicalAverages = Object.values(historicalGroupedData).map((group) => {
 			const averageTemperature =
 				group.temperatures.reduce((sum, temp) => sum + temp, 0) / group.temperatures.length;
@@ -67,100 +84,79 @@
 			};
 		});
 
-		// Create a dictionary for easy lookup of historical averages by season or month name
 		const historicalAverageLookup = historicalAverages.reduce((acc, entry) => {
 			acc[entry.period] = entry.averageTemperature;
 			return acc;
 		}, {});
 
-		const currentDate = dayjs();
-
 		let recentPeriods;
-		if (activeView === 'months') {
-			recentPeriods = Array.from({ length: 13 }, (_, i) =>
-				currentDate.subtract(i, 'month').format('MMMM YYYY')
-			).reverse();
-		} else if (activeView === 'seasons') {
-			recentPeriods = Array.from({ length: 5 }, (_, i) =>
-				getSeason(currentDate.subtract(i * 3, 'month'))
-			).reverse();
+		if (selectedResolution.key === 'months') {
+			recentPeriods = [...new Set(data.map((entry) => dayjs(entry.date).format('MMMM YYYY')))];
+		} else if (selectedResolution.key === 'seasons') {
+			recentPeriods = [...new Set(data.map((entry) => getSeason(entry.date)))];
+		} else if (selectedResolution.key === 'years') {
+			recentPeriods = [...new Set(data.map((entry) => dayjs(entry.date).year()))]; // No need to convert year to string here
 		}
+
+		// Limit to the most recent 100 periods
+		recentPeriods = recentPeriods.slice(-100);
 
 		recentData = recentPeriods.map((period) => {
 			const periodData = data.filter((entry) => {
-				if (activeView === 'months') {
+				if (selectedResolution.key === 'months') {
 					return dayjs(entry.date).format('MMMM YYYY') === period;
-				} else if (activeView === 'seasons') {
+				} else if (selectedResolution.key === 'seasons') {
 					return getSeason(entry.date) === period;
+				} else if (selectedResolution.key === 'years') {
+					return dayjs(entry.date).year() == period; // No string comparison, use equality
 				}
 			});
 
 			const averageTemperature =
-				periodData.reduce((sum, entry) => sum + entry.tl_mittel, 0) / (periodData.length || 1); // Avoid division by zero
+				periodData.reduce((sum, entry) => sum + entry.tl_mittel, 0) / (periodData.length || 1);
 
-			// Determine if this period is ongoing
-			let isOngoing = false;
-			if (activeView === 'months') {
-				isOngoing = period === currentDate.format('MMMM YYYY');
-			} else if (activeView === 'seasons') {
-				isOngoing = period === getSeason(currentDate);
-			}
-
-			// Calculate the difference from the historical average for this specific season name
-			const seasonType = period.split(' ')[0]; // Get the season name without year (e.g., "Winter")
+			// Only split if it's months or seasons, not years
+			const seasonType = selectedResolution.key !== 'years' ? period.split(' ')[0] : period;
 			const historicalAverage = historicalAverageLookup[seasonType] || 0;
 			const differenceFromHistorical = averageTemperature - historicalAverage;
 
 			return {
 				period,
 				averageTemperature: parseFloat(averageTemperature.toFixed(2)),
-				ongoing: isOngoing,
-				differenceFromHistorical: parseFloat(differenceFromHistorical.toFixed(2)) // Add the difference here
+				differenceFromHistorical: parseFloat(differenceFromHistorical.toFixed(2))
 			};
 		});
+
+		// Set the last datapoint
+		lastDatapoint = recentData[recentData.length - 1];
 	};
 
-	$: if (activeView) {
+	$: if (selectedResolution) {
 		calculateAverages();
 	}
-
-	const views = [
-		{
-			key: 'months',
-			label: 'Monate'
-		},
-		{
-			key: 'seasons',
-			label: 'Jahreszeiten'
-		}
-	];
-
-	$: overAveragePeriods = recentData.filter(
-		(d) => !d.ongoing && d.differenceFromHistorical > 0
-	).length;
 </script>
 
 <div class="mt-16">
 	<div class="flex items-center gap-2">
-		<Switch
-			{views}
-			{activeView}
-			on:itemClick={(event) => {
-				activeView = event.detail;
-			}}
-		/>
-		<p class="text-sm text-gray-600">
-			im Vergleich zum Schnitt {compareStartYear} - {compareEndYear}
-		</p>
+		<select bind:value={selectedResolution}>
+			{#each availableResolutions as resolution}
+				<option value={resolution}>{resolution.label}</option>
+			{/each}
+		</select>
+		<select bind:value={selectedPeriod}>
+			{#each availablePeriods as period}
+				<option value={period}>{period.label}</option>
+			{/each}
+		</select>
 	</div>
 
+	<!-- Display the last datapoint value -->
 	<h2 class="text-2xl max-w-xl mt-4">
-		{#if activeView == 'months'}
-			Von den letzten 12 Monaten waren {overAveragePeriods} Monate bei der Wetterstation {selectedStation.name}
-			überdurchschnittlich warm.
-		{:else}
-			Von den letzten 4 Jahreszeiten waren {overAveragePeriods} Jahreszeiten bei der Wetterstation {selectedStation.name}
-			überdurchschnittlich warm.
+		{#if lastDatapoint}
+			Im {lastDatapoint.period} war es {formatNumber(lastDatapoint.differenceFromHistorical)}°C {lastDatapoint.differenceFromHistorical >
+			0
+				? 'heißer'
+				: 'kälter'} als der historische Durchschnitt.
 		{/if}
 	</h2>
 

@@ -15,5 +15,7 @@
 
 	<Records {data} {selectedStation} />
 
+	<!--
 	<YearlyAverages {data} {selectedStation} />
+	-->
 {/if}
