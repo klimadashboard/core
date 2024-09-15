@@ -39,7 +39,11 @@
 
 	$: copyEmbedCode = function () {
 		var copyText =
-			'<iframe src="' + window.location.origin + '/embed/' + chartId + '" width=1200 height=400>';
+			'<iframe src="' +
+			window.location.origin +
+			'/embed/' +
+			chartId +
+			'" width=1200 height=400></iframe>';
 		copyToClipboard(copyText);
 		alert('Der iFrame-Code wurde in die Zwischenablage kopiert.');
 	};
