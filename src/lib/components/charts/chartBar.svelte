@@ -165,48 +165,48 @@
 										<stop offset="100%" style="stop-color:{category.color};stop-opacity:0.8" />
 									</linearGradient>
 									<rect
-										class="bar"
-										width={visualisation == 'grouped'
-											? barWidth / datapoint.categories.length || 0
-											: barWidth}
-										height={yScale(category.value) || 0}
-										fill={category.estimate
-											? 'transparent'
-											: category.color
-											? 'url(#grad-' + category.color.replace('#', '') + '-' + i + '-' + j + ')'
-											: 'currentColor'}
-										stroke={category.estimate
-											? 'currentColor'
-											: category.color
-											? category.color
-											: 'currentColor'}
-										stroke-width={category.estimate ? '2' : '0'}
-										x={visualisation == 'grouped'
-											? (j * barWidth) / datapoint.categories.length || 0
-											: 0}
-										y={calculateYPositionForCategory(category, datapoint)}
-										on:mouseover={(e) => (selectedBar = datapoint)}
-										on:focus={(e) => (selectedBar = datapoint)}
-										on:mouseout={(e) => (selectedBar = [])}
-										on:blur={(e) => (selectedBar = [])}
-									/>
+    class="bar"
+    width={visualisation == 'grouped'
+        ? barWidth / datapoint.categories.length || 0
+        : barWidth}
+    height={yScale(category.value) || 0}
+    fill={category.color || (category.estimate
+        ? 'transparent'
+        : datapoint.color
+            ? datapoint.color
+            : 'currentColor')}
+    stroke={category.stroke || (category.estimate
+        ? 'currentColor'
+        : category.color
+            ? category.color
+            : 'currentColor')}
+    stroke-width={category.estimate ? '2' : '0'}
+    x={visualisation == 'grouped'
+        ? (j * barWidth) / datapoint.categories.length || 0
+        : 0}
+    y={calculateYPositionForCategory(category, datapoint)}
+    on:mouseover={(e) => (selectedBar = datapoint)}
+    on:focus={(e) => (selectedBar = datapoint)}
+    on:mouseout={(e) => (selectedBar = [])}
+    on:blur={(e) => (selectedBar = [])}
+/>
 								</g>
 							{/each}
 						{:else}
-							<rect
-								class="bar"
-								width={barWidth || 0}
-								height={yScale(datapoint.value) || 0}
-								fill={datapoint.estimate ? 'estimate' : 'currentColor'}
-								stroke={datapoint.stroke ? 'stroke' : 'currentColor'}
-								stroke-width="2"
-								x="0"
-								y={innerChartHeight - yScale(datapoint.value) || 0}
-								on:mouseover={(e) => (selectedBar = datapoint)}
-								on:focus={(e) => (selectedBar = datapoint)}
-								on:mouseout={(e) => (selectedBar = [])}
-								on:blur={(e) => (selectedBar = [])}
-							/>
+						<rect
+						class="bar"
+						width={barWidth || 0}
+						height={yScale(datapoint.value) || 0}
+						fill={datapoint.color || (datapoint.estimate ? 'transparent' : 'currentColor')}
+						stroke={datapoint.stroke || (datapoint.stroke ? 'stroke' : 'currentColor')}
+						stroke-width="2"
+						x="0"
+						y={innerChartHeight - yScale(datapoint.value) || 0}
+						on:mouseover={(e) => (selectedBar = datapoint)}
+						on:focus={(e) => (selectedBar = datapoint)}
+						on:mouseout={(e) => (selectedBar = [])}
+						on:blur={(e) => (selectedBar = [])}
+				/>
 							{#if selectedBar == datapoint}
 								<g
 									transform={`translate(0, ${
