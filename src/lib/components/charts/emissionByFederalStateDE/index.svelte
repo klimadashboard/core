@@ -7,6 +7,7 @@
 	let rawData;
 	let regions;
 	let gastypes;
+	let availableRegions;
 
 	Papa.parse('https://data.klimadashboard.org/de/emissions/udrdl_emissions_by_bundesland.csv', {
 		download: true,
@@ -30,30 +31,33 @@
 						})
 					)
 				];
+				availableRegions = [...new Set(rawData.filter(d => d.sector === 'total').map(d => d.region))];
+				
+				// Set initial selectedRegion to the first available region
+				selectedRegion = availableRegions[0] || 'Deutschland';
 			}
 		}
 	});
 
-	$: selectedRegion = 'Deutschland';
-	$: selectedGas = 'GHG';
+	let selectedRegion;
+	let selectedGas = 'GHG';
 
-	$: dataset = [];
+	let dataset = [];
 
-	// Create complete dataset
 	function createCompleteDataset(rawData, selectedRegion, selectedGas) {
-		console.log(selectedRegion)
+		if (!rawData || !selectedRegion || !selectedGas) return [];
 		
 		let filteredData = rawData.filter((d) => d.region === selectedRegion && d.gastype === selectedGas && d.sector === 'total');
 		
 		if (filteredData.length === 0) {
 			return [];
 		}
-		// Determine year range
+
+		// Rest of the function remains the same
 		let years = filteredData.map(d => d.year);
 		let minYear = Math.min(...years);
 		let maxYear = Math.max(...years);
 
-		// Generating all years within the range
 		let allYears = [];
 		for (let year = minYear; year <= maxYear; year++) {
 			allYears.push(year);
@@ -63,58 +67,59 @@
 			return acc;
 		}, {});
 
-		// Mapping all years to the dataset
-    let result = allYears.map((year) => ({
-        label: year.toString(),
-        value: data[year] !== undefined ? data[year] : 'NA',
-				estimate: "#000000",
-				stroke: "#000000"
-    }));
+		let result = allYears.map((year) => ({
+			label: year.toString(),
+			value: data[year] !== undefined ? data[year] : null,
+			estimate: "#000000",
+			stroke: "#000000"
+		}));
 
-    // Append the specified elements if the selected region is Bayern
-    if (selectedRegion === 'Bayern') {
-        for (let year = 2021; year <= 2045; year++) {
-            if (!result.find(d => d.label === year.toString())) {
-                result.push({ label: year.toString(), value: 'NA' });
-            }
-        }
-        // Update specific values for 2030 and 2040
-        result = result.map(d => {
-            if (d.label === '2030') {
-                return { label: '2030', value: 3000, estimate: "#000000", stroke: "#000000"};
-            } else if (d.label === '2040') {
-                return { label: '2040', value: 0, estimate: "#000000", stroke: "#000000"};
+		if (selectedRegion === 'Bayern') {
+			for (let year = 2021; year <= 2045; year++) {
+				if (!result.find(d => d.label === year.toString())) {
+					result.push({ label: year.toString(), value: null });
+				}
+			}
+			result = result.map(d => {
+				if (d.label === '2030') {
+					return { label: '2030', value: 3000, estimate: "#000000", stroke: "#000000"};
+				} else if (d.label === '2040') {
+					return { label: '2040', value: 0, estimate: "#000000", stroke: "#000000"};
+				} else if(d.label === '2045') {
+					return { label: '2045', value: 0, estimate: "#000000", stroke: "#000000"};
+				}
+				return d;
+			});
+		}
 
-            } else if(d.label === '2045') {
-								return { label: '2045', value: 0, estimate: "#000000", stroke: "#000000"};
+		result.sort((a, b) => parseInt(a.label) - parseInt(b.label));
 
-						}
-            return d;
-        });
-    }
-
-    // Sort the result by label (year) to ensure chronological order
-    result.sort((a, b) => parseInt(a.label) - parseInt(b.label));
-
-    return result;
+		return result.filter(d => d.value !== null);
 	}
 
-	// Updating dataset
-	$: if (rawData) {
-		console.log(rawData);
+	$: if (rawData && selectedRegion && selectedGas) {
 		dataset = createCompleteDataset(rawData, selectedRegion, selectedGas);
 	}
+
+	$: datasetAvailable = dataset && dataset.length > 0;
 </script>
 
-{#if dataset.length > 0}
-	<Filter {regions} bind:selectedRegion {gastypes} bind:selectedGas />
-	<div class="h-80">
-		<BarChart 
-			data={dataset} 
-			xAxixInterval="5"
-			unit={'t ' + selectedGas} 
-		/>
-	</div>
+{#if rawData}
+	<Filter {regions} bind:selectedRegion {gastypes} bind:selectedGas {availableRegions} />
+	{#if datasetAvailable}
+		<div class="h-80">
+			<BarChart 
+				data={dataset} 
+				xAxixInterval="5"
+				unit={'t ' + selectedGas} 
+			/>
+		</div>
+	{:else}
+		<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-4" role="alert">
+			<p class="font-bold">Keine Daten verfügbar 😢</p>
+<p>Leider liegen uns für die ausgewählte Kombination von {selectedRegion} und {selectedGas} keine Daten vor.</p>
+		</div>
+	{/if}
 {:else}
 	<Loader />
 {/if}
