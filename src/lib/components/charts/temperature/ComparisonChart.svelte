@@ -6,12 +6,12 @@
 	export let historicalAverages = [];
 	export let recentData = [];
 
-	console.log(recentData);
+	$: console.log(recentData);
 
 	let chartWidth;
 	let chartHeight;
 
-	const margin = { left: 30, right: 0, top: 0, bottom: 0 };
+	const margin = { left: 30, right: 5, top: 0, bottom: 0 };
 
 	// Set up scales for the x, y, and bar width dimensions
 	$: xScale = scaleLinear()
@@ -77,7 +77,7 @@
 						y={datapoint.differenceFromHistorical > 0
 							? yScale(datapoint.differenceFromHistorical)
 							: yScale(0)}
-						class="fill-current"
+						class={datapoint.isOngoing ? 'fill-white stroke-1 stroke-current' : 'fill-current'}
 					/>
 					{#if tooltip == datapoint}
 						<g>

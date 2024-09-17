@@ -2,6 +2,10 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import ComparisonChart from './ComparisonChart.svelte';
 	import dayjs from 'dayjs';
+	import 'dayjs/locale/de';
+	import isBetween from 'dayjs/plugin/isBetween';
+	dayjs.locale('de'); // Set the locale globally to German
+	dayjs.extend(isBetween); // Extend Day.js with the isBetween plugin
 	import formatNumber from '$lib/stores/formatNumber';
 
 	export let data;
@@ -53,6 +57,65 @@
 		if (month >= 8 && month <= 10) return 'Herbst';
 	}
 
+	// Function to determine if a season is ongoing
+	function isSeasonOngoing(seasonPeriod, currentDate) {
+		const [seasonName, years] = seasonPeriod.split(' ');
+		let startMonth, endMonth;
+		let startYear, endYear;
+
+		switch (seasonName) {
+			case 'Winter':
+				// Winter spans December to February
+				if (years.includes('-')) {
+					const [startYearStr, endYearStr] = years.split('-');
+					startYear = parseInt(startYearStr);
+					endYear = parseInt(endYearStr);
+				} else {
+					startYear = parseInt(years);
+					endYear = startYear + 1;
+				}
+				startMonth = 11; // December
+				endMonth = 1; // February
+				break;
+			case 'Frühling':
+				// Spring spans March to May
+				startYear = parseInt(years);
+				endYear = startYear;
+				startMonth = 2; // March
+				endMonth = 4; // May
+				break;
+			case 'Sommer':
+				// Summer spans June to August
+				startYear = parseInt(years);
+				endYear = startYear;
+				startMonth = 5; // June
+				endMonth = 7; // August
+				break;
+			case 'Herbst':
+				// Autumn spans September to November
+				startYear = parseInt(years);
+				endYear = startYear;
+				startMonth = 8; // September
+				endMonth = 10; // November
+				break;
+			default:
+				return false; // Unknown season
+		}
+
+		// Construct start and end dates for the season
+		let seasonStartDate = dayjs().year(startYear).month(startMonth).startOf('month');
+
+		let seasonEndDate = dayjs().year(endYear).month(endMonth).endOf('month');
+
+		// Adjust for Winter spanning over years
+		if (seasonName === 'Winter' && startMonth === 11 && endMonth === 1 && startYear !== endYear) {
+			seasonEndDate = seasonEndDate.add(1, 'year');
+		}
+
+		// Check if current date is within the season period
+		return currentDate.isBetween(seasonStartDate, seasonEndDate, null, '[]');
+	}
+
 	// Function to calculate historical averages and recent data
 	$: calculateAverages = function () {
 		const filteredHistoricalData = data.filter((entry) => {
@@ -67,7 +130,7 @@
 			} else if (selectedResolution.key === 'seasons') {
 				key = getSeasonName(entry.date); // Group by season
 			} else if (selectedResolution.key === 'years') {
-				key = dayjs(entry.date).year().toString(); // Group by year (converted to string for consistency)
+				key = 'Overall'; // Use a single key for all years
 			}
 
 			if (!acc[key]) acc[key] = { key, temperatures: [] };
@@ -95,7 +158,7 @@
 		} else if (selectedResolution.key === 'seasons') {
 			recentPeriods = [...new Set(data.map((entry) => getSeason(entry.date)))];
 		} else if (selectedResolution.key === 'years') {
-			recentPeriods = [...new Set(data.map((entry) => dayjs(entry.date).year()))]; // No need to convert year to string here
+			recentPeriods = [...new Set(data.map((entry) => dayjs(entry.date).year()))];
 		}
 
 		// Limit to the most recent 100 periods
@@ -108,22 +171,37 @@
 				} else if (selectedResolution.key === 'seasons') {
 					return getSeason(entry.date) === period;
 				} else if (selectedResolution.key === 'years') {
-					return dayjs(entry.date).year() == period; // No string comparison, use equality
+					return dayjs(entry.date).year() == period;
 				}
 			});
 
 			const averageTemperature =
 				periodData.reduce((sum, entry) => sum + entry.tl_mittel, 0) / (periodData.length || 1);
 
-			// Only split if it's months or seasons, not years
-			const seasonType = selectedResolution.key !== 'years' ? period.split(' ')[0] : period;
+			const seasonType = selectedResolution.key !== 'years' ? period.split(' ')[0] : 'Overall';
+
 			const historicalAverage = historicalAverageLookup[seasonType] || 0;
 			const differenceFromHistorical = averageTemperature - historicalAverage;
+
+			// Determine if the period is ongoing
+			let isOngoing = false;
+			const today = dayjs();
+
+			if (selectedResolution.key === 'months') {
+				// Period is in the format 'MMMM YYYY', e.g., 'September 2023' (in German)
+				const periodDate = dayjs(period, 'MMMM YYYY', 'de');
+				isOngoing = periodDate.isSame(today, 'month');
+			} else if (selectedResolution.key === 'seasons') {
+				isOngoing = isSeasonOngoing(period, today);
+			} else if (selectedResolution.key === 'years') {
+				isOngoing = period === today.year();
+			}
 
 			return {
 				period,
 				averageTemperature: parseFloat(averageTemperature.toFixed(2)),
-				differenceFromHistorical: parseFloat(differenceFromHistorical.toFixed(2))
+				differenceFromHistorical: parseFloat(differenceFromHistorical.toFixed(2)),
+				isOngoing // Add the new variable here
 			};
 		});
 
@@ -153,12 +231,16 @@
 	<!-- Display the last datapoint value -->
 	<h2 class="text-2xl max-w-xl mt-4">
 		{#if lastDatapoint}
-			Im {lastDatapoint.period} war es {formatNumber(lastDatapoint.differenceFromHistorical)}°C {lastDatapoint.differenceFromHistorical >
-			0
-				? 'heißer'
-				: 'kälter'} als der historische Durchschnitt.
+			Im {lastDatapoint.period} war es {formatNumber(lastDatapoint.differenceFromHistorical)}°C
+			{lastDatapoint.differenceFromHistorical > 0 ? 'heißer' : 'kälter'} als der historische Durchschnitt.
+			{#if lastDatapoint.isOngoing}
+				<em>
+					(Dieser Zeitraum ist noch nicht abgeschlossen und die Daten können unvollständig sein.)</em
+				>
+			{/if}
 		{/if}
 	</h2>
 
+	<!-- Use the isOngoing variable in your ComparisonChart or other components as needed -->
 	<ComparisonChart {historicalAverages} {recentData} />
 </div>
