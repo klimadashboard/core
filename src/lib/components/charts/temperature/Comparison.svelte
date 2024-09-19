@@ -33,7 +33,6 @@
 
 	let historicalAverages = [];
 	let recentData = [];
-	let lastDatapoint;
 
 	// Function to get season name for grouping
 	function getSeason(date) {
@@ -204,9 +203,6 @@
 				isOngoing // Add the new variable here
 			};
 		});
-
-		// Set the last datapoint
-		lastDatapoint = recentData[recentData.length - 1];
 	};
 
 	$: if (selectedResolution) {
@@ -227,19 +223,6 @@
 			{/each}
 		</select>
 	</div>
-
-	<!-- Display the last datapoint value -->
-	<h2 class="text-2xl max-w-xl mt-4">
-		{#if lastDatapoint}
-			Im {lastDatapoint.period} war es {formatNumber(lastDatapoint.differenceFromHistorical)}°C
-			{lastDatapoint.differenceFromHistorical > 0 ? 'heißer' : 'kälter'} als der historische Durchschnitt.
-			{#if lastDatapoint.isOngoing}
-				<em>
-					(Dieser Zeitraum ist noch nicht abgeschlossen und die Daten können unvollständig sein.)</em
-				>
-			{/if}
-		{/if}
-	</h2>
 
 	<!-- Use the isOngoing variable in your ComparisonChart or other components as needed -->
 	<ComparisonChart {historicalAverages} {recentData} />

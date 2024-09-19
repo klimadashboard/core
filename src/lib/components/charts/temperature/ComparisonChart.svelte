@@ -2,11 +2,12 @@
 	import { scaleLinear } from 'd3-scale';
 	import { max, min } from 'd3-array';
 	import { onMount } from 'svelte';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	export let historicalAverages = [];
 	export let recentData = [];
 
-	$: console.log(recentData);
+	let selectedDatapoint = recentData[recentData.length - 1];
 
 	let chartWidth;
 	let chartHeight;
@@ -30,18 +31,37 @@
 	$: getColor = function (value) {
 		const colorScale = scaleLinear()
 			.domain([-5, 0, 5]) // Adjust the domain for expected values
-			.range(['#08306b', '#ffffff', '#67000d']); // Blue to white to red gradient
+			.range(['#08306b', '#fff', '#67000d']); // Blue to white to red gradient
 		return colorScale(value);
 	};
-
-	// Tooltip logic
-	$: tooltip = false;
 
 	// Adjust barWidth to remove gaps (fit stripes as close as possible)
 	$: barWidth = chartWidth / recentData.length;
 </script>
 
-<div class="h-80 mt-4 min-w-[1000px]" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
+<h2 class="text-2xl mt-4">
+	{#if selectedDatapoint}
+		Im <span class="font-bold">{selectedDatapoint.period}</span> war es
+		<span
+			class="underline underline-offset-4 font-bold"
+			style="text-decoration-color: {getColor(selectedDatapoint.differenceFromHistorical)}"
+			>{formatNumber(selectedDatapoint.differenceFromHistorical).replace('-', '')}°C
+			{selectedDatapoint.differenceFromHistorical > 0 ? 'heißer' : 'kälter'}</span
+		>
+		als der historische Durchschnitt.
+		{#if selectedDatapoint.isOngoing}
+			<em>
+				(Dieser Zeitraum ist noch nicht abgeschlossen und die Daten können unvollständig sein.)</em
+			>
+		{/if}
+	{/if}
+</h2>
+
+<div
+	class="h-80 mt-4 min-w-[1000px] relative"
+	bind:clientWidth={chartWidth}
+	bind:clientHeight={chartHeight}
+>
 	{#if chartWidth && chartHeight && recentData.length > 0}
 		<svg width={'100%'} height={'100%'}>
 			<!-- Y-Axis with ticks -->
@@ -61,15 +81,23 @@
 				{/each}
 			</g>
 
+			<!-- X-Axis with ticks -->
+			<g>
+				{#each xScale.ticks(10) as tick}
+					<g transform="translate({xScale(tick)},{yScale(0) + 14})">
+						<line x1={0} x2={0} y1={-14} y2={-10} class="stroke-gray-600" />
+						<text class="text-xs fill-gray-600" text-anchor="middle">
+							{recentData[tick]?.period}
+						</text>
+					</g>
+				{/each}
+			</g>
+
 			<!-- Bars representing data -->
 			{#each recentData as datapoint, i}
 				<g
 					transform="translate({xScale(i)},0)"
 					style="color: {getColor(datapoint.differenceFromHistorical)}"
-					on:mouseover={() => (tooltip = datapoint)}
-					on:focus={() => (tooltip = datapoint)}
-					on:mouseout={() => (tooltip = false)}
-					on:blur={() => (tooltip = false)}
 				>
 					<rect
 						width={barWidth}
@@ -79,25 +107,23 @@
 							: yScale(0)}
 						class={datapoint.isOngoing ? 'fill-white stroke-1 stroke-current' : 'fill-current'}
 					/>
-					{#if tooltip == datapoint}
-						<g>
-							<rect class="fill-current" width={40} height={40} />
-							<text class="fill-white">{datapoint.differenceFromHistorical}°C</text>
-						</g>
-					{/if}
+					<rect
+						class="fill-transparent"
+						width={barWidth}
+						height={chartHeight}
+						on:mouseover={() => (selectedDatapoint = datapoint)}
+						on:focus={() => (selectedDatapoint = datapoint)}
+					/>
 				</g>
 			{/each}
+			<line
+				x1={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
+				x2={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
+				y1={margin.top}
+				y2={innerHeight}
+				class="stroke-black opacity-70"
+				stroke-dasharray="5, 2, 10, 2"
+			/>
 		</svg>
 	{/if}
 </div>
-
-<style>
-	.tooltip {
-		background-color: rgba(0, 0, 0, 0.75);
-		color: white;
-		padding: 8px;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		pointer-events: none;
-	}
-</style>
