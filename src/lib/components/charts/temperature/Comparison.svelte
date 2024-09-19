@@ -11,6 +11,9 @@
 	export let data;
 	export let selectedStation;
 
+	let slices = [100, 500, 1000];
+	let slice = 100;
+
 	const availableResolutions = [
 		{ key: 'months', label: 'Monate' },
 		{ key: 'seasons', label: 'Jahreszeiten' },
@@ -161,7 +164,7 @@
 		}
 
 		// Limit to the most recent 100 periods
-		recentPeriods = recentPeriods.slice(-100);
+		recentPeriods = recentPeriods.slice(-slice);
 
 		recentData = recentPeriods.map((period) => {
 			const periodData = data.filter((entry) => {
@@ -200,6 +203,7 @@
 				period,
 				averageTemperature: parseFloat(averageTemperature.toFixed(2)),
 				differenceFromHistorical: parseFloat(differenceFromHistorical.toFixed(2)),
+				selectedResolution: selectedResolution.key,
 				isOngoing // Add the new variable here
 			};
 		});
@@ -211,18 +215,25 @@
 </script>
 
 <div class="mt-16">
-	<div class="flex items-center gap-2">
+	<p class="text-sm text-gray-700">
+		<span>Zeige die letzten</span>
+		<select bind:value={slice}>
+			{#each slices as slice}
+				<option value={slice}>{slice}</option>
+			{/each}
+		</select>
 		<select bind:value={selectedResolution}>
 			{#each availableResolutions as resolution}
 				<option value={resolution}>{resolution.label}</option>
 			{/each}
 		</select>
+		<span>im Vergleich zum Zeitraum</span>
 		<select bind:value={selectedPeriod}>
 			{#each availablePeriods as period}
 				<option value={period}>{period.label}</option>
 			{/each}
 		</select>
-	</div>
+	</p>
 
 	<!-- Use the isOngoing variable in your ComparisonChart or other components as needed -->
 	<ComparisonChart {historicalAverages} {recentData} />

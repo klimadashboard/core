@@ -7,7 +7,7 @@
 	export let historicalAverages = [];
 	export let recentData = [];
 
-	let selectedDatapoint = recentData[recentData.length - 1];
+	$: selectedDatapoint = recentData[recentData.length - 1];
 
 	let chartWidth;
 	let chartHeight;
@@ -41,7 +41,13 @@
 
 <h2 class="text-2xl mt-4">
 	{#if selectedDatapoint}
-		Im <span class="font-bold">{selectedDatapoint.period}</span> war es
+		Im {selectedDatapoint.selectedResolution == 'years' ? 'Jahr' : ''}
+		<span class="font-bold">{selectedDatapoint.period}</span>
+		{#if selectedDatapoint.isOngoing}
+			ist es bisher
+		{:else}
+			war es
+		{/if}
 		<span
 			class="underline underline-offset-4 font-bold"
 			style="text-decoration-color: {getColor(selectedDatapoint.differenceFromHistorical)}"
@@ -49,11 +55,6 @@
 			{selectedDatapoint.differenceFromHistorical > 0 ? 'heißer' : 'kälter'}</span
 		>
 		als der historische Durchschnitt.
-		{#if selectedDatapoint.isOngoing}
-			<em>
-				(Dieser Zeitraum ist noch nicht abgeschlossen und die Daten können unvollständig sein.)</em
-			>
-		{/if}
 	{/if}
 </h2>
 
@@ -68,7 +69,7 @@
 			<g>
 				{#each yScale.ticks(5) as tick}
 					<g transform="translate(0,{yScale(tick)})">
-						<text y={-5} class="text-xs font-bold fill-gray-600">
+						<text y={-5} class="text-xs fill-gray-600">
 							{#if tick == 0}
 								Ø
 							{:else}
@@ -83,9 +84,8 @@
 
 			<!-- X-Axis with ticks -->
 			<g>
-				{#each xScale.ticks(10) as tick}
-					<g transform="translate({xScale(tick)},{yScale(0) + 14})">
-						<line x1={0} x2={0} y1={-14} y2={-10} class="stroke-gray-600" />
+				{#each xScale.ticks(6) as tick}
+					<g transform="translate({xScale(tick)},{10})">
 						<text class="text-xs fill-gray-600" text-anchor="middle">
 							{recentData[tick]?.period}
 						</text>
@@ -116,14 +116,16 @@
 					/>
 				</g>
 			{/each}
-			<line
-				x1={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
-				x2={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
-				y1={margin.top}
-				y2={innerHeight}
-				class="stroke-black opacity-70"
-				stroke-dasharray="5, 2, 10, 2"
-			/>
+			<g style="color: {getColor(selectedDatapoint.differenceFromHistorical)}">
+				<line
+					x1={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
+					x2={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
+					y1={20}
+					y2={innerHeight}
+					class="stroke-current stroke-2 opacity-70"
+					stroke-dasharray="5, 2, 10, 2"
+				/>
+			</g>
 		</svg>
 	{/if}
 </div>
