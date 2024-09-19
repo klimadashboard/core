@@ -8,7 +8,7 @@
 	export let selectedStation = 427;
 	const wetterdienst = PUBLIC_VERSION == 'at' ? 'geosphere' : 'impact';
 
-	let selectedYearDefinition = 'last-full';
+	let selectedYearDefinition = 'current';
 
 	$: earliestPossibleYear = 1961;
 	$: currentYear = new Date().getFullYear();
@@ -60,7 +60,6 @@
 </script>
 
 {#if selectedStationData.length > 0 && selectedStationName !== 'station'}
-	<!--
 <div
 		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
 	>
@@ -80,8 +79,7 @@
 			<span>{currentYear} bisher</span>
 		</label>
 	</div>
-	-->
-
+	
 	<div
 		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
 	>
