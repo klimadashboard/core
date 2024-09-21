@@ -7,16 +7,19 @@
 	export let historicalAverages = [];
 	export let recentData = [];
 
+	$: console.log(recentData);
+	$: console.log(historicalAverages);
+
 	$: selectedDatapoint = recentData[recentData.length - 1];
 
 	let chartWidth;
 	let chartHeight;
 
-	const margin = { left: 30, right: 5, top: 0, bottom: 0 };
+	const margin = { left: 30, right: 10, top: 0, bottom: 0 };
 
 	// Set up scales for the x, y, and bar width dimensions
 	$: xScale = scaleLinear()
-		.domain([0, recentData.length])
+		.domain([0, recentData.length - 1])
 		.range([margin.left, chartWidth - margin.right]);
 
 	// Ensure the yScale runs from largest positive to largest negative
@@ -36,7 +39,7 @@
 	};
 
 	// Adjust barWidth to remove gaps (fit stripes as close as possible)
-	$: barWidth = chartWidth / recentData.length;
+	$: barWidth = (chartWidth - margin.left - margin.right) / recentData.length;
 </script>
 
 <h2 class="text-2xl mt-4">
@@ -84,7 +87,7 @@
 
 			<!-- X-Axis with ticks -->
 			<g>
-				{#each xScale.ticks(6) as tick}
+				{#each xScale.ticks(4) as tick}
 					<g transform="translate({xScale(tick)},{10})">
 						<text class="text-xs fill-gray-600" text-anchor="middle">
 							{recentData[tick]?.period}
