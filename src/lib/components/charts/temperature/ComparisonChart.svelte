@@ -6,16 +6,14 @@
 
 	export let historicalAverages = [];
 	export let recentData = [];
-
-	$: console.log(recentData);
-	$: console.log(historicalAverages);
+	export let selectedStation;
 
 	$: selectedDatapoint = recentData[recentData.length - 1];
 
 	let chartWidth;
 	let chartHeight;
 
-	const margin = { left: 30, right: 10, top: 0, bottom: 0 };
+	const margin = { left: 30, right: 11, top: 0, bottom: 0 };
 
 	// Set up scales for the x, y, and bar width dimensions
 	$: xScale = scaleLinear()
@@ -39,18 +37,20 @@
 	};
 
 	// Adjust barWidth to remove gaps (fit stripes as close as possible)
-	$: barWidth = (chartWidth - margin.left - margin.right) / recentData.length;
+	$: barWidth = (chartWidth - margin.left - margin.right) / recentData.length - 1;
 </script>
 
 <h2 class="text-2xl mt-4">
 	{#if selectedDatapoint}
-		Im {selectedDatapoint.selectedResolution == 'years' ? 'Jahr' : ''}
-		<span class="font-bold">{selectedDatapoint.period}</span>
+		In {selectedStation.name}
 		{#if selectedDatapoint.isOngoing}
 			ist es bisher
 		{:else}
 			war es
 		{/if}
+		im {selectedDatapoint.selectedResolution == 'years' ? 'Jahr' : ''}
+		<span class="font-bold">{selectedDatapoint.period}</span>
+
 		<span
 			class="underline underline-offset-4 font-bold"
 			style="text-decoration-color: {getColor(selectedDatapoint.differenceFromHistorical)}"
