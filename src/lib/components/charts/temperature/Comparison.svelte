@@ -12,8 +12,8 @@
 	export let data;
 	export let selectedStation;
 
-	let slices = [100, 500, 1000];
-	let slice = 100;
+	let slices = [200, 400, 600];
+	let slice = slices[0];
 
 	const availableResolutions = [
 		{ key: 'months', label: 'Monate' },
@@ -27,7 +27,7 @@
 		{ label: '1991-2020', start: 1991, end: 2020 }
 	];
 
-	let selectedResolutionKey = availableResolutions[0].key;
+	let selectedResolutionKey = availableResolutions[2].key;
 	let selectedPeriodLabel = availablePeriods[0].label;
 
 	// Derive the selectedResolution and selectedPeriod objects
@@ -174,8 +174,8 @@
 			}
 		});
 
-		// Limit to the most recent 'slice' periods
-		recentPeriods = recentPeriods.slice(-slice);
+		// Limit to the most recent 'slice' periods and exlude the very first one
+		recentPeriods = recentPeriods.slice(1);
 
 		// Calculate recent data
 		recentData = recentPeriods.map((period) => {
@@ -245,19 +245,13 @@
 
 <div class="mt-16">
 	<p class="text-sm text-gray-700">
-		<span>Zeige die letzten</span>
-		<select bind:value={slice}>
-			{#each slices as s}
-				<option value={s}>{s}</option>
-			{/each}
-		</select>
-		<select bind:value={selectedResolutionKey}>
+		<select bind:value={selectedResolutionKey} class="k_input">
 			{#each availableResolutions as resolution}
 				<option value={resolution.key}>{resolution.label}</option>
 			{/each}
 		</select>
 		<span>im Vergleich zur Periode</span>
-		<select bind:value={selectedPeriodLabel}>
+		<select bind:value={selectedPeriodLabel} class="k_input">
 			{#each availablePeriods as period}
 				<option value={period.label}>{period.label}</option>
 			{/each}
@@ -265,7 +259,7 @@
 	</p>
 
 	{#await averagesPromise}
-		<Loader />
+		<Loader showText={true} />
 	{:then averages}
 		<ComparisonChart
 			historicalAverages={averages.historicalAverages}
@@ -273,4 +267,11 @@
 			{selectedStation}
 		/>
 	{/await}
+
+	{#if selectedResolutionKey !== 'years'}
+		<p class="text-gray-700 border-t mt-2 pt-2">
+			Monate und Jahreszeiten werden mit den gleichen Perioden im Vergleichszeitraum vergleichen,
+			also z.B. April 2024 im Vergleich zu allen Aprils im Vergleichszeitraum.
+		</p>
+	{/if}
 </div>

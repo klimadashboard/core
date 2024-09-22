@@ -58,7 +58,7 @@
 
 <div class="grid md:grid-cols-2 gap-4 mt-16">
 	{#each items as item}
-		<div class="p-4 rounded bg-gray-100">
+		<div class="rounded border p-4 text-lg">
 			<p><b>{item.heading}:</b> {item.text}</p>
 		</div>
 	{/each}

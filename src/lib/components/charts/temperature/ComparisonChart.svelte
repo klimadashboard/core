@@ -10,10 +10,12 @@
 
 	$: selectedDatapoint = recentData[recentData.length - 1];
 
-	let chartWidth;
-	let chartHeight;
+	const margin = { left: 50, right: 15, top: 10, bottom: 10 };
+	$: barWidth = Math.max(5, wrapperWidth / recentData.length - 1);
+	$: chartWidth = barWidth * recentData.length + margin.left + margin.right;
 
-	const margin = { left: 30, right: 11, top: 0, bottom: 0 };
+	let wrapperWidth;
+	let chartHeight;
 
 	// Set up scales for the x, y, and bar width dimensions
 	$: xScale = scaleLinear()
@@ -31,13 +33,24 @@
 	// Correct the warming stripes color scale
 	$: getColor = function (value) {
 		const colorScale = scaleLinear()
-			.domain([-5, 0, 5]) // Adjust the domain for expected values
-			.range(['#08306b', '#fff', '#67000d']); // Blue to white to red gradient
+			.domain([-6, -3, 0, 3, 6]) // Adjust the domain for expected values
+			.range(['#071B3A', '#08306b', '#fff', '#67000d', '#42061C']); // Blue to white to red gradient
 		return colorScale(value);
 	};
 
-	// Adjust barWidth to remove gaps (fit stripes as close as possible)
-	$: barWidth = (chartWidth - margin.left - margin.right) / recentData.length - 1;
+	let container;
+
+	onMount(() => {
+		// Wait for the DOM to be updated
+		requestAnimationFrame(() => {
+			if (container) {
+				container.scrollTo({
+					left: container.scrollWidth,
+					behavior: 'smooth'
+				});
+			}
+		});
+	});
 </script>
 
 <h2 class="text-2xl mt-4">
@@ -61,74 +74,80 @@
 	{/if}
 </h2>
 
-<div
-	class="h-80 mt-4 min-w-[1000px] relative"
-	bind:clientWidth={chartWidth}
-	bind:clientHeight={chartHeight}
->
-	{#if chartWidth && chartHeight && recentData.length > 0}
-		<svg width={'100%'} height={'100%'}>
-			<!-- Y-Axis with ticks -->
-			<g>
+<div class="h-80 mt-4 relative" bind:clientHeight={chartHeight} bind:clientWidth={wrapperWidth}>
+	<div class="overflow-x-scroll h-full relative w-full" bind:this={container}>
+		{#if chartWidth && chartHeight && recentData.length > 0}
+			<svg width={chartWidth} height={'100%'}>
 				{#each yScale.ticks(5) as tick}
 					<g transform="translate(0,{yScale(tick)})">
-						<text y={-5} class="text-xs fill-gray-600">
-							{#if tick == 0}
-								Ø
-							{:else}
-								{tick > 0 ? '+' : ''}
-								{tick}°C
-							{/if}
-						</text>
 						<line x1={0} x2={chartWidth} class="stroke-gray-200" />
 					</g>
 				{/each}
-			</g>
+				<!-- X-Axis with ticks -->
+				<g>
+					{#each xScale.ticks(recentData.length / 50) as tick}
+						<g transform="translate({xScale(tick)},{10})">
+							<text class="text-xs fill-gray-600" text-anchor="middle">
+								{recentData[tick]?.period}
+							</text>
+						</g>
+					{/each}
+				</g>
 
-			<!-- X-Axis with ticks -->
-			<g>
-				{#each xScale.ticks(4) as tick}
-					<g transform="translate({xScale(tick)},{10})">
-						<text class="text-xs fill-gray-600" text-anchor="middle">
-							{recentData[tick]?.period}
-						</text>
+				<!-- Bars representing data -->
+				{#each recentData as datapoint, i}
+					<g
+						transform="translate({xScale(i)},0)"
+						style="color: {getColor(datapoint.differenceFromHistorical)}"
+					>
+						<rect
+							width={barWidth}
+							height={Math.abs(yScale(0) - yScale(datapoint.differenceFromHistorical))}
+							y={datapoint.differenceFromHistorical > 0
+								? yScale(datapoint.differenceFromHistorical)
+								: yScale(0)}
+							class={datapoint.isOngoing ? 'fill-white stroke-1 stroke-current' : 'fill-current'}
+						/>
+						<rect
+							class="fill-transparent"
+							width={barWidth}
+							height={chartHeight}
+							on:mouseover={() => (selectedDatapoint = datapoint)}
+							on:focus={() => (selectedDatapoint = datapoint)}
+						/>
 					</g>
 				{/each}
-			</g>
-
-			<!-- Bars representing data -->
-			{#each recentData as datapoint, i}
-				<g
-					transform="translate({xScale(i)},0)"
-					style="color: {getColor(datapoint.differenceFromHistorical)}"
-				>
-					<rect
-						width={barWidth}
-						height={Math.abs(yScale(0) - yScale(datapoint.differenceFromHistorical))}
-						y={datapoint.differenceFromHistorical > 0
-							? yScale(datapoint.differenceFromHistorical)
-							: yScale(0)}
-						class={datapoint.isOngoing ? 'fill-white stroke-1 stroke-current' : 'fill-current'}
-					/>
-					<rect
-						class="fill-transparent"
-						width={barWidth}
-						height={chartHeight}
-						on:mouseover={() => (selectedDatapoint = datapoint)}
-						on:focus={() => (selectedDatapoint = datapoint)}
+				<g style="color: {getColor(selectedDatapoint.differenceFromHistorical)}">
+					<line
+						x1={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
+						x2={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
+						y1={20}
+						y2={innerHeight}
+						class="stroke-current stroke-2 opacity-70"
+						stroke-dasharray="5, 2, 10, 2"
 					/>
 				</g>
+			</svg>
+		{/if}
+	</div>
+	<div
+		class="absolute w-32 pointer-events-none left-0 top-0 bottom-0 bg-gradient-to-r from-white to-transparent"
+	/>
+	<svg width={50} height={'100%'} class="absolute left-0 top-0 pointer-events-none">
+		<!-- Y-Axis with ticks -->
+		<g>
+			{#each yScale.ticks(5) as tick}
+				<g transform="translate(0,{yScale(tick)})">
+					<text y={-5} class="text-xs fill-gray-600">
+						{#if tick == 0}
+							Ø
+						{:else}
+							{tick > 0 ? '+' : ''}
+							{tick}°C
+						{/if}
+					</text>
+				</g>
 			{/each}
-			<g style="color: {getColor(selectedDatapoint.differenceFromHistorical)}">
-				<line
-					x1={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
-					x2={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
-					y1={20}
-					y2={innerHeight}
-					class="stroke-current stroke-2 opacity-70"
-					stroke-dasharray="5, 2, 10, 2"
-				/>
-			</g>
-		</svg>
-	{/if}
+		</g>
+	</svg>
 </div>
