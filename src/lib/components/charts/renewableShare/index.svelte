@@ -1,7 +1,6 @@
 <script>
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems, readItem } from '@directus/sdk';
-	import ChartGrid from './ChartGrid.svelte';
 	import BarChart from '$lib/components/charts/chartBar.svelte';
 	import dayjs from 'dayjs';
 	import de from 'dayjs/locale/de-at';
@@ -81,7 +80,7 @@
 		An {data.filter((d) => d.renewable_share >= 100).length} von den letzten 365 Tagen wurde mehr als
 		100% des Strombedarfs aus Erneuerbaren Energien entdeckt.
 	</h2>
-	<div class="h-80 mt-4">
+	<div class="h-80 mt-4 mb-10">
 		<div class="relative text-gray-600 w-40 mb-4">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
