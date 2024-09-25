@@ -6,6 +6,7 @@
 
 	export let historicalAverages = [];
 	export let recentData = [];
+	export let selectedPeriod;
 	export let selectedStation;
 
 	$: selectedDatapoint = recentData[recentData.length - 1];
@@ -55,22 +56,27 @@
 
 <h2 class="text-2xl mt-4">
 	{#if selectedDatapoint}
-		In {selectedStation.name}
-		{#if selectedDatapoint.isOngoing}
-			ist es bisher
+		{#if selectedDatapoint.differenceFromHistorical == null}
+			In {selectedStation.name} sind keine vollständigen Temperaturdaten für {selectedDatapoint.period}
+			verfügbar.
 		{:else}
-			war es
-		{/if}
-		im {selectedDatapoint.selectedResolution == 'years' ? 'Jahr' : ''}
-		<span class="font-bold">{selectedDatapoint.period}</span>
+			In {selectedStation.name}
+			{#if selectedDatapoint.isOngoing}
+				ist es bisher
+			{:else}
+				war es
+			{/if}
+			im {selectedDatapoint.selectedResolution == 'years' ? 'Jahr' : ''}
+			<span class="font-bold">{selectedDatapoint.period}</span>
 
-		<span
-			class="underline underline-offset-4 font-bold"
-			style="text-decoration-color: {getColor(selectedDatapoint.differenceFromHistorical)}"
-			>{formatNumber(selectedDatapoint.differenceFromHistorical).replace('-', '')}°C
-			{selectedDatapoint.differenceFromHistorical > 0 ? 'heißer' : 'kälter'}</span
-		>
-		als der historische Durchschnitt.
+			<span
+				class="underline underline-offset-4 font-bold"
+				style="text-decoration-color: {getColor(selectedDatapoint.differenceFromHistorical)}"
+				>{formatNumber(selectedDatapoint.differenceFromHistorical).replace('-', '')}°C
+				{selectedDatapoint.differenceFromHistorical > 0 ? 'heißer' : 'kälter'}</span
+			>
+			als der historische Durchschnitt.
+		{/if}
 	{/if}
 </h2>
 
@@ -100,6 +106,14 @@
 						transform="translate({xScale(i)},0)"
 						style="color: {getColor(datapoint.differenceFromHistorical)}"
 					>
+						{#if datapoint.differenceFromHistorical == null}
+							<rect
+								width={barWidth}
+								y={margin.top}
+								height={chartHeight - margin.top - margin.bottom}
+								class="fill-gray-200 opacity-30"
+							/>
+						{/if}
 						<rect
 							width={barWidth}
 							height={Math.abs(yScale(0) - yScale(datapoint.differenceFromHistorical))}

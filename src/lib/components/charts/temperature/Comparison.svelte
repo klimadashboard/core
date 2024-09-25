@@ -4,10 +4,11 @@
 	import dayjs from 'dayjs';
 	import 'dayjs/locale/de';
 	import isBetween from 'dayjs/plugin/isBetween';
-	import { construct_svelte_component } from 'svelte/internal';
+	import isLeapYear from 'dayjs/plugin/isLeapYear';
 
 	dayjs.locale('de'); // Set the locale globally to German
 	dayjs.extend(isBetween); // Extend Day.js with the isBetween plugin
+	dayjs.extend(isLeapYear);
 
 	export let data;
 	export let selectedStation;
@@ -21,11 +22,14 @@
 		{ key: 'years', label: 'Jahre' }
 	];
 
-	const availablePeriods = [
+	let firstDate = dayjs(data[0].date);
+	let availablePeriods = [
 		{ label: '1961-1990', start: 1961, end: 1990 },
 		{ label: '1981-2010', start: 1981, end: 2010 },
 		{ label: '1991-2020', start: 1991, end: 2020 }
-	];
+	].filter((duration) => {
+		return duration.start > firstDate.year() && duration.end > firstDate.year();
+	});
 
 	let selectedResolutionKey = availableResolutions[2].key;
 	let selectedPeriodLabel = availablePeriods[0].label;
@@ -104,7 +108,7 @@
 
 		// Filter historical data based on the selected period
 		const filteredHistoricalData = data.filter((entry) => {
-			const parsedDate = dayjs(entry.date); // Adjust the format as needed
+			const parsedDate = dayjs(entry.date);
 			const year = parsedDate.year();
 			return year >= compareStartYear && year <= compareEndYear;
 		});
@@ -113,11 +117,11 @@
 		const historicalGroupedData = filteredHistoricalData.reduce((acc, entry) => {
 			let key;
 			if (selectedResolution.key === 'months') {
-				key = String(dayjs(entry.date).month()); // month number as string '0'-'11'
+				key = String(dayjs(entry.date).month());
 			} else if (selectedResolution.key === 'seasons') {
-				key = String(getSeasonCode(entry.date)); // season code as string '0'-'3'
+				key = String(getSeasonCode(entry.date));
 			} else if (selectedResolution.key === 'years') {
-				key = 'Overall'; // Use a single key for all years
+				key = 'Overall';
 			}
 
 			if (!acc[key]) acc[key] = { key, temperatures: [] };
@@ -174,22 +178,29 @@
 			}
 		});
 
-		// Limit to the most recent 'slice' periods and exlude the very first one
+		// Limit to the most recent 'slice' periods and exclude the very first one
 		recentPeriods = recentPeriods.slice(1);
 
-		// Calculate recent data
+		// Calculate recent data with completeness check
 		recentData = recentPeriods.map((period) => {
 			let periodData;
 			let seasonType;
 			let isOngoing = false;
 			const today = dayjs();
 
+			let averageTemperature = null;
+			let differenceFromHistorical = null;
+			let expectedDays = 0;
+
 			if (selectedResolution.key === 'months') {
 				periodData = data.filter((entry) => dayjs(entry.date).format('YYYY-MM') === period);
 				const periodDate = dayjs(period, 'YYYY-MM');
-				seasonType = String(periodDate.month()); // Ensure it's a string
+				seasonType = String(periodDate.month());
 				isOngoing = periodDate.isSame(today, 'month');
-				period = periodDate.format('MMMM YYYY'); // For display purposes
+				period = periodDate.format('MMMM YYYY');
+
+				// Compute expectedDays
+				expectedDays = periodDate.daysInMonth();
 			} else if (selectedResolution.key === 'seasons') {
 				const [seasonCodeStr, yearStr] = period.split('-');
 				const seasonCode = parseInt(seasonCodeStr);
@@ -204,32 +215,61 @@
 				// For display purposes
 				const seasonName = Object.keys(seasonCodes).find((key) => seasonCodes[key] === seasonCode);
 				period = `${seasonName} ${year}`;
+
+				// Compute expectedDays
+				let monthsInSeason = [];
+				if (seasonCode === seasonCodes['Winter']) {
+					monthsInSeason = [
+						dayjs(`${year - 1}-12-01`),
+						dayjs(`${year}-01-01`),
+						dayjs(`${year}-02-01`)
+					];
+				} else if (seasonCode === seasonCodes['Frühling']) {
+					monthsInSeason = [dayjs(`${year}-03-01`), dayjs(`${year}-04-01`), dayjs(`${year}-05-01`)];
+				} else if (seasonCode === seasonCodes['Sommer']) {
+					monthsInSeason = [dayjs(`${year}-06-01`), dayjs(`${year}-07-01`), dayjs(`${year}-08-01`)];
+				} else if (seasonCode === seasonCodes['Herbst']) {
+					monthsInSeason = [dayjs(`${year}-09-01`), dayjs(`${year}-10-01`), dayjs(`${year}-11-01`)];
+				}
+
+				expectedDays = monthsInSeason.reduce((sum, month) => sum + month.daysInMonth(), 0);
 			} else if (selectedResolution.key === 'years') {
 				const year = parseInt(period);
 				periodData = data.filter((entry) => dayjs(entry.date).year() === year);
 				seasonType = 'Overall';
 				isOngoing = year === today.year();
+
+				// Compute expectedDays
+				const isLeapYear = dayjs(`${year}-01-01`).isLeapYear();
+				expectedDays = isLeapYear ? 366 : 365;
 			}
 
-			const averageTemperature =
-				periodData.reduce((sum, entry) => sum + parseFloat(entry.tl_mittel), 0) /
-				(periodData.length || 1);
+			// Check if data is complete
+			if (periodData.length > expectedDays * 0.95 || isOngoing) {
+				// Proceed with calculation
+				averageTemperature =
+					periodData.reduce((sum, entry) => sum + parseFloat(entry.tl_mittel), 0) /
+					periodData.length;
 
-			const historicalAverage = historicalAverageLookup[seasonType] || 0;
-
-			const differenceFromHistorical = averageTemperature - historicalAverage;
+				const historicalAverage = historicalAverageLookup[seasonType] || 0;
+				differenceFromHistorical = averageTemperature - historicalAverage;
+			}
 
 			return {
 				period,
-				averageTemperature: parseFloat(averageTemperature.toFixed(2)),
-				differenceFromHistorical: parseFloat(differenceFromHistorical.toFixed(2)),
+				averageTemperature:
+					averageTemperature !== null ? parseFloat(averageTemperature.toFixed(2)) : null,
+				differenceFromHistorical:
+					differenceFromHistorical !== null
+						? parseFloat(differenceFromHistorical.toFixed(2))
+						: null,
 				selectedResolution: selectedResolution.key,
 				isOngoing
 			};
 		});
 
 		if (selectedResolutionKey == 'years' || selectedResolutionKey == 'seasons') {
-			// do not include ongoing years & seasons
+			// Do not include ongoing years & seasons
 			recentData = recentData.filter((d) => !d.isOngoing);
 		}
 		return { historicalAverages, recentData };
@@ -265,6 +305,7 @@
 			historicalAverages={averages.historicalAverages}
 			recentData={averages.recentData}
 			{selectedStation}
+			{selectedPeriod}
 		/>
 	{/await}
 

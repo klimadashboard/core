@@ -66,6 +66,13 @@
 							fill={isSelected(station) ? selectedColor : getColor(station)}
 							class="opacity-70"
 						/>
+						{#if isSelected(station)}
+							<circle
+								r={getRadius(station)}
+								fill={isSelected(station) ? selectedColor : getColor(station)}
+								class="animate-ping"
+							/>
+						{/if}
 					</g>
 				{/each}
 			</g>
