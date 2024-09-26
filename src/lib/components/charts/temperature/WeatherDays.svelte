@@ -84,6 +84,10 @@
 	$: summerDaysThisYear = [...data]
 		.filter((d) => new Date(d.date).getFullYear() == new Date().getFullYear())
 		.filter((d) => isDay('summerDay', d)).length;
+	$: lastFrostDay = [...data].reverse().find((d) => isDay('frostDay', d));
+	$: frostDaysThisYear = [...data]
+		.filter((d) => new Date(d.date).getFullYear() == new Date().getFullYear())
+		.filter((d) => isDay('frostDay', d)).length;
 
 	function countFirstConsecutiveItemsFromStart(arr, condition) {
 		// Check if the first element meets the condition, otherwise return false
@@ -116,32 +120,44 @@
 		>
 		<span>Achtung! Hitzewelle in {selectedStation.name}</span>
 	</p>
-	<h3 class="text-2xl max-w-xl mb-4 text-[#DB5537]">
+	<h3 class="title text-[#DB5537]">
 		An den letzten {heatWaveLength} Tagen hatte es mindestens 30°C. Insgesamt gab es in diesem Jahr bereits
 		{heatDaysThisYear}
 		Hitzetage.
 	</h3>
-{:else if lastHeatDay && (dayjs(lastHeatDay.date).isAfter(dayjs(lastSummerDay.date)) || dayjs(lastHeatDay.date).isSame(dayjs(lastSummerDay.date)))}
-	<h3 class="text-2xl max-w-xl mb-4">
+{:else if lastHeatDay && dayjs().diff(dayjs(lastHeatDay.date), 'day') < 10 && (dayjs(lastHeatDay.date).isAfter(dayjs(lastSummerDay.date)) || dayjs(lastHeatDay.date).isSame(dayjs(lastSummerDay.date)))}
+	<h3 class="title">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastHeatDay.date))} am {dayjs(lastHeatDay.date).format(
 			'D. MMMM'
-		)}
-		{formatNumber(lastHeatDay.tlmax)}°C gemessen, es war der {heatDaysThisYear}. Hitzetag dieses
+		)} mit
+		{formatNumber(lastHeatDay.tlmax)}°C ein Hitzetag gemessen, es war der {heatDaysThisYear}. dieses
 		Jahr.
 	</h3>
-{:else if summerDaysThisYear > 5}
-	<h3 class="text-2xl max-w-xl mb-4">
+{:else if summerDaysThisYear > 5 && dayjs().diff(dayjs(lastSummerDay.date), 'day') < 10}
+	<h3 class="title">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastSummerDay.date))} am {dayjs(
 			lastSummerDay.date
-		).format('D. MMMM')}
-		{formatNumber(lastSummerDay.tlmax)}°C gemessen, es war der {summerDaysThisYear}. Sommertag
+		).format('D. MMMM')} mit
+		{formatNumber(lastSummerDay.tlmax)}°C ein Sommertag gemessen, es war der {summerDaysThisYear}.
 		dieses Jahr.
+	</h3>
+{:else if dayjs().diff(dayjs(lastFrostDay.date), 'day') < 10}
+	<h3 class="title">
+		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastFrostDay.date))} am {dayjs(
+			lastFrostDay.date
+		).format('D. MMMM')} mit
+		{formatNumber(lastFrostDay.tlmax)}°C ein Frosttag gemessen, es war der {frostDaysThisYear}.
+		dieses Jahr.
+	</h3>
+{:else}
+	<h3 class="title">
+		Die globale Erwärmung führt auch in Österreich zu mehr heißen Tagen und weniger Tagen mit Frost.
 	</h3>
 {/if}
 
 {#if compareFirstYear && compareLastYear}
-	<p class="text-gray-700 mb-2 pb-2 border-b">
-		Vergleiche das Jahr
+	<p class="text-gray-700 mb-4 mx-auto w-max max-w-full text-center">
+		Wähle ein Jahr und einen Referenzzeitraum:
 		<input
 			type="number"
 			class="inline k_input mx-1"
@@ -150,7 +166,7 @@
 			max={lastDate.year()}
 			id="selectedYear"
 		/>
-		mit dem Zeitraum
+		vs.
 		<select bind:value={selectedComparisonDuration} class="k_input mx-1">
 			{#each comparisonDurations as duration}
 				<option value={duration}>
@@ -176,37 +192,36 @@
 </div>
 
 <p class="text-sm mt-2 text-gray-700 border-t pt-2">
-	{selectedStation.name} (ID {selectedStation.id}); Daten verfügbar von {dayjs(data[0].date).format(
-		'DD.MM.YYYY'
-	)} - {lastDate.format('DD.MM.YYYY')}
+	{selectedStation.name} (ID {selectedStation.id}); Daten von
+	<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>
+	verfügbar von {dayjs(data[0].date).format('DD.MM.YYYY')} - {lastDate.format('DD.MM.YYYY')}
 	{data.findIndex((d) => d.tlmax == null) > -1
 		? ' mit Datenlücken, die in diesen Auswertungen automatisch übersprungen werden'
 		: ''}
 </p>
 
-<div class="mt-8 grid md:grid-cols-2 gap-4">
-	{#if heatDaysThisYear > 5}
-		<div class="rounded border p-4">
-			<p class="text-lg">
-				Mehr Hitzetage durch den Klimawandel führen zu <b>gesundheitlichen Problemen</b> wie
-				Hitzschlägen, Kreislaufbelastungen und einer Zunahme von Herz-Kreislauf-Erkrankungen,
-				insbesondere bei gefährdeten Gruppen wie älteren Menschen und Kindern. Allein in Europa
-				sterben jedes Jahr ca. 45.000 Menschen an extremer Hitze.
-				<sup
-					><a
-						href="https://www.nature.com/articles/s41591-024-03186-1"
-						class="text-gray-500 underline">Nature Medicine</a
-					></sup
-				>
-			</p>
-		</div>
-		<div class="rounded border p-4">
-			<p class="text-lg">
-				Leichte Kleidung, ausreichende Flüssigkeitszufuhr und das Vermeiden von Anstrengung bei
-				Hitze reduzieren die individuelle Hitzebelastung. Begrünung, mehr Schattenplätze und
-				angepasste Gebäude mit besserer Dämmung und Lüftung mildern langfristig die Auswirkungen von
-				Hitzewellen.
-			</p>
-		</div>
-	{/if}
-</div>
+<p class="text-lg max-w-3xl mx-auto mt-8">
+	Die globale Erwärmung ist auch in Österreich spürbar. Im Durchschnitt nimmt die Anzahl der
+	Sommer-, Hitze- und Wüstentage sowie der Tropennächte zu. Dieser Trend ist im Vergleich mit allen
+	Referenzperioden zu beobachten. Häufigere und länger anhaltende Hitzeperioden können zu
+	gesundheitlichen Problemen wie unter anderem Hitzschlägen, Erschöpfung und einer Zunahme von
+	Herz-Kreislauf- und Nierenerkrankungen führen. Insbesondere ältere Menschen, Schwangere und
+	Kinder, aber auch Menschen mit Vorerkrankungen gehören zu den am stärksten gefährdeten Gruppen.
+	Allein in Europa starben im Jahr 2023 etwa 45.000 Menschen an extremer Hitze (Nature Medicine,
+	2024). Luftige Bekleidung, ausreichende Flüssigkeitszufuhr und das Vermeiden von Anstrengung bei
+	Hitze reduzieren die individuelle Hitzebelastung. Begrünung, mehr Schattenplätze und angepasste
+	Gebäude mit besserer Dämmung und Lüftung mildern langfristig die Auswirkungen von Hitzewellen.
+</p>
+
+<p class="text-lg max-w-3xl mx-auto mt-4">
+	Gleichzeitig gibt es im Durchschnitt auch weniger Tage mit Temperaturen unter dem Gefrierpunkt.
+	Die Frost- und Eistage nehmen also im Vergleich mit allen Referenzperioden ab. Dies hat unter
+	anderem Auswirkungen auf die Anzahl der Schneetage, Gletscher, die Landwirtschaft und die
+	Wasserversorgung.
+</p>
+
+<style>
+	.title {
+		@apply text-2xl mb-4 text-center max-w-2xl mx-auto text-balance;
+	}
+</style>

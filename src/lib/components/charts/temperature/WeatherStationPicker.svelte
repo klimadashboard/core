@@ -48,62 +48,64 @@
 	}
 </script>
 
-<p class="text-sm text-gray-700 mb-1 font-medium">Wähle deine Wetterstation</p>
-<div class="flex items-center space-x-2">
-	<div class="relative">
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="absolute pointer-events-none top-3 h-6 right-2 transform -translate-y-0.5 icon-tabler-selector"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			stroke-width="2"
-			stroke="currentColor"
-			fill="none"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-		>
-			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-			<polyline points="8 9 12 5 16 9" />
-			<polyline points="16 15 12 19 8 15" />
-		</svg>
-		<select
-			name="weatherStations"
-			id="weatherStations"
-			class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
-			bind:value={selectedStation}
-		>
-			{#each data.stations.sort((a, b) => a.name > b.name) as station}
-				<option value={station}>{station.name} ({station.height}m)</option>
-			{/each}
-		</select>
-	</div>
+<div class="mx-auto w-max mb-4">
+	<p class="text-sm text-gray-700 mb-1 font-medium">Wähle deine Wetterstation</p>
+	<div class="flex items-center space-x-2">
+		<div class="relative">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="absolute pointer-events-none top-3 h-6 right-2 transform -translate-y-0.5 icon-tabler-selector"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<polyline points="8 9 12 5 16 9" />
+				<polyline points="16 15 12 19 8 15" />
+			</svg>
+			<select
+				name="weatherStations"
+				id="weatherStations"
+				class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
+				bind:value={selectedStation}
+			>
+				{#each data.stations.sort((a, b) => a.name > b.name) as station}
+					<option value={station}>{station.name} ({station.height}m)</option>
+				{/each}
+			</select>
+		</div>
 
-	<button
-		aria-label="Nächste Wetterstation finden"
-		class="bg-gray-200 p-2.5 rounded"
-		on:mousedown={getCurrentPosition()}
-	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="icon icon-tabler icon-tabler-current-location"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			stroke-width="2"
-			stroke="currentColor"
-			fill="none"
-			stroke-linecap="round"
-			stroke-linejoin="round"
+		<button
+			aria-label="Nächste Wetterstation finden"
+			class="bg-gray-200 p-2.5 rounded"
+			on:mousedown={getCurrentPosition()}
 		>
-			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-			<circle cx="12" cy="12" r="3" />
-			<circle cx="12" cy="12" r="8" />
-			<line x1="12" y1="2" x2="12" y2="4" />
-			<line x1="12" y1="20" x2="12" y2="22" />
-			<line x1="20" y1="12" x2="22" y2="12" />
-			<line x1="2" y1="12" x2="4" y2="12" />
-		</svg>
-		<span>{geoLocationStatus}</span>
-	</button>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="icon icon-tabler icon-tabler-current-location"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<circle cx="12" cy="12" r="3" />
+				<circle cx="12" cy="12" r="8" />
+				<line x1="12" y1="2" x2="12" y2="4" />
+				<line x1="12" y1="20" x2="12" y2="22" />
+				<line x1="20" y1="12" x2="22" y2="12" />
+				<line x1="2" y1="12" x2="4" y2="12" />
+			</svg>
+			<span>{geoLocationStatus}</span>
+		</button>
+	</div>
 </div>

@@ -25,6 +25,7 @@
 	let firstDate = dayjs(data[0].date);
 	let availablePeriods = [
 		{ label: '1961-1990', start: 1961, end: 1990 },
+		{ label: '1971-2000', start: 1971, end: 2000 },
 		{ label: '1981-2010', start: 1981, end: 2010 },
 		{ label: '1991-2020', start: 1991, end: 2020 }
 	].filter((duration) => {
@@ -284,18 +285,20 @@
 </script>
 
 <div class="mt-16">
-	<p class="text-sm text-gray-700">
-		<select bind:value={selectedResolutionKey} class="k_input">
+	<p class=" text-gray-700 mx-auto w-max max-w-full">
+		Schau die
+		<select bind:value={selectedResolutionKey} class="k_input mx-1">
 			{#each availableResolutions as resolution}
 				<option value={resolution.key}>{resolution.label}</option>
 			{/each}
 		</select>
-		<span>im Vergleich zur Periode</span>
-		<select bind:value={selectedPeriodLabel} class="k_input">
+		<span>im Vergleich zum Referenzzeitraum</span>
+		<select bind:value={selectedPeriodLabel} class="k_input mx-1">
 			{#each availablePeriods as period}
 				<option value={period.label}>{period.label}</option>
 			{/each}
 		</select>
+		an
 	</p>
 
 	{#await averagesPromise}

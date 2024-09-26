@@ -26,12 +26,14 @@
 
 <div class="rounded overflow-hidden bg-gray-100" style="border: 2px solid {type.color}">
 	<div
-		class="text-white px-3 py-2 leading-none flex items-end gap-1 flex-wrap w-full"
+		class="text-white px-3 py-2 leading-none flex items-center gap-1 flex-wrap w-full"
 		style="background: {type.color}"
 	>
-		<h3 class="text-2xl font-medium">{type.label}</h3>
-		<p class="text-lg">{type.description}</p>
-		<div class="ml-auto -translate-y-1">
+		<div class="">
+			<h3 class="text-lg font-bold leading-tight">{type.label}</h3>
+			<p class="text-lg leading-none">{type.description}</p>
+		</div>
+		<div class="ml-auto">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"

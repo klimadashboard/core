@@ -54,7 +54,7 @@
 	});
 </script>
 
-<h2 class="text-2xl mt-4">
+<h2 class="text-2xl mt-4 text-center mx-auto max-w-2xl text-balance">
 	{#if selectedDatapoint}
 		{#if selectedDatapoint.differenceFromHistorical == null}
 			In {selectedStation.name} sind keine vollständigen Temperaturdaten für {selectedDatapoint.period}
@@ -109,9 +109,9 @@
 						{#if datapoint.differenceFromHistorical == null}
 							<rect
 								width={barWidth}
-								y={margin.top}
-								height={chartHeight - margin.top - margin.bottom}
-								class="fill-gray-200 opacity-30"
+								y={margin.top + 5}
+								height={chartHeight - margin.top - margin.bottom - 10}
+								class="fill-gray-300 opacity-40"
 							/>
 						{/if}
 						<rect
@@ -137,7 +137,8 @@
 						x2={xScale(recentData.indexOf(selectedDatapoint)) + barWidth / 2}
 						y1={20}
 						y2={innerHeight}
-						class="stroke-current stroke-2 opacity-70"
+						class="stroke-current opacity-70"
+						stroke-width={2}
 						stroke-dasharray="5, 2, 10, 2"
 					/>
 				</g>
