@@ -1,6 +1,8 @@
 <script>
 	// @ts-nocheck
 	import atxCompanies from '$lib/stores/companies';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
 	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
@@ -120,6 +122,13 @@
 		}
 	}
 
+	async function getData() {
+		const directus = getDirectusInstance(fetch);
+		const emissions = await directus.request(readItems('at_companies_emissions'));
+		console.log('🚀 ~ getData ~ emissions:', emissions);
+		return emissions;
+	}
+
 	function toggleScope(scope) {
 		if (selectedScopes.length === 1 && selectedScopes[0] === scope) return;
 		const index = selectedScopes.indexOf(scope);
@@ -130,6 +139,8 @@
 			selectedScopes = selectedScopes;
 		}
 	}
+
+	getData();
 </script>
 
 <div>
