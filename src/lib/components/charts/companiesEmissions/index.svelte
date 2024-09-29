@@ -104,7 +104,6 @@
 			header: true,
 			skipEmptyLines: true,
 			complete: function (results) {
-				console.log('🚀 ~ file: index.svelte:44 ~ raw data:', results);
 				if (results) {
 					rawData = results.data;
 				}
@@ -116,7 +115,6 @@
 		if (rawData) {
 			// get unique available years
 			availableYears = [...new Set(rawData.map((entry) => entry.Year_Scope.split('_')[0]))];
-			console.log('🚀 ~ file: index.svelte:60 ~ availableYears:', availableYears);
 		}
 	}
 
