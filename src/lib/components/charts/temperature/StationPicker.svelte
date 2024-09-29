@@ -1,6 +1,6 @@
 <script>
 	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems, readItem } from '@directus/sdk';
+	import { readItems } from '@directus/sdk';
 	import WeatherStationMap from './WeatherStationMap.svelte';
 	import WeatherStationPicker from './WeatherStationPicker.svelte';
 
