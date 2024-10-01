@@ -246,7 +246,7 @@
 			}
 
 			// Check if data is complete
-			if (periodData.length > expectedDays * 0.95 || isOngoing) {
+			if (periodData.length >= expectedDays * 0.9 || isOngoing) {
 				// Proceed with calculation
 				averageTemperature =
 					periodData.reduce((sum, entry) => sum + parseFloat(entry.tl_mittel), 0) /
