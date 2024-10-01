@@ -124,6 +124,7 @@
 	}
 
 	async function getData(filterCompanies, filterScopes) {
+		if (!filterCompanies || filterCompanies.length === 0 || !filterScopes) return;
 		const directus = getDirectusInstance(fetch);
 		const emissions = await directus.request(
 			readItems('at_companies_emissions', {
