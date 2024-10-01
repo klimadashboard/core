@@ -133,7 +133,7 @@
 					company: {
 						_in: filterCompanies
 					},
-					scope: { _in: selectedScopes.map((scope) => `scope${scope}`) }
+					scope: { _in: filterScopes.map((scope) => `scope${scope}`) }
 				},
 				limit: -1
 			})
