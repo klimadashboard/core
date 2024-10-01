@@ -3,6 +3,7 @@
 	import { max, min } from 'd3-array';
 	import { onMount } from 'svelte';
 	import formatNumber from '$lib/stores/formatNumber';
+	import dayjs from 'dayjs';
 
 	export let historicalAverages = [];
 	export let recentData = [];
@@ -91,12 +92,14 @@
 				{/each}
 				<!-- X-Axis with ticks -->
 				<g>
-					{#each xScale.ticks(recentData.length / 50) as tick}
-						<g transform="translate({xScale(tick)},{10})">
-							<text class="text-xs fill-gray-600" text-anchor="middle">
-								{recentData[tick]?.period}
-							</text>
-						</g>
+					{#each recentData as datapoint, i}
+						{#if datapoint.period % 10 == 0 || (datapoint.period.includes('Sommer') && parseInt(datapoint.period.slice(-4)) % 10 == 0) || (datapoint.period.includes(dayjs().format('MMMM')) && parseInt(datapoint.period.slice(-4)) % 2 == 0)}
+							<g transform="translate({xScale(i)},{10})">
+								<text class="text-xs fill-gray-600" text-anchor="middle">
+									{datapoint.period}
+								</text>
+							</g>
+						{/if}
 					{/each}
 				</g>
 

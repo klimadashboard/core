@@ -167,7 +167,7 @@
 			id="selectedYear"
 		/>
 		vs.
-		<select bind:value={selectedComparisonDuration} class="k_input mx-1">
+		<select bind:value={selectedComparisonDuration} class="k_input k_dropdown mx-1">
 			{#each comparisonDurations as duration}
 				<option value={duration}>
 					{duration[0]} - {duration[1]}

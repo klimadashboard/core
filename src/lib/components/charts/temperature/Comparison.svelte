@@ -287,13 +287,13 @@
 <div class="mt-16">
 	<p class=" text-gray-700 mx-auto w-max max-w-full">
 		Schau die
-		<select bind:value={selectedResolutionKey} class="k_input mx-1">
+		<select bind:value={selectedResolutionKey} class="k_input k_dropdown mx-1">
 			{#each availableResolutions as resolution}
 				<option value={resolution.key}>{resolution.label}</option>
 			{/each}
 		</select>
 		<span>im Vergleich zum Referenzzeitraum</span>
-		<select bind:value={selectedPeriodLabel} class="k_input mx-1">
+		<select bind:value={selectedPeriodLabel} class="k_input k_dropdown mx-1">
 			{#each availablePeriods as period}
 				<option value={period.label}>{period.label}</option>
 			{/each}
