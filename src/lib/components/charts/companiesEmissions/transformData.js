@@ -14,14 +14,38 @@ export const transformDataSingleCompany = (data, company, selectedScopes) => {
 			return;
 		}
 
-		// If the specific company has emission data for this entry, merge it
+		// If the specific company has emission data for this year, merge it
 		if (!emissionsPerYear[year]) {
 			emissionsPerYear[year] = { year, unit: 'CO2', label: year }; // Initialize if not present
 		}
-		emissionsPerYear[year][scope] = emissions[company]; // Merge scope data
+		emissionsPerYear[year][scope] = emissions[company]; // Merge scope
 	});
 
 	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
+	return convertObjectToArray(emissionsPerYear);
+};
+
+export const transformDataSingleCompanyV2 = (emissionsData, company, selectedScopes) => {
+	const selectedCompanyData = emissionsData.filter((item) => item.company === company);
+
+	// Object to hold emissions data per year with merged scopes
+	const emissionsPerYear = {};
+
+	// Iterate over each item in the rawData
+	selectedCompanyData.forEach((item) => {
+		const { year, scope, value } = item;
+
+		// only include selected scopes
+		if (!selectedScopes.includes(scope.replace('scope', ''))) {
+			return;
+		}
+
+		// If the specific company has emission data for this year, merge it
+		if (!emissionsPerYear[year]) {
+			emissionsPerYear[year] = { year, unit: 'CO2', label: year }; // Initialize if not present
+		}
+		emissionsPerYear[year][scope] = value; // Merge scope data
+	});
 	return convertObjectToArray(emissionsPerYear);
 };
 

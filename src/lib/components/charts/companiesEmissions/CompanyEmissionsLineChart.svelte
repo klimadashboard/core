@@ -1,9 +1,14 @@
 <script>
 	// @ts-nocheck
 	import LineChart from '../chartLine.svelte';
-	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
+	import {
+		transformDataSingleCompany,
+		transformDataMultipleCompanies,
+		transformDataSingleCompanyV2
+	} from './transformData';
 
 	export let rawData;
+	export let emissions;
 	export let selectedCompanies;
 	export let selectedScopes = ['scope1'];
 
@@ -68,6 +73,9 @@
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
 				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
+				const datasetV2 = transformDataSingleCompanyV2(emissions, companyName, selectedScopes);
+				console.log('🚀 ~ dataset:', dataset);
+				console.log('🚀 ~ datasetV2:', datasetV2);
 			} else {
 				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
 			}

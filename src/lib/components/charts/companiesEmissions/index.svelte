@@ -10,12 +10,13 @@
 
 	let scopes = ['1', '2', '3'];
 	let selectedScopes = ['1'];
-	let selectedYear = '2020';
 	let selectedSector = '';
 	let rawData;
+	let emissions;
 	let availableYears;
 	let isFocusView = true;
 	let initialCompany = 'Erste Group Bank AG';
+	let selectedCompaniesNames = [initialCompany];
 	let sortBy = 'sector';
 
 	// use companies data with `selected: true` as default
@@ -122,12 +123,30 @@
 		}
 	}
 
-	async function getData() {
+	async function getData(filterCompanies, filterScopes) {
 		const directus = getDirectusInstance(fetch);
-		const emissions = await directus.request(readItems('at_companies_emissions'));
+		const emissions = await directus.request(
+			readItems('at_companies_emissions', {
+				fields: ['year', 'company', 'scope', 'value', 'category'],
+				filter: {
+					company: {
+						_in: filterCompanies
+					},
+					scope: { _in: selectedScopes.map((scope) => `scope${scope}`) }
+				},
+				limit: -1
+			})
+		);
 		console.log('🚀 ~ getData ~ emissions:', emissions);
 		return emissions;
 	}
+	$: selectedCompaniesNames = companies
+		.filter((company) => company.selected)
+		.map((company) => company.name);
+
+	$: console.log('🚀 ~ file: index.svelte:84 ~ selectedCompaniesNames:', selectedCompaniesNames);
+
+	$: promise = getData(selectedCompaniesNames, selectedScopes);
 
 	function toggleScope(scope) {
 		if (selectedScopes.length === 1 && selectedScopes[0] === scope) return;
@@ -261,14 +280,16 @@
 
 	<!-- Chart -->
 	{#if rawData}
-		<div class="h-72">
+		{#await promise}
+			<p>Loading...</p>
+		{:then emissions}
 			<CompanyEmissionsLineChart
 				{rawData}
+				{emissions}
 				selectedCompanies={companies.filter((company) => company.selected)}
 				{selectedScopes}
-				{selectedYear}
 			/>
-		</div>
+		{/await}
 	{/if}
 	<br />
 	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Klimaziele</h2>
