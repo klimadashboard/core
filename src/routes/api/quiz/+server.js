@@ -1,7 +1,7 @@
 import {
 	saveQuizAnswerToDb,
 	getQuizAnswersFromDb
-} from '../../../lib/components/charts/climateQuiz/climateQuizDbClient.server';
+} from '$lib/components/charts/custom/climateQuiz/climateQuizDbClient.server';
 import { json } from '@sveltejs/kit';
 
 export async function GET(request) {
