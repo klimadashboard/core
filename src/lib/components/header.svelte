@@ -4,6 +4,8 @@
 	import Loader from './Loader.svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 
 	let promise = fetch('https://klimadashboard.org/get/navigation/' + PUBLIC_VERSION + '.json')
 		.then((x) => x.json())
@@ -13,6 +15,16 @@
 		});
 
 	$: showNav = false;
+
+	let region = 'Österreich';
+
+	onMount(() => {
+		setTimeout(() => {
+			if (localStorage.getItem('kd_region_name')) {
+				region = localStorage.getItem('kd_region_name');
+			}
+		}, 100);
+	});
 </script>
 
 <header class="fixed w-full z-50">
@@ -47,10 +59,10 @@
 				<span>Klimadashboard</span>
 			</a>
 			<button
-				class=" text-[#398F70] border-[#398F70] font-bold -ml-2 flex items-center gap-1"
+				class=" text-[#398F70] border-[#398F70] font-bold -ml-2 flex items-center gap-1 flex-shrink-0"
 				on:mousedown={() => goto('/region')}
 			>
-				<span>Österreich</span>
+				<span class="">{region}</span>
 				<svg
 					width="22"
 					height="22"

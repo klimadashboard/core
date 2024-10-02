@@ -1,6 +1,12 @@
 <script>
 	/** @type {import('./$types').PageData} */
+	import { onMount } from 'svelte';
 	export let data;
+
+	onMount(() => {
+		localStorage.setItem('kd_region_id', data.page.id);
+		localStorage.setItem('kd_region_name', data.page.name);
+	});
 </script>
 
 <main class="py-32">

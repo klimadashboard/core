@@ -4,7 +4,6 @@
 	import { fade } from 'svelte/transition';
 	import { error } from '@sveltejs/kit';
 	import Loader from '$lib/components/Loader.svelte';
-	import { locale } from '$lib/stores/i18n';
 	import Blocks from '$lib/components/blocks/index.svelte';
 
 	const getGlossary = async function () {

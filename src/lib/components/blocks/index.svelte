@@ -1,6 +1,5 @@
 <script>
 	import Heading from './Heading.svelte';
-	import Text from './Text.svelte';
 	import Markdown from './Markdown.svelte';
 	import Chart from './Chart.svelte';
 	import Toggle from './Toggle.svelte';
@@ -14,6 +13,7 @@
 	import List from './List.svelte';
 	import Grid from './Grid.svelte';
 	import Break from './Break.svelte';
+	import Text from './Text.svelte';
 
 	export let data;
 
