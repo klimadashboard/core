@@ -49,6 +49,39 @@ export const transformDataSingleCompanyV2 = (emissionsData, company, selectedSco
 	return convertObjectToArray(emissionsPerYear);
 };
 
+export const transformDataMultipleCompaniesV2 = (
+	emissionsData,
+	selectedCompanies,
+	selectedScopes
+) => {
+	const emissionsPerYear = {};
+
+	emissionsData.forEach(({ year, scope, value, company }) => {
+		const scopeNumber = scope.replace('scope', '');
+		// Skip items that are not included in the companies array
+		if (!selectedCompanies.includes(company) || !selectedScopes.includes(scopeNumber)) {
+			return;
+		}
+
+		// Initialize the emissions data object for the year if it does not exist
+		if (!emissionsPerYear[year]) {
+			emissionsPerYear[year] = { year, unit: 'CO2', label: year };
+		}
+
+		// TODO: Make sure that 'na' values are handled correctly
+		// IDEA: Insert 'na' for all values null or undefined
+		if (!emissionsPerYear[year][company]) {
+			emissionsPerYear[year][company] = value;
+		} else {
+			emissionsPerYear[year][company] += value;
+		}
+	});
+
+	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
+	console.log('🚀 ~ transformDataMultipleCompaniesV2 ~ emissionsPerYear:', emissionsPerYear);
+	return convertObjectToArray(emissionsPerYear);
+};
+
 export const transformDataMultipleCompanies = (data, companies, selectedScopes) => {
 	const emissionsPerYear = {};
 	data.forEach((item) => {
@@ -78,6 +111,7 @@ export const transformDataMultipleCompanies = (data, companies, selectedScopes) 
 	});
 
 	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
+	console.log('🚀 ~ transformDataMultipleCompanies ~ emissionsPerYear:', emissionsPerYear);
 	return convertObjectToArray(emissionsPerYear);
 };
 

@@ -119,7 +119,6 @@
 		if (rawData) {
 			// get unique available years
 			availableYears = [...new Set(rawData.map((entry) => entry.Year_Scope.split('_')[0]))];
-			console.log('🚀 ~ file: index.svelte:60 ~ availableYears:', availableYears);
 		}
 	}
 

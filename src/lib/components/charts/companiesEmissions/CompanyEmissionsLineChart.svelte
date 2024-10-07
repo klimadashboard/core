@@ -4,7 +4,8 @@
 	import {
 		transformDataSingleCompany,
 		transformDataMultipleCompanies,
-		transformDataSingleCompanyV2
+		transformDataSingleCompanyV2,
+		transformDataMultipleCompaniesV2
 	} from './transformData';
 
 	export let rawData;
@@ -64,6 +65,7 @@
 	const companyName = selectedCompanies[0].name;
 
 	let dataset = [];
+	let datasetV2 = [];
 	let keys;
 	let labels;
 	let colors;
@@ -73,11 +75,17 @@
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
 				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
-				const datasetV2 = transformDataSingleCompanyV2(emissions, companyName, selectedScopes);
+				datasetV2 = transformDataSingleCompanyV2(emissions, companyName, selectedScopes);
 				console.log('🚀 ~ dataset:', dataset);
 				console.log('🚀 ~ datasetV2:', datasetV2);
 			} else {
 				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
+				datasetV2 = transformDataMultipleCompaniesV2(
+					emissions,
+					selectedCompanyNames,
+					selectedScopes
+				);
+				console.log('🚀 ~ datasetV2:', datasetV2);
 			}
 
 			// Select keys, colors and labels
@@ -96,7 +104,7 @@
 
 {#if dataset && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
 	<LineChart
-		data={dataset}
+		data={datasetV2}
 		{colors}
 		{keys}
 		{labels}
