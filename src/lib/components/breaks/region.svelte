@@ -25,18 +25,36 @@
 
 		try {
 			const directus = getDirectusInstance(fetch);
-			suggestions = await directus.request(
+
+			// Fetch exact matches
+			const exactMatches = await directus.request(
 				readItems('regions', {
 					filter: {
-						_or: [
-							{ name: { _icontains: value } },
-							{ postcode: { _icontains: value } } // Use 'postcode' if that's your field name
+						_or: [{ name: { _eq: value } }, { postcode: { _eq: value } }]
+					},
+					fields: ['*'], // Include any other fields you need
+					sort: ['name'] // Sort exact matches alphabetically by name
+				})
+			);
+
+			// Fetch partial matches excluding exact matches
+			const partialMatches = await directus.request(
+				readItems('regions', {
+					filter: {
+						_and: [
+							{
+								_or: [{ name: { _icontains: value } }, { postcode: { _icontains: value } }]
+							}
 						]
 					},
-					fields: ['name', 'postcode', 'id', 'type'],
-					limit: 10
+					fields: ['*'],
+					sort: ['name'] // Sort partial matches alphabetically by name
 				})
-			); // Include any other fields you need));
+			);
+
+			// Combine exact matches and partial matches
+			suggestions = [...exactMatches, ...partialMatches];
+			console.log(suggestions);
 			showSuggestions = true;
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
@@ -118,6 +136,7 @@
 								{/if}
 								{region.name}
 								<span class="opacity-50">
+									{region.country} |
 									{region.type}
 								</span>
 							</li>
