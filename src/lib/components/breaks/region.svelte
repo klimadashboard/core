@@ -124,10 +124,15 @@
 					autocomplete="off"
 				/>
 				{#if showSuggestions && suggestions.length > 0}
-					<ul class="suggestions rounded-2xl">
+					<ul
+						class="absolute top-full left-0 right-0 bg-white bg-opacity-50 backdrop-blur border overflow-scroll z-10 max-h-64 rounded-2xl"
+					>
 						{#each suggestions as region, index}
 							<li
-								class="suggestion-item {index === activeSuggestionIndex ? 'active' : ''}"
+								class="p-2 cursor-pointer hover:bg-gray-100 border-b {index ===
+								activeSuggestionIndex
+									? 'bg-gray-100'
+									: ''}"
 								on:click={() => selectRegion(region)}
 								on:mouseover={() => (activeSuggestionIndex = index)}
 							>
@@ -147,30 +152,3 @@
 		</div>
 	</div>
 </div>
-
-<style>
-	.suggestions {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		background: white;
-		border: 1px solid #ccc;
-		z-index: 10;
-		max-height: 200px;
-		overflow-y: auto;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.suggestion-item {
-		padding: 8px;
-		cursor: pointer;
-	}
-
-	.suggestion-item.active,
-	.suggestion-item:hover {
-		background-color: #f0f0f0;
-	}
-</style>
