@@ -55,7 +55,7 @@
 	});
 </script>
 
-<h2 class="text-2xl mt-4 text-center mx-auto max-w-2xl">
+<h2 class="text-2xl mt-4 text-center mx-auto max-w-2xl text-balance">
 	{#if selectedDatapoint}
 		{#if selectedDatapoint.differenceFromHistorical == null}
 			In {selectedStation.name} sind keine vollständigen Temperaturdaten für {selectedDatapoint.period}

@@ -292,7 +292,7 @@
 				<option value={resolution.key}>{resolution.label}</option>
 			{/each}
 		</select>
-		<span>im Vergleich zum Referenzzeitraum</span>
+		<span>im Vergleich zum historischen Durchschnitt</span>
 		<select bind:value={selectedPeriodLabel} class="k_input k_dropdown mx-1">
 			{#each availablePeriods as period}
 				<option value={period.label}>{period.label}</option>
