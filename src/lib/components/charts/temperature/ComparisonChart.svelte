@@ -55,7 +55,7 @@
 	});
 </script>
 
-<h2 class="text-2xl mt-4 text-center mx-auto max-w-2xl text-balance">
+<h2 class="text-2xl mt-4 text-center mx-auto max-w-2xl">
 	{#if selectedDatapoint}
 		{#if selectedDatapoint.differenceFromHistorical == null}
 			In {selectedStation.name} sind keine vollständigen Temperaturdaten für {selectedDatapoint.period}
@@ -73,7 +73,10 @@
 			<span
 				class="underline underline-offset-4 font-bold"
 				style="text-decoration-color: {getColor(selectedDatapoint.differenceFromHistorical)}"
-				>{formatNumber(selectedDatapoint.differenceFromHistorical).replace('-', '')}°C
+			>
+				{selectedDatapoint.differenceFromHistorical > 0 ? '+' : '-'}{formatNumber(
+					selectedDatapoint.differenceFromHistorical
+				).replace('-', '')}°C
 				{selectedDatapoint.differenceFromHistorical > 0 ? 'heißer' : 'kälter'}</span
 			>
 			als der historische Durchschnitt.
