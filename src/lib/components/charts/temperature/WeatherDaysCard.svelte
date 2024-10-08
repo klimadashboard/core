@@ -72,7 +72,7 @@
 			<p class="leading-none font-semibold">
 				{type.label}
 				{#if currentDate}
-					bis {dayjs(currentDate).format('D.M.YYYY')}{:else}
+					in diesem Jahr bis {dayjs(currentDate).format('D.M.YYYY')}{:else}
 					im Jahr {selectedYear}{/if}
 			</p>
 		</div>
