@@ -318,4 +318,15 @@
 			also z.B. April 2024 im Vergleich zu allen Aprils im Vergleichszeitraum.
 		</p>
 	{/if}
+
+	<p class="text-sm mt-2 text-gray-700 border-t pt-2">
+		{selectedStation.name} (ID {selectedStation.id}); Daten von
+		<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>
+		verfügbar von {dayjs(data[0].date).format('DD.MM.YYYY')} - {dayjs(
+			data[data.length - 1].date
+		).format('DD.MM.YYYY')}
+		{data.findIndex((d) => d.tlmax == null) > -1
+			? ' mit Datenlücken, die in diesen Auswertungen automatisch übersprungen werden'
+			: ''}
+	</p>
 </div>
