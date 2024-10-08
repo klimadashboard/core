@@ -20,11 +20,11 @@
 			data.geo
 		);
 
-	const colors = ['#209857', '#5774DB']; // from green to blue
+	const colors = ['#209857', '#fdea45']; // from green to blue
 	const selectedColor = '#C7495C';
 
 	$: getColor = function (station) {
-		const colorScale = scaleLinear().range(colors).domain([0, 3100]);
+		const colorScale = scaleLinear().range(colors).domain([0, 3000]);
 		return colorScale(station.height);
 	};
 
@@ -42,7 +42,7 @@
 	};
 </script>
 
-<div id="map" class="h-48" bind:clientHeight={mapHeight} bind:clientWidth={mapWidth}>
+<div id="map" class="h-56" bind:clientHeight={mapHeight} bind:clientWidth={mapWidth}>
 	{#if mapHeight && mapWidth}
 		<svg width={'100%'} height={'100%'}>
 			<g>
@@ -66,9 +66,25 @@
 							fill={isSelected(station) ? selectedColor : getColor(station)}
 							class="opacity-70"
 						/>
+						{#if isSelected(station)}
+							<circle
+								r={getRadius(station)}
+								fill={isSelected(station) ? selectedColor : getColor(station)}
+								class="animate-ping"
+							/>
+						{/if}
 					</g>
 				{/each}
 			</g>
 		</svg>
 	{/if}
+</div>
+
+<div class="text-gray-600 w-max mx-auto flex items-center gap-2 text-sm mb-8">
+	<span>0m Seehöhe</span>
+	<div
+		class="w-24 h-3 bg-gray-100"
+		style="background: linear-gradient(90deg, {colors[0]} 0%, {colors[1]} 100%);"
+	/>
+	<span>3.000m</span>
 </div>

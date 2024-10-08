@@ -99,6 +99,28 @@ main {
 .no-scrollbar::-webkit-scrollbar {
 	display: none;
 }
+
+.scrollbar-custom::-webkit-scrollbar {
+	width: 12px;
+	height: 12px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+	background-color: rgba(0, 0, 0, 0.33); /* Change this to your desired color */
+	border-radius: 6px;
+	border: 3px solid transparent;
+	background-clip: content-box;
+}
+
+.scrollbar-custom {
+	scrollbar-width: thin; /* Firefox */
+	scrollbar-color: rgba(0, 0, 0, 0.33) transparent; /* Firefox */
+}
+
 .carousel {
 	align-items: stretch;
 	overflow-x: scroll;
@@ -221,4 +243,16 @@ sub {
 
 .block-list li::marker {
 	@apply text-gray-400;
+}
+
+.k_input {
+	@apply appearance-none bg-gray-100 px-3 py-1 rounded-full;
+}
+
+.k_dropdown {
+	background-image: url('data:image/svg+xml;utf8,<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-selector"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 9l4 -4l4 4" /><path d="M16 15l-4 4l-4 -4" /></svg>');
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	background-size: 16px 16px;
+	@apply pr-8;
 }

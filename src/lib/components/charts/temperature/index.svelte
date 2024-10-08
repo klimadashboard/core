@@ -22,7 +22,6 @@
 					limit: -1
 				})
 			);
-			console.log(data);
 			return data;
 		} else {
 			return false;
@@ -40,7 +39,7 @@
 	<StationPicker bind:selectedStation />
 
 	{#await promise}
-		<Loader />
+		<Loader showText={true} />
 	{:then data}
 		<Wrapper {data} {selectedStation} />
 	{:catch error}

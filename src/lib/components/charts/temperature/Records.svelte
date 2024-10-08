@@ -1,5 +1,6 @@
 <script>
 	import dayjs from 'dayjs';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	export let data;
 	export let selectedStation;
@@ -33,15 +34,30 @@
 
 	let items = [
 		{
-			heading: 'Heißester Tag',
-			text:
-				'Mit ' +
-				hottestDay.tlmax +
-				'°C war der ' +
-				dayjs(hottestDay.date).format('D. MMMM YYYY') +
-				' der heißeste jemals gemessene Tag in ' +
-				selectedStation.name +
-				'.'
+			heading: 'Heißeste Tage',
+			text: '',
+			values: [...data]
+				.sort((a, b) => b.tlmax - a.tlmax)
+				.splice(0, 10)
+				.map((d) => {
+					return {
+						date: d.date,
+						t: d.tlmax
+					};
+				})
+		},
+		{
+			heading: 'Heißeste Nächte',
+			text: '',
+			values: [...data]
+				.sort((a, b) => b.tlmin - a.tlmin)
+				.splice(0, 10)
+				.map((d) => {
+					return {
+						date: d.date,
+						t: d.tlmin
+					};
+				})
 		}
 	];
 
@@ -51,15 +67,46 @@
 			text:
 				'Der früheste Hitzetag (30°C oder mehr) in einem Jahr wurde am ' +
 				dayjs(earliestHeatDay.date).format('D. MMMM YYYY') +
-				' gemessen.'
+				' gemessen.',
+			values: []
 		});
 	}
 </script>
 
-<div class="grid md:grid-cols-2 gap-4">
+<div class="grid md:grid-cols-2 gap-4 mt-16">
 	{#each items as item}
-		<div class="p-4 rounded bg-gray-100">
+		<div class="rounded border p-4 text-lg">
 			<p><b>{item.heading}:</b> {item.text}</p>
+			{#if item.values.length > 0}
+				<table>
+					<thead>
+						<tr>
+							<td>Datum</td>
+							<td>Temperatur</td>
+						</tr>
+					</thead>
+					{#each item.values as day}
+						<tr>
+							<td>{dayjs(day.date).format('D. MMMM YYYY')}</td>
+							<td>{formatNumber(day.t)}°C</td>
+						</tr>
+					{/each}
+				</table>
+			{/if}
 		</div>
 	{/each}
 </div>
+
+<style>
+	table {
+		@apply text-base mt-4 w-full;
+	}
+
+	thead {
+		@apply font-bold;
+	}
+
+	tr {
+		@apply border-t;
+	}
+</style>
