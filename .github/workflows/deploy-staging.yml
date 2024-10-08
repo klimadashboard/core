@@ -20,7 +20,7 @@ jobs:
         with:
           api_token: ${{ secrets.PLOI_API_KEY }}
           server_id: 47649
-          site_id: 198078
+          site_id: 248307
       - name: Deploy staging.klimadashboard.de
         uses: Glennmen/ploi-deploy-action@v1.2.0
         with:
