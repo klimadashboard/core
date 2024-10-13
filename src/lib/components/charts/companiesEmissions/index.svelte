@@ -3,7 +3,6 @@
 	import atxCompanies from '$lib/stores/companies';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
-	import Papa from 'papaparse';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
 	import CompanyClimateGoals from './CompanyClimateGoals.svelte';
@@ -11,9 +10,7 @@
 	let scopes = ['1', '2', '3'];
 	let selectedScopes = ['1'];
 	let selectedSector = '';
-	let rawData;
 	let emissions;
-	let availableYears;
 	let isFocusView = true;
 	let initialCompany = 'Erste Group Bank AG';
 	let selectedCompaniesNames = [initialCompany];
@@ -97,43 +94,18 @@
 		true
 	);
 
-	// Load emissions data
-	Papa.parse(
-		// `../../data/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3_PathTo2040.csv`,
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/company-emissions/ATX_Emissions_Scope1_2_3.csv`,
-		{
-			download: true,
-			dynamicTyping: true,
-			header: true,
-			skipEmptyLines: true,
-			complete: function (results) {
-				console.log('🚀 ~ file: index.svelte:44 ~ raw data:', results);
-				if (results) {
-					rawData = results.data;
-				}
-			}
-		}
-	);
-
-	$: {
-		if (rawData) {
-			// get unique available years
-			availableYears = [...new Set(rawData.map((entry) => entry.Year_Scope.split('_')[0]))];
-		}
-	}
-
 	async function getData(filterCompanies, filterScopes) {
 		if (!filterCompanies || filterCompanies.length === 0 || !filterScopes) return;
 		const directus = getDirectusInstance(fetch);
 		const emissions = await directus.request(
 			readItems('at_companies_emissions', {
 				fields: ['year', 'company', 'scope', 'value', 'category'],
-				filter: {
-					company: {
-						_in: filterCompanies
-					},
-					scope: { _in: filterScopes.map((scope) => `scope${scope}`) }
-				},
+				// filter: {
+				// 	company: {
+				// 		_in: filterCompanies
+				// 	},
+				// 	scope: { _in: filterScopes.map((scope) => `scope${scope}`) }
+				// },
 				limit: -1
 			})
 		);
@@ -158,8 +130,6 @@
 			selectedScopes = selectedScopes;
 		}
 	}
-
-	getData();
 </script>
 
 <div>
@@ -279,18 +249,15 @@
 	</div>
 
 	<!-- Chart -->
-	{#if rawData}
-		{#await promise}
-			<p>Loading...</p>
-		{:then emissions}
-			<CompanyEmissionsLineChart
-				{rawData}
-				{emissions}
-				selectedCompanies={companies.filter((company) => company.selected)}
-				{selectedScopes}
-			/>
-		{/await}
-	{/if}
+	{#await promise}
+		<p>Loading...</p>
+	{:then emissions}
+		<CompanyEmissionsLineChart
+			{emissions}
+			selectedCompanies={companies.filter((company) => company.selected)}
+			{selectedScopes}
+		/>
+	{/await}
 	<br />
 	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Klimaziele</h2>
 	<CompanyClimateGoals selectedCompanies={companies.filter((company) => company.selected)} />

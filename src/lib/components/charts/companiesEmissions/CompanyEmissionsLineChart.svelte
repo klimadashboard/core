@@ -1,17 +1,12 @@
 <script>
 	// @ts-nocheck
 	import LineChart from '../chartLine.svelte';
-	import {
-		transformDataSingleCompany,
-		transformDataMultipleCompanies,
-		transformDataSingleCompanyV2,
-		transformDataMultipleCompaniesV2
-	} from './transformData';
+	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
 
-	export let rawData;
 	export let emissions;
 	export let selectedCompanies;
 	export let selectedScopes = ['scope1'];
+	export let selectedCategory = 'location_based';
 
 	let isSingleCompanySelected;
 	let selectedCompanyNames;
@@ -65,29 +60,29 @@
 	const companyName = selectedCompanies[0].name;
 
 	let dataset = [];
-	let datasetV2 = [];
 	let keys;
 	let labels;
 	let colors;
 	$: {
-		if (rawData && companyName && selectedScopes) {
+		if (emissions && companyName && selectedScopes) {
 			if (isSingleCompanySelected) {
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
-				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
-				datasetV2 = transformDataSingleCompanyV2(emissions, companyName, selectedScopes);
-				console.log('🚀 ~ dataset:', dataset);
-				console.log('🚀 ~ datasetV2:', datasetV2);
+				dataset = transformDataSingleCompany(
+					emissions,
+					companyName,
+					selectedScopes,
+					selectedCategory
+				);
 			} else {
-				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
-				datasetV2 = transformDataMultipleCompaniesV2(
+				dataset = transformDataMultipleCompanies(
 					emissions,
 					selectedCompanyNames,
-					selectedScopes
+					selectedScopes,
+					selectedCategory
 				);
-				console.log('🚀 ~ datasetV2:', datasetV2);
 			}
-
+			console.log('🚀 ~ dataset:', dataset);
 			// Select keys, colors and labels
 			keys = isSingleCompanySelected
 				? selectedScopes.map((scope) => selectedScopesToKeys[scope])
@@ -104,7 +99,7 @@
 
 {#if dataset && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
 	<LineChart
-		data={datasetV2}
+		data={dataset}
 		{colors}
 		{keys}
 		{labels}
