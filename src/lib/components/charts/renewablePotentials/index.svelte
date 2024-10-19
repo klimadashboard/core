@@ -68,8 +68,6 @@
 
 	let goals;
 	let showTechn = false;
-	let hoverType;
-	let hoverBundesland;
 
 	// onMount(() => {
 	// https://docs.google.com/spreadsheets/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/edit?usp=drive_link
@@ -205,7 +203,7 @@
 	$: selectedStartYear = minYear;
 </script>
 
-<div class="grid grid-cols-3 gap-3 my-3">
+<div class="flex gap-4">
 	<div>
 		<label
 			class="flex gap-1 text-sm items-center cursor-pointer {showTechn
@@ -217,18 +215,6 @@
 			<input type="checkbox" bind:checked={showTechn} />
 		</label>
 	</div>
-	<div />
-	<!-- <div class="rounded overflow-hidden div-bundesland w-40">
-		<Chart
-			bundesland={'Legende'}
-			current_energy={{ wasserkraft: 50, windkraft: 70, pv: 40, year: '' }}
-			{energyTypes}
-			bundeslaender={{ Legende: 'Legende' }}
-			potentiale_2030={{ wasserkraft: 90, windkraft: 110, pv: 120, year: '' }}
-			potentiale_techn={{ wasserkraft: 150, windkraft: 150, pv: 150, year: '' }}
-			{showTechn}
-		/>
-	</div> -->
 </div>
 
 <div id="renewablePotentialsDiv" class="grid gap-4 my-4">

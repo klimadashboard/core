@@ -14,8 +14,9 @@
 	export let goals;
 	export let selectedStartYear;
 	export let showTechn;
+	export let predefinedMaxValue;
 
-	const margin = { top: 20, right: 10, left: 10, bottom: 10 };
+	const margin = { top: 15, right: 10, left: 10, bottom: 25 };
 	let chartWidth;
 	let chartHeight;
 	let unit = 'TWh';
@@ -26,15 +27,16 @@
 
 	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2038);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
-	$: maxValue =
-		(showTechn
-			? potential_techn
-			: Math.max(
-					Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
-					potential_2030,
-					Math.max(...dataset.map((g) => +g.value))
-			  )) * 1.1;
-	$: minValue = -maxValue / 5;
+	$: maxValue = predefinedMaxValue
+		? predefinedMaxValue
+		: (showTechn
+				? potential_techn
+				: Math.max(
+						Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
+						potential_2030,
+						Math.max(...dataset.map((g) => +g.value))
+				  )) * 1.1;
+	$: minValue = 0;
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
@@ -88,17 +90,19 @@
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
 						<g>
-							{#each xScale.ticks(6) as tick, index}
-								<g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-gray-200">
-									<rect
-										x={0}
-										y={-chartHeight - margin.top}
-										width={chartWidth / 10}
-										height={chartHeight}
-										class="fill-gray-200 opacity-50"
+							{#each xScale.ticks(12) as tick, index}
+								<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
+									<line
+										x1={0}
+										x2={0}
+										y1={innerChartHeight - 5}
+										y2={innerChartHeight}
+										class="stroke-gray-400"
 									/>
-									<text class="text-sm text-gray-600 fill-current" x="6" y={-margin.top - 4}
-										>{tick.getFullYear()}</text
+									<text
+										class="text-sm text-gray-600 fill-current"
+										text-anchor="middle"
+										y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
 									>
 								</g>
 							{/each}
@@ -111,8 +115,7 @@
 										x2={chartWidth}
 										y1="0"
 										y2="0"
-										stroke-width="1"
-										class="stroke-gray-200 opacity-50"
+										class={index == 0 ? 'stroke-gray-400' : 'stroke-gray-200'}
 									/>
 									<text class="text-sm text-gray-600 fill-current bg-white" x="10" y="-4"
 										>{tick} {index == yScale.ticks(3).length - 1 ? ' ' + unit : ''}</text
@@ -183,17 +186,18 @@
 							</g> -->
 						{/if}
 						{#if potential_2030 != null && potential_2030 > 0}
-							<text
-								text-anchor="middle"
-								class="text-sm font-semibold fill-current bg-white"
-								style="fill: {green}"
-								x={xScale(new Date(2030, 1, 1))}
-								y={yScale(potential_2030)}
-								dy={text_potential_2030_y_offset}
-								dx={0}
-								>{formatNumber(Math.round(potential_2030 * 100) / 100)}
-								{' ' + unit + ' '}Potential 2030
-							</text>
+							<g
+								transform="translate({xScale(new Date(2030, 1, 1))},{yScale(potential_2030)})"
+								class="text-green-600"
+							>
+								<text
+									x={12}
+									dominant-baseline="middle"
+									class="text-sm font-semibold fill-current bg-white"
+									>{formatNumber(Math.round(potential_2030 * 100) / 100)}
+									{' ' + unit + ' '}Potential 2030
+								</text>
+								<!--
 							<text
 								text-anchor="middle"
 								class="text-xl font-semibold fill-current bg-white"
@@ -203,6 +207,27 @@
 								dy={4}
 								dx={0}>★</text
 							>
+						-->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									y={-12}
+									x={-12}
+									><path stroke="none" d="M0 0h24v24H0z" fill="none" /><circle
+										cx="12"
+										cy="12"
+										r=".5"
+										fill="currentColor"
+									/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg
+								>
+							</g>
 						{/if}
 						{#if potential_techn != null && showTechn}
 							<line
@@ -273,7 +298,9 @@
 								y={5}
 								transition:fade
 								dy={text_production_x_offset}
-								>{formatNumber(Math.round(last_datapoint.value * 100) / 100)}
+								>{last_datapoint.value > 0.01
+									? formatNumber(Math.round(last_datapoint.value * 100) / 100)
+									: last_datapoint.value.toString().replace('.', ',')}
 								{' ' + unit + ' '}
 								Produktion
 								<!-- im Zeitraum
