@@ -1,5 +1,4 @@
 import { readable, writable } from 'svelte/store';
-import Papa from 'papaparse';
 import { PUBLIC_VERSION } from '$env/static/public';
 
 const climateIndices = [];
@@ -20,13 +19,15 @@ climateIndices.push({
 	icon: "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-temperature' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5'></path><line x1='10' y1='9' x2='14' y2='9'></line></svg>"
 });
 
-climateIndices.push({
-	label: 'Wüstentage',
-	key: 'extremeHeatDay',
-	description: 'mindestens 35°C',
-	color: '#D61C1C',
-	icon: "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-temperature' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5'></path><line x1='10' y1='9' x2='14' y2='9'></line></svg>"
-});
+if (PUBLIC_VERSION == 'at') {
+	climateIndices.push({
+		label: 'Wüstentage',
+		key: 'extremeHeatDay',
+		description: 'mindestens 35°C',
+		color: '#D61C1C',
+		icon: "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-temperature' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5'></path><line x1='10' y1='9' x2='14' y2='9'></line></svg>"
+	});
+}
 
 climateIndices.push({
 	label: 'Tropennächte',
