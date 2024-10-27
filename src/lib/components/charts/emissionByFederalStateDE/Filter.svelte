@@ -4,12 +4,17 @@
 	export let gastypes;
 	export let selectedGas;
 	export let availableRegions;
+	export let endYear = 2030; // New prop for end year
 
 	function handleRegionChange(event) {
 		const newRegion = event.target.value;
 		if (availableRegions.includes(newRegion)) {
 			selectedRegion = newRegion;
 		}
+	}
+
+	function handleEndYearChange(event) {
+		endYear = parseInt(event.target.value);
 	}
 </script>
 
@@ -44,5 +49,20 @@
 				<option value={gastype}>{gastype}</option>
 			{/each}
 		</select>
+	</div>
+	<div class="relative text-gray-600">
+		<fieldset>
+			<legend class="sr-only">End Year</legend>
+			<div class="flex items-center space-x-4">
+				<label class="inline-flex items-center">
+					<input type="radio" class="form-radio" name="endYear" value="2030" checked={endYear === 2030} on:change={handleEndYearChange}>
+					<span class="ml-2">2030</span>
+				</label>
+				<label class="inline-flex items-center">
+					<input type="radio" class="form-radio" name="endYear" value="2040" checked={endYear === 2040} on:change={handleEndYearChange}>
+					<span class="ml-2">2040</span>
+				</label>
+			</div>
+		</fieldset>
 	</div>
 </div>
