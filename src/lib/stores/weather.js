@@ -19,15 +19,13 @@ climateIndices.push({
 	icon: "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-temperature' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5'></path><line x1='10' y1='9' x2='14' y2='9'></line></svg>"
 });
 
-if (PUBLIC_VERSION == 'at') {
-	climateIndices.push({
-		label: 'Wüstentage',
-		key: 'extremeHeatDay',
-		description: 'mindestens 35°C',
-		color: '#D61C1C',
-		icon: "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-temperature' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5'></path><line x1='10' y1='9' x2='14' y2='9'></line></svg>"
-	});
-}
+climateIndices.push({
+	label: 'Wüstentage',
+	key: 'extremeHeatDay',
+	description: 'mindestens 35°C',
+	color: '#D61C1C',
+	icon: "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-temperature' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5'></path><line x1='10' y1='9' x2='14' y2='9'></line></svg>"
+});
 
 climateIndices.push({
 	label: 'Tropennächte',
@@ -44,6 +42,7 @@ climateIndices.push({
 	color: '#39A4B3',
 	icon: "<svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-snowflake' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path stroke='none' d='M0 0h24v24H0z' fill='none'></path><path d='M10 4l2 1l2 -1m-2 -2v6.5l3 1.72'></path><path d='M10 4l2 1l2 -1m-2 -2v6.5l3 1.72' transform='rotate(60 12 12)'></path><path d='M10 4l2 1l2 -1m-2 -2v6.5l3 1.72' transform='rotate(120 12 12)'></path><path d='M10 4l2 1l2 -1m-2 -2v6.5l3 1.72' transform='rotate(180 12 12)'></path><path d='M10 4l2 1l2 -1m-2 -2v6.5l3 1.72' transform='rotate(240 12 12)'></path><path d='M10 4l2 1l2 -1m-2 -2v6.5l3 1.72' transform='rotate(300 12 12)'></path></svg>"
 });
+
 if (PUBLIC_VERSION == 'de') {
 	climateIndices.push({
 		label: 'Schneedeckentage',

@@ -3,13 +3,20 @@
 	import { readItems } from '@directus/sdk';
 	import WeatherStationMap from './WeatherStationMap.svelte';
 	import WeatherStationPicker from './WeatherStationPicker.svelte';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let selectedStation;
 
+	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_stations' : 'at_geosphere_stations';
+	let geoJsonName =
+		PUBLIC_VERSION == 'de'
+			? 'https://data.klimadashboard.org/de/germany.json'
+			: 'https://data.klimadashboard.org/at/austria.json';
+
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
-		const stations = await directus.request(readItems('at_geosphere_stations'));
-		const response = await fetch('https://data.klimadashboard.org/at/austria.json');
+		const stations = await directus.request(readItems(tableName));
+		const response = await fetch(geoJsonName);
 		const geo = await response.json();
 
 		return {

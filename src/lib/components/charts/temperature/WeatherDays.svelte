@@ -43,6 +43,8 @@
 			return d.tlmax >= 35;
 		} else if (key == 'frostDay') {
 			return d.tlmin < 0;
+		} else if (key == 'snowCoverDay') {
+			return d.sh > 0;
 		} else {
 			return false;
 		}
