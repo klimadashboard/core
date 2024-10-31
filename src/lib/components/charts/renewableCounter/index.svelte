@@ -44,8 +44,6 @@
 			}
 		}
 	});
-
-	$: console.log('datagoals', dataGoals);
 </script>
 
 {#if dataPV && dataWind && dataGoals}

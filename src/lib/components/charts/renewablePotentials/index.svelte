@@ -240,10 +240,7 @@
 					(row) =>
 						row.state_name === selectedBundesland &&
 						row.energy_data_key === type.dataKey &&
-						row.goal_amount != 'keinZiel' //&&
-					// !isNaN(row.goal_amount) &&
-					// !isNaN(row.goal_year) &&
-					// !isNaN(row.source_year)
+						row.goal_amount != 'keinZiel'
 				)}
 				<Details
 					bundesland={selectedBundesland}
