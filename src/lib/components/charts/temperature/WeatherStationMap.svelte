@@ -2,6 +2,7 @@
 	import { geoPath, geoAlbers } from 'd3-geo';
 	import { scaleLinear } from 'd3-scale';
 	import { max, min } from 'd3-array';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let data;
 	export let selectedStation;
@@ -42,7 +43,12 @@
 	};
 </script>
 
-<div id="map" class="h-56" bind:clientHeight={mapHeight} bind:clientWidth={mapWidth}>
+<div
+	id="map"
+	class={PUBLIC_VERSION == 'at' ? 'h-56' : 'h-80'}
+	bind:clientHeight={mapHeight}
+	bind:clientWidth={mapWidth}
+>
 	{#if mapHeight && mapWidth}
 		<svg width={'100%'} height={'100%'}>
 			<g>
