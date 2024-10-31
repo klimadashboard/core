@@ -39,7 +39,7 @@
 	<StationPicker bind:selectedStation />
 
 	{#await promise}
-		<Loader />
+		<Loader showText={true} />
 	{:then data}
 		<Wrapper {data} {selectedStation} />
 	{:catch error}
