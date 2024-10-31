@@ -52,7 +52,6 @@
 		header: true,
 		complete: function (results) {
 			if (results) {
-				// console.log('dwd data', results.data, selectedStation);
 				selectedStationName = results.data.find((d) => d.id == selectedStation).name;
 			}
 		}
@@ -60,7 +59,7 @@
 </script>
 
 {#if selectedStationData.length > 0 && selectedStationName !== 'station'}
-<div
+	<div
 		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
 	>
 		<span class="font-bold">Jahr</span>
@@ -79,7 +78,7 @@
 			<span>{currentYear} bisher</span>
 		</label>
 	</div>
-	
+
 	<div
 		class="inline-flex flex-wrap gap-2 items-center bg-gray-100 rounded-2xl py-1 px-3 mb-3 max-w-max"
 	>

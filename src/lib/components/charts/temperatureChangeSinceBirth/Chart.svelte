@@ -64,8 +64,6 @@
 				try {
 					await navigator.share(shareData);
 				} catch (err) {
-					// console.log(`Cannot share data: ${err}, downloading instead.`);
-
 					// BACKUP: download image
 					let url = window.URL.createObjectURL(blob);
 					let a = document.createElement('a');

@@ -44,8 +44,6 @@
 			}
 		}
 	);
-
-	$: console.log(selectedStationData);
 </script>
 
 <p>Temperaturtageverlauf für {selectedStationName}:</p>
@@ -54,7 +52,14 @@
 	{#each $types as type}
 		<p>{@html type.icon} {type.label}</p>
 		<p><small>{type.description}</small></p>
-		<BarChart data={selectedStationData.map(d => { return { label: d.year, value: d[type.key+"s"] }; })} color={type.color} xAxixInterval={10} unit={''} />
+		<BarChart
+			data={selectedStationData.map((d) => {
+				return { label: d.year, value: d[type.key + 's'] };
+			})}
+			color={type.color}
+			xAxixInterval={10}
+			unit={''}
+		/>
 	{/each}
 {:else}
 	<Loader />

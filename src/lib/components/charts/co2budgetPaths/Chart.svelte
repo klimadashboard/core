@@ -143,17 +143,6 @@
 		var inflectionYear = 0;
 		var inflectionIndex = 0;
 
-		// for (var i = 0; i < rates.length; i++) {
-		// 	var difference = rates[i] - rates[Math.max(i - 1, 0)];
-		// 	console.log(i, difference);
-		// 	if (difference > 1 || difference < -1) {
-		// 		inflectionYear = dataPaths[i].year;
-		// 		inflectionIndex = i;
-		// 	}
-		// }
-		// var valueBeforeInflection = rates[inflectionIndex - 1];
-		// var valueAfterInflection = rates[inflectionIndex];
-
 		var string = '';
 
 		if (inflectionYear == 0) {

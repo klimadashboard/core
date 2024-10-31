@@ -8,9 +8,6 @@
 
 	dayjs.extend(duration);
 
-	$: console.log(windGap);
-	$: console.log(pvGap);
-
 	let windGap =
 		dataGoals.find((d) => d.energy_type == 'windkraft' && d.scenario == 'eag').value -
 		dataWind[dataWind.length - 1].Jahresproduktion;
@@ -21,9 +18,7 @@
 
 	let windCounter = (windGap * 1000000000) / 12500000;
 	let pvArea = pvGap * 7;
-	$: console.log(pvArea);
 	let monthsLeftUntil2030 = dayjs.duration(dayjs('2030-12-31').diff(dayjs())).asMonths();
-	$: console.log(monthsLeftUntil2030);
 
 	let counter = [
 		{

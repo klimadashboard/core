@@ -64,9 +64,6 @@
 		.map((d) => `${xScale(d.year)},${yScale(d.path)}`)
 		.join('L')}`;
 
-	$: for (let i = 0; i < 200; i++) {
-		console.log(`%c getting color ${i} ${colorScale(i)}`, `background-color: ${colorScale(i)}`);
-	}
 	$: getColor = function (datapoint) {
 		// console.log(
 		// 	`%c getting color ${datapoint.averageTemperature} ${colorScale(
