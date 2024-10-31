@@ -10,8 +10,6 @@
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';
 
-	$: console.log(selectedStation);
-
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
 		if (selectedStation) {

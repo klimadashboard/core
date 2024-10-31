@@ -26,8 +26,6 @@
 	$: if ($locale && browser) {
 		invalidateAll();
 	}
-
-	$: console.log($page);
 </script>
 
 <svelte:head>

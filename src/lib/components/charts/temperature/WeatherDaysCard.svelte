@@ -24,14 +24,17 @@
 	}
 </script>
 
-<div class="rounded overflow-hidden bg-gray-100" style="border: 2px solid {type.color}">
+<div
+	class="rounded overflow-hidden bg-gray-100 flex flex-col justify-between"
+	style="border: 2px solid {type.color}"
+>
 	<div
 		class="text-white px-3 py-2 leading-none flex items-center gap-1 flex-wrap w-full"
 		style="background: {type.color}"
 	>
-		<div class="">
-			<h3 class="text-lg font-bold leading-tight">{type.label}</h3>
-			<p class="text-lg leading-none">{type.description}</p>
+		<div class="text-lg leading-none">
+			<h3 class="font-bold">{type.label}</h3>
+			<p class="">{type.description}</p>
 		</div>
 		<div class="ml-auto">
 			<svg
@@ -55,21 +58,21 @@
 			</svg>
 		</div>
 	</div>
-	<div class="p-3 pt-1 grid grid-cols-2 gap-2" style="color: {type.color}">
-		<div class="flex items-end space-x-1">
-			<p class="text-6xl font-extralight translate-y-1">
+	<div class="p-2 grid grid-cols-2 gap-2" style="color: {type.color}">
+		<div class="flex items-end space-x-2">
+			<p class="text-6xl font-extralight tracking-tighter leading-[0.85em]">
 				{comparison}
 			</p>
-			<p class="leading-none font-semibold">
+			<p class="leading-none font-semibold hyphens-auto text-balance min-w-0">
 				{type.label}
 				{#if currentDate} bis {dayjs(currentDate).format('D.M.')}{/if} im Schnitt {compareFirstYear}-{compareLastYear}
 			</p>
 		</div>
-		<div class="flex items-end space-x-1">
-			<p class="text-6xl font-extralight tracking-tight translate-y-1">
+		<div class="flex items-end space-x-2">
+			<p class="text-6xl font-extralight tracking-tighter leading-[0.85em]">
 				{current}
 			</p>
-			<p class="leading-none font-semibold">
+			<p class="leading-none font-semibold hyphens-auto text-balance min-w-0">
 				{type.label}
 				{#if currentDate}
 					in diesem Jahr bis {dayjs(currentDate).format('D.M.YYYY')}{:else}
