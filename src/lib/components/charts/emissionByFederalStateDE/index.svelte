@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		BarController,
 		BarElement,
 		CategoryScale,
 		Chart as ChartJS,
@@ -11,10 +12,17 @@
 		type ChartOptions
 	} from 'chart.js';
 	import Papa from 'papaparse';
-	import { onMount } from 'svelte';
-	import { Bar } from 'svelte-chartjs';
+	import { onDestroy, onMount } from 'svelte';
 
-	ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
+	ChartJS.register(
+		BarController,
+		BarElement,
+		CategoryScale,
+		LinearScale,
+		Title,
+		Tooltip,
+		Legend
+	);
 
 	let isPerCapita = false;
 	let emissionType: 'ghg' | 'co2' = 'ghg';
@@ -60,6 +68,14 @@
 				title: {
 					display: true,
 					text: 'Jahr'
+				},
+				ticks: {
+					autoSkip: false,
+					maxRotation: 0,
+					callback: function(val, index) {
+						const year = parseInt(this.getLabelForValue(val as number));
+						return year >= 1990 && (year - 1990) % 5 === 0 ? year.toString() : '';
+					}
 				}
 			}
 		}
@@ -105,6 +121,53 @@
 		'de-thueringen': 'Thüringen'
 	};
 
+	// Add chart instance variable
+	let chart: ChartJS | null = null;
+	let chartCanvas: HTMLCanvasElement;
+
+	interface PapaParseResult {
+		data: EmissionData[];
+		errors: any[];
+		meta: {
+			delimiter: string;
+			linebreak: string;
+			aborted: boolean;
+			truncated: boolean;
+			cursor: number;
+		};
+	}
+
+	function initChart(node: HTMLCanvasElement) {
+		chartCanvas = node;
+		
+		// Set canvas dimensions
+		const parent = node.parentElement;
+		if (parent) {
+			node.width = parent.clientWidth;
+			node.height = parent.clientHeight || 400;
+		}
+
+		// Create new chart
+		chart = new ChartJS(node, {
+			type: 'bar',
+			data: chartData,
+			options: {
+				...options,
+				maintainAspectRatio: false,
+				responsive: true
+			}
+		});
+
+		return {
+			destroy() {
+				if (chart) {
+					chart.destroy();
+					chart = null;
+				}
+			}
+		};
+	}
+
 	function updateChartData(rawData: EmissionData[], usePerCapita: boolean) {
 		const years = Array.from({ length: 51 }, (_, i) => (1990 + i).toString());
 		const population = statePopulations[selectedState];
@@ -142,41 +205,37 @@
 				  } (1990-2045)`
 				: `${emissionType.toUpperCase()}-Emissionen in ${stateNames[selectedState]} (1990-2045)`;
 		}
+
+		// Update the chart if it exists
+		if (chart) {
+			chart.data = chartData;
+			chart.options = options;
+			chart.update('none'); // Add update mode
+		}
 	}
 
 	async function fetchData() {
 		try {
 			const response = await fetch('/emissions_de_federal_states_25102024.csv');
 			const csvText = await response.text();
-			console.log('CSV fetched, first 100 chars:', csvText.substring(0, 100));
 
 			Papa.parse<EmissionData>(csvText, {
 				header: true,
 				delimiter: ',',
 				skipEmptyLines: true,
-				complete: (results) => {
-					console.log('Papa Parse complete:', {
-						totalRows: results.data.length,
-						firstRow: results.data[0]
-					});
-
+				complete: (results: PapaParseResult) => {
 					currentData = results.data;
 					const filteredData = results.data.filter(
 						(row) =>
 							row.category === 'total' && row.region === selectedState && row.unit === emissionType
 					);
 
-					console.log('Filtered data:', {
-						filteredLength: filteredData.length,
-						firstFilteredRow: filteredData[0]
-					});
-
 					updateChartData(filteredData, isPerCapita);
 					dataLoaded = true;
 				},
-				error: (error) => {
+				error: (error: Error) => {
 					console.error('Papa Parse error:', error);
-					error = new Error(error.message);
+					error = error;
 				}
 			});
 		} catch (e) {
@@ -198,6 +257,12 @@
 	onMount(() => {
 		console.log('Component mounted');
 		fetchData();
+	});
+
+	onDestroy(() => {
+		if (chart) {
+			chart.destroy();
+		}
 	});
 
 	$: {
@@ -236,9 +301,9 @@
 
 {#if error}
 	<p>Error loading data: {error.message}</p>
-{:else if dataLoaded && chartData.labels.length > 0}
-	<div>
-		<Bar data={chartData} {options} />
+{:else if dataLoaded && chartData.labels && chartData.labels.length > 0}
+	<div class="chart-container">
+		<canvas use:initChart></canvas>
 	</div>
 {:else}
 	<p>Loading data...</p>
@@ -250,6 +315,7 @@
 		justify-content: space-between;
 		align-items: center;
 		margin-bottom: 1rem;
+		padding: 0 1rem;
 	}
 
 	.controls-left {
@@ -273,13 +339,15 @@
 
 	.toggle-container {
 		text-align: right;
+		padding-left: 2rem;
 	}
 
 	.toggle-label {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.8rem;
 		cursor: pointer;
+		padding: 0.3rem 0;
 	}
 
 	input[type='checkbox'],
@@ -290,5 +358,20 @@
 	select:focus {
 		outline: none;
 		border-color: #666;
+	}
+
+	.chart-container {
+		position: relative;
+		height: 400px;
+		width: 100%;
+		margin: 1rem 0;
+	}
+
+	canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
 	}
 </style>
