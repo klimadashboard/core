@@ -157,7 +157,7 @@
 	</h3>
 {:else}
 	<h3 class="title">
-		Die globale Erwärmung führt auch in {regionString} zu mehr heißen Tagen und weniger Tagen mit Frost.
+		Die Erderhitzung führt auch in {regionString} zu mehr heißen Tagen und weniger Tagen mit Frost.
 	</h3>
 {/if}
 
@@ -221,7 +221,7 @@
 </p>
 
 <p class="text-lg max-w-3xl mx-auto mt-8">
-	Die globale Erwärmung ist auch in {regionString} spürbar. Im Durchschnitt nimmt die Anzahl der Sommer-,
+	Die Erderhitzung ist auch in {regionString} spürbar. Im Durchschnitt nimmt die Anzahl der Sommer-,
 	Hitze- und Wüstentage sowie der Tropennächte zu. Dieser Trend ist im Vergleich mit allen Referenzperioden
 	zu beobachten. Häufigere und länger anhaltende Hitzeperioden können zu gesundheitlichen Problemen wie
 	unter anderem Hitzschlägen, Erschöpfung und einer Zunahme von Herz-Kreislauf- und Nierenerkrankungen
