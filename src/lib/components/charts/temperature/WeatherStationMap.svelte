@@ -45,7 +45,7 @@
 
 <div
 	id="map"
-	class={PUBLIC_VERSION == 'at' ? 'h-56' : 'h-80'}
+	class={PUBLIC_VERSION == 'at' ? 'h-56' : 'h-96'}
 	bind:clientHeight={mapHeight}
 	bind:clientWidth={mapWidth}
 >

@@ -15,7 +15,11 @@
 
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
-		const stations = await directus.request(readItems(tableName));
+		const stations = await directus.request(
+			readItems(tableName, {
+				limit: 300
+			})
+		);
 		const response = await fetch(geoJsonName);
 		const geo = await response.json();
 

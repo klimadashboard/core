@@ -6,6 +6,8 @@
 	export let data;
 	export let selectedStation;
 
+	console.log(data);
+
 	$: geoLocationStatus = '';
 
 	$: getDistance = function (currentPosition, station) {
