@@ -1,6 +1,5 @@
 <script>
 	import WeatherDays from './WeatherDays.svelte';
-	import YearlyAverages from './YearlyAverages.svelte';
 	import Comparison from './Comparison.svelte';
 	import Records from './Records.svelte';
 
@@ -14,8 +13,4 @@
 	<Comparison {data} {selectedStation} />
 
 	<Records {data} {selectedStation} />
-
-	<!--
-	<YearlyAverages {data} {selectedStation} />
-	-->
 {/if}

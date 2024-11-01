@@ -4,18 +4,21 @@
 	import Wrapper from './Wrapper.svelte';
 	import StationPicker from './StationPicker.svelte';
 	import Loader from '$lib/components/Loader.svelte';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let selectedStation;
+
+	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';
 
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
 		if (selectedStation) {
 			const data = await directus.request(
-				readItems('at_geosphere_data', {
+				readItems(tableName, {
 					filter: {
 						station: {
 							id: {
-								_eq: selectedStation.id
+								_eq: parseInt(selectedStation.id)
 							}
 						}
 					},

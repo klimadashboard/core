@@ -5,6 +5,7 @@
 	import { types } from '$lib/stores/weather';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	import 'dayjs/locale/de';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	dayjs.extend(relativeTime);
 	dayjs.locale('de');
@@ -13,6 +14,7 @@
 	export let selectedStation;
 
 	$: selectedYear = dayjs().month() > 4 ? dayjs().year() : dayjs().year() - 1;
+	$: daysAvailableInSelectedYear = data.filter((d) => dayjs(d.date).year() == selectedYear).length;
 	let firstDate = dayjs(data[0].date);
 	let lastDate = dayjs(data[data.length - 1].date);
 
@@ -43,6 +45,8 @@
 			return d.tlmax >= 35;
 		} else if (key == 'frostDay') {
 			return d.tlmin < 0;
+		} else if (key == 'snowCoverDay') {
+			return d.sh > 0;
 		} else {
 			return false;
 		}
@@ -103,6 +107,8 @@
 	$: heatWaveLength = countFirstConsecutiveItemsFromStart([...data].reverse(), (d) =>
 		isDay('heatDay', d)
 	);
+
+	$: regionString = PUBLIC_VERSION == 'at' ? 'Österreich' : 'Deutschland';
 </script>
 
 {#if heatWaveLength > 2}
@@ -146,12 +152,12 @@
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastFrostDay.date))} am {dayjs(
 			lastFrostDay.date
 		).format('D. MMMM')} mit
-		{formatNumber(lastFrostDay.tlmax)}°C ein Frosttag gemessen, es war der {frostDaysThisYear}.
+		{formatNumber(lastFrostDay.tlmin)}°C Mindesttemperatur ein Frosttag gemessen, es war der {frostDaysThisYear}.
 		dieses Jahr.
 	</h3>
 {:else}
 	<h3 class="title">
-		Die globale Erwärmung führt auch in Österreich zu mehr heißen Tagen und weniger Tagen mit Frost.
+		Die globale Erwärmung führt auch in {regionString} zu mehr heißen Tagen und weniger Tagen mit Frost.
 	</h3>
 {/if}
 
@@ -177,23 +183,37 @@
 	</p>
 {/if}
 
-<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-	{#each $types as type}
-		<WeatherDaysCard
-			{type}
-			current={resultCurrent.find((d) => d.key == type.key).value}
-			comparison={resultComparison.find((d) => d.key == type.key).value}
-			{compareLastYear}
-			{compareFirstYear}
-			{selectedYear}
-			currentDate={selectedYear == lastDate.year() ? lastDate : false}
-		/>
-	{/each}
-</div>
+{#if selectedYear == dayjs().year() || daysAvailableInSelectedYear > 360}
+	<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+		{#each $types as type}
+			<WeatherDaysCard
+				{type}
+				current={resultCurrent.find((d) => d.key == type.key).value}
+				comparison={resultComparison.find((d) => d.key == type.key).value}
+				{compareLastYear}
+				{compareFirstYear}
+				{selectedYear}
+				currentDate={selectedYear == lastDate.year() ? lastDate : false}
+			/>
+		{/each}
+	</div>
+{:else}
+	<p>
+		Keine ausreichenden Temperaturdaten für dieses Jahr verfügbar. Wähle eine andere Wetterstation
+		oder ein anderes Jahr.
+	</p>
+{/if}
 
 <p class="text-sm mt-2 text-gray-700 border-t pt-2">
 	{selectedStation.name} (ID {selectedStation.id}); Daten von
-	<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>
+	{#if PUBLIC_VERSION == 'at'}
+		<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>
+	{:else}
+		<a
+			href="https://www.dwd.de/DE/klimaumwelt/cdc/cdc_node.html"
+			class="underline underline-offset-2">DWD</a
+		>
+	{/if}
 	verfügbar von {dayjs(data[0].date).format('DD.MM.YYYY')} - {lastDate.format('DD.MM.YYYY')}
 	{data.findIndex((d) => d.tlmax == null) > -1
 		? ' mit Datenlücken, die in diesen Auswertungen automatisch übersprungen werden'
@@ -201,16 +221,16 @@
 </p>
 
 <p class="text-lg max-w-3xl mx-auto mt-8">
-	Die globale Erwärmung ist auch in Österreich spürbar. Im Durchschnitt nimmt die Anzahl der
-	Sommer-, Hitze- und Wüstentage sowie der Tropennächte zu. Dieser Trend ist im Vergleich mit allen
-	Referenzperioden zu beobachten. Häufigere und länger anhaltende Hitzeperioden können zu
-	gesundheitlichen Problemen wie unter anderem Hitzschlägen, Erschöpfung und einer Zunahme von
-	Herz-Kreislauf- und Nierenerkrankungen führen. Insbesondere ältere Menschen, Schwangere und
-	Kinder, aber auch Menschen mit Vorerkrankungen gehören zu den am stärksten gefährdeten Gruppen.
-	Allein in Europa starben im Jahr 2023 etwa 45.000 Menschen an extremer Hitze (Nature Medicine,
-	2024). Luftige Bekleidung, ausreichende Flüssigkeitszufuhr und das Vermeiden von Anstrengung bei
-	Hitze reduzieren die individuelle Hitzebelastung. Begrünung, mehr Schattenplätze und angepasste
-	Gebäude mit besserer Dämmung und Lüftung mildern langfristig die Auswirkungen von Hitzewellen.
+	Die globale Erwärmung ist auch in {regionString} spürbar. Im Durchschnitt nimmt die Anzahl der Sommer-,
+	Hitze- und Wüstentage sowie der Tropennächte zu. Dieser Trend ist im Vergleich mit allen Referenzperioden
+	zu beobachten. Häufigere und länger anhaltende Hitzeperioden können zu gesundheitlichen Problemen wie
+	unter anderem Hitzschlägen, Erschöpfung und einer Zunahme von Herz-Kreislauf- und Nierenerkrankungen
+	führen. Insbesondere ältere Menschen, Schwangere und Kinder, aber auch Menschen mit Vorerkrankungen
+	gehören zu den am stärksten gefährdeten Gruppen. Allein in Europa starben im Jahr 2023 etwa 45.000
+	Menschen an extremer Hitze (Nature Medicine, 2024). Luftige Bekleidung, ausreichende Flüssigkeitszufuhr
+	und das Vermeiden von Anstrengung bei Hitze reduzieren die individuelle Hitzebelastung. Begrünung,
+	mehr Schattenplätze und angepasste Gebäude mit besserer Dämmung und Lüftung mildern langfristig die
+	Auswirkungen von Hitzewellen.
 </p>
 
 <p class="text-lg max-w-3xl mx-auto mt-4">

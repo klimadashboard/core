@@ -1,9 +1,12 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let data;
 	export let selectedStation;
+
+	console.log(data);
 
 	$: geoLocationStatus = '';
 
@@ -33,12 +36,15 @@
 		}
 	};
 
+	// 105 for Hohe Warte, 403 for Berlin-Dahlem
+	$: presetID = PUBLIC_VERSION == 'at' ? 105 : 403;
+
 	if ($page.url.searchParams.get('weatherStation')) {
 		selectedStation = data.stations.find(
 			(d) => d.id == $page.url.searchParams.get('weatherStation')
 		);
 	} else {
-		selectedStation = data.stations.find((d) => d.id == 105);
+		selectedStation = data.stations.find((d) => d.id == presetID);
 	}
 
 	$: if (selectedStation) {
@@ -46,6 +52,15 @@
 		url.searchParams.set('weatherStation', selectedStation.id);
 		goto(url.toString(), { replaceState: true });
 	}
+
+	// Step 1: Group options by 'state'
+	let groupedOptions = {};
+	data.stations.forEach((option) => {
+		if (!groupedOptions[option.state]) {
+			groupedOptions[option.state] = [];
+		}
+		groupedOptions[option.state].push(option);
+	});
 </script>
 
 <div class="mx-auto w-max mb-4">
@@ -57,8 +72,12 @@
 			class="k_input k_dropdown max-w-[60vw]"
 			bind:value={selectedStation}
 		>
-			{#each data.stations.sort((a, b) => a.name > b.name) as station}
-				<option value={station}>{station.name} ({station.height}m)</option>
+			{#each Object.keys(groupedOptions).sort((a, b) => a > b) as state}
+				<optgroup label={state}>
+					{#each groupedOptions[state].sort((a, b) => a.name > b.name) as station}
+						<option value={station}>{station.name} ({station.height}m)</option>
+					{/each}
+				</optgroup>
 			{/each}
 		</select>
 

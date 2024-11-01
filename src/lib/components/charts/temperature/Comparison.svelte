@@ -5,6 +5,7 @@
 	import 'dayjs/locale/de';
 	import isBetween from 'dayjs/plugin/isBetween';
 	import isLeapYear from 'dayjs/plugin/isLeapYear';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	dayjs.locale('de'); // Set the locale globally to German
 	dayjs.extend(isBetween); // Extend Day.js with the isBetween plugin
@@ -321,7 +322,14 @@
 
 	<p class="text-sm mt-2 text-gray-700 border-t pt-2">
 		{selectedStation.name} (ID {selectedStation.id}); Daten von
-		<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>
+		{#if PUBLIC_VERSION == 'at'}
+			<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>
+		{:else}
+			<a
+				href="https://www.dwd.de/DE/klimaumwelt/cdc/cdc_node.html"
+				class="underline underline-offset-2">DWD</a
+			>
+		{/if}
 		verfügbar von {dayjs(data[0].date).format('DD.MM.YYYY')} - {dayjs(
 			data[data.length - 1].date
 		).format('DD.MM.YYYY')}
