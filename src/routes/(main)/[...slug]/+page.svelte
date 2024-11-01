@@ -54,6 +54,7 @@
 	/>
 </svelte:head>
 
-<div class="py-16">
+<div class="">
+	<div class="bg-gradient-to-b from-mobility to-white h-20 opacity-20" />
 	<Blocks data={data.content.blocks} />
 </div>

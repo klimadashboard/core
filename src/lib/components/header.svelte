@@ -27,184 +27,122 @@
 	});
 </script>
 
-<header class="fixed w-full z-50">
-	<div class="bg-white md:shadow-sm">
-		<div class="container flex gap-4 items-center text-lg">
-			<a href="/" class="flex gap-4 font-bold items-center text-[#11998e]">
-				<div class="bg-current h-10 w-10 relative rounded">
-					<svg
-						width="256"
-						height="256"
-						viewBox="0 0 256 256"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-10 w-10 absolute inset-0"
-					>
-						<path
-							d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
-							fill="#DBF0E0"
-						/>
-						<path
-							opacity="0.6"
-							d="M162.95 88H134.808C133.732 88 132.701 88.4337 131.948 89.203L96.7358 125.203C95.2152 126.758 95.2152 129.242 96.7358 130.797L131.948 166.797C132.701 167.566 133.732 168 134.808 168H162.95C166.498 168 168.29 163.723 165.8 161.194L135.887 130.806C134.355 129.249 134.355 126.751 135.887 125.194L165.8 94.8061C168.29 92.2773 166.498 88 162.95 88Z"
-							fill="#DBF0E0"
-						/>
-						<path
-							opacity="0.2"
-							d="M197.95 88H178.808C177.732 88 176.701 88.4337 175.948 89.203L140.736 125.203C139.215 126.758 139.215 129.242 140.736 130.797L175.948 166.797C176.701 167.566 177.732 168 178.808 168H197.95C201.498 168 203.29 163.723 200.8 161.194L170.887 130.806C169.355 129.249 169.355 126.751 170.887 125.194L200.8 94.8061C203.29 92.2773 201.498 88 197.95 88Z"
-							fill="#DBF0E0"
-						/>
-					</svg>
-				</div>
-				<span>Klimadashboard</span>
-			</a>
-			<button
-				class=" text-[#398F70] border-[#398F70] font-bold -ml-2 flex items-center gap-1 flex-shrink-0"
-				on:mousedown={() => goto('/region')}
-			>
-				<span class="">{region}</span>
+<header
+	class="fixed left-1/2 top-4 -translate-x-1/2 space-x-8 flex items-center border bg-white shadow-xl rounded-full px-4 z-50"
+>
+	<div class="flex">
+		<a href="/" class="flex gap-4 font-bold items-center text-[#11998e]">
+			<div class="bg-current h-10 w-10 relative rounded">
 				<svg
-					width="22"
-					height="22"
-					viewBox="0 0 22 22"
+					width="256"
+					height="256"
+					viewBox="0 0 256 256"
 					fill="none"
-					class="w-4 h-4"
 					xmlns="http://www.w3.org/2000/svg"
+					class="h-10 w-10 absolute inset-0"
 				>
 					<path
-						d="M8 11C8 11.7956 8.31607 12.5587 8.87868 13.1213C9.44129 13.6839 10.2044 14 11 14C11.7956 14 12.5587 13.6839 13.1213 13.1213C13.6839 12.5587 14 11.7956 14 11C14 10.2044 13.6839 9.44129 13.1213 8.87868C12.5587 8.31607 11.7956 8 11 8C10.2044 8 9.44129 8.31607 8.87868 8.87868C8.31607 9.44129 8 10.2044 8 11Z"
-						stroke="#398F70"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
+						fill="#DBF0E0"
 					/>
 					<path
-						d="M3 11C3 13.1217 3.84285 15.1566 5.34315 16.6569C6.84344 18.1571 8.87827 19 11 19C13.1217 19 15.1566 18.1571 16.6569 16.6569C18.1571 15.1566 19 13.1217 19 11C19 8.87827 18.1571 6.84344 16.6569 5.34315C15.1566 3.84285 13.1217 3 11 3C8.87827 3 6.84344 3.84285 5.34315 5.34315C3.84285 6.84344 3 8.87827 3 11Z"
-						stroke="#398F70"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						opacity="0.6"
+						d="M162.95 88H134.808C133.732 88 132.701 88.4337 131.948 89.203L96.7358 125.203C95.2152 126.758 95.2152 129.242 96.7358 130.797L131.948 166.797C132.701 167.566 133.732 168 134.808 168H162.95C166.498 168 168.29 163.723 165.8 161.194L135.887 130.806C134.355 129.249 134.355 126.751 135.887 125.194L165.8 94.8061C168.29 92.2773 166.498 88 162.95 88Z"
+						fill="#DBF0E0"
 					/>
 					<path
-						d="M11 1V3"
-						stroke="#398F70"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					/>
-					<path
-						d="M11 19V21"
-						stroke="#398F70"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					/>
-					<path
-						d="M19 11H21"
-						stroke="#398F70"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					/>
-					<path
-						d="M1 11H3"
-						stroke="#398F70"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						opacity="0.2"
+						d="M197.95 88H178.808C177.732 88 176.701 88.4337 175.948 89.203L140.736 125.203C139.215 126.758 139.215 129.242 140.736 130.797L175.948 166.797C176.701 167.566 177.732 168 178.808 168H197.95C201.498 168 203.29 163.723 200.8 161.194L170.887 130.806C169.355 129.249 169.355 126.751 170.887 125.194L200.8 94.8061C203.29 92.2773 201.498 88 197.95 88Z"
+						fill="#DBF0E0"
 					/>
 				</svg>
-			</button>
-			<button
-				class="md:hidden flex items-center gap-1 leading-[4rem] px-2 ml-auto"
-				on:mousedown={() => (showNav = !showNav)}
+			</div>
+			<span>Klimadashboard</span>
+		</a>
+		<button
+			class=" text-[#398F70] border-[#398F70] font-bold -ml-2 flex items-center gap-1 flex-shrink-0"
+			on:mousedown={() => goto('/region')}
+		>
+			<span class="">{region}</span>
+			<svg
+				width="22"
+				height="22"
+				viewBox="0 0 22 22"
+				fill="none"
+				class="w-4 h-4"
+				xmlns="http://www.w3.org/2000/svg"
 			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-menu-2"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
+				<path
+					d="M8 11C8 11.7956 8.31607 12.5587 8.87868 13.1213C9.44129 13.6839 10.2044 14 11 14C11.7956 14 12.5587 13.6839 13.1213 13.1213C13.6839 12.5587 14 11.7956 14 11C14 10.2044 13.6839 9.44129 13.1213 8.87868C12.5587 8.31607 11.7956 8 11 8C10.2044 8 9.44129 8.31607 8.87868 8.87868C8.31607 9.44129 8 10.2044 8 11Z"
+					stroke="#398F70"
 					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
 					stroke-linecap="round"
 					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M4 6l16 0" />
-					<path d="M4 12l16 0" />
-					<path d="M4 18l16 0" />
-				</svg>
-				<span>Menü</span>
-			</button>
-			<nav
-				class="{showNav
-					? ''
-					: 'hidden'} absolute bg-white top-16 w-screen left-0 p-4 md:p-0 h-screen md:h-auto md:top-0 md:relative md:flex items-center"
-			>
-				<ul class="flex flex-col space-y-4 pt-8 md:pt-0 md:space-y-0 md:flex-row w-full">
-					{#await promise}
-						<div class="translate-y-5">
-							<Loader />
-						</div>
-					{:then navigation}
-						{#each navigation.filter((d) => d.num > 0 && d.parent == 'klimadashboard-' + PUBLIC_VERSION) as item}
-							<li
-								class="group md:px-2 lg:px-3 relative navigation-item border-b pb-4 md:pb-0 md:border-b-0"
-							>
-								<a
-									href={item.uri.replace('klimadashboard-' + PUBLIC_VERSION, '')}
-									class="md:leading-[4rem] font-bold {$page.params.slug.includes(item.slug)
-										? ''
-										: 'md:font-normal'} hover:underline underline-offset-2"
-									on:mouseup={() => (showNav = false)}>{item.content.title}</a
-								>
-
-								{#if navigation.filter((c) => item.id == c.parent && c !== item).length > 0}
-									<div
-										class="md:fixed left-0 md:top-18 w-screen md:bg-white md:bg-opacity-80 md:backdrop-blur-md md:shadow-sm transition"
-									>
-										<ul class="md:container flex gap-6 md:py-3 md:hidden group-hover:flex">
-											{#each navigation.filter((c) => item.id == c.parent && c !== item) as child}
-												<li>
-													<a
-														href={child.id.replace('klimadashboard-' + PUBLIC_VERSION + '/', '/')}
-														on:mouseup={() => (showNav = false)}
-														class="hover:underline underline-offset-2 {$page.params.slug.includes(
-															child.slug
-														)
-															? 'font-bold'
-															: ''}">{child.content.title}</a
-													>
-												</li>
-											{/each}
-										</ul>
-									</div>
-								{/if}
-							</li>
-						{/each}
-					{:catch error}
-						{error}
-					{/await}
-					<li class="opacity-70 hover:opacity-100 transition md:ml-auto">
-						<a
-							href="https://klimadashboard.org"
-							class="leading-[4rem] text-sm font-bold uppercase tracking-wide">Über uns</a
-						>
-					</li>
-					<li class="opacity-100 hover:opacity-80 transition md:ml-4 hidden lg:block">
-						<a
-							href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
-							target="_blank"
-							class="leading-[4rem] text-sm font-bold uppercase tracking-wide bg-gradient-blue px-2 py-1 text-white rounded"
-							>Spenden</a
-						>
-					</li>
-				</ul>
-			</nav>
-		</div>
+				/>
+				<path
+					d="M3 11C3 13.1217 3.84285 15.1566 5.34315 16.6569C6.84344 18.1571 8.87827 19 11 19C13.1217 19 15.1566 18.1571 16.6569 16.6569C18.1571 15.1566 19 13.1217 19 11C19 8.87827 18.1571 6.84344 16.6569 5.34315C15.1566 3.84285 13.1217 3 11 3C8.87827 3 6.84344 3.84285 5.34315 5.34315C3.84285 6.84344 3 8.87827 3 11Z"
+					stroke="#398F70"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M11 1V3"
+					stroke="#398F70"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M11 19V21"
+					stroke="#398F70"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M19 11H21"
+					stroke="#398F70"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				/>
+				<path
+					d="M1 11H3"
+					stroke="#398F70"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				/>
+			</svg>
+		</button>
 	</div>
+	<label for="">
+		<input type="search" placeholder="Thema, Region, Frage suchen..." />
+	</label>
+	<button
+		class="flex items-center gap-1 leading-[4rem] px-2 ml-auto"
+		on:mousedown={() => (showNav = !showNav)}
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="icon icon-tabler icon-tabler-menu-2"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			stroke-width="2"
+			stroke="currentColor"
+			fill="none"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<path d="M4 6l16 0" />
+			<path d="M4 12l16 0" />
+			<path d="M4 18l16 0" />
+		</svg>
+		<span>Menü</span>
+	</button>
 </header>
 
 <style>
