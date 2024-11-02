@@ -13,7 +13,7 @@
 	export let maxY;
 	export let dataGoals;
 
-	let unit = PUBLIC_VERSION == 'de' ? 'GW' : 'TWh';
+	let unit = PUBLIC_VERSION == 'de' ? 'GW' : ' TWh';
 	let title =
 		PUBLIC_VERSION == 'de' ? 'Installierte Leistung vs. Ziel' : 'Jahresproduktion vs. Ausbauziel';
 
@@ -51,7 +51,7 @@
 	let chartWidth;
 	let chartHeight;
 
-	const margin = { top: 20, right: 0, left: 0, bottom: 0 };
+	const margin = { top: 30, right: 0, left: 0, bottom: 0 };
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
@@ -171,8 +171,8 @@
 											style="color:{colors[0]}"
 											class="text-sm font-semibold fill-current"
 											text-anchor="end"
-											x={-8}
-											y={4}
+											x={-7}
+											y={-4}
 										>
 											{#if dataGoalsForType.every((d) => d.value == dataGoalsForType[0].value)}
 												NEKP, EAG und ÖNIP-Ziel: {formatNumber(goal.value)} {unit}

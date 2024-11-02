@@ -104,7 +104,6 @@
 			header: true,
 			skipEmptyLines: true,
 			complete: function (results) {
-				console.log('🚀 ~ file: index.svelte:44 ~ raw data:', results);
 				if (results) {
 					rawData = results.data;
 				}
@@ -116,7 +115,6 @@
 		if (rawData) {
 			// get unique available years
 			availableYears = [...new Set(rawData.map((entry) => entry.Year_Scope.split('_')[0]))];
-			console.log('🚀 ~ file: index.svelte:60 ~ availableYears:', availableYears);
 		}
 	}
 
@@ -135,8 +133,8 @@
 <div>
 	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Emissionen</h2>
 	<!-- Sector Selector -->
-	<div class="flex block font-normal font-semibold text-xs mb-1">
-		<span class="mb-1">Filter: Sektoren</span>
+	<div class="flex font-semibold text-sm mb-1">
+		<span class="mb-1">Sektoren</span>
 	</div>
 	<!-- </summary> -->
 	<div class="flex flex-wrap mb-2">
@@ -166,9 +164,9 @@
 	</div>
 
 	<!-- Company Heading -->
-	<div class="flex mb-2">
+	<div class="flex mb-2 flex-wrap gap-x-3">
 		<p class="font-semibold text-sm">Unternehmen</p>
-		<div class="flex text-sm text-underline gap-3 ml-6">
+		<div class="flex flex-wrap text-sm text-underline gap-x-3 md:ml-6">
 			<button
 				class="disabled:opacity-50"
 				disabled={selectedSector === '' || !isFocusView}
@@ -188,7 +186,7 @@
 				Auswahl löschen
 			</button>
 			<button
-				class="ml-6 flex items-center {isFocusView ? 'text-agriculture' : 'text-energy'}"
+				class="md:ml-6 flex items-center {isFocusView ? 'text-agriculture' : 'text-energy'}"
 				on:click={() => (isFocusView = !isFocusView)}
 			>
 				<span
@@ -205,10 +203,10 @@
 	<div class="flex flex-wrap gap-2 mb-4">
 		{#each companies as company}
 			<button
-				class="flex items-center rounded-xl font-semibold px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
+				class="flex items-center rounded-xl font-semibold p-1 md:px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
 					{company.selected ? 'border-2 border-green-600' : 'border-2'}
 					{company.sector === selectedSector || selectedSector === '' ? '' : 'opacity-50'}
-					{company.sector === selectedSector && !company.selected ? 'border-gray-600' : ''}"
+					{company.sector === selectedSector && !company.selected ? 'border-gray-300' : ''}"
 				on:mousedown={() => onClickCompany(company)}
 				aria-label={company.name}
 				title="{company.name} ({company.sector})"
@@ -231,19 +229,21 @@
 	</div>
 
 	<div class="flex flex-wrap mb-2">
-		<p class="font-semibold text-sm mr-4">Emissionsquellen</p>
-		{#each scopes as scope}
-			<button
-				class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
+		<p class="font-semibold text-sm mr-4 mb-1">Emissionsquellen</p>
+		<div class="flex gap-x-3">
+			{#each scopes as scope}
+				<button
+					class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2 mb-2
                 {selectedScopes.includes(scope)
-					? 'text-black bg-gray-300'
-					: 'text-gray-600 bg-gray-100'}"
-				aria-label={scope}
-				on:click={() => toggleScope(scope)}
-			>
-				<span class="font-semibold tracking-wide">Scope {scope}</span>
-			</button>
-		{/each}
+						? 'text-black bg-gray-300'
+						: 'text-gray-600 bg-gray-100'}"
+					aria-label={scope}
+					on:click={() => toggleScope(scope)}
+				>
+					<span class="font-semibold tracking-wide">Scope {scope}</span>
+				</button>
+			{/each}
+		</div>
 	</div>
 
 	<!-- Chart -->

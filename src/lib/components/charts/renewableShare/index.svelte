@@ -56,30 +56,53 @@
 			}
 		};
 
+		// Define expected data points for each interval
+		const getExpectedCount = (date) => {
+			switch (interval) {
+				case 'day':
+					return 1; // One data point per day
+				case 'week':
+					return 7; // Seven days per week
+				case 'month':
+					return dayjs(date).daysInMonth(); // Number of days in the month
+				default:
+					throw new Error('Invalid interval. Use "day", "week", or "month".');
+			}
+		};
+
 		// Use reduce to group data based on the specified interval
 		const groupedData = data.reduce((acc, curr) => {
 			const key = getGroupingKey(curr.date);
 			if (!acc[key]) {
-				acc[key] = { sum: 0, count: 0 };
+				acc[key] = { sum: 0, count: 0, expectedCount: getExpectedCount(curr.date) };
 			}
 			acc[key].sum += curr.renewable_share;
 			acc[key].count += 1;
 			return acc;
 		}, {});
 
-		// Convert the result back to an array, calculating the average
-		return Object.entries(groupedData).map(([key, { sum, count }]) => ({
-			interval: key,
-			value: sum / count
-		}));
+		// Filter out intervals that do not have the expected count of data points
+		const filteredData = Object.entries(groupedData)
+			.filter(([key, { count, expectedCount }]) => count === expectedCount)
+			.map(([key, { sum, count }]) => ({
+				interval: key,
+				value: sum / count
+			}));
+
+		return filteredData;
 	}
 </script>
 
 {#await promise then data}
-	<h2 class="text-2xl max-w-2xl">
-		An {data.filter((d) => d.renewable_share >= 100).length} von den letzten 365 Tagen wurde mehr als
-		100% des Strombedarfs aus Erneuerbaren Energien entdeckt.
+	<h2 class="text-2xl max-w-2xl text-balance">
+		An {data.filter((d) => d.renewable_share >= 100).length} Tagen im letzten Jahr wurde der gesamte
+		Strombedarf komplett aus erneuerbaren Energien gedeckt.
 	</h2>
+	<p class="max-w-lg text-lg text-balance leading-snug mt-1">
+		Strom aus erneuerbaren Energien entsprach in den letzten 365 Tagen {Math.round(
+			data.reduce((a, b) => a + b.renewable_share, 0) / data.length
+		)}% der Gesamtlast.
+	</p>
 	<div class="h-80 mt-4 mb-10">
 		<div class="relative text-gray-600 w-40 mb-4">
 			<svg

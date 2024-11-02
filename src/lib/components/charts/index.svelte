@@ -1,5 +1,6 @@
 <script>
 	import { locale } from '$lib/stores/i18n';
+	import Text from '$lib/components/Text.svelte';
 	import domtoimage from 'dom-to-image';
 	import Loader from '$lib/components/Loader.svelte';
 	import { chartsData } from '../../stores/charts';
@@ -39,7 +40,11 @@
 
 	$: copyEmbedCode = function () {
 		var copyText =
-			'<iframe src="' + window.location.origin + '/embed/' + chartId + '" width=1200 height=400>';
+			'<iframe src="' +
+			window.location.origin +
+			'/embed/' +
+			chartId +
+			'" width=1200 height=400></iframe>';
 		copyToClipboard(copyText);
 		alert('Der iFrame-Code wurde in die Zwischenablage kopiert.');
 	};
@@ -226,7 +231,7 @@
 					</div>
 					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 						{#if chart.text && showText}
-							<p class="text-lg text col-span-2">{@html chart.text}</p>
+							<p class="text-lg text col-span-2"><Text htmlString={chart.text} /></p>
 						{/if}
 						{#if chart.source}
 							<div class="text-gray-700 text-sm">

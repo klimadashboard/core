@@ -10,7 +10,7 @@ locale.subscribe((value) => {
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
 	const url =
-		'https://cms.klimadashboard.org/' +
+		'https://klimadashboard.org/' +
 		localeString +
 		'/klimadashboard-' +
 		PUBLIC_VERSION +

@@ -1,10 +1,12 @@
 <script>
+	import Text from '$lib/components/Text.svelte';
+
 	export let block;
 </script>
 
 <div class="my-8 text-lg container text" id={block.id}>
 	<div class="max-w-4xl">
-		{@html block.content.text}
+		<Text htmlString={block.content.text} />
 	</div>
 </div>
 
