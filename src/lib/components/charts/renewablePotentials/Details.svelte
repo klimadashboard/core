@@ -119,6 +119,17 @@
 									>
 								</g>
 							{/each}
+							<!-- 0 Linie -->
+							<g transform={`translate(0, ${yScale(0)})`} class="text-gray-400">
+								<line
+									x1="0"
+									x2={chartWidth}
+									y1="0"
+									y2="0"
+									stroke-width="2"
+									class="stroke-gray-400 opacity-50"
+								/>
+							</g>
 						</g>
 						{#if has_goals}
 							<g>
@@ -186,7 +197,7 @@
 							<text
 								text-anchor="middle"
 								class="text-sm font-semibold fill-current bg-white"
-								style="fill: {green}"
+								style="fill: {grey}"
 								x={xScale(new Date(2030, 1, 1))}
 								y={yScale(potential_2030)}
 								dy={text_potential_2030_y_offset}
@@ -197,7 +208,7 @@
 							<text
 								text-anchor="middle"
 								class="text-xl font-semibold fill-current bg-white"
-								style="fill: {green}"
+								style="fill: {grey}"
 								x={xScale(new Date(2030, 1, 1))}
 								y={yScale(potential_2030)}
 								dy={4}
