@@ -30,7 +30,9 @@
 		{ label: '1981-2010', start: 1981, end: 2010 },
 		{ label: '1991-2020', start: 1991, end: 2020 }
 	].filter((duration) => {
-		return duration.start > firstDate.year() && duration.end > firstDate.year();
+		return (
+			dayjs('' + duration.start + '-01-01') >= dayjs(firstDate) && duration.end > firstDate.year()
+		);
 	});
 
 	let selectedResolutionKey = availableResolutions[2].key;

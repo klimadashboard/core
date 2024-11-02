@@ -25,7 +25,7 @@
 		[1991, 2020]
 	].filter((duration) => {
 		const [startYear, endYear] = duration;
-		return startYear > firstDate.year() && endYear > firstDate.year();
+		return dayjs('' + startYear + '-01-01') >= dayjs(firstDate) && endYear > firstDate.year();
 	});
 	let selectedComparisonDuration = comparisonDurations[0];
 
