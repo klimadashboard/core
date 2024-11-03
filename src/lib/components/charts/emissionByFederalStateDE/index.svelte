@@ -14,15 +14,9 @@
 	import Papa from 'papaparse';
 	import { onDestroy, onMount } from 'svelte';
 
-	ChartJS.register(
-		BarController,
-		BarElement,
-		CategoryScale,
-		LinearScale,
-		Title,
-		Tooltip,
-		Legend
-	);
+	console.log('test');
+
+	ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
 	let isPerCapita = false;
 	let emissionType: 'ghg' | 'co2' = 'ghg';
@@ -72,7 +66,7 @@
 				ticks: {
 					autoSkip: false,
 					maxRotation: 0,
-					callback: function(val, index) {
+					callback: function (val, index) {
 						const year = parseInt(this.getLabelForValue(val as number));
 						return year >= 1990 && (year - 1990) % 5 === 0 ? year.toString() : '';
 					}
@@ -139,7 +133,7 @@
 
 	function initChart(node: HTMLCanvasElement) {
 		chartCanvas = node;
-		
+
 		// Set canvas dimensions
 		const parent = node.parentElement;
 		if (parent) {
@@ -303,7 +297,7 @@
 	<p>Error loading data: {error.message}</p>
 {:else if dataLoaded && chartData.labels && chartData.labels.length > 0}
 	<div class="chart-container">
-		<canvas use:initChart></canvas>
+		<canvas use:initChart />
 	</div>
 {:else}
 	<p>Loading data...</p>
