@@ -42,10 +42,10 @@ export async function GET(event) {
         </linearGradient>
       </defs>
       <rect width="100%" height="100%" fill="url(#gradient)" />
-      <text x="50" y="70" font-size="20" fill="white" dominant-baseline="middle" font-family="Barlow" font-weight="bold">
+      <text x="50" y="70" font-size="20" fill="white" dominant-baseline="middle" font-family="Barlow, sans-serif" font-weight="bold">
         Klimadashboard
       </text>
-      <text x="50" y="100" font-size="60" class="uppercase" fill="white" dominant-baseline="hanging" font-family="Barlow" font-weight="bold">
+      <text x="50" y="100" font-size="60" class="uppercase" fill="white" dominant-baseline="hanging" font-family="Barlow, sans-serif" font-weight="bold">
         ${title}
       </text>
     </svg>
@@ -61,7 +61,7 @@ export async function GET(event) {
 				height: height,
 				resvg: {
 					font: {
-						fontFiles: ['/static/fonts/barlow-v12-latin-regular.ttf']
+						fontFiles: ['/fonts/barlow-v12-latin-regular.ttf']
 					}
 				}
 			},
