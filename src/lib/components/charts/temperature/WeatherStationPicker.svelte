@@ -36,8 +36,8 @@
 		}
 	};
 
-	// 105 for Hohe Warte, 403 for Berlin-Dahlem
-	$: presetID = PUBLIC_VERSION == 'at' ? 105 : 403;
+	// 105 for Hohe Warte, 443 for Berlin-Tempelhof
+	$: presetID = PUBLIC_VERSION == 'at' ? 105 : 433;
 
 	if ($page.url.searchParams.get('weatherStation')) {
 		selectedStation = data.stations.find(
