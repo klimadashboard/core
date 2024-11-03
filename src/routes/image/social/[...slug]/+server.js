@@ -33,6 +33,9 @@ export async function GET(event) {
 	const svg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
+    		<style type="text/css">@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600');</style>
+	  </defs>
+	  <defs>
         <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="#27C264" />
           <stop offset="100%" stop-color="#11998E" />
@@ -50,10 +53,23 @@ export async function GET(event) {
 
 	// Convert SVG to JPEG
 	const buffer = await new Promise((resolve, reject) => {
-		svg2img(svg, { format: 'jpeg', width: width, height: height }, (error, buffer) => {
-			if (error) reject(error);
-			else resolve(buffer);
-		});
+		svg2img(
+			svg,
+			{
+				format: 'jpeg',
+				width: width,
+				height: height,
+				resvg: {
+					font: {
+						fontFiles: ['/static/fonts/barlow-v12-latin-regular.ttf']
+					}
+				}
+			},
+			(error, buffer) => {
+				if (error) reject(error);
+				else resolve(buffer);
+			}
+		);
 	});
 
 	// Return the image as a response
