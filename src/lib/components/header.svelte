@@ -28,18 +28,18 @@
 </script>
 
 <header
-	class="fixed left-1/2 top-4 -translate-x-1/2 space-x-8 flex items-center border bg-white shadow-xl rounded-full px-4 z-50"
+	class="fixed left-1/2 top-4 -translate-x-1/2 space-x-4 flex items-center border bg-white shadow rounded-full z-50"
 >
 	<div class="flex">
-		<a href="/" class="flex gap-4 font-bold items-center text-[#11998e]">
-			<div class="bg-current h-10 w-10 relative rounded">
+		<a href="/" class="flex font-bold items-center text-[#11998e]">
+			<div class="bg-current h-12 w-12 relative rounded-full">
 				<svg
 					width="256"
 					height="256"
 					viewBox="0 0 256 256"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
-					class="h-10 w-10 absolute inset-0"
+					class="h-12 w-12 absolute inset-0"
 				>
 					<path
 						d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
@@ -57,10 +57,10 @@
 					/>
 				</svg>
 			</div>
-			<span>Klimadashboard</span>
+			<span class="ml-2">Klimadashboard</span>
 		</a>
 		<button
-			class=" text-[#398F70] border-[#398F70] font-bold -ml-2 flex items-center gap-1 flex-shrink-0"
+			class=" text-[#398F70] border-[#398F70] font-bold ml-1 flex items-center gap-1 flex-shrink-0"
 			on:mousedown={() => goto('/region')}
 		>
 			<span class="">{region}</span>
@@ -117,13 +117,27 @@
 			</svg>
 		</button>
 	</div>
-	<label for="">
-		<input type="search" placeholder="Thema, Region, Frage suchen..." />
-	</label>
-	<button
-		class="flex items-center gap-1 leading-[4rem] px-2 ml-auto"
-		on:mousedown={() => (showNav = !showNav)}
-	>
+	<div class="relative">
+		<label for="">
+			<input type="search" placeholder="Thema, Region, Frage suchen..." />
+		</label>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class="absolute right-0 top-0"
+			><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+				d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"
+			/><path d="M21 21l-6 -6" /></svg
+		>
+	</div>
+	<button class="flex items-center gap-1 px-2 ml-auto" on:mousedown={() => (showNav = !showNav)}>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			class="icon icon-tabler icon-tabler-menu-2"
