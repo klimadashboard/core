@@ -94,14 +94,16 @@
 </script>
 
 {#await promise then data}
-	<h2 class="text-2xl max-w-2xl text-balance">
-		An {data.filter((d) => d.renewable_share >= 100).length} Tagen im letzten Jahr wurde der gesamte
-		Strombedarf komplett aus erneuerbaren Energien gedeckt.
+	<h2 class="text-2xl max-w-2xl">
+		An <span class="underline underline-offset-2 decoration-green-500"
+			>{data.filter((d) => d.renewable_share >= 100).length} Tagen</span
+		> im letzten Jahr wurde der gesamte Strombedarf komplett aus erneuerbaren Energien gedeckt.
 	</h2>
 	<p class="max-w-lg text-lg text-balance leading-snug mt-1">
-		Strom aus erneuerbaren Energien entsprach in den letzten 365 Tagen {Math.round(
-			data.reduce((a, b) => a + b.renewable_share, 0) / data.length
-		)}% der Gesamtlast.
+		Bilanziell wurde die Netzlast in den letzten 365 Tagen zu <span
+			class="underline underline-offset-2 decoration-green-500"
+			>{Math.round(data.reduce((a, b) => a + b.renewable_share, 0) / data.length)}%</span
+		> von Erneuerbaren Energien abgedeckt.
 	</p>
 	<div class="h-80 mt-4 mb-10">
 		<div class="relative text-gray-600 w-40 mb-4">
