@@ -137,26 +137,45 @@
 						{#if has_goals}
 							<g>
 								{#each goals as goal, index}
-									{@const sourceYear = index > 0 ? last_datapoint.goal_year : +goal.source_year}
+									{@const sourceYear = index > 0 ? +goals[index - 1].goal_year : +goal.source_year}
 									<!--take last goal's year and value if there are several goals defined-->
 									{@const sourceAmount =
 										index > 0
-											? +last_datapoint.goal_amount
+											? +goals[index - 1].goal_amount
 											: +dataset.find((d) => +d.year === sourceYear)?.value}
 									{@const goalYear = +goal.goal_year}
 									{@const goalAmount = +goal.goal_amount}
-									{#if !isNaN(sourceYear) && !isNaN(sourceAmount) && !isNaN(goalYear) && !isNaN(goalAmount)}
+									{#if !isNaN(goalYear) && !isNaN(goalAmount)}
+										{#if !isNaN(sourceYear) && !isNaN(sourceAmount)}
+											<line
+												x1={xScale(new Date(sourceYear, 1, 1))}
+												y1={yScale(sourceAmount)}
+												x2={xScale(new Date(goalYear, 1, 1))}
+												y2={yScale(goalAmount)}
+												style="stroke:{grey}; stroke-width:2"
+											/>
+										{:else}
+											{@const approxSourceAmount = +dataset
+												.map((d) => {
+													return {
+														sort: +Math.abs(+d.year - sourceYear),
+														value: d.value,
+														year: d.year
+													};
+												})
+												.sort((a, b) => a.sort - b.sort)[0].value}
+											<line
+												x1={xScale(new Date(sourceYear, 1, 1))}
+												y1={yScale(approxSourceAmount)}
+												x2={xScale(new Date(goalYear, 1, 1))}
+												y2={yScale(goalAmount)}
+												style="stroke:{grey}; stroke-width:2; stroke-dasharray: 5,5"
+											/>
+										{/if}
 										<!-- {@const delta_values_potential = yScale(potential_2030) - yScale(goalAmount)} -->
 										<!-- {@const text_potential_x_offset =
 											showTechn && Math.abs(delta_values_potential) <= 7 ? 10 : 0} -->
 										{@const text_potential_x_offset = 0}
-										<line
-											x1={xScale(new Date(sourceYear, 1, 1))}
-											y1={yScale(sourceAmount)}
-											x2={xScale(new Date(goalYear, 1, 1))}
-											y2={yScale(goalAmount)}
-											style="stroke:{grey}; stroke-width:2"
-										/>
 										<circle
 											cx={xScale(new Date(goalYear, 1, 1))}
 											cy={yScale(goalAmount)}
