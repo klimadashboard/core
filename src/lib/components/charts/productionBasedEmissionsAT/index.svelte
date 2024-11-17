@@ -207,19 +207,34 @@
 		selectedClassification == 'Gesamt' &&
 		!showPerCapita
 	) {
-		dataset.push({
-			label: 2023,
-			annotation: 'Nowcast 2023',
-			categories: [
-				{
-					label: 'Nowcast 2023',
-					value: 68200000,
-					estimate: true,
-					color: '#4DB263'
-				}
-			],
-			estimate: true
-		});
+		dataset.push(
+			{
+				label: 2023,
+				annotation: '',
+				categories: [
+					{
+						label: 'Nowcast 2023',
+						value: 68200000,
+						estimate: true,
+						color: '#4DB263'
+					}
+				],
+				estimate: true
+			},
+			{
+				label: 2024,
+				annotation: '',
+				categories: [
+					{
+						label: 'Forecast 2024',
+						value: 65600000,
+						estimate: true,
+						color: '#4DB263'
+					}
+				],
+				estimate: true
+			}
+		);
 	}
 
 	let freezeYAxis = false;
