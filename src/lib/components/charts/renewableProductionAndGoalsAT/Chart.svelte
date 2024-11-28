@@ -93,19 +93,23 @@
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})" style="color: {type.color}">
 						<g>
-							{#each xScale.ticks(6) as tick, index}
-								<g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-gray-200">
-									<rect
-										x={0}
-										y={-chartHeight - margin.top}
-										width={chartWidth / 15}
-										height={chartHeight}
-										class="fill-gray-200 opacity-50"
-									/>
-									<text class="text-sm text-gray-600 fill-current" x="6" y={-margin.top - 4}
-										>{tick.getFullYear()}</text
-									>
-								</g>
+							{#each xScale.ticks() as tick, index}
+								{#if tick.getMonth() === 0 && tick.getDate() === 1 && tick.getFullYear() % 2 === 0}
+									<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
+										<line
+											x1={0}
+											x2={0}
+											y1={innerChartHeight - 5}
+											y2={innerChartHeight}
+											class="stroke-gray-400"
+										/>
+										<text
+											class="text-sm text-gray-600 fill-current"
+											text-anchor="middle"
+											y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
+										>
+									</g>
+								{/if}
 							{/each}
 						</g>
 						<g>

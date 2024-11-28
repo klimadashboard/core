@@ -25,7 +25,7 @@
 
 	$: has_goals = goals != null && goals.length > 0;
 
-	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2038);
+	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2060);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxValue = predefinedMaxValue
 		? predefinedMaxValue
@@ -90,21 +90,23 @@
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate(0,{margin.top})">
 						<g>
-							{#each xScale.ticks(12) as tick, index}
-								<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
-									<line
-										x1={0}
-										x2={0}
-										y1={innerChartHeight - 5}
-										y2={innerChartHeight}
-										class="stroke-gray-400"
-									/>
-									<text
-										class="text-sm text-gray-600 fill-current"
-										text-anchor="middle"
-										y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
-									>
-								</g>
+							{#each xScale.ticks(6) as tick, index}
+								{#if tick.getFullYear() < 2040}
+									<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
+										<line
+											x1={0}
+											x2={0}
+											y1={innerChartHeight - 5}
+											y2={innerChartHeight}
+											class="stroke-gray-400"
+										/>
+										<text
+											class="text-sm text-gray-600 fill-current"
+											text-anchor="middle"
+											y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
+										>
+									</g>
+								{/if}
 							{/each}
 						</g>
 						<g>
