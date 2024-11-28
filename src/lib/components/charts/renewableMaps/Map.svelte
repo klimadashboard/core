@@ -36,6 +36,63 @@
 	$: getValue = (feature) => {
 		return data[feature.properties['name']][key];
 	};
+
+	const OFFSET_POSITIONS = [
+		[0, 0], // center (default)
+		[0, -15], // top
+		[0, 15], // bottom
+		[-15, 0], // left
+		[15, 0] // right
+	];
+
+	let placedLabels = [];
+
+	function checkOverlap(rect1, rect2) {
+		return !(
+			rect1.x + rect1.width < rect2.x ||
+			rect1.x > rect2.x + rect2.width ||
+			rect1.y + rect1.height < rect2.y ||
+			rect1.y > rect2.y + rect2.height
+		);
+	}
+
+	function findBestPosition(feature) {
+		const centroid = pathGenerator.centroid(feature);
+		let bestPosition = OFFSET_POSITIONS[0];
+		let minOverlaps = Infinity;
+
+		OFFSET_POSITIONS.forEach(([offsetX, offsetY]) => {
+			const testRect = {
+				x: centroid[0] - 26 + offsetX,
+				y: centroid[1] - 12 + offsetY,
+				width: 52,
+				height: 20
+			};
+
+			const overlaps = placedLabels.filter((label) => checkOverlap(testRect, label)).length;
+
+			if (overlaps < minOverlaps) {
+				minOverlaps = overlaps;
+				bestPosition = [offsetX, offsetY];
+			}
+		});
+
+		const finalRect = {
+			x: centroid[0] - 26 + bestPosition[0],
+			y: centroid[1] - 12 + bestPosition[1],
+			width: 52,
+			height: 20
+		};
+
+		placedLabels.push(finalRect);
+		return bestPosition;
+	}
+
+	$: {
+		if (data) {
+			placedLabels = [];
+		}
+	}
 </script>
 
 <div>
@@ -58,11 +115,13 @@
 				<g>
 					{#each topo.features as feature}
 						{#if getValue(feature) !== undefined}
+							{@const position = findBestPosition(feature)}
+							{@const centroid = pathGenerator.centroid(feature)}
 							{#key getValue(feature)}
 								<g>
 									<rect
-										x={pathGenerator.centroid(feature)[0] - 26}
-										y={pathGenerator.centroid(feature)[1] - 12}
+										x={centroid[0] - 26 + position[0]}
+										y={centroid[1] - 12 + position[1]}
 										width="52"
 										height="20"
 										fill="white"
@@ -71,8 +130,8 @@
 										opacity="0.5"
 									/>
 									<text
-										x={pathGenerator.centroid(feature)[0]}
-										y={pathGenerator.centroid(feature)[1]}
+										x={centroid[0] + position[0]}
+										y={centroid[1] + position[1]}
 										dy=".2em"
 										text-anchor="middle"
 										class="fill-black font-bold text-xs"

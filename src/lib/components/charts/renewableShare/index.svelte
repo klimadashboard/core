@@ -91,6 +91,8 @@
 
 		return filteredData;
 	}
+
+	let chartWidth;
 </script>
 
 {#await promise then data}
@@ -105,7 +107,7 @@
 			>{Math.round(data.reduce((a, b) => a + b.renewable_share, 0) / data.length)}%</span
 		> von Erneuerbaren Energien abgedeckt.
 	</p>
-	<div class="h-80 mt-4 mb-10">
+	<div class="mt-4 mb-10">
 		<div class="relative text-gray-600 w-40 mb-4">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -131,30 +133,33 @@
 				<option value="month">Monate</option>
 			</select>
 		</div>
-		<BarChart
-			data={groupByInterval(data, selectedPeriod).map((entry, i) => {
-				return {
-					label: entry.interval,
-					categories: [
-						{
-							label: 'Erneuerbarer Anteil ' + entry.interval + '&nbsp&nbsp|&nbsp&nbsp',
-							value: entry.value,
-							color: entry.value >= 100 ? '#3FB375' : '#c1c1c1'
-						}
-					]
-				};
-			})}
-			visualisation={'stacked'}
-			xAxixInterval={intervals.find((d) => d.key == selectedPeriod).interval}
-			unit="%"
-			lines={[
-				{
-					value: 100,
-					label: '100%',
-					color: '3FB375'
-				}
-			]}
-		/>
+		<div bind:clientWidth={chartWidth} class="h-80">
+			<BarChart
+				data={groupByInterval(data, selectedPeriod).map((entry, i) => {
+					return {
+						label: entry.interval,
+						categories: [
+							{
+								label: 'Erneuerbarer Anteil ' + entry.interval + '&nbsp&nbsp|&nbsp&nbsp',
+								value: entry.value,
+								color: entry.value >= 100 ? '#3FB375' : '#c1c1c1'
+							}
+						]
+					};
+				})}
+				visualisation={'stacked'}
+				xAxixInterval={intervals.find((d) => d.key == selectedPeriod).interval *
+					(chartWidth > 600 ? 1 : 5)}
+				unit="%"
+				lines={[
+					{
+						value: 100,
+						label: '100%',
+						color: '3FB375'
+					}
+				]}
+			/>
+		</div>
 	</div>
 {:catch error}
 	{error}
