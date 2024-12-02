@@ -67,7 +67,7 @@
 		{@html type.icon}
 	</div>
 	<div class="h-auto">
-		<div class="relative w-full h-48" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
+		<div class="relative w-full h-56" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				{@const last_datapoint = dataset[dataset.length - 1]}
 				{@const delta_values = has_goals
@@ -188,7 +188,7 @@
 										{@const anchor = goalYear >= 2040 ? 'end' : 'start'}
 										<text
 											text-anchor={anchor}
-											class="text-sm font-semibold fill-current bg-white"
+											class="text-sm font-semibold fill-current bg-white chart-text"
 											style="fill: {grey};"
 											x={xScale(new Date(goalYear, 1, 1))}
 											y={yScale(goalAmount) + 5}
@@ -226,7 +226,7 @@
 								<text
 									x={12}
 									dominant-baseline="middle"
-									class="text-sm font-semibold fill-current bg-white"
+									class="text-sm font-semibold fill-current bg-white chart-text"
 									>{formatNumber(Math.round(potential_2030 * 100) / 100)}
 									{' ' + unit + ' '}Potential 2030
 								</text>
@@ -276,7 +276,7 @@
 							<text
 								text-anchor="middle"
 								style="fill:{grey};"
-								class="text-sm bg-white font-semibold"
+								class="text-sm bg-white font-semibold chart-text"
 								x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
 								y={yScale(potential_techn)}
 								dy={-3}
@@ -326,7 +326,7 @@
 								/>
 							</circle>
 							<text
-								class="text-sm font-semibold fill-current"
+								class="text-sm font-semibold fill-current chart-text"
 								x={12}
 								y={5}
 								transition:fade
