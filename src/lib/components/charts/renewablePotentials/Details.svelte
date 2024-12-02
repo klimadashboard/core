@@ -16,7 +16,7 @@
 	export let showTechn;
 	export let predefinedMaxValue;
 
-	const margin = { top: 15, right: 10, left: 10, bottom: 25 };
+	const margin = { top: 15, right: 15, left: 15, bottom: 25 };
 	let chartWidth;
 	let chartHeight;
 	let unit = 'TWh';
@@ -60,7 +60,10 @@
 		class="text-white p-1 flex justify-between items-center"
 		style="background: {type.color}; padding-left: 1rem; padding-right: 1rem;"
 	>
-		<h3 class="text-xl"><b>{type.label}</b> {has_goals ? '' : '(kein Ausbauziel definiert)'}</h3>
+		<h3 class="text-xl">
+			<b>{type.label}</b>
+			<span class="text-sm">{has_goals ? '' : '(kein Ausbauziel definiert)'}</span>
+		</h3>
 		{@html type.icon}
 	</div>
 	<div class="h-auto">
@@ -88,30 +91,28 @@
 					: -14}
 
 				<svg width={'100%'} height={'100%'}>
-					<g transform="translate(0,{margin.top})">
+					<g transform="translate({margin.left},{margin.top})">
 						<g>
 							{#each xScale.ticks(6) as tick, index}
-								{#if tick.getFullYear() < 2040}
-									<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
-										<line
-											x1={0}
-											x2={0}
-											y1={innerChartHeight - 5}
-											y2={innerChartHeight}
-											class="stroke-gray-400"
-										/>
-										<text
-											class="text-sm text-gray-600 fill-current"
-											text-anchor="middle"
-											y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
-										>
-									</g>
-								{/if}
+								<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
+									<line
+										x1={0}
+										x2={0}
+										y1={innerChartHeight - 5}
+										y2={innerChartHeight}
+										class="stroke-gray-400"
+									/>
+									<text
+										class="text-sm text-gray-600 fill-current"
+										text-anchor="middle"
+										y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
+									>
+								</g>
 							{/each}
 						</g>
 						<g>
 							{#each yScale.ticks(3) as tick, index}
-								<g transform={`translate(0, ${yScale(tick)})`} class="text-gray-400">
+								<g transform={`translate(${-margin.left}, ${yScale(tick)})`} class="text-gray-400">
 									<line
 										x1="0"
 										x2={chartWidth}
