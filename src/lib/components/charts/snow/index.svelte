@@ -29,8 +29,65 @@
 					limit: -1
 				})
 			);
-			console.log(data);
-			return data;
+
+			// Sort data by date ascending
+			const sortedData = data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+			const winters = [];
+			let currentWinter = {
+				label: '',
+				daysWithSnow: 0,
+				totalSnowAccumulation: 0
+			};
+			let previousSh = null;
+			let currentWinterStartYear = null;
+
+			sortedData.forEach((entry) => {
+				const date = new Date(entry.date);
+				const year = date.getFullYear();
+				const month = date.getMonth() + 1; // Months are 0-based
+
+				// Determine the winter start year
+				let winterStartYear;
+				if (month >= 7) {
+					// July to December
+					winterStartYear = year;
+				} else {
+					// January to June
+					winterStartYear = year - 1;
+				}
+
+				// Initialize new winter if not set or different from current
+				if (currentWinterStartYear !== winterStartYear) {
+					// Push the previous winter to the array
+					if (currentWinterStartYear !== null) {
+						winters.push({ ...currentWinter });
+					}
+					// Start a new winter
+					currentWinterStartYear = winterStartYear;
+					currentWinter = {
+						label: `Winter ${winterStartYear}-${winterStartYear + 1}`,
+						daysWithSnow: 0,
+						totalSnowAccumulation: 0
+					};
+					previousSh = null; // Reset previousSh for the new winter
+				}
+
+				if (previousSh !== null) {
+					if (entry.sh > previousSh) {
+						currentWinter.daysWithSnow += 1;
+						currentWinter.totalSnowAccumulation += entry.sh - previousSh;
+					}
+				}
+
+				previousSh = entry.sh;
+			});
+
+			// Push the last winter
+			if (currentWinterStartYear !== null) {
+				winters.push({ ...currentWinter });
+			}
+			return winters;
 		} else {
 			return false;
 		}
@@ -42,8 +99,8 @@
 <div>
 	{#await promise}
 		<Loader showText={true} />
-	{:then data}
-		<Chart {data} />
+	{:then winters}
+		<Chart {winters} />
 	{:catch error}
 		{error}
 	{/await}
