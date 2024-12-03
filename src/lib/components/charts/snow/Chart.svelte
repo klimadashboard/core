@@ -10,6 +10,7 @@
 			type: 'bar',
 			label: 'Snow days',
 			color: '#11998E',
+			unit: 'Tage',
 			data: winters.map((d, i) => {
 				return {
 					x: i,
@@ -21,6 +22,7 @@
 			type: 'line',
 			label: 'Snow height',
 			color: '#0D22B6',
+			unit: 'cm',
 			data: winters.map((d, i) => {
 				return {
 					x: i,
