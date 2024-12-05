@@ -2,7 +2,6 @@
 	import Chart from '$lib/components/charts/index.svelte';
 
 	export let block;
-	console.log(block);
 	$: hideWrapper = block.hidewrapper;
 </script>
 

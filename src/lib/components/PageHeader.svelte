@@ -2,7 +2,6 @@
 	import { page } from '$app/stores';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { browser } from '$app/environment';
-	import News from './News.svelte';
 
 	export let data;
 

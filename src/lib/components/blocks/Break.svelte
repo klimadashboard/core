@@ -1,5 +1,6 @@
 <script>
-	import Region from '../breaks/region.svelte';
+	import Break from '../breaks/index.svelte';
+	export let block;
 </script>
 
-<Region />
+<Break {block} />

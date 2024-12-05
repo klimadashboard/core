@@ -23,14 +23,14 @@
 	];
 </script>
 
-<div class="">
+<div class="p-4">
 	<h3 class="border-b mb-2 pb-2 uppercase font-bold flex items-center gap-2">
 		<div class="bg-energy bg-opacity-20 w-3 h-3 rounded-full p-1">
 			<div class="bg-energy w-1 h-1 rounded-full animate-ping" />
 		</div>
 		<span>Live</span>
 	</h3>
-	<ul class="flex gap-4">
+	<ul class="grid gap-4 grid-cols-2 md:grid-cols-4">
 		{#each blocks as block}
 			<li class="bg-gray-100 p-4 flex-1">
 				<div class="flex items-end">

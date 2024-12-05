@@ -54,7 +54,6 @@
 
 			// Combine exact matches and partial matches
 			suggestions = [...exactMatches, ...partialMatches];
-			console.log(suggestions);
 			showSuggestions = true;
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);

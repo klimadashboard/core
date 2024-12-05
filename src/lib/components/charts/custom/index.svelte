@@ -1,6 +1,5 @@
 <script>
 	export let chart;
-	console.log(chart);
 
 	const chartComponents = import.meta.glob('./*/index.svelte', {
 		import: 'default',
