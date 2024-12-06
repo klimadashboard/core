@@ -1,7 +1,8 @@
 <script>
-	import Snowflakes from './Snowflakes.svelte';
+	import Tree from './Tree.svelte';
 
 	export let data;
+
 	let startYear = data[0].year;
 	$: countSinceStartYear = data.filter(
 		(d) => d.year >= startYear && (d.sh24 >= 1 || d.sh25 >= 1 || d.sh26 >= 1)
@@ -22,7 +23,7 @@
 		{#each data as d}
 			<div class="flex items-center flex-col">
 				{#if d.hasData}
-					<Snowflakes {d} />
+					<Tree {d} />
 				{:else}
 					<p>No data available</p>
 				{/if}
