@@ -1,4 +1,6 @@
 <script>
+	import { Splide, SplideSlide } from '@splidejs/svelte-splide';
+	import '@splidejs/svelte-splide/css';
 	import { readItems, readAssetRaw } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { onMount } from 'svelte';
@@ -21,9 +23,25 @@
 </script>
 
 {#await promise then quotes}
-	<div class="p-4">
+	<Splide
+		options={{
+			type: 'loop',
+			perPage: 3,
+			arrows: false,
+			autoplay: true,
+			breakpoints: {
+				1800: {
+					perPage: 2
+				},
+				1000: {
+					perPage: 1
+				}
+			}
+		}}
+		aria-label="My Favorite Images"
+	>
 		{#each quotes as quote}
-			<div class="quote">
+			<SplideSlide class="p-4">
 				<p class="text-2xl">{quote.text}</p>
 				<div class="flex items-center gap-2">
 					{#if quote.author_image}
@@ -40,9 +58,9 @@
 						{/if}
 					</div>
 				</div>
-			</div>
+			</SplideSlide>
 		{/each}
-	</div>
+	</Splide>
 {:catch error}
 	<p>Error fetching quotes: {error.message}</p>
 {/await}

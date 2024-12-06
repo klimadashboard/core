@@ -32,6 +32,7 @@
 	"type": "module",
 	"dependencies": {
 		"@directus/sdk": "^16.1.1",
+		"@splidejs/svelte-splide": "^0.2.9",
 		"@sveltejs/svelte-scroller": "^2.0.7",
 		"d3": "^7.6.1",
 		"dayjs": "^1.11.3",
