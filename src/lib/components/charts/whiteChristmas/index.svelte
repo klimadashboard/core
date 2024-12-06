@@ -23,17 +23,13 @@
 										_eq: parseInt(selectedStation.id)
 									}
 								}
-							},
-							{
-								sh: {
-									_gte: 1
-								}
 							}
 						]
 					},
 					limit: -1
 				})
 			);
+			console.log(data);
 
 			const snowHeights = {};
 
