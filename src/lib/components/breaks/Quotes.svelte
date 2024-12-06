@@ -42,11 +42,14 @@
 	>
 		{#each quotes as quote}
 			<SplideSlide class="p-4">
-				<p class="text-2xl">{quote.text}</p>
-				<div class="flex items-center gap-2">
+				<div class="relative">
+					<p class="text-2xl">{quote.text}</p>
+					<p class="-top-32 -left-8 absolute text-[10rem] font-light opacity-10">»</p>
+				</div>
+				<div class="flex items-center gap-2 mt-4">
 					{#if quote.author_image}
 						<img
-							class="w-24 h-24 rounded-full"
+							class="w-20 h-20 rounded-full shadow"
 							src="https://base.klimadashboard.org/assets/{quote.author_image}"
 							alt={quote.author_name}
 						/>
