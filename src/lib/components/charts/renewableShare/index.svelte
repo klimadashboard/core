@@ -5,6 +5,7 @@
 	import dayjs from 'dayjs';
 	import de from 'dayjs/locale/de-at';
 	import isoWeek from 'dayjs/plugin/isoWeek';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	dayjs.extend(isoWeek);
 	dayjs.locale('de');
@@ -12,7 +13,12 @@
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
 		const data = await directus.request(
-			readItems('at_energy_renewable_share_daily_average', {
+			readItems('renewable_share_daily', {
+				filter: {
+					country: {
+						_eq: PUBLIC_VERSION.toUpperCase()
+					}
+				},
 				limit: -1
 			})
 		);
@@ -76,7 +82,7 @@
 			if (!acc[key]) {
 				acc[key] = { sum: 0, count: 0, expectedCount: getExpectedCount(curr.date) };
 			}
-			acc[key].sum += curr.renewable_share;
+			acc[key].sum += curr.share;
 			acc[key].count += 1;
 			return acc;
 		}, {});
@@ -98,13 +104,13 @@
 {#await promise then data}
 	<h2 class="text-2xl max-w-2xl">
 		An <span class="underline underline-offset-2 decoration-green-500"
-			>{data.filter((d) => d.renewable_share >= 100).length} Tagen</span
+			>{data.filter((d) => d.share >= 100).length} Tagen</span
 		> im letzten Jahr wurde der gesamte Strombedarf komplett aus erneuerbaren Energien gedeckt.
 	</h2>
 	<p class="max-w-lg text-lg text-balance leading-snug mt-1">
 		Bilanziell wurde die Netzlast in den letzten 365 Tagen zu <span
 			class="underline underline-offset-2 decoration-green-500"
-			>{Math.round(data.reduce((a, b) => a + b.renewable_share, 0) / data.length)}%</span
+			>{Math.round(data.reduce((a, b) => a + b.share, 0) / data.length)}%</span
 		> von Erneuerbaren Energien abgedeckt.
 	</p>
 	<div class="mt-4 mb-10">
