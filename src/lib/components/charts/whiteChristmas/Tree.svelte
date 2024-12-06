@@ -1,6 +1,5 @@
 <script>
 	export let d;
-	console.log(d);
 </script>
 
 {#if d.sh24 >= 1 && d.sh25 >= 1 && d.sh26 >= 1}

@@ -2,6 +2,9 @@
 	import Tree from './Tree.svelte';
 
 	export let data;
+	export let selectedStation;
+
+	console.log(data);
 
 	let startYear = data[0].year;
 	$: countSinceStartYear = data.filter(
@@ -16,7 +19,7 @@
 	</div>
 	<div class="">
 		<p class="text-2xl">
-			Seit {startYear} gab es {countSinceStartYear} weiße Weihnachten in {'München'}.
+			Seit {startYear} gab es {countSinceStartYear} weiße Weihnachten in {selectedStation.name}.
 		</p>
 	</div>
 	<div class="grid grid-cols-10 gap-4 bg-gray-100">

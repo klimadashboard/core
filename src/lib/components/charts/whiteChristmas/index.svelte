@@ -1,15 +1,15 @@
 <script>
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems, readItem } from '@directus/sdk';
-	import Loader from '$lib/components/Loader.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Chart from './Chart.svelte';
+	import StationPicker from '$lib/components/charts/stationPicker/index.svelte';
 
-	let selectedStation = 101;
+	let selectedStation;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';
 
-	async function getData() {
+	$: getData = async function () {
 		const directus = getDirectusInstance(fetch);
 		if (selectedStation) {
 			const data = await directus.request(
@@ -20,7 +20,7 @@
 							{
 								station: {
 									id: {
-										_eq: parseInt(3379)
+										_eq: parseInt(selectedStation.id)
 									}
 								}
 							},
@@ -34,72 +34,53 @@
 					limit: -1
 				})
 			);
-			return data;
+
+			const snowHeights = {};
+
+			// Populate snowHeights with entries for Dec 24, 25, and 26
+			data.forEach(({ date, sh }) => {
+				const d = new Date(date);
+				const year = d.getFullYear();
+				const month = d.getMonth() + 1;
+				const day = d.getDate();
+
+				if (month === 12 && [24, 25, 26].includes(day) && sh >= 0) {
+					snowHeights[year] = snowHeights[year] || { 24: null, 25: null, 26: null };
+					snowHeights[year][day] = sh;
+				}
+			});
+
+			const currentYear = new Date().getFullYear();
+			const snowHeightsArray = [];
+
+			for (let year = 1950; year <= currentYear; year++) {
+				const { 24: sh24 = null, 25: sh25 = null, 26: sh26 = null } = snowHeights[year] || {};
+				const allNull = sh24 === null && sh25 === null && sh26 === null;
+
+				// If all null, no data. Otherwise, replace nulls with 0.
+				snowHeightsArray.push({
+					year,
+					sh24: allNull ? null : sh24 ?? 0,
+					sh25: allNull ? null : sh25 ?? 0,
+					sh26: allNull ? null : sh26 ?? 0,
+					hasData: !allNull
+				});
+			}
+
+			return snowHeightsArray;
 		} else {
 			return false;
 		}
-	}
+	};
 
-	function calculateSnowHeights(data) {
-		const snowHeights = {};
-
-		data.forEach(({ date, sh }) => {
-			const currentDate = new Date(date);
-			const year = currentDate.getFullYear();
-			const month = currentDate.getMonth() + 1; // Months are 0-indexed
-			const day = currentDate.getDate();
-
-			if (month === 12 && (day === 24 || day === 25 || day === 26)) {
-				if (!snowHeights[year]) {
-					// Initialize snow heights for the three days to null
-					snowHeights[year] = { 24: null, 25: null, 26: null };
-				}
-				// Assign snow height if sh is 0 or greater
-				if (sh >= 0) {
-					snowHeights[year][day] = sh;
-				}
-			}
-		});
-
-		// Generate an array from 1950 to the current year
-		const currentYear = new Date().getFullYear();
-		const snowHeightsArray = [];
-
-		for (let year = 1950; year <= currentYear; year++) {
-			const days = snowHeights[year];
-
-			if (days && days[24] !== null && days[25] !== null && days[26] !== null) {
-				// All three days have valid snow height data
-				snowHeightsArray.push({
-					year,
-					sh24: days[24],
-					sh25: days[25],
-					sh26: days[26],
-					hasData: true
-				});
-			} else {
-				// Missing data for one or more days
-				snowHeightsArray.push({
-					year,
-					sh24: days?.[24] ?? 0,
-					sh25: days?.[25] ?? 0,
-					sh26: days?.[26] ?? 0,
-					hasData: false
-				});
-			}
-		}
-
-		return snowHeightsArray;
-	}
-
-	$: promise = getData().then(calculateSnowHeights);
+	$: promise = getData();
 </script>
 
+<StationPicker bind:selectedStation />
+
 <div>
-	{#await promise}
-		<Loader showText={true} />
-	{:then data}
-		<Chart {data} />
+	{#await promise then data}
+		<Chart {data} {selectedStation} />
 	{:catch error}
 		{error}
 	{/await}
