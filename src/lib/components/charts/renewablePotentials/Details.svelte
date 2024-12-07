@@ -14,8 +14,9 @@
 	export let goals;
 	export let selectedStartYear;
 	export let showTechn;
+	export let predefinedMaxValue;
 
-	const margin = { top: 20, right: 10, left: 10, bottom: 10 };
+	const margin = { top: 15, right: 15, left: 15, bottom: 25 };
 	let chartWidth;
 	let chartHeight;
 	let unit = 'TWh';
@@ -24,15 +25,18 @@
 
 	$: has_goals = goals != null && goals.length > 0;
 
-	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2038);
+	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2060);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
-	$: maxValue = showTechn
-		? potential_techn * 1.1
-		: Math.max(
-				Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
-				potential_2030 * 1.1
-		  );
-	$: minValue = -maxValue / 5;
+	$: maxValue = predefinedMaxValue
+		? predefinedMaxValue
+		: (showTechn
+				? potential_techn
+				: Math.max(
+						Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
+						potential_2030,
+						Math.max(...dataset.map((g) => +g.value))
+				  )) * 1.1;
+	$: minValue = 0;
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
@@ -56,85 +60,125 @@
 		class="text-white p-1 flex justify-between items-center"
 		style="background: {type.color}; padding-left: 1rem; padding-right: 1rem;"
 	>
-		<h3 class="text-xl"><b>{type.label}</b> {has_goals ? '' : '(kein Ausbauziel definiert)'}</h3>
+		<h3 class="text-xl">
+			<b>{type.label}</b>
+			<span class="text-sm">{has_goals ? '' : '(kein Ausbauziel definiert)'}</span>
+		</h3>
 		{@html type.icon}
 	</div>
 	<div class="h-auto">
-		<div class="relative w-full h-48" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
+		<div class="relative w-full h-56" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				{@const last_datapoint = dataset[dataset.length - 1]}
 				{@const delta_values = has_goals
 					? yScale(+goals[0].goal_amount) - yScale(+last_datapoint.value)
 					: 0}
 				{@const text_production_x_offset = has_goals
-					? Math.abs(delta_values) <= 7 && +goals[0].goal_year > 2000
+					? Math.abs(delta_values) <= 8.1 && +goals[0].goal_year > 2000
 						? delta_values < 0
 							? 10
 							: -10
 						: 0
 					: 0}
 
-				{@const text_potential_2030_y_offset =
-					has_goals && yScale(+goals[0].goal_amount) - yScale(potential_2030) < 0 ? +16 : -14}
+				{@const delta_goal_potential_2030 = yScale(+goals[0]?.goal_amount) - yScale(potential_2030)}
+				{@const text_potential_2030_y_offset = has_goals
+					? Math.abs(delta_goal_potential_2030) < 25
+						? delta_goal_potential_2030 > -18
+							? -14
+							: +16
+						: -14
+					: -14}
 
 				<svg width={'100%'} height={'100%'}>
-					<g transform="translate(0,{margin.top})">
+					<g transform="translate({margin.left},{margin.top})">
 						<g>
 							{#each xScale.ticks(6) as tick, index}
-								<g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-gray-200">
-									<rect
-										x={0}
-										y={-chartHeight - margin.top}
-										width={chartWidth / 10}
-										height={chartHeight}
-										class="fill-gray-200 opacity-50"
+								<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
+									<line
+										x1={0}
+										x2={0}
+										y1={innerChartHeight - 5}
+										y2={innerChartHeight}
+										class="stroke-gray-400"
 									/>
-									<text class="text-sm text-gray-600 fill-current" x="6" y={-margin.top - 4}
-										>{tick.getFullYear()}</text
+									<text
+										class="text-sm text-gray-600 fill-current"
+										text-anchor="middle"
+										y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
 									>
 								</g>
 							{/each}
 						</g>
 						<g>
 							{#each yScale.ticks(3) as tick, index}
-								<g transform={`translate(0, ${yScale(tick)})`} class="text-gray-400">
+								<g transform={`translate(${-margin.left}, ${yScale(tick)})`} class="text-gray-400">
 									<line
 										x1="0"
 										x2={chartWidth}
 										y1="0"
 										y2="0"
-										stroke-width="1"
-										class="stroke-gray-200 opacity-50"
+										class={index == 0 ? 'stroke-gray-400' : 'stroke-gray-200'}
 									/>
 									<text class="text-sm text-gray-600 fill-current bg-white" x="10" y="-4"
 										>{tick} {index == yScale.ticks(3).length - 1 ? ' ' + unit : ''}</text
 									>
 								</g>
 							{/each}
+							<!-- 0 Linie -->
+							<g transform={`translate(0, ${yScale(0)})`} class="text-gray-400">
+								<line
+									x1="0"
+									x2={chartWidth}
+									y1="0"
+									y2="0"
+									stroke-width="2"
+									class="stroke-gray-400 opacity-50"
+								/>
+							</g>
 						</g>
 						{#if has_goals}
 							<g>
 								{#each goals as goal, index}
-									{@const sourceYear = index > 0 ? last_datapoint.goal_year : +goal.source_year}
+									{@const sourceYear = index > 0 ? +goals[index - 1].goal_year : +goal.source_year}
 									<!--take last goal's year and value if there are several goals defined-->
 									{@const sourceAmount =
 										index > 0
-											? +last_datapoint.goal_amount
+											? +goals[index - 1].goal_amount
 											: +dataset.find((d) => +d.year === sourceYear)?.value}
 									{@const goalYear = +goal.goal_year}
 									{@const goalAmount = +goal.goal_amount}
-									{#if !isNaN(sourceYear) && !isNaN(sourceAmount) && !isNaN(goalYear) && !isNaN(goalAmount)}
+									{#if !isNaN(goalYear) && !isNaN(goalAmount)}
+										{#if !isNaN(sourceYear) && !isNaN(sourceAmount)}
+											<line
+												x1={xScale(new Date(sourceYear, 1, 1))}
+												y1={yScale(sourceAmount)}
+												x2={xScale(new Date(goalYear, 1, 1))}
+												y2={yScale(goalAmount)}
+												style="stroke:{grey}; stroke-width:2"
+											/>
+										{:else}
+											{@const approxSourceAmount = +dataset
+												.map((d) => {
+													return {
+														sort: +Math.abs(+d.year - sourceYear),
+														value: d.value,
+														year: d.year
+													};
+												})
+												.sort((a, b) => a.sort - b.sort)[0].value}
+											<line
+												x1={xScale(new Date(sourceYear, 1, 1))}
+												y1={yScale(approxSourceAmount)}
+												x2={xScale(new Date(goalYear, 1, 1))}
+												y2={yScale(goalAmount)}
+												style="stroke:{grey}; stroke-width:2; stroke-dasharray: 5,5"
+											/>
+										{/if}
 										<!-- {@const delta_values_potential = yScale(potential_2030) - yScale(goalAmount)} -->
 										<!-- {@const text_potential_x_offset =
 											showTechn && Math.abs(delta_values_potential) <= 7 ? 10 : 0} -->
 										{@const text_potential_x_offset = 0}
-										<line
-											x1={xScale(new Date(sourceYear, 1, 1))}
-											y1={yScale(sourceAmount)}
-											x2={xScale(new Date(goalYear, 1, 1))}
-											y2={yScale(goalAmount)}
-											style="stroke:{grey}; stroke-width:2"
-										/>
 										<circle
 											cx={xScale(new Date(goalYear, 1, 1))}
 											cy={yScale(goalAmount)}
@@ -144,7 +188,7 @@
 										{@const anchor = goalYear >= 2040 ? 'end' : 'start'}
 										<text
 											text-anchor={anchor}
-											class="text-sm font-semibold fill-current bg-white"
+											class="text-sm font-semibold fill-current bg-white chart-text"
 											style="fill: {grey};"
 											x={xScale(new Date(goalYear, 1, 1))}
 											y={yScale(goalAmount) + 5}
@@ -174,27 +218,49 @@
 								</text>
 							</g> -->
 						{/if}
-						{#if potential_2030 != null}
-							<text
-								text-anchor="middle"
-								class="text-sm font-semibold fill-current bg-white"
-								style="fill: {green}"
-								x={xScale(new Date(2030, 1, 1))}
-								y={yScale(potential_2030)}
-								dy={text_potential_2030_y_offset}
-								dx={0}
-								>{formatNumber(Math.round(potential_2030 * 100) / 100)}
-								{' ' + unit + ' '}Potential 2030
-							</text>
+						{#if potential_2030 != null && potential_2030 > 0}
+							<g
+								transform="translate({xScale(new Date(2030, 1, 1))},{yScale(potential_2030)})"
+								class="text-green-600"
+							>
+								<text
+									x={12}
+									dominant-baseline="middle"
+									class="text-sm font-semibold fill-current bg-white chart-text"
+									>{formatNumber(Math.round(potential_2030 * 100) / 100)}
+									{' ' + unit + ' '}Potential 2030
+								</text>
+								<!--
 							<text
 								text-anchor="middle"
 								class="text-xl font-semibold fill-current bg-white"
-								style="fill: {green}"
+								style="fill: {grey}"
 								x={xScale(new Date(2030, 1, 1))}
 								y={yScale(potential_2030)}
 								dy={4}
 								dx={0}>★</text
 							>
+						-->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									y={-12}
+									x={-12}
+									><path stroke="none" d="M0 0h24v24H0z" fill="none" /><circle
+										cx="12"
+										cy="12"
+										r=".5"
+										fill="currentColor"
+									/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /></svg
+								>
+							</g>
 						{/if}
 						{#if potential_techn != null && showTechn}
 							<line
@@ -210,7 +276,7 @@
 							<text
 								text-anchor="middle"
 								style="fill:{grey};"
-								class="text-sm bg-white font-semibold"
+								class="text-sm bg-white font-semibold chart-text"
 								x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
 								y={yScale(potential_techn)}
 								dy={-3}
@@ -260,12 +326,14 @@
 								/>
 							</circle>
 							<text
-								class="text-sm font-semibold fill-current"
+								class="text-sm font-semibold fill-current chart-text"
 								x={12}
 								y={5}
 								transition:fade
 								dy={text_production_x_offset}
-								>{formatNumber(Math.round(last_datapoint.value * 100) / 100)}
+								>{last_datapoint.value > 0.01
+									? formatNumber(Math.round(last_datapoint.value * 100) / 100)
+									: last_datapoint.value.toString().replace('.', ',')}
 								{' ' + unit + ' '}
 								Produktion
 								<!-- im Zeitraum

@@ -68,8 +68,6 @@
 
 	let goals;
 	let showTechn = false;
-	let hoverType;
-	let hoverBundesland;
 
 	// onMount(() => {
 	// https://docs.google.com/spreadsheets/d/16kr90lRgPOteSYTa7hp5gOGA_49WdOqWSwSQty4uSZs/edit?usp=drive_link
@@ -205,35 +203,31 @@
 	$: selectedStartYear = minYear;
 </script>
 
-<div class="grid grid-cols-3 gap-3 my-3">
+<div class="flex gap-4 items-center text-gray-700">
 	<div>
 		<label
-			class="flex gap-1 text-sm items-center cursor-pointer {showTechn
-				? 'text-gray-700'
-				: 'text-gray-400'}"
+			class="flex gap-1 items-center cursor-pointer {showTechn ? '' : 'text-gray-400'}"
 			style=""
 		>
 			<span>Technisch mögliche Potentiale</span>
 			<input type="checkbox" bind:checked={showTechn} />
 		</label>
 	</div>
-	<div />
-	<!-- <div class="rounded overflow-hidden div-bundesland w-40">
-		<Chart
-			bundesland={'Legende'}
-			current_energy={{ wasserkraft: 50, windkraft: 70, pv: 40, year: '' }}
-			{energyTypes}
-			bundeslaender={{ Legende: 'Legende' }}
-			potentiale_2030={{ wasserkraft: 90, windkraft: 110, pv: 120, year: '' }}
-			potentiale_techn={{ wasserkraft: 150, windkraft: 150, pv: 150, year: '' }}
-			{showTechn}
+	<div>
+		<span>Startjahr auswählen</span>
+		<input
+			type="number"
+			min={minYear}
+			max={maxYear}
+			bind:value={selectedStartYear}
+			class="px-3 py-1 w-20 bg-gray-100 rounded-full"
 		/>
-	</div> -->
+	</div>
 </div>
 
-<div id="renewablePotentialsDiv" class="grid gap-4 my-4">
+<div class="mt-4">
 	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset && goals}
-		<div class="flex flex-wrap gap-2 justify-center items-center">
+		<div class="flex flex-wrap gap-2 items-center">
 			{#each Object.keys(energyByBundesland) as bundesland}
 				<button
 					class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-1 {selectedBundesland === bundesland
@@ -248,16 +242,13 @@
 				>
 			{/each}
 		</div>
-		<div class="grid gap-4 p-2">
+		<div class="grid gap-4 md:grid-cols-3 mt-4">
 			{#each energyTypes as type}
 				{@const cur_goals = goals.filter(
 					(row) =>
 						row.state_name === selectedBundesland &&
 						row.energy_data_key === type.dataKey &&
-						row.goal_amount != 'keinZiel' //&&
-					// !isNaN(row.goal_amount) &&
-					// !isNaN(row.goal_year) &&
-					// !isNaN(row.source_year)
+						row.goal_amount != 'keinZiel'
 				)}
 				<Details
 					bundesland={selectedBundesland}
@@ -278,33 +269,5 @@
 				/>
 			{/each}
 		</div>
-		<div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
-			<span>Startjahr auswählen</span>
-			<input
-				type="number"
-				min={minYear}
-				max={maxYear}
-				bind:value={selectedStartYear}
-				class="px-3 py-1 w-20 bg-gray-100 rounded-full"
-			/>
-		</div>
 	{/if}
 </div>
-
-<style>
-	@media screen and (min-width: 1024px) {
-		#renewablePotentialsDiv {
-			/* grid-template-areas: 'overview overview overview overview details details details'; */
-			/*grid-template-columns: 60% 40%;*/
-			padding-left: 10%;
-			padding-right: 10%;
-		}
-	}
-	.div-bundesland {
-		border: 5px solid #ffffff00;
-		cursor: pointer;
-	}
-	.selected {
-		border-color: #11998e;
-	}
-</style>
