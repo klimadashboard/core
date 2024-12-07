@@ -12,23 +12,44 @@
 	import Quote from './Quote.svelte';
 	import List from './List.svelte';
 	import Grid from './Grid.svelte';
-	import Break from './Break.svelte';
 	import Text from './Text.svelte';
+	import Media from './Media.svelte';
+	import Donation from './Donation.svelte';
+	import Quiz from './Quiz.svelte';
+	import Quotes from './Quotes.svelte';
+	import Live from './Live.svelte';
 
 	export let data;
+	console.log(data);
 
 	const blocks = [
+		{
+			type: 'block_live',
+			component: Live
+		},
 		{
 			type: 'block_richtext',
 			component: Text
 		},
 		{
-			type: 'block_grid',
-			component: Grid
+			type: 'block_media',
+			component: Media
 		},
 		{
-			type: 'block_break',
-			component: Break
+			type: 'block_donation',
+			component: Donation
+		},
+		{
+			type: 'block_quiz',
+			component: Quiz
+		},
+		{
+			type: 'block_quotes',
+			component: Quotes
+		},
+		{
+			type: 'block_grid',
+			component: Grid
 		},
 		{
 			type: 'heading',

@@ -10,6 +10,8 @@
 	$: questionIndex = 0;
 	$: questionText = '';
 
+	$: console.log($page);
+
 	fetch('https://klimadashboard.org/quiz.json').then(async (response) => {
 		const questions = (await response.json()) as QuizQuestion[];
 		// filter only questions for this page!
@@ -19,9 +21,9 @@
 			})
 			.filter((q) => {
 				const uuid = $page.data.uuid;
-				if ($page.data.title == 'Startseite') return true; // q.showOnPages == null   // only STARTPAGE
+				if ($page.data.content.title == 'Startseite') return true; // q.showOnPages == null   // only STARTPAGE
 				return q.showOnPages?.filter((p) =>
-					p.uid.split('-')[0].includes($page.data.title.toLocaleLowerCase())
+					p.uid.split('-')[0].includes($page.data.content.title.toLocaleLowerCase())
 				).length;
 			});
 
