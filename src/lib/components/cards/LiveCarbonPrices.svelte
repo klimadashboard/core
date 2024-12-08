@@ -34,7 +34,7 @@
 </script>
 
 {#await promise then data}
-	<div class="shadow p-4 leading-tight">
+	<div class="leading-tight">
 		<div class="flex justify-between font-bold text-blue-700 border-b border-current pb-2 mb-2">
 			<h3>CO2-Preis</h3>
 			<svg
@@ -58,7 +58,9 @@
 		<div>
 			<div class="flex items-end gap-2">
 				<p class="text-5xl font-light font-condensed">
-					{formatNumber(data.etsPrice[0].value)}{data.etsPrice[0].unit}
+					{formatNumber(data.etsPrice[0].value)}<span class="text-2xl font-normal"
+						>{data.etsPrice[0].unit}</span
+					>
 				</p>
 				<div class="h-8 w-full text-blue-700">
 					<SmallLine
@@ -75,12 +77,12 @@
 			<p>Preis im europäischen Emissionshandel</p>
 			<p>{dayjs(data.etsPrice[0].date).format('D.M.YYYY HH:mm')}</p>
 		</div>
-		<div>
-			<p class="border-t border-gray-200 pt-2 mt-2">
+		<ul class="card-list">
+			<li class="">
 				<strong>{data.nationalPrice.value}{data.nationalPrice.unit}</strong> CO2-Preis in {PUBLIC_VERSION}
 				seit {dayjs(data.nationalPrice.date).format('D.M.YYYY')}
-			</p>
-		</div>
+			</li>
+		</ul>
 	</div>
 {:catch error}
 	<p>Error: {error}</p>

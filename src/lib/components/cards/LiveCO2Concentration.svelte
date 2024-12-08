@@ -21,7 +21,7 @@
 </script>
 
 {#await promise then data}
-	<div class="shadow p-4 leading-tight">
+	<div class="leading-tight">
 		<div class="flex justify-between font-bold text-budgetDark border-b border-current pb-2 mb-2">
 			<h3>CO2-Konzentration & Erderhitzung</h3>
 			<svg
@@ -42,8 +42,10 @@
 		</div>
 		<div>
 			<div class="flex items-end gap-2">
-				<p class="text-5xl font-light font-condensed">
-					{formatNumber(data[data.length - 1].mean)}<span class="text-2xl font-normal">ppm</span>
+				<p class="text-4xl font-light font-condensed">
+					{formatNumber(Math.round(data[data.length - 1].mean))}<span class="text-2xl font-normal"
+						>ppm</span
+					>
 				</p>
 				<div class="h-8 w-full text-budgetDark">
 					<SmallLine
@@ -57,11 +59,11 @@
 				</div>
 			</div>
 			<p>im Jahr {data[data.length - 1].year}</p>
-			<ul>
-				<li class="border-t border-gray-200 pt-2 mt-2">
+			<ul class="card-list">
+				<li class="">
 					<strong>+1,2°C</strong> Erderhitzung im langjährigen Mittel gegenüber 1850
 				</li>
-				<li class="border-t border-gray-200 pt-2 mt-2">
+				<li class="">
 					<strong>+1,5°C</strong> Globales Temperaturmittel im Jahr 2024 gegenüber 1850
 				</li>
 			</ul>

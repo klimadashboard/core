@@ -229,3 +229,11 @@ sub {
 .splide__pagination__page.is-active {
 	@apply bg-gray-700;
 }
+
+.card-list {
+	@apply text-sm leading-tight;
+}
+
+.card-list li {
+	@apply border-t border-gray-200 pt-1 mt-1;
+}

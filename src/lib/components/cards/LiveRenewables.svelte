@@ -63,7 +63,7 @@
 </script>
 
 {#await promise then data}
-	<div class="shadow p-4 leading-tight">
+	<div class="leading-tight font-condensed">
 		<div class="flex justify-between font-bold text-orange-600 border-b border-current pb-2 mb-2">
 			<h3>Erneuerbare Energien</h3>
 			<svg
@@ -84,7 +84,7 @@
 		</div>
 		<div>
 			<p class="text-5xl font-light font-condensed">
-				{formatNumber(data.renewableShareNow.share)}%
+				{formatNumber(data.renewableShareNow.share)}<span class="text-2xl font-normal">%</span>
 			</p>
 			<p>
 				aktueller Anteil am Gesamtstromverbrauch <span class="opacity-70"
@@ -93,16 +93,16 @@
 			</p>
 			<p />
 		</div>
-		<ul>
-			<li class="border-t border-gray-200 pt-2 mt-2">
+		<ul class="card-list">
+			<li>
 				<strong>{formatNumber(data.renewableShareLast30Days)}%</strong>
 				in den letzten 30 Tagen
 			</li>
-			<li class="border-t border-gray-200 pt-2 mt-2">
+			<li>
 				<strong>{formatNumber(data.renewableShareLast365Days)}%</strong>
 				in den letzten 365 Tagen
 			</li>
-			<li class="border-t border-gray-200 pt-2 mt-2">
+			<li>
 				<strong>XX%</strong> Ziel bis 2030
 			</li>
 		</ul>

@@ -19,9 +19,11 @@
 	];
 </script>
 
-<h2 class="text-center text-2xl font-bold mb-4">Spende für unsere Arbeit</h2>
-<div class="flex items-center gap-4 justify-center text-2xl">
-	{#each values as value}
-		<a href={value.link} class="shadow-lg px-2 py-1 rounded-md border">{value.value}</a>
-	{/each}
+<div class="p-3">
+	<h2 class="text-center text-2xl font-bold mb-4">Spende für unsere Arbeit</h2>
+	<div class="flex items-center gap-4 justify-center text-2xl">
+		{#each values as value}
+			<a href={value.link} class="shadow-lg px-2 py-1 rounded-md border">{value.value}</a>
+		{/each}
+	</div>
 </div>
