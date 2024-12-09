@@ -4,8 +4,6 @@
 	export let data;
 	export let selectedStation;
 
-	console.log(data);
-
 	let startYear = data[0].year;
 	$: countSinceStartYear = data.filter(
 		(d) => d.year >= startYear && (d.sh24 >= 1 || d.sh25 >= 1 || d.sh26 >= 1)
@@ -22,16 +20,17 @@
 			Seit {startYear} gab es {countSinceStartYear} weiße Weihnachten in {selectedStation.name}.
 		</p>
 	</div>
-	<div class="grid grid-cols-10 gap-4 bg-gray-100">
-		{#each data as d}
-			<div class="flex items-center flex-col">
-				{#if d.hasData}
-					<Tree {d} />
-				{:else}
-					<p>No data available</p>
-				{/if}
-				<p>{d.year}</p>
-			</div>
-		{/each}
-	</div>
+</div>
+<div
+	class="mt-4 grid grid-cols-10 shadow-lg border bg-gray-50 p-4 pt-12 rounded-lg relative max-w-2xl mx-auto"
+>
+	<p class="absolute top-2 left-1/2 -translate-x-1/2 uppercase font-medium opacity-70">
+		Weiße Weihnachten in {selectedStation.name}
+	</p>
+	{#each data as d}
+		<div class="flex items-center flex-col">
+			<Tree {d} />
+			<p class="text-sm opacity-70 pb-2 border-t border-black">{d.year}</p>
+		</div>
+	{/each}
 </div>

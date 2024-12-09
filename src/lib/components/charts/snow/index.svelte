@@ -9,6 +9,45 @@
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';
 
+	function groupDataByWinter(data) {
+		const winters = {};
+
+		data.forEach((entry) => {
+			const date = new Date(entry.date);
+			const month = date.getMonth(); // 0 (January) to 11 (December)
+			const year = date.getFullYear();
+
+			// Include only October (9) to April (3)
+			if (month >= 10) {
+				// October to December
+				const winterKey = `${year}/${year + 1}`;
+
+				if (!winters[winterKey]) {
+					winters[winterKey] = [];
+				}
+				winters[winterKey].push(entry);
+			} else if (month <= 2) {
+				// January to April
+				const winterKey = `${year - 1}/${year}`;
+
+				if (!winters[winterKey]) {
+					winters[winterKey] = [];
+				}
+				winters[winterKey].push(entry);
+			}
+			// Ignore months May (4) to September (8)
+		});
+
+		// Transform the winters object into an array with label and data
+		return Object.keys(winters).map((winterKey) => ({
+			label: winterKey,
+			data: winters[winterKey].map((entry, index) => ({
+				...entry,
+				x: index // Assign incremental x value starting from 0
+			}))
+		}));
+	}
+
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
 		if (selectedStation) {
@@ -20,7 +59,7 @@
 							{
 								station: {
 									id: {
-										_eq: parseInt(3379)
+										_eq: parseInt(2667)
 									}
 								}
 							}
@@ -30,7 +69,9 @@
 				})
 			);
 
-			return data;
+			const wintersData = groupDataByWinter(data);
+
+			return wintersData;
 		} else {
 			return false;
 		}

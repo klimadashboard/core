@@ -1,60 +1,51 @@
 <script>
-	export let data;
-
 	import { line, area } from 'd3-shape';
+	import { scaleLinear } from 'd3-scale';
 
-	/**
-	 * Groups the data array into separate arrays for each winter period.
-	 * Winter is defined as October to April of the following year.
-	 *
-	 * @param {Array} data - Array of objects with `date` and `sh` properties.
-	 * @returns {Array} - Array of winter arrays, each containing daily values.
-	 */
-	function groupDataByWinter(data) {
-		const winters = {};
+	export let data;
+	console.log(data);
 
-		data.forEach((entry) => {
-			const date = new Date(entry.date);
-			let year = date.getFullYear();
-			const month = date.getMonth() + 1; // Months are zero-indexed
+	let chartWidth;
+	let chartHeight;
 
-			// If month is October (10) to December (12), it's the start of a winter
-			if (month >= 10) {
-				winters[year] = winters[year] || [];
-				winters[year].push(entry);
-			}
-			// If month is January (1) to April (4), it belongs to the previous winter
-			else if (month >= 1 && month <= 4) {
-				winters[year - 1] = winters[year - 1] || [];
-				winters[year - 1].push(entry);
-			}
-			// Months outside the winter range are ignored
-		});
+	// Compute scales
+	$: xScale = scaleLinear().domain([0, 150]).range([0, chartWidth]);
+	$: yScale = scaleLinear().domain([0, 10]).range([20, 0]);
 
-		// Convert the winters object to an array sorted by year
-		const sortedWinters = Object.keys(winters)
-			.sort((a, b) => a - b)
-			.map((year) => winters[year]);
+	// Generate lines
+	$: generateLine = function (data) {
+		return line()
+			.x((d) => xScale(d.x))
+			.y((d) => yScale(d.sh))(data.filter((d) => !isNaN(d.sh)));
+	};
 
-		return sortedWinters;
-	}
+	$: generateArea = function (data) {
+		return area()
+			.x((d) => xScale(d.x))
+			.y0((d) => yScale(d.sh))
+			.y1((d) => yScale(0))(data.filter((d) => !isNaN(d.sh)));
+	};
 
-	// Example usage:
-	const wintersData = groupDataByWinter(data);
-	console.log(wintersData);
-
-	$: lines = keys.map((k) =>
-		generateLine(
-			data.filter((d) => !isNaN(d.value)),
-			k
-		)
-	);
+	$: selectedYear = false;
 </script>
 
-{#each wintersData as winter}
-	<div>
-		{#each winter as item}
-			<svg />
-		{/each}
-	</div>
-{/each}
+test
+<div
+	class="w-full h-[1400px] bg-blue-900"
+	bind:clientWidth={chartWidth}
+	bind:clientHeight={chartHeight}
+>
+	{#if chartWidth && chartHeight}
+		<svg width={'100%'} height={'100%'}>
+			{#each data as winter, i}
+				<g transform="translate(0,{i * 10})">
+					<text dominant-baseline="hanging">{winter.label}</text>
+					<path
+						d={generateArea(winter.data.filter((d) => !isNaN(d.sh)))}
+						class="stroke-gray-300 fill-white"
+					/>
+				</g>
+			{/each}
+		</svg>
+	{/if}
+</div>

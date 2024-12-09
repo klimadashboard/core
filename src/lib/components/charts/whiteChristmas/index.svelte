@@ -29,12 +29,18 @@
 					limit: -1
 				})
 			);
-			console.log(data);
+
+			const correctedData = data.map((d) => {
+				return {
+					date: d.date,
+					sh: d.sh == -1 ? 0 : d.sh
+				};
+			});
 
 			const snowHeights = {};
 
 			// Populate snowHeights with entries for Dec 24, 25, and 26
-			data.forEach(({ date, sh }) => {
+			correctedData.forEach(({ date, sh }) => {
 				const d = new Date(date);
 				const year = d.getFullYear();
 				const month = d.getMonth() + 1;
@@ -49,7 +55,7 @@
 			const currentYear = new Date().getFullYear();
 			const snowHeightsArray = [];
 
-			for (let year = 1950; year <= currentYear; year++) {
+			for (let year = 1960; year <= currentYear; year++) {
 				const { 24: sh24 = null, 25: sh25 = null, 26: sh26 = null } = snowHeights[year] || {};
 				const allNull = sh24 === null && sh25 === null && sh26 === null;
 
@@ -74,7 +80,7 @@
 
 <StationPicker bind:selectedStation />
 
-<div>
+<div class="w-full">
 	{#await promise then data}
 		<Chart {data} {selectedStation} />
 	{:catch error}
