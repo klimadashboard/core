@@ -4,6 +4,7 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Chart from './Chart.svelte';
+	import { page } from '$app/stores';
 
 	let selectedStation = 101;
 
@@ -42,13 +43,12 @@
 		return Object.keys(winters).map((winterKey) => ({
 			label: winterKey,
 			data: winters[winterKey].map((entry, index) => ({
-				...entry,
-				x: index // Assign incremental x value starting from 0
+				...entry
 			}))
 		}));
 	}
 
-	async function getData() {
+	$: getData = async function () {
 		const directus = getDirectusInstance(fetch);
 		if (selectedStation) {
 			const data = await directus.request(
@@ -59,7 +59,11 @@
 							{
 								station: {
 									id: {
-										_eq: parseInt(2667)
+										_eq: parseInt(
+											$page.url.searchParams.get('weatherStation')
+												? parseInt($page.url.searchParams.get('weatherStation'))
+												: 555
+										)
 									}
 								}
 							}
@@ -75,7 +79,7 @@
 		} else {
 			return false;
 		}
-	}
+	};
 
 	$: promise = getData();
 </script>
