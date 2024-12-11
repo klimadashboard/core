@@ -7,16 +7,20 @@
 	console.log(data);
 
 	let chartWidth;
-	let distance = 15;
+	let marginLeft = 200;
+	$: timeChartWidth = chartWidth - marginLeft;
+	let distance = 14;
 	let chartHeight = data.length * distance;
 
 	// Compute scales
 	$: xScales = data.map((d) =>
 		scaleTime()
 			.domain([new Date(d.data[0].date), new Date(d.data[d.data.length - 1].date)])
-			.range([0, chartWidth])
+			.range([0, timeChartWidth])
 	);
-	$: yScale = scaleLinear().domain([0, 10]).range([20, 0]);
+	$: yScale = scaleLinear()
+		.domain([0, max(data, (d) => max(d.data, (d) => d.sh))])
+		.range([distance * 4, 0]);
 
 	// Generate lines
 	$: generateLine = function (data, xScale) {
@@ -33,10 +37,21 @@
 	};
 
 	$: selectedWinter = false;
+
+	$: getTotalSnowAccumulation = (winter) => {
+		return winter.data.reduce((acc, d) => acc + d.sh, 0);
+	};
+
+	$: getWidthForWinter = (winter) => {
+		const totalSnowAccumulation = getTotalSnowAccumulation(winter);
+		return (
+			(totalSnowAccumulation / max(data, (d) => d.data.reduce((acc, d) => acc + d.sh, 0))) * 100
+		);
+	};
 </script>
 
 <div
-	class="w-full max-w-4xl bg-[#CDE0E6] mx-auto"
+	class="w-full"
 	style="height: {chartHeight}px"
 	bind:clientWidth={chartWidth}
 	bind:clientHeight={chartHeight}
@@ -50,16 +65,42 @@
 					on:mouseover={() => (selectedWinter = winter)}
 					on:mouseout={() => (selectedWinter = false)}
 					class={!selectedWinter || selectedWinter == winter ? 'opacity-100' : 'opacity-50'}
-				>
-					<text class="fill-white text-sm">{winter.label}</text>
-					<path
-						d={generateArea(
-							winter.data.filter((d) => !isNaN(d.sh)),
-							xScale
-						)}
-						class="stroke-gray-100 fill-white"
+					><text
+						text-anchor="end"
+						x={marginLeft - 45 - getWidthForWinter(winter)}
+						class="text-xs"
+						y={-2}>{getTotalSnowAccumulation(winter)}cm</text
+					>
+					<rect
+						x={marginLeft - 45 - getWidthForWinter(winter)}
+						y={-distance}
+						width={getWidthForWinter(winter)}
+						height={distance - 2}
+						class="fill-building"
 					/>
-					<rect fill="transparent" y={-5} height={5} width={chartWidth} />
+					<text class="fill-black text-xs tabular-nums" x={marginLeft - 40} y={-2}>
+						{winter.label}
+					</text>
+					<!--
+					<line x1={0} x2={chartWidth} class="stroke stroke-white" />
+                    -->
+					<g transform="translate({marginLeft},{-distance * 4})">
+						<path
+							d={generateArea(
+								winter.data.filter((d) => !isNaN(d.sh)),
+								xScale
+							)}
+							class="stroke-gray-100 fill-[#CDE0E6]"
+						/>
+						<path
+							d={generateLine(
+								winter.data.filter((d) => !isNaN(d.sh)),
+								xScale
+							)}
+							class="stroke-gray-10 fill-none"
+						/>
+					</g>
+					<rect fill="transparent" y={-distance} height={distance} width={chartWidth} />
 				</g>
 			{/each}
 		</svg>
