@@ -1,6 +1,7 @@
 <script>
 	/** @type {import('./$types').PageData} */
 	import { onMount } from 'svelte';
+	import Chart from '$lib/components/charts/index.svelte';
 	export let data;
 
 	onMount(() => {
@@ -36,18 +37,13 @@
 		</section>
 
 		<section class="my-8">
-			<h2>Herausforderungen</h2>
-			<div class="bg-gray-50 h-80" />
-		</section>
-
-		<section class="my-8">
-			<h2>Auswirkungen</h2>
-			<div class="bg-gray-50 h-80" />
-		</section>
-
-		<section class="my-8">
-			<h2>Lösungen</h2>
-			<div class="bg-gray-50 h-80" />
+			<Chart
+				chart={{
+					type: 'custom',
+					custom_sveltestring: 'temperature',
+					variables: []
+				}}
+			/>
 		</section>
 	</div>
 </main>
