@@ -81,7 +81,7 @@
 							title: { _eq: value }
 						}
 					},
-					fields: ['id', 'translations.title']
+					fields: ['id', 'translations.title', 'translations.slug']
 				})
 			);
 
@@ -92,7 +92,7 @@
 							title: { _icontains: value }
 						}
 					},
-					fields: ['id', 'translations.title']
+					fields: ['id', 'translations.title', 'translations.slug']
 				})
 			);
 
@@ -101,7 +101,7 @@
 				id: r.id,
 				title: r.name,
 				subtitle: r.postcode,
-				source: 'region',
+				source: 'Region',
 				country: r.country,
 				type: r.type
 			}));
@@ -114,7 +114,7 @@
 					id: r.id,
 					title: r.name,
 					subtitle: r.postcode,
-					source: 'region',
+					source: 'Region',
 					country: r.country,
 					type: r.type
 				}));
@@ -123,7 +123,7 @@
 				id: c.id,
 				title: c.label,
 				subtitle: '',
-				source: 'chart'
+				source: 'Chart'
 			}));
 
 			const chartExactIds = mappedChartExact.map((c) => c.id);
@@ -133,14 +133,16 @@
 					id: c.id,
 					title: c.label,
 					subtitle: '',
-					source: 'chart'
+					source: 'Chart',
+					slug: c.slug
 				}));
 
 			const mappedPageExact = pageExactMatches.map((p) => ({
 				id: p.id,
-				title: p.title,
+				title: p.translations[0].title,
 				subtitle: '',
-				source: 'page'
+				source: 'Seite',
+				slug: p.translations[0].slug
 			}));
 
 			const pageExactIds = mappedPageExact.map((p) => p.id);
@@ -148,9 +150,10 @@
 				.filter((p) => !pageExactIds.includes(p.id))
 				.map((p) => ({
 					id: p.id,
-					title: p.title,
+					title: p.translations[0].title,
 					subtitle: '',
-					source: 'page'
+					slug: p.translations[0].slug,
+					source: 'Seite'
 				}));
 
 			// Combine all suggestions
@@ -182,7 +185,7 @@
 		} else if (item.source === 'chart') {
 			window.location.href = `/chart/${item.id}`;
 		} else if (item.source === 'page') {
-			window.location.href = `/page/${item.id}`;
+			window.location.href = `${item.slug}`;
 		}
 	}
 
@@ -233,12 +236,14 @@
 		>
 			{#each suggestions as suggestion, index}
 				<li
-					class="p-2 cursor-pointer hover:bg-gray-100 border-b border-b-gray-600 {index ===
+					class="p-2 cursor-pointer hover:bg-gray-600 hover:text-white border-b border-b-gray-600 {index ===
 					activeSuggestionIndex
 						? 'bg-gray-600 text-white'
 						: ''}"
 					on:click={() => selectSuggestion(suggestion)}
+					on:keydown={() => selectSuggestion(suggestion)}
 					on:mouseover={() => (activeSuggestionIndex = index)}
+					on:focus={() => (activeSuggestionIndex = index)}
 				>
 					<!-- Display the suggestion title and subtitle if available -->
 					<strong>{suggestion.title}</strong>
