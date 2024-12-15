@@ -6,6 +6,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let selectedStation;
+	export let snowCoverageMinimum = 0;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_stations' : 'at_geosphere_stations';
 	let geoJsonName =
@@ -17,6 +18,11 @@
 		const directus = getDirectusInstance(fetch);
 		const stations = await directus.request(
 			readItems(tableName, {
+				filter: {
+					snow_coverage: {
+						_gte: snowCoverageMinimum
+					}
+				},
 				limit: 300
 			})
 		);

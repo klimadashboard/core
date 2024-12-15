@@ -23,6 +23,11 @@
 										_eq: parseInt(selectedStation.id)
 									}
 								}
+							},
+							{
+								sh: {
+									_gte: -1
+								}
 							}
 						]
 					},
@@ -52,10 +57,13 @@
 				}
 			});
 
+			const years = Object.keys(snowHeights).map(Number);
+			const earliestYear = Math.min(...years);
+			const startYear = Math.ceil(earliestYear / 10) * 10; // Round up to the next full decade
 			const currentYear = new Date().getFullYear();
 			const snowHeightsArray = [];
 
-			for (let year = 1960; year <= currentYear; year++) {
+			for (let year = startYear; year <= currentYear; year++) {
 				const { 24: sh24 = null, 25: sh25 = null, 26: sh26 = null } = snowHeights[year] || {};
 				const allNull = sh24 === null && sh25 === null && sh26 === null;
 
@@ -78,7 +86,7 @@
 	$: promise = getData();
 </script>
 
-<StationPicker bind:selectedStation />
+<StationPicker bind:selectedStation snowCoverageMinimum={90} />
 
 <div class="w-full">
 	{#await promise then data}
