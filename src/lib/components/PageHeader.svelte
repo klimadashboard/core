@@ -4,20 +4,36 @@
 	console.log(page);
 </script>
 
-<div class="p-3 bg-gradient-green">
-	<p class="border-b">Chart</p>
-	<h1 class="text-2xl font-bold">Titel der Seite</h1>
-	<p>Beschreibung der Seite</p>
+<div class="g-1 py-8">
+	<div class="container">
+		{#if $page.url.pathname.includes('region')}
+			<p class="border-b border-b-white pb-2 mb-2 uppercase font-bold tracking-wide text-sm">
+				Region
+			</p>
+		{:else if $page.url.pathname.includes('chart')}
+			<p class="border-b border-b-white pb-2 mb-2 uppercase font-bold tracking-wide text-sm">
+				Chart
+			</p>
+		{/if}
 
-	<Search />
+		<h1 class="text-4xl font-bold">Titel der Seite</h1>
+		<p>Beschreibung der Seite</p>
 
-	<div class="text-sm mt-4">
-		<div>Open Source</div>
-		<div class="flex gap-2">
-			<h3>Bekannt aus</h3>
-			<p>profil.at</p>
-			<p>derstandard.at</p>
-			<p>ORF</p>
+		{#if $page.params.slug == ''}
+			<Search />
+		{/if}
+
+		<div class="text-sm mt-4">
+			<div class="flex items-center gap-1 opacity-80">
+				<img class="w-16" src="/icons/general/by.svg" alt="Creative Commons" />
+				<p>Alle Grafiken frei verwendbar.</p>
+			</div>
+			<div class="flex gap-2">
+				<h3>Bekannt aus</h3>
+				<p>profil.at</p>
+				<p>derstandard.at</p>
+				<p>ORF</p>
+			</div>
 		</div>
 	</div>
 </div>

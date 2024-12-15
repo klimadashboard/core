@@ -101,7 +101,7 @@
 				id: r.id,
 				title: r.name,
 				subtitle: r.postcode,
-				source: 'Region',
+				source: 'region',
 				country: r.country,
 				type: r.type
 			}));
@@ -114,7 +114,7 @@
 					id: r.id,
 					title: r.name,
 					subtitle: r.postcode,
-					source: 'Region',
+					source: 'region',
 					country: r.country,
 					type: r.type
 				}));
@@ -123,7 +123,7 @@
 				id: c.id,
 				title: c.label,
 				subtitle: '',
-				source: 'Chart'
+				source: 'chart'
 			}));
 
 			const chartExactIds = mappedChartExact.map((c) => c.id);
@@ -133,7 +133,7 @@
 					id: c.id,
 					title: c.label,
 					subtitle: '',
-					source: 'Chart',
+					source: 'chart',
 					slug: c.slug
 				}));
 
@@ -141,7 +141,7 @@
 				id: p.id,
 				title: p.translations[0].title,
 				subtitle: '',
-				source: 'Seite',
+				source: 'page',
 				slug: p.translations[0].slug
 			}));
 
@@ -153,7 +153,7 @@
 					title: p.translations[0].title,
 					subtitle: '',
 					slug: p.translations[0].slug,
-					source: 'Seite'
+					source: 'page'
 				}));
 
 			// Combine all suggestions
@@ -223,7 +223,7 @@
 	<input
 		type="text"
 		{placeholder}
-		class="px-4 py-2 rounded-full w-full"
+		class="px-4 py-2 rounded-full w-full bg-gray-100"
 		bind:value={query}
 		on:input={onInput}
 		on:keydown={onKeyDown}
