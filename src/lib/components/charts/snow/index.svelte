@@ -114,6 +114,8 @@
 			(d) => d.daysWithSnow === Math.max(...data.winters.map((d) => d.daysWithSnow))
 		);
 	};
+
+	let chartWidth;
 </script>
 
 <div>
@@ -129,7 +131,7 @@
 			{data.winters[data.winters.length - 2].daysWithSnow} Schneedeckentage gab.
 		</h2>
 
-		<div class="h-72">
+		<div class="h-72" bind:clientWidth={chartWidth}>
 			<BarChart
 				data={data.winters.map((d, i) => {
 					return {
@@ -143,7 +145,7 @@
 						]
 					};
 				})}
-				xAxixInterval={10}
+				xAxixInterval={chartWidth > 600 ? 10 : 20}
 				visualisation={'stacked'}
 				unit={'Schneedeckentage'}
 			/>

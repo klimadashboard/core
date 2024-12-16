@@ -3,9 +3,19 @@
 	$: selected = false;
 </script>
 
-<div class="relative" on:mouseover={() => (selected = d)} on:mouseleave={() => (selected = false)}>
+<div
+	class="relative w-8 h-8 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
+	on:mouseover={() => (selected = d)}
+	on:mouseleave={() => (selected = false)}
+>
 	{#if d.sh24 >= 1 && d.sh25 >= 1 && d.sh26 >= 1}
-		<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<svg
+			width={'100%'}
+			height={'100%'}
+			viewBox="0 0 60 60"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+		>
 			<path d="M30.498 17L49.1176 42.0833H11.8785L30.498 17Z" fill="white" />
 			<path d="M29.998 9L42.9884 26.5H17.0077L29.998 9Z" fill="white" />
 			<path d="M29.998 2L37.7923 12.5H22.2038L29.998 2Z" fill="#D9D9D9" />
@@ -42,7 +52,13 @@
 			<circle cx="54.75" cy="16.75" r="0.75" fill="black" />
 		</svg>
 	{:else if d.sh24 > 0 || d.sh25 > 0 || d.sh26 > 0}
-		<svg width="46" height="56" viewBox="0 0 46 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<svg
+			width={'100%'}
+			height={'100%'}
+			viewBox="0 0 46 56"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+		>
 			<path d="M23 2L30.7942 12.5H15.2058L23 2Z" fill="#D9D9D9" />
 			<path d="M23 2L30.7942 12.5H15.2058L23 2Z" fill="url(#paint0_linear_2763_33)" />
 			<path d="M23 0L35.9904 17.5H10.0096L23 0Z" fill="white" />
@@ -135,14 +151,20 @@
 		</svg>
 	{:else if (d.year >= new Date().getFullYear() && new Date().getDate() < 27 && new Date().getMonth() == 11) || new Date().getMonth() < 11}
 		<svg
-			width="46"
-			height="56"
+			width={'100%'}
+			height={'100%'}
 			viewBox="0 0 46 56"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 		/>
 	{:else if !d.hasData}
-		<svg width="46" height="56" viewBox="0 0 46 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<svg
+			width={'100%'}
+			height={'100%'}
+			viewBox="0 0 46 56"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+		>
 			<path d="M23 2L30.7942 12.5H15.2058L23 2Z" fill="#434343" />
 			<path d="M23 2L30.7942 12.5H15.2058L23 2Z" fill="url(#paint0_linear_2769_2)" />
 			<path d="M23 0L35.9904 17.5H10.0096L23 0Z" fill="white" />
@@ -176,7 +198,13 @@
 			/>
 		</svg>
 	{:else}
-		<svg width="46" height="56" viewBox="0 0 46 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<svg
+			width={'100%'}
+			height={'100%'}
+			viewBox="0 0 46 56"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+		>
 			<path d="M23 2L30.7942 12.5H15.2058L23 2Z" fill="#D9D9D9" />
 			<path d="M23 2L30.7942 12.5H15.2058L23 2Z" fill="url(#paint0_linear_2763_18)" />
 			<path d="M23 0L35.9904 17.5H10.0096L23 0Z" fill="white" />
@@ -265,6 +293,17 @@
 				<p>{d.sh26}cm am 26.12.</p>{:else}
 				<p>Keine Daten verfügbar</p>
 			{/if}
+			<div class="arrow-down absolute left-1/2 -translate-x-1/2" />
 		</div>
 	{/if}
 </div>
+
+<style>
+	.arrow-down {
+		width: 0;
+		height: 0;
+		border-left: 10px solid transparent;
+		border-right: 10px solid transparent;
+		border-top: 10px solid #fff;
+	}
+</style>
