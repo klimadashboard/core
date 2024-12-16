@@ -1,7 +1,6 @@
 <script>
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems, readItem } from '@directus/sdk';
-	import ChartGrid from './ChartGrid.svelte';
 	import BarChart from '$lib/components/charts/chartBar.svelte';
 	import dayjs from 'dayjs';
 	import de from 'dayjs/locale/de-at';
