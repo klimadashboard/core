@@ -47,7 +47,7 @@
 	</div>
 	<div class="">
 		<p class="text-2xl text-center text-balance">
-			Seit {startYear} gab es {countSinceStartYear} weiße Weihnachten in {selectedStation.name}.
+			Seit {startYear} gab es {countSinceStartYear} weiße Weihnachten an der Wetterstation {selectedStation.name}.
 		</p>
 	</div>
 </div>
