@@ -152,6 +152,8 @@
 				visualisation={'stacked'}
 				unit={'Schneedeckentage'}
 				reverseLegend={true}
+				marginLeft={40}
+				marginRight={30}
 			/>
 		</div>
 	{:catch error}

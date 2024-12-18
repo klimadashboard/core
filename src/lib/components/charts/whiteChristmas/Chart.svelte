@@ -41,9 +41,9 @@
 </script>
 
 <div class="flex flex-col items-center gap-4">
-	<div class="">
-		<label for="">Wähle dein Geburtsdatum</label>
-		<input type="number" bind:value={startYear} class="k_input" />
+	<div class=" ">
+		<label for="" class="text-sm text-gray-700 mb-1 font-medium">Wähle dein Geburtsdatum</label>
+		<input type="number" bind:value={startYear} class="k_input max-w-20" />
 	</div>
 	<div class="">
 		<p class="text-2xl text-center text-balance">
@@ -129,7 +129,7 @@
 		{#each data as d}
 			<div class="flex items-center flex-col">
 				<Tree {d} />
-				<p class="text-xs xs:text-sm opacity-70 pb-2 border-t border-black">{d.year}</p>
+				<p class="text-xs xs:text-sm pb-2 border-t border-black -translate-y-[1px]">{d.year}</p>
 			</div>
 		{/each}
 	</div>
