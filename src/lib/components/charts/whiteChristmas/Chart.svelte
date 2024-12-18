@@ -26,19 +26,27 @@
 			})
 			.then(async function (blob) {
 				const filesArray = [
-					new File([blob], 'share.png', {
+					new File([blob], 'whitechristmas.png', {
 						type: blob.type,
 						lastModified: new Date().getTime()
 					})
 				];
-				const shareData = {
-					files: filesArray
-				};
+
+				const shareData = { files: filesArray };
 
 				try {
 					await navigator.share(shareData);
 				} catch (err) {
-					// console.log(`Cannot share data: ${err}, downloading instead.`);
+					// Display a user-friendly error message
+					alert('Sharing is not supported on this device. Please download the image instead.');
+
+					// Optional: implement a fallback download if sharing isn't available
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = 'whitechristmas.png';
+					a.click();
+					URL.revokeObjectURL(url);
 				}
 			});
 	};
