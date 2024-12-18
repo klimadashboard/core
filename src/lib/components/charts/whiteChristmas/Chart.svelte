@@ -17,8 +17,12 @@
 				filter: (e) => {
 					return Object.keys(e.dataset || {}).includes('shareIgnore') ? false : true;
 				},
-				width: item.clientWidth,
-				height: item.clientHeight
+				width: item.clientWidth * 4,
+				height: item.clientHeight * 4,
+				style: {
+					transform: 'scale(4)',
+					transformOrigin: 'top left'
+				}
 			})
 			.then(async function (blob) {
 				const filesArray = [
