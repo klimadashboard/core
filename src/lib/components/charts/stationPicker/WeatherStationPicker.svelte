@@ -6,7 +6,7 @@
 	export let data;
 	export let selectedStation;
 
-	console.log(data);
+	const presetID = PUBLIC_VERSION == 'at' ? 105 : 403;
 
 	$: geoLocationStatus = '';
 
@@ -36,9 +36,6 @@
 		}
 	};
 
-	// 105 for Hohe Warte, 443 for Berlin-Tempelhof
-	$: presetID = PUBLIC_VERSION == 'at' ? 105 : 433;
-
 	if ($page.url.searchParams.get('weatherStation')) {
 		selectedStation = data.stations.find(
 			(d) => d.id == $page.url.searchParams.get('weatherStation')
@@ -50,7 +47,7 @@
 	$: if (selectedStation) {
 		const url = new URL(window.location);
 		url.searchParams.set('weatherStation', selectedStation.id);
-		goto(url.toString(), { replaceState: true });
+		goto(url.toString(), { replaceState: true, noScroll: true });
 	}
 
 	// Step 1: Group options by 'state'
@@ -72,9 +69,9 @@
 			class="k_input k_dropdown max-w-[60vw]"
 			bind:value={selectedStation}
 		>
-			{#each Object.keys(groupedOptions).sort((a, b) => a > b) as state}
+			{#each Object.keys(groupedOptions).sort((a, b) => a.localeCompare(b)) as state}
 				<optgroup label={state}>
-					{#each groupedOptions[state].sort((a, b) => a.name > b.name) as station}
+					{#each groupedOptions[state].sort((a, b) => a.name.localeCompare(b.name)) as station}
 						<option value={station}>{station.name} ({station.height}m)</option>
 					{/each}
 				</optgroup>

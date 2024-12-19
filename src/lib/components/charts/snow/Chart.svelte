@@ -3,8 +3,6 @@
 	import { scaleTime } from 'd3-scale';
 	export let winters;
 
-	$: console.log(winters);
-
 	let layers = [
 		{
 			type: 'bar',

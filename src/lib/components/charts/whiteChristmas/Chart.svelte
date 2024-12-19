@@ -85,7 +85,7 @@
 
 <div class="mt-4 max-w-2xl mx-auto shadow">
 	<div bind:this={item} class=" bg-[#F0F1F1] p-2 sm:p-4">
-		<div class="flex justify-between items-center text-[#82838B]">
+		<div class="flex justify-between items-center font-bold">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"
@@ -110,7 +110,7 @@
 				/><path d="M3.34 7l5.629 3.25l2.99 -1.738" /></svg
 			>
 			<p class="text-xs sm:text-base text-center w-full">
-				Weiße Weihnachten in {selectedStation.name}
+				Weiße Weihnachten: <span class="underline underline-offset-2">{selectedStation.name}</span>
 			</p>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
