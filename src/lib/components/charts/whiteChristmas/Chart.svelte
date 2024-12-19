@@ -51,7 +51,7 @@
 
 <div class="flex flex-col items-center gap-4">
 	<div class=" ">
-		<label for="" class="text-sm text-gray-700 mb-1 font-medium">Wähle dein Geburtsdatum</label>
+		<label for="" class="text-sm text-gray-700 mb-1 font-medium">Wähle dein Geburtsjahr</label>
 		<input type="number" bind:value={startYear} class="k_input max-w-20" />
 	</div>
 	<div class="">
