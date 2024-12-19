@@ -122,25 +122,28 @@
 	{#await promise}
 		<Loader showText={true} />
 	{:then data}
-		<h2 class="text-2xl max-w-4xl text-center mx-auto text-balance">
-			Die Wetterstation {data.station.name} meldete im {getRecordWinter(data).label} mit {getRecordWinter(
-				data
-			).daysWithSnow} Schneedeckentagen einen Rekord, während es im {data.winters[
-				data.winters.length - 2
-			].label}
-			{data.winters[data.winters.length - 2].daysWithSnow} Schneedeckentage gab.
-		</h2>
+		{#if getRecordWinter(data).daysWithSnow < 200}
+			<h2 class="text-2xl max-w-4xl text-center mx-auto text-balance">
+				Im Rekordwinter {getRecordWinter(data).label.replace('Winter', '')} verzeichnete die Wetterstation
+				{data.station.name}
+				{getRecordWinter(data).daysWithSnow} Schneedeckentage – im {data.winters[
+					data.winters.length - 2
+				].label}
+				waren es {data.winters[data.winters.length - 2].daysWithSnow}.
+			</h2>
+		{/if}
 
 		<div class="h-72" bind:clientWidth={chartWidth}>
 			<BarChart
 				data={data.winters.map((d, i) => {
 					return {
-						label: d.label,
+						label: d.label.replace('Winter ', ''),
 						categories: [
 							{
 								value: d.daysWithSnow,
 								label: 'Schneedeckentage im ' + d.label,
-								color: '#11998E'
+								color: '#11998E',
+								estimate: d == data.winters[data.winters.length - 1] ? true : false
 							}
 						]
 					};
@@ -148,6 +151,9 @@
 				xAxixInterval={chartWidth > 600 ? 10 : 20}
 				visualisation={'stacked'}
 				unit={'Schneedeckentage'}
+				reverseLegend={true}
+				marginLeft={40}
+				marginRight={30}
 			/>
 		</div>
 	{:catch error}
