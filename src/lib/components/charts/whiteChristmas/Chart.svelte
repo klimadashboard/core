@@ -7,6 +7,7 @@
 	export let selectedStation;
 	let item;
 
+	let firstPossibleYear = data[0].year;
 	let startYear = data[0].year;
 	$: countSinceStartYear = data.filter(
 		(d) => d.year >= startYear && (d.sh24 >= 1 || d.sh25 >= 1 || d.sh26 >= 1)
@@ -52,7 +53,13 @@
 <div class="flex flex-col items-center gap-4">
 	<div class=" ">
 		<label for="" class="text-sm text-gray-700 mb-1 font-medium">Wähle dein Geburtsjahr</label>
-		<input type="number" bind:value={startYear} class="k_input max-w-20" />
+		<input
+			type="number"
+			bind:value={startYear}
+			class="k_input max-w-20"
+			min={firstPossibleYear}
+			max={new Date().getFullYear() - 1}
+		/>
 	</div>
 	<div class="">
 		<p class="text-2xl text-center text-balance">
