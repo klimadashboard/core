@@ -14,7 +14,7 @@
 
 <!-- switch between views -->
 <div
-	class="switch bg-gray-200 border-2 border-solid border-gray-100 rounded-full p-1 inline-flex overflow-y-hidden text-gray-600 no-scrollbar overflow-x-scroll max-w-full"
+	class="switch border-2 border-solid border-gray-100 rounded-full p-1 inline-flex overflow-y-hidden text-gray-600 no-scrollbar overflow-x-scroll max-w-full"
 	class:bg-white={type === 'primary'}
 >
 	{#each views as view}
