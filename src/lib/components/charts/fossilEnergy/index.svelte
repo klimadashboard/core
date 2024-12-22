@@ -38,7 +38,7 @@
 	$: showWaste = false;
 
 	$: if (selectedSource == 'renewables') {
-		window.location.href = '../energy/renewable';
+		window.location.href = '/energie/erneuerbare-energien';
 	}
 </script>
 
