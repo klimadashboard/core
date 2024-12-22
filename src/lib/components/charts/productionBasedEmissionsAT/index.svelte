@@ -125,7 +125,7 @@
 				categories: selectedSectors?.map(function (item, index) {
 					if (selectedClassification == 'Emissionshandel') {
 						return {
-							label: item.label,
+							label: item.label + ' ' + entry.year,
 							value: showPerCapita
 								? entry['energy_industry_co2e_t_percapita']
 								: entry['energy_industry_co2e_t'],
@@ -133,7 +133,7 @@
 						};
 					} else {
 						return {
-							label: item.label,
+							label: item.label + ' ' + entry.year,
 							value: showPerCapita ? entry[item.key + perCapitaString] : entry[item.key],
 							color: item.color
 						};
