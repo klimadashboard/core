@@ -19,10 +19,11 @@
 						_eq: PUBLIC_VERSION.toUpperCase()
 					}
 				},
-				limit: -1
+				sort: ['-date'],
+				limit: 365
 			})
 		);
-		return data;
+		return data.sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
 	}
 
 	$: promise = getData();
