@@ -9,32 +9,15 @@
 	import PageHeader from './PageHeader.svelte';
 </script>
 
-<header>
+<header
+	class="max-w-full w-full sm:w-max fixed bg-white sm:rounded-full left-1/2 -translate-x-1/2 sm:top-4 z-50 shadow-lg bg-opacity-90 backdrop-blur-sm"
+>
 	<div class="flex items-center gap-2">
-		<a href="/" class="flex items-center gap-2">
-			<div class="w-10 h-10 bg-green-700" />
-			<div class="text-green-700 font-bold">Klimadashboard</div>
+		<a href="/" class="flex items-center gap-2 mr-auto sm:mr-8">
+			<div class="w-10 h-10 bg-gray-500 rounded-full" />
+			<div class="text-gray-800 font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 		</a>
-		<button class="ml-auto"
-			><svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="icon icon-tabler icons-tabler-outline icon-tabler-map-2"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-					d="M12 18.5l-3 -1.5l-6 3v-13l6 -3l6 3l6 -3v7.5"
-				/><path d="M9 4v13" /><path d="M15 7v5.5" /><path
-					d="M21.121 20.121a3 3 0 1 0 -4.242 0c.418 .419 1.125 1.045 2.121 1.879c1.051 -.89 1.759 -1.516 2.121 -1.879z"
-				/><path d="M19 18v.01" /></svg
-			></button
-		>
-		<button>
+		<button class="flex items-center gap-1 font-bold">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"
@@ -52,26 +35,10 @@
 					d="M19.1 18h-6.2"
 				/></svg
 			>
+			<span>DE</span>
 		</button>
-		<button>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="icon icon-tabler icons-tabler-outline icon-tabler-search"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-					d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"
-				/><path d="M21 21l-6 -6" /></svg
-			>
-		</button>
-		<button class="flex">
-			<span>Navigation</span>
+
+		<button class="flex items-center gap-1 font-bold mx-4">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"
@@ -87,15 +54,8 @@
 					d="M4 12l16 0"
 				/><path d="M4 18l16 0" /></svg
 			>
+			<span>Menü</span>
 		</button>
-	</div>
-	<div class="overflow-scroll border-t p-2 bg-gray-200">
-		<div class="flex gap-2 items-center text-sm">
-			<h3 class="uppercase font-bold tracking-wider">Beliebt</h3>
-			<a href="#" class="flex-shrink-0">Emissionen</a>
-			<a href="#" class="flex-shrink-0">CO2-Preis</a>
-			<a href="#" class="flex-shrink-0">Temperatur</a>
-		</div>
 	</div>
 </header>
 <PageHeader />

@@ -19,11 +19,17 @@
 	];
 </script>
 
-<div class="p-3">
-	<h2 class="text-center text-2xl font-bold mb-4">Spende für unsere Arbeit</h2>
+<div class="p-4 mx-4">
+	<p class="text-center text-sm uppercase opacity-50 font-bold">Unser Neujahrsvorsatz seit 2021</p>
+	<h2 class="text-center text-3xl font-bold leading-tight">
+		Klimawissenschaft zugänglich machen. <br />Für alle, immer, kostenlos.
+	</h2>
+	<p class="text-lg text-center mx-auto max-w-md leading-snug mb-4 mt-2 text-balance">
+		Das machen wir als Verein Klimadashboard. Unterstütze unsere Arbeit 2025 mit einer Spende.
+	</p>
 	<div class="flex items-center gap-4 justify-center text-2xl">
 		{#each values as value}
-			<a href={value.link} class="shadow-lg px-2 py-1 rounded-md border">{value.value}</a>
+			<a href={value.link} class="border-b">{value.value}</a>
 		{/each}
 	</div>
 </div>

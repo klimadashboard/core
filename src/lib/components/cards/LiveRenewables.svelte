@@ -64,7 +64,7 @@
 
 {#await promise then data}
 	<div class="leading-tight font-condensed">
-		<div class="flex justify-between font-bold text-orange-600 border-b border-current pb-2 mb-2">
+		<div class="flex justify-between font-bold text-orange-600 border-b border-current pb-1 mb-2">
 			<h3>Erneuerbare Energien</h3>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -76,7 +76,7 @@
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class="icon icon-tabler icons-tabler-outline icon-tabler-bolt"
+				class="w-5 h-5"
 				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
 					d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11"
 				/></svg

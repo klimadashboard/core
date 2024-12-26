@@ -18,6 +18,7 @@
 	import Quiz from './Quiz.svelte';
 	import Quotes from './Quotes.svelte';
 	import Live from './Live.svelte';
+	import Teaser from './Teaser.svelte';
 
 	export let data;
 	console.log(data);
@@ -50,6 +51,10 @@
 		{
 			type: 'block_grid',
 			component: Grid
+		},
+		{
+			type: 'block_teaser',
+			component: Teaser
 		},
 		{
 			type: 'heading',

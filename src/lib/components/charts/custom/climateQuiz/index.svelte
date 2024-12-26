@@ -112,9 +112,7 @@
 </script>
 
 {#if quizQuestions != null}
-	<div
-		class="w-full flex justify-center bg-{PUBLIC_VERSION} bg-opacity-50 text-white py-8 overflow-hidden"
-	>
+	<div class="text-black m-4 bg-gray-100 py-8 overflow-hidden">
 		<div class="container max-w-prose">
 			{#if questionIndex < quizQuestions.length}
 				<h4 class="text-3xl pb-4">

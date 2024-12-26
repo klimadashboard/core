@@ -4,8 +4,9 @@
 	console.log(page);
 </script>
 
-<div class="g-1 py-8">
-	<div class="container">
+<div class="pt-24 g-1 lg:grid grid-cols-4">
+	<div />
+	<div class="col-span-2 px-4">
 		{#if $page.url.pathname.includes('region')}
 			<p class="border-b border-b-white pb-2 mb-2 uppercase font-bold tracking-wide text-sm">
 				Region
@@ -16,7 +17,7 @@
 			</p>
 		{/if}
 
-		<h1 class="text-4xl font-bold">Titel der Seite</h1>
+		<h1 class="text-3xl font-bold">Daten und Fakten zur Klimakrise in Österreich</h1>
 		<p>Beschreibung der Seite</p>
 
 		{#if $page.params.slug == ''}
@@ -35,5 +36,17 @@
 				<p>ORF</p>
 			</div>
 		</div>
+		<div class="mt-8 overflow-x-scroll">
+			<div class="w-max">
+				<ul class="flex gap-4 text-white flex-shrink-0">
+					<li class="border-b-2 border-white font-bold">Startseite</li>
+					<li>Emissionen</li>
+					<li>Diagramme</li>
+					<li>Über Uns</li>
+					<li>Gesellschaft</li>
+				</ul>
+			</div>
+		</div>
 	</div>
+	<div />
 </div>
