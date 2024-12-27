@@ -1,5 +1,6 @@
 <script>
 	export let chart;
+	$: console.log(chart);
 
 	const chartComponents = import.meta.glob('./*/index.svelte', {
 		import: 'default',
@@ -18,7 +19,7 @@
 		if (input) {
 			const variable = {};
 			for (var i = 0; i < input.length; i++) {
-				variable[input[i].label] = input[i].text;
+				variable[input[i].key] = input[i].text;
 			}
 			return variable;
 		} else {
@@ -28,7 +29,7 @@
 </script>
 
 {#await promise then}
-	<svelte:component this={ChartComponent} v={createVariables(chart.variables)} />
+	<svelte:component this={ChartComponent} v={createVariables(chart.content.variables)} />
 {:catch error}
 	{error}
 {/await}

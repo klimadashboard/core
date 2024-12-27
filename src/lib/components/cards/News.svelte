@@ -39,7 +39,7 @@
 		<div class="flex items-center gap-2 mt-auto">
 			<div class="h-12 w-12 rounded-full bg-gray-400" />
 			<div class="leading-tight">
-				<p class="font-bold">Zusammengestellt von David Jablonski</p>
+				<p class="font-bold">Zusammengestellt von <em>Vorname Nachname</em></p>
 				<p class="opacity-70">Team Klimadashboard</p>
 			</div>
 		</div>

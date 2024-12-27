@@ -83,9 +83,28 @@
 >
 	<div class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition">
 		<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
-			{chart.heading}
+			{chart.content.title}
 		</h2>
 		<div class="flex items-center gap-3 transition">
+			<a href="/charts/{chart.id}">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="icon icon-tabler icons-tabler-outline icon-tabler-link"
+					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 15l6 -6" /><path
+						d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464"
+					/><path
+						d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"
+					/></svg
+				>
+			</a>
 			<button
 				on:mousedown={() => exportImage()}
 				class="hover:text-black"
@@ -168,16 +187,16 @@
 		</div>
 	</div>
 	{#if !showNotices}
-		<h3 class="text-2xl max-w-2xl tracking-tight">{chart.heading}</h3>
+		<h3 class="text-2xl max-w-2xl tracking-tight">{chart.content.heading}</h3>
 
 		<div class="my-4">
 			<slot />
 		</div>
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-			{#if chart.text && showText}
-				<p class="text-lg text col-span-2">{@html chart.text}</p>
+			{#if chart.content.text}
+				<p class="text-lg text col-span-2">{@html chart.content.text}</p>
 			{/if}
-			{#if chart.source}
+			{#if chart.content.source}
 				<div class="text-gray-700 text-sm">
 					<div class="flex items-center gap-0.5 font-bold -mb-4">
 						<svg
@@ -200,7 +219,7 @@
 						<h3 class="">Datenquellen</h3>
 					</div>
 					<p class="text">
-						{@html chart.source}
+						{@html chart.content.source}
 					</p>
 				</div>
 			{/if}
@@ -208,7 +227,7 @@
 	{:else}
 		<div class="text-lg relative overflow-hidden" style="max-height: 32rem">
 			<div class="overflow-scroll data-notices" style="max-height:32rem;">
-				{@html chart.methods}
+				{@html chart.content.methods}
 				<div class="bottom-hint" use:observeBottomInView />
 			</div>
 			<div
@@ -218,7 +237,7 @@
 			/>
 		</div>
 	{/if}
-	{#if chart.methods}
+	{#if chart.content.methods}
 		<div
 			id="tab-switcher"
 			class="absolute rounded-b bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 text-sm md:text-base"

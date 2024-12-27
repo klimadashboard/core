@@ -12,7 +12,6 @@
 		header: true,
 		complete: function (results) {
 			if (results) {
-				console.log(results.data);
 				data = results.data.slice(-1460).map((e, i) => {
 					return {
 						etsPrice: e.price,
@@ -23,8 +22,6 @@
 			}
 		}
 	});
-
-	$: console.log(data);
 
 	const keys = ['etsPrice'];
 	const labels = ['ETS Preis'];

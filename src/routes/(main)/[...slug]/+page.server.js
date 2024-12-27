@@ -11,8 +11,6 @@ export async function load({ fetch, params }) {
 		language_code = value;
 	});
 	let slug = params.slug ? params.slug : 'home';
-	console.log(language_code);
-	console.log(slug);
 	try {
 		const translations = await directus.request(
 			readItems('pages_translations', {
@@ -38,7 +36,7 @@ export async function load({ fetch, params }) {
 										charts: [
 											'*',
 											{
-												chart: ['*']
+												chart: ['*', { translations: ['*'] }]
 											}
 										]
 									}

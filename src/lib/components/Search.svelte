@@ -53,9 +53,17 @@
 			const chartExactMatches = await directus.request(
 				readItems('charts', {
 					filter: {
-						_or: [{ title: { _eq: value } }, { label: { _eq: value } }, { text: { _eq: value } }]
+						_or: [
+							{
+								translations: {
+									title: { _eq: value }
+								}
+							},
+							{ translations: { heading: { _eq: value } } },
+							{ translations: { text: { _eq: value } } }
+						]
 					},
-					fields: ['id', 'title', 'label', 'text']
+					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
 				})
 			);
 
@@ -63,12 +71,12 @@
 				readItems('charts', {
 					filter: {
 						_or: [
-							{ title: { _icontains: value } },
-							{ label: { _icontains: value } },
-							{ text: { _icontains: value } }
+							{ translations: { title: { _icontains: value } } },
+							{ translations: { heading: { _icontains: value } } },
+							{ translations: { text: { _icontains: value } } }
 						]
 					},
-					fields: ['id', 'title', 'label', 'text']
+					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
 				})
 			);
 
@@ -121,7 +129,7 @@
 
 			const mappedChartExact = chartExactMatches.map((c) => ({
 				id: c.id,
-				title: c.label,
+				title: c.translations.title,
 				subtitle: '',
 				source: 'chart'
 			}));
@@ -131,7 +139,7 @@
 				.filter((c) => !chartExactIds.includes(c.id))
 				.map((c) => ({
 					id: c.id,
-					title: c.label,
+					title: c.translations.title,
 					subtitle: '',
 					source: 'chart',
 					slug: c.slug
@@ -181,9 +189,9 @@
 	// Handle selection of a suggestion
 	function selectSuggestion(item) {
 		if (item.source === 'region') {
-			window.location.href = `/region/${item.id}`;
+			window.location.href = `/regions/${item.id}`;
 		} else if (item.source === 'chart') {
-			window.location.href = `/chart/${item.id}`;
+			window.location.href = `/charts/${item.id}`;
 		} else if (item.source === 'page') {
 			window.location.href = `${item.slug}`;
 		}

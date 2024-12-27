@@ -1,23 +1,15 @@
 <script>
 	import { page } from '$app/stores';
 	import Search from './Search.svelte';
-	console.log(page);
+	$: console.log($page);
 </script>
 
 <div class="pt-24 g-1 lg:grid grid-cols-4">
 	<div />
 	<div class="col-span-2 px-4">
-		{#if $page.url.pathname.includes('region')}
-			<p class="border-b border-b-white pb-2 mb-2 uppercase font-bold tracking-wide text-sm">
-				Region
-			</p>
-		{:else if $page.url.pathname.includes('chart')}
-			<p class="border-b border-b-white pb-2 mb-2 uppercase font-bold tracking-wide text-sm">
-				Chart
-			</p>
-		{/if}
+		<h1 />
 
-		<h1 class="text-3xl font-bold">Daten und Fakten zur Klimakrise in Österreich</h1>
+		<h2 class="text-3xl font-bold">Daten und Fakten zur Klimakrise in Österreich</h2>
 		<p>Beschreibung der Seite</p>
 
 		{#if $page.params.slug == ''}

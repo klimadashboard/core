@@ -19,9 +19,9 @@
 	import Quotes from './Quotes.svelte';
 	import Live from './Live.svelte';
 	import Teaser from './Teaser.svelte';
+	import Items from './Items.svelte';
 
 	export let data;
-	console.log(data);
 
 	const blocks = [
 		{
@@ -55,6 +55,10 @@
 		{
 			type: 'block_teaser',
 			component: Teaser
+		},
+		{
+			type: 'block_items',
+			component: Items
 		},
 		{
 			type: 'heading',

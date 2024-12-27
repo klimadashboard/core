@@ -10,8 +10,6 @@
 	$: questionIndex = 0;
 	$: questionText = '';
 
-	$: console.log($page);
-
 	fetch('https://klimadashboard.org/quiz.json').then(async (response) => {
 		const questions = (await response.json()) as QuizQuestion[];
 		// filter only questions for this page!
@@ -115,7 +113,7 @@
 	<div class="text-black m-4 bg-gray-100 py-8 overflow-hidden">
 		<div class="container max-w-prose">
 			{#if questionIndex < quizQuestions.length}
-				<h4 class="text-3xl pb-4">
+				<h4 class="text-3xl pb-4 leading-tight">
 					{quizQuestions[questionIndex].question}
 					{#if quizQuestions[questionIndex].text_question != ''}
 						<div class="inline-block ml-2 translate-y-2">

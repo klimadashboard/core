@@ -72,7 +72,7 @@
 
 <div class="h-80">
 	{#if data}
-		<ChartLine
+		<LineChart
 			showZeroValuesInLegend={false}
 			{data}
 			{labels}

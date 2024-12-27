@@ -2,9 +2,13 @@
 	import Builder from './builder/index.svelte';
 	import Custom from './custom/index.svelte';
 	import Wrapper from './Wrapper.svelte';
+	import { locale } from '$lib/stores/i18n';
 
 	export let chart;
 	export let hideWrapper = false;
+
+	/* todo: fix this in API call */
+	chart = { ...chart, content: chart.translations.find((t) => t.languages_code === $locale) };
 </script>
 
 {#if hideWrapper}

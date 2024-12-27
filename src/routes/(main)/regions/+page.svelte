@@ -6,7 +6,7 @@
 	<ul>
 		{#each data.regions as region}
 			<li>
-				<a href="/region/{region.id}">{region.name}</a>
+				<a href="/regions/{region.id}">{region.name}</a>
 			</li>
 		{/each}
 	</ul>
