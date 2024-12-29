@@ -12,8 +12,18 @@
 		const directus = getDirectusInstance();
 		try {
 			const response = await directus.request(
-				readItems('news', { sort: ['-date_published'], limit: 5 })
+				readItems('news', {
+					filter: {
+						status: {
+							_eq: 'published'
+						}
+					},
+					sort: ['-date_created'],
+					limit: 3,
+					fields: ['*.*']
+				})
 			);
+			console.log(response);
 			return response;
 		} catch (err) {
 			return [];
@@ -24,7 +34,10 @@
 </script>
 
 <div class="flex flex-col h-full">
-	<div class="flex items-center gap-2">
+	<div class="h-[1px] bg-gray-200" />
+	<div class="h-[1px] mt-1 bg-gray-200" />
+	<div class="h-[1px] mt-1 bg-gray-200" />
+	<div class="flex items-center gap-2 mt-4">
 		<div class="pulse" />
 		<h3 class="uppercase font-bold tracking-wider text-sm relative">Was heute wichtig ist</h3>
 	</div>
@@ -36,13 +49,24 @@
 			{/each}
 		</ul>
 
-		<div class="flex items-center gap-2 mt-auto">
-			<div class="h-12 w-12 rounded-full bg-gray-400" />
-			<div class="leading-tight">
-				<p class="font-bold">Zusammengestellt von <em>Vorname Nachname</em></p>
-				<p class="opacity-70">Team Klimadashboard</p>
+		{#if news[0].author}
+			<div class="flex items-center gap-2 mt-auto">
+				<div class="h-16 w-16 rounded-full bg-gray-400 overflow-hidden relative">
+					<img
+						src="https://base.klimadashboard.org/assets/96b213e5-2594-4705-8690-2e1a1a26f517"
+						alt=""
+						class="absolute w-full h-full object-cover inset-0"
+					/>
+				</div>
+				<div class="leading-tight">
+					<p class="font-bold">
+						Zusammengestellt von {news[0].author.first_name}
+						{news[0].author.last_name}
+					</p>
+					<p class="opacity-70">Team Klimadashboard</p>
+				</div>
 			</div>
-		</div>
+		{/if}
 	{/await}
 </div>
 
