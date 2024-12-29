@@ -6,9 +6,10 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
 	import CompanyClimateGoals from './CompanyClimateGoals.svelte';
+	import { EMISSION_SCOPE_KEYS } from './constants';
 
-	let scopes = ['1', '2', '3'];
-	let selectedScopes = ['1'];
+	const scopes = EMISSION_SCOPE_KEYS;
+	let selectedScopes = [1];
 	let selectedSector = '';
 	let emissions;
 	let isFocusView = true;
@@ -252,11 +253,13 @@
 	{#await promise}
 		<p>Loading...</p>
 	{:then emissions}
-		<CompanyEmissionsLineChart
-			{emissions}
-			selectedCompanies={companies.filter((company) => company.selected)}
-			{selectedScopes}
-		/>
+		<div class="h-72">
+			<CompanyEmissionsLineChart
+				{emissions}
+				selectedCompanies={companies.filter((company) => company.selected)}
+				{selectedScopes}
+			/>
+		</div>
 	{/await}
 	<br />
 	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Klimaziele</h2>

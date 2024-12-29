@@ -1,11 +1,12 @@
 <script>
 	// @ts-nocheck
 	import LineChart from '../chartLine.svelte';
+	import { EMISSION_SCOPE_KEYS } from './constants';
 	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
 
 	export let emissions;
 	export let selectedCompanies;
-	export let selectedScopes = ['scope1'];
+	export let selectedScopes = [1];
 	export let selectedCategory = 'location_based';
 
 	let isSingleCompanySelected;
@@ -24,11 +25,6 @@
 		1: 'Scope 1',
 		2: 'Scope 2',
 		3: 'Scope 3'
-	};
-	const selectedScopesToKeys = {
-		1: 'scope1',
-		2: 'scope2',
-		3: 'scope3'
 	};
 	const maxCompanies = 7;
 
@@ -56,15 +52,12 @@
 	// 	'Austria Technologie & Systemtechnik AG'
 	// ];
 
-	// Specify the company name to filter for
-	const companyName = selectedCompanies[0].name;
-
 	let dataset = [];
 	let keys;
 	let labels;
 	let colors;
 	$: {
-		if (emissions && companyName && selectedScopes) {
+		if (emissions && selectedCompanies && selectedScopes) {
 			if (isSingleCompanySelected) {
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
@@ -84,9 +77,7 @@
 			}
 			console.log('🚀 ~ dataset:', dataset);
 			// Select keys, colors and labels
-			keys = isSingleCompanySelected
-				? selectedScopes.map((scope) => selectedScopesToKeys[scope])
-				: selectedCompanyNames;
+			keys = isSingleCompanySelected ? selectedScopes : selectedCompanyNames;
 			labels = isSingleCompanySelected
 				? selectedScopes.map((scope) => selectedScopesToLabels[scope])
 				: selectedCompanyNames;
@@ -97,7 +88,7 @@
 	}
 </script>
 
-{#if dataset && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
+{#if dataset.length > 0 && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
 	<LineChart
 		data={dataset}
 		{colors}
@@ -109,7 +100,6 @@
 		visualisation={'non-stacked'}
 		marginLeft={50}
 		xTicksInterval={2}
-		preselectedIndex={7}
 		unit={'t'}
 		invalidX={6}
 		invalidText={'Text zu invaliden Daten'}

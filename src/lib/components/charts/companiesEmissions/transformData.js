@@ -12,8 +12,8 @@ export const transformDataSingleCompany = (
 	emissionsData.forEach(({ year, company, scope, value, category }) => {
 		if (
 			company !== selectedCompany ||
-			!selectedScopes.includes(scope.replace('scope', '')) ||
-			category !== selectedCategory
+			!selectedScopes.includes(scope)
+			// category !== selectedCategory
 		) {
 			return;
 		}
@@ -40,12 +40,12 @@ export const transformDataMultipleCompanies = (
 	const emissionsPerYear = {};
 
 	emissionsData.forEach(({ year, company, scope, value, category }) => {
-		const scopeNumber = scope.replace('scope', '');
 		// Skip items that are not included in the companies array
 		if (
 			!selectedCompanies.includes(company) ||
-			!selectedScopes.includes(scopeNumber) ||
-			category !== selectedCategory
+			!selectedScopes.includes(scope)
+			// TODO: Add logic to filter by category! location and market based should not be mixed!
+			// category !== selectedCategory
 		) {
 			return;
 		}
@@ -65,7 +65,6 @@ export const transformDataMultipleCompanies = (
 	});
 
 	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
-	console.log('🚀 ~ transformDataMultipleCompanies ~ emissionsPerYear:', emissionsPerYear);
 	return convertObjectToArray(emissionsPerYear);
 };
 
