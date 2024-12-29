@@ -112,8 +112,12 @@
 		preselectedIndex={7}
 		unit={'t'}
 		invalidX={6}
-		invalidText={'Text zu invaliden Daten'}
+		invalidText={'Daten weniger genau*'}
 	/>
+	<p class="text-sm text-gray-600 mt-2">
+		* Vor 2022 führt die Datenungenauigkeit aufgrund unterschiedlicher erfasster Dimensionen der
+		Scope 3 Emissionen zu fehlender Vergleichbarkeit.
+	</p>
 {:else if selectedCompanies.length === 0}
 	<br /><br /><br />
 	<p class="text-center">Keine Unternehmen ausgewählt.</p>
