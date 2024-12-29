@@ -1,6 +1,7 @@
 <script>
 	import { page } from '$app/stores';
 	import Search from './Search.svelte';
+	import PopularPages from './PopularPages.svelte';
 	$: console.log($page);
 </script>
 
@@ -14,6 +15,7 @@
 
 		{#if $page.params.slug == ''}
 			<Search />
+			<PopularPages />
 		{/if}
 
 		<div class="text-sm mt-4">
@@ -26,17 +28,6 @@
 				<p>profil.at</p>
 				<p>derstandard.at</p>
 				<p>ORF</p>
-			</div>
-		</div>
-		<div class="mt-8 overflow-x-scroll">
-			<div class="w-max">
-				<ul class="flex gap-4 text-white flex-shrink-0">
-					<li class="border-b-2 border-white font-bold">Startseite</li>
-					<li>Emissionen</li>
-					<li>Diagramme</li>
-					<li>Über Uns</li>
-					<li>Gesellschaft</li>
-				</ul>
 			</div>
 		</div>
 	</div>
