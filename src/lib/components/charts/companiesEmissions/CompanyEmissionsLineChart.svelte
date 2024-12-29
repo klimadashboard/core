@@ -99,7 +99,7 @@
 		showDots={true}
 		visualisation={'non-stacked'}
 		marginLeft={50}
-		xTicksInterval={2}
+		xTicksInterval={1}
 		unit={'t'}
 		invalidX={6}
 		invalidText={'Daten weniger genau*'}
