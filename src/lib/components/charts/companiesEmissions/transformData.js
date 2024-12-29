@@ -58,9 +58,9 @@ export const transformDataMultipleCompanies = (
 		if (!value) {
 			emissionsPerYear[year][company] = 'na';
 		} else if (!emissionsPerYear[year][company]) {
-			emissionsPerYear[year][company] = value;
-		} else {
-			emissionsPerYear[year][company] += value;
+			emissionsPerYear[year][company] = parseInt(value); // TODO: check why directus returns string instead of integer!
+		} else if (value && emissionsPerYear[year][company] !== 'na') {
+			emissionsPerYear[year][company] += parseInt(value);
 		}
 	});
 
