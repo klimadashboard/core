@@ -129,7 +129,7 @@
 
 			const mappedChartExact = chartExactMatches.map((c) => ({
 				id: c.id,
-				title: c.translations.title,
+				title: c.translations[0].title,
 				subtitle: '',
 				source: 'chart'
 			}));
@@ -139,7 +139,7 @@
 				.filter((c) => !chartExactIds.includes(c.id))
 				.map((c) => ({
 					id: c.id,
-					title: c.translations.title,
+					title: c.translations[0].title,
 					subtitle: '',
 					source: 'chart',
 					slug: c.slug

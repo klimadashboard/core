@@ -40,8 +40,7 @@
 			<Chart
 				chart={{
 					type: 'custom',
-					custom_sveltestring: 'temperature',
-					variables: []
+					custom_sveltestring: 'temperature'
 				}}
 			/>
 		</section>

@@ -8,7 +8,9 @@
 	import { onMount } from 'svelte';
 	import PageHeader from './PageHeader.svelte';
 	import LocaleSwitcher from './LocaleSwitcher.svelte';
-	let showLocaleSwitcher = false;
+	import Navigation from './Navigation.svelte';
+
+	let showNavigation = false;
 </script>
 
 <header
@@ -22,7 +24,10 @@
 
 		<LocaleSwitcher />
 
-		<button class="flex items-center gap-1 font-bold mx-4">
+		<button
+			class="flex items-center gap-1 font-bold mx-4"
+			on:mousedown={() => (showNavigation = !showNavigation)}
+		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"
@@ -42,4 +47,7 @@
 		</button>
 	</div>
 </header>
+{#if showNavigation}
+	<Navigation />
+{/if}
 <PageHeader />
