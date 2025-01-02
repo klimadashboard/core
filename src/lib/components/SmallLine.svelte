@@ -4,6 +4,8 @@
 	import { min, max } from 'd3-array';
 
 	export let data;
+	export let dataComparison;
+	export let xLabels;
 
 	let chartWidth;
 	let chartHeight;
@@ -14,7 +16,7 @@
 
 	$: yScale = scaleLinear()
 		.domain([min(data, (d) => d.y), max(data, (d) => d.y)])
-		.range([chartHeight - 12, 0]);
+		.range([chartHeight - 16, 0]);
 
 	$: generateLine = (data) => {
 		return line()
@@ -32,10 +34,35 @@
 
 <div class="w-full h-full relative" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 	{#if chartWidth && chartHeight}
-		<svg width={chartWidth} height={chartHeight} class="overflow-visible">
+		<svg width="100%" height="100%" class="overflow-visible">
 			<g>
-				<path d={generateArea(data)} class="fill-current stroke-current opacity-20" />
-				<path d={generateLine(data)} class="fill-none stroke-current stroke-2" />
+				{#if dataComparison}
+					<g>
+						<path d={generateArea(dataComparison)} class="fill-current stroke-current opacity-0" />
+						<path
+							d={generateLine(dataComparison)}
+							class="fill-none stroke-current stroke-2 opacity-50"
+						/>
+					</g>
+				{/if}
+				<g>
+					<path d={generateArea(data)} class="fill-current stroke-current opacity-10" />
+					<path d={generateLine(data)} class="fill-none stroke-current stroke-2" />
+				</g>
+
+				{#if xLabels}
+					<g transform="translate(0,{chartHeight})" class="text-xs">
+						<text x={2} y={-4} dominant-baseline="bottom" class="fill-current">{xLabels[0]}</text>
+						<text
+							x={chartWidth - 2}
+							y={-4}
+							dominant-baseline="bottom"
+							text-anchor="end"
+							class="fill-current">{xLabels[1]}</text
+						>
+					</g>
+				{/if}
+
 				<circle
 					cx={xScale(data[data.length - 1].x)}
 					cy={yScale(data[data.length - 1].y)}
@@ -45,5 +72,4 @@
 			</g>
 		</svg>
 	{/if}
-	<div class="absolute left-0 bottom-0 right-0 h-4 bg-gradient-to-b from-transparent to-white" />
 </div>

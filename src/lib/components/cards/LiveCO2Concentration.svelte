@@ -55,6 +55,7 @@
 								y: item.mean
 							};
 						})}
+						xLabels={[data[0].year, data[data.length - 1].year]}
 					/>
 				</div>
 			</div>
