@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer';
+import { getPage, releasePage } from '$lib/utils/puppeteer';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import SocialImage from '$lib/components/SocialImage.svelte';
@@ -14,47 +14,35 @@ export async function GET({ params, setHeaders }) {
 	const data = await directus.request(
 		readItems('pages_translations', {
 			filter: {
-				_and: [
-					{
-						languages_code: { _eq: 'de' }
-					},
-					{
-						slug: { _eq: params.slug }
-					}
-				]
+				_and: [{ languages_code: { _eq: 'de' } }, { slug: { _eq: params.slug } }]
 			}
 		})
 	);
-	console.log(data);
+
+	const props = {
+		eyebrow: 'Klimadashboard.' + PUBLIC_VERSION,
+		title: data[0].title
+	};
+
+	const { html, head, css } = SocialImage.render(props);
+
+	const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>${props.title}</title>
+        ${head}
+        <style>${css.code}</style>
+      </head>
+      <body>
+        ${html}
+      </body>
+    </html>
+  `;
 
 	try {
-		// 1. Render the component on the server
-		const props = {
-			eyebrow: 'Klimadashboard.' + PUBLIC_VERSION,
-			title: data[0].title
-		};
-
-		const { html, head, css } = SocialImage.render(props);
-
-		// 2. Build minimal HTML to feed into Puppeteer
-		const htmlContent = `
-			<!DOCTYPE html>
-			<html lang="en">
-				<head>
-					<meta charset="UTF-8">
-					<title>${props.title}</title>
-          ${head}
-					<style>${css.code}</style>
-				</head>
-				<body>
-					${html}
-				</body>
-			</html>
-		`;
-
-		// 3. Launch Puppeteer, set content, and take a screenshot
-		const browser = await puppeteer.launch();
-		const page = await browser.newPage();
+		const page = await getPage();
 		await page.setContent(htmlContent, {});
 
 		const screenshotBuffer = await page.screenshot({
@@ -62,9 +50,8 @@ export async function GET({ params, setHeaders }) {
 			fullPage: true
 		});
 
-		await browser.close();
+		releasePage(page);
 
-		// 4. Return the JPEG image
 		return new Response(screenshotBuffer, {
 			status: 200,
 			headers: {
