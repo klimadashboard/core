@@ -46,30 +46,33 @@ export async function getPage() {
 		});
 	}
 
-	// Create a new page if limit not reached
-	return browser.newPage();
-}
+	const page = await browser.newPage();
 
-// Return a page to the pool
+	// Set a timeout for navigation and content loading
+	await page.setDefaultNavigationTimeout(3000); // 15 seconds
+	await page.setDefaultTimeout(1000); // 10 seconds for other operations
+
+	return page;
+}
+const PAGE_IDLE_TIMEOUT = 30000; // Close idle pages after 30 seconds
+
 export function releasePage(page) {
 	if (isShuttingDown) {
-		// Close pages immediately during shutdown
 		page.close().catch((err) => console.error('Error closing page:', err));
 		return;
 	}
 
+	// Schedule page closure if not reused
+	setTimeout(() => {
+		if (!pagePool.includes(page)) {
+			page.close().catch((err) => console.error('Error closing idle page:', err));
+		}
+	}, PAGE_IDLE_TIMEOUT);
+
 	if (pagePool.length < MAX_PAGES) {
 		pagePool.push(page);
 	} else {
-		// Close pages if the pool is full
-		page.close().catch((err) => console.error('Error closing page:', err));
-	}
-
-	// Process the next item in the queue
-	if (queue.length > 0) {
-		const { resolve, reject, timeout } = queue.shift();
-		clearTimeout(timeout);
-		getPage().then(resolve).catch(reject);
+		page.close().catch((err) => console.error('Error closing page (pool full):', err));
 	}
 }
 
