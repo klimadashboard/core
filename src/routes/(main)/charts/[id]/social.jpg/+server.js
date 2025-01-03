@@ -1,8 +1,6 @@
 import puppeteer from 'puppeteer';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem } from '@directus/sdk';
-import fs from 'fs';
-import path from 'path';
 import SocialImage from '$lib/components/SocialImage.svelte';
 import { PUBLIC_VERSION } from '$env/static/public';
 
