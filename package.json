@@ -1,6 +1,6 @@
 {
 	"name": "klimadashboard-core",
-	"version": "0.0.1",
+	"version": "2.0.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -39,7 +39,6 @@
 		"dom-to-image": "^2.6.0",
 		"fathom-client": "^3.5.0",
 		"mapbox-gl": "^2.15.0",
-		"mongodb": "^5.7.0",
 		"papaparse": "^5.3.2",
 		"puppeteer": "^23.11.1",
 		"vite": "^4.0.2"
