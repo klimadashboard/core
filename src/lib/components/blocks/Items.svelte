@@ -1,9 +1,9 @@
 <script>
-	import { Splide, SplideSlide } from '@splidejs/svelte-splide';
+	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import { locale } from '$lib/stores/i18n';
-	import '@splidejs/svelte-splide/css';
+	import '@splidejs/svelte-splide/css/core';
 
 	export let block;
 
@@ -20,7 +20,12 @@
 			.request(
 				readItems(tableName, {
 					limit,
-					fields: ['*.*']
+					fields: ['*.*'],
+					filter: {
+						status: {
+							_eq: 'published'
+						}
+					}
 				})
 			)
 			.then((response) => {
@@ -59,43 +64,85 @@
 	}
 </script>
 
-<div class="m-4">
-	<div class="flex border-b">
-		<h3 class="uppercase font-bold tracking-wide">{block.title}</h3>
-	</div>
-	<div class="mt-4">
-		<!-- Await the `itemsPromise` -->
-		{#await itemsPromise}
-			<!-- Loading State -->
-			<p>Loading...</p>
-		{:then items}
-			<!-- Success State: Use the `items` resolved by `itemsPromise` -->
-			<Splide
-				options={{
-					autoWidth: true,
-					autoHeight: true,
-					gap: '1rem',
-					trimSpace: true,
-					omitEnd: true,
-					type: 'loop',
-					pagination: false
-				}}
-			>
+{#await itemsPromise}
+	<!-- Loading State -->
+	<p>Loading...</p>
+{:then items}
+	<Splide
+		class="m-4"
+		options={{
+			autoWidth: true,
+			autoHeight: true,
+			gap: '1rem',
+			trimSpace: true,
+			omitEnd: true,
+			type: 'loop',
+			pagination: false
+		}}
+		hasTrack={false}
+	>
+		<div class="flex border-b items-end pb-1">
+			<h3 class="uppercase font-bold tracking-wide">{block.title}</h3>
+			<div class="flex ml-auto splide__arrows">
+				<button class="splide__arrow splide__arrow--prev"
+					><svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg
+					></button
+				>
+				<button class="splide__arrow splide__arrow--next"
+					><svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-right"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg
+					></button
+				>
+			</div>
+		</div>
+		<div class="mt-4">
+			<SplideTrack>
 				{#each items as item}
+					{@const relativeUrl = item.type + '/' + item.id}
 					<SplideSlide>
-						<a class="border w-64 h-80 block" href="{item.type}/{item.id}">
-							<div class="h-20 bg-gray-100" />
-							<div class="p-4">
-								<p class="uppercase font-bold text-sm tracking-wide">{item.content?.title}</p>
-								<h3 class="text-xl">{item.content?.heading}</h3>
+						<a class="w-64 block" href={relativeUrl}>
+							<div class="bg-gray-100">
+								<img src="{relativeUrl}/social.jpg" alt="" />
+							</div>
+							<div class="pt-2">
+								{#if item.content?.title}
+									<p class="uppercase font-bold text-sm tracking-wide">{item.content?.title}</p>
+								{/if}
+								{#if item.content?.heading}
+									<h3 class="text-xl">{item.content?.heading}</h3>
+								{/if}
+								{#if item.name}
+									<h3 class="text-xl">{item.name}</h3>
+								{/if}
 							</div>
 						</a>
 					</SplideSlide>
 				{/each}
-			</Splide>
-		{:catch error}
-			<!-- Error State -->
-			<p class="text-red-500">Error loading items: {error.message}</p>
-		{/await}
-	</div>
-</div>
+			</SplideTrack>
+		</div>
+	</Splide>
+{:catch error}
+	<!-- Error State -->
+	<p class="text-red-500">Error loading items: {error.message}</p>
+{/await}

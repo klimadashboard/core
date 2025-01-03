@@ -43,7 +43,7 @@
 			<path d="M19.1 18h-6.2" />
 		</svg>
 		<select
-			class="appearance-none bg-none"
+			class="appearance-none bg-transparent"
 			bind:value={$locale}
 			on:change={(e) => locale.set(e.target.value)}
 		>

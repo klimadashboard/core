@@ -1,9 +1,7 @@
 <script>
 	import { Splide, SplideSlide } from '@splidejs/svelte-splide';
-	import '@splidejs/svelte-splide/css';
 	import { readItems, readAssetRaw } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
-	import { onMount } from 'svelte';
 
 	let quotes = [];
 	let error = null;

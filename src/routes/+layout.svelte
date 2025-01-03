@@ -1,5 +1,5 @@
 <script>
-	import '../app.css';
+	import '$lib/app.css';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { glossaryItem } from '$lib/stores/glossary';

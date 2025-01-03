@@ -435,3 +435,11 @@ sub {
 		transform: scale(0.8);
 	}
 }
+
+.splide__arrow {
+	@apply text-gray-400 transition;
+}
+
+.splide__arrow:hover {
+	@apply text-black;
+}

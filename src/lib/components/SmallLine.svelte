@@ -14,6 +14,12 @@
 		.domain([min(data, (d) => d.x), max(data, (d) => d.x)])
 		.range([0, chartWidth]);
 
+	$: if (dataComparison) {
+		xScale = scaleLinear()
+			.domain([min(dataComparison, (d) => d.x), max(dataComparison, (d) => d.x)])
+			.range([0, chartWidth]);
+	}
+
 	$: yScale = scaleLinear()
 		.domain([min(data, (d) => d.y), max(data, (d) => d.y)])
 		.range([chartHeight - 16, 0]);

@@ -5,6 +5,7 @@
 	import LiveEmissions from '../cards/LiveEmissions.svelte';
 	import LiveGasUsage from '../cards/LiveGasUsage.svelte';
 	import { Splide, SplideSlide } from '@splidejs/svelte-splide';
+	import '@splidejs/svelte-splide/css/core';
 
 	const components = [
 		LiveCarbonPrices,
