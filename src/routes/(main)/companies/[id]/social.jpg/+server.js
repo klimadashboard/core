@@ -1,8 +1,7 @@
-import { getPage, releasePage } from '$lib/utils/puppeteer';
+import { renderAndScreenshot } from '$lib/utils/screenshot';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem } from '@directus/sdk';
 import SocialImage from '$lib/components/SocialImage.svelte';
-import { PUBLIC_VERSION } from '$env/static/public';
 
 /** @type {import('@sveltejs/kit').RequestHandler} */
 export async function GET({ params, setHeaders }) {
@@ -10,47 +9,23 @@ export async function GET({ params, setHeaders }) {
 		'cache-control': 'max-age=60'
 	});
 
-	const directus = getDirectusInstance(fetch);
-	const data = await directus.request(
-		readItem('companies', params.id, {
-			fields: ['*.*']
-		})
-	);
-
-	// 1. Render the component on the server
-	const props = {
-		imageUrl: 'https://base.klimadashboard.org/assets/' + data.logo.id,
-		imageCenter: true
-	};
-
-	const { html, head, css } = SocialImage.render(props);
-
-	// 2. Build minimal HTML to feed into Puppeteer
-	const htmlContent = `
-			<!DOCTYPE html>
-			<html lang="en">
-				<head>
-					<meta charset="UTF-8">
-					<title>${props.title}</title>
-          ${head}
-					<style>${css.code}</style>
-				</head>
-				<body>
-					${html}
-				</body>
-			</html>
-		`;
-
 	try {
-		const page = await getPage();
-		await page.setContent(htmlContent, {});
+		// Fetch data from Directus
+		const directus = getDirectusInstance(fetch);
+		const data = await directus.request(
+			readItem('companies', params.id, {
+				fields: ['*.*']
+			})
+		);
 
-		const screenshotBuffer = await page.screenshot({
-			type: 'jpeg',
-			fullPage: true
-		});
+		// Prepare props for the Svelte component
+		const props = {
+			imageUrl: `https://base.klimadashboard.org/assets/${data.logo.id}`,
+			imageCenter: true
+		};
 
-		releasePage(page);
+		// Generate the screenshot
+		const screenshotBuffer = await renderAndScreenshot(SocialImage.render, props);
 
 		return new Response(screenshotBuffer, {
 			status: 200,

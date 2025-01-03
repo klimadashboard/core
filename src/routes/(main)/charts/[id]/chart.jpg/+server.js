@@ -1,7 +1,6 @@
-import { getPage, releasePage } from '$lib/utils/puppeteer';
+import { renderAndScreenshot } from '$lib/utils/screenshot';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem } from '@directus/sdk';
-import { PUBLIC_VERSION } from '$env/static/public';
 import Chart from '$lib/components/charts/index.svelte';
 
 /** @type {import('@sveltejs/kit').RequestHandler} */
@@ -10,45 +9,21 @@ export async function GET({ params, setHeaders }) {
 		'cache-control': 'max-age=60'
 	});
 
-	const directus = getDirectusInstance(fetch);
-	const data = await directus.request(
-		readItem('charts', params.id, {
-			fields: ['*.*']
-		})
-	);
-
-	// 1. Render the component on the server
-	const props = {
-		chart: data
-	};
-
-	const { html, head, css } = Chart.render(props);
-
-	// 2. Build minimal HTML to feed into Puppeteer
-	const htmlContent = `
-			<!DOCTYPE html>
-			<html lang="en">
-				<head>
-					<meta charset="UTF-8">
-                    ${head}
-					<style>${css.code}</style>
-				</head>
-				<body>
-					${html}
-				</body>
-			</html>
-		`;
-
 	try {
-		const page = await getPage();
-		await page.setContent(htmlContent, {});
+		const directus = getDirectusInstance(fetch);
+		const data = await directus.request(
+			readItem('charts', params.id, {
+				fields: ['*.*']
+			})
+		);
 
-		const screenshotBuffer = await page.screenshot({
-			type: 'jpeg',
-			fullPage: true
-		});
+		// 1. Render the component on the server
+		const props = {
+			chart: data
+		};
 
-		releasePage(page);
+		// Generate the screenshot
+		const screenshotBuffer = await renderAndScreenshot(Chart.render, props);
 
 		return new Response(screenshotBuffer, {
 			status: 200,

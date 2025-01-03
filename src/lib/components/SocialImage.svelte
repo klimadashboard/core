@@ -1,5 +1,4 @@
 <script>
-	import { PUBLIC_VERSION } from '$env/static/public';
 	export let eyebrow;
 	export let title;
 	export let imageUrl;
