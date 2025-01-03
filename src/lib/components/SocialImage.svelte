@@ -32,6 +32,8 @@
 
 <style>
 	/* no global styles available here, so everything coded by hand */
+	@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;700&display=swap');
+
 	html,
 	body,
 	div,
