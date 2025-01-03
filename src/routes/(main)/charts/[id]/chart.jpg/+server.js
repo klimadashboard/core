@@ -1,10 +1,8 @@
 import puppeteer from 'puppeteer';
 import getDirectusInstance from '$lib/utils/directus';
-import { readItems } from '@directus/sdk';
-import fs from 'fs';
-import path from 'path';
-import SocialImage from '$lib/components/SocialImage.svelte';
+import { readItem } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
+import Chart from '$lib/components/charts/index.svelte';
 
 /** @type {import('@sveltejs/kit').RequestHandler} */
 export async function GET({ params, setHeaders }) {
@@ -14,29 +12,18 @@ export async function GET({ params, setHeaders }) {
 
 	const directus = getDirectusInstance(fetch);
 	const data = await directus.request(
-		readItems('pages_translations', {
-			filter: {
-				_and: [
-					{
-						languages_code: { _eq: 'de' }
-					},
-					{
-						slug: { _eq: params.slug }
-					}
-				]
-			}
+		readItem('charts', params.id, {
+			fields: ['*.*']
 		})
 	);
-	console.log(data);
 
 	try {
 		// 1. Render the component on the server
 		const props = {
-			eyebrow: 'Klimadashboard.' + PUBLIC_VERSION,
-			title: data[0].title
+			chart: data
 		};
 
-		const { html, head, css } = SocialImage.render(props);
+		const { html, head, css } = Chart.render(props);
 
 		// 2. Build minimal HTML to feed into Puppeteer
 		const htmlContent = `
@@ -44,8 +31,7 @@ export async function GET({ params, setHeaders }) {
 			<html lang="en">
 				<head>
 					<meta charset="UTF-8">
-					<title>${props.title}</title>
-          ${head}
+                    ${head}
 					<style>${css.code}</style>
 				</head>
 				<body>

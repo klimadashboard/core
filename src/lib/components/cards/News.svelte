@@ -23,7 +23,6 @@
 					fields: ['*.*']
 				})
 			);
-			console.log(response);
 			return response;
 		} catch (err) {
 			return [];

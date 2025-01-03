@@ -119,7 +119,8 @@
 		<div class="mt-4">
 			<SplideTrack>
 				{#each items as item}
-					{@const relativeUrl = item.type + '/' + item.id}
+					{@const relativeUrl =
+						item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
 					<SplideSlide>
 						<a class="w-64 block" href={relativeUrl}>
 							<div class="bg-gray-100">

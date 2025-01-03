@@ -2,7 +2,6 @@
 	import { page } from '$app/stores';
 	import Search from './Search.svelte';
 	import PopularPages from './PopularPages.svelte';
-	$: console.log($page);
 </script>
 
 <div class="pt-24 g-1 lg:grid grid-cols-4">

@@ -1,39 +1,29 @@
 import puppeteer from 'puppeteer';
 import getDirectusInstance from '$lib/utils/directus';
-import { readItems } from '@directus/sdk';
+import { readItem } from '@directus/sdk';
 import fs from 'fs';
 import path from 'path';
 import SocialImage from '$lib/components/SocialImage.svelte';
 import { PUBLIC_VERSION } from '$env/static/public';
 
 /** @type {import('@sveltejs/kit').RequestHandler} */
-export async function GET({ params, setHeaders }) {
+export async function GET({ url, params, setHeaders }) {
 	setHeaders({
 		'cache-control': 'max-age=60'
 	});
 
 	const directus = getDirectusInstance(fetch);
 	const data = await directus.request(
-		readItems('pages_translations', {
-			filter: {
-				_and: [
-					{
-						languages_code: { _eq: 'de' }
-					},
-					{
-						slug: { _eq: params.slug }
-					}
-				]
-			}
+		readItem('charts', params.id, {
+			fields: ['*.*']
 		})
 	);
-	console.log(data);
 
 	try {
 		// 1. Render the component on the server
 		const props = {
 			eyebrow: 'Klimadashboard.' + PUBLIC_VERSION,
-			title: data[0].title
+			imageUrl: `${url.origin}/charts/${params.id}/chart.jpg`
 		};
 
 		const { html, head, css } = SocialImage.render(props);
@@ -45,7 +35,7 @@ export async function GET({ params, setHeaders }) {
 				<head>
 					<meta charset="UTF-8">
 					<title>${props.title}</title>
-          ${head}
+                    ${head}
 					<style>${css.code}</style>
 				</head>
 				<body>
