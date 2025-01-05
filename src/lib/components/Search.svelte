@@ -61,6 +61,10 @@
 							},
 							{ translations: { heading: { _eq: value } } },
 							{ translations: { text: { _eq: value } } }
+							/*
+							current not supported by directus
+							{ translations: { tags: { _contains: value } } }
+							 */
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
@@ -74,6 +78,10 @@
 							{ translations: { title: { _icontains: value } } },
 							{ translations: { heading: { _icontains: value } } },
 							{ translations: { text: { _icontains: value } } }
+							/*
+							current not supported by directus
+							{ translations: { tags: { _contains: value } } }
+							 */
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
@@ -85,9 +93,17 @@
 			const pageExactMatches = await directus.request(
 				readItems('pages', {
 					filter: {
-						translations: {
-							title: { _eq: value }
-						}
+						_or: [
+							{
+								translations: {
+									title: { _eq: value }
+								}
+							}
+							/*
+							current not supported by directus
+							{ translations: { tags: { _contains: value } } }
+							 */
+						]
 					},
 					fields: ['id', 'translations.title', 'translations.slug']
 				})
@@ -96,9 +112,17 @@
 			const pagePartialMatches = await directus.request(
 				readItems('pages', {
 					filter: {
-						translations: {
-							title: { _icontains: value }
-						}
+						_or: [
+							{
+								translations: {
+									title: { _icontains: value }
+								}
+							}
+							/*
+							current not supported by directus
+							{ translations: { tags: { _contains: value } } }
+							 */
+						]
 					},
 					fields: ['id', 'translations.title', 'translations.slug']
 				})
