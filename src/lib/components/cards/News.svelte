@@ -52,7 +52,7 @@
 			<div class="flex items-center gap-2 mt-auto">
 				<div class="h-16 w-16 rounded-full bg-gray-400 overflow-hidden relative">
 					<img
-						src="https://base.klimadashboard.org/assets/96b213e5-2594-4705-8690-2e1a1a26f517"
+						src="https://base.klimadashboard.org/assets/{news[0].author.avatar}"
 						alt=""
 						class="absolute w-full h-full object-cover inset-0"
 					/>
