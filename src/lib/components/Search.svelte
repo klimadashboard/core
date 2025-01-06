@@ -252,16 +252,37 @@
 </script>
 
 <div class="relative">
-	<input
-		type="text"
-		{placeholder}
-		class="px-4 py-2 rounded-full w-full bg-gray-100"
-		bind:value={query}
-		on:input={onInput}
-		on:keydown={onKeyDown}
-		on:blur={onBlur}
-		autocomplete="off"
-	/>
+	<div class="flex gap-2">
+		<input
+			type="text"
+			{placeholder}
+			class="px-4 py-2 rounded-full w-full bg-gray-100"
+			bind:value={query}
+			on:input={onInput}
+			on:keydown={onKeyDown}
+			on:blur={onBlur}
+			autocomplete="off"
+		/>
+		<button aria-label="Orten lasen..." class="bg-gray-100 rounded-full grid px-2">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="m-auto"
+				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+					d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"
+				/><path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" /><path d="M12 2l0 2" /><path
+					d="M12 20l0 2"
+				/><path d="M20 12l2 0" /><path d="M2 12l2 0" /></svg
+			>
+		</button>
+	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
 			class="absolute top-full left-0 right-0 bg-white bg-opacity-80 backdrop-blur border overflow-scroll z-10 max-h-64 rounded-2xl"

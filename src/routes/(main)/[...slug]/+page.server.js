@@ -39,7 +39,8 @@ export async function load({ fetch, params }) {
 												chart: ['*', { translations: ['*'] }]
 											}
 										]
-									}
+									},
+									{ files: ['*.*'] }
 								]
 							}
 						]

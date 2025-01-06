@@ -47,7 +47,6 @@
 		</button>
 	</div>
 </header>
-{#if showNavigation}
-	<Navigation />
-{/if}
+<Navigation {showNavigation} />
+
 <PageHeader />

@@ -20,6 +20,7 @@
 	import Live from './Live.svelte';
 	import Teaser from './Teaser.svelte';
 	import Items from './Items.svelte';
+	import Gallery from './Gallery.svelte';
 
 	export let data;
 
@@ -27,6 +28,10 @@
 		{
 			type: 'block_live',
 			component: Live
+		},
+		{
+			type: 'block_gallery',
+			component: Gallery
 		},
 		{
 			type: 'block_richtext',

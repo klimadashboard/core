@@ -1,6 +1,26 @@
 <script>
+	let items = [
+		{
+			link: '/emissionen',
+			label: 'Emissionen'
+		},
+		{
+			link: '/temperatur',
+			label: 'Temperatur'
+		},
+		{
+			link: '/unternehmen',
+			label: 'Unternehmen'
+		}
+	];
 </script>
 
-<div class="flex mt-4">
-	<a href="" class="bg-white px-3 py-1 rounded-full text-lg">Emissionen</a>
+<div class="flex mt-4 gap-2">
+	{#each items as item}
+		<a
+			href={item.link}
+			class="bg-gray-100 px-4 py-2 rounded-full font-bold hover:bg-gray-200 transition"
+			>{item.label}</a
+		>
+	{/each}
 </div>
