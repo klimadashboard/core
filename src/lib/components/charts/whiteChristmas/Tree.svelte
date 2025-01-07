@@ -189,7 +189,7 @@
 				</linearGradient>
 			</defs>
 		</svg>
-	{:else if (d.year >= new Date().getFullYear() && new Date().getDate() < 27 && new Date().getMonth() == 11) || new Date().getMonth() < 11}
+	{:else if d.year === new Date().getFullYear() && (new Date().getMonth() !== 11 || new Date().getDate() < 27)}
 		<svg
 			width="100%"
 			height="100%"
