@@ -43,9 +43,9 @@ export const transformDataMultipleCompanies = (
 		// Skip items that are not included in the companies array
 		if (
 			!selectedCompanies.includes(company) ||
-			!selectedScopes.includes(scope)
+			!selectedScopes.includes(scope) ||
 			// TODO: Add logic to filter by category! location and market based should not be mixed!
-			// category !== selectedCategory
+			category !== 'location_based' // selectedCategory
 		) {
 			return;
 		}

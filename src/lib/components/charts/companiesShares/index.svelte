@@ -1,6 +1,6 @@
 <script>
 	import Chart from '$lib/components/blocks/Chart.svelte';
-	import atxCompanies, { companyId } from '$lib/stores/companies';
+	import atxCompanies from '$lib/stores/companies';
 
 	import * as d3 from 'd3';
 
@@ -175,7 +175,6 @@
 			<g
 				on:mouseenter={() => {
 					hover_company_idx = company.idx;
-					companyId.set(company.id);
 				}}
 				on:mouseleave={() => {
 					hover_company_idx = -1;

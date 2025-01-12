@@ -1,7 +1,3 @@
-import { writable } from 'svelte/store';
-
-export const companyId = writable(1);
-
 export default [
 	{
 		id: 1,

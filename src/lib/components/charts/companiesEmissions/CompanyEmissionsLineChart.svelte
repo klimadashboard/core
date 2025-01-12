@@ -6,7 +6,7 @@
 
 	export let emissions;
 	export let selectedCompanies;
-	export let selectedScopes = [1];
+	export let selectedScopes;
 	export let selectedCategory = 'location_based';
 
 	let isSingleCompanySelected;
