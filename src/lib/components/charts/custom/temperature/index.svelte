@@ -2,7 +2,7 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems, readItem } from '@directus/sdk';
 	import Wrapper from './Wrapper.svelte';
-	import StationPicker from '$lib/components/charts/stationPicker/index.svelte';
+	import StationPicker from '$lib/components/charts/custom/stationPicker/index.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 

@@ -42,6 +42,7 @@
 		{
 			title: 'Temperatur',
 			id: 'temperature',
+			toggle: true,
 			charts: [
 				{
 					id: '8378b7bc-10db-4373-9941-1ca014e70353'
@@ -106,7 +107,7 @@
 				<h2 class="uppercase opacity-70 font-bold tracking-wide text-sm">Themen im Überblick</h2>
 				<div class="flex justify-between">
 					{#each sections as section}
-						<a href="#{section.id}">{section.title}</a>
+						<a href="#{section.id}" class="text-center block mx-auto">{section.title}</a>
 					{/each}
 				</div>
 			</div>
@@ -114,17 +115,19 @@
 			{#each sections as section}
 				<section id={section.id} class="mt-16">
 					<h2 class="text-2xl my-4 text-center max-w-2xl mx-auto">{section.title}</h2>
-					{#if section.charts}
-						{#each section.charts as chart}
-							{#if chartData[chart.id]}
-								<Chart chart={chartData[chart.id]} />
-							{:else}
-								<p>Loading chart...</p>
-							{/if}
-						{/each}
-					{:else}
-						<div class="bg-gray-100 h-96">Charts</div>
-					{/if}
+					<div>
+						{#if section.charts}
+							{#each section.charts as chart}
+								{#if chartData[chart.id]}
+									<Chart chart={chartData[chart.id]} />
+								{:else}
+									<p>Loading chart...</p>
+								{/if}
+							{/each}
+						{:else}
+							<div class="bg-gray-100 h-96">Charts</div>
+						{/if}
+					</div>
 					<button on:mousedown={scrollToTop} class="my-4 mx-auto w-max text-center block">
 						&uarr; Zurück zum Überblick
 					</button>
