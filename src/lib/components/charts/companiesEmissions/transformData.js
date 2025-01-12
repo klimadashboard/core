@@ -25,7 +25,7 @@ export const transformDataSingleCompany = (
 		if (!value) {
 			emissionsPerYear[year][scope] = 'na';
 		} else {
-			emissionsPerYear[year][scope] = value; // Merge scope data
+			emissionsPerYear[year][scope] = parseInt(value); // Merge scope data
 		}
 	});
 	return convertObjectToArray(emissionsPerYear);

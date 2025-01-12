@@ -102,14 +102,13 @@
 </script>
 
 <div>
+	<!-- Sector Selector -->
 	{#await getAllSectors()}
 		<p>Loading Sectors...</p>
 	{:then sectors}
-		<!-- Sector Selector -->
 		<div class="flex font-semibold text-sm mb-1">
 			<span class="mb-1">Sektoren</span>
 		</div>
-		<!-- </summary> -->
 		<div class="flex flex-wrap mb-2">
 			{#each sectors as sector}
 				<button
@@ -137,8 +136,7 @@
 		</div>
 	{/await}
 
-	<!-- Company Heading -->
-
+	<!-- Companies Selection Heading -->
 	<div class="flex mb-2 flex-wrap gap-x-3">
 		<p class="font-semibold text-sm">Unternehmen</p>
 		<div class="flex flex-wrap text-sm text-underline gap-x-3 md:ml-6">
@@ -174,7 +172,7 @@
 		</div>
 		<div class="ml-auto" />
 	</div>
-	<!-- Companies v1 -->
+	<!-- Companies -->
 	<div class="flex flex-wrap gap-2 mb-4">
 		{#each companies as company}
 			<button
@@ -202,7 +200,7 @@
 			</button>
 		{/each}
 	</div>
-
+	<!-- Scopes -->
 	<div class="flex flex-wrap mb-2">
 		<p class="font-semibold text-sm mr-4 mb-1">Emissionsquellen</p>
 		<div class="flex gap-x-3">
@@ -220,13 +218,6 @@
 			{/each}
 		</div>
 	</div>
-
-	<!-- Filter
-	{#await getAllCompanyDataPromise}
-		<p>Loading...</p>
-	{:then data}
-		<CompaniesEmissionsFilter companiesMetaData={data.meta} />
-	{/await} -->
 
 	<!-- Chart -->
 	{#await getCompanyEmissionData()}
