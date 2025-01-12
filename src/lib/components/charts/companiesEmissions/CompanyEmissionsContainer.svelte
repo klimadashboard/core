@@ -8,7 +8,6 @@
 	import CompanyClimateGoals from './CompanyClimateGoals.svelte';
 	import { EMISSION_SCOPE_KEYS } from './constants';
 	import { getCompanyEmissionData, getAllSectors, getCompanyMetaData } from './getData';
-	import CompaniesEmissionsFilter from './CompaniesEmissionsFilter.svelte';
 
 	export let companiesMetaData = [];
 
@@ -95,11 +94,9 @@
 		const index = selectedScopes.indexOf(scope);
 		if (index === -1) {
 			selectedScopes = [...selectedScopes, scope];
-			selectedScopesStored.set([...selectedScopes]);
 		} else {
 			selectedScopes.splice(index, 1);
 			selectedScopes = selectedScopes;
-			selectedScopesStored.set([...selectedScopes]);
 		}
 	}
 </script>

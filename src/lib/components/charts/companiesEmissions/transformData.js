@@ -13,7 +13,7 @@ export const transformDataSingleCompany = (
 		if (
 			company !== selectedCompany ||
 			!selectedScopes.includes(scope)
-			// category !== selectedCategory
+			// (scope === 2 && category !== selectedCategory)
 		) {
 			return;
 		}
