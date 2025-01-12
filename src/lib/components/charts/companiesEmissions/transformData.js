@@ -45,7 +45,7 @@ export const transformDataMultipleCompanies = (
 			!selectedCompanies.includes(company) ||
 			!selectedScopes.includes(scope) ||
 			// TODO: Add logic to filter by category! location and market based should not be mixed!
-			category !== 'location_based' // selectedCategory
+			(scope === 2 && category !== 'location_based') // selectedCategory
 		) {
 			return;
 		}
