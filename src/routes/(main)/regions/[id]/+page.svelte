@@ -1,6 +1,8 @@
 <script>
 	/** @type {import('./$types').PageData} */
 	import { onMount } from 'svelte';
+	import Scroller from '@sveltejs/svelte-scroller';
+	import { browser } from '$app/environment';
 	import Chart from '$lib/components/charts/index.svelte';
 	export let data;
 
@@ -8,41 +10,89 @@
 		localStorage.setItem('kd_region_id', data.page.id);
 		localStorage.setItem('kd_region_name', data.page.name);
 	});
+
+	let index, offset, progress;
+
+	$: currentSection = sections[index];
+
+	$: {
+		if (currentSection && browser) {
+			// Update the URL hash without scrolling
+			const url = new URL(window.location);
+			url.hash = currentSection.id;
+			history.replaceState(null, '', url.toString());
+		}
+	}
+
+	let sections = [
+		{
+			title: 'Emissionen',
+			id: 'emissions'
+		},
+		{
+			title: 'Energie',
+			id: 'energy'
+		},
+		{
+			title: 'Mobilität',
+			id: 'mobility'
+		},
+		{
+			title: 'Temperatur',
+			id: 'temperature'
+		},
+		{
+			title: 'Schnee',
+			id: 'snow'
+		}
+	];
+
+	const scrollToTop = function (event) {
+		event.preventDefault(); // Prevent default anchor behavior
+		window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top
+	};
 </script>
 
-<main class="py-32">
-	<div class="container">
-		<h1 class="text-4xl">
-			Die Klimakrise in <span class="bg-agriculture text-white px-2 py-1 font-bold"
-				>{data.page.name}</span
-			>
-		</h1>
-
-		<section class="my-8">
-			<h2 class="uppercase opacity-70 font-bold tracking-wide text-sm">Auf einen Blick</h2>
-			<div class="grid md:grid-cols-3 gap-4 mt-2">
-				<div class="bg-gray-50 p-4 rounded flex gap-4">
-					<p class="font-light text-6xl">35%</p>
-					<p class="text-lg leading-tight">eine erste Statistik, <br />live aus der Region</p>
-				</div>
-				<div class="bg-gray-50 p-4 rounded flex gap-4">
-					<p class="font-light text-6xl">14</p>
-					<p class="text-lg leading-tight">Hitzetage bisher in diesem Jahr</p>
-				</div>
-				<div class="bg-gray-50 p-4 rounded flex gap-4">
-					<p class="font-light text-6xl">70%</p>
-					<p class="text-lg leading-tight">der Wege im Bezirk werden mit dem Auto zurückgelegt</p>
+<main class="top">
+	<Scroller bind:index bind:offset bind:progress>
+		<div slot="background" />
+		<div slot="foreground">
+			<div class="my-8">
+				<h2 class="uppercase opacity-70 font-bold tracking-wide text-sm">Auf einen Blick</h2>
+				<div class="grid md:grid-cols-3 gap-4 mt-2">
+					<div class="bg-gray-50 p-4 rounded flex gap-4">
+						<p class="font-light text-6xl">35%</p>
+						<p class="text-lg leading-tight">eine erste Statistik, <br />live aus der Region</p>
+					</div>
+					<div class="bg-gray-50 p-4 rounded flex gap-4">
+						<p class="font-light text-6xl">14</p>
+						<p class="text-lg leading-tight">Hitzetage bisher in diesem Jahr</p>
+					</div>
+					<div class="bg-gray-50 p-4 rounded flex gap-4">
+						<p class="font-light text-6xl">70%</p>
+						<p class="text-lg leading-tight">der Wege im Bezirk werden mit dem Auto zurückgelegt</p>
+					</div>
 				</div>
 			</div>
-		</section>
 
-		<section class="my-8">
-			<Chart
-				chart={{
-					type: 'custom',
-					custom_sveltestring: 'temperature'
-				}}
-			/>
-		</section>
-	</div>
+			<div class="" id="">
+				<h2 class="uppercase opacity-70 font-bold tracking-wide text-sm">Themen im Überblick</h2>
+				<div class="flex justify-between">
+					{#each sections as section}
+						<a href="#{section.id}">{section.title}</a>
+					{/each}
+				</div>
+			</div>
+
+			{#each sections as section}
+				<section id={section.id} class="mt-16">
+					<h2 class="text-2xl my-4 text-center max-w-2xl mx-auto">{section.title}</h2>
+					<div class="bg-gray-100 h-96">Charts</div>
+					<button on:mousedown={scrollToTop} class="my-4 mx-auto w-max text-center block">
+						&uarr; Zurück zum Überblick</button
+					>
+				</section>
+			{/each}
+		</div>
+	</Scroller>
 </main>
