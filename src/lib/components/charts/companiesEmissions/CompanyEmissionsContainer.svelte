@@ -8,6 +8,7 @@
 	import CompanyClimateGoals from './CompanyClimateGoals.svelte';
 	import { EMISSION_SCOPE_KEYS } from './constants';
 	import { getCompanyEmissionData, getAllSectors, getCompanyMetaData } from './getData';
+	import Switch from '$lib/components/Switch.svelte';
 
 	export let companiesMetaData = [];
 
@@ -18,6 +19,20 @@
 	let isFocusView = true;
 	let initialCompany = 'Erste Group Bank AG';
 	let selectedCompaniesNames = [initialCompany];
+
+	const views = [
+		{
+			key: 'location_based',
+			label: 'location-based',
+			icon: null
+		},
+		{
+			key: 'market_based',
+			label: 'market-based',
+			icon: null
+		}
+	];
+	let selectedScope2Category = 'location_based';
 
 	$: console.log('🚀 ~ selectedScopes:', selectedScopes);
 	$: console.log('🚀 ~ selectedSector:', selectedSector);
@@ -200,23 +215,38 @@
 			</button>
 		{/each}
 	</div>
-	<!-- Scopes -->
-	<div class="flex flex-wrap mb-2">
-		<p class="font-semibold text-sm mr-4 mb-1">Emissionsquellen</p>
-		<div class="flex gap-x-3">
-			{#each scopes as scope}
-				<button
-					class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2 mb-2
+	<div class="flex justify-between items-center mb-1">
+		<!-- Scopes -->
+		<div class="flex flex-wrap mb-2 items-center">
+			<p class="font-semibold text-sm mr-4">Emissionsquellen</p>
+			<div class="flex gap-x-3 items-center">
+				{#each scopes as scope}
+					<button
+						class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2
               {selectedScopes.includes(scope)
-						? 'text-black bg-gray-100 border-2 border-green-600'
-						: 'text-gray-600 bg-gray-100 border-2 border-gray-100'}"
-					aria-label={scope}
-					on:click={() => toggleScope(scope)}
-				>
-					<span class="font-semibold tracking-wide">Scope {scope}</span>
-				</button>
-			{/each}
+							? 'text-black bg-gray-100 border-2 border-green-600'
+							: 'text-gray-600 bg-gray-100 border-2 border-gray-100'}"
+						aria-label={scope}
+						on:click={() => toggleScope(scope)}
+					>
+						<span class="font-semibold tracking-wide">Scope {scope}</span>
+					</button>
+				{/each}
+				{#if selectedScopes.length > 1 && selectedCompaniesNames.length > 1}
+					<p class="text-gray-600 text-sm">(ausgewählte Scopes werden summiert)</p>
+				{/if}
+			</div>
 		</div>
+		{#if selectedScopes.includes(2)}
+			<Switch
+				{views}
+				activeView={selectedScope2Category}
+				on:itemClick={(event) => {
+					selectedScope2Category = event.detail;
+				}}
+				type="small"
+			/>
+		{/if}
 	</div>
 
 	<!-- Chart -->
@@ -228,6 +258,7 @@
 				{emissions}
 				selectedCompanies={companies.filter((company) => company.selected)}
 				{selectedScopes}
+				{selectedScope2Category}
 			/>
 		</div>
 	{/await}

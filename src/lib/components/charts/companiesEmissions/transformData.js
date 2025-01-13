@@ -1,10 +1,11 @@
 // @ts-nocheck
+import { convertObjectToArray } from './utils';
 
 export const transformDataSingleCompany = (
 	emissionsData,
 	selectedCompany,
 	selectedScopes,
-	selectedCategory
+	selectedScope2Category
 ) => {
 	const emissionsPerYear = {};
 
@@ -12,8 +13,8 @@ export const transformDataSingleCompany = (
 	emissionsData.forEach(({ year, company, scope, value, category }) => {
 		if (
 			company !== selectedCompany ||
-			!selectedScopes.includes(scope)
-			// (scope === 2 && category !== selectedCategory)
+			!selectedScopes.includes(scope) ||
+			(scope === 2 && category !== selectedScope2Category)
 		) {
 			return;
 		}
@@ -35,7 +36,7 @@ export const transformDataMultipleCompanies = (
 	emissionsData,
 	selectedCompanies,
 	selectedScopes,
-	selectedCategory
+	selectedScope2Category
 ) => {
 	const emissionsPerYear = {};
 
@@ -45,7 +46,7 @@ export const transformDataMultipleCompanies = (
 			!selectedCompanies.includes(company) ||
 			!selectedScopes.includes(scope) ||
 			// TODO: Add logic to filter by category! location and market based should not be mixed!
-			(scope === 2 && category !== 'location_based') // selectedCategory
+			(scope === 2 && category !== selectedScope2Category)
 		) {
 			return;
 		}
@@ -66,15 +67,4 @@ export const transformDataMultipleCompanies = (
 
 	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
 	return convertObjectToArray(emissionsPerYear);
-};
-
-const convertObjectToArray = (emissionsPerYear) => {
-	return Object.values(emissionsPerYear)
-		.sort((a, b) => a.year - b.year)
-		.map((item, index) => {
-			return {
-				...item,
-				x: index
-			};
-		});
 };

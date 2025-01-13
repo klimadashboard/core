@@ -8,3 +8,14 @@ export const flattenCompanies = (companies) => {
 		};
 	});
 };
+
+export const convertObjectToArray = (emissionsPerYear) => {
+	return Object.values(emissionsPerYear)
+		.sort((a, b) => a.year - b.year)
+		.map((item, index) => {
+			return {
+				...item,
+				x: index
+			};
+		});
+};

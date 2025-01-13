@@ -7,7 +7,7 @@
 	export let emissions;
 	export let selectedCompanies;
 	export let selectedScopes;
-	export let selectedCategory = 'location_based';
+	export let selectedScope2Category = 'location_based';
 
 	let isSingleCompanySelected;
 	let selectedCompanyNames;
@@ -65,14 +65,14 @@
 					emissions,
 					companyName,
 					selectedScopes,
-					selectedCategory
+					selectedScope2Category
 				);
 			} else {
 				dataset = transformDataMultipleCompanies(
 					emissions,
 					selectedCompanyNames,
 					selectedScopes,
-					selectedCategory
+					selectedScope2Category
 				);
 			}
 			console.log('🚀 ~ dataset:', dataset);
