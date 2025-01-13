@@ -109,11 +109,13 @@
 		Scope 3 Emissionen zu fehlender Vergleichbarkeit.
 	</p>
 {:else if selectedCompanies.length === 0}
-	<br /><br /><br />
+	<div class="h-28" />
 	<p class="text-center">Keine Unternehmen ausgewählt.</p>
 	<p class="text-center">⬆ Wähle oben bis zu sieben Unternehmen aus! ⬆</p>
 {:else if selectedCompanies.length > maxCompanies}
+	<div class="h-28" />
 	<p class="text-center">Zu viele Unternehmen ausgewählt. Wähle maximal 7 Unternehmen.</p>
 {:else}
+	<div class="h-28" />
 	<p class="text-center">Laden...</p>
 {/if}
