@@ -1,6 +1,7 @@
 const colors = require('tailwindcss/colors');
 
 module.exports = {
+	darkMode: 'selector',
 	content: ['./public/index.html', './src/app.html', './src/**/*.svelte', './src/**/**/*.svelte'],
 	safelist: [
 		'bg-energy',

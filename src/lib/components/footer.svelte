@@ -196,6 +196,9 @@
 			</div>
 		</div>
 	</div>
+	<div>
+		<p>Status | API</p>
+	</div>
 	<div class="bg-gray-900 py-4 flex">
 		<div class="mx-auto flex items-center space-x-8 opacity-50 hover:opacity-80 transition">
 			<svg

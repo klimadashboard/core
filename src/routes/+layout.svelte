@@ -28,8 +28,12 @@
 	$: $page.url.pathname, browser && Fathom.trackPageview();
 </script>
 
-{#if $glossaryItem}
-	<Glossary />
-{/if}
+<div>
+	<div class="dark:bg-gray-900 dark:text-white transition duration-1000">
+		{#if $glossaryItem}
+			<Glossary />
+		{/if}
 
-<slot />
+		<slot />
+	</div>
+</div>

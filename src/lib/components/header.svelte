@@ -9,23 +9,26 @@
 	import PageHeader from './PageHeader.svelte';
 	import LocaleSwitcher from './LocaleSwitcher.svelte';
 	import Navigation from './Navigation.svelte';
+	import LightSwitch from './LightSwitch.svelte';
 
 	let showNavigation = false;
 </script>
 
 <header
-	class="max-w-full w-full sm:w-max fixed bg-white sm:rounded-full left-1/2 -translate-x-1/2 sm:top-4 z-50 shadow-lg bg-opacity-90 backdrop-blur-sm"
+	class="max-w-full w-full sm:w-max fixed bg-white text-gray-800 sm:rounded-full left-1/2 -translate-x-1/2 sm:top-4 z-50 shadow-lg bg-opacity-90 backdrop-blur-sm"
 >
-	<div class="flex items-center gap-2">
+	<div class="flex items-center gap-4">
 		<a href="/" class="flex items-center gap-2 mr-auto sm:mr-8">
 			<div class="w-10 h-10 bg-gray-500 rounded-full" />
-			<div class="text-gray-800 font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
+			<div class=" font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 		</a>
 
 		<LocaleSwitcher />
 
+		<LightSwitch />
+
 		<button
-			class="flex items-center gap-1 font-bold mx-4"
+			class="flex items-center gap-1 font-bold mr-4"
 			on:mousedown={() => (showNavigation = !showNavigation)}
 		>
 			<svg
