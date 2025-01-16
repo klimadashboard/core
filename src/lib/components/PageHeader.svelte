@@ -2,14 +2,22 @@
 	import { page } from '$app/stores';
 	import Search from './Search.svelte';
 	import PopularPages from './PopularPages.svelte';
+
+	console.log($page);
 </script>
 
 <div class="pt-24 g-1 pb-4 lg:grid grid-cols-4">
 	<div />
 	<div class="col-span-2 px-4">
-		<h1 />
+		{#if $page.data.content}
+			<!--
+		<h1 class="font-bold tracking-wide uppercase">{$page.data.content.title}</h1>
+		-->
 
-		<h2 class="text-3xl md:text-4xl font-bold">Daten und Fakten zur Klimakrise in Österreich</h2>
+			<h2 class="text-3xl md:text-4xl font-bold">
+				{$page.data.content.heading ? $page.data.content.heading : $page.data.content.title}
+			</h2>
+		{/if}
 
 		{#if $page.params.slug == ''}
 			<div class="mb-4 mt-2 saturate-0">

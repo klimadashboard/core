@@ -57,26 +57,25 @@
 				</a>
 				<a
 					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
-					href="https://twitter.com/klimadashboard"
-					aria-label="Twitter"
+					rel="me"
+					href="https://bsky.app/profile/klimadashboard.bsky.social"
+					aria-label="Bluesky"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						class="icon icon-tabler icon-tabler-brand-twitter"
 						width="24"
 						height="24"
 						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke="currentColor"
 						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
+						class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bluesky"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+							d="M6.335 5.144c-1.654 -1.199 -4.335 -2.127 -4.335 .826c0 .59 .35 4.953 .556 5.661c.713 2.463 3.13 2.75 5.444 2.369c-4.045 .665 -4.889 3.208 -2.667 5.41c1.03 1.018 1.913 1.59 2.667 1.59c2 0 3.134 -2.769 3.5 -3.5c.333 -.667 .5 -1.167 .5 -1.5c0 .333 .167 .833 .5 1.5c.366 .731 1.5 3.5 3.5 3.5c.754 0 1.637 -.571 2.667 -1.59c2.222 -2.203 1.378 -4.746 -2.667 -5.41c2.314 .38 4.73 .094 5.444 -2.369c.206 -.708 .556 -5.072 .556 -5.661c0 -2.953 -2.68 -2.025 -4.335 -.826c-2.293 1.662 -4.76 5.048 -5.665 6.856c-.905 -1.808 -3.372 -5.194 -5.665 -6.856z"
+						/></svg
 					>
-						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-						<path
-							d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z"
-						/>
-					</svg>
 				</a>
 				<a
 					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
@@ -107,8 +106,7 @@
 				</a>
 			</div>
 			<p class="opacity-50 text-sm leading-tight mt-2">
-				Du erhältst nicht mehr als 12 Newsletter pro Jahr.<br />Wir verwenden Buttondown als
-				Newsletter-Tool. <br />Mehr in unserer
+				Wir verwenden Buttondown als Newsletter-Tool. <br />Mehr in unserer
 				<a href="https://klimadashboard.org/impressum" class="underline">Datenschutzvereinbarung</a
 				>.
 			</p>
@@ -196,9 +194,6 @@
 			</div>
 		</div>
 	</div>
-	<div>
-		<p>Status | API</p>
-	</div>
 	<div class="bg-gray-900 py-4 flex">
 		<div class="mx-auto flex items-center space-x-8 opacity-50 hover:opacity-80 transition">
 			<svg
@@ -228,6 +223,7 @@
 
 			<a href="https://klimadashboard.org/impressum" target="_blank">Impressum</a>
 			<a href="https://klimadashboard.org/datenschutz" target="_blank">Datenschutz</a>
+			<a href="https://status.klimadashboard.org" target="_blank">Status</a>
 		</div>
 	</div>
 </footer>

@@ -1,7 +1,69 @@
 <script>
 	import { fade } from 'svelte/transition';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let showNavigation;
+
+	/**
+	 * Fetch items from a single table
+	 * @param {string} tableName
+	 * @param {number} limit
+	 * @returns {Promise<Array<any>>}
+	 */
+	function fetchTableItems(tableName, limit = 20) {
+		const directus = getDirectusInstance();
+		return directus
+			.request(
+				readItems(tableName, {
+					limit,
+					fields: ['*.*'],
+					filter: {
+						_and: [
+							{
+								status: {
+									_eq: 'published'
+								}
+							},
+							{
+								translations: {
+									languages_code: {
+										_eq: 'de'
+									}
+								}
+							},
+							{
+								site: {
+									_eq: PUBLIC_VERSION
+								}
+							}
+						]
+					}
+				})
+			)
+			.then((response) => response)
+			.catch((err) => {
+				console.error(`Failed to fetch items from table "${tableName}":`, err);
+				return [];
+			});
+	}
+
+	/**
+	 * Fetch items for all tables listed in block.types
+	 * @param {string[]} tables
+	 * @returns {Promise<Record<string, Array<any>>>}
+	 */
+	async function fetchAllItems(tables) {
+		const results = {};
+		for (const table of tables) {
+			results[table] = await fetchTableItems(table);
+		}
+		return results;
+	}
+
+	// Fetch items for the specified tables
+	let itemsPromise = fetchAllItems(['pages', 'charts']);
 </script>
 
 {#if showNavigation}
@@ -10,21 +72,20 @@
 		transition:fade
 	>
 		<div class="max-w-4xl mx-auto">
-			<div>
-				<h2 class="font-bold">Seiten</h2>
-				<ul>
-					<li>1</li>
-					<li>2</li>
-				</ul>
-			</div>
-
-			<div>
-				<h2 class="font-bold">Diagramme</h2>
-				<ul>
-					<li>1</li>
-					<li>2</li>
-				</ul>
-			</div>
+			{#await itemsPromise then itemsByTable}
+				{#each Object.entries(itemsByTable) as [tableName, items]}
+					<div>
+						<h2 class="font-bold capitalize">{tableName}</h2>
+						<ul>
+							{#each items as item}
+								<li>
+									<a href={item.slug}> {item.id}</a>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/each}
+			{/await}
 		</div>
 	</div>
 {/if}
