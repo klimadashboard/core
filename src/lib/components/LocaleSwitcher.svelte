@@ -2,7 +2,7 @@
 	import { locale } from '$lib/stores/i18n';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
-	import { invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 
 	// Fetch languages from Directus
 	$: getLanguages = async () => {
@@ -13,12 +13,29 @@
 
 	$: promise = getLanguages();
 
-	// Watch for locale changes and invalidate pages
-	$: {
-		locale.subscribe(() => {
-			// Invalidate all pages to reload data and server-side logic
-		});
-	}
+	// Update locale and navigate to the corresponding URL
+	const updateLocale = (newLocale) => {
+		// Update the locale store
+		locale.set(newLocale);
+
+		// Get current URL path and break it into segments
+		const pathSegments = window.location.pathname.split('/').filter(Boolean);
+
+		// Define supported languages
+		const supportedLanguages = ['de', 'en']; // Add your supported languages here
+
+		// Remove the current language segment if present
+		if (supportedLanguages.includes(pathSegments[0])) {
+			pathSegments.shift();
+		}
+
+		// Prepend the new locale if it's not the default language
+		const newPath =
+			newLocale === 'de' ? `/${pathSegments.join('/')}` : `/${newLocale}/${pathSegments.join('/')}`;
+
+		// Navigate to the new path
+		goto(newPath || '/');
+	};
 </script>
 
 {#await promise then languages}
@@ -42,13 +59,11 @@
 			<path d="M12 20l4 -9l4 9" />
 			<path d="M19.1 18h-6.2" />
 		</svg>
-		<select
-			class="appearance-none bg-transparent"
-			bind:value={$locale}
-			on:change={(e) => locale.set(e.target.value)}
-		>
+		<select class="appearance-none bg-transparent" on:change={(e) => updateLocale(e.target.value)}>
 			{#each languages as language}
-				<option value={language.code}>{language.name}</option>
+				<option value={language.code} selected={$locale === language.code}>
+					{language.name}
+				</option>
 			{/each}
 		</select>
 	</div>
