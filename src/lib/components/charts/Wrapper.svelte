@@ -77,7 +77,7 @@
 </script>
 
 <div
-	class="bg-white p-4 border border-gray-200 rounded relative {chart.methods ? 'pb-16' : ''}"
+	class=" p-4 border border-gray-200 rounded relative {chart.methods ? 'pb-16' : ''}"
 	id={chart.identifier_string}
 	bind:this={item}
 >
