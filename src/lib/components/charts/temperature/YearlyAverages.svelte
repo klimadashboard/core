@@ -2,6 +2,7 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	import { scaleLinear } from 'd3-scale';
 	import { min, max } from 'd3-array';
+	import { line, curveMonotoneX } from 'd3-shape';
 	import dayjs from 'dayjs';
 	import isLeapYear from 'dayjs/plugin/isLeapYear';
 
@@ -38,7 +39,8 @@
 
 	$: xScale = scaleLinear()
 		.domain([yearlyAverages[0].year, yearlyAverages[yearlyAverages.length - 1].year])
-		.range([40, chartWidth - 40]);
+		.range([60, chartWidth - 60]);
+
 	$: yScale = scaleLinear()
 		.domain([min(yearlyAverages, (d) => d.average) - 1, max(yearlyAverages, (d) => d.average) + 1])
 		.range([chartHeight, 0]);
@@ -53,6 +55,25 @@
 	$: lastYear = yearlyAverages[yearlyAverages.length - 1];
 
 	$: selectedYear = lastYear;
+
+	$: l = line()
+		.x((d) => xScale(d.year))
+		.y((d) => yScale(d.value))
+		.curve(curveMonotoneX); // Optional: smooth the line with a curve
+
+	$: path = l(
+		yearlyAverages
+			.map((d, idx, arr) => {
+				if (idx < 29) return null; // Skip the first 29 elements because they don't have enough data for a 30-year window
+
+				const window = arr.slice(idx - 29, idx + 1); // Get the 30-year window
+				const average = window.reduce((sum, d) => sum + d.average, 0) / window.length;
+
+				return { year: d.year, value: average };
+			})
+			.filter((d) => d !== null),
+		(d) => d.value
+	);
 </script>
 
 <h3 class="text-2xl mt-16 max-w-xl">
@@ -80,6 +101,28 @@
 				on:mouseover={() => (selectedYear = false)}
 				fill="none"
 			/>
+			{#if selectedYear}
+				<g transform="translate({xScale(selectedYear.year)},0)">
+					<line x1={0} x2={0} y1={20} y2={chartHeight} class="stroke-gray-400" />
+					<text
+						y={5}
+						class="text-xs fill-gray-400 font-bold"
+						dominant-baseline="hanging"
+						text-anchor="middle">{selectedYear.year}: {selectedYear.average}°C</text
+					>
+				</g>
+			{/if}
+			<g>
+				<path
+					d={path}
+					class="fill-none opacity-50"
+					stroke={getColor(
+						yearlyAverages.reduce((sum, d) => sum + d.average, 0) / yearlyAverages.length
+					)}
+					stroke-width={5}
+					stroke-linecap="round"
+				/>
+			</g>
 			<g>
 				{#each yearlyAverages as year}
 					<g
@@ -102,22 +145,12 @@
 					/>
 				{/each}
 			</g>
-			{#if selectedYear}
-				<g transform="translate({xScale(selectedYear.year)},0)">
-					<line x1={0} x2={0} y1={20} y2={chartHeight} class="stroke-gray-400" />
-					<text
-						y={5}
-						class="text-xs fill-gray-400 font-bold"
-						dominant-baseline="hanging"
-						text-anchor="middle">{selectedYear.year}: {selectedYear.average}°C</text
-					>
-				</g>
-			{/if}
+
 			<g>
 				{#each yScale.ticks(3) as tick}
 					<g transform="translate(0,{yScale(tick)})">
 						<line x1={0} x2={5} y1={0} y2={0} class="stroke-gray-200" />
-						<text x={7} class="text-sm fill-gray-400" dominant-baseline="middle">{tick}°C</text>
+						<text x={7} class="text-xs fill-gray-400" dominant-baseline="middle">{tick}°C</text>
 					</g>
 				{/each}
 			</g>

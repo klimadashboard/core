@@ -19,7 +19,7 @@
 		},
 		{
 			label: 'Emissionshandel (ETS)',
-			key: 'Emissionshandel Abgrenzung ab 2013'
+			key: 'Emissionshandel'
 		},
 		{
 			label: 'Nicht-Emissionshandel (Non-ETS)',
@@ -123,9 +123,9 @@
 			result.push({
 				label: entry.year,
 				categories: selectedSectors?.map(function (item, index) {
-					if (selectedClassification == 'Emissionshandel Abgrenzung ab 2013') {
+					if (selectedClassification == 'Emissionshandel') {
 						return {
-							label: item.label,
+							label: item.label + ' ' + entry.year,
 							value: showPerCapita
 								? entry['energy_industry_co2e_t_percapita']
 								: entry['energy_industry_co2e_t'],
@@ -133,7 +133,7 @@
 						};
 					} else {
 						return {
-							label: item.label,
+							label: item.label + ' ' + entry.year,
 							value: showPerCapita ? entry[item.key + perCapitaString] : entry[item.key],
 							color: item.color
 						};
@@ -168,7 +168,7 @@
 		!showPerCapita &&
 		selectedClassification == 'Gesamt';
 
-	$: if (showFlightEmissions == true && allowFlightEmissions) {
+	$: if (showFlightEmissions && allowFlightEmissions) {
 		dataset = rawData
 			?.filter((d) => d.classification == selectedClassification)
 			.reduce(reducer, [])
@@ -205,15 +205,16 @@
 		selectedRegion == 'Austria' &&
 		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
 		selectedClassification == 'Gesamt' &&
-		!showPerCapita
+		!showPerCapita &&
+		!showFlightEmissions
 	) {
 		dataset.push({
-			label: 2023,
-			annotation: 'Nowcast 2023',
+			label: 2024,
+			annotation: '',
 			categories: [
 				{
-					label: 'Nowcast 2023',
-					value: 68200000,
+					label: 'Forecast 2024',
+					value: 65600000,
 					estimate: true,
 					color: '#4DB263'
 				}
@@ -224,18 +225,13 @@
 
 	let freezeYAxis = false;
 
-	$: if (selectedClassification == 'Emissionshandel Abgrenzung ab 2013') {
-		selectedRegion = 'Austria';
+	$: if (selectedClassification == 'Emissionshandel') {
 		activeView = 'total_co2e_t';
 	}
 </script>
 
 <div class="flex flex-wrap gap-4 items-center sm:justify-between">
-	<div
-		class="relative text-gray-600 {selectedClassification == 'Emissionshandel Abgrenzung ab 2013'
-			? 'opacity-50'
-			: ''}"
-	>
+	<div class="relative text-gray-600">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			class="absolute pointer-events-none top-3 h-6 right-2 transform -translate-y-0.5 icon-tabler-selector"
@@ -255,7 +251,6 @@
 		<select
 			bind:value={selectedRegion}
 			class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
-			disabled={selectedClassification == 'Emissionshandel Abgrenzung ab 2013'}
 		>
 			{#each regions as region}
 				<option value={region}>{region}</option>

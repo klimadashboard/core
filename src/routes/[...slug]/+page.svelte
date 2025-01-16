@@ -44,7 +44,9 @@
 	<meta property="og:description" content={data.meta_description} />
 	<meta
 		property="og:image"
-		content="{$page.url}image/social/{$page.params.slug ? $page.params.slug : 'home'}/social.jpg"
+		content="{$page.url.origin}/image/social/{$page.params.slug
+			? $page.params.slug
+			: 'home'}/social.jpg"
 	/>
 
 	<!-- Twitter Meta Tags -->
@@ -58,7 +60,9 @@
 	<meta name="twitter:description" content={data.meta_description} />
 	<meta
 		name="twitter:image"
-		content="{$page.url}image/social/{$page.params.slug ? $page.params.slug : 'home'}/social.jpg"
+		content="{$page.url.origin}/image/social/{$page.params.slug
+			? $page.params.slug
+			: 'home'}/social.jpg"
 	/>
 </svelte:head>
 

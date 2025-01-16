@@ -17,13 +17,13 @@
 	export let show0ValuesInLegend = false;
 	export let freezeYAxis = false;
 	export let marginLeft = 20;
+	export let marginRight = 0;
 	export let highlightYLine = false;
-
-	console.log(data);
+	export let reverseLegend = false;
 
 	let chartHeight;
 	let chartWidth;
-	$: margin = { top: 20, right: 0, bottom: 50, left: marginLeft };
+	$: margin = { top: 20, right: marginRight, bottom: 50, left: marginLeft };
 
 	$: padding = Math.min(3, Math.round(chartWidth / data.length / 5));
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -341,10 +341,20 @@
 						style="background-color:{category.color || '#41AB5D'}"
 						transition:fade={{ duration: 300 }}
 					>
-						<span class="uppercase">{@html category.label}</span>
-						<span class="">{prettifyTick(category.value)}</span>
-						{#if unit.length < 8}
-							<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
+						{#if reverseLegend}
+							<span class="uppercase"
+								><span class="">{prettifyTick(category.value)}</span>
+								{#if unit.length < 8}
+									<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
+								{/if}
+								{@html category.label}</span
+							>
+						{:else}
+							<span class="uppercase">{@html category.label}</span>
+							<span class="">{prettifyTick(category.value)}</span>
+							{#if unit.length < 8}
+								<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
+							{/if}
 						{/if}
 					</div>
 				{/each}

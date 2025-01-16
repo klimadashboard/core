@@ -37,12 +37,6 @@
 	$: chartHeight = chartWidth / 1.4;
 
 	$: ratio_data = showTechn ? potentiale_techn : potentiale_2030;
-
-	// $: console.log(hoverType);
-	$: console.log(potentiale_2030);
-
-	// $: hoverX = margin_bars.left;
-	// $: hoverY = margin.top;
 </script>
 
 {#if chartWidth < 150}
