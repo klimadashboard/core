@@ -1,13 +1,12 @@
 <script>
 	import { page } from '$app/stores';
-
-	console.log($page);
+	$: console.log($page);
 </script>
 
-<div>
+<div class="hidden sm:block">
 	<ol>
 		<li>
-			<span class="opacity-50">&rarr;</span>
+			<span class="opacity-50 mr-3">›</span>
 			<a href="#">Breadcrumb Menü</a>
 		</li>
 	</ol>

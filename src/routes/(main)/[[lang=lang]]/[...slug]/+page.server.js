@@ -40,7 +40,7 @@ export async function load({ fetch, params }) {
 						},
 						{
 							site: {
-								_eq: site
+								_eq: PUBLIC_VERSION
 							}
 						}
 					]
@@ -83,6 +83,7 @@ export async function load({ fetch, params }) {
 		}
 
 		const page = pages[0];
+		const site = await directus.request(readItem('sites', PUBLIC_VERSION));
 		const translation = page.translations.find(
 			(t) => t.slug === slug && t.languages_code === language
 		);
@@ -90,7 +91,8 @@ export async function load({ fetch, params }) {
 
 		return {
 			content: translation,
-			page: page
+			page: page,
+			site: site
 			// seo: seo
 		};
 	} catch (err) {

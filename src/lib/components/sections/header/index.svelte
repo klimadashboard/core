@@ -7,45 +7,64 @@
 	import Breadcrumb from './Breadcrumb.svelte';
 
 	let showNavigation = false;
+	let showSearch = false;
+
+	// Function to handle closing the navigation menu
+	function closeNavigation() {
+		showNavigation = false;
+	}
 </script>
 
 <header
 	class="font-display fixed bg-white dark:bg-gray-900 w-screen bg-opacity-90 backdrop-blur-sm z-50"
 >
-	<div class="flex items-center gap-4 p-4">
-		<a href="/" class="flex items-center gap-2">
-			<div class=" font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
-		</a>
+	<div class="p-4">
+		<div class="flex items-center gap-4">
+			<a href="/" class="flex items-center gap-2">
+				<div class=" font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
+			</a>
 
-		<Breadcrumb />
+			<Breadcrumb />
 
-		<span class="ml-auto" />
-		<LocaleSwitcher />
+			<span class="ml-auto" />
+			<LocaleSwitcher />
 
-		<LightSwitch />
+			<LightSwitch />
 
-		<button
-			class="flex items-center gap-1 font-bold mr-4"
-			on:mousedown={() => (showNavigation = !showNavigation)}
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6l16 0" /><path
-					d="M4 12l16 0"
-				/><path d="M4 18l16 0" /></svg
+			<button
+				class="flex items-center gap-1 font-bold mr-4"
+				on:mousedown={() => (showNavigation = !showNavigation)}
 			>
-			<span>Menü</span>
-		</button>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"
+					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6l16 0" /><path
+						d="M4 12l16 0"
+					/><path d="M4 18l16 0" /></svg
+				>
+				<span>Menü</span>
+			</button>
+		</div>
+		{#if showNavigation || showSearch}
+			<div class="mt-4 pt-4 border-t border-opacity-20">
+				{#if showNavigation}
+					<Navigation on:linkClicked={closeNavigation} />
+				{/if}
+				{#if showSearch}
+					<SearchBox />
+				{/if}
+			</div>
+		{/if}
 	</div>
 	<ProgressIndicator />
 </header>
-<Navigation {showNavigation} />
+
+<div class="h-12" />

@@ -17,7 +17,16 @@
 </script>
 
 <div class="px-2 py-4">
-	<Splide options={{ autoWidth: true, gap: '0', pagination: false, arrows: false, type: 'loop' }}>
+	<Splide
+		options={{
+			autoWidth: true,
+			gap: '0',
+			pagination: false,
+			arrows: false,
+			type: 'loop',
+			autoplay: true
+		}}
+	>
 		{#each components as component}
 			<SplideSlide class="w-1/2 md:w-1/4 px-2">
 				<svelte:component this={component} />

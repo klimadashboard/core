@@ -116,9 +116,11 @@
 	];
 </script>
 
-{#each data as block}
-	<svelte:component
-		this={blocks.find((d) => d.type == block.collection).component}
-		block={block.item}
-	/>
-{/each}
+<div class="min-h-[60vh]">
+	{#each data as block}
+		<svelte:component
+			this={blocks.find((d) => d.type == block.collection).component}
+			block={block.item}
+		/>
+	{/each}
+</div>
