@@ -30,6 +30,10 @@ module.exports = {
 		'border-economy'
 	],
 	theme: {
+		fontFamily: {
+			sans: ['Zed Text Variable', 'sans-serif'],
+			display: ['Zed Display Variable', 'sans-serif']
+		},
 		colors: {
 			transparent: 'transparent',
 			current: 'currentColor',

@@ -194,7 +194,7 @@
 		</div>
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 			{#if chart.content.text}
-				<p class="text-lg text col-span-2">{@html chart.content.text}</p>
+				<p class="text col-span-2">{@html chart.content.text}</p>
 			{/if}
 			{#if chart.content.source}
 				<div class="text-gray-700 text-sm">

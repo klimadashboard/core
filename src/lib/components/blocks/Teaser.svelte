@@ -4,7 +4,7 @@
 	export let block;
 </script>
 
-<div class="p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
+<div class="p-4 grid grid-cols-1 lg:grid-cols-4 gap-4 font-display">
 	<a href="#" class="bg-gray-100 lg:col-span-2 relative overflow-hidden min-h-[50vh] group">
 		<img
 			class="inset-0 w-full h-full object-cover object-center absolute group-hover:scale-105 transition duration-500"
