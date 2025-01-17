@@ -1,6 +1,6 @@
 <script>
-	import Header from '$lib/components/header.svelte';
-	import Footer from '$lib/components/footer.svelte';
+	import Header from '$lib/components/sections/header/index.svelte';
+	import Footer from '$lib/components/sections/footer/index.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
 

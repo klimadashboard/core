@@ -81,7 +81,7 @@
 	id={chart.identifier_string}
 	bind:this={item}
 >
-	<div class="flex justify-between items-center mb-1 text-gray-500 hover:text-gray-600 transition">
+	<div class="flex justify-between items-center mb-1 transition">
 		<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
 			{chart.content.title}
 		</h2>
@@ -197,7 +197,7 @@
 				<p class="text col-span-2">{@html chart.content.text}</p>
 			{/if}
 			{#if chart.content.source}
-				<div class="text-gray-700 text-sm">
+				<div class="text-sm">
 					<div class="flex items-center gap-0.5 font-bold -mb-4">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

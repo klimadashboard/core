@@ -1,28 +1,25 @@
 <script>
-	import { error } from '@sveltejs/kit';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import Loader from './Loader.svelte';
-	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
-	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
-	import PageHeader from './PageHeader.svelte';
 	import LocaleSwitcher from './LocaleSwitcher.svelte';
 	import Navigation from './Navigation.svelte';
 	import LightSwitch from './LightSwitch.svelte';
+	import ProgressIndicator from './ProgressIndicator.svelte';
+	import Breadcrumb from './Breadcrumb.svelte';
 
 	let showNavigation = false;
 </script>
 
 <header
-	class="max-w-full w-full sm:w-max fixed bg-white text-gray-800 sm:rounded-full left-1/2 -translate-x-1/2 sm:top-4 z-50 shadow-lg bg-opacity-90 backdrop-blur-sm"
+	class="font-display fixed bg-white dark:bg-gray-900 w-screen bg-opacity-90 backdrop-blur-sm z-50"
 >
-	<div class="flex items-center gap-4">
-		<a href="/" class="flex items-center gap-2 mr-auto sm:mr-8">
-			<div class="w-10 h-10 bg-gray-500 rounded-full" />
+	<div class="flex items-center gap-4 p-4">
+		<a href="/" class="flex items-center gap-2">
 			<div class=" font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 		</a>
 
+		<Breadcrumb />
+
+		<span class="ml-auto" />
 		<LocaleSwitcher />
 
 		<LightSwitch />
@@ -49,7 +46,6 @@
 			<span>Menü</span>
 		</button>
 	</div>
+	<ProgressIndicator />
 </header>
 <Navigation {showNavigation} />
-
-<PageHeader />
