@@ -14,7 +14,7 @@
 		<h1 class="font-bold tracking-wide uppercase">{$page.data.content.title}</h1>
 		-->
 
-			<h2 class="text-3xl md:text-5xl font-bold font-display">
+			<h2 class="text-3xl md:text-5xl font-bold">
 				{$page.data.content.heading ? $page.data.content.heading : $page.data.content.title}
 			</h2>
 		{/if}
