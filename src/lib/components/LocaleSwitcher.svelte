@@ -39,7 +39,7 @@
 </script>
 
 {#await promise then languages}
-	<div class="flex items-center gap-2 font-bold">
+	<div class="flex items-center gap-1 font-bold">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			width="24"
@@ -59,10 +59,13 @@
 			<path d="M12 20l4 -9l4 9" />
 			<path d="M19.1 18h-6.2" />
 		</svg>
-		<select class="appearance-none bg-transparent" on:change={(e) => updateLocale(e.target.value)}>
+		<select
+			class="appearance-none bg-transparent uppercase"
+			on:change={(e) => updateLocale(e.target.value)}
+		>
 			{#each languages as language}
 				<option value={language.code} selected={$locale === language.code}>
-					{language.name}
+					{language.code}
 				</option>
 			{/each}
 		</select>
