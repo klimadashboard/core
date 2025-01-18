@@ -3,6 +3,7 @@
 	import Papa from 'papaparse';
 
 	let dataGoals;
+
 	Papa.parse(
 		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_scenarios.csv',
 		{

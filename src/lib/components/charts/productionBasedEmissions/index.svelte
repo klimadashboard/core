@@ -206,8 +206,6 @@
 	}
 
 	let freezeYAxis = false;
-
-	$: console.log(dataset);
 </script>
 
 <div class="flex flex-wrap gap-4 items-center sm:justify-between">

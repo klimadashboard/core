@@ -13,7 +13,7 @@ let fetchCharts = async () => {
 	const response = await fetch(uri)
 		.then((x) => x.json())
 		.catch(function (err) {
-			// console.log('Timeout when loading chart. ' + err);
+			console.log('Timeout when loading chart. ' + err);
 		});
 
 	if (response) {

@@ -5,6 +5,14 @@
 
 	export let v;
 
+	const goalScenarios = {
+		eag: 'EAG',
+		nekp: 'NEKP',
+		önip: 'ÖNIP'
+	};
+
+	let selectedScenario = 'eag';
+
 	const energyTypes = [
 		{
 			key: 'Wind',
@@ -48,12 +56,52 @@
 			}
 		}
 	);
+
+	let dataGoals;
+	Papa.parse(
+		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_scenarios.csv',
+		{
+			download: true,
+			dynamicTyping: true,
+			skipEmptyLines: true,
+			header: true,
+			complete: function (results) {
+				if (results) {
+					dataGoals = results.data;
+				}
+			}
+		}
+	);
 </script>
 
+<!-- <div class="flex flex-wrap gap-2 justify-center items-center"> -->
+<div class="flex flex-wrap gap-2 items-center">
+	Wähle das Ausbauziel:
+	{#each Object.keys(goalScenarios) as goalScenario}
+		<button
+			class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-1 {selectedScenario === goalScenario
+				? 'stroke-2 bg-gray-200 font-bold'
+				: ''}"
+			on:click={() => {
+				selectedScenario = goalScenario;
+			}}
+			on:keydown={() => {
+				selectedScenario = goalScenario;
+			}}>{goalScenarios[goalScenario]}</button
+		>
+	{/each}
+</div>
 {#if dataset}
 	<div class="grid md:grid-cols-2 gap-4 my-4">
 		{#each energyTypes as type}
-			<Gap {type} {dataset} />
+			<Gap
+				{type}
+				{dataset}
+				dataGoal={dataGoals.filter(
+					(d) => d.energy_type == type.dataKey && d.scenario == selectedScenario
+				)[0]}
+				goalScenario={goalScenarios[selectedScenario]}
+			/>
 		{/each}
 		<div class="bg-gray-100 p-4">
 			<p>Für Biomasse stehen noch nicht ausreichend Daten zu Verfügung.</p>

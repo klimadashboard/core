@@ -18,7 +18,9 @@
 					dataset = results.data.filter(
 						(d) => d.region !== 'Austria' && d.classification == 'Gesamt' && d.total_co2e_t
 					);
-					maxYear = [...dataset].sort((a, b) => b.year - a.year)[0].year;
+					maxYear = [...dataset]
+						.filter((d) => d.region == 'Wien' && d.total_co2e_t > 0)
+						.sort((a, b) => b.year - a.year)[0].year;
 				}
 			}
 		}
