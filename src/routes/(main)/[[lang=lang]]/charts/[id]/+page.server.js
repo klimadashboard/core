@@ -6,12 +6,17 @@ export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
 
 	try {
+		let language = params.lang ? params.lang : 'de';
+
+		const chart = await directus.request(
+			readItem('charts', params.id, {
+				fields: ['*.*']
+			})
+		);
+		const content = chart.translations.find((t) => t.languages_code === language);
 		return {
-			content: await directus.request(
-				readItem('charts', params.id, {
-					fields: ['*.*']
-				})
-			)
+			chart: chart,
+			content: content
 		};
 	} catch (err) {
 		throw error(404, 'Page not found');

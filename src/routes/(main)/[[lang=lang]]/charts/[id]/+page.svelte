@@ -7,6 +7,6 @@
 <div class="grid lg:grid-cols-4 py-8">
 	<div />
 	<div class="col-span-2">
-		<Chart chart={data.content} />
+		<Chart chart={data.chart} />
 	</div>
 </div>

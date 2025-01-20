@@ -2,9 +2,11 @@
 	import { page } from '$app/stores';
 	import Search from './Search.svelte';
 	import PopularPages from './PopularPages.svelte';
+
+	$: tags = $page.data.content.tags || [];
 </script>
 
-<div class="pt-16">
+<div class="m-1 py-8 rounded-2xl">
 	<div class="container">
 		{#if $page.data.content}
 			<!--
@@ -16,14 +18,25 @@
 			</h2>
 		{/if}
 
-		{#if $page.params.slug == ''}
-			<div class="mb-4 mt-2 saturate-0">
+		<div class="opacity-80 mt-4 sm:text-lg leading-tight">
+			{#if true == true}
+				<p>Zuletzt aktualisiert am XX.XX.2024.</p>
 				<p>
-					Science-based. Open. Up-to-date.<br />
-					Bekannt aus DER STANDARD, ORF, APA, Stern.de
+					{#each tags as tag}
+						{tag}
+					{/each}
 				</p>
-			</div>
-		{/if}
+			{/if}
+
+			{#if $page.params.slug == ''}
+				<div class="mb-4 mt-2 saturate-0">
+					<p>
+						Science-based. Open. Up-to-date.<br />
+						Bekannt aus DER STANDARD, ORF, APA, Stern.de
+					</p>
+				</div>
+			{/if}
+		</div>
 
 		{#if $page.params.slug == ''}
 			<Search />

@@ -16,11 +16,11 @@
 	];
 </script>
 
-<div class="px-2 py-4">
+<div class="px-1">
 	<Splide
 		options={{
 			autoWidth: true,
-			gap: '0',
+			gap: '0.25rem',
 			pagination: false,
 			arrows: false,
 			type: 'loop',
@@ -28,7 +28,7 @@
 		}}
 	>
 		{#each components as component}
-			<SplideSlide class="w-1/2 md:w-1/4 px-2">
+			<SplideSlide class="w-1/2 md:w-1/4 bg-gray-100 p-3 rounded-2xl">
 				<svelte:component this={component} />
 			</SplideSlide>
 		{/each}

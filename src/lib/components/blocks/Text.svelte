@@ -1,9 +1,10 @@
 <script>
 	export let block;
+	console.log(block);
 </script>
 
 <div class="my-8 text-lg container text" id={block.id}>
-	<div class="max-w-4xl mx-auto">
+	<div class="max-w-2xl mx-auto">
 		{@html block.content}
 	</div>
 </div>
@@ -18,6 +19,6 @@
 	}
 
 	:global(.text h2) {
-		@apply text-center max-w-xl mx-auto text-2xl font-bold;
+		@apply text-2xl font-bold mt-12;
 	}
 </style>
