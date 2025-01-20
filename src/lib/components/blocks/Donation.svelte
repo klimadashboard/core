@@ -19,7 +19,7 @@
 	];
 </script>
 
-<div class="p-4 mx-4">
+<div class="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 py-10">
 	<p class="text-center text-sm uppercase opacity-50 font-bold">Unser Neujahrsvorsatz seit 2021</p>
 	<h2 class="text-center text-3xl font-bold leading-tight">
 		Klimawissenschaft zugänglich machen. <br />Für alle, immer, kostenlos.

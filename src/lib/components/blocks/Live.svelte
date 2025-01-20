@@ -19,16 +19,21 @@
 <div class="px-1">
 	<Splide
 		options={{
-			autoWidth: true,
+			perPage: 4,
 			gap: '0.25rem',
 			pagination: false,
 			arrows: false,
 			type: 'loop',
-			autoplay: true
+			autoplay: true,
+			breakpoints: {
+				1000: {
+					perPage: 2
+				}
+			}
 		}}
 	>
 		{#each components as component}
-			<SplideSlide class="w-1/2 md:w-1/4 bg-gray-100 p-3 rounded-2xl">
+			<SplideSlide class="bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl">
 				<svelte:component this={component} />
 			</SplideSlide>
 		{/each}

@@ -5,6 +5,9 @@
 	import LightSwitch from './LightSwitch.svelte';
 	import ProgressIndicator from './ProgressIndicator.svelte';
 	import Breadcrumb from './Breadcrumb.svelte';
+	import { page } from '$app/stores';
+
+	$: console.log($page);
 
 	let showNavigation = false;
 	let showSearch = false;
@@ -18,21 +21,13 @@
 <header
 	class="font-display fixed bg-white dark:bg-gray-900 w-screen bg-opacity-90 backdrop-blur-sm z-50"
 >
-	<div class="p-4">
+	<div class="p-1 sm:px-4 sm:py-2">
 		<div class="flex items-center gap-4">
 			<a href="/" class="flex items-center gap-2">
 				<div class=" font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>
-
-			<Breadcrumb />
-
-			<span class="ml-auto" />
-			<LocaleSwitcher />
-
-			<LightSwitch />
-
 			<button
-				class="flex items-center gap-1 font-bold mr-4"
+				class="flex items-center gap-1 font-bold rounded border p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
 				on:mousedown={() => (showNavigation = !showNavigation)}
 			>
 				<svg
@@ -52,6 +47,13 @@
 				>
 				<span>Menü</span>
 			</button>
+
+			<Breadcrumb />
+
+			<span class="ml-auto" />
+			<LocaleSwitcher />
+
+			<LightSwitch />
 		</div>
 		{#if showNavigation || showSearch}
 			<div class="mt-4 pt-4 border-t border-opacity-20">
@@ -68,3 +70,24 @@
 </header>
 
 <div class="h-14" />
+
+{#if $page.params.lang}
+	<div class="bg-yellow-100 rounded-2xl p-3 m-1 flex gap-1">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class="text-yellow-700"
+			><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+				d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"
+			/><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg
+		>
+		<p>Please note that translations are currently in beta and sometimes incomplete.</p>
+	</div>
+{/if}

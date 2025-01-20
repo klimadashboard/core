@@ -7,8 +7,6 @@ import { PUBLIC_VERSION } from '$env/static/public';
 export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
 
-	console.log(params);
-
 	let language = params.lang ? params.lang : 'de';
 	let slug = params.slug ? params.slug : 'home';
 	let site = PUBLIC_VERSION;

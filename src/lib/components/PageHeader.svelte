@@ -2,8 +2,14 @@
 	import { page } from '$app/stores';
 	import Search from './Search.svelte';
 	import PopularPages from './PopularPages.svelte';
+	import dayjs from 'dayjs';
+	import RelativeTime from 'dayjs/plugin/relativeTime';
+
+	dayjs.extend(RelativeTime);
+	dayjs.locale('de-at');
 
 	$: tags = $page.data.content.tags || [];
+	$: console.log($page.data);
 </script>
 
 <div class="m-1 py-8 rounded-2xl">
@@ -19,14 +25,24 @@
 		{/if}
 
 		<div class="opacity-80 mt-4 sm:text-lg leading-tight">
-			{#if true == true}
-				<p>Zuletzt aktualisiert am XX.XX.2024.</p>
+			{#if $page.data.page.date_updated}
 				<p>
-					{#each tags as tag}
-						{tag}
-					{/each}
+					Zuletzt aktualisiert
+					<span class="underline underline-offset-2 decoration-gray-400 group relative">
+						<span class="group-hover:hidden">
+							{dayjs().to(dayjs($page.data.page.date_updated))}
+						</span>
+						<span class="hidden group-hover:inline"
+							>{dayjs($page.data.page.date_updated).format('DD.MM.YYYY HH:m')}</span
+						>
+					</span>.
 				</p>
 			{/if}
+			<p>
+				{#each tags as tag}
+					{tag}
+				{/each}
+			</p>
 
 			{#if $page.params.slug == ''}
 				<div class="mb-4 mt-2 saturate-0">

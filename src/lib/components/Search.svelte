@@ -256,14 +256,14 @@
 		<input
 			type="text"
 			{placeholder}
-			class="px-4 py-2 rounded-full w-full bg-gray-100"
+			class="px-4 py-2 rounded-full w-full bg-gray-100 dark:bg-gray-800"
 			bind:value={query}
 			on:input={onInput}
 			on:keydown={onKeyDown}
 			on:blur={onBlur}
 			autocomplete="off"
 		/>
-		<button aria-label="Orten lasen..." class="bg-gray-100 rounded-full grid px-2">
+		<button aria-label="Orten lasen..." class="bg-gray-100 dark:bg-gray-800 rounded-full grid px-2">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"

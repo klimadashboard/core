@@ -42,7 +42,7 @@
 	</div>
 
 	{#await promise then news}
-		<ul class="kd_news font-sans">
+		<ul class="kd_news">
 			{#each news as item}
 				<li class="my-2">{@html item.text}</li>
 			{/each}

@@ -4,6 +4,7 @@
 	import { readItems } from '@directus/sdk';
 	import { locale } from '$lib/stores/i18n';
 	import '@splidejs/svelte-splide/css/core';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let block;
 
@@ -13,35 +14,53 @@
 	 * @param {number} limit
 	 * @returns {Promise<Array<any>>}
 	 */
-	function fetchTableItems(tableName, limit = 20) {
+	async function fetchTableItems(tableName, limit = 20) {
 		const directus = getDirectusInstance();
-		// Use .then() and .catch() or async/await—both return a Promise
-		return directus
-			.request(
+
+		let hasSiteField = false;
+
+		try {
+			// Fetch a single record to check for the existence of the "site" field
+			const [sampleRecord] = await directus.request(
+				readItems(tableName, {
+					limit: 1, // Limit to 1 record for quick check
+					fields: ['*']
+				})
+			);
+
+			// Check if "site" is a key in the sample record
+			hasSiteField = sampleRecord && Object.keys(sampleRecord).includes('site');
+		} catch (err) {
+			console.error(`Failed to fetch sample data for table "${tableName}":`, err);
+		}
+
+		try {
+			const response = await directus.request(
 				readItems(tableName, {
 					limit,
 					fields: ['*.*'],
 					filter: {
 						status: {
 							_eq: 'published'
-						}
+						},
+						...(hasSiteField && {
+							site: {
+								_eq: PUBLIC_VERSION
+							}
+						})
 					}
 				})
-			)
-			.then((response) => {
-				return response.map((item) => ({
-					...item,
-					// Because $locale is a store, ensure you have a local subscription
-					// or read it where it’s in scope.
-					// If it’s in scope, you can do:
-					content: item.translations?.find((t) => t.languages_code === $locale),
-					type: tableName
-				}));
-			})
-			.catch((err) => {
-				console.error(`Failed to fetch items from table "${tableName}":`, err);
-				return [];
-			});
+			);
+
+			return response.map((item) => ({
+				...item,
+				content: item.translations?.find((t) => t.languages_code === $locale),
+				type: tableName
+			}));
+		} catch (err) {
+			console.error(`Failed to fetch items from table "${tableName}":`, err);
+			return [];
+		}
 	}
 
 	/**
@@ -52,16 +71,21 @@
 	async function fetchAllItems(tables) {
 		const promises = tables.map((table) => fetchTableItems(table));
 		const results = await Promise.all(promises);
-		return results.flat(); // Flatten the array of arrays
+
+		// Flatten and deduplicate items based on a unique property
+		const uniqueItems = Array.from(
+			new Map(
+				results.flat().map((item) => [item.id, item]) // Use 'id' as the key for uniqueness
+			).values()
+		);
+
+		console.log('Raw fetched results:', uniqueItems);
+
+		return uniqueItems;
 	}
 
 	// We store the Promise itself here
-	let itemsPromise;
-
-	// Whenever block.types changes, set a new promise
-	$: if (block.types && Array.isArray(block.types)) {
-		itemsPromise = fetchAllItems(block.types);
-	}
+	let itemsPromise = fetchAllItems(block.types);
 </script>
 
 {#await itemsPromise}
@@ -119,9 +143,9 @@
 		<div class="mt-4">
 			<SplideTrack>
 				{#each items as item}
-					{@const relativeUrl =
-						item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
 					<SplideSlide>
+						{@const relativeUrl =
+							item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
 						<a class="w-64 block" href={relativeUrl}>
 							<div class="bg-gray-100">
 								<img src="{relativeUrl}/social.jpg" alt="" />

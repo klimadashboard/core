@@ -1,4 +1,6 @@
 import { getPage, releasePage } from '$lib/utils/browser';
+import path from 'path';
+import fs from 'fs/promises';
 
 async function retrySetContent(page, htmlContent, retries = 3) {
 	for (let attempt = 0; attempt < retries; attempt++) {
@@ -12,9 +14,33 @@ async function retrySetContent(page, htmlContent, retries = 3) {
 	}
 }
 
+async function loadAllCSS() {
+	const cssDir = path.resolve('build/client/_app/immutable/assets'); // Adjust path as needed
+	try {
+		// Read the directory and find all .css files
+		const files = await fs.readdir(cssDir);
+		const cssFiles = files.filter((file) => file.endsWith('.css'));
+
+		// Read and concatenate all CSS file contents
+		const cssContents = await Promise.all(
+			cssFiles.map((file) => fs.readFile(path.join(cssDir, file), 'utf-8'))
+		);
+
+		return cssContents.join('\n'); // Combine all CSS into a single string
+	} catch (error) {
+		console.error('Error loading CSS files:', error);
+		return '';
+	}
+}
+
 export async function renderAndScreenshot(renderFunction, props) {
+	// Load all CSS files from the assets folder
+	const allCSS = await loadAllCSS();
+
+	// Render the Svelte component
 	const { html, head, css } = renderFunction(props);
 
+	// Combine loaded CSS with the component's scoped CSS
 	const htmlContent = `
 		<!DOCTYPE html>
 		<html lang="en">
@@ -22,6 +48,7 @@ export async function renderAndScreenshot(renderFunction, props) {
 				<meta charset="UTF-8">
 				<title>${props.title || 'Image'}</title>
 				${head}
+				<style>${allCSS}</style>
 				<style>${css.code}</style>
 			</head>
 			<body>
