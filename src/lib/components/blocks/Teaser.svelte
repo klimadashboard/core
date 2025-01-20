@@ -1,14 +1,16 @@
 <script>
 	import News from '$lib/components/cards/News.svelte';
+	import Donation from './Donation.svelte';
 
 	export let block;
 
-	let secondaryItems = ['', '', '', ''];
+	let primaryItem = block.items[0];
+	let secondaryItems = block.items.slice(1);
 </script>
 
 <div class="p-1 grid grid-cols-1 lg:grid-cols-4 gap-1">
 	<a
-		href="#"
+		href={primaryItem.link}
 		class="bg-gray-100 lg:col-span-2 relative overflow-hidden min-h-[50vh] group rounded-2xl"
 	>
 		<img
@@ -19,22 +21,24 @@
 		<div
 			class="bg-gradient-to-b from-transparent to-black opacity-90 absolute h-2/3 w-full bottom-0"
 		/>
-		<div class="absolute p-4 text-white uppercase font-bold tracking-wider">Unternehmen</div>
+		<div class="absolute p-4 text-white uppercase font-bold tracking-wider text-sm">
+			{primaryItem.eyebrow}
+		</div>
 
 		<div class="p-4 absolute bottom-0 text-white max-w-xl text-balance">
 			<h3 class="font-bold text-3xl lg:text-4xl leading-tight mb-2">
-				Wie viele Emissionen stoßen Österreichs Unternehmen aus?
+				{primaryItem.title}
 			</h3>
 			<p class="text-lg leading-snug">
-				Neue Recherchen des Klimadashboards zeigen Emissionen der OMV, UNIQA und vielen mehr.
+				{primaryItem.description}
 			</p>
 		</div>
 	</a>
-	<div class="grid grid-cols-2 gap-4 lg:grid-cols-1">
+	<div class="grid grid-cols-2 gap-1 lg:grid-cols-1">
 		{#each secondaryItems as item}
-			<a href={item.link} class="border-b p-3">
-				<p class="uppercase font-bold tracking-wide">{item.eyebrow}</p>
-				<p class="text-2xl">{item.title}</p>
+			<a href={item.link} class="bg-gray-50 rounded-2xl p-3 flex flex-col">
+				<p class="uppercase font-bold tracking-wider text-sm">{item.eyebrow}</p>
+				<p class="text-xl mt-auto">{item.title}</p>
 			</a>
 		{/each}
 	</div>

@@ -24,7 +24,7 @@
 			</h2>
 		{/if}
 
-		<div class="opacity-80 mt-4 sm:text-lg leading-tight">
+		<div class="opacity-80 mt-4 text-lg leading-snug">
 			{#if $page.data.page.date_updated}
 				<p>
 					Zuletzt aktualisiert
@@ -47,8 +47,8 @@
 			{#if $page.params.slug == ''}
 				<div class="mb-4 mt-2 saturate-0">
 					<p>
-						Science-based. Open. Up-to-date.<br />
-						Bekannt aus DER STANDARD, ORF, APA, Stern.de
+						Wissenschaftsbasiert. Transparent. Unabhängig.<br />
+						Bekannt aus DER STANDARD, ORF, APA, Stern.de.
 					</p>
 				</div>
 			{/if}

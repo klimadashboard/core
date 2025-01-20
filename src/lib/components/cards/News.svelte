@@ -33,16 +33,13 @@
 </script>
 
 <div class="flex flex-col h-full">
-	<div class="h-[1px] bg-gray-200" />
-	<div class="h-[1px] mt-1 bg-gray-200" />
-	<div class="h-[1px] mt-1 bg-gray-200" />
-	<div class="flex items-center gap-2 mt-4">
+	<div class="flex items-center gap-2">
 		<div class="pulse" />
 		<h3 class="uppercase font-bold tracking-wider text-sm relative">Was heute wichtig ist</h3>
 	</div>
 
 	{#await promise then news}
-		<ul class="kd_news">
+		<ul class="kd_news text-base">
 			{#each news as item}
 				<li class="my-2">{@html item.text}</li>
 			{/each}
@@ -50,7 +47,7 @@
 
 		{#if news[0].author}
 			<div class="flex items-center gap-2 mt-auto">
-				<div class="h-16 w-16 rounded-full bg-gray-400 overflow-hidden relative">
+				<div class="h-12 w-12 rounded-full bg-gray-400 overflow-hidden relative">
 					<img
 						src="https://base.klimadashboard.org/assets/{news[0].author.avatar}"
 						alt=""
