@@ -88,86 +88,31 @@
 	let itemsPromise = fetchAllItems(block.types);
 </script>
 
-{#await itemsPromise}
-	<!-- Loading State -->
-	<p>Loading...</p>
-{:then items}
-	<Splide
-		class="m-4"
-		options={{
-			autoWidth: true,
-			autoHeight: true,
-			gap: '1rem',
-			trimSpace: true,
-			omitEnd: true,
-			type: 'loop',
-			pagination: false
-		}}
-		hasTrack={false}
-	>
-		<div class="flex border-b items-end pb-1">
-			<h3 class="uppercase font-bold tracking-wide">{block.title}</h3>
-			<div class="flex ml-auto splide__arrows">
-				<button class="splide__arrow splide__arrow--prev"
-					><svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"
-						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg
-					></button
-				>
-				<button class="splide__arrow splide__arrow--next"
-					><svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-right"
-						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg
-					></button
-				>
-			</div>
-		</div>
-		<div class="mt-4">
-			<SplideTrack>
-				{#each items as item}
-					<SplideSlide>
-						{@const relativeUrl =
-							item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
-						<a class="w-64 block" href={relativeUrl}>
-							<div class="bg-gray-100">
-								<img src="{relativeUrl}/social.jpg" alt="" />
-							</div>
-							<div class="pt-2">
-								{#if item.content?.title}
-									<p class="uppercase font-bold text-sm tracking-wide">{item.content?.title}</p>
-								{/if}
-								{#if item.content?.heading}
-									<h3 class="text-xl">{item.content?.heading}</h3>
-								{/if}
-								{#if item.name}
-									<h3 class="text-xl">{item.name}</h3>
-								{/if}
-							</div>
-						</a>
-					</SplideSlide>
-				{/each}
-			</SplideTrack>
-		</div>
-	</Splide>
-{:catch error}
-	<!-- Error State -->
-	<p class="text-red-500">Error loading items: {error.message}</p>
-{/await}
+<div class="container my-4">
+	{#await itemsPromise}
+		<!-- Loading State -->
+		<p>Loading...</p>
+	{:then items}
+		<h3 class="uppercase font-bold tracking-wide">{block.title}</h3>
+		<ul class="flex flex-wrap gap-x-4">
+			{#each items as item}
+				{@const relativeUrl = item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
+				<li class="inline text-lg hover:underline underline-offset-2 opacity-80 hover:opacity-100">
+					<a href={relativeUrl}>
+						<div class="">
+							{#if item.content?.title}
+								<p class="">{item.content?.title}</p>
+							{/if}
+							{#if item.name}
+								<h3 class="">{item.name}</h3>
+							{/if}
+						</div>
+					</a>
+				</li>
+			{/each}
+		</ul>
+	{:catch error}
+		<!-- Error State -->
+		<p class="text-red-500">Error loading items: {error.message}</p>
+	{/await}
+</div>
