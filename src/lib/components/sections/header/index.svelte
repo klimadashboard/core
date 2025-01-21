@@ -7,8 +7,6 @@
 	import Breadcrumb from './Breadcrumb.svelte';
 	import { page } from '$app/stores';
 
-	$: console.log($page);
-
 	let showNavigation = false;
 	let showSearch = false;
 
@@ -27,7 +25,7 @@
 				<div class=" font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>
 			<button
-				class="flex items-center gap-1 font-bold rounded border p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+				class="flex items-center gap-1 font-bold rounded-full border py-1.5 px-3 hover:bg-gray-100 dark:hover:bg-gray-800"
 				on:mousedown={() => (showNavigation = !showNavigation)}
 			>
 				<svg

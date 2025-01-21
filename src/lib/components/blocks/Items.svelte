@@ -79,8 +79,6 @@
 			).values()
 		);
 
-		console.log('Raw fetched results:', uniqueItems);
-
 		return uniqueItems;
 	}
 
@@ -88,16 +86,16 @@
 	let itemsPromise = fetchAllItems(block.types);
 </script>
 
-<div class="container my-4">
+<div class="container my-4 text-lg">
 	{#await itemsPromise}
 		<!-- Loading State -->
 		<p>Loading...</p>
 	{:then items}
-		<h3 class="uppercase font-bold tracking-wide">{block.title}</h3>
+		<h3 class="font-bold border-b mb-1">{block.title}</h3>
 		<ul class="flex flex-wrap gap-x-4">
 			{#each items as item}
 				{@const relativeUrl = item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
-				<li class="inline text-lg hover:underline underline-offset-2 opacity-80 hover:opacity-100">
+				<li class="inline hover:underline underline-offset-2 opacity-80 hover:opacity-100">
 					<a href={relativeUrl}>
 						<div class="">
 							{#if item.content?.title}

@@ -235,7 +235,7 @@ sub {
 }
 
 .card-list li {
-	@apply border-t border-gray-200 pt-1 mt-1;
+	@apply border-t border-current pt-1 mt-1;
 }
 
 @keyframes hero-gradient-animation {
@@ -381,8 +381,8 @@ sub {
 }
 
 .pulse {
-	width: 10px;
-	height: 10px;
+	width: 8px;
+	height: 8px;
 	position: relative;
 
 	&:before {

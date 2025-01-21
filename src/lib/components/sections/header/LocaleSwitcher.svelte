@@ -40,7 +40,7 @@
 
 {#await promise then languages}
 	<div
-		class="flex items-center gap-1 font-bold rounded border p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+		class="flex items-center gap-1 font-bold rounded-full py-1.5 px-3 border hover:bg-gray-100 dark:hover:bg-gray-800"
 	>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

@@ -109,7 +109,6 @@
 
 <div class="bg-gray-100 dark:bg-gray-800 p-4">
 	<div class="max-w-4xl mx-auto p-4 bg-white dark:bg-gray-700">
-		<h2 class="font-bold tracking-wide uppercase mb-2">Klimaquiz</h2>
 		{#if quizQuestions.length > 0}
 			<!-- Progress indicator -->
 			<div class="flex gap-1">

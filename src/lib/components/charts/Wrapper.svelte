@@ -77,7 +77,7 @@
 </script>
 
 <div
-	class=" p-4 border border-gray-200 rounded relative {chart.methods ? 'pb-16' : ''}"
+	class="p-3 border border-gray-200 rounded-2xl relative {chart.methods ? 'pb-16' : ''}"
 	id={chart.identifier_string}
 	bind:this={item}
 >
@@ -240,7 +240,7 @@
 	{#if chart.content.methods}
 		<div
 			id="tab-switcher"
-			class="absolute rounded-b bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 text-sm md:text-base"
+			class="absolute rounded-b-2xl bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 text-sm md:text-base"
 		>
 			<button
 				on:mousedown={() => (showNotices = !showNotices)}

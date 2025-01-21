@@ -18,7 +18,10 @@
 	});
 </script>
 
-<button on:click={toggleTheme} class="rounded border p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
+<button
+	on:click={toggleTheme}
+	class="rounded-full py-1.5 px-3 border hover:bg-gray-100 dark:hover:bg-gray-800"
+>
 	{#if currentTheme == 'dark'}
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

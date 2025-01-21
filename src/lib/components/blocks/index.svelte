@@ -13,7 +13,7 @@
 	import List from './List.svelte';
 	import Grid from './Grid.svelte';
 	import Text from './Text.svelte';
-	import Media from './Media.svelte';
+	import News from './News.svelte';
 	import Donation from './Donation.svelte';
 	import Quiz from './Quiz.svelte';
 	import Quotes from './Quotes.svelte';
@@ -21,10 +21,15 @@
 	import Teaser from './Teaser.svelte';
 	import Items from './Items.svelte';
 	import Gallery from './Gallery.svelte';
+	import Panel from './Panel.svelte';
 
 	export let data;
 
 	const blocks = [
+		{
+			type: 'block_panel',
+			component: Panel
+		},
 		{
 			type: 'block_live',
 			component: Live
@@ -38,8 +43,8 @@
 			component: Text
 		},
 		{
-			type: 'block_media',
-			component: Media
+			type: 'block_news',
+			component: News
 		},
 		{
 			type: 'block_donation',
@@ -114,13 +119,13 @@
 			component: List
 		}
 	];
+
+	console.log(data);
 </script>
 
-<div class="min-h-[60vh]">
-	{#each data as block}
-		<svelte:component
-			this={blocks.find((d) => d.type == block.collection).component}
-			block={block.item}
-		/>
-	{/each}
-</div>
+{#each data as block}
+	<svelte:component
+		this={blocks.find((d) => d.type == block.collection).component}
+		block={block.item}
+	/>
+{/each}

@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems, readItem } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
+import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
 
 export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
@@ -62,6 +63,26 @@ export async function load({ fetch, params }) {
 													}
 												]
 											},
+											{
+												blocks: [
+													'*',
+													{
+														item: [
+															'*',
+															{
+																charts: [
+																	'*',
+																	{
+																		chart: ['*', { translations: ['*'] }]
+																	}
+																]
+															},
+															{ blocks: ['*.*'] },
+															{ files: ['*.*'] }
+														]
+													}
+												]
+											},
 											{ files: ['*.*'] }
 										]
 									}
@@ -74,23 +95,21 @@ export async function load({ fetch, params }) {
 			})
 		);
 
-		// console.log(pages);
-
 		if (pages.length === 0) {
 			throw error(404, 'Page not found');
 		}
 
 		const page = pages[0];
-		const site = await directus.request(readItem('sites', PUBLIC_VERSION));
+
 		const translation = page.translations.find(
 			(t) => t.slug === slug && t.languages_code === language
 		);
+
 		// const seo = page.seo ? await directus.request(readItem('seo', page.seo)) : null;
 
 		return {
-			content: translation,
-			page: page,
-			site: site
+			content: resolvePlaceholders(translation),
+			page: page
 			// seo: seo
 		};
 	} catch (err) {

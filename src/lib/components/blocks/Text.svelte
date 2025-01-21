@@ -1,6 +1,5 @@
 <script>
 	export let block;
-	console.log(block);
 </script>
 
 <div class="my-8 text-lg container text" id={block.id}>
@@ -16,6 +15,10 @@
 
 	:global(.text p) {
 		@apply my-4;
+	}
+
+	:global(.text ul) {
+		@apply list-disc;
 	}
 
 	:global(.text h2) {

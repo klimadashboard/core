@@ -2,13 +2,16 @@
 	import { onMount } from 'svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
+	import { page } from '$app/stores';
+
+	console.log($page.data);
 
 	let query = '';
 	let suggestions = [];
 	let showSuggestions = false;
 	let activeSuggestionIndex = -1;
 	let debounceTimeout;
-	let placeholder = 'Nach Thema oder Ort suchen...';
+	let placeholder = $page.data.translations.searchPlaceholder;
 
 	// Debounce function to limit API calls
 	function debounce(func, delay) {

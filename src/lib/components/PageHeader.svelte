@@ -9,7 +9,6 @@
 	dayjs.locale('de-at');
 
 	$: tags = $page.data.content.tags || [];
-	$: console.log($page.data);
 </script>
 
 <div class="m-1 py-8 rounded-2xl">
@@ -24,10 +23,10 @@
 			</h2>
 		{/if}
 
-		<div class="opacity-80 mt-4 text-lg leading-snug">
+		<div class="opacity-80 mt-4 text-lg max-w-xl text">
 			{#if $page.data.page.date_updated}
 				<p>
-					Zuletzt aktualisiert
+					{$page.data.translations.lastUpdated}
 					<span class="underline underline-offset-2 decoration-gray-400 group relative">
 						<span class="group-hover:hidden">
 							{dayjs().to(dayjs($page.data.page.date_updated))}
@@ -44,12 +43,9 @@
 				{/each}
 			</p>
 
-			{#if $page.params.slug == ''}
+			{#if $page.data.content.description}
 				<div class="mb-4 mt-2 saturate-0">
-					<p>
-						Wissenschaftsbasiert. Transparent. Unabhängig.<br />
-						Bekannt aus DER STANDARD, ORF, APA, Stern.de.
-					</p>
+					{@html $page.data.content.description}
 				</div>
 			{/if}
 		</div>

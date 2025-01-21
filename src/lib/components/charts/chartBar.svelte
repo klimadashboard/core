@@ -235,7 +235,7 @@
 									width={barWidth}
 									height={margin.bottom}
 									x={-4}
-									class="text-white fill-current"
+									class="fill-white dark:fill-gray-900"
 								/>
 								<text fill="currentColor" dominant-baseline="hanging">{datapoint.label}</text>
 							</g>

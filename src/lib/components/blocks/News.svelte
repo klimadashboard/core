@@ -32,10 +32,10 @@
 	$: promise = getNews();
 </script>
 
-<div class="flex flex-col h-full">
-	<div class="flex items-center gap-2">
+<div class="flex flex-col h-full border rounded-2xl p-4">
+	<div class="flex items-center gap-2 border-b pb-1 text-red-700">
 		<div class="pulse" />
-		<h3 class="uppercase font-bold tracking-wider text-sm relative">Was heute wichtig ist</h3>
+		<h3 class="font-bold">Was heute wichtig ist</h3>
 	</div>
 
 	{#await promise then news}
