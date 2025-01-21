@@ -86,7 +86,7 @@
 			{chart.content.title}
 		</h2>
 		<div class="flex items-center gap-3 transition">
-			<a href="/charts/{chart.id}">
+			<a href="/charts/{chart.id}" aria-label="Chart auf eigener Seite öffnen">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"

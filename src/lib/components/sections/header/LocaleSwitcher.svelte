@@ -64,6 +64,7 @@
 		<select
 			class="appearance-none bg-transparent uppercase"
 			on:change={(e) => updateLocale(e.target.value)}
+			aria-label="Choose language"
 		>
 			{#each languages as language}
 				<option value={language.code} selected={$locale === language.code}>
