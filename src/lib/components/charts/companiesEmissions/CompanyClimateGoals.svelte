@@ -5,6 +5,9 @@
 
 	export let companiesGoalData = [];
 
+	let isOMV = false;
+	$: isOMV = !!companiesGoalData.filter((company) => company.name === 'OMV AG').length;
+
 	const tableCellClasses = 'text-semibold text-sm text-center px-1 leading-tight py-1';
 </script>
 
@@ -57,11 +60,18 @@
 						{#if company.member_sbt}
 							<CheckIcon additionalClasses="mx-auto" />
 						{:else}
-							<XIcon additionalClasses="mx-auto" />
+							<XIcon additionalClasses="mx-auto inline" />
+							{#if company.name === 'OMV AG'}<span>*</span>{/if}
 						{/if}
 					</td>
 				</tr>
 			{/each}
 		</tbody>
 	</table>
+	{#if isOMV}
+		<p class="text-sm pt-4">
+			*Öl und Gaskonzerne wie die OMV können aktuell nicht an der Science Based Target Initative
+			teilnehmen (SBTi Oil and Gas) und ihre Emmissionsziele validieren lassen.
+		</p>
+	{/if}
 {/if}
