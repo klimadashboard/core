@@ -35,11 +35,6 @@
 	];
 	let selectedScope2Category = 'location_based';
 
-	$: console.log('🚀 ~ selectedScopes:', selectedScopes);
-	$: console.log('🚀 ~ selectedSector:', selectedSector);
-	$: console.log('🚀 ~ isFocusView:', isFocusView);
-	$: console.log('companiesMeta', companiesMetaData);
-
 	$: companies = companiesMetaData.map((company, index) => {
 		if (index === 0) {
 			return {
@@ -53,8 +48,6 @@
 			};
 		}
 	});
-
-	$: console.log('companies', companies);
 
 	function selectAll() {
 		companies = companies.map((company) => {

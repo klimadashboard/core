@@ -22,7 +22,7 @@
 	export let marginTop = 0;
 	export let xTicksInterval = 10;
 	export let minValue = 0;
-	export let preselectedIndex;
+	export let preselectedIndex = 0;
 	export let showPulse = false;
 	export let invalidX;
 	export let invalidText;

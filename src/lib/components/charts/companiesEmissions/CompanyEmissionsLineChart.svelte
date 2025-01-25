@@ -75,7 +75,6 @@
 					selectedScope2Category
 				);
 			}
-			console.log('🚀 ~ dataset:', dataset);
 			// Select keys, colors and labels
 			keys = isSingleCompanySelected ? selectedScopes : selectedCompanyNames;
 			labels = isSingleCompanySelected
