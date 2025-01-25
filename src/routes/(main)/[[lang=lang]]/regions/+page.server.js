@@ -10,6 +10,6 @@ export async function load({ fetch, params }) {
 			regions: await directus.request(readItems('regions'))
 		};
 	} catch (err) {
-		throw error(404, 'Page not found');
+		error(404, 'Page not found');
 	}
 }

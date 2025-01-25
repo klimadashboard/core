@@ -11,7 +11,7 @@
 			response
 		) {
 			if (!response.ok) {
-				throw error(500, response.statusText);
+				error(500, response.statusText);
 			}
 			return response;
 		});
@@ -20,7 +20,7 @@
 		if (json) {
 			return Object.values(json.glossary);
 		}
-		throw error(500, 'Timeout when loading glossary.');
+		error(500, 'Timeout when loading glossary.');
 	};
 
 	$: promise = getGlossary();

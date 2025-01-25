@@ -10,7 +10,7 @@
 	let promise = fetch('https://data.klimadashboard.org/de/geo/landkreise_simplify200.json')
 		.then((x) => x.json())
 		.catch(function (err) {
-			throw error(500, 'Couldn’t load geodata.');
+			error(500, 'Couldn’t load geodata.');
 		});
 </script>
 

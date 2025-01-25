@@ -19,6 +19,6 @@ export async function load({ fetch, params }) {
 			content: content
 		};
 	} catch (err) {
-		throw error(404, 'Page not found');
+		error(404, 'Page not found');
 	}
 }

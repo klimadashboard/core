@@ -96,7 +96,7 @@ export async function load({ fetch, params }) {
 		);
 
 		if (pages.length === 0) {
-			throw error(404, 'Page not found');
+			error(404, 'Page not found');
 		}
 
 		const page = pages[0];
@@ -116,6 +116,6 @@ export async function load({ fetch, params }) {
 		};
 	} catch (err) {
 		console.log(err);
-		throw error(404, 'Page not found');
+		error(404, 'Page not found');
 	}
 }

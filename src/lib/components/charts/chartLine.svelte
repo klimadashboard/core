@@ -44,35 +44,35 @@
 		]);
 
 	$: yScale = scaleLinear()
-		.range([innerChartHeight, 0])
-		.domain([
-			minValue,
-			max(
-				data.map((item, index) => {
-					if (visualisation == 'stacked') {
-						// get total of all values for keys
-						var total = 0;
-						for (var k = 0; k < shownKeys.length; k++) {
-							if (!isNaN(item[shownKeys[k]])) {
-								total += item[shownKeys[k]];
-							}
-						}
-						return total;
-					} else {
-						// get max of values
-						var values = [];
-						for (var k = 0; k < shownKeys.length; k++) {
-							if (!isNaN(item[shownKeys[k]])) {
-								values.push(item[shownKeys[k]]);
-							}
-						}
-						var max = Math.max(...values);
-						return max;
-					}
-				})
-			) +
-				1 * 1.1
-		]);
+    .range([innerChartHeight, 0])
+    .domain([
+        minValue,
+        max(
+            data.map((item) => {
+                if (visualisation == 'stacked') {
+                    // get total of all values for keys
+                    let total = 0;
+                    for (let k = 0; k < shownKeys.length; k++) { // Use let instead of var
+                        if (!isNaN(item[shownKeys[k]])) {
+                            total += item[shownKeys[k]];
+                        }
+                    }
+                    return total;
+                } else {
+                    // get max of values
+                    const values = [];
+                    for (let k = 0; k < shownKeys.length; k++) { // Use let instead of var
+                        if (!isNaN(item[shownKeys[k]])) {
+                            values.push(item[shownKeys[k]]);
+                        }
+                    }
+                    return Math.max(...values);
+                }
+            })
+        ) +
+            1 * 1.1
+    ]);
+
 
 	$: shownKeys = [...keys];
 
