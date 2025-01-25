@@ -119,8 +119,6 @@
 			component: List
 		}
 	];
-
-	console.log(data);
 </script>
 
 {#each data as block}

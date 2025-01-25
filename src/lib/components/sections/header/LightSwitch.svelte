@@ -12,9 +12,13 @@
 	};
 
 	onMount(() => {
+		// Get saved theme or use system preference
 		const savedTheme = localStorage.getItem('theme');
 		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 		currentTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+
+		// Apply the current theme class to the body
+		document.querySelector('body')?.classList.add(currentTheme);
 	});
 </script>
 

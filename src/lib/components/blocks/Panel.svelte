@@ -4,7 +4,7 @@
 </script>
 
 <div
-	class="p-3 h-full group relative"
+	class="p-3 h-full group relative leading-tight"
 	style="background: {block.colorBackground}; color: {block.colorText}"
 >
 	<a class="flex justify-between font-bold border-b border-current pb-1 mb-2" href={block.link}>

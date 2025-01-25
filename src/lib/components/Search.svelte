@@ -4,8 +4,6 @@
 	import { readItems } from '@directus/sdk';
 	import { page } from '$app/stores';
 
-	console.log($page.data);
-
 	let query = '';
 	let suggestions = [];
 	let showSuggestions = false;

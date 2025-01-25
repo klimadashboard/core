@@ -238,6 +238,27 @@ sub {
 	@apply border-t border-current pt-1 mt-1;
 }
 
+.data-notices h3,
+.data-notices h4 {
+	@apply mt-4;
+}
+
+.data-notices h3 {
+	@apply text-2xl;
+}
+
+.data-notices ul {
+	@apply list-disc list-outside pl-5 py-2;
+}
+
+.data-notices ol {
+	@apply list-decimal list-inside py-2;
+}
+
+.data-notices li p {
+	@apply whitespace-nowrap inline;
+}
+
 @keyframes hero-gradient-animation {
 	0% {
 		--s-start-0: 3%;

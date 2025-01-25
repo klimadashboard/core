@@ -9,42 +9,14 @@
 
 	/* todo: fix this in API call */
 	chart = { ...chart, content: chart.translations.find((t) => t.languages_code === $locale) };
+
+	let ChartComponent = chart.type === 'builder' ? Builder : Custom;
 </script>
 
 {#if hideWrapper}
-	{#if chart.type == 'builder'}
-		<Builder {chart} />
-	{:else}
-		<Custom {chart} />
-	{/if}
+	<svelte:component this={ChartComponent} {chart} />
 {:else}
 	<Wrapper {chart}>
-		{#if chart.type == 'builder'}
-			<Builder {chart} />
-		{:else}
-			<Custom {chart} />
-		{/if}
+		<svelte:component this={ChartComponent} {chart} />
 	</Wrapper>
 {/if}
-
-<style>
-	:global(.data-notices h3, .data-notices h4) {
-		@apply mt-4;
-	}
-
-	:global(.data-notices h3) {
-		@apply text-2xl;
-	}
-
-	:global(.data-notices ul) {
-		@apply list-disc list-outside pl-5 py-2;
-	}
-
-	:global(.data-notices ol) {
-		@apply list-decimal list-inside py-2;
-	}
-
-	:global(.data-notices li p) {
-		@apply whitespace-nowrap inline;
-	}
-</style>

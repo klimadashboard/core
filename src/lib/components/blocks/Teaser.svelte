@@ -1,9 +1,8 @@
 <script>
 	export let block;
-	console.log(block);
 </script>
 
-<a href={block.link} class="block bg-gray-800 relative overflow-hidden min-h-[50vh] group">
+<a href={block.link} class="block bg-gray-800 relative overflow-hidden min-h-[50vh] group h-full">
 	{#if block.image}
 		<img
 			class="inset-0 w-full h-full object-cover object-center absolute group-hover:scale-105 transition duration-500"
