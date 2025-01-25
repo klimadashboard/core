@@ -242,7 +242,7 @@
 			class="flex gap-1 text-sm items-center {showFlightEmissions
 				? 'text-blue-700'
 				: 'text-gray-400'}"
-			transition:fade
+			transition:fade|global
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -265,7 +265,7 @@
 	{/if}
 	<label
 		class="flex gap-1 text-sm items-center {freezeYAxis ? 'text-gray-700' : 'text-gray-400'}"
-		transition:fade
+		transition:fade|global
 	>
 		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<path
@@ -302,7 +302,7 @@
 	</label>
 	<label
 		class="flex gap-1 text-sm items-center {showPerCapita ? 'text-gray-700' : 'text-gray-400'}"
-		transition:fade
+		transition:fade|global
 	>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

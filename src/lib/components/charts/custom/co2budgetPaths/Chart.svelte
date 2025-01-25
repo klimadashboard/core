@@ -297,14 +297,14 @@
 								xScaleOffset(1990)},{innerChartHeight}Z"
 							fill={'#268EA5'}
 							fill-opacity="0.2"
-							transition:fade
+							transition:fade|global
 						/>
 						<path
 							d={lineHistoric}
 							fill="none"
 							stroke-width="4"
 							stroke={'#268EA5'}
-							transition:draw={{ duration: 2000, easing: quintOut }}
+							transition:draw|global={{ duration: 2000, easing: quintOut }}
 						/>
 					</g>
 					{#if ksgDottedLine}
@@ -350,7 +350,7 @@
 										)},{yScale(lastTHG)}z"
 										fill={selectedKey.color}
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
-										transition:fade
+										transition:fade|global
 										on:mouseover={() => (chosenPath = i)}
 										on:mouseout={() => (chosenPath = 2)}
 									/>
@@ -367,7 +367,7 @@
 										fill="none"
 										stroke-width="4"
 										stroke={selectedKey.color}
-										transition:draw={{ duration: 2000, easing: quintOut }}
+										transition:draw|global={{ duration: 2000, easing: quintOut }}
 									/>
 								</g>
 							{/each}

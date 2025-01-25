@@ -365,7 +365,7 @@
 							transform="translate(0,{yScale(
 								populations.slice(0, i).reduce((pv, cv) => pv + cv, 0)
 							) || 0})"
-							transition:fade
+							transition:fade|global
 						>
 							<g>
 								{#each selectedSectors as sector, k}
@@ -537,7 +537,7 @@
 									on:focus={() => (activeState = feature.properties.name)}
 									on:mouseout={() => (activeState = '')}
 									on:blur={() => (activeState = '')}
-									transition:fade
+									transition:fade|global
 								/>
 							{/each}</g
 						>

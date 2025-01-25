@@ -179,7 +179,7 @@
 							historicalArray.findLast((d) => d.year == highlightedYear.year).index
 						) - (i == 1 ? 50 : 40)})"
 						class="text-industry"
-						transition:fade
+						transition:fade|global
 					>
 						<text x={40} y={2} dominant-baseline="middle" class="font-bold text-sm fill-current"
 							>{highlightedYear.year} – {highlightedYear.label}</text
@@ -209,8 +209,8 @@
 					class="{circle.highlighted ? 'opacity-100' : 'opacity-50'} {circle.overflow
 						? 'fill-energy'
 						: 'fill-industry'}"
-					in:fade
-					out:fly
+					in:fade|global
+					out:fly|global
 				/>
 			{/each}
 
@@ -220,7 +220,7 @@
 					cx={circle.x}
 					cy={circle.y}
 					class="stroke-black stroke-1 fill-none"
-					transition:fade
+					transition:fade|global
 				/>
 			{/each}
 		</g>
@@ -229,7 +229,7 @@
 				id="xScale"
 				class="text-xs text-gray-600"
 				transform="translate(0,{innerChartHeight + 25})"
-				in:fade
+				in:fade|global
 			>
 				{#each xScale.ticks().filter((d) => d < 2101) as tick}
 					<g transform="translate({xScale(tick)},0)">

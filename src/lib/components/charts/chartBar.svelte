@@ -145,7 +145,7 @@
 					<g
 						class={datapoint.highlight ? 'text-green-700' : 'text-green-500 '}
 						transform={`translate(${i * (barWidth + padding) || 0} 0)`}
-						in:fade={{ delay: i * 62 }}
+						in:fade|global={{ delay: i * 62 }}
 					>
 						{#if datapoint.categories !== undefined}
 							{#each datapoint.categories as category, j}
@@ -329,7 +329,7 @@
 					<div
 						class="font-semibold tracking-wide px-3 py-1 text-white text-xs rounded-full"
 						style="background-color:{category.color || '#41AB5D'}"
-						transition:fade={{ duration: 300 }}
+						transition:fade|global={{ duration: 300 }}
 					>
 						<span class="uppercase">{category.label}</span>
 						<span class="">{prettifyTick(category.value)}</span>

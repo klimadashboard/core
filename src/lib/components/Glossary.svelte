@@ -29,7 +29,7 @@
 {#if $glossaryItem}
 	<div
 		class="popup fixed inset-0 grid bg-black bg-opacity-50 p-4 z-50"
-		transition:fade={{ duration: 200 }}
+		transition:fade|global={{ duration: 200 }}
 	>
 		<div
 			class="bg-white m-auto shadow-lg p-4 max-w-md lg:max-w-lg relative overflow-scroll"

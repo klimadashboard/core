@@ -199,7 +199,7 @@
 								/>
 							</circle>
 							{#if !unifiedScaling}
-								<text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade
+								<text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade|global
 									>{formatNumber(
 										Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100
 									)}

@@ -189,7 +189,7 @@
 								? 'opacity-100'
 								: 'opacity-70'
 							: ''}"
-						transition:fade
+						transition:fade|global
 					>
 						<!--
           {#if j == 0}
@@ -247,7 +247,7 @@
 
 		<div class="grid gap-1 mx-auto mt-2 text-budgetDefault budget-grid">
 			{#each arrayBudget as box}
-				<div class="w-3 h-3 bg-current" transition:fade />
+				<div class="w-3 h-3 bg-current" transition:fade|global />
 			{/each}
 		</div>
 
@@ -273,7 +273,7 @@
 
 		<div class="grid gap-1 mx-auto mt-2 text-budgetDark budget-grid">
 			{#each arrayCurrent as box}
-				<div class="w-3 h-3 bg-current" transition:fade />
+				<div class="w-3 h-3 bg-current" transition:fade|global />
 			{/each}
 			<div class="text-sm -translate-y-1" style="grid-column: span 24 / span 24;">
 				666,5 Mio. Tonnen hat Deutschland im Jahr 2022 emittiert.
