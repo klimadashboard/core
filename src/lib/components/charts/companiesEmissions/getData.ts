@@ -31,7 +31,10 @@ export const getCompanyMetaData = async () => {
 				'name',
 				'logo.id',
 				'sectors.companies_sectors_id.name',
-				'sectors.companies_sectors_id.icon'
+				'sectors.companies_sectors_id.icon',
+				'climate_neutrality_goal',
+				'climate_neutrality_scopes',
+				'member_sbt'
 			],
 			sort: ['sectors.companies_sectors_id.name', 'name'],
 			limit: -1

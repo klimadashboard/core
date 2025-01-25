@@ -283,5 +283,9 @@
 	{/await}
 	<br />
 	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Klimaziele</h2>
-	<CompanyClimateGoals selectedCompanies={companies.filter((company) => company.selected)} />
+	<CompanyClimateGoals
+		companiesGoalData={companiesMetaData.filter((company) =>
+			selectedCompaniesNames.includes(company.name)
+		)}
+	/>
 </div>
