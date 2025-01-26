@@ -3,6 +3,9 @@
 	import YAxis from './YAxis.svelte';
 	import Bar from './Bar.svelte';
 	import Line from './Line.svelte';
+	import Table from './Table.svelte';
+	import Switch from '$lib/components/Switch.svelte';
+
 	export let data;
 	export let chart;
 
@@ -28,9 +31,27 @@
 			left: 10
 		}
 	};
+
+    let activeView = "chart";
+
+    const views = [{
+    key: "chart",
+    label: "Chart"
+}, {
+    key: "table",
+    label: "Table"
+}];
 </script>
 
-<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="min-h-96">
+<div>
+<Switch 
+{views} {activeView} on:itemClick={(event) => {
+		activeView = event.detail;
+	}} />
+
+<div class="h-[400px]">
+{#if activeView == "chart"}
+<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-full">
 	{#if chartWidth && chartHeight}
 		<svg width={'100%'} height={'100%'}>
 			<XAxis {chartWidth} {chartHeight} {data} {options} />
@@ -41,4 +62,9 @@
 			{/each}
 		</svg>
 	{/if}
+</div>
+{:else}
+<Table {data} />
+{/if}
+</div>
 </div>
