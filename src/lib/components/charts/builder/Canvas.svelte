@@ -51,14 +51,14 @@
 
 <div class="h-[400px]">
 {#if activeView == "chart"}
-<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-full">
+<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-full mt-4">
 	{#if chartWidth && chartHeight}
-		<svg width={'100%'} height={'100%'}>
+		<svg width={'100%'} height={'100%'} class="overflow-visible">
 			<XAxis {chartWidth} {chartHeight} {data} {options} />
 
 			{#each chart.layers as layer}
-				<YAxis {chartWidth} {chartHeight} {data} />
-				<svelte:component this={layerTypes.find((d) => d.key == layer.type)?.component} {data} />
+				<YAxis {chartWidth} {chartHeight} {layer} {data} />
+				<svelte:component this={layerTypes.find((d) => d.key == layer.type)?.component} {data} {layer} {chartWidth} {chartHeight} {options} />
 			{/each}
 		</svg>
 	{/if}

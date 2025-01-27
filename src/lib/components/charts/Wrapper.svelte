@@ -83,7 +83,7 @@
 >
 	<div class="flex justify-between items-center mb-1 transition">
 		<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
-			{chart.content.title}
+			{chart.content?.title}
 		</h2>
 		<div class="flex items-center gap-3 transition">
 			<a href="/charts/{chart.id}" aria-label="Chart auf eigener Seite öffnen">
@@ -187,16 +187,16 @@
 		</div>
 	</div>
 	{#if !showNotices}
-		<h3 class="text-2xl max-w-2xl tracking-tight">{chart.content.heading}</h3>
+		<h3 class="text-2xl max-w-2xl tracking-tight">{chart.content?.heading}</h3>
 
 		<div class="my-4">
 			<slot />
 		</div>
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-			{#if chart.content.text}
-				<p class="text-lg text col-span-2">{@html chart.content.text}</p>
+			{#if chart.content?.text}
+				<p class="text-lg text col-span-2">{@html chart.content?.text}</p>
 			{/if}
-			{#if chart.content.source}
+			{#if chart.content?.source}
 				<div class="text-sm">
 					<div class="flex items-center gap-0.5 font-bold -mb-4">
 						<svg
@@ -219,7 +219,7 @@
 						<h3 class="">Datenquellen</h3>
 					</div>
 					<p class="text">
-						{@html chart.content.source}
+						{@html chart.content?.source}
 					</p>
 				</div>
 			{/if}
@@ -227,7 +227,7 @@
 	{:else}
 		<div class="text-lg relative overflow-hidden" style="max-height: 32rem">
 			<div class="overflow-scroll data-notices" style="max-height:32rem;">
-				{@html chart.content.methods}
+				{@html chart.content?.methods}
 				<div class="bottom-hint" use:observeBottomInView />
 			</div>
 			<div
@@ -237,7 +237,7 @@
 			/>
 		</div>
 	{/if}
-	{#if chart.content.methods}
+	{#if chart.content?.methods}
 		<div
 			id="tab-switcher"
 			class="absolute rounded-b-2xl bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 text-sm md:text-base"

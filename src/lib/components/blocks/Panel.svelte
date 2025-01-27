@@ -1,5 +1,6 @@
 <script>
 	import formatNumber from '$lib/stores/formatNumber';
+	import Chart from '$lib/components/charts/builder/index.svelte';
 	export let block;
 </script>
 
@@ -20,7 +21,11 @@
 			</p>
 		</div>
 		<div>{@html block.subtitle}</div>
-		<div class="">Chart</div>
+		{#if block.chart}
+		<div class="h-16">
+			<Chart chart={block.chart} type="small"  />
+			</div>
+		{/if}
 	</div>
 	{#if block.list}
 		<ul class="card-list">
