@@ -88,21 +88,23 @@
 </script>
 
 {#if dataset.length > 0 && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
-	<LineChart
-		data={dataset}
-		{colors}
-		{keys}
-		{labels}
-		showTotal={isSingleCompanySelected}
-		showAreas={false}
-		showDots={true}
-		visualisation={'non-stacked'}
-		marginLeft={50}
-		xTicksInterval={1}
-		unit={'t'}
-		invalidX={6}
-		invalidText={'Daten weniger genau*'}
-	/>
+	<div class="h-72">
+		<LineChart
+			data={dataset}
+			{colors}
+			{keys}
+			{labels}
+			showTotal={isSingleCompanySelected}
+			showAreas={false}
+			showDots={true}
+			visualisation={'non-stacked'}
+			marginLeft={50}
+			xTicksInterval={1}
+			unit={'t'}
+			invalidX={6}
+			invalidText={'Daten weniger genau*'}
+		/>
+	</div>
 	<p class="text-sm text-gray-600 mt-2">
 		* Vor 2022 führt die Datenungenauigkeit aufgrund unterschiedlicher erfasster Dimensionen der
 		Scope 3 Emissionen zu fehlender Vergleichbarkeit.

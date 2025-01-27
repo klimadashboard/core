@@ -216,7 +216,7 @@
 			</button>
 		{/each}
 	</div>
-	<div class="flex justify-between items-center mb-1">
+	<div class="flex md:justify-between items-center mb-1 flex-wrap">
 		<!-- Scopes -->
 		<div class="flex flex-wrap mb-2 items-center">
 			<p class="font-semibold text-sm mr-4">
@@ -234,7 +234,7 @@
 			<div class="flex gap-x-3 items-center">
 				{#each scopes as scope}
 					<button
-						class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2
+						class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2 flex-shrink-0
               {selectedScopes.includes(scope)
 							? 'text-black bg-gray-100 border-2 border-green-600'
 							: 'text-gray-600 bg-gray-100 border-2 border-gray-100'}"
@@ -265,7 +265,7 @@
 	{#await getCompanyEmissionData()}
 		<p>Loading...</p>
 	{:then emissions}
-		<div class="h-72">
+		<div class="">
 			<CompanyEmissionsLineChart
 				{emissions}
 				selectedCompanies={companies.filter((company) => company.selected)}
@@ -274,8 +274,7 @@
 			/>
 		</div>
 	{/await}
-	<br />
-	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Klimaziele</h2>
+	<h2 class="text-2xl my-4 border-b py-2">Klimaziele</h2>
 	<CompanyClimateGoals
 		companiesGoalData={companiesMetaData.filter((company) =>
 			selectedCompaniesNames.includes(company.name)
