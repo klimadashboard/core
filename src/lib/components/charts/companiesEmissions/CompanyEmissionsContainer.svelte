@@ -9,6 +9,7 @@
 	import { EMISSION_SCOPE_KEYS } from './constants';
 	import { getCompanyEmissionData, getAllSectors, getCompanyMetaData } from './getData';
 	import Switch from '$lib/components/Switch.svelte';
+	import { glossaryItem } from '$lib/stores/glossary';
 
 	export let companiesMetaData = [];
 
@@ -34,11 +35,6 @@
 	];
 	let selectedScope2Category = 'location_based';
 
-	$: console.log('🚀 ~ selectedScopes:', selectedScopes);
-	$: console.log('🚀 ~ selectedSector:', selectedSector);
-	$: console.log('🚀 ~ isFocusView:', isFocusView);
-	$: console.log('companiesMeta', companiesMetaData);
-
 	$: companies = companiesMetaData.map((company, index) => {
 		if (index === 0) {
 			return {
@@ -52,8 +48,6 @@
 			};
 		}
 	});
-
-	$: console.log('companies', companies);
 
 	function selectAll() {
 		companies = companies.map((company) => {
@@ -112,6 +106,13 @@
 		} else {
 			selectedScopes.splice(index, 1);
 			selectedScopes = selectedScopes;
+		}
+	}
+
+	function handleGlossaryButtonClick(event) {
+		const term = event.target.dataset.term;
+		if (term) {
+			$glossaryItem = term;
 		}
 	}
 </script>
@@ -218,7 +219,18 @@
 	<div class="flex justify-between items-center mb-1">
 		<!-- Scopes -->
 		<div class="flex flex-wrap mb-2 items-center">
-			<p class="font-semibold text-sm mr-4">Emissionsquellen</p>
+			<p class="font-semibold text-sm mr-4">
+				Emissionsquellen
+				<button
+					class="w-4 h-4 cursor-help rounded-full text-white text-xs"
+					style="background: linear-gradient(90deg, #79ca94 0%, #2e9c5c 100%);"
+					data-term="scope-1-scope-2-und-scope-3"
+					on:click={handleGlossaryButtonClick}
+				>
+					?
+				</button>
+			</p>
+
 			<div class="flex gap-x-3 items-center">
 				{#each scopes as scope}
 					<button
@@ -264,5 +276,9 @@
 	{/await}
 	<br />
 	<h2 class="text-2xl mt-8 mb-4 border-b py-2">Klimaziele</h2>
-	<CompanyClimateGoals selectedCompanies={companies.filter((company) => company.selected)} />
+	<CompanyClimateGoals
+		companiesGoalData={companiesMetaData.filter((company) =>
+			selectedCompaniesNames.includes(company.name)
+		)}
+	/>
 </div>

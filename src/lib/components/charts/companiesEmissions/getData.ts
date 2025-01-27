@@ -11,28 +11,30 @@ import { flattenCompanies } from './utils';
 // 	scope: { _in: filterScopes.map((scope) => `scope${scope}`) }
 // },
 
+const directus = getDirectusInstance(fetch);
+
 export const getCompanyEmissionData = async () => {
-	const directus = getDirectusInstance(fetch);
 	const data = await directus.request(
-		readItems('at_companies_emissions', {
+		readItems('companies_emissions', {
 			fields: ['year', 'company', 'scope', 'value', 'category'],
 
 			limit: -1
 		})
 	);
-	console.log('🚀 ~ getCompanyEmissionData ~ data:', data);
 	return data;
 };
 
 export const getCompanyMetaData = async () => {
-	const directus = getDirectusInstance(fetch);
 	const data = await directus.request(
 		readItems('companies', {
 			fields: [
 				'name',
 				'logo.id',
 				'sectors.companies_sectors_id.name',
-				'sectors.companies_sectors_id.icon'
+				'sectors.companies_sectors_id.icon',
+				'climate_neutrality_goal',
+				'climate_neutrality_scopes',
+				'member_sbt'
 			],
 			sort: ['sectors.companies_sectors_id.name', 'name'],
 			limit: -1
@@ -42,7 +44,6 @@ export const getCompanyMetaData = async () => {
 };
 
 export const getAllSectors = async () => {
-	const directus = getDirectusInstance(fetch);
 	const sectors = await directus.request(
 		readItems('companies_sectors', {
 			fields: ['name', 'icon'],

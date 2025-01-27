@@ -1,6 +1,7 @@
 export const flattenCompanies = (companies) => {
 	return companies.map((company) => {
 		return {
+			...company,
 			name: company.name,
 			logoId: company.logo.id,
 			sectors: [...company.sectors.map((sector) => sector.companies_sectors_id.name)],
