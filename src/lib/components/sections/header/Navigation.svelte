@@ -8,7 +8,7 @@
 <div class="container">
 	<ul class="flex gap-4 flex-col sm:flex-row justify-between">
 		{#each $page.data.site.navigation_primary as c}
-			<li class="flex-1 border-r last:border-r-0">
+			<li class="flex-1 md:border-r md:last:border-r-0">
 				<h3 class="font-bold">{c.title}</h3>
 				<ul>
 					{#each c.links as l}

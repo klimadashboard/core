@@ -43,7 +43,7 @@
 						d="M4 12l16 0"
 					/><path d="M4 18l16 0" /></svg
 				>
-				<span>Menü</span>
+				<span class="hidden sm:block">Menü</span>
 			</button>
 
 			<Breadcrumb />
