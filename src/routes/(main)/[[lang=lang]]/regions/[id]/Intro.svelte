@@ -1,6 +1,10 @@
 <script>
     import Panel from "$lib/components/blocks/Panel.svelte";
 
+    export let data;
+    
+    $: place = data.page.name;
+
     let panels = [{
         title: "Eine erste Statistik, live aus der Region",
         text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -28,7 +32,7 @@
 
 <div class="grid md:grid-cols-2 container my-8 gap-4">
     <div class="grid">
-        <p class="font-bold my-auto text-xl">In Wien gab es XXX Hitzetage dieses Jahr, das sind 10% mehr als im Durchschnitt. Als Stadt hat Wien vielfältige Herausforderungen in der Anpassung an die Klimakrise zu bewältigen. Die Emissionen in der Region Wien sind im letzten Jahr um 10% gesunken.</p>
+        <p class="font-bold my-auto text-xl">In {place} gab es YZ Hitzetage dieses Jahr, das sind YZ% mehr als im Durchschnitt. Als YZ hat {place} vielfältige Herausforderungen in der Anpassung an die Klimakrise zu bewältigen. Die Emissionen in der Region {place} sind im letzten Jahr um ZY% gesunken.</p>
     </div>
     <div class="grid grid-cols-2 gap-1">
         {#each panels as panel}

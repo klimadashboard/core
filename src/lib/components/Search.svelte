@@ -32,30 +32,40 @@
 
 			// --- REGIONS ---
 			const regionExactMatches = await directus.request(
-				readItems('regions', {
-					filter: {
-						_or: [
-							{ name: { _eq: value } },
-							{ postcodes: { _contains: value } }
-						]
-					},
-					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-					sort: ['name']
-				})
-			);
+    readItems('regions', {
+        filter: {
+            _and: [
+                { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+                {
+                    _or: [
+                        { name: { _eq: value } },
+                        { postcodes: { _contains: value } }
+                    ]
+                }
+            ]
+        },
+        fields: ['id', 'name', 'postcodes', 'country', 'layer'],
+        sort: ['name']
+    })
+);
 
-			const regionPartialMatches = await directus.request(
-				readItems('regions', {
-					filter: {
-						_or: [
-							{ name: { _icontains: value } },
-							{ postcodes: { _contains: value } }
-						]
-					},
-					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-					sort: ['name']
-				})
-			);
+const regionPartialMatches = await directus.request(
+    readItems('regions', {
+        filter: {
+            _and: [
+                { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+                {
+                    _or: [
+                        { name: { _icontains: value } },
+                        { postcodes: { _contains: value } }
+                    ]
+                }
+            ]
+        },
+        fields: ['id', 'name', 'postcodes', 'country', 'layer'],
+        sort: ['name']
+    })
+);
 
 			const mapRegions = (regions) =>
 				regions.map((r) => ({
@@ -346,7 +356,7 @@
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
-			class="absolute top-full left-0 right-0 bg-white bg-opacity-80 backdrop-blur border overflow-scroll z-10 max-h-64 rounded-2xl"
+			class="absolute top-full left-0 right-0 bg-white dark:bg-black bg-opacity-80 backdrop-blur border overflow-scroll z-10 max-h-64 rounded-2xl"
 		>
 			{#each suggestions as suggestion, index}
 				<li

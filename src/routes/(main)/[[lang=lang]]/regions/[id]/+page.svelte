@@ -94,7 +94,7 @@
 			<div class="h-80">
 				<Map {data} />
 			</div>
-			<Intro />
+			<Intro {data} />
 			<div class="container" id="top">
 				<div class="grid grid-cols-2 md:grid-cols-5 gap-1">
 					{#each sections as section}

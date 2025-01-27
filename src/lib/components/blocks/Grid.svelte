@@ -19,8 +19,10 @@
 
 <div class="grid gap-1 grid-cols-2 lg:grid-cols-4 p-1">
 	{#each block.blocks as b}
-		<div class="{map.find(d => d.width == b.width)?.classes} rounded-2xl overflow-hidden">
+		<div class="{map.find(d => d.width == b.width)?.classes} rounded-2xl overflow-hidden row-span-{b.height}">
 			<Block data={[b]} />
 		</div>
 	{/each}
 </div>
+
+<!-- row-span-1 row-span-2 row-span-3 row-span-4-->
