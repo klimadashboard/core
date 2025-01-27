@@ -9,7 +9,7 @@
 
 <svelte:head>
 	<title
-		>{$page.data.content.title} – Klimadashboard {PUBLIC_VERSION == 'de'
+		>{$page.data.content?.title} – Klimadashboard {PUBLIC_VERSION == 'de'
 			? 'Deutschland'
 			: 'Österreich'}</title
 	>
@@ -20,7 +20,7 @@
 	<meta property="og:type" content="website" />
 	<meta
 		property="og:title"
-		content="{$page.data.content.title} – Klimadashboard {PUBLIC_VERSION == 'de'
+		content="{$page.data.content?.title} – Klimadashboard {PUBLIC_VERSION == 'de'
 			? 'Deutschland'
 			: 'Österreich'}"
 	/>
@@ -33,7 +33,7 @@
 	<meta property="twitter:site" content="@klimadashboard" />
 	<meta
 		name="twitter:title"
-		content="{$page.data.content.title} – Klimadashboard {PUBLIC_VERSION == 'de'
+		content="{$page.data.content?.title} – Klimadashboard {PUBLIC_VERSION == 'de'
 			? 'Deutschland'
 			: 'Österreich'}"
 	/>

@@ -13,7 +13,7 @@
 				<ul>
 					{#each c.links as l}
 						<li>
-							<a href={l.link} on:click={() => dispatch('linkClicked')}>{l.label}</a>
+							<a href={l.link} on:click={() => dispatch('linkClicked')} class="hover:underline underline-offset-2">{l.label}</a>
 						</li>
 					{/each}
 				</ul>

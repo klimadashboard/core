@@ -401,6 +401,28 @@ sub {
 	background-blend-mode: overlay, overlay, overlay, normal;
 }
 
+.pulsating-marker {
+	width: 20px;
+	height: 20px;
+	background-color: green;
+	border-radius: 50%;
+	position: relative;
+	animation: pulse 2s infinite;
+}
+
+/* Create the pulsating effect */
+@keyframes pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4);
+	}
+	70% {
+		box-shadow: 0 0 0 20px rgba(0, 255, 0, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(0, 255, 0, 0);
+	}
+}
+
 .pulse {
 	width: 8px;
 	height: 8px;

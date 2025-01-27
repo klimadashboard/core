@@ -23,7 +23,7 @@
 			</h2>
 		{/if}
 
-		<div class="opacity-80 mt-4 text-lg max-w-xl text">
+		<div class="opacity-80 mt-4 text-lg leading-snug max-w-xl text">
 			{#if $page.data.page.date_updated}
 				<p>
 					{$page.data.translations.lastUpdated}

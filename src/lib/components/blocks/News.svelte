@@ -32,9 +32,9 @@
 	$: promise = getNews();
 </script>
 
-<div class="flex flex-col h-full border rounded-2xl p-4">
-	<div class="flex items-center gap-2 border-b pb-1 text-red-700">
-		<div class="pulse" />
+<div class="flex flex-col h-full border rounded-2xl p-3">
+	<div class="flex items-center gap-2 border-b text-red-700">
+		<div class="pulse hidden sm:block" />
 		<h3 class="font-bold">Was heute wichtig ist</h3>
 	</div>
 
@@ -46,15 +46,15 @@
 		</ul>
 
 		{#if news[0].author}
-			<div class="flex items-center gap-2 mt-auto">
-				<div class="h-12 w-12 rounded-full bg-gray-400 overflow-hidden relative">
+			<div class="flex flex-wrap items-center gap-2 mt-auto">
+				<div class="h-12 w-12 rounded-full bg-gray-400 overflow-hidden relative shrink-0">
 					<img
 						src="https://base.klimadashboard.org/assets/{news[0].author.avatar}"
 						alt=""
 						class="absolute w-full h-full object-cover inset-0"
 					/>
 				</div>
-				<div class="leading-tight">
+				<div class="leading-tight text-sm">
 					<p class="font-bold">
 						Zusammengestellt von {news[0].author.first_name}
 						{news[0].author.last_name}

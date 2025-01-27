@@ -2,6 +2,9 @@
 	import { onMount } from 'svelte';
 	import Scroller from '@sveltejs/svelte-scroller';
 	import { browser } from '$app/environment';
+	import Map from './Map.svelte';
+	import Intro from './Intro.svelte';
+	import Image from './Image.svelte';
 	import Chart from '$lib/components/charts/index.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
@@ -77,40 +80,27 @@
 
 	const scrollToTop = function (event) {
 		event.preventDefault(); // Prevent default anchor behavior
-		window.scrollTo({ top: 0, behavior: 'smooth' }); // Smooth scroll to top
+		window.scrollTo({ top: 600, behavior: 'smooth' }); // Smooth scroll to top
 	};
 </script>
 
-<main class="top">
+<main class="">
 	<Scroller bind:index bind:offset bind:progress>
 		<div slot="background" />
 		<div slot="foreground">
-			<div class="my-8">
-				<h2 class="uppercase opacity-70 font-bold tracking-wide text-sm">Auf einen Blick</h2>
-				<div class="grid md:grid-cols-3 gap-4 mt-2">
-					<div class="bg-gray-50 p-4 rounded flex gap-4">
-						<p class="font-light text-6xl">35%</p>
-						<p class="text-lg leading-tight">eine erste Statistik, <br />live aus der Region</p>
-					</div>
-					<div class="bg-gray-50 p-4 rounded flex gap-4">
-						<p class="font-light text-6xl">14</p>
-						<p class="text-lg leading-tight">Hitzetage bisher in diesem Jahr</p>
-					</div>
-					<div class="bg-gray-50 p-4 rounded flex gap-4">
-						<p class="font-light text-6xl">70%</p>
-						<p class="text-lg leading-tight">der Wege im Bezirk werden mit dem Auto zurückgelegt</p>
-					</div>
-				</div>
+			<div class="h-80">
+				<Map {data} />
 			</div>
-
-			<div>
-				<h2 class="uppercase opacity-70 font-bold tracking-wide text-sm">Themen im Überblick</h2>
-				<div class="flex justify-between">
+			<Intro />
+			<div class="container" id="top">
+				<div class="grid grid-cols-2 md:grid-cols-5 gap-1">
 					{#each sections as section}
-						<a href="#{section.id}" class="text-center block mx-auto">{section.title}</a>
+						<a href="#{section.id}" class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 text-xl">{section.title}</a>
 					{/each}
 				</div>
 			</div>
+
+		<Image />
 
 			{#each sections as section}
 				<section id={section.id} class="mt-16">
@@ -128,11 +118,10 @@
 							<div class="bg-gray-100 h-96">Charts</div>
 						{/if}
 					</div>
-					<button on:mousedown={scrollToTop} class="my-4 mx-auto w-max text-center block">
+					<button on:mousedown={scrollToTop} class=" mt-4 font-bold rounded-full py-1.5 px-3 border hover:bg-gray-100 dark:hover:bg-gray-800 mx-auto block">
 						&uarr; Zurück zum Überblick
 					</button>
 				</section>
 			{/each}
-		</div>
 	</Scroller>
 </main>

@@ -3,6 +3,8 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let query = '';
 	let suggestions = [];
@@ -32,9 +34,12 @@
 			const regionExactMatches = await directus.request(
 				readItems('regions', {
 					filter: {
-						_or: [{ name: { _eq: value } }, { postcode: { _eq: value } }]
+						_or: [
+							{ name: { _eq: value } },
+							{ postcodes: { _contains: value } }
+						]
 					},
-					fields: ['id', 'name', 'postcode', 'country', 'type'],
+					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
 					sort: ['name']
 				})
 			);
@@ -42,30 +47,40 @@
 			const regionPartialMatches = await directus.request(
 				readItems('regions', {
 					filter: {
-						_or: [{ name: { _icontains: value } }, { postcode: { _icontains: value } }]
+						_or: [
+							{ name: { _icontains: value } },
+							{ postcodes: { _contains: value } }
+						]
 					},
-					fields: ['id', 'name', 'postcode', 'country', 'type'],
+					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
 					sort: ['name']
 				})
 			);
 
+			const mapRegions = (regions) =>
+				regions.map((r) => ({
+					id: r.id,
+					title: r.name,
+					subtitle: Array.isArray(r.postcodes) ? r.postcodes[0] : '',
+					source: 'region',
+					country: r.country,
+					layer: r.layer
+				}));
+
+			const mappedRegionExact = mapRegions(regionExactMatches);
+			const regionExactIds = mappedRegionExact.map((r) => r.id);
+			const mappedRegionPartial = mapRegions(
+				regionPartialMatches.filter((r) => !regionExactIds.includes(r.id))
+			);
+
 			// --- CHARTS ---
-			// Exact matches: title or text equals value
 			const chartExactMatches = await directus.request(
 				readItems('charts', {
 					filter: {
 						_or: [
-							{
-								translations: {
-									title: { _eq: value }
-								}
-							},
+							{ translations: { title: { _eq: value } } },
 							{ translations: { heading: { _eq: value } } },
 							{ translations: { text: { _eq: value } } }
-							/*
-							current not supported by directus
-							{ translations: { tags: { _contains: value } } }
-							 */
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
@@ -79,78 +94,11 @@
 							{ translations: { title: { _icontains: value } } },
 							{ translations: { heading: { _icontains: value } } },
 							{ translations: { text: { _icontains: value } } }
-							/*
-							current not supported by directus
-							{ translations: { tags: { _contains: value } } }
-							 */
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
 				})
 			);
-
-			// --- PAGES ---
-			// Exact matches: title equals value
-			const pageExactMatches = await directus.request(
-				readItems('pages', {
-					filter: {
-						_or: [
-							{
-								translations: {
-									title: { _eq: value }
-								}
-							}
-							/*
-							current not supported by directus
-							{ translations: { tags: { _contains: value } } }
-							 */
-						]
-					},
-					fields: ['id', 'translations.title', 'translations.slug']
-				})
-			);
-
-			const pagePartialMatches = await directus.request(
-				readItems('pages', {
-					filter: {
-						_or: [
-							{
-								translations: {
-									title: { _icontains: value }
-								}
-							}
-							/*
-							current not supported by directus
-							{ translations: { tags: { _contains: value } } }
-							 */
-						]
-					},
-					fields: ['id', 'translations.title', 'translations.slug']
-				})
-			);
-
-			// Map all results to a unified format
-			const mappedRegionExact = regionExactMatches.map((r) => ({
-				id: r.id,
-				title: r.name,
-				subtitle: r.postcode,
-				source: 'region',
-				country: r.country,
-				type: r.type
-			}));
-
-			// Avoid duplicates in partial matches that appear as exact
-			const regionExactIds = mappedRegionExact.map((r) => r.id);
-			const mappedRegionPartial = regionPartialMatches
-				.filter((r) => !regionExactIds.includes(r.id))
-				.map((r) => ({
-					id: r.id,
-					title: r.name,
-					subtitle: r.postcode,
-					source: 'region',
-					country: r.country,
-					type: r.type
-				}));
 
 			const mappedChartExact = chartExactMatches.map((c) => ({
 				id: c.id,
@@ -166,9 +114,31 @@
 					id: c.id,
 					title: c.translations[0].title,
 					subtitle: '',
-					source: 'chart',
-					slug: c.slug
+					source: 'chart'
 				}));
+
+			// --- PAGES ---
+			const pageExactMatches = await directus.request(
+				readItems('pages', {
+					filter: {
+						_or: [
+							{ translations: { title: { _eq: value } } }
+						]
+					},
+					fields: ['id', 'translations.title', 'translations.slug']
+				})
+			);
+
+			const pagePartialMatches = await directus.request(
+				readItems('pages', {
+					filter: {
+						_or: [
+							{ translations: { title: { _icontains: value } } }
+						]
+					},
+					fields: ['id', 'translations.title', 'translations.slug']
+				})
+			);
 
 			const mappedPageExact = pageExactMatches.map((p) => ({
 				id: p.id,
@@ -189,14 +159,13 @@
 					source: 'page'
 				}));
 
-			// Combine all suggestions
 			suggestions = [
-				...mappedPageExact,
-				...mappedChartExact,
 				...mappedRegionExact,
-				...mappedPagePartial,
+				...mappedChartExact,
+				...mappedPageExact,
+				...mappedRegionPartial,
 				...mappedChartPartial,
-				...mappedRegionPartial
+				...mappedPagePartial
 			];
 
 			showSuggestions = true;
@@ -205,24 +174,21 @@
 		}
 	}
 
-	// Handle input event with debounce
 	function onInput(event) {
 		query = event.target.value;
 		debounce(() => fetchSuggestions(query), 100);
 	}
 
-	// Handle selection of a suggestion
 	function selectSuggestion(item) {
 		if (item.source === 'region') {
-			window.location.href = `/regions/${item.id}`;
+			goto(`/regions/${item.id}`);
 		} else if (item.source === 'chart') {
-			window.location.href = `/charts/${item.id}`;
+			goto(`/charts/${item.id}`);
 		} else if (item.source === 'page') {
-			window.location.href = `${item.slug}`;
+			goto(`${item.slug}`);
 		}
 	}
 
-	// Keyboard navigation in suggestions
 	function onKeyDown(event) {
 		if (event.key === 'ArrowDown') {
 			event.preventDefault();
@@ -243,12 +209,99 @@
 		}
 	}
 
-	// Hide suggestions on blur
 	function onBlur() {
 		setTimeout(() => {
 			showSuggestions = false;
 			activeSuggestionIndex = -1;
 		}, 100);
+	}
+
+	// Function to calculate the distance between two lat/lng points
+	function haversineDistance(lat1, lng1, lat2, lng2) {
+		const toRadians = (degrees) => (degrees * Math.PI) / 180;
+
+		const R = 6371; // Radius of the Earth in km
+		const dLat = toRadians(lat2 - lat1);
+		const dLng = toRadians(lng2 - lng1);
+
+		const a =
+			Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+			Math.cos(toRadians(lat1)) *
+				Math.cos(toRadians(lat2)) *
+				Math.sin(dLng / 2) *
+				Math.sin(dLng / 2);
+		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+		return R * c; // Distance in km
+	}
+
+	// Handle button click to find the closest region
+	async function findClosestRegion() {
+		// Check if the browser supports Geolocation
+		if (!navigator.geolocation) {
+			alert('Geolocation is not supported by your browser.');
+			return;
+		}
+
+		// Get the user's current location
+		navigator.geolocation.getCurrentPosition(
+			async (position) => {
+				const { latitude, longitude } = position.coords;
+
+				try {
+					const directus = getDirectusInstance(fetch);
+
+					// Fetch all regions with their centers
+					const regions = await directus.request(
+						readItems('regions', {
+							fields: ['id', 'name', 'center'],
+							filter: {
+								country: {
+									_eq: PUBLIC_VERSION.toUpperCase()
+								}
+							},
+							limit: -1
+						})
+					);
+
+					console.log(regions)
+
+					// Parse regions and calculate distances
+					let closestRegion = null;
+					let minDistance = Infinity;
+
+					regions.forEach((region) => {
+	if (region.center) {
+		const [regionLng, regionLat] = region.center.map((coord) => parseFloat(coord.trim()));
+
+		const distance = haversineDistance(latitude, longitude, regionLat, regionLng);
+
+
+		if (distance < minDistance) {
+			console.log(region.name);
+			console.log(distance)
+			minDistance = distance;
+			closestRegion = region;
+		}
+	}
+});
+
+
+					if (closestRegion) {
+						// Redirect to the closest region's page
+						goto(`/regions/${closestRegion.id}`);
+					} else {
+						alert('No regions found.');
+					}
+				} catch (error) {
+					console.error('Error finding the closest region:', error);
+				}
+			},
+			(error) => {
+				alert('Unable to retrieve your location.');
+				console.error(error);
+			}
+		);
 	}
 </script>
 
@@ -264,7 +317,11 @@
 			on:blur={onBlur}
 			autocomplete="off"
 		/>
-		<button aria-label="Orten lasen..." class="bg-gray-100 dark:bg-gray-800 rounded-full grid px-2">
+		<button
+			aria-label="Find location"
+			class="bg-gray-100 dark:bg-gray-800 rounded-full grid px-2"
+			on:click={findClosestRegion}
+		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"
@@ -276,12 +333,15 @@
 				stroke-linecap="round"
 				stroke-linejoin="round"
 				class="m-auto"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-					d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"
-				/><path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" /><path d="M12 2l0 2" /><path
-					d="M12 20l0 2"
-				/><path d="M20 12l2 0" /><path d="M2 12l2 0" /></svg
 			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+				<path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" />
+				<path d="M12 2l0 2" />
+				<path d="M12 20l0 2" />
+				<path d="M20 12l2 0" />
+				<path d="M2 12l2 0" />
+			</svg>
 		</button>
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
@@ -295,24 +355,13 @@
 						? 'bg-gray-600 text-white'
 						: ''}"
 					on:click={() => selectSuggestion(suggestion)}
-					on:keydown={() => selectSuggestion(suggestion)}
 					on:mouseover={() => (activeSuggestionIndex = index)}
-					on:focus={() => (activeSuggestionIndex = index)}
 				>
-					<!-- Display the suggestion title and subtitle if available -->
 					<strong>{suggestion.title}</strong>
 					{#if suggestion.subtitle}
 						<span>{suggestion.subtitle}</span>
 					{/if}
-					<!-- Show source after title -->
 					<span class="opacity-50 italic ml-2">({suggestion.source})</span>
-
-					{#if suggestion.source === 'region'}
-						<!-- Optional: show additional region info -->
-						<span class="opacity-50 ml-2">
-							{suggestion.country} | {suggestion.type}
-						</span>
-					{/if}
 				</li>
 			{/each}
 		</ul>

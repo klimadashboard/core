@@ -9,7 +9,9 @@
 
 	$: getData = async function () {
 		const directus = getDirectusInstance(fetch);
-		const rawData = await directus.request(readItems(chart.table_name));
+		const rawData = await directus.request(readItems(chart.table_name, {
+            limit: -1
+        }));
 		// todo: add options, sorting,...
 
 		const data = rawData.map((d) => ({

@@ -56,20 +56,41 @@ const getRenewableData = async function () {
 	});
 
 	return {
-		renewableShareNow: closestRenewableShareNow,
+		renewablePercentageNow: closestRenewableShareNow.share,
+		renewablePercentageNowDate: dayjs(closestRenewableShareNow.date).format("DD.M.YYYY"),
 		renewableShareLast30Days: calculateAverage(last30DaysData),
 		renewableShareLast365Days: calculateAverage(last365DaysData)
 	};
 };
 
+const getCO2PriceData = async () => {
+	const directus = getDirectusInstance(fetch);
+	const data = await directus.request(readItems('carbon_prices', {
+		sort: ['-date']
+	}));
+	const co2PriceNowEU = data.find((d) => d.region === "EU")?.value;
+		const co2PriceNowEUDate = dayjs(data.find((d) => d.region === "EU")?.date).format("DD.M.YYYY");
+
+	const co2PriceNowNational = data.find((d) => d.region === PUBLIC_VERSION)?.value;
+	return {
+	co2PriceNowEU,
+	co2PriceNowEUDate,
+	co2PriceNowNational
+	};
+};
+
 // Placeholder handlers: Define a function for each placeholder
 const placeholderHandlers = {
-	renewablePercentageNow: async () => (await getRenewableData()).renewableShareNow.share, // Simulate fetching percentageShare
-	renewablePercentageNowDate: async () => (await getRenewableData()).renewableShareNow.date, // Simulate fetching or computing expectedGrowth
+	renewablePercentageNow: async () => (await getRenewableData()).renewablePercentageNow, // Simulate fetching percentageShare
+	renewablePercentageNowDate: async () => (await getRenewableData()).renewablePercentageNowDate, // Simulate fetching or computing expectedGrowth
 	renewablePercentage30days: async () => (await getRenewableData()).renewableShareLast30Days, // Simulate fetching renewableValue
 	renewablePercentageLastYear: async () => (await getRenewableData()).renewableShareLast365Days, // Simulate fetching nonRenewableValue
 	renewablePercentageGoalValue: async () => 'XYZ', // Simulate fetching nonRenewableValue
-	renewablePercentageGoalYear: async () => '2010' // Simulate fetching nonRenewableValue
+	renewablePercentageGoalYear: async () => '2010', // Simulate fetching nonRenewableValue,
+	co2PriceNowEU: async () => (await getCO2PriceData()).co2PriceNowEU,
+	co2PriceNowEUDate: async () => (await getCO2PriceData()).co2PriceNowEUDate,
+	co2PriceNowNational: async () => (await getCO2PriceData()).co2PriceNowNational,
+	currentCountry: async () => PUBLIC_VERSION
 };
 
 // Parse a single string and resolve placeholders on demand

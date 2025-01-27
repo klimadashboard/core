@@ -19,10 +19,10 @@
 <header
 	class="font-display fixed bg-white dark:bg-gray-900 w-screen bg-opacity-90 backdrop-blur-sm z-50"
 >
-	<div class="p-1 sm:px-4 sm:py-2">
-		<div class="flex items-center gap-4">
+	<div class="p-1 px-4 sm:py-2 text-sm sm:text-base">
+		<div class="flex items-center gap-2">
 			<a href="/" class="flex items-center gap-2">
-				<div class=" font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
+				<div class="font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>
 			<button
 				class="flex items-center gap-1 font-bold rounded-full border py-1.5 px-3 hover:bg-gray-100 dark:hover:bg-gray-800"

@@ -10,8 +10,8 @@
     let chartHeight;
 
     const margin = {
-        left: 0,
-        right: 0,
+        left: 2,
+        right: 2,
         top: 10,
         bottom: 20
     }
