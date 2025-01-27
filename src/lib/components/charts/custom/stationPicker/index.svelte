@@ -6,6 +6,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let selectedStation;
+	export let chart;
 	export let snowCoverageMinimum = 0;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_stations' : 'at_geosphere_stations';
@@ -39,7 +40,7 @@
 </script>
 
 {#await promise then data}
-	<WeatherStationPicker {data} bind:selectedStation />
+	<WeatherStationPicker {data} {chart} bind:selectedStation />
 
-	<WeatherStationMap {data} bind:selectedStation />
+		<WeatherStationMap {data} bind:selectedStation />
 {/await}

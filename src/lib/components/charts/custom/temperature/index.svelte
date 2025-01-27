@@ -6,6 +6,8 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
+	export let chart;
+	
 	let selectedStation;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';
@@ -39,7 +41,7 @@
 </script>
 
 <div>
-	<StationPicker bind:selectedStation />
+	<StationPicker bind:selectedStation {chart} />
 
 	{#await promise}
 		<Loader showText={true} />

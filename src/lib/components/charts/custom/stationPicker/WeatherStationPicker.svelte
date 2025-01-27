@@ -4,43 +4,47 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let data;
+	export let chart;
 	export let selectedStation;
 
 	const presetID = PUBLIC_VERSION == 'at' ? 105 : 403;
 
 	$: geoLocationStatus = '';
 
-	$: getDistance = function (currentPosition, station) {
+	$: getDistance = function (currentCoords, station) {
 		return Math.sqrt(
-			Math.pow(currentPosition.coords.latitude - station.latitude, 2) +
-				Math.pow(currentPosition.coords.longitude - station.longitude, 2)
+			Math.pow(currentCoords.latitude - station.latitude, 2) +
+				Math.pow(currentCoords.longitude - station.longitude, 2)
 		);
 	};
 
-	$: getClosestStation = function (position) {
-		geoLocationStatus = 'getting closest weather station...';
-		// currentPosition = "Latitude: " + position.coords.latitude + "; Longitude: " + position.coords.longitude;
-		var closestStation = data.stations.reduce((a, b) =>
-			getDistance(position, a) < getDistance(position, b) ? a : b
+	$: getClosestStation = function (currentCoords) {
+		geoLocationStatus = 'Getting closest weather station...';
+
+		const closestStation = data.stations.reduce((a, b) =>
+			getDistance(currentCoords, a) < getDistance(currentCoords, b) ? a : b
 		);
+
 		selectedStation = closestStation;
 		geoLocationStatus = '';
 	};
 
-	$: getCurrentPosition = function () {
-		geoLocationStatus = 'getting user’s position...';
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(getClosestStation);
-		} else {
-			geoLocationStatus = 'Geolocation is not supported by this browser.';
-		}
-	};
+	// Check if chart.coordinates is defined
+	if (chart?.coordinates) {
+		// Parse coordinates
+		const [lng, lat] = chart.coordinates.split(',').map(Number);
 
-	if ($page.url.searchParams.get('weatherStation')) {
+		// Use coordinates to find the closest station
+		if (!isNaN(lng) && !isNaN(lat)) {
+			getClosestStation({ latitude: lat, longitude: lng });
+		}
+	} else if ($page.url.searchParams.get('weatherStation')) {
+		// If weatherStation is defined in the URL, select it
 		selectedStation = data.stations.find(
 			(d) => d.id == $page.url.searchParams.get('weatherStation')
 		);
 	} else {
+		// Default to preset station
 		selectedStation = data.stations.find((d) => d.id == presetID);
 	}
 
@@ -50,7 +54,7 @@
 		goto(url.toString(), { replaceState: true, noScroll: true });
 	}
 
-	// Step 1: Group options by 'state'
+	// Group options by 'state'
 	let groupedOptions = {};
 	data.stations.forEach((option) => {
 		if (!groupedOptions[option.state]) {
@@ -79,7 +83,7 @@
 		</select>
 
 		<button
-			aria-label="Nächste Wetterstation finden"
+			aria-label="Find nearest weather station"
 			class="k_input"
 			on:mousedown={getCurrentPosition()}
 		>

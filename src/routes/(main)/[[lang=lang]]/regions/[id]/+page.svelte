@@ -11,9 +11,12 @@
 
 	export let data;
 
+	const coordinates = data.page.center.map(d => parseFloat(d)).join(',');
+
 	onMount(() => {
 		localStorage.setItem('kd_region_id', data.page.id);
 		localStorage.setItem('kd_region_name', data.page.name);
+		localStorage.setItem('kd_region_coordinates', coordinates);
 	});
 
 	let index, offset, progress;
@@ -109,7 +112,7 @@
 						{#if section.charts}
 							{#each section.charts as chart}
 								{#if chartData[chart.id]}
-									<Chart chart={chartData[chart.id]} />
+									<Chart chart={coordinates, chartData[chart.id]} />
 								{:else}
 									<p>Loading chart...</p>
 								{/if}
