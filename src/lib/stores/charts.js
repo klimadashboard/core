@@ -1,6 +1,5 @@
-import { writable, derived } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { locale } from '$lib/stores/i18n';
-import { error } from '@sveltejs/kit';
 
 let localeString = 'de';
 locale.subscribe((value) => {

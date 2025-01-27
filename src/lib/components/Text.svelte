@@ -11,8 +11,15 @@
 		});
 	}
 
+	function replaceImagePlaceholders(htmlString) {
+		return htmlString.replace(/{{image:([^}]+)}}/g, (match, variable) => {
+			return `<img src="https://base.klimadashboard.org/assets/${variable}">`;
+		});
+	}
+
 	// Replace placeholders with buttons containing data-term attributes
 	htmlString = replaceGlossaryPlaceholders(htmlString);
+	htmlString = replaceImagePlaceholders(htmlString);
 
 	// Handle the click event
 	function handleButtonClick(event) {

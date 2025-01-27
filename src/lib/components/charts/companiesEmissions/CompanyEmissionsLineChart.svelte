@@ -1,11 +1,13 @@
 <script>
 	// @ts-nocheck
 	import LineChart from '../chartLine.svelte';
+	import { EMISSION_SCOPE_KEYS } from './constants';
 	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
 
-	export let rawData;
+	export let emissions;
 	export let selectedCompanies;
-	export let selectedScopes = ['scope1'];
+	export let selectedScopes;
+	export let selectedScope2Category = 'location_based';
 
 	let isSingleCompanySelected;
 	let selectedCompanyNames;
@@ -23,11 +25,6 @@
 		1: 'Scope 1',
 		2: 'Scope 2',
 		3: 'Scope 3'
-	};
-	const selectedScopesToKeys = {
-		1: 'scope1',
-		2: 'scope2',
-		3: 'scope3'
 	};
 	const maxCompanies = 7;
 
@@ -55,27 +52,31 @@
 	// 	'Austria Technologie & Systemtechnik AG'
 	// ];
 
-	// Specify the company name to filter for
-	const companyName = selectedCompanies[0].name;
-
 	let dataset = [];
 	let keys;
 	let labels;
 	let colors;
 	$: {
-		if (rawData && companyName && selectedScopes) {
+		if (emissions && selectedCompanies && selectedScopes) {
 			if (isSingleCompanySelected) {
 				// Specify the company name to filter for
 				const companyName = selectedCompanies[0].name;
-				dataset = transformDataSingleCompany(rawData, companyName, selectedScopes);
+				dataset = transformDataSingleCompany(
+					emissions,
+					companyName,
+					selectedScopes,
+					selectedScope2Category
+				);
 			} else {
-				dataset = transformDataMultipleCompanies(rawData, selectedCompanyNames, selectedScopes);
+				dataset = transformDataMultipleCompanies(
+					emissions,
+					selectedCompanyNames,
+					selectedScopes,
+					selectedScope2Category
+				);
 			}
-
 			// Select keys, colors and labels
-			keys = isSingleCompanySelected
-				? selectedScopes.map((scope) => selectedScopesToKeys[scope])
-				: selectedCompanyNames;
+			keys = isSingleCompanySelected ? selectedScopes : selectedCompanyNames;
 			labels = isSingleCompanySelected
 				? selectedScopes.map((scope) => selectedScopesToLabels[scope])
 				: selectedCompanyNames;
@@ -86,29 +87,36 @@
 	}
 </script>
 
-{#if dataset && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
-	<LineChart
-		data={dataset}
-		{colors}
-		{keys}
-		{labels}
-		showTotal={isSingleCompanySelected}
-		showAreas={false}
-		showDots={true}
-		visualisation={'non-stacked'}
-		marginLeft={50}
-		xTicksInterval={2}
-		preselectedIndex={7}
-		unit={'t'}
-		invalidX={6}
-		invalidText={'Text zu invaliden Daten'}
-	/>
+{#if dataset.length > 0 && selectedCompanies.length > 0 && selectedCompanies.length <= maxCompanies}
+	<div class="h-72">
+		<LineChart
+			data={dataset}
+			{colors}
+			{keys}
+			{labels}
+			showTotal={isSingleCompanySelected}
+			showAreas={false}
+			showDots={true}
+			visualisation={'non-stacked'}
+			marginLeft={50}
+			xTicksInterval={1}
+			unit={'t'}
+			invalidX={6}
+			invalidText={'Daten weniger genau*'}
+		/>
+	</div>
+	<p class="text-sm text-gray-600 mt-2">
+		* Vor 2022 führt die Datenungenauigkeit aufgrund unterschiedlicher erfasster Dimensionen der
+		Scope 3 Emissionen zu fehlender Vergleichbarkeit.
+	</p>
 {:else if selectedCompanies.length === 0}
-	<br /><br /><br />
+	<div class="h-28" />
 	<p class="text-center">Keine Unternehmen ausgewählt.</p>
 	<p class="text-center">⬆ Wähle oben bis zu sieben Unternehmen aus! ⬆</p>
 {:else if selectedCompanies.length > maxCompanies}
+	<div class="h-28" />
 	<p class="text-center">Zu viele Unternehmen ausgewählt. Wähle maximal 7 Unternehmen.</p>
 {:else}
+	<div class="h-28" />
 	<p class="text-center">Laden...</p>
 {/if}

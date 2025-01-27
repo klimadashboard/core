@@ -1,75 +1,70 @@
 // @ts-nocheck
+import { convertObjectToArray } from './utils';
 
-export const transformDataSingleCompany = (data, company, selectedScopes) => {
-	// Object to hold emissions data per year with merged scopes
+export const transformDataSingleCompany = (
+	emissionsData,
+	selectedCompany,
+	selectedScopes,
+	selectedScope2Category
+) => {
 	const emissionsPerYear = {};
 
 	// Iterate over each item in the rawData
-	data.forEach((item) => {
-		const { Year_Scope, ...emissions } = item;
-		const { year, scope } = parseYearScope(Year_Scope);
-
-		// only include selected scopes
-		if (!selectedScopes.includes(scope.replace('scope', ''))) {
+	emissionsData.forEach(({ year, company, scope, value, category }) => {
+		if (
+			company !== selectedCompany ||
+			!selectedScopes.includes(scope) ||
+			(scope === 2 && category !== selectedScope2Category)
+		) {
 			return;
 		}
 
-		// If the specific company has emission data for this entry, merge it
+		// If the specific company has emission data for this year, merge it
 		if (!emissionsPerYear[year]) {
 			emissionsPerYear[year] = { year, unit: 'CO2', label: year }; // Initialize if not present
 		}
-		emissionsPerYear[year][scope] = emissions[company]; // Merge scope data
+		if (!value) {
+			emissionsPerYear[year][scope] = 'na';
+		} else {
+			emissionsPerYear[year][scope] = parseInt(value); // Merge scope data
+		}
 	});
-
-	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
 	return convertObjectToArray(emissionsPerYear);
 };
 
-export const transformDataMultipleCompanies = (data, companies, selectedScopes) => {
+export const transformDataMultipleCompanies = (
+	emissionsData,
+	selectedCompanies,
+	selectedScopes,
+	selectedScope2Category
+) => {
 	const emissionsPerYear = {};
-	data.forEach((item) => {
-		const { Year_Scope, ...emissions } = item;
-		const { year, scope } = parseYearScope(Year_Scope);
+
+	emissionsData.forEach(({ year, company, scope, value, category }) => {
+		// Skip items that are not included in the companies array
+		if (
+			!selectedCompanies.includes(company) ||
+			!selectedScopes.includes(scope) ||
+			// TODO: Add logic to filter by category! location and market based should not be mixed!
+			(scope === 2 && category !== selectedScope2Category)
+		) {
+			return;
+		}
 
 		// Initialize the emissions data object for the year if it does not exist
 		if (!emissionsPerYear[year]) {
 			emissionsPerYear[year] = { year, unit: 'CO2', label: year };
 		}
 
-		companies.forEach((company) => {
-			if (emissions[company] !== undefined && emissions[company] !== null) {
-				// Aggregate emission data for the company and selected scopes
-
-				selectedScopes.forEach((selectedScope) => {
-					if (scope === `scope${selectedScope}`) {
-						if (!emissionsPerYear[year][company]) {
-							emissionsPerYear[year][company] = emissions[company];
-						} else {
-							emissionsPerYear[year][company] += emissions[company];
-						}
-					}
-				});
-			}
-		});
+		if (!value) {
+			emissionsPerYear[year][company] = 'na';
+		} else if (!emissionsPerYear[year][company]) {
+			emissionsPerYear[year][company] = parseInt(value); // TODO: check why directus returns string instead of integer!
+		} else if (value && emissionsPerYear[year][company] !== 'na') {
+			emissionsPerYear[year][company] += parseInt(value);
+		}
 	});
 
 	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
 	return convertObjectToArray(emissionsPerYear);
-};
-
-// Function to parse the year and scope from the "Year_Scope" string
-const parseYearScope = (yearScope) => {
-	const [year, scope] = yearScope.split('_');
-	return { year: parseInt(year), scope: scope };
-};
-
-const convertObjectToArray = (emissionsPerYear) => {
-	return Object.values(emissionsPerYear)
-		.sort((a, b) => a.year - b.year)
-		.map((item, index) => {
-			return {
-				...item,
-				x: index
-			};
-		});
 };
