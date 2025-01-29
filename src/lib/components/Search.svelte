@@ -67,20 +67,33 @@ const regionPartialMatches = await directus.request(
     })
 );
 
-			const mapRegions = (regions) =>
-				regions.map((r) => ({
-					id: r.id,
-					title: r.name,
-					subtitle: Array.isArray(r.postcodes) ? r.postcodes[0] : '',
-					source: 'region',
-					country: r.country,
-					layer: r.layer
-				}));
+			const mapRegions = (regions, searchValue) =>
+	regions.map((r) => {
+		let subtitle = '';
+		
+		if (Array.isArray(r.postcodes) && r.postcodes.length > 0) {
+			// Check if the search value matches any postcode
+			const matchedPostcode = r.postcodes.find(pc => pc.startsWith(searchValue));
 
-			const mappedRegionExact = mapRegions(regionExactMatches);
+			// If there's a match, use it, otherwise default to the first postcode
+			subtitle = matchedPostcode || r.postcodes[0];
+		}
+
+		return {
+			id: r.id,
+			title: r.name,
+			subtitle,
+			source: 'region',
+			country: r.country,
+			layer: r.layer
+		};
+	});
+
+
+			const mappedRegionExact = mapRegions(regionExactMatches, value);
 			const regionExactIds = mappedRegionExact.map((r) => r.id);
 			const mappedRegionPartial = mapRegions(
-				regionPartialMatches.filter((r) => !regionExactIds.includes(r.id))
+				regionPartialMatches.filter((r) => !regionExactIds.includes(r.id)), value
 			);
 
 			// --- CHARTS ---
