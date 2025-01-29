@@ -9,74 +9,88 @@ import formatNumber from '$lib/stores/formatNumber';
 const getRenewableData = async function () {
 	const directus = getDirectusInstance(fetch);
 
-	// Fetch data
-	const renewableShareDaily = await directus.request(
-		readItems('renewable_share_daily', {
-			filter: { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
-			sort: ['-date'],
-			limit: 365
-		})
-	);
+	try {
+		// Fetch data with error handling
+		const renewableShareDaily = await directus.request(
+			readItems('renewable_share_daily', {
+				filter: { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+				sort: ['-date'],
+				limit: 365
+			})
+		).catch(() => []); // Return empty array if request fails
 
-	const renewableShareNow = await directus.request(
-		readItems('renewable_share_15min', {
-			filter: { country: { _eq: PUBLIC_VERSION.toUpperCase() } }
-		})
-	);
+		const renewableShareNow = await directus.request(
+			readItems('renewable_share_15min', {
+				filter: { country: { _eq: PUBLIC_VERSION.toUpperCase() } }
+			})
+		).catch(() => []); // Return empty array if request fails
 
-	// Helper function to calculate average
-	const calculateAverage = (filteredData) => {
-		if (filteredData.length === 0) return 0; // Avoid division by zero
-		const total = filteredData.reduce((sum, item) => sum + item.share, 0);
-		return formatNumber(total / filteredData.length);
-	};
+		// Helper function to calculate average
+		const calculateAverage = (filteredData) => {
+			if (!filteredData.length) return 'N/A'; // Avoid division by zero
+			const total = filteredData.reduce((sum, item) => sum + item.share, 0);
+			return formatNumber(total / filteredData.length);
+		};
 
-	// Get the current time
-	const now = dayjs();
+		// Get the current time
+		const now = dayjs();
 
-	// Find the item with the date closest to the current time
-	const closestRenewableShareNow = renewableShareNow.reduce((closest, item) => {
-		const itemDate = dayjs(item.date);
-		const closestDate = dayjs(closest.date);
+		// Find the closest item or return fallback
+		const closestRenewableShareNow = renewableShareNow.length
+			? renewableShareNow.reduce((closest, item) => {
+				const itemDate = dayjs(item.date);
+				const closestDate = dayjs(closest.date);
+				return Math.abs(itemDate.diff(now)) < Math.abs(closestDate.diff(now)) ? item : closest;
+			  })
+			: { share: 'N/A', date: now };
 
-		// Compare the absolute difference between dates
-		return Math.abs(itemDate.diff(now)) < Math.abs(closestDate.diff(now)) ? item : closest;
-	});
+		// Filter data for the last 30 and 365 days
+		const last30DaysData = renewableShareDaily.filter((item) =>
+			dayjs(item.date).isAfter(now.subtract(30, 'days'))
+		);
+		const last365DaysData = renewableShareDaily.filter((item) =>
+			dayjs(item.date).isAfter(now.subtract(365, 'days'))
+		);
 
-	// Filter data for the last 30 days
-	const last30DaysData = renewableShareDaily.filter((item) => {
-		const itemDate = dayjs(item.date);
-		return itemDate.isAfter(now.subtract(30, 'days'));
-	});
-
-	// Filter data for the last 365 days
-	const last365DaysData = renewableShareDaily.filter((item) => {
-		const itemDate = dayjs(item.date);
-		return itemDate.isAfter(now.subtract(365, 'days'));
-	});
-
-	return {
-		renewablePercentageNow: closestRenewableShareNow.share,
-		renewablePercentageNowDate: dayjs(closestRenewableShareNow.date).format("DD.M.YYYY"),
-		renewableShareLast30Days: calculateAverage(last30DaysData),
-		renewableShareLast365Days: calculateAverage(last365DaysData)
-	};
+		return {
+			renewablePercentageNow: closestRenewableShareNow.share || 'N/A',
+			renewablePercentageNowDate: dayjs(closestRenewableShareNow.date).format("DD.M.YYYY"),
+			renewableShareLast30Days: calculateAverage(last30DaysData),
+			renewableShareLast365Days: calculateAverage(last365DaysData)
+		};
+	} catch (error) {
+		console.error("Error fetching renewable data:", error);
+		return {
+			renewablePercentageNow: 'N/A',
+			renewablePercentageNowDate: 'N/A',
+			renewableShareLast30Days: 'N/A',
+			renewableShareLast365Days: 'N/A'
+		};
+	}
 };
 
 const getCO2PriceData = async () => {
 	const directus = getDirectusInstance(fetch);
-	const data = await directus.request(readItems('carbon_prices', {
-		sort: ['-date']
-	}));
-	const co2PriceNowEU = data.find((d) => d.region === "EU")?.value;
-		const co2PriceNowEUDate = dayjs(data.find((d) => d.region === "EU")?.date).format("DD.M.YYYY");
 
-	const co2PriceNowNational = data.find((d) => d.region === PUBLIC_VERSION)?.value;
-	return {
-	co2PriceNowEU,
-	co2PriceNowEUDate,
-	co2PriceNowNational
-	};
+	try {
+		const data = await directus.request(readItems('carbon_prices', { sort: ['-date'] })).catch(() => []);
+
+		const co2PriceNowEUEntry = data.find((d) => d.region === "EU");
+		const co2PriceNowNationalEntry = data.find((d) => d.region === PUBLIC_VERSION);
+
+		return {
+			co2PriceNowEU: co2PriceNowEUEntry?.value || 'N/A',
+			co2PriceNowEUDate: co2PriceNowEUEntry ? dayjs(co2PriceNowEUEntry.date).format("DD.M.YYYY") : 'N/A',
+			co2PriceNowNational: co2PriceNowNationalEntry?.value || 'N/A'
+		};
+	} catch (error) {
+		console.error("Error fetching CO2 price data:", error);
+		return {
+			co2PriceNowEU: 'N/A',
+			co2PriceNowEUDate: 'N/A',
+			co2PriceNowNational: 'N/A'
+		};
+	}
 };
 
 // Placeholder handlers: Define a function for each placeholder

@@ -4,6 +4,7 @@
 	import Bar from './Bar.svelte';
 	import Line from './Line.svelte';
 	import Table from './Table.svelte';
+    import Export from './Export.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 
 	export let data;
@@ -28,7 +29,7 @@
 			top: 0,
 			right: 10,
 			bottom: 10,
-			left: 10
+			left: 70
 		}
 	};
 
@@ -57,11 +58,13 @@
 	{#if chartWidth && chartHeight}
 		<svg width={'100%'} height={'100%'} class="overflow-visible">
 			<XAxis {chartWidth} {chartHeight} {data} {options} />
-
+            
 			{#each chart.layers as layer}
 				<YAxis {chartWidth} {chartHeight} {layer} {data} />
+                <g transform="translate({options.margin.left},0)">
 				<svelte:component this={layerTypes.find((d) => d.key == layer.type)?.component} {data} {layer} {chartWidth} {chartHeight} {options} />
-			{/each}
+			    </g>
+                {/each}
 		</svg>
 	{/if}
 </div>
@@ -71,7 +74,4 @@
 </div>
 </div>
 
-<div class="text-sm">
-    <a href="">download data: csv</a>
-    <a href="">json</a>
-</div>
+<Export {data} />

@@ -24,7 +24,7 @@
 
 <button
 	on:click={toggleTheme}
-	class="rounded-full py-1.5 px-3 border hover:bg-gray-100 dark:hover:bg-gray-800"
+	class="button"
 	aria-label="Switch dark/light mode"
 >
 	{#if currentTheme == 'dark'}

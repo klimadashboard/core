@@ -20,7 +20,7 @@
 <g transform="translate(0,0)" class="text-sm">
 	{#each yScale.ticks(10) as tick}
 		<g transform="translate(0,{yScale(tick)})">
-			<text text-anchor="middle">{tick} {relevantData[0].unit}</text>
+			<text text-anchor="left">{tick} {relevantData[0].unit}</text>
 			<line x1={0} x2={chartWidth} class="stroke-black opacity-20" />
 		</g>
 	{/each}

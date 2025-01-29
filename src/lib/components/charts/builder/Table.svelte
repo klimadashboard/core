@@ -19,7 +19,7 @@
                 {formatLabel(d.x)}
             </td>
             {#each d.layers as l}
-            <td>{l.y}</td>
+            <td>{formatLabel(l.y)}</td>
             {/each}
         </tr>
         {/each}
