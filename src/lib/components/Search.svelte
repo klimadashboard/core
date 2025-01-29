@@ -213,24 +213,38 @@ const regionPartialMatches = await directus.request(
 	}
 
 	function onKeyDown(event) {
-		if (event.key === 'ArrowDown') {
-			event.preventDefault();
-			if (activeSuggestionIndex < suggestions.length - 1) {
-				activeSuggestionIndex++;
-			}
-		} else if (event.key === 'ArrowUp') {
-			event.preventDefault();
-			if (activeSuggestionIndex > 0) {
-				activeSuggestionIndex--;
-			}
-		} else if (event.key === 'Enter') {
-			if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
-				selectSuggestion(suggestions[activeSuggestionIndex]);
-			}
-		} else if (event.key === 'Escape') {
-			showSuggestions = false;
-		}
-	}
+    if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        if (activeSuggestionIndex < suggestions.length - 1) {
+            activeSuggestionIndex++;
+            scrollActiveSuggestionIntoView();
+        }
+    } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (activeSuggestionIndex > 0) {
+            activeSuggestionIndex--;
+            scrollActiveSuggestionIntoView();
+        }
+    } else if (event.key === 'Enter') {
+        if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
+            selectSuggestion(suggestions[activeSuggestionIndex]);
+        }
+    } else if (event.key === 'Escape') {
+        showSuggestions = false;
+    }
+}
+
+// Function to scroll the active suggestion into view
+function scrollActiveSuggestionIntoView() {
+    const suggestionList = document.querySelector("ul");
+    if (!suggestionList) return;
+
+    const activeItem = suggestionList.querySelectorAll("li")[activeSuggestionIndex];
+    if (activeItem) {
+        activeItem.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+}
+
 
 	function onBlur() {
 		setTimeout(() => {
