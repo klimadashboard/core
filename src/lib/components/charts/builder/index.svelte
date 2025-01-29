@@ -9,9 +9,9 @@
 
 	$: getData = async function () {
 		const directus = getDirectusInstance(fetch);
-		const rawData = await directus.request(readItems(chart.table_name, {
-            limit: -1
-        }));
+		const rawData = await directus.request(readItems(chart.table_name, chart.options));
+
+        console.log(chart.options)
 		// todo: add options, sorting,...
 
 		const data = rawData.map((d) => ({
@@ -19,6 +19,7 @@
 			layers: chart.layers.map((l) => ({
 				label: l.name,
 				y: d[l.y_axis],
+                unit: d.unit,
                 type: l.type
 			}))
 		}));

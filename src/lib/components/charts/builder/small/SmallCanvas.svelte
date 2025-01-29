@@ -1,7 +1,6 @@
 <script>
-    import { scaleLinear } from 'd3-scale';
-    import { min, max } from 'd3-array';
     import SmallLine from './SmallLine.svelte';
+    import { formatLabel } from '$lib/utils/format';
 
     export let data;
     export let chart;
@@ -37,8 +36,8 @@
         </g>
         <g transform="translate(0,{margin.top + innerChartHeight})" class="text-sm fill-current">
             <line x1={0} x2={chartWidth} class="stroke-current stroke-2 opacity-50" />
-            <text dominant-baseline="hanging" y={4}>{data[0].x}</text>
-            <text x={chartWidth} text-anchor="end" dominant-baseline="hanging" y={4}>{data[data.length - 1].x}</text>
+            <text dominant-baseline="hanging" y={4}>{formatLabel(data[0].x)}</text>
+            <text x={chartWidth} text-anchor="end" dominant-baseline="hanging" y={4}>{formatLabel(data[data.length - 1].x)}</text>
         </g>
     </svg>
     {/if}

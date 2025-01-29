@@ -4,7 +4,7 @@
 	import Table from './Table.svelte';
 	import Search from './Search.svelte';
 	import Papa from 'papaparse';
-	import { scaleApproval } from '$lib/stores/scales';
+	import { scaleApproval } from '$lib/utils/scales';
 
 	let dataset;
 

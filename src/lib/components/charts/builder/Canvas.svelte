@@ -49,6 +49,8 @@
 		activeView = event.detail;
 	}} />
 
+<p class="">custom configuration goes here</p>
+
 <div class="h-[400px]">
 {#if activeView == "chart"}
 <div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-full mt-4">
@@ -67,4 +69,9 @@
 <Table {data} />
 {/if}
 </div>
+</div>
+
+<div class="text-sm">
+    <a href="">download data: csv</a>
+    <a href="">json</a>
 </div>

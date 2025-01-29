@@ -2,7 +2,7 @@
 	import Papa from 'papaparse';
 	import Map from './Map.svelte';
 	import Loader from '$lib/components/Loader.svelte';
-	import { scaleApproval } from '$lib/stores/scales';
+	import { scaleApproval } from '$lib/utils/scales';
 
 	let dataset;
 

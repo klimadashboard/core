@@ -1,4 +1,5 @@
 <script>
+    import { formatLabel } from '$lib/utils/format';
     export let data;
 </script>
 
@@ -15,7 +16,7 @@
         {#each data as d}
         <tr class="odd:bg-gray-100 dark:odd:bg-gray-800">
             <td>
-                {d.x}
+                {formatLabel(d.x)}
             </td>
             {#each d.layers as l}
             <td>{l.y}</td>

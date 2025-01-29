@@ -1,6 +1,6 @@
 <script>
 	import { geoPath, geoAlbers } from 'd3-geo';
-	import { scaleApproval } from '$lib/stores/scales';
+	import { scaleApproval } from '$lib/utils/scales';
 
 	let mapWidth;
 	let mapHeight;

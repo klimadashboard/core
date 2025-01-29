@@ -1,7 +1,6 @@
 <script>
     import { line } from "d3-shape";
-    import { scaleLinear, scaleTime } from 'd3-scale';
-    import { min, max } from 'd3-array';
+    import { getScale } from '$lib/utils/scales.js'; // Import the updated getScale function
 
     export let data;
     export let layer;
@@ -9,28 +8,26 @@
     export let chartHeight;
     export let options;
 
-    $: xScale = scaleLinear()
-		.domain([min(data, (d) => d.x), max(data, (d) => d.x)])
-		.range([0, chartWidth - options.margin.left - options.margin.right]);
+    // Create scales using getScale
+    $: xScale = getScale(relevantData, 'x', [0, chartWidth - options.margin.left - options.margin.right]);
+    $: yScale = getScale(relevantData, 'y', [chartHeight, 0]);
 
-    $: relevantData = data.map(d => {
-        return {
-        x: d.x,
-        y: d.layers.find(d => d.label == layer.name).y
-        }
-    });
+    // Extract relevant data for rendering
+    $: relevantData = data.map(d => ({
+        x: d.x, // Pass x as is
+        y: d.layers.find(l => l.label === layer.name).y
+    }));
 
-    $: console.log(relevantData);
+    console.log(relevantData)
 
-	$: yScale = scaleLinear()
-		.domain([min(relevantData, (d) => d.y), max(relevantData, (d) => d.y)])
-		.range([chartHeight, 0]);
-
+    // Generate line
     $: generateLine = line()
         .x((d) => xScale(d.x))
         .y((d) => yScale(d.y));
 </script>
 
+{#if relevantData}
 <g>
-	<path d={generateLine(relevantData)} class="stroke-black stroke-2 fill-none" />
+    <path d={generateLine(relevantData)} class="stroke-black stroke-2 fill-none" />
 </g>
+{/if}
