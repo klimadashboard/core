@@ -1,53 +1,19 @@
 <script>
 	import companies from '$lib/stores/companies';
-	import { onMount } from 'svelte';
 	import CheckIcon from './CheckIcon.svelte';
 	import XIcon from './XIcon.svelte';
 
-	export let selectedCompanies = [];
+	export let companiesGoalData = [];
 
-	let companyGoalData = null;
-	let originalData = null;
+	let isOMV = false;
+	$: isOMV = !!companiesGoalData.filter((company) => company.name === 'OMV AG').length;
+
 	const tableCellClasses = 'text-semibold text-sm text-center px-1 leading-tight py-1';
-
-	onMount(() => {
-		getData();
-	});
-
-	async function getData() {
-		let response = await fetch(
-			`https://data.klimadashboard.org/at/companies/atx_climate_goals_v2.json`
-			// `../data/at/companies/atx_climate_goals_v2.json`
-		);
-		let data = await response.json();
-		if (response.ok) {
-			originalData = data;
-			companyGoalData = data;
-		} else {
-			throw new Error(data);
-		}
-	}
-	$: {
-		if (originalData && selectedCompanies) {
-			const selectedCompanyNames = selectedCompanies.map((company) => company.name);
-			companyGoalData = originalData.filter((company) =>
-				selectedCompanyNames.includes(company.name)
-			);
-		}
-	}
-
-	function mapStatusToIcon(status) {
-		const mapping = {
-			Ja: CheckIcon,
-			Nein: XIcon
-		};
-		return mapping[status]; // Returns the original status if it's neither of the above
-	}
 </script>
 
-{#if !companyGoalData}
+{#if !companiesGoalData}
 	<p>Loading...</p>
-{:else if companyGoalData}
+{:else if companiesGoalData}
 	<table class="mx-auto">
 		<thead>
 			<tr class="border-b">
@@ -59,45 +25,53 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#if selectedCompanies.length === 0}
+			{#if companiesGoalData.length === 0}
 				<tr>
 					<td class="text-center text-sm pt-3" colspan="5">Keine Unternehmen ausgewählt</td>
 				</tr>
 			{/if}
-			{#each companyGoalData as company (company.name)}
+			{#each companiesGoalData as company (company.name)}
 				{@const companyMetaData = companies.find((c) => c.name == company.name)}
 				<tr class="border-b">
 					<td class={tableCellClasses}>
 						<img
-							src="../icons/atx-companies/{companyMetaData.logo}.svg"
-							alt={companyMetaData.logo}
-							width="64"
-							height="64"
-							class="inline-block w-12 h-8 p-1 object-contain"
-							title={companyMetaData.name}
+							src="https://base.klimadashboard.org/assets/{company.logoId}"
+							alt={companiesGoalData.name}
+							width="80"
+							height="80"
+							class="inline-block w-24 h-16 p-1 object-contain"
+							title={companiesGoalData.name}
 						/>
 					</td>
 					<td class={tableCellClasses}>
-						{#if company.climateNeutrality === 'Nein'}
+						{#if company.climate_neutrality_goal === 'Nein'}
 							<XIcon additionalClasses="mx-auto" />
 						{:else}
 							<CheckIcon additionalClasses="mx-auto" />
-							<b>{company.climateNeutrality}</b><br />
-							{#if company.climateNeutralityScopes === 'nicht definiert'}
+							<b>{company.climate_neutrality_goal}</b><br />
+							{#if company.climate_neutrality_scopes === null}
 								ohne definierte Scopes
 							{:else}
-								für Scope {company.climateNeutralityScopes}
+								für Scope {company.climate_neutrality_scopes}
 							{/if}
 						{/if}
 					</td>
-					<td class={tableCellClasses} title={company.memberSBT}
-						><svelte:component
-							this={mapStatusToIcon(company.intermediateGoal)}
-							additionalClasses="mx-auto"
-						/></td
-					>
+					<td class={tableCellClasses} title={company.member_sbt}>
+						{#if company.member_sbt}
+							<CheckIcon additionalClasses="mx-auto" />
+						{:else}
+							<XIcon additionalClasses="mx-auto inline" />
+							{#if company.name === 'OMV AG'}<span>*</span>{/if}
+						{/if}
+					</td>
 				</tr>
 			{/each}
 		</tbody>
 	</table>
+	{#if isOMV}
+		<p class="text-sm pt-4">
+			*Öl und Gaskonzerne wie die OMV können aktuell nicht an der Science Based Target Initative
+			teilnehmen (SBTi Oil and Gas) und ihre Emmissionsziele validieren lassen.
+		</p>
+	{/if}
 {/if}
