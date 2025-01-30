@@ -8,6 +8,8 @@
 	dayjs.extend(RelativeTime);
 	dayjs.locale('de-at');
 
+	console.log($page.data);
+
 	$: tags = $page.data.content.tags || [];
 </script>
 
@@ -24,7 +26,7 @@
 		{/if}
 
 		<div class="opacity-80 mt-4 text-lg leading-snug max-w-xl text">
-			{#if $page.data.page.date_updated}
+			{#if $page.data.page?.date_updated}
 				<p>
 					{$page.data.translations.lastUpdated}
 					<span class="underline underline-offset-2 decoration-gray-400 group relative">
@@ -43,7 +45,7 @@
 				{/each}
 			</p>
 
-			{#if $page.data.content.description}
+			{#if $page.data.content?.description}
 				<div class="mb-4 mt-2 saturate-0">
 					{@html $page.data.content.description}
 				</div>

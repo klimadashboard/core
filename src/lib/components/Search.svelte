@@ -301,8 +301,6 @@ function scrollActiveSuggestionIntoView() {
 						})
 					);
 
-					console.log(regions)
-
 					// Parse regions and calculate distances
 					let closestRegion = null;
 					let minDistance = Infinity;
@@ -315,8 +313,6 @@ function scrollActiveSuggestionIntoView() {
 
 
 		if (distance < minDistance) {
-			console.log(region.name);
-			console.log(distance)
 			minDistance = distance;
 			closestRegion = region;
 		}

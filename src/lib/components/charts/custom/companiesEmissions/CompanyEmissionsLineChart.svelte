@@ -1,6 +1,6 @@
 <script>
 	// @ts-nocheck
-	import LineChart from '../chartLine.svelte';
+	import LineChart from '$lib/components/charts/chartLine.svelte';
 	import { EMISSION_SCOPE_KEYS } from './constants';
 	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
 

@@ -12,6 +12,7 @@
 	import { glossaryItem } from '$lib/stores/glossary';
 
 	export let companiesMetaData = [];
+	export let chart;
 
 	const scopes = EMISSION_SCOPE_KEYS;
 	let selectedScopes = [1];
@@ -35,19 +36,19 @@
 	];
 	let selectedScope2Category = 'location_based';
 
-	$: companies = companiesMetaData.map((company, index) => {
-		if (index === 0) {
-			return {
-				...company,
-				selected: true
-			};
-		} else {
-			return {
-				...company,
-				selected: false
-			};
-		}
-	});
+	$: companies = companiesMetaData.map((company) => {
+    if (chart.preset && company.id === chart.preset) {
+        return {
+            ...company,
+            selected: true
+        };
+    } else {
+        return {
+            ...company,
+            selected: false
+        };
+    }
+});
 
 	function selectAll() {
 		companies = companies.map((company) => {

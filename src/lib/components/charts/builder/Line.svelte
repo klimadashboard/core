@@ -18,8 +18,6 @@
         y: d.layers.find(l => l.label === layer.name).y
     }));
 
-    console.log(relevantData)
-
     // Generate line
     $: generateLine = line()
         .x((d) => xScale(d.x))

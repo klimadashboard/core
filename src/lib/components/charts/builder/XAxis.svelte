@@ -7,8 +7,6 @@
 	export let data;
 	export let options;
 
-	console.log(data);
-
 	$: xScale = getScale(data, 'x', [0, chartWidth - options.margin.left - options.margin.right]);
 </script>
 

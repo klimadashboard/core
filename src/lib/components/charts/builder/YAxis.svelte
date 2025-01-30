@@ -8,8 +8,6 @@
     export let layer;
 	export let options;
 
-	console.log(data);
-
     $: relevantData = data.map(d => d.layers.find(d => d.label == layer.name));
 
 	$: yScale = scaleLinear()

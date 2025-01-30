@@ -107,8 +107,6 @@ export async function load({ fetch, params }) {
 
 		const content = await resolvePlaceholders(translation);
 
-		console.log(content);
-
 		// const seo = page.seo ? await directus.request(readItem('seo', page.seo)) : null;
 
 		return {

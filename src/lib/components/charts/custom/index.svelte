@@ -28,7 +28,7 @@
 </script>
 
 {#await promise then}
-	<svelte:component this={ChartComponent} v={createVariables(chart.content.variables)} />
+	<svelte:component {chart} this={ChartComponent} v={createVariables(chart.content.variables)} />
 {:catch error}
 	{error}
 {/await}

@@ -6,12 +6,27 @@ export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
 
 	try {
+		const company = await directus.request(
+			readItem('companies', params.id, {
+				fields: ['*.*']
+			})
+		);
+		const chart = await directus.request(
+			readItem('charts', "b07da22c-e425-4259-8094-f85ddb46518a", {
+				fields: ['*.*']
+			})
+		);
+		const content = {
+			title: company.name,
+			heading: company.name
+		}
 		return {
-			content: await directus.request(
-				readItem('companies', params.id, {
-					fields: ['*.*']
-				})
-			)
+			company,
+			content,
+			chart: {
+				preset: company.id,
+				...chart
+			}
 		};
 	} catch (err) {
 		error(404, 'Page not found');

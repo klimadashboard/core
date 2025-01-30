@@ -11,9 +11,6 @@
 		const directus = getDirectusInstance(fetch);
 		const rawData = await directus.request(readItems(chart.table_name, chart.options));
 
-        console.log(chart.options)
-		// todo: add options, sorting,...
-
 		const data = rawData.map((d) => ({
 			x: d[chart.x_axis],
 			layers: chart.layers.map((l) => ({

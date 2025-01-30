@@ -28,6 +28,7 @@ export const getCompanyMetaData = async () => {
 	const data = await directus.request(
 		readItems('companies', {
 			fields: [
+				'id',
 				'name',
 				'logo.id',
 				'sectors.companies_sectors_id.name',
