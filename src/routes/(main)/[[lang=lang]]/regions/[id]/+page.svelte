@@ -115,7 +115,7 @@
 			{#each sections as section}
 				<section id={section.id} class="mt-16">
 					<h2 class="text-2xl my-4 text-center max-w-2xl mx-auto">{section.title}</h2>
-					<div>
+					<div class="p-1">
 						{#if section.charts}
 							{#each section.charts as chart}
 								{#if chartData[chart.id]}
