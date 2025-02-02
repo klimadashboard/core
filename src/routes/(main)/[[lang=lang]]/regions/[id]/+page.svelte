@@ -11,7 +11,7 @@
 
 	export let data;
 
-	const coordinates = data.page.center.map(d => parseFloat(d)).join(',');
+	const coordinates = data.page.center.map((d) => parseFloat(d)).join(',');
 
 	onMount(() => {
 		localStorage.setItem('kd_region_id', data.page.id);
@@ -57,7 +57,12 @@
 		},
 		{
 			title: 'Schnee',
-			id: 'snow'
+			id: 'snow',
+			charts: [
+				{
+					id: 'd88601f8-40de-4753-beb1-a0e824aa048c'
+				}
+			]
 		}
 	];
 
@@ -98,12 +103,14 @@
 			<div class="container" id="top">
 				<div class="grid grid-cols-2 md:grid-cols-5 gap-1">
 					{#each sections as section}
-						<a href="#{section.id}" class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 text-xl">{section.title}</a>
+						<a href="#{section.id}" class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 text-xl"
+							>{section.title}</a
+						>
 					{/each}
 				</div>
 			</div>
 
-		<Image />
+			<Image />
 
 			{#each sections as section}
 				<section id={section.id} class="mt-16">
@@ -112,7 +119,7 @@
 						{#if section.charts}
 							{#each section.charts as chart}
 								{#if chartData[chart.id]}
-									<Chart chart={coordinates, chartData[chart.id]} />
+									<Chart chart={(coordinates, chartData[chart.id])} />
 								{:else}
 									<p>Loading chart...</p>
 								{/if}
@@ -121,10 +128,14 @@
 							<div class="bg-gray-100 h-96">Charts</div>
 						{/if}
 					</div>
-					<button on:mousedown={scrollToTop} class=" mt-4 font-bold rounded-full py-1.5 px-3 border hover:bg-gray-100 dark:hover:bg-gray-800 mx-auto block">
+					<button
+						on:mousedown={scrollToTop}
+						class=" mt-4 font-bold rounded-full py-1.5 px-3 border hover:bg-gray-100 dark:hover:bg-gray-800 mx-auto block"
+					>
 						&uarr; Zurück zum Überblick
 					</button>
 				</section>
 			{/each}
-	</Scroller>
+		</div></Scroller
+	>
 </main>
