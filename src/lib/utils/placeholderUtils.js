@@ -9,7 +9,6 @@ const getRenewableData = async function () {
 	const directus = getDirectusInstance(fetch);
 
 	try {
-		// Fetch data with error handling
 		const country = PUBLIC_VERSION.toUpperCase();
 
 		const renewableData = await directus
@@ -20,12 +19,10 @@ const getRenewableData = async function () {
 					limit: 1000
 				})
 			)
-			.catch(() => []); // Return empty array if request fails
+			.catch(() => []);
 
-		// Get the current time
 		const now = dayjs();
 
-		// Filter data by category
 		const data15min = renewableData
 			.filter((item) => item.category === '15min' && dayjs(item.period).isBefore(now))
 			.sort((a, b) => dayjs(b.period).isBefore(dayjs(a.period)))[0] || {
@@ -49,8 +46,6 @@ const getRenewableData = async function () {
 			value: 'N/A',
 			period: 'N/A'
 		};
-
-		$: console.log(data15min);
 
 		return {
 			renewablePercentageNow: Math.round(data15min.value),
@@ -101,21 +96,70 @@ const getCO2PriceData = async () => {
 	}
 };
 
-// Placeholder handlers: Define a function for each placeholder
+const getGasUsageData = async () => {
+	const directus = getDirectusInstance(fetch);
+
+	try {
+		const data = await directus
+			.request(
+				readItems('energy', {
+					filter: {
+						_and: [
+							{
+								category: { _eq: 'gas|usage' }
+							},
+							{ region: { _eq: PUBLIC_VERSION } }
+						]
+					},
+					sort: ['-period'],
+					limit: 1000
+				})
+			)
+			.catch(() => []);
+
+		const latestEntry = data[0] || { value: 'N/A', period: 'N/A' };
+		const lastYearDate = dayjs(latestEntry.period).subtract(1, 'year').format('YYYY-MM-DD');
+		const lastYearEntry = data.find((item) => item.period === lastYearDate) || {
+			value: 'N/A',
+			period: lastYearDate
+		};
+
+		console.log(latestEntry);
+
+		return {
+			gasUsageCurrent: latestEntry.value,
+			gasUsageCurrentDate: dayjs(latestEntry.period).format('D.M.YYYY'),
+			gasUsageLastYear: formatNumber(lastYearEntry.value),
+			gasUsageLastYearDate: dayjs(lastYearEntry.period).format('D.M.YYYY')
+		};
+	} catch (error) {
+		console.error('Error fetching gas usage data:', error);
+		return {
+			gasUsageCurrent: 'N/A',
+			gasUsageCurrentDate: 'N/A',
+			gasUsageLastYear: 'N/A',
+			gasUsageLastYearDate: 'N/A'
+		};
+	}
+};
+
 const placeholderHandlers = {
-	renewablePercentageNow: async () => (await getRenewableData()).renewablePercentageNow, // Simulate fetching percentageShare
-	renewablePercentageNowDate: async () => (await getRenewableData()).renewablePercentageNowDate, // Simulate fetching or computing expectedGrowth
-	renewablePercentage30days: async () => (await getRenewableData()).renewableShareLast30Days, // Simulate fetching renewableValue
-	renewablePercentageLastYear: async () => (await getRenewableData()).renewableShareLast365Days, // Simulate fetching nonRenewableValue
-	renewablePercentageGoalValue: async () => (await getRenewableData()).renewableShareGoalValue, // Simulate fetching nonRenewableValue
-	renewablePercentageGoalYear: async () => (await getRenewableData()).renewableShareGoalYear, // Simulate fetching nonRenewableValue,
+	renewablePercentageNow: async () => (await getRenewableData()).renewablePercentageNow,
+	renewablePercentageNowDate: async () => (await getRenewableData()).renewablePercentageNowDate,
+	renewablePercentage30days: async () => (await getRenewableData()).renewableShareLast30Days,
+	renewablePercentageLastYear: async () => (await getRenewableData()).renewableShareLast365Days,
+	renewablePercentageGoalValue: async () => (await getRenewableData()).renewableShareGoalValue,
+	renewablePercentageGoalYear: async () => (await getRenewableData()).renewableShareGoalYear,
 	co2PriceNowEU: async () => (await getCO2PriceData()).co2PriceNowEU,
 	co2PriceNowEUDate: async () => (await getCO2PriceData()).co2PriceNowEUDate,
 	co2PriceNowNational: async () => (await getCO2PriceData()).co2PriceNowNational,
+	gasUsageCurrent: async () => (await getGasUsageData()).gasUsageCurrent,
+	gasUsageCurrentDate: async () => (await getGasUsageData()).gasUsageCurrentDate,
+	gasUsageLastYear: async () => (await getGasUsageData()).gasUsageLastYear,
+	gasUsageLastYearDate: async () => (await getGasUsageData()).gasUsageLastYearDate,
 	currentCountry: async () => PUBLIC_VERSION
 };
 
-// Parse a single string and resolve placeholders on demand
 const parseTemplate = async (template) => {
 	if (!template || typeof template !== 'string') return template;
 
@@ -123,14 +167,13 @@ const parseTemplate = async (template) => {
 	const resolvedValues = await Promise.all(
 		placeholders.map(async (key) => {
 			const handler = placeholderHandlers[key];
-			return handler ? await handler() : `{{${key}}}`; // Return the placeholder if no handler exists
+			return handler ? await handler() : `{{${key}}}`;
 		})
 	);
 
 	return template.replace(/{{(.*?)}}/g, () => resolvedValues.shift());
 };
 
-// Recursively resolve placeholders in an object, array, or string
 const resolvePlaceholders = async (data) => {
 	if (typeof data === 'string') {
 		return await parseTemplate(data);
@@ -147,8 +190,7 @@ const resolvePlaceholders = async (data) => {
 		return Object.fromEntries(entries);
 	}
 
-	return data; // Return non-object, non-string values as-is
+	return data;
 };
 
-// Export the utilities and placeholder handlers
 export { parseTemplate, resolvePlaceholders, placeholderHandlers };
