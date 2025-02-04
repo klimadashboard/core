@@ -20,10 +20,10 @@
 				{formatNumber(block.number)}<span class="text-2xl font-normal">{block.unit}</span>
 			</p>
 		</div>
-		<div>{@html block.subtitle}</div>
+		<div class="text-balance">{@html block.subtitle}</div>
 		{#if block.chart}
-		<div class="h-16">
-			<Chart chart={block.chart} type="small"  />
+			<div class="h-16">
+				<Chart chart={block.chart} type="small" />
 			</div>
 		{/if}
 	</div>

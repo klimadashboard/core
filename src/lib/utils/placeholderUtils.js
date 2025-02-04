@@ -53,12 +53,12 @@ const getRenewableData = async function () {
 		$: console.log(data15min);
 
 		return {
-			renewablePercentageNow: data15min.value,
+			renewablePercentageNow: Math.round(data15min.value),
 			renewablePercentageNowDate: dayjs(data15min.period).fromNow(),
-			renewableShareLast30Days: formatNumber(dataMonthly.value),
-			renewableShareLast365Days: formatNumber(dataYearly.value),
+			renewableShareLast30Days: Math.round(dataMonthly.value),
+			renewableShareLast365Days: Math.round(dataYearly.value),
 			renewableShareGoalYear: dayjs(goalData.period).format('YYYY'),
-			renewableShareGoalValue: formatNumber(goalData.value)
+			renewableShareGoalValue: Math.round(goalData.value)
 		};
 	} catch (error) {
 		console.error('Error fetching renewable data:', error);
@@ -87,7 +87,7 @@ const getCO2PriceData = async () => {
 		return {
 			co2PriceNowEU: co2PriceNowEUEntry?.value || 'N/A',
 			co2PriceNowEUDate: co2PriceNowEUEntry
-				? dayjs(co2PriceNowEUEntry.date).format('DD.M.YYYY')
+				? dayjs(co2PriceNowEUEntry.date).format('D.M.YYYY')
 				: 'N/A',
 			co2PriceNowNational: co2PriceNowNationalEntry?.value || 'N/A'
 		};
