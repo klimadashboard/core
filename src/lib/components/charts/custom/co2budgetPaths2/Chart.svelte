@@ -247,14 +247,14 @@
 							d="{lineHistoric}L{xScale(2021)},{innerChartHeight}L0,{innerChartHeight}Z"
 							fill={'#268EA5'}
 							fill-opacity="0.2"
-							transition:fade|global
+							transition:fade
 						/>
 						<path
 							d={lineHistoric}
 							fill="none"
 							stroke-width="4"
 							stroke={'#268EA5'}
-							transition:draw|global={{ duration: 2000, easing: quintOut }}
+							transition:draw={{ duration: 2000, easing: quintOut }}
 						/>
 					</g>
 					{#key chosenBudget}
@@ -269,7 +269,7 @@
 										d="{areas[i]}L{xScale(2021)},{yScale(0)}L{xScale(2021)},{yScale(80)}z"
 										fill={selectedKey.color}
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
-										transition:fade|global
+										transition:fade
 										on:mouseover={() => (chosenPath = i)}
 										on:mouseout={() => (chosenPath = 2)}
 									/>
@@ -286,7 +286,7 @@
 										fill="none"
 										stroke-width="4"
 										stroke={selectedKey.color}
-										transition:draw|global={{ duration: 2000, easing: quintOut }}
+										transition:draw={{ duration: 2000, easing: quintOut }}
 									/>
 								</g>
 							{/each}

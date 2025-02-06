@@ -143,17 +143,6 @@
 		var inflectionYear = 0;
 		var inflectionIndex = 0;
 
-		// for (var i = 0; i < rates.length; i++) {
-		// 	var difference = rates[i] - rates[Math.max(i - 1, 0)];
-		// 	console.log(i, difference);
-		// 	if (difference > 1 || difference < -1) {
-		// 		inflectionYear = dataPaths[i].year;
-		// 		inflectionIndex = i;
-		// 	}
-		// }
-		// var valueBeforeInflection = rates[inflectionIndex - 1];
-		// var valueAfterInflection = rates[inflectionIndex];
-
 		var string = '';
 
 		if (inflectionYear == 0) {
@@ -297,14 +286,14 @@
 								xScaleOffset(1990)},{innerChartHeight}Z"
 							fill={'#268EA5'}
 							fill-opacity="0.2"
-							transition:fade|global
+							transition:fade
 						/>
 						<path
 							d={lineHistoric}
 							fill="none"
 							stroke-width="4"
 							stroke={'#268EA5'}
-							transition:draw|global={{ duration: 2000, easing: quintOut }}
+							transition:draw={{ duration: 2000, easing: quintOut }}
 						/>
 					</g>
 					{#if ksgDottedLine}
@@ -350,7 +339,7 @@
 										)},{yScale(lastTHG)}z"
 										fill={selectedKey.color}
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
-										transition:fade|global
+										transition:fade
 										on:mouseover={() => (chosenPath = i)}
 										on:mouseout={() => (chosenPath = 2)}
 									/>
@@ -367,7 +356,7 @@
 										fill="none"
 										stroke-width="4"
 										stroke={selectedKey.color}
-										transition:draw|global={{ duration: 2000, easing: quintOut }}
+										transition:draw={{ duration: 2000, easing: quintOut }}
 									/>
 								</g>
 							{/each}

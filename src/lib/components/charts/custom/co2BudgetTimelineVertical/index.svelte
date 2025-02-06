@@ -111,7 +111,7 @@
 	<div class="container relative">
 		<div class="flex flex-col space-y-2">
 			{#each data as year, i}
-				<div class="relative" transition:fade|global={{ delay: i * 10 }}>
+				<div class="relative" transition:fade={{ delay: i * 10 }}>
 					{#if i % 10 == 0 || year.year == 2023}
 						<p class="text-xs text-gray-600 absolute -bottom-4 left-1 -translate-x-1/2">
 							{year.year}

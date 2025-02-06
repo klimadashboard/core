@@ -50,7 +50,7 @@
 	$: chosenBudget = budgets[1];
 	$: totalHistoricalEmissions = historicalEmissions
 		.filter((d) => d.year <= endYear && d.year >= startYear)
-		.reduce((a, b) => a + b.total_AR4_Mt_CO2e, 0);
+		.reduce((a, b) => a + b.total_AR6_Mt_CO2e, 0);
 	$: chosenHistoricalEmissions = historicalEmissions.filter(
 		(d) => d.year <= endYear && d.year >= startYear
 	);
@@ -65,7 +65,7 @@
 	$: arrayHistorical = decades.map((key) => {
 		let values = chosenHistoricalEmissions
 			.filter((d) => d.year >= key && d.year < key + 10)
-			.reduce((a, b) => Math.round(a + b.total_AR4_Mt_CO2e), 0);
+			.reduce((a, b) => Math.round(a + b.total_AR6_Mt_CO2e), 0);
 		return values;
 	});
 
@@ -191,7 +191,7 @@
 							? 'opacity-100'
 							: 'opacity-70'
 						: ''}"
-					transition:fade|global
+					transition:fade
 				>
 					<!--
           {#if j == 0}
@@ -247,7 +247,7 @@
 
 	<div class="grid gap-1 mx-auto mt-2 text-budgetDefault budget-grid">
 		{#each arrayBudget as box}
-			<div class="w-3 h-3 bg-current" transition:fade|global />
+			<div class="w-3 h-3 bg-current" transition:fade />
 		{/each}
 	</div>
 
@@ -273,7 +273,7 @@
 
 	<div class="grid gap-1 mx-auto mt-2 text-budgetDark budget-grid">
 		{#each arrayCurrent as box}
-			<div class="w-3 h-3 bg-current" transition:fade|global />
+			<div class="w-3 h-3 bg-current" transition:fade />
 		{/each}
 		<div class="text-sm -translate-y-1" style="grid-column: span 24 / span 24;">
 			80 Mio. Tonnen hat Österreich im Jahr 2021 emittiert

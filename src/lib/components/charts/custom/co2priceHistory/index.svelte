@@ -1,6 +1,6 @@
 <script>
 	import Papa from 'papaparse';
-	import ChartLine from '$lib/components/charts/chartLine.svelte';
+	import ChartLine from '$lib/components/charts/ChartLine.svelte';
 	import dayjs from 'dayjs';
 
 	let data;
