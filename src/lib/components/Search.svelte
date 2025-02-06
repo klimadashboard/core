@@ -32,78 +32,81 @@
 
 			// --- REGIONS ---
 			const regionExactMatches = await directus.request(
-    readItems('regions', {
-        filter: {
-            _and: [
-                { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
-                {
-                    _or: [
-                        { name: { _eq: value } },
-                        { postcodes: { _contains: value } }
-                    ]
-                }
-            ]
-        },
-        fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-        sort: ['name']
-    })
-);
+				readItems('regions', {
+					filter: {
+						_and: [
+							{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+							{
+								_or: [{ name: { _eq: value } }, { postcodes: { _contains: value } }]
+							}
+						]
+					},
+					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
+					sort: ['name']
+				})
+			);
 
-const regionPartialMatches = await directus.request(
-    readItems('regions', {
-        filter: {
-            _and: [
-                { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
-                {
-                    _or: [
-                        { name: { _icontains: value } },
-                        { postcodes: { _contains: value } }
-                    ]
-                }
-            ]
-        },
-        fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-        sort: ['name']
-    })
-);
+			const regionPartialMatches = await directus.request(
+				readItems('regions', {
+					filter: {
+						_and: [
+							{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+							{
+								_or: [{ name: { _icontains: value } }, { postcodes: { _contains: value } }]
+							}
+						]
+					},
+					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
+					sort: ['name']
+				})
+			);
 
 			const mapRegions = (regions, searchValue) =>
-	regions.map((r) => {
-		let subtitle = '';
-		
-		if (Array.isArray(r.postcodes) && r.postcodes.length > 0) {
-			// Check if the search value matches any postcode
-			const matchedPostcode = r.postcodes.find(pc => pc.startsWith(searchValue));
+				regions.map((r) => {
+					let subtitle = '';
 
-			// If there's a match, use it, otherwise default to the first postcode
-			subtitle = matchedPostcode || r.postcodes[0];
-		}
+					if (Array.isArray(r.postcodes) && r.postcodes.length > 0) {
+						// Check if the search value matches any postcode
+						const matchedPostcode = r.postcodes.find((pc) => pc.startsWith(searchValue));
 
-		return {
-			id: r.id,
-			title: r.name,
-			subtitle,
-			source: 'region',
-			country: r.country,
-			layer: r.layer
-		};
-	});
+						// If there's a match, use it, otherwise default to the first postcode
+						subtitle = matchedPostcode || r.postcodes[0];
+					}
 
+					return {
+						id: r.id,
+						title: r.name,
+						subtitle,
+						source: 'region',
+						country: r.country,
+						layer: r.layer
+					};
+				});
 
 			const mappedRegionExact = mapRegions(regionExactMatches, value);
 			const regionExactIds = mappedRegionExact.map((r) => r.id);
 			const mappedRegionPartial = mapRegions(
-				regionPartialMatches.filter((r) => !regionExactIds.includes(r.id)), value
+				regionPartialMatches.filter((r) => !regionExactIds.includes(r.id)),
+				value
 			);
 
 			// --- CHARTS ---
 			const chartExactMatches = await directus.request(
 				readItems('charts', {
 					filter: {
-						_or: [
-							{ translations: { title: { _eq: value } } },
-							{ translations: { heading: { _eq: value } } },
-							{ translations: { text: { _eq: value } } }
+						_and: [
+							{
+								site: {
+									_eq: PUBLIC_VERSION
+								}
+							},
+							{
+								_or: [
+									{ translations: { title: { _eq: value } } },
+									{ translations: { heading: { _eq: value } } },
+									{ translations: { text: { _eq: value } } }
+								]
+							}
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
@@ -113,10 +116,19 @@ const regionPartialMatches = await directus.request(
 			const chartPartialMatches = await directus.request(
 				readItems('charts', {
 					filter: {
-						_or: [
-							{ translations: { title: { _icontains: value } } },
-							{ translations: { heading: { _icontains: value } } },
-							{ translations: { text: { _icontains: value } } }
+						_and: [
+							{
+								site: {
+									_eq: PUBLIC_VERSION
+								}
+							},
+							{
+								_or: [
+									{ translations: { title: { _icontains: value } } },
+									{ translations: { heading: { _icontains: value } } },
+									{ translations: { text: { _icontains: value } } }
+								]
+							}
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
@@ -144,8 +156,15 @@ const regionPartialMatches = await directus.request(
 			const pageExactMatches = await directus.request(
 				readItems('pages', {
 					filter: {
-						_or: [
-							{ translations: { title: { _eq: value } } }
+						_and: [
+							{
+								site: {
+									_eq: PUBLIC_VERSION
+								}
+							},
+							{
+								_or: [{ translations: { title: { _eq: value } } }]
+							}
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.slug']
@@ -155,8 +174,13 @@ const regionPartialMatches = await directus.request(
 			const pagePartialMatches = await directus.request(
 				readItems('pages', {
 					filter: {
-						_or: [
-							{ translations: { title: { _icontains: value } } }
+						_and: [
+							{
+								site: {
+									_eq: PUBLIC_VERSION
+								}
+							},
+							{ _or: [{ translations: { title: { _icontains: value } } }] }
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.slug']
@@ -183,12 +207,12 @@ const regionPartialMatches = await directus.request(
 				}));
 
 			suggestions = [
-				...mappedRegionExact,
-				...mappedChartExact,
 				...mappedPageExact,
-				...mappedRegionPartial,
+				...mappedChartExact,
+				...mappedRegionExact,
+				...mappedPagePartial,
 				...mappedChartPartial,
-				...mappedPagePartial
+				...mappedRegionPartial
 			];
 
 			showSuggestions = true;
@@ -213,38 +237,37 @@ const regionPartialMatches = await directus.request(
 	}
 
 	function onKeyDown(event) {
-    if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        if (activeSuggestionIndex < suggestions.length - 1) {
-            activeSuggestionIndex++;
-            scrollActiveSuggestionIntoView();
-        }
-    } else if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        if (activeSuggestionIndex > 0) {
-            activeSuggestionIndex--;
-            scrollActiveSuggestionIntoView();
-        }
-    } else if (event.key === 'Enter') {
-        if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
-            selectSuggestion(suggestions[activeSuggestionIndex]);
-        }
-    } else if (event.key === 'Escape') {
-        showSuggestions = false;
-    }
-}
+		if (event.key === 'ArrowDown') {
+			event.preventDefault();
+			if (activeSuggestionIndex < suggestions.length - 1) {
+				activeSuggestionIndex++;
+				scrollActiveSuggestionIntoView();
+			}
+		} else if (event.key === 'ArrowUp') {
+			event.preventDefault();
+			if (activeSuggestionIndex > 0) {
+				activeSuggestionIndex--;
+				scrollActiveSuggestionIntoView();
+			}
+		} else if (event.key === 'Enter') {
+			if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
+				selectSuggestion(suggestions[activeSuggestionIndex]);
+			}
+		} else if (event.key === 'Escape') {
+			showSuggestions = false;
+		}
+	}
 
-// Function to scroll the active suggestion into view
-function scrollActiveSuggestionIntoView() {
-    const suggestionList = document.querySelector("ul");
-    if (!suggestionList) return;
+	// Function to scroll the active suggestion into view
+	function scrollActiveSuggestionIntoView() {
+		const suggestionList = document.querySelector('ul');
+		if (!suggestionList) return;
 
-    const activeItem = suggestionList.querySelectorAll("li")[activeSuggestionIndex];
-    if (activeItem) {
-        activeItem.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    }
-}
-
+		const activeItem = suggestionList.querySelectorAll('li')[activeSuggestionIndex];
+		if (activeItem) {
+			activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+		}
+	}
 
 	function onBlur() {
 		setTimeout(() => {
@@ -306,19 +329,17 @@ function scrollActiveSuggestionIntoView() {
 					let minDistance = Infinity;
 
 					regions.forEach((region) => {
-	if (region.center) {
-		const [regionLng, regionLat] = region.center.map((coord) => parseFloat(coord.trim()));
+						if (region.center) {
+							const [regionLng, regionLat] = region.center.map((coord) => parseFloat(coord.trim()));
 
-		const distance = haversineDistance(latitude, longitude, regionLat, regionLng);
+							const distance = haversineDistance(latitude, longitude, regionLat, regionLng);
 
-
-		if (distance < minDistance) {
-			minDistance = distance;
-			closestRegion = region;
-		}
-	}
-});
-
+							if (distance < minDistance) {
+								minDistance = distance;
+								closestRegion = region;
+							}
+						}
+					});
 
 					if (closestRegion) {
 						// Redirect to the closest region's page

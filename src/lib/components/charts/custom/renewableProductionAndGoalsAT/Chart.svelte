@@ -11,40 +11,15 @@
 	export let unifiedScaling;
 	export let maxX;
 	export let maxY;
+	export let dataGoals;
 
-	let goalYear;
-	let unit = PUBLIC_VERSION == 'de' ? 'GW' : 'TWh';
+	let unit = PUBLIC_VERSION == 'de' ? 'GW' : ' TWh';
 	let title =
 		PUBLIC_VERSION == 'de' ? 'Installierte Leistung vs. Ziel' : 'Jahresproduktion vs. Ausbauziel';
 
-	$: maxValue = 50;
-
-	let dataGoal;
-	Papa.parse(
-		'https://data.klimadashboard.org/' +
-			PUBLIC_VERSION +
-			'/energy/renewables/' +
-			type.dataKey +
-			'_zielpfad.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataGoal = results.data.map((entry) => {
-						return {
-							x: new Date(entry.DateTime.slice(0, 10)),
-							y: entry.Jahresproduktion
-						};
-					});
-					maxValue = results.data[results.data.length - 1].Jahresproduktion;
-					goalYear = new Date(results.data[results.data.length - 1].DateTime).getFullYear();
-				}
-			}
-		}
-	);
+	$: maxValue = dataGoals
+		.filter((d) => d.energy_type == type.dataKey)
+		.sort((a, b) => b.value - a.value)[0].value;
 
 	let dataProduction;
 	Papa.parse(
@@ -76,12 +51,12 @@
 	let chartWidth;
 	let chartHeight;
 
-	const margin = { top: 20, right: 0, left: 0, bottom: 0 };
+	const margin = { top: 30, right: 0, left: 0, bottom: 0 };
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
-	const keys = ['goal', 'production'];
-	const colors = ['#A3A3A3', type.color];
+	const keys = ['production', 'goal'];
+	const colors = [type.color];
 
 	$: xScale = scaleTime()
 		.range([0, chartWidth])
@@ -99,11 +74,12 @@
 
 	$: areas = [];
 
-	$: if (dataGoal && dataProduction) {
-		areas = keys.map((key) => generateArea(key)(key == 'production' ? dataProduction : dataGoal));
+	$: if (dataProduction) {
+		areas = keys.map((key) => generateArea(key)(dataProduction));
 	}
 
 	$: selected = false;
+	$: dataGoalsForType = dataGoals.filter((d) => d.energy_type == type.dataKey);
 </script>
 
 <div class="bg-gray-100 rounded overflow-hidden">
@@ -113,23 +89,27 @@
 	</div>
 	<div class="">
 		<div class="relative w-full h-64" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
-			{#if chartWidth && chartHeight && dataGoal && dataProduction}
+			{#if chartWidth && chartHeight && dataProduction}
 				<svg width={'100%'} height={'100%'}>
-					<g transform="translate(0,{margin.top})">
+					<g transform="translate(0,{margin.top})" style="color: {type.color}">
 						<g>
-							{#each xScale.ticks(6) as tick, index}
-								<g transform={`translate(${xScale(tick)}, ${chartHeight})`} class="text-gray-200">
-									<rect
-										x={0}
-										y={-chartHeight - margin.top}
-										width={chartWidth / 15}
-										height={chartHeight}
-										class="fill-gray-200 opacity-50"
-									/>
-									<text class="text-sm text-gray-600 fill-current" x="6" y={-margin.top - 4}
-										>{tick.getFullYear()}</text
-									>
-								</g>
+							{#each xScale.ticks() as tick, index}
+								{#if tick.getMonth() === 0 && tick.getDate() === 1 && tick.getFullYear() % 2 === 0}
+									<g transform={`translate(${xScale(tick)}, ${0})`} class="text-gray-200">
+										<line
+											x1={0}
+											x2={0}
+											y1={innerChartHeight - 5}
+											y2={innerChartHeight}
+											class="stroke-gray-400"
+										/>
+										<text
+											class="text-sm text-gray-600 fill-current"
+											text-anchor="middle"
+											y={innerChartHeight + margin.bottom - 7}>{tick.getFullYear()}</text
+										>
+									</g>
+								{/if}
 							{/each}
 						</g>
 						<g>
@@ -150,6 +130,23 @@
 							{/each}
 						</g>
 
+						<line
+							x1={xScale(new Date(dataGoalsForType.find((d) => d.scenario == 'eag').release_date))}
+							y1={yScale(
+								dataProduction.find(
+									(e) =>
+										new Date(e.x) >
+										new Date(dataGoalsForType.find((d) => d.scenario == 'eag').release_date)
+								).y
+							)}
+							x2={xScale(
+								new Date(dataGoalsForType.find((d) => d.scenario == 'eag').year + '-01-01')
+							)}
+							y2={yScale(dataGoalsForType.find((d) => d.scenario == 'eag').value)}
+							class="stroke-2 stroke-current opacity-50"
+							stroke-dasharray="10 10"
+						/>
+
 						<g>
 							{#each [...areas] as area, i}
 								<g id="area-{i}">
@@ -169,11 +166,34 @@
 							{/each}
 						</g>
 
+						<g style="color: {colors[0]}" class="opacity-70">
+							{#each dataGoalsForType as goal, i}
+								<g transform="translate({xScale(new Date(goal.year, 1, 1))},{yScale(goal.value)})">
+									{#if !(i > 0 && dataGoalsForType.every((d) => d.value == dataGoalsForType[0].value))}
+										<circle r={4} class="fill-none stroke-current stroke-2" />
+										<text
+											style="color:{colors[0]}"
+											class="text-sm font-semibold fill-current"
+											text-anchor="end"
+											x={-7}
+											y={-4}
+										>
+											{#if dataGoalsForType.every((d) => d.value == dataGoalsForType[0].value)}
+												NEKP, EAG und ÖNIP-Ziel: {formatNumber(goal.value)} {unit}
+											{:else}
+												{goal.scenario.toUpperCase()}-Ziel: {formatNumber(goal.value)} {unit}
+											{/if}
+										</text>
+									{/if}
+								</g>
+							{/each}
+						</g>
+
 						<g
 							transform="translate({xScale(dataProduction[dataProduction.length - 1].x)},{yScale(
 								dataProduction[dataProduction.length - 1].y
 							)})"
-							style="color: {colors[1]}"
+							style="color: {colors[0]}"
 							on:mouseover={() => (selected = true)}
 							on:focus={() => (selected = true)}
 							on:mouseout={() => (selected = false)}
@@ -199,14 +219,14 @@
 								/>
 							</circle>
 							{#if !unifiedScaling}
-								<text class="text-sm font-semibold fill-current" x={16} y={0} transition:fade
+								<text class="text-sm font-semibold fill-current" x={5} y={20} transition:fade
 									>{formatNumber(
 										Math.round(dataProduction[dataProduction.length - 1].y * 100) / 100
 									)}
 									{' ' + unit + ' '}
 									{#if PUBLIC_VERSION == 'at'}
 										Produktion im Zeitraum
-										<tspan x="16" y="16"
+										<tspan x="5" y="35"
 											>{dayjs(dataProduction[dataProduction.length - 1].x)
 												.subtract(364, 'day')
 												.format('D.M.YYYY')} – {dayjs(
@@ -220,26 +240,6 @@
 									{/if}
 								</text>
 							{/if}
-						</g>
-
-						<g
-							transform="translate({xScale(dataGoal[dataGoal.length - 1].x)},{yScale(
-								dataGoal[dataGoal.length - 1].y
-							)})"
-						>
-							{#if !unifiedScaling}
-								<text
-									style="color:{colors[0]}"
-									class="text-sm font-semibold fill-current"
-									text-anchor="end"
-									x={-10}
-									y={-2}
-									>{goalYear}-Ziel: {formatNumber(dataGoal[dataGoal.length - 1].y)}
-									{unit} Strom aus {type.label}</text
-								>
-							{/if}
-
-							<circle r="5" fill={colors[0]} />
 						</g>
 					</g>
 				</svg>

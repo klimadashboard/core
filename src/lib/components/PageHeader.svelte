@@ -20,7 +20,7 @@
 		<h1 class="font-bold tracking-wide uppercase">{$page.data.content.title}</h1>
 		-->
 
-			<h2 class="text-3xl md:text-5xl font-bold max-w-2xl">
+			<h2 class="text-3xl md:text-5xl font-bold max-w-2xl text-balance">
 				{$page.data.content.heading ? $page.data.content.heading : $page.data.content.title}
 			</h2>
 		{/if}
