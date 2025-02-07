@@ -5,7 +5,7 @@
 </script>
 
 <div
-	class="p-3 h-full group relative leading-tight flex flex-col break-words hyphens-auto"
+	class="p-3 h-full group relative leading-tight flex flex-col break-words hyphens-auto group transition"
 	style="background: {block.colorBackground}; color: {block.colorText}"
 >
 	<a class="flex justify-between font-bold border-b border-current pb-1" href={block.link}>
