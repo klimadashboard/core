@@ -79,9 +79,7 @@
 	Wähle das Ausbauziel:
 	{#each Object.keys(goalScenarios) as goalScenario}
 		<button
-			class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-1 {selectedScenario === goalScenario
-				? 'stroke-2 bg-gray-200 font-bold'
-				: ''}"
+			class="button {selectedScenario === goalScenario ? '' : 'opacity-50'}"
 			on:click={() => {
 				selectedScenario = goalScenario;
 			}}
@@ -92,7 +90,7 @@
 	{/each}
 </div>
 {#if dataset}
-	<div class="grid md:grid-cols-2 gap-4 my-4">
+	<div class="grid md:grid-cols-2 gap-1 my-4">
 		{#each energyTypes as type}
 			<Gap
 				{type}
@@ -103,7 +101,7 @@
 				goalScenario={goalScenarios[selectedScenario]}
 			/>
 		{/each}
-		<div class="bg-gray-100 p-4">
+		<div class="bg-gray-700 rounded-2xl p-4">
 			<p>Für Biomasse stehen noch nicht ausreichend Daten zu Verfügung.</p>
 		</div>
 	</div>

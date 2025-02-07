@@ -49,9 +49,7 @@
 	Wähle das Ausbauziel:
 	{#each Object.keys(goalScenarios) as goalScenario}
 		<button
-			class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-1 {selectedScenario === goalScenario
-				? 'stroke-2 bg-gray-200 font-bold'
-				: ''}"
+			class="button {selectedScenario === goalScenario ? '' : 'opacity-50'}"
 			on:click={() => {
 				selectedScenario = goalScenario;
 			}}

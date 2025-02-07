@@ -24,7 +24,7 @@
 			tick > 999999
 				? `${formatNumber(Math.round((tick / 1000000) * 100) / 100)} Mio`
 				: formatNumber(tick)}
-		<g transform={`translate(0, ${baseline - yScale(tick)})`} class="text-gray-500">
+		<g transform={`translate(0, ${baseline - yScale(tick)})`} class="">
 			<line x1="0" x2={width} y1="0" y2="0" stroke-width="2" class="stroke-current opacity-30" />
 			<text class="text-xs fill-current bg-white" x="15" y="-3"
 				>{tickLabel}
@@ -45,7 +45,9 @@
 			class="stroke-current opacity-30"
 		/>
 		{#if (xAxisValues.length - 1 - i) % skipCount == 0}
-			<text {x} y={baseline + 20} font-size="15" text-anchor="middle"><tspan>{year}</tspan></text>
+			<text {x} y={baseline + 20} font-size="15" text-anchor="middle" class="fill-current"
+				><tspan>{year}</tspan></text
+			>
 		{/if}
 	{/each}
 </g>

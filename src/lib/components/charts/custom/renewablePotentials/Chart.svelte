@@ -51,7 +51,7 @@
 {/if}
 
 <div
-	class="bg-gray-100 relative w-full"
+	class="bg-gray-100 dark:bg-gray-800 relative w-full"
 	style="height: {chartHeight}px;"
 	bind:clientWidth={chartWidth}
 >
@@ -59,7 +59,7 @@
 		{#if hoverBundesland === bundesland && chartWidth >= 150 && bundesland !== 'Legende'}
 			<!-- <span style="position: absolute; top: {hoverY}px; left: {hoverX}px">asdf</span> -->
 			<div
-				class="absolute h-15 bg-gray-100"
+				class="absolute h-15 bg-gray-100 dark:bg-gray-800"
 				style="padding-left: {margin_bars.left}px; padding-right: {margin_bars.right}px; margin-left: {margin_bars.left}px; margin-right: {margin_bars.right}px; opacity:0.6;"
 			>
 				<b>{hoverType.label}</b>

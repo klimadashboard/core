@@ -17,7 +17,7 @@
 	<table class="mx-auto">
 		<thead>
 			<tr class="border-b">
-				<th class="{tableCellClasses} text-left bg-white text-white">Logo Images</th>
+				<th class="{tableCellClasses} text-left"></th>
 				<th class="{tableCellClasses} text-left">Klimaneutralitätsziel</th>
 				<th class="{tableCellClasses} text-left"
 					>Mitglied der <br />Science-Based-Target Initiative</th

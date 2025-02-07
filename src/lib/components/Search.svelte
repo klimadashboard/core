@@ -380,7 +380,7 @@
 			<input
 				type="text"
 				{placeholder}
-				class="input"
+				class="input w-full"
 				bind:value={query}
 				on:input={onInput}
 				on:keydown={onKeyDown}

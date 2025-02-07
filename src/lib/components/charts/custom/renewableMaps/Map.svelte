@@ -99,7 +99,7 @@
 	<h3 style="color: {colorRange[1]}" class="font-bold ml-8 mt-8">{label}</h3>
 	<div class="w-full h-80 relative" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
 		{#if chartHeight && chartWidth}
-			<svg width={'100%'} height={'100%'} preserveAspectRatio="xMidYMid meet" class="bg-white">
+			<svg width={'100%'} height={'100%'} preserveAspectRatio="xMidYMid meet" class="">
 				<!-- First render all the paths -->
 				<g>
 					{#each topo.features as feature}

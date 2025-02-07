@@ -203,22 +203,16 @@
 	$: selectedStartYear = minYear;
 </script>
 
-<div class="flex gap-4 items-center text-gray-700">
+<div class="flex gap-4 items-center">
 	<div>
-		<label class="flex gap-1 items-center cursor-pointer {showTechn ? '' : 'text-gray-400'}">
+		<label class="flex gap-1 items-center cursor-pointer {showTechn ? '' : ''}">
 			<span>Technisch mögliche Potentiale</span>
 			<input type="checkbox" bind:checked={showTechn} />
 		</label>
 	</div>
-	<div>
+	<div class="flex items-center gap-2">
 		<span>Startjahr auswählen</span>
-		<input
-			type="number"
-			min={minYear}
-			max={maxYear}
-			bind:value={selectedStartYear}
-			class="px-3 py-1 w-20 bg-gray-100 rounded-full"
-		/>
+		<input type="number" min={minYear} max={maxYear} bind:value={selectedStartYear} class="input" />
 	</div>
 </div>
 
@@ -227,9 +221,7 @@
 		<div class="flex flex-wrap gap-2 items-center">
 			{#each Object.keys(energyByBundesland) as bundesland}
 				<button
-					class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-1 {selectedBundesland === bundesland
-						? 'stroke-2 bg-gray-200 font-bold'
-						: ''}"
+					class="button {selectedBundesland === bundesland ? '' : 'opacity-50'}"
 					on:click={() => {
 						selectedBundesland = bundesland;
 					}}

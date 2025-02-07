@@ -68,12 +68,12 @@
 </script>
 
 <section>
-	<label class="flex gap-1 text-gray-700 items-center">
+	<label class="flex gap-1 text-sm items-center">
 		<input type="checkbox" bind:checked={unifiedScaling} />
 		<span>Einheitliche Skalierung?</span>
 	</label>
 	{#if dataGoals}
-		<div class="grid md:grid-cols-2 gap-4 my-4">
+		<div class="grid md:grid-cols-2 gap-1 my-4">
 			{#each energyTypes.filter((d) => d.regions.indexOf(PUBLIC_VERSION) > -1) as type}
 				<Chart
 					{type}

@@ -368,38 +368,21 @@
 
 {#if sortedData}
 	<div class="flex flex-wrap gap-5 items-center sm:justify-center md:justify-start">
-		<div class="relative text-gray-600">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="absolute pointer-events-none top-4 h-5 right-2 transform -translate-y-0.5 icon-tabler-selector"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><polyline
-					points="8 9 12 5 16 9"
-				/><polyline points="16 15 12 19 8 15" /></svg
-			>
-			<select
-				bind:value={selectedGhGas}
-				class="block appearance-none w-full bg-gray-200 border border-gray-100 px-4 py-3 pr-8 rounded leading-tight cursor-pointer focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
-				id="emission-detail-ghg"
-				on:input={() => {
-					ksgSelection = null;
-					crfSelection = null;
-				}}
-			>
-				{#each ghGas as ghg}
-					<option value={ghg.key}>{ghg.label}</option>
-				{/each}
-			</select>
-		</div>
+		<select
+			bind:value={selectedGhGas}
+			class="button"
+			id="emission-detail-ghg"
+			on:input={() => {
+				ksgSelection = null;
+				crfSelection = null;
+			}}
+		>
+			{#each ghGas as ghg}
+				<option value={ghg.key}>{ghg.label}</option>
+			{/each}
+		</select>
 
-		<label class="flex gap-1 text-sm items-center text-gray-700">
+		<label class="flex gap-1 text-sm items-center">
 			<input
 				type="range"
 				min="1990"
@@ -566,7 +549,7 @@
 				</span>
 			{/if}
 			<div
-				class="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-r from-transparent to-white"
+				class="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-r from-transparent to-white dark:to-gray-900"
 			/>
 		</div>
 	</div>

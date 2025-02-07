@@ -37,18 +37,18 @@
 	let selectedScope2Category = 'location_based';
 
 	$: companies = companiesMetaData.map((company) => {
-    if (chart.preset && company.id === chart.preset) {
-        return {
-            ...company,
-            selected: true
-        };
-    } else {
-        return {
-            ...company,
-            selected: false
-        };
-    }
-});
+		if (chart.preset && company.id === chart.preset) {
+			return {
+				...company,
+				selected: true
+			};
+		} else {
+			return {
+				...company,
+				selected: false
+			};
+		}
+	});
 
 	function selectAll() {
 		companies = companies.map((company) => {
@@ -130,7 +130,7 @@
 			{#each sectors as sector}
 				<button
 					class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
-        {selectedSector === sector.name ? 'text-black bg-gray-300' : 'text-gray-600 bg-gray-100'}"
+        {selectedSector === sector.name ? 'text-black bg-gray-300 ' : 'text-gray-600 bg-gray-100 '}"
 					aria-label={sector}
 					title={sector.name}
 					on:click={() => {

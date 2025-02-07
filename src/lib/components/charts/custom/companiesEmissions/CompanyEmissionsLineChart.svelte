@@ -105,7 +105,7 @@
 			invalidText={'Daten weniger genau*'}
 		/>
 	</div>
-	<p class="text-sm text-gray-600 mt-2">
+	<p class="text-sm opacity-80 mt-2">
 		* Vor 2022 führt die Datenungenauigkeit aufgrund unterschiedlicher erfasster Dimensionen der
 		Scope 3 Emissionen zu fehlender Vergleichbarkeit.
 	</p>

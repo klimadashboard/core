@@ -41,7 +41,7 @@
 				? dataset.find(
 						(d) =>
 							d.state_name == entry && d.energy_type == type.key && d.goal_year > dayjs().year()
-				  ).goal_amount
+					).goal_amount
 				: 0;
 			const goalYear = dataset.find(
 				(d) => d.state_name == entry && d.energy_type == type.key && d.goal_year > dayjs().year()
@@ -49,7 +49,7 @@
 				? dataset.find(
 						(d) =>
 							d.state_name == entry && d.energy_type == type.key && d.goal_year > dayjs().year()
-				  ).goal_year
+					).goal_year
 				: 2030;
 			const currentProduction =
 				dataset.find((d) => d.state_name == entry && d.energy_type == type.key).current_production >
@@ -94,7 +94,7 @@
 	$: gap = nationalGoal - totalGoalsAndProduction;
 </script>
 
-<div class="bg-gray-100 rounded overflow-hidden">
+<div class="bg-gray-100 dark:bg-gray-700 rounded-2xl overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
 		<h3 class="text-xl">
 			<b>{type.label}</b> Nationales {goalScenario}-Ausbauziel zu {Math.round(percentage)}%
@@ -105,7 +105,7 @@
 
 	<div class="p-4">
 		<div
-			class="w-full h-24 border-2 border-gray-300 bg-white"
+			class="w-full h-24 border-2 border-gray-300 bg-white dark:bg-gray-900"
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
@@ -198,7 +198,7 @@
 					{unit} im Jahr 2030
 					<br />
 					{#if statesNoGoals.length > 0}
-						<span class="opacity-70">
+						<span class="">
 							Bundesländer ohne Ausbauziele bis 2030:<br />
 							{#each statesNoGoals as state, index}
 								{state.state}{index !== statesNoGoals.length - 1 ? ', ' : ''}

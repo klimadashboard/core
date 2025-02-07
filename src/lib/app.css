@@ -237,11 +237,11 @@ sub {
 }
 
 .card-list {
-	@apply text-sm leading-tight;
+	@apply text-sm leading-tight border-t border-current mt-1;
 }
 
 .card-list li {
-	@apply border-t border-current pt-1 mt-1;
+	@apply border-b border-current border-opacity-20 py-1;
 }
 
 .data-notices h3,
@@ -266,11 +266,11 @@ sub {
 }
 
 .button {
-	@apply flex items-center gap-1 font-bold rounded-full py-1.5 px-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition;
+	@apply appearance-none flex items-center gap-1 font-bold rounded-full py-1.5 px-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition;
 }
 
 .input {
-	@apply px-3 py-1.5 rounded-full w-full border bg-transparent;
+	@apply px-3 py-1.5 rounded-full border bg-transparent;
 }
 
 @keyframes hero-gradient-animation {
