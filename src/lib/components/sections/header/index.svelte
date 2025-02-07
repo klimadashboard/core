@@ -24,10 +24,7 @@
 			<a href="/" class="flex items-center gap-2">
 				<div class="font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>
-			<button
-				class="flex items-center gap-1 font-bold rounded-full border py-1.5 px-3 hover:bg-gray-100 dark:hover:bg-gray-800"
-				on:mousedown={() => (showNavigation = !showNavigation)}
-			>
+			<button class="button" on:mousedown={() => (showNavigation = !showNavigation)}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"

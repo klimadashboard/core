@@ -231,7 +231,7 @@
 				<div class="bottom-hint" use:observeBottomInView />
 			</div>
 			<div
-				class="absolute left-0 right-0 bottom-0 h-16 bg-gradient-to-t from-white pointer-events-none transition-opacity {!showBottomFade
+				class="absolute left-0 right-0 bottom-0 h-16 bg-gradient-to-t from-white dark:from-gray-900 pointer-events-none transition-opacity {!showBottomFade
 					? 'opacity-0'
 					: ''}"
 			/>
