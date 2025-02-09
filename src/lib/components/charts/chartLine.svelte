@@ -26,6 +26,7 @@
 	export let showPulse = false;
 	export let invalidX;
 	export let invalidText;
+	export let additionalYAxisUnit = '';
 
 	let chartHeight;
 	let chartWidth;
@@ -195,7 +196,9 @@
 						/>
 						<text class="text-xs fill-current bg-white" x="2" y="-3"
 							>{prettifyTick(tick)}
-							<tspan dx="2">{index == yScale.ticks(6).length - 1 ? unit : ''}</tspan></text
+							<tspan dx="2"
+								>{index == yScale.ticks(6).length - 1 ? unit + additionalYAxisUnit : ''}</tspan
+							></text
 						>
 					</g>
 				{/each}
@@ -284,11 +287,17 @@
 				{/if}
 				{#if invalidX}
 					<g>
+						<defs>
+							<linearGradient id="fadeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+								<stop offset="0%" stop-color="rgb(229, 231, 235)" stop-opacity="0" />
+								<stop offset="100%" stop-color="rgb(229, 231, 235)" stop-opacity="0.60" />
+							</linearGradient>
+						</defs>
 						<rect
 							y={-5}
 							width={xScale(invalidX)}
 							height={innerChartHeight + 5}
-							class="fill-gray-200 opacity-50"
+							fill="url(#fadeGradient)"
 						/>
 						<line
 							x1={xScale(invalidX)}
