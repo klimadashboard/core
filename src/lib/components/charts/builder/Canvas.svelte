@@ -63,7 +63,7 @@
 		{#if activeView == 'chart'}
 			<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-full mt-4">
 				{#if chartWidth && chartHeight}
-					<svg width={'100%'} height={'100%'} class="overflow-visible">
+					<svg width={'100%'} height={'100%'} class="overflow-visible text-current">
 						<XAxis {chartWidth} {chartHeight} {data} {options} />
 
 						{#each chart.layers as layer}

@@ -29,7 +29,7 @@
 </script>
 
 <div>
-	<div class="dark:bg-gray-900 dark:text-white transition duration-1000">
+	<div class="dark:bg-gray-950 dark:text-white transition duration-1000">
 		{#if $glossaryItem}
 			<Glossary />
 		{/if}
