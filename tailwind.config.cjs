@@ -79,7 +79,7 @@ module.exports = {
 				900: '#67000D',
 				1000: '#1A0003'
 			},
-			gray: colors.neutral,
+			gray: colors.zinc,
 			yellow: colors.yellow,
 			orange: colors.orange,
 			amber: colors.amber,
