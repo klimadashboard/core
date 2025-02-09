@@ -7,14 +7,14 @@
 	import Blocks from '$lib/components/blocks/index.svelte';
 
 	const getGlossary = async function () {
-		const res = await fetch('https://cms.klimadashboard.org/de/glossary.json').then(function (
-			response
-		) {
-			if (!response.ok) {
-				error(500, response.statusText);
+		const res = await fetch('https://cms.klimadashboard.org/de/glossary.json').then(
+			function (response) {
+				if (!response.ok) {
+					error(500, response.statusText);
+				}
+				return response;
 			}
-			return response;
-		});
+		);
 		const json = await res.json();
 
 		if (json) {
@@ -28,7 +28,7 @@
 
 {#if $glossaryItem}
 	<div
-		class="popup fixed inset-0 grid bg-black bg-opacity-50 p-4 z-50"
+		class="popup fixed inset-0 grid bg-black/50 p-4 z-50"
 		transition:fade|global={{ duration: 200 }}
 	>
 		<div

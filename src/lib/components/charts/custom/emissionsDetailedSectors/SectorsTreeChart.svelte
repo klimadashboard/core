@@ -143,7 +143,7 @@
 											: colorForKey(ksgSector.key).colorCode};"
 									>
 										<div
-											class="w-full max-h-full flex items-center flex-wrap flex-grow-0 gap-2 text-white"
+											class="w-full max-h-full flex items-center flex-wrap grow-0 gap-2 text-white"
 											style="padding: {fontSize < 30
 												? 4
 												: fontSize / 4}px; font-size: {fontSize}px;"
@@ -296,7 +296,7 @@
 	{/if}
 	{#if extensiveList && ksgSelection != null}
 		<div
-			class="absolute rounded -top-4 -right-4 h-90 w-5/6 overflow-scroll"
+			class="absolute rounded-sm -top-4 -right-4 h-90 w-5/6 overflow-scroll"
 			style="background-color: {colorForKey(sortedData[ksgSelection].key).colorCode};"
 		>
 			<div

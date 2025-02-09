@@ -118,7 +118,7 @@
 	>
 	<select
 		bind:value={selectedCategory}
-		class="block appearance-none w-full bg-gray-200 border border-gray-100 px-4 py-3 pr-8 rounded leading-tight cursor-pointer focus:outline-none focus:bg-white focus:border-gray-500"
+		class="block appearance-none w-full bg-gray-200 border border-gray-100 px-4 py-3 pr-8 rounded-sm leading-tight cursor-pointer focus:outline-hidden focus:bg-white focus:border-gray-500"
 	>
 		<option value="day">Tage</option>
 		<option value="month">Monate</option>

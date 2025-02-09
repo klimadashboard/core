@@ -25,7 +25,7 @@
 </script>
 
 <div
-	class="rounded overflow-hidden bg-gray-100 flex flex-col justify-between"
+	class="rounded-sm overflow-hidden bg-gray-100 flex flex-col justify-between"
 	style="border: 2px solid {type.color}"
 >
 	<div

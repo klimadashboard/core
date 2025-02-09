@@ -47,7 +47,7 @@
 				<div class="flex items-center gap-2 mt-4">
 					{#if quote.author_image}
 						<img
-							class="w-20 h-20 rounded-full shadow"
+							class="w-20 h-20 rounded-full shadow-sm"
 							src="https://base.klimadashboard.org/assets/{quote.author_image}"
 							alt={quote.author_name}
 						/>

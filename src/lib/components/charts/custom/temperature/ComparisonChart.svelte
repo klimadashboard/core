@@ -152,7 +152,7 @@
 		{/if}
 	</div>
 	<div
-		class="absolute w-32 pointer-events-none left-0 top-0 bottom-0 bg-gradient-to-r from-white to-transparent"
+		class="absolute w-32 pointer-events-none left-0 top-0 bottom-0 bg-linear-to-r from-white to-transparent"
 	/>
 	<svg width={50} height={'100%'} class="absolute left-0 top-0 pointer-events-none">
 		<!-- Y-Axis with ticks -->

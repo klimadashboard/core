@@ -33,7 +33,7 @@
 					/>
 				</form>
 				<a
-					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
+					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded-sm"
 					href="https://instagram.com/klimadashboard{PUBLIC_VERSION == 'de' ? '_de' : ''}"
 					aria-label="Instagram"
 				>
@@ -56,7 +56,7 @@
 					</svg>
 				</a>
 				<a
-					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
+					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded-sm"
 					rel="me"
 					href="https://bsky.app/profile/klimadashboard.bsky.social"
 					aria-label="Bluesky"
@@ -78,7 +78,7 @@
 					>
 				</a>
 				<a
-					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
+					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded-sm"
 					rel="me"
 					href="https://mastodon.social/@klimadashboard"
 					aria-label="Mastodon"
@@ -118,7 +118,7 @@
 				wir laufend neue Visualisierungen bauen.
 			</p>
 			<a
-				class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
+				class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded-sm"
 				href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
 			>
 				<svg
@@ -147,7 +147,7 @@
 			<p>Hast du Ideen, Wünsche, Anregungen zu dieser Seite? Wir freuen uns, von dir zu hören.</p>
 			<div class="flex items-center space-x-2 flex-wrap">
 				<a
-					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
+					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded-sm"
 					href="mailto:team@klimadashboard.org"
 				>
 					<svg
@@ -169,7 +169,7 @@
 					<span>E-Mail schreiben</span>
 				</a>
 				<a
-					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded"
+					class="inline-flex items-center space-x-2 mt-2 bg-gray-700 hover:bg-gray-900 transition py-1 px-2 rounded-sm"
 					href="https://github.com/klimadashboard"
 					aria-label="GitHub"
 				>

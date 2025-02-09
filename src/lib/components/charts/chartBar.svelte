@@ -210,7 +210,7 @@
 									})`}
 									class="text-sm text-white"
 								>
-									<rect width={barWidth} height="28" class="shadow-sm fill-current" />
+									<rect width={barWidth} height="28" class="shadow-xs fill-current" />
 									<g transform="translate(4,4)" class="text-gray-800">
 										<text class="fill-current">{datapoint.label}</text>
 										<text y="16" class="fill-current"

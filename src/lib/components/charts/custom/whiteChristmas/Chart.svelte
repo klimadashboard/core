@@ -90,7 +90,7 @@
 	></button
 >
 
-<div class="mt-4 max-w-2xl mx-auto shadow">
+<div class="mt-4 max-w-2xl mx-auto shadow-sm">
 	<div bind:this={item} class=" bg-[#F0F1F1] p-2 sm:p-4">
 		<div class="flex justify-between items-center font-bold">
 			<svg
@@ -517,7 +517,7 @@
 			</li>
 		</ul>
 		<div class="text-[#11998e] flex items-center gap-2 font-bold mx-auto w-max mt-4">
-			<div class="bg-current w-6 h-6 relative rounded s-Nqbj62FQcFe9">
+			<div class="bg-current w-6 h-6 relative rounded-sm s-Nqbj62FQcFe9">
 				<svg
 					width="256"
 					height="256"

@@ -297,7 +297,7 @@
 
 					{#if activeState}
 						<div class="text-left flex items-center gap-2 -my-2 pr-14">
-							<div class="flex flex-col flex-shrink-0 leading-tight text-xs">
+							<div class="flex flex-col shrink-0 leading-tight text-xs">
 								<p class="">
 									{formatNumber(
 										data.find((d) => d.year == selectedYear && d.region == activeState)[
@@ -547,7 +547,7 @@
             <text
               text-anchor="middle"
               fill="white"
-              style="filter: url(#shadow); fill: black"
+              style="filter: url(#shadow-sm); fill: black"
               x={geoPath().projection(projection).centroid(feature)[0]}
               y={geoPath().projection(projection).centroid(feature)[1]}
             >

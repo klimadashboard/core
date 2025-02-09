@@ -43,6 +43,7 @@
 </div>
 
 <style>
+	@reference "tailwindcss/theme";
 	td,
 	th {
 		@apply py-1;

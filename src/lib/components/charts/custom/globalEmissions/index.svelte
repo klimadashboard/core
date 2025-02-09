@@ -94,7 +94,7 @@
 					.filter((d) => selectedCountries.indexOf(d.state_iso.toLowerCase()) < 0) as country}
 					<option
 						value={country.state_iso.toLowerCase()}
-						class="background-transparent bg-opacity-0 appearance-none"
+						class="background-transparent appearance-none"
 						>{getCountryName(country.state_iso.toLowerCase())}</option
 					>
 				{/each}

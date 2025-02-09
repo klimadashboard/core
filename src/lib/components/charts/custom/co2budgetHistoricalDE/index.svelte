@@ -229,7 +229,7 @@
 			<select
 				name="budget"
 				bind:value={chosenBudget}
-				class="block appearance-none w-full leading-tight focus:outline-none focus:bg-gray-200 focus:border-gray-500 bg-gray-100 py-1 px-2"
+				class="block appearance-none w-full leading-tight focus:outline-hidden focus:bg-gray-200 focus:border-gray-500 bg-gray-100 py-1 px-2"
 			>
 				{#each budgets as budget}
 					<option value={budget}>
@@ -307,6 +307,7 @@
 </section>
 
 <style>
+	@reference "tailwindcss/theme";
 	.budget-grid {
 		grid-template-columns: repeat(40, minmax(0, 1fr));
 	}

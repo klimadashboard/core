@@ -160,7 +160,7 @@
 			bind:clientHeight={chartHeight}
 			bind:clientWidth={chartWidth}
 		>
-			<div class="absolute top-16 left-0 right-0 w-full z-[1200]">
+			<div class="absolute top-16 left-0 right-0 w-full z-1200">
 				<div class="bg-de h-1" style="width: {progress > 0 ? progress * 100 : 0}%" />
 			</div>
 			{#if historicalData.length > 0 && chartWidth && chartHeight}
@@ -272,7 +272,7 @@
 						berechnet.
 					</p>
 					<p class="text-lg my-2">
-						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy bg-opacity-50 p-1"
+						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy/50 p-1"
 							>5.012 Millionen Tonnen CO<sub>2</sub></strong
 						> ausstoßen.
 					</p>
@@ -394,7 +394,7 @@
 						Wenn Deutschland weiterhin so viel emittiert wie im Jahr 2023 (594 Millionen Tonnen CO<sub
 							>2</sub
 						>) hätten wir dieses Budget
-						<strong class="bg-economy bg-opacity-50 p-1">im Jahr 2030 aufgebraucht</strong>.
+						<strong class="bg-economy/50 p-1">im Jahr 2030 aufgebraucht</strong>.
 					</h2>
 				</div>
 			</section>
@@ -403,7 +403,7 @@
 					<h2 class="text-lg">
 						Reduzieren wir jedes Jahr dieselbe Menge an CO<sub>2</sub>, nämlich 46 Millionen Tonnen,
 						ist das Budget
-						<strong class="bg-economy bg-opacity-50 p-1">im Jahr 2036</strong> aufgebraucht.
+						<strong class="bg-economy/50 p-1">im Jahr 2036</strong> aufgebraucht.
 					</h2>
 				</div>
 			</section>
@@ -412,7 +412,7 @@
 					<p class="text-lg">
 						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Somit müssten
 						die CO<sub>2</sub>-Emissionen
-						<strong class="bg-economy bg-opacity-50 p-1">jedes Jahr bis 2045 um 12,7%</strong>
+						<strong class="bg-economy/50 p-1">jedes Jahr bis 2045 um 12,7%</strong>
 						im Vergleich zum Vorjahr sinken.
 					</p>
 					<p class="text-lg mt-4">

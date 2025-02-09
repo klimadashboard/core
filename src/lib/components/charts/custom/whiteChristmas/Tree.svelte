@@ -366,7 +366,7 @@
 	{/if}
 	{#if selected}
 		<div
-			class="absolute shadow left-1/2 -translate-x-1/2 top-0 -translate-y-full bg-white text-sm p-1 leading-none text-center w-32"
+			class="absolute shadow-sm left-1/2 -translate-x-1/2 top-0 -translate-y-full bg-white text-sm p-1 leading-none text-center w-32"
 		>
 			{#if d.hasData}<p>{d.sh24}cm am 24.12.</p>
 				<p>{d.sh25}cm am 25.12.</p>

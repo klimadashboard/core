@@ -181,7 +181,7 @@
 
 								<div class="flex">
 									<button
-										class="mx-auto bg-gray-100 dark:bg-gray-800 rounded p-4 text-lg leading-tight hover:bg-gray-200 dark:hover:bg-gray-900"
+										class="mx-auto bg-gray-100 dark:bg-gray-800 rounded-sm p-4 text-lg leading-tight hover:bg-gray-200 dark:hover:bg-gray-900"
 										on:click={nextQuestion}
 									>
 										Weiter

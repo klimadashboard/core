@@ -1,51 +1,47 @@
-/* barlow-200 - latin */
-@font-face {
-	font-family: 'Barlow';
-	font-style: normal;
-	font-weight: 200;
-	src: url('/fonts/barlow-v12-latin-200.eot'); /* IE9 Compat Modes */
-	src:
-		local(''),
-		url('/fonts/barlow-v12-latin-200.eot?#iefix') format('embedded-opentype'),
-		/* IE6-IE8 */ url('/fonts/barlow-v12-latin-200.woff2') format('woff2'),
-		/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-200.woff') format('woff'),
-		/* Modern Browsers */ url('/fonts/barlow-v12-latin-200.ttf') format('truetype'),
-		/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-200.svg#Barlow') format('svg'); /* Legacy iOS */
-}
+@import 'tailwindcss';
+@config '../../tailwind.config.cjs';
 
-/* barlow-regular - latin */
-@font-face {
-	font-family: 'Barlow';
-	font-style: normal;
-	font-weight: 400;
-	src: url('/fonts/barlow-v12-latin-regular.eot'); /* IE9 Compat Modes */
-	src:
-		local(''),
-		url('/fonts/barlow-v12-latin-regular.eot?#iefix') format('embedded-opentype'),
-		/* IE6-IE8 */ url('/fonts/barlow-v12-latin-regular.woff2') format('woff2'),
-		/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-regular.woff') format('woff'),
-		/* Modern Browsers */ url('/fonts/barlow-v12-latin-regular.ttf') format('truetype'),
-		/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-regular.svg#Barlow') format('svg'); /* Legacy iOS */
+@layer base {
+	@font-face {
+		font-family: 'Barlow';
+		font-style: normal;
+		font-weight: 200;
+		src: url('/fonts/barlow-v12-latin-200.eot'); /* IE9 Compat Modes */
+		src:
+			local(''),
+			url('/fonts/barlow-v12-latin-200.eot?#iefix') format('embedded-opentype'),
+			/* IE6-IE8 */ url('/fonts/barlow-v12-latin-200.woff2') format('woff2'),
+			/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-200.woff') format('woff'),
+			/* Modern Browsers */ url('/fonts/barlow-v12-latin-200.ttf') format('truetype'),
+			/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-200.svg#Barlow') format('svg'); /* Legacy iOS */
+	}
+	@font-face {
+		font-family: 'Barlow';
+		font-style: normal;
+		font-weight: 400;
+		src: url('/fonts/barlow-v12-latin-regular.eot'); /* IE9 Compat Modes */
+		src:
+			local(''),
+			url('/fonts/barlow-v12-latin-regular.eot?#iefix') format('embedded-opentype'),
+			/* IE6-IE8 */ url('/fonts/barlow-v12-latin-regular.woff2') format('woff2'),
+			/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-regular.woff') format('woff'),
+			/* Modern Browsers */ url('/fonts/barlow-v12-latin-regular.ttf') format('truetype'),
+			/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-regular.svg#Barlow') format('svg'); /* Legacy iOS */
+	}
+	@font-face {
+		font-family: 'Barlow';
+		font-style: normal;
+		font-weight: 600;
+		src: url('/fonts/barlow-v12-latin-600.eot'); /* IE9 Compat Modes */
+		src:
+			local(''),
+			url('/fonts/barlow-v12-latin-600.eot?#iefix') format('embedded-opentype'),
+			/* IE6-IE8 */ url('/fonts/barlow-v12-latin-600.woff2') format('woff2'),
+			/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-600.woff') format('woff'),
+			/* Modern Browsers */ url('/fonts/barlow-v12-latin-600.ttf') format('truetype'),
+			/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-600.svg#Barlow') format('svg'); /* Legacy iOS */
+	}
 }
-
-/* barlow-600 - latin */
-@font-face {
-	font-family: 'Barlow';
-	font-style: normal;
-	font-weight: 600;
-	src: url('/fonts/barlow-v12-latin-600.eot'); /* IE9 Compat Modes */
-	src:
-		local(''),
-		url('/fonts/barlow-v12-latin-600.eot?#iefix') format('embedded-opentype'),
-		/* IE6-IE8 */ url('/fonts/barlow-v12-latin-600.woff2') format('woff2'),
-		/* Super Modern Browsers */ url('/fonts/barlow-v12-latin-600.woff') format('woff'),
-		/* Modern Browsers */ url('/fonts/barlow-v12-latin-600.ttf') format('truetype'),
-		/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-600.svg#Barlow') format('svg'); /* Legacy iOS */
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 body {
 	font-family: 'Barlow', sans-serif;
@@ -124,7 +120,7 @@ main {
 	}
 }
 .card {
-	@apply relative shadow transition p-4 border-t-2 border-green-400;
+	@apply relative shadow-sm transition p-4 border-t-2 border-green-400;
 }
 
 .text-gradient-green {
@@ -195,7 +191,7 @@ details a {
 }
 
 .co2b-section-background {
-	@apply bg-white bg-opacity-20 backdrop-blur-lg p-4 inline-block shadow-2xl md:rounded-xl;
+	@apply bg-white/20 backdrop-blur-lg p-4 inline-block shadow-2xl md:rounded-xl;
 }
 
 .co2b-foreground section {
@@ -241,7 +237,7 @@ sub {
 }
 
 .card-list li {
-	@apply border-b border-current border-opacity-20 py-1;
+	@apply border-b border-current/20 py-1;
 }
 
 .data-notices h3,

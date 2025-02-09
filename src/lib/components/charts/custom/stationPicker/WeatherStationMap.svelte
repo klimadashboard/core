@@ -55,7 +55,7 @@
 				{#each data.geo.features as feature}
 					<path
 						d={geoPath().projection(projection)(feature)}
-						class="fill-gray-200 stroke-white stroke-1 shadow"
+						class="fill-gray-200 stroke-white stroke-1 shadow-sm"
 					/>
 				{/each}
 			</g>

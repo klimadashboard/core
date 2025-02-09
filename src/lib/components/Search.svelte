@@ -413,7 +413,7 @@
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
-			class="absolute top-full left-0 right-0 bg-white dark:bg-black bg-opacity-80 backdrop-blur border overflow-scroll z-10 max-h-64 rounded-2xl"
+			class="absolute top-full left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm border overflow-scroll z-10 max-h-64 rounded-2xl"
 		>
 			{#each suggestions as suggestion, index}
 				<li

@@ -158,6 +158,7 @@
 </div>
 
 <style>
+	@reference "tailwindcss/theme";
 	.map-wrapper {
 		height: 70vh;
 	}

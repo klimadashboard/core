@@ -32,7 +32,7 @@
 	$: areas = keys.map((key) => generateArea(key)(key == 'production' ? dataProduction : dataGoals));
 </script>
 
-<div class="bg-gray-100 rounded overflow-hidden">
+<div class="bg-gray-100 rounded-sm overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
 		<h3 class="text-xl"><b>{type.label}</b> Produktion und Ausbauziel</h3>
 		{@html type.icon}

@@ -4,7 +4,7 @@
 
 <div class="relative">
 	<div
-		class="absolute pointer-events-none right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-gray-900 to-transparent"
+		class="absolute pointer-events-none right-0 top-0 bottom-0 w-16 bg-linear-to-l from-white dark:from-gray-900 to-transparent"
 	></div>
 
 	<div class="overflow-scroll">

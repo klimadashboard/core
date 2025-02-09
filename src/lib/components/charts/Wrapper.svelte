@@ -159,7 +159,7 @@
 					viewBox="0 0 256 256"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
-					class="h-8 w-8 rounded"
+					class="h-8 w-8 rounded-sm"
 					><rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" /><path
 						d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
 						fill="#DBF0E0"
@@ -231,7 +231,7 @@
 				<div class="bottom-hint" use:observeBottomInView />
 			</div>
 			<div
-				class="absolute left-0 right-0 bottom-0 h-16 bg-gradient-to-t from-white dark:from-gray-900 pointer-events-none transition-opacity {!showBottomFade
+				class="absolute left-0 right-0 bottom-0 h-16 bg-linear-to-t from-white dark:from-gray-900 pointer-events-none transition-opacity {!showBottomFade
 					? 'opacity-0'
 					: ''}"
 			/>

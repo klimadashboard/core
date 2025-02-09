@@ -16,9 +16,7 @@
 	}
 </script>
 
-<header
-	class="font-display fixed bg-white dark:bg-gray-900 w-screen bg-opacity-90 backdrop-blur-sm z-50"
->
+<header class="fixed bg-white/90 dark:bg-gray-900/90 w-screen backdrop-blur-xs z-50">
 	<div class="p-1 px-4 sm:py-2 text-sm sm:text-base">
 		<div class="flex items-center gap-2">
 			<a href="/" class="flex items-center gap-2">
@@ -51,7 +49,7 @@
 			<LightSwitch />
 		</div>
 		{#if showNavigation || showSearch}
-			<div class="mt-4 pt-4 border-t border-opacity-20">
+			<div class="mt-4 pt-4 border-t">
 				{#if showNavigation}
 					<Navigation on:linkClicked={closeNavigation} />
 				{/if}

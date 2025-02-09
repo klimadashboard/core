@@ -60,7 +60,7 @@
 		.filter((d) =>
 			selectedYear == lastDate.year()
 				? dayjs(d.date).year(lastDate.year()).isBefore(lastDate) ||
-				  dayjs(d.date).year(lastDate.year()).isSame(lastDate)
+					dayjs(d.date).year(lastDate.year()).isSame(lastDate)
 				: true
 		);
 
@@ -241,6 +241,7 @@
 </p>
 
 <style>
+	@reference "tailwindcss/theme";
 	.title {
 		@apply text-2xl mb-4 text-center max-w-2xl mx-auto text-balance;
 	}

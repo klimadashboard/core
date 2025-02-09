@@ -549,7 +549,7 @@
 				</span>
 			{/if}
 			<div
-				class="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-r from-transparent to-white dark:to-gray-900"
+				class="absolute top-0 right-0 bottom-0 w-16 bg-linear-to-r from-transparent to-white dark:to-gray-900"
 			/>
 		</div>
 	</div>
@@ -590,7 +590,8 @@
 {/if}
 
 <style>
+	@reference "tailwindcss/theme";
 	.breadcrumb-slider > * {
-		@apply flex-shrink-0;
+		@apply shrink-0;
 	}
 </style>

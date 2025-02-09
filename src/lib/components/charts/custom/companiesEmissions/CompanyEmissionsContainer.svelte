@@ -235,7 +235,7 @@
 			<div class="flex gap-x-3 items-center">
 				{#each scopes as scope}
 					<button
-						class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2 flex-shrink-0
+						class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2 shrink-0
               {selectedScopes.includes(scope)
 							? 'text-black bg-gray-100 border-2 border-green-600'
 							: 'text-gray-600 bg-gray-100 border-2 border-gray-100'}"

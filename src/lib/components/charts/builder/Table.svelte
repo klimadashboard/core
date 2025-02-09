@@ -27,6 +27,7 @@
 </div>
 
 <style>
+	@reference "tailwindcss/theme";
 	td {
 		@apply px-2 border-l border-gray-100;
 	}

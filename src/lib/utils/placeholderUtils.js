@@ -1,9 +1,12 @@
 // Placeholder utilities
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import getDirectusInstance from './directus';
 import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import formatNumber from '$lib/stores/formatNumber';
+
+dayjs.extend(relativeTime);
 
 const getRenewableData = async function () {
 	const directus = getDirectusInstance(fetch);

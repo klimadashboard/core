@@ -106,7 +106,7 @@
 	$: selected = false;
 </script>
 
-<div class="bg-gray-100 rounded overflow-hidden">
+<div class="bg-gray-100 rounded-sm overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
 		<h3 class="text-xl"><b>{type.label}</b> {title}</h3>
 		{@html type.icon}

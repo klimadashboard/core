@@ -55,7 +55,7 @@
 		.y((d) => yScale(d.value));
 </script>
 
-<div class="bg-gray-100 rounded overflow-hidden">
+<div class="bg-gray-100 rounded-sm overflow-hidden">
 	<div
 		class="text-white p-1 flex justify-between items-center"
 		style="background: {type.color}; padding-left: 1rem; padding-right: 1rem;"

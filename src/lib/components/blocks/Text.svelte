@@ -9,6 +9,7 @@
 </div>
 
 <style>
+	@reference "tailwindcss/theme";
 	:global(.text a) {
 		@apply border-b border-b-gray-300;
 	}

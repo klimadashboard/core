@@ -10,7 +10,7 @@
 			alt=""
 		/>
 		<div
-			class="bg-gradient-to-b from-transparent to-black opacity-90 absolute h-2/3 w-full bottom-0"
+			class="bg-linear-to-b from-transparent to-black opacity-90 absolute h-2/3 w-full bottom-0"
 		/>
 	{/if}
 

@@ -67,6 +67,7 @@
 </div>
 
 <style>
+	@reference "tailwindcss/theme";
 	:global(.kd_news a) {
 		@apply underline decoration-gray-200 underline-offset-2;
 	}
