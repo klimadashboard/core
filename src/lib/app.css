@@ -266,7 +266,7 @@ sub {
 }
 
 .input {
-	@apply px-3 py-1.5 rounded-full border bg-transparent;
+	@apply px-3 py-1.5 rounded-full border border-current/20 bg-transparent;
 }
 
 @keyframes hero-gradient-animation {

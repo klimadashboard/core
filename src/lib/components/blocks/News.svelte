@@ -32,7 +32,7 @@
 	$: promise = getNews();
 </script>
 
-<div class="flex flex-col h-full border rounded-2xl p-3">
+<div class="flex flex-col h-full border border-current/20 rounded-2xl p-3">
 	<div class="flex items-center gap-2 border-b text-red-700">
 		<div class="pulse hidden sm:block" />
 		<h3 class="font-bold">Was heute wichtig ist</h3>
