@@ -99,8 +99,10 @@
 			showDots={true}
 			visualisation={'non-stacked'}
 			marginLeft={50}
+			marginTop={10}
 			xTicksInterval={1}
 			unit={'t'}
+			additionalYAxisUnit={' CO2e'}
 			invalidX={6}
 			invalidText={'Daten weniger genau*'}
 		/>
