@@ -12,6 +12,7 @@
 		<div
 			class="bg-linear-to-b from-transparent to-black opacity-90 absolute h-2/3 w-full bottom-0"
 		/>
+		<div class="bg-linear-to-br from-black to-transparent opacity-20 absolute inset-0" />
 	{/if}
 
 	<div class="absolute p-3 text-white font-bold">

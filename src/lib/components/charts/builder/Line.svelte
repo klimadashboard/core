@@ -15,10 +15,11 @@
 	]);
 	$: yScale = getScale(relevantData, 'y', [chartHeight, 0]);
 
+	console.log(layer);
 	// Extract relevant data for rendering
 	$: relevantData = data.map((d) => ({
 		x: d.x, // Pass x as is
-		y: d.layers.find((l) => l.label === layer.name).y
+		y: d.layers?.find((l) => l.label === layer.name)?.y
 	}));
 
 	// Generate line

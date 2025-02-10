@@ -288,7 +288,7 @@
 </script>
 
 <div class="mt-16">
-	<p class=" text-gray-700 mx-auto w-max max-w-full">
+	<p class="mx-auto w-max max-w-full">
 		Schau die
 		<select bind:value={selectedResolutionKey} class="k_input k_dropdown mx-1">
 			{#each availableResolutions as resolution}
@@ -316,13 +316,13 @@
 	{/await}
 
 	{#if selectedResolutionKey !== 'years'}
-		<p class="text-gray-700 border-t mt-2 pt-2">
+		<p class="border-t mt-2 pt-2">
 			Monate und Jahreszeiten werden mit den gleichen Perioden im Vergleichszeitraum vergleichen,
 			also z.B. April 2024 im Vergleich zu allen Aprils im Vergleichszeitraum.
 		</p>
 	{/if}
 
-	<p class="text-sm mt-2 text-gray-700 border-t pt-2">
+	<p class="text-sm mt-2 border-t pt-2">
 		{selectedStation.name} (ID {selectedStation.id}); Daten von
 		{#if PUBLIC_VERSION == 'at'}
 			<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>

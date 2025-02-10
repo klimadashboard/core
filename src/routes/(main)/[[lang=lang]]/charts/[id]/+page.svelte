@@ -4,9 +4,8 @@
 	export let data;
 </script>
 
-<div class="grid lg:grid-cols-4 py-8">
-	<div />
-	<div class="col-span-2">
+<div class="">
+	<div class="container my-16">
 		<Chart chart={data.chart} />
 	</div>
 </div>

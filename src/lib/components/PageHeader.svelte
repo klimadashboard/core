@@ -31,12 +31,12 @@
 					{$page.data.translations.lastUpdated}
 					<span class="underline underline-offset-2 decoration-gray-400 group relative">
 						<span class="group-hover:hidden">
-							{dayjs().to(dayjs($page.data.page.date_updated))}
-						</span>
+							{dayjs().to(dayjs($page.data.page.date_updated))}</span
+						>
 						<span class="hidden group-hover:inline"
 							>{dayjs($page.data.page.date_updated).format('DD.MM.YYYY HH:m')}</span
-						>
-					</span>.
+						></span
+					>.
 				</p>
 			{/if}
 			<p>

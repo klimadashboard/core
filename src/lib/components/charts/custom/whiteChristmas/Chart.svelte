@@ -51,12 +51,12 @@
 </script>
 
 <div class="flex flex-col items-center gap-4">
-	<div class=" ">
-		<label for="" class="text-sm text-gray-700 mb-1 font-medium">Wähle dein Geburtsjahr</label>
+	<div class="text-sm">
+		<label for="" class="mb-1 font-medium">Wähle dein Geburtsjahr</label>
 		<input
 			type="number"
 			bind:value={startYear}
-			class="k_input max-w-20"
+			class="k_input max-w-20 font-bold"
 			min={firstPossibleYear}
 			max={new Date().getFullYear() - 1}
 		/>
@@ -91,7 +91,7 @@
 >
 
 <div class="mt-4 max-w-2xl mx-auto shadow-sm">
-	<div bind:this={item} class=" bg-[#F0F1F1] p-2 sm:p-4">
+	<div bind:this={item} class=" bg-[#F0F1F1] dark:bg-gray-900 p-2 sm:p-4">
 		<div class="flex justify-between items-center font-bold">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"

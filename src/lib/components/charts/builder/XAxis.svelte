@@ -13,8 +13,10 @@
 <g transform="translate(0,0)" class="text-sm">
 	{#each xScale.ticks(10) as tick}
 		<g transform="translate({xScale(tick)},0)">
-			<text y={chartHeight - options.margin.bottom} text-anchor="middle">{formatLabel(tick)}</text>
-			<line y1={0} y2={chartHeight} class="stroke-current opacity-20" />
+			<text y={chartHeight - options.margin.bottom} text-anchor="middle" class="fill-current"
+				>{formatLabel(tick)}</text
+			>
+			<line y1={chartHeight - 40} y2={chartHeight - 30} class="stroke-current opacity-20" />
 		</g>
 	{/each}
 </g>

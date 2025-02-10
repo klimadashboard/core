@@ -72,7 +72,7 @@
 
 {#if selectedStation}
 	<div class="mx-auto w-max mb-4">
-		<p class="text-sm text-gray-700 mb-1 font-medium">Wähle deine Wetterstation</p>
+		<p class="text-sm mb-1 font-medium">Wähle deine Wetterstation</p>
 		<div class="flex items-center space-x-2">
 			<select
 				name="weatherStations"

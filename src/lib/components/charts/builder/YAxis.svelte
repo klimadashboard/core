@@ -18,7 +18,7 @@
 <g transform="translate(0,0)" class="text-sm">
 	{#each yScale.ticks(10) as tick}
 		<g transform="translate(0,{yScale(tick)})">
-			<text text-anchor="left">{tick} {relevantData[0].unit}</text>
+			<text text-anchor="left" class="fill-current">{tick} {relevantData[0].unit}</text>
 			<line x1={0} x2={chartWidth} class="stroke-current opacity-20" />
 		</g>
 	{/each}

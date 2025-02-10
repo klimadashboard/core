@@ -55,7 +55,7 @@
 				{#each data.geo.features as feature}
 					<path
 						d={geoPath().projection(projection)(feature)}
-						class="fill-gray-200 stroke-white stroke-1 shadow-sm"
+						class="fill-current/10 stroke-white stroke-1 shadow-sm"
 					/>
 				{/each}
 			</g>
@@ -86,7 +86,7 @@
 	{/if}
 </div>
 
-<div class="text-gray-600 w-max mx-auto flex items-center gap-2 text-sm mb-8">
+<div class=" w-max mx-auto flex items-center gap-2 text-sm mb-8">
 	<span>0m Seehöhe</span>
 	<div
 		class="w-24 h-3 bg-gray-100"

@@ -123,7 +123,7 @@
 			<g class="y-axis" transform={`translate(0, ${margin.top})`}>
 				{#each yScale.ticks(6) as tick, index}
 					{@const isUppermost = index == yScale.ticks(6).length - 1}
-					<g transform={`translate(0, ${innerChartHeight - yScale(tick)})`} class="text-gray-500">
+					<g transform={`translate(0, ${innerChartHeight - yScale(tick)})`} class="">
 						<line
 							x1="0"
 							x2={chartWidth}
@@ -169,13 +169,13 @@
 										fill={category.estimate
 											? 'transparent'
 											: category.color
-											? 'url(#grad-' + category.color.replace('#', '') + '-' + i + '-' + j + ')'
-											: 'currentColor'}
+												? 'url(#grad-' + category.color.replace('#', '') + '-' + i + '-' + j + ')'
+												: 'currentColor'}
 										stroke={category.estimate
 											? 'currentColor'
 											: category.color
-											? category.color
-											: 'currentColor'}
+												? category.color
+												: 'currentColor'}
 										stroke-width={category.estimate ? '2' : '0'}
 										x={visualisation == 'grouped'
 											? (j * barWidth) / datapoint.categories.length || 0
@@ -227,9 +227,9 @@
 						{#if i % xAxixInterval == 0}
 							<g
 								transform="translate(0, {innerChartHeight + 4})"
-								class="text-xs {selectedBar == datapoint
-									? 'text-gray-700 '
-									: 'text-gray-500'} tracking-wide"
+								class="text-xs text-black dark:text-white {selectedBar == datapoint
+									? 'opacity-70 '
+									: 'opacity-50'} tracking-wide"
 							>
 								<rect
 									width={barWidth}
@@ -237,7 +237,7 @@
 									x={-4}
 									class="fill-white dark:fill-gray-900"
 								/>
-								<text fill="currentColor" dominant-baseline="hanging">{datapoint.label}</text>
+								<text class="fill-current" dominant-baseline="hanging">{datapoint.label}</text>
 							</g>
 						{/if}
 

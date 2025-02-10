@@ -7,6 +7,7 @@
 	import Export from './Export.svelte';
 	import XAxisConfig from './XAxisConfig.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import Tooltip from './Tooltip.svelte';
 
 	export let data;
 	export let chart;
@@ -60,14 +61,20 @@
 	<p class="">custom configuration goes here</p>
 
 	<div class="h-[400px]">
-		{#if activeView == 'chart'}
-			<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-full mt-4">
+		{#if activeView == 'chart' && data.length > 0}
+			<div
+				bind:clientWidth={chartWidth}
+				bind:clientHeight={chartHeight}
+				class="h-full mt-4 relative"
+			>
 				{#if chartWidth && chartHeight}
 					<svg width={'100%'} height={'100%'} class="overflow-visible text-current">
 						<XAxis {chartWidth} {chartHeight} {data} {options} />
 
 						{#each chart.layers as layer}
+							<!--
 							<YAxis {chartWidth} {chartHeight} {layer} {data} />
+							-->
 							<g transform="translate({options.margin.left},0)">
 								<svelte:component
 									this={layerTypes.find((d) => d.key == layer.type)?.component}
@@ -81,6 +88,7 @@
 						{/each}
 					</svg>
 				{/if}
+				<Tooltip {chartWidth} {chartHeight} {data} {options} />
 			</div>
 			<XAxisConfig {data} {chart} />
 		{:else}

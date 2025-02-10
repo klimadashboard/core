@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 
 // Helper function to check if a value is a valid date
 function isValidDate(value) {
-	return typeof value === 'string' && dayjs(value, 'YYYY-MM-DD', true).isValid();
+	return dayjs(value, 'YYYY-MM-DD', true).isValid();
 }
 
 // Helper function for number formatting

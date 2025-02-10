@@ -162,7 +162,7 @@
 {/if}
 
 {#if compareFirstYear && compareLastYear}
-	<p class="text-gray-700 mb-4 mx-auto w-max max-w-full text-center">
+	<p class="mb-4 mx-auto w-max max-w-full text-center">
 		Wähle ein Jahr und einen Referenzzeitraum:
 		<input
 			type="number"
@@ -173,7 +173,7 @@
 			id="selectedYear"
 		/>
 		vs.
-		<select bind:value={selectedComparisonDuration} class="k_input k_dropdown mx-1">
+		<select bind:value={selectedComparisonDuration} class="k_input k_dropdown mx-1 appearance-none">
 			{#each comparisonDurations as duration}
 				<option value={duration}>
 					{duration[0]} - {duration[1]}
@@ -204,7 +204,7 @@
 	</p>
 {/if}
 
-<p class="text-sm mt-2 text-gray-700 border-t pt-2">
+<p class="text-sm mt-2 border-t pt-2">
 	{selectedStation.name} (ID {selectedStation.id}); Daten von
 	{#if PUBLIC_VERSION == 'at'}
 		<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>

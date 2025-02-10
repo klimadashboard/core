@@ -86,7 +86,7 @@
 			</button>
 			<select
 				bind:value={selectedCountry}
-				class="border rounded-full appearance-none bg-gray-100 px-2 text-sm"
+				class="border rounded-full appearance-none bg-gray-100 dark:bg-gray-800 px-2 text-sm"
 			>
 				<option value="" disabled selected>Select a country</option>
 				{#each countryData

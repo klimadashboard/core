@@ -29,7 +29,7 @@
 	{#if chartWidth && chartHeight}
 		<svg width="100%" height="100%">
 			{#each xScale.ticks() as tick, i}
-				<g transform={`translate(${margin.left + xScale(tick)}, 4)`} class="text-xs text-gray-500">
+				<g transform={`translate(${margin.left + xScale(tick)}, 4)`} class="text-xs">
 					<text fill="currentColor" text-anchor="middle" dominant-baseline="hanging"
 						>{tick}
 						{i + 1 == xScale.ticks().length ? 't THG' : ''}</text
@@ -39,7 +39,7 @@
 			{/each}
 			{#if worldAverage > 0}
 				<g transform="translate({xScale(worldAverage) + margin.left},4)">
-					<rect width={62} height={10} class="fill-white" />
+					<rect width={62} height={10} class="fill-white dark:fill-gray-950" />
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width={20}
@@ -61,7 +61,7 @@
 					<text class="text-xs text-gray-800 font-bold" dominant-baseline="hanging" x={12}
 						>{worldAverage}t THG</text
 					>
-					<line x1={0} x2={0} y1={14} y2={chartHeight} class="stroke-gray-600 stroke-1" />
+					<line x1={0} x2={0} y1={14} y2={chartHeight} class="opacity-80 stroke-current stroke-1" />
 				</g>
 			{/if}
 			<g transform="translate(0,{margin.top})">
@@ -72,7 +72,7 @@
 							text-anchor="end"
 							x={margin.left - 10}
 							y={16}
-							class="text-sm font-bold">{country.label}</text
+							class="text-sm font-bold fill-current">{country.label}</text
 						>
 						{#if country.value}
 							<rect
@@ -99,7 +99,7 @@
 						{/if}
 						<g
 							transform="translate({xScale(country.value) + margin.left + 10},0)"
-							class="opacity-10 hover:opacity-100 transition cursor-pointer"
+							class="opacity-40 hover:opacity-100 transition cursor-pointer"
 							on:mousedown={removeCountry(country.code)}
 						>
 							<path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
