@@ -206,13 +206,52 @@
 					source: 'page'
 				}));
 
+			// --- COMPANIES ---
+			const companyExactMatches = await directus.request(
+				readItems('companies', {
+					filter: {
+						name: { _eq: value }
+					},
+					fields: ['id', 'name']
+				})
+			);
+
+			const companyPartialMatches = await directus.request(
+				readItems('companies', {
+					filter: {
+						name: { _icontains: value }
+					},
+					fields: ['id', 'name']
+				})
+			);
+
+			const mappedCompanyExact = companyExactMatches.map((company) => ({
+				id: company.id,
+				title: company.name,
+				subtitle: '',
+				source: 'company'
+			}));
+
+			const companyExactIds = mappedCompanyExact.map((c) => c.id);
+			const mappedCompanyPartial = companyPartialMatches
+				.filter((company) => !companyExactIds.includes(company.id))
+				.map((company) => ({
+					id: company.id,
+					title: company.name,
+					subtitle: '',
+					source: 'company'
+				}));
+
+			// Combine all suggestions
 			suggestions = [
 				...mappedPageExact,
 				...mappedChartExact,
 				...mappedRegionExact,
 				...mappedPagePartial,
 				...mappedChartPartial,
-				...mappedRegionPartial
+				...mappedRegionPartial,
+				...mappedCompanyExact,
+				...mappedCompanyPartial
 			];
 
 			showSuggestions = true;
@@ -233,6 +272,8 @@
 			goto(`/charts/${item.id}`);
 		} else if (item.source === 'page') {
 			goto(`${item.slug}`);
+		} else if (item.source === 'company') {
+			goto(`/companies/${item.id}`);
 		}
 	}
 
@@ -373,10 +414,11 @@
 				stroke-linecap="round"
 				stroke-linejoin="round"
 				class="absolute right-3 top-1.5 pointer-events-none"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-					d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"
-				/><path d="M21 21l-6 -6" /></svg
 			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+				<path d="M21 21l-6 -6" />
+			</svg>
 			<input
 				type="text"
 				{placeholder}
