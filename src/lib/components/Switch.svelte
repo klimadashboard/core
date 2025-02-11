@@ -21,8 +21,8 @@
 		<button
 			class="element px-4 py-1 rounded-full transition duration-100 flex items-center {view.key ==
 			activeView
-				? 'bg-gray-200 dark:bg-gray-700 font-bold'
-				: 'bg-white dark:bg-gray-900 '}"
+				? 'bg-white dark:bg-gray-700 font-bold'
+				: 'bg-gray-200 dark:bg-gray-900 '}"
 			on:click={() => handleClick(view)}
 		>
 			{#if view.icon}
