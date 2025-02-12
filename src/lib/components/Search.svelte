@@ -470,7 +470,7 @@
 					{#if suggestion.subtitle}
 						<span>{suggestion.subtitle}</span>
 					{/if}
-					<span class="opacity-80 ml-1">[{suggestion.source}]</span>
+					<span class="opacity-80 ml-1">[{$page.data.translations[suggestion.source]}]</span>
 				</li>
 			{/each}
 		</ul>
