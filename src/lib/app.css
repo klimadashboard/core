@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @config '../../tailwind.config.cjs';
 
+@utility container {
+	margin-inline: auto;
+}
+
 @layer base {
 	@font-face {
 		font-family: 'Barlow';
