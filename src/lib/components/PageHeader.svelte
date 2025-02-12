@@ -6,7 +6,6 @@
 	import RelativeTime from 'dayjs/plugin/relativeTime';
 
 	dayjs.extend(RelativeTime);
-	dayjs.locale('de-at');
 
 	$: tags = $page.data.content.tags || [];
 </script>

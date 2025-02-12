@@ -2,12 +2,11 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import ComparisonChart from './ComparisonChart.svelte';
 	import dayjs from 'dayjs';
-	import 'dayjs/locale/de';
 	import isBetween from 'dayjs/plugin/isBetween';
 	import isLeapYear from 'dayjs/plugin/isLeapYear';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/stores';
 
-	dayjs.locale('de'); // Set the locale globally to German
 	dayjs.extend(isBetween); // Extend Day.js with the isBetween plugin
 	dayjs.extend(isLeapYear);
 

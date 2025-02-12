@@ -4,13 +4,15 @@ import { PUBLIC_VERSION } from '$env/static/public';
 
 // src/routes/+layout.server.js
 export async function load({ fetch, params }) {
+	const locale = params.lang ? params.lang : 'de';
+	const localeLong = locale == 'de' ? 'de-DE' : 'en-US';
 	const directus = getDirectusInstance(fetch);
 
 	const site = await directus.request(readItem('sites', PUBLIC_VERSION));
 	const translationsData = await directus.request(
 		readTranslations({
 			filter: {
-				language: 'de-DE'
+				language: localeLong
 			}
 		})
 	);
@@ -20,6 +22,10 @@ export async function load({ fetch, params }) {
 	}, {});
 	return {
 		site,
-		translations
+		translations,
+		language: {
+			code: locale,
+			codeLong: localeLong
+		}
 	};
 }

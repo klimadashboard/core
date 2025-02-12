@@ -4,11 +4,9 @@
 	import dayjs from 'dayjs';
 	import { types } from '$lib/stores/weather';
 	import relativeTime from 'dayjs/plugin/relativeTime';
-	import 'dayjs/locale/de';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	dayjs.extend(relativeTime);
-	dayjs.locale('de');
 
 	export let data;
 	export let selectedStation;

@@ -3,11 +3,9 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import dayjs from 'dayjs';
-	import 'dayjs/locale/de-at';
 	import RelativeTime from 'dayjs/plugin/relativeTime';
 
 	dayjs.extend(RelativeTime);
-	dayjs.locale('de-at');
 
 	$: getNews = async function () {
 		const directus = getDirectusInstance();

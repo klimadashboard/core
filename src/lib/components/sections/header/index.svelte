@@ -39,7 +39,7 @@
 						d="M4 12l16 0"
 					/><path d="M4 18l16 0" /></svg
 				>
-				<span class="hidden sm:block">Menü</span>
+				<span class="hidden sm:block">{$page.data.translations.navigation}</span>
 			</button>
 
 			<Breadcrumb />

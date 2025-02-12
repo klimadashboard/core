@@ -3,12 +3,11 @@
 	import { readItems } from '@directus/sdk';
 	import BarChart from '$lib/components/charts/chartBar.svelte';
 	import dayjs from 'dayjs';
-	import de from 'dayjs/locale/de-at';
 	import isoWeek from 'dayjs/plugin/isoWeek';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/stores';
 
 	dayjs.extend(isoWeek);
-	dayjs.locale('de');
 
 	let selectedCategory = 'day';
 

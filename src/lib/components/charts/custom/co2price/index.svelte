@@ -1,6 +1,5 @@
 <script>
 	import dayjs from 'dayjs';
-	import 'dayjs/locale/de-at';
 	import formatNumber from '$lib/stores/formatNumber';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';

@@ -2,7 +2,6 @@
 	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
-	import { locale } from '$lib/stores/i18n';
 	import '@splidejs/svelte-splide/css/core';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
@@ -54,7 +53,7 @@
 
 			return response.map((item) => ({
 				...item,
-				content: item.translations?.find((t) => t.languages_code === $locale),
+				content: item.translations?.find((t) => t.languages_code === 'de'),
 				type: tableName
 			}));
 		} catch (err) {

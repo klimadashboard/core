@@ -1,9 +1,8 @@
 <script>
 	import Papa from 'papaparse';
-	import { locale } from '$lib/stores/i18n';
-	import MultiSelect from '$lib/components/MultiSelect.svelte';
 	import Chart from './Chart.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/state';
 
 	let countryData;
 
@@ -53,7 +52,7 @@
 
 	$: getCountryName = function (code) {
 		return countryNames?.find((d) => d.alpha2 == code)
-			? countryNames?.find((d) => d.alpha2 == code)[$locale]
+			? countryNames?.find((d) => d.alpha2 == code)[page.data.language.code]
 			: code;
 	};
 

@@ -11,7 +11,6 @@
 	let showSuggestions = false;
 	let activeSuggestionIndex = -1;
 	let debounceTimeout;
-	let placeholder = $page.data.translations.searchPlaceholder;
 
 	// Debounce function to limit API calls
 	function debounce(func, delay) {
@@ -421,7 +420,7 @@
 			</svg>
 			<input
 				type="text"
-				{placeholder}
+				placeholder={$page.data.translations.searchPlaceholder}
 				class="input w-full !pl-10"
 				bind:value={query}
 				on:input={onInput}
