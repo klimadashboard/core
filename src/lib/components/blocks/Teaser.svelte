@@ -2,7 +2,10 @@
 	export let block;
 </script>
 
-<a href={block.link} class="block bg-gray-800 relative overflow-hidden min-h-[50vh] group h-full">
+<a
+	href={block.link}
+	class="block bg-gray-800 relative overflow-hidden min-h-[50vh] group h-full hover:opacity-90 transition"
+>
 	{#if block.image}
 		<img
 			class="inset-0 w-full h-full object-cover object-center absolute group-hover:scale-105 transition duration-500"

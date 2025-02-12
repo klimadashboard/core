@@ -12,16 +12,19 @@
 	];
 </script>
 
-<div
-	class="p-3 h-full group relative leading-tight flex flex-col break-words hyphens-auto group transition"
+<a
+	class="p-3 h-full group hover:opacity-90 relative leading-tight flex flex-col break-words hyphens-auto group transition"
 	style="background: {block.colorBackground}; color: {block.colorText}"
+	href={block.link}
 >
-	<a class="flex justify-between font-bold border-b border-current pb-1" href={block.link}>
-		<h3>{block.title}</h3>
+	<div class="flex justify-between font-bold border-b border-current pb-1">
+		<h3 class="">
+			{block.title} <span class="opacity-0 group-hover:opacity-100 transition">&rarr;</span>
+		</h3>
 		{#if block.icon}
 			{@html block.icon}
 		{/if}
-	</a>
+	</div>
 	<div>
 		<div class="flex items-end gap-2 mt-1">
 			<p class="text-5xl font-light font-condensed">
@@ -48,4 +51,4 @@
 	{#if block.source}
 		<div class="text-xs leading-none mt-auto pt-2">{block.source}</div>
 	{/if}
-</div>
+</a>

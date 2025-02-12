@@ -24,19 +24,6 @@
 		{/if}
 
 		<div class="opacity-80 mt-4 text-lg leading-snug max-w-xl text">
-			{#if $page.data.page?.date_updated}
-				<p>
-					{$page.data.translations.lastUpdated}
-					<span class="underline underline-offset-2 decoration-gray-400 group relative">
-						<span class="group-hover:hidden">
-							{dayjs().to(dayjs($page.data.page.date_updated))}</span
-						>
-						<span class="hidden group-hover:inline"
-							>{dayjs($page.data.page.date_updated).format('DD.MM.YYYY HH:m')}</span
-						></span
-					>.
-				</p>
-			{/if}
 			<p>
 				{#each tags as tag}
 					{tag}
@@ -47,6 +34,20 @@
 				<div class="mb-4 mt-2 saturate-0">
 					{@html $page.data.content.description}
 				</div>
+			{/if}
+
+			{#if $page.data.page?.date_updated && $page.data.page?.showUpdated}
+				<p class="text-sm">
+					{$page.data.translations.lastUpdated}
+					<span class="underline underline-offset-2 decoration-gray-400 group relative">
+						<span class="group-hover:hidden">
+							{dayjs().to(dayjs($page.data.page.date_updated))}</span
+						>
+						<span class="hidden group-hover:inline"
+							>{dayjs($page.data.page.date_updated).format('DD.MM.YYYY HH:m')}</span
+						></span
+					>.
+				</p>
 			{/if}
 		</div>
 
