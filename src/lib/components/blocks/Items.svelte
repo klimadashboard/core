@@ -86,13 +86,13 @@
 	let itemsPromise = fetchAllItems(block.types);
 </script>
 
-<div class="container my-4 text-lg">
+<div class="container my-4">
 	{#await itemsPromise}
 		<!-- Loading State -->
 		<p>Loading...</p>
 	{:then items}
 		<h3 class="font-bold border-b mb-1">{block.title}</h3>
-		<ul class="flex flex-wrap gap-x-4">
+		<ul class="flex flex-wrap gap-x-4 text-lg">
 			{#each items as item}
 				{@const relativeUrl = item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
 				<li class="inline hover:underline underline-offset-2 opacity-80 hover:opacity-100">

@@ -28,7 +28,8 @@ function formatNumber(value, decimals = 2, unit = '') {
 }
 
 export function formatLabel(value, decimals = 2, unit = '') {
-	if (isValidDate(value)) {
+	// Ensure value is not a pure number before treating it as a date
+	if (typeof value !== 'number' && isValidDate(value)) {
 		return dayjs(value).format('D.M.YYYY');
 	}
 

@@ -5,15 +5,19 @@
 	const dispatch = createEventDispatcher();
 </script>
 
-<div class="container">
+<div class="container text-base">
 	<ul class="flex gap-4 flex-col sm:flex-row justify-between">
 		{#each $page.data.site.navigation_primary as c}
-			<li class="flex-1 md:border-r md:last:border-r-0">
+			<li class="flex-1 md:border-r md:last:border-r-0 border-current/20">
 				<h3 class="font-bold">{c.title}</h3>
 				<ul>
 					{#each c.links as l}
 						<li>
-							<a href={l.link} on:click={() => dispatch('linkClicked')} class="hover:underline underline-offset-2">{l.label}</a>
+							<a
+								href={l.link}
+								on:click={() => dispatch('linkClicked')}
+								class="hover:underline underline-offset-2">{l.label}</a
+							>
 						</li>
 					{/each}
 				</ul>

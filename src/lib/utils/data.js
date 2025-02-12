@@ -65,12 +65,11 @@ export const mapAndFilterData = (chart, data) => {
 			x: d[chart.x_axis],
 			x_axis_name: chart.x_axis_name,
 			layers: chart.layers
-				.map((l) => {
-					// Get the filter for the layer (default to an always-true condition)
+				.map((l, i) => {
 					const layerFilters = l.filter || { logic: 'and', conditions: [] };
+					const passesFilter = evaluateLogic(d, layerFilters);
 
-					// Only include the layer if the data record passes the filter.
-					if (!evaluateLogic(d, layerFilters)) return null;
+					if (!passesFilter) return null;
 
 					return {
 						label: l.name,

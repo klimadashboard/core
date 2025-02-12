@@ -77,7 +77,9 @@
 </script>
 
 <div
-	class="p-3 border border-gray-200 rounded-2xl relative {chart.methods ? 'pb-16' : ''}"
+	class="p-3 border border-gray-200 rounded-2xl relative overflow-hidden {chart.methods
+		? 'pb-16'
+		: ''}"
 	id={chart.identifier_string}
 	bind:this={item}
 >

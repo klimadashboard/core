@@ -35,6 +35,6 @@
 		</ul>
 	{/if}
 	{#if block.source}
-		<div class="text-xs leading-none mt-auto">{block.source}</div>
+		<div class="text-xs leading-none mt-auto pt-2">{block.source}</div>
 	{/if}
 </div>

@@ -49,7 +49,7 @@
 			<LightSwitch />
 		</div>
 		{#if showNavigation || showSearch}
-			<div class="mt-4 pt-4 border-t">
+			<div class="mt-4 pt-4 border-t border-current/20">
 				{#if showNavigation}
 					<Navigation on:linkClicked={closeNavigation} />
 				{/if}

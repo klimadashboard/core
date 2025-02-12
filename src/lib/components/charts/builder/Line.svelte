@@ -13,7 +13,10 @@
 		0,
 		chartWidth - options.margin.left - options.margin.right
 	]);
-	$: yScale = getScale(relevantData, 'y', [chartHeight, 0]);
+	$: yScale = getScale(relevantData, 'y', [
+		chartHeight - options.margin.bottom - options.margin.top,
+		0
+	]);
 
 	console.log(layer);
 	// Extract relevant data for rendering

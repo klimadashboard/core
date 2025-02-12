@@ -15,12 +15,12 @@
 		<div class="bg-linear-to-br from-black to-transparent opacity-20 absolute inset-0" />
 	{/if}
 
-	<div class="absolute p-3 text-white font-bold">
+	<div class="absolute p-3 text-white font-bold hyphens-auto leading-tight">
 		{block.eyebrow}
 	</div>
 
 	<div class="p-3 absolute bottom-0 text-white max-w-xl text-balance">
-		<h3 class="font-bold text-3xl lg:text-4xl leading-tight mb-2">
+		<h3 class="font-bold text-3xl lg:text-4xl leading-none mb-2">
 			{block.title}
 		</h3>
 		<p class="text-lg leading-snug">

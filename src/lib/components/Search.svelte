@@ -413,7 +413,7 @@
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class="absolute right-3 top-1.5 pointer-events-none"
+				class="absolute left-3 top-1.5 pointer-events-none"
 			>
 				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 				<path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
@@ -422,7 +422,7 @@
 			<input
 				type="text"
 				{placeholder}
-				class="input w-full"
+				class="input w-full !pl-10"
 				bind:value={query}
 				on:input={onInput}
 				on:keydown={onKeyDown}
@@ -470,7 +470,7 @@
 					{#if suggestion.subtitle}
 						<span>{suggestion.subtitle}</span>
 					{/if}
-					<span class="opacity-50 italic ml-2">({suggestion.source})</span>
+					<span class="opacity-80 ml-1">[{suggestion.source}]</span>
 				</li>
 			{/each}
 		</ul>

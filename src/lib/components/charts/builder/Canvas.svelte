@@ -30,7 +30,7 @@
 		margin: {
 			top: 0,
 			right: 10,
-			bottom: 10,
+			bottom: 20,
 			left: 70
 		}
 	};
@@ -58,8 +58,6 @@
 		}}
 	/>
 
-	<p class="">custom configuration goes here</p>
-
 	<div class="h-[400px]">
 		{#if activeView == 'chart' && data.length > 0}
 			<div
@@ -72,9 +70,13 @@
 						<XAxis {chartWidth} {chartHeight} {data} {options} />
 
 						{#each chart.layers as layer}
-							<!--
-							<YAxis {chartWidth} {chartHeight} {layer} {data} />
-							-->
+							<YAxis
+								{chartWidth}
+								{chartHeight}
+								{layer}
+								data={data.map((d) => d.layers.find((d) => d.label == layer.name))}
+								{options}
+							/>
 							<g transform="translate({options.margin.left},0)">
 								<svelte:component
 									this={layerTypes.find((d) => d.key == layer.type)?.component}
