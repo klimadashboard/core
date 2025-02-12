@@ -1,4 +1,5 @@
 <script>
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import dayjs from 'dayjs';
@@ -14,9 +15,18 @@
 			const response = await directus.request(
 				readItems('news', {
 					filter: {
-						status: {
-							_eq: 'published'
-						}
+						_and: [
+							{
+								status: {
+									_eq: 'published'
+								}
+							},
+							{
+								sites: {
+									_icontains: PUBLIC_VERSION
+								}
+							}
+						]
 					},
 					sort: ['-date_created'],
 					limit: 3,
