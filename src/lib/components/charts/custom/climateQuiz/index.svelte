@@ -1,5 +1,6 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/stores';
 
 	let quizQuestions = [];
 	let questionIndex = 0;
@@ -109,6 +110,7 @@
 
 <div class="bg-gray-100 dark:bg-gray-800 p-4">
 	<div class="max-w-4xl mx-auto p-4 bg-white dark:bg-gray-700">
+		<h2 class="font-bold pb-1">{$page.data.translations.climateQuiz}</h2>
 		{#if quizQuestions.length > 0}
 			<!-- Progress indicator -->
 			<div class="flex gap-1">
