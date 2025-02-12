@@ -17,9 +17,10 @@
 </script>
 
 <header class="fixed bg-white/90 dark:bg-gray-900/90 w-screen backdrop-blur-xs z-50">
-	<div class="p-1 px-4 sm:py-2 text-sm sm:text-base">
+	<div class="p-1 sm:py-2 text-sm sm:text-base">
 		<div class="flex items-center gap-2">
 			<a href="/" class="flex items-center gap-2">
+				<img src="/logo.svg" alt="Klimadashboard" class="h-13 w-13 -m-2 mr-1" />
 				<div class="font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>
 			<button class="button" on:mousedown={() => (showNavigation = !showNavigation)}>
