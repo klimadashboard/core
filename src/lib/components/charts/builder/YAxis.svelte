@@ -8,7 +8,7 @@
 	export let layer;
 	export let options;
 
-	console.log(data);
+	// console.log(data);
 
 	$: yScale = scaleLinear()
 		.domain([min(data, (d) => d.y), max(data, (d) => d.y)])

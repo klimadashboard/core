@@ -11,11 +11,11 @@
 	$: getData = async function () {
 		const directus = getDirectusInstance(fetch);
 		const rawData = await directus.request(readItems(chart.table_name, chart.options));
-		console.log(JSON.stringify(chart, null, 2));
+		// console.log(JSON.stringify(chart, null, 2));
 
 		const data = mapAndFilterData(chart, rawData);
 
-		console.log(data);
+		// console.log(data);
 		return data;
 	};
 

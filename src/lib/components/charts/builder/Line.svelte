@@ -18,7 +18,7 @@
 		0
 	]);
 
-	console.log(layer);
+	// console.log(layer);
 	// Extract relevant data for rendering
 	$: relevantData = data.map((d) => ({
 		x: d.x, // Pass x as is

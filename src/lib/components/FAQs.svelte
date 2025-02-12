@@ -12,8 +12,6 @@
 	};
 
 	$: promise = getFAQs();
-
-	$: console.log($page);
 </script>
 
 <section class="bg-gray-100 dark:bg-gray-900 pt-4">

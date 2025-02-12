@@ -6,6 +6,7 @@
 	export let data;
 	export let dataComparison;
 	export let xLabels;
+	export let labels;
 
 	let chartWidth;
 	let chartHeight;
@@ -21,7 +22,10 @@
 	}
 
 	$: yScale = scaleLinear()
-		.domain([min(data, (d) => d.y), max(data, (d) => d.y)])
+		.domain([
+			min([...data, ...(dataComparison || [])], (d) => d.y),
+			max([...data, ...(dataComparison || [])], (d) => d.y)
+		])
 		.range([chartHeight - 16, 0]);
 
 	$: generateLine = (data) => {
@@ -75,6 +79,29 @@
 					r="4"
 					class="fill-current"
 				/>
+
+				{#if labels}
+					<g class="text-xs font-bold">
+						{#if labels[0]}
+							<text
+								class="fill-current"
+								text-anchor="start"
+								dominant-baseline="middle"
+								x={xScale(data[data.length - 1].x) + 10}
+								y={yScale(data[data.length - 1].y)}>{labels[0]}</text
+							>
+						{/if}
+						{#if labels[1]}
+							<text
+								class="fill-current opacity-50"
+								text-anchor="end"
+								dominant-baseline="middle"
+								x={xScale(dataComparison[dataComparison.length - 1].x) - 10}
+								y={yScale(dataComparison[dataComparison.length - 1].y) + 15}>{labels[1]}</text
+							>
+						{/if}
+					</g>
+				{/if}
 			</g>
 		</svg>
 	{/if}

@@ -8,8 +8,6 @@
 	dayjs.extend(RelativeTime);
 	dayjs.locale('de-at');
 
-	console.log($page.data);
-
 	$: tags = $page.data.content.tags || [];
 </script>
 

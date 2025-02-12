@@ -1,7 +1,15 @@
 <script>
 	import formatNumber from '$lib/stores/formatNumber';
 	import Chart from '$lib/components/charts/builder/index.svelte';
+	import GasUsage from '$lib/components/charts/small/gasUsage.svelte';
 	export let block;
+
+	let customCharts = [
+		{
+			key: 'gasUsage',
+			component: GasUsage
+		}
+	];
 </script>
 
 <div
@@ -25,6 +33,9 @@
 			<div class="h-20">
 				<Chart chart={block.chart} type="small" />
 			</div>
+		{/if}
+		{#if block.chart_custom}
+			<svelte:component this={customCharts.find((d) => d.key == block.chart_custom).component} />
 		{/if}
 	</div>
 	{#if block.list}
