@@ -40,7 +40,8 @@ export function getScale(data, key, range) {
 				minV instanceof Date ? minV : new Date(minV),
 				maxV instanceof Date ? maxV : new Date(maxV)
 			])
-			.range(range);
+			.range(range)
+			.nice();
 
 		// **Create a wrapper function that mimics scaleTime()**
 		function wrappedScale(value) {

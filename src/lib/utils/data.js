@@ -75,7 +75,8 @@ export const mapAndFilterData = (chart, data) => {
 						label: l.name,
 						y: d[l.y_axis],
 						unit: d.unit,
-						type: l.type
+						type: l.type,
+						color: l.color
 					};
 				})
 				.filter((layer) => layer !== null) // Remove layers that didn't pass filtering.

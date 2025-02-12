@@ -5,7 +5,7 @@
 
 <div class="overflow-scroll mt-4 w-full h-full">
 	<table class="min-w-full">
-		<thead class="font-bold">
+		<thead class="font-bold border-b">
 			<tr>
 				<td>{data[0].x_axis_name}</td>
 				{#each data[0].layers as l}
@@ -15,11 +15,11 @@
 		</thead>
 		{#each data as d}
 			<tr class="odd:bg-gray-100 dark:odd:bg-gray-800">
-				<td>
+				<td class="tabular-nums">
 					{formatLabel(d.x)}
 				</td>
 				{#each d.layers as l}
-					<td>{formatLabel(l.y)}</td>
+					<td>{formatLabel(l.y)}{l.unit}</td>
 				{/each}
 			</tr>
 		{/each}

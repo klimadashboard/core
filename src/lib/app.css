@@ -216,17 +216,17 @@ sub {
 	@apply text-lg container;
 }
 
-.block-list ul {
+.text ul {
 	@apply list-outside max-w-2xl space-y-2 -translate-x-1.5;
 	list-style-type: '- ';
 }
 
-.block-list li {
+.text li {
 	@apply pl-1;
 }
 
-.block-list li::marker {
-	@apply text-gray-400;
+.text li::marker {
+	@apply opacity-50;
 }
 
 .splide__pagination__page {

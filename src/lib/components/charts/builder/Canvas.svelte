@@ -49,7 +49,7 @@
 	];
 </script>
 
-<div>
+<div class="mb-4">
 	<Switch
 		{views}
 		{activeView}
@@ -77,7 +77,7 @@
 								data={data.map((d) => d.layers.find((d) => d.label == layer.name))}
 								{options}
 							/>
-							<g transform="translate({options.margin.left},0)">
+							<g transform="translate({options.margin.left},0)" style="color: {layer.color}">
 								<svelte:component
 									this={layerTypes.find((d) => d.key == layer.type)?.component}
 									{data}

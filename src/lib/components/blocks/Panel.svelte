@@ -2,12 +2,17 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	import Chart from '$lib/components/charts/builder/index.svelte';
 	import GasUsage from '$lib/components/charts/small/gasUsage.svelte';
+	import Emissions from '$lib/components/charts/small/emissions.svelte';
 	export let block;
 
 	let customCharts = [
 		{
 			key: 'gasUsage',
 			component: GasUsage
+		},
+		{
+			key: 'emissions',
+			component: Emissions
 		}
 	];
 </script>

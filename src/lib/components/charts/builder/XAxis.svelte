@@ -7,15 +7,12 @@
 	export let data;
 	export let options;
 
-	$: xScale = getScale(data, 'x', [
-		0,
-		chartWidth - options.margin.left - options.margin.right
-	]).nice(); // Ensures nice round numbers
+	$: xScale = getScale(data, 'x', [0, chartWidth - options.margin.left - options.margin.right]); // Ensures nice round numbers
 
 	$: top = chartHeight - options.margin.bottom;
 
 	// Dynamically adjust tick count based on chart width
-	$: tickCount = Math.max(3, Math.floor(chartWidth / 100)); // Adjust 100px as needed
+	$: tickCount = Math.max(3, Math.floor(chartWidth / 200)); // Adjust 100px as needed
 	$: ticks = xScale.ticks(tickCount).filter((d, i, arr) => {
 		// Ensure even spacing, remove overlapping values
 		if (i === 0 || i === arr.length - 1) return true;
