@@ -43,7 +43,10 @@
 </script>
 
 {#if data.length > 0}
-	<div class="flex h-14 mt-2 items-end justify-between relative" bind:clientWidth={chartWidth}>
+	<div
+		class="flex h-14 mt-2 -mb-1 items-end justify-between relative"
+		bind:clientWidth={chartWidth}
+	>
 		<p class="absolute left-0 top-0 text-xs">{data[0].x}</p>
 		<p class="absolute right-0 top-0 text-xs">{data[data.length - 1].x}</p>
 		{#each data as d}

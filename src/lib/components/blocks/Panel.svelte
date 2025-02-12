@@ -38,7 +38,7 @@
 		</div>
 		<div class="text-balance">{@html block.subtitle}</div>
 		{#if block.chart}
-			<div class="h-20">
+			<div class="h-17">
 				<Chart chart={block.chart} type="small" />
 			</div>
 		{/if}

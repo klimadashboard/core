@@ -65,7 +65,7 @@
 				/>
 				<g transform="translate(5,0)">
 					{#each yTicks as tick}
-						<text y={getYPosition(tick)} dominant-baseline="middle" class="fill-current text-sm"
+						<text y={getYPosition(tick)} dominant-baseline="middle" class="fill-current text-xs"
 							>{Math.round(tick)}</text
 						>
 					{/each}
@@ -73,7 +73,7 @@
 			</g>
 
 			<!-- X-axis -->
-			<g transform="translate(0,{margin.top + innerChartHeight})" class="text-sm fill-current">
+			<g transform="translate(0,{margin.top + innerChartHeight})" class="text-xs fill-current">
 				<line x1={margin.left} x2={innerChartWidth} class="stroke-current stroke-2 opacity-50" />
 				<text dominant-baseline="hanging" y={4}>{formatLabel(data[0].x)}</text>
 				<text x={innerChartWidth} text-anchor="end" dominant-baseline="hanging" y={4}>

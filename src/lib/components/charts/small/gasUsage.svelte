@@ -82,7 +82,7 @@
 
 {#await promise then d}
 	<div
-		class="h-14 mt-2 w-full relative"
+		class="h-14 mt-2 -mb-1 w-full relative"
 		bind:clientWidth={chartWidth}
 		bind:clientHeight={chartHeight}
 	>
