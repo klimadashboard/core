@@ -41,6 +41,7 @@
 
 	let chartWidth;
 	let chartHeight;
+	let margin = { top: 0, right: 0, bottom: 10, left: 20 };
 
 	$: if (promise) {
 		promise.then(({ data, dataComparison }) => {
@@ -48,12 +49,12 @@
 
 			xScale = scaleLinear()
 				.domain([min(data, (d) => d.x), max(data, (d) => d.x)])
-				.range([0, chartWidth]);
+				.range([0, chartWidth - margin.left - margin.right]);
 
 			if (dataComparison.length) {
 				xScale = scaleLinear()
 					.domain([min(dataComparison, (d) => d.x), max(dataComparison, (d) => d.x)])
-					.range([0, chartWidth]);
+					.range([0, chartWidth - margin.left - margin.right]);
 			}
 
 			yScale = scaleLinear()
@@ -61,7 +62,7 @@
 					min([...data, ...dataComparison], (d) => d.y),
 					max([...data, ...dataComparison], (d) => d.y)
 				])
-				.range([chartHeight - 20, 0]);
+				.range([chartHeight - margin.top - margin.bottom, 0]);
 		});
 	}
 
@@ -87,7 +88,7 @@
 	>
 		{#if chartWidth && chartHeight}
 			<svg width="100%" height="100%" class="overflow-visible">
-				<g>
+				<g transform={`translate(${margin.left},${margin.top})`}>
 					{#if d.dataComparison.length}
 						<g>
 							<path
@@ -106,16 +107,33 @@
 
 					{#if xLabels}
 						<g transform="translate(0,{chartHeight})" class="text-xs">
-							<text x={2} y={-4} dominant-baseline="bottom" class="fill-current">{xLabels[0]}</text>
+							<text x={0} y={-5} dominant-baseline="bottom" class="fill-current">{xLabels[0]}</text>
 							<text
-								x={chartWidth - 2}
-								y={-4}
+								x={chartWidth - margin.right - margin.left}
+								y={-5}
 								dominant-baseline="bottom"
 								text-anchor="end"
 								class="fill-current">{xLabels[1]}</text
 							>
 						</g>
 					{/if}
+
+					<g>
+						{#each yScale.ticks(2) as tick}
+							<g transform="translate({-margin.left},{yScale(tick)})">
+								<text class="fill-current text-xs" dominant-baseline="middle">{tick}</text>
+							</g>
+						{/each}
+						<!--
+						<line
+							x1={0}
+							y1={yScale(0)}
+							x2={chartWidth - margin.left - margin.right}
+							y2={yScale(0)}
+							class="stroke-current stroke-1"
+						/>
+						-->
+					</g>
 
 					<circle
 						cx={xScale(d.data[d.data.length - 1].x)}
