@@ -167,6 +167,10 @@ const parseTemplate = async (template) => {
 	const placeholders = Array.from(template.matchAll(/{{(.*?)}}/g), ([, key]) => key.trim());
 	const resolvedValues = await Promise.all(
 		placeholders.map(async (key) => {
+			if (key.startsWith('glossary:')) {
+				const term = key.split(':')[1];
+				return '<button data-key="' + term + '" aria-label="Info" class="glossary-label"></button>';
+			}
 			const handler = placeholderHandlers[key];
 			return handler ? await handler() : `{{${key}}}`;
 		})

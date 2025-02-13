@@ -2,33 +2,47 @@
 	import { clickOutside } from '$lib/utils/clickOutside';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import { fade } from 'svelte/transition';
-	import { error } from '@sveltejs/kit';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
 	import Loader from '$lib/components/Loader.svelte';
-	import Blocks from '$lib/components/blocks/index.svelte';
 
-	const getGlossary = async function () {
-		const res = await fetch('https://cms.klimadashboard.org/de/glossary.json').then(
-			function (response) {
-				if (!response.ok) {
-					error(500, response.statusText);
-				}
-				return response;
-			}
-		);
-		const json = await res.json();
+	const getGlossary = async function (key) {
+		const directus = getDirectusInstance();
+		try {
+			const response = await directus.request(
+				readItems('glossary', {
+					filter: {
+						_and: [
+							{
+								status: {
+									_eq: 'published'
+								}
+							},
+							{
+								key: {
+									_eq: key
+								}
+							}
+						]
+					},
+					limit: 1,
+					fields: ['*.*']
+				})
+			);
 
-		if (json) {
-			return Object.values(json.glossary);
+			return response[0];
+		} catch (err) {
+			console.error(err);
+			return [];
 		}
-		error(500, 'Timeout when loading glossary.');
 	};
 
-	$: promise = getGlossary();
+	$: promise = getGlossary($glossaryItem);
 </script>
 
 {#if $glossaryItem}
 	<div
-		class="popup fixed inset-0 grid bg-black/50 p-4 z-50"
+		class="popup fixed inset-0 grid bg-black/50 rounded-2xl z-50"
 		transition:fade|global={{ duration: 200 }}
 	>
 		<div
@@ -61,12 +75,11 @@
 			</button>
 			{#await promise}
 				<Loader />
-			{:then glossaryData}
-				{@const item = glossaryData.find((d) => d.slug == $glossaryItem.toString())}
+			{:then item}
 				<h3 class="text-gradient-green text-xl border-b border-b-green-600 pb-2 mb-4">
-					{item.content.title}
+					{item.translations[0]?.title}
 				</h3>
-				<Blocks content={JSON.parse(item.content.text)} />
+				{@html item.translations[0]?.text}
 			{:catch error}
 				{error}
 			{/await}

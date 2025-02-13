@@ -420,7 +420,7 @@
 				<span class="-translate-y-0.5"
 					>int. Flug- & Schiffverkehr <span
 						class="glossary-label"
-						on:mousedown={() => glossaryItem.set('memo-items')}
+						on:mousedown={() => glossaryItem.set('memo')}
 					/></span
 				> <input type="checkbox" bind:checked={showFlightEmissions} /></label
 			>

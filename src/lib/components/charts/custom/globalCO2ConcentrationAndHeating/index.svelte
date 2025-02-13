@@ -360,7 +360,7 @@
 					</div>
 					<div class="flex items-center space-x-1 -mt-1">
 						<p class="font-semibold">{v.CO2ConcentrationLabel}</p>
-						<button on:mousedown={() => glossaryItem.set('co2-konzentration')} aria-label="Info">
+						<button on:mousedown={() => glossaryItem.set('co2Concentration')} aria-label="Info">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								class="w-5 h-5 icon icon-tabler icon-tabler-info-circle"
@@ -412,7 +412,7 @@
 					<p class="text-6xl font-extralight mb-2">+{formatNumber(globalWarming)}°C</p>
 					<div class="flex items-center space-x-1">
 						<p class="font-semibold">{v.globalWarmingLabel}</p>
-						<button on:mousedown={() => glossaryItem.set('globale-erhitzung')} aria-label="Info">
+						<button on:mousedown={() => glossaryItem.set('globalHeating')} aria-label="Info">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								class="w-5 h-5 icon icon-tabler icon-tabler-info-circle"

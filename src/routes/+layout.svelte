@@ -1,7 +1,7 @@
 <script>
 	import '$lib/app.css';
 	import { browser } from '$app/environment';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import Glossary from '$lib/components/Glossary.svelte';
 	import { onMount } from 'svelte';
@@ -20,12 +20,25 @@
 	];
 
 	onMount(() => {
+		function handleGlobalClick(event) {
+			const button = event.target.closest('button[data-key]');
+			if (button) {
+				glossaryItem.set(button.dataset.key);
+			}
+		}
+
+		document.addEventListener('click', handleGlobalClick);
+
 		Fathom.load(fathom_ids.find((d) => d.version == PUBLIC_VERSION).fathom, {
 			url: 'https://cdn-eu.usefathom.com/script.js'
 		});
+
+		return () => {
+			document.removeEventListener('click', handleGlobalClick);
+		};
 	});
 
-	$: $page.url.pathname, browser && Fathom.trackPageview();
+	$: page.url.pathname, browser && Fathom.trackPageview();
 </script>
 
 <div>

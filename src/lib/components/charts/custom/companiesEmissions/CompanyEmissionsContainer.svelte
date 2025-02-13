@@ -225,7 +225,7 @@
 				<button
 					class="w-4 h-4 cursor-help rounded-full text-white text-xs"
 					style="background: linear-gradient(90deg, #79ca94 0%, #2e9c5c 100%);"
-					data-term="scope-1-scope-2-und-scope-3"
+					data-term="scopes"
 					on:click={handleGlossaryButtonClick}
 				>
 					?

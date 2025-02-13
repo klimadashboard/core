@@ -41,8 +41,6 @@
 				})
 			);
 
-			console.log(response);
-
 			const data = response.map((item) => {
 				return {
 					...item,
@@ -50,7 +48,6 @@
 				};
 			});
 
-			console.log(data);
 			return data;
 		} catch (err) {
 			console.error(err);
