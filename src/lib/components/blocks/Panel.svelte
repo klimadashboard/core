@@ -1,6 +1,6 @@
 <script>
 	import formatNumber from '$lib/stores/formatNumber';
-	import Chart from '$lib/components/charts/builder/index.svelte';
+	import Chart from '$lib/components/charts/index.svelte';
 	import GasUsage from '$lib/components/charts/small/gasUsage.svelte';
 	import Emissions from '$lib/components/charts/small/emissions.svelte';
 	export let block;
@@ -39,7 +39,7 @@
 		<div class="text-balance">{@html block.subtitle}</div>
 		{#if block.chart}
 			<div class="h-17">
-				<Chart chart={block.chart} type="small" />
+				<Chart id={block.chart} type="small" />
 			</div>
 		{/if}
 		{#if block.chart_custom}

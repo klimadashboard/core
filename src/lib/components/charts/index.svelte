@@ -5,20 +5,22 @@
 	import { page } from '$app/state';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
+
+	export let type;
 	export let id;
 	export let hideWrapper = false;
+
+	console.log(id);
 
 	$: getChart = async () => {
 		const directus = getDirectusInstance();
 		const response = await directus.request(
 			readItem('charts', id, {
 				fields: ['*', 'translations.*'],
-				deep: {
+				filter: {
 					translations: {
-						_filter: {
-							languages_code: {
-								_eq: page.data.language.code
-							}
+						languages_code: {
+							_eq: page.data.language.code
 						}
 					}
 				}
@@ -50,11 +52,11 @@
 </script>
 
 {#await promise then c}
-	{#if hideWrapper}
-		<svelte:component this={c.chartComponent} chart={c.chart} />
+	{#if hideWrapper || type == 'small'}
+		<svelte:component this={c.chartComponent} chart={c.chart} {type} />
 	{:else}
 		<Wrapper chart={c.chart}>
-			<svelte:component this={c.chartComponent} chart={c.chart} />
+			<svelte:component this={c.chartComponent} chart={c.chart} {type} />
 		</Wrapper>
 	{/if}
 {:catch error}
