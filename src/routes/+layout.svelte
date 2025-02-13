@@ -7,6 +7,9 @@
 	import { onMount } from 'svelte';
 	import * as Fathom from 'fathom-client';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import dayjs from 'dayjs';
+	import 'dayjs/locale/de'; // Import necessary locales
+	import 'dayjs/locale/en';
 
 	const fathom_ids = [
 		{
@@ -25,6 +28,12 @@
 			if (button) {
 				glossaryItem.set(button.dataset.key);
 			}
+		}
+
+		console.log('dayjs locale: ' + dayjs.locale());
+
+		if (page.data?.language?.code) {
+			dayjs.locale(page.data.language.code);
 		}
 
 		document.addEventListener('click', handleGlobalClick);

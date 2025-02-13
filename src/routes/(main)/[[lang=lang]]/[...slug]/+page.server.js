@@ -108,14 +108,11 @@ export async function load({ fetch, params }) {
 			(t) => t.slug === slug && t.languages_code === language
 		);
 
-		const content = await resolvePlaceholders(translation);
-
-		// const seo = page.seo ? await directus.request(readItem('seo', page.seo)) : null;
+		const content = await resolvePlaceholders(translation, language);
 
 		return {
 			content: content,
 			page: page
-			// seo: seo
 		};
 	} catch (err) {
 		console.log(err);
