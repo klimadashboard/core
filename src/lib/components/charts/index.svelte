@@ -2,14 +2,14 @@
 	import Builder from './builder/index.svelte';
 	import Custom from './custom/index.svelte';
 	import Wrapper from './Wrapper.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	export let chart;
 	export let hideWrapper = false;
 
 	/* todo: fix this in API call */
 	chart = {
 		...chart,
-		content: chart.translations.find((t) => t.languages_code === $page.data.language.code)
+		content: chart.translations.find((t) => t.languages_code === page.data.language.code)
 	};
 
 	let ChartComponent = chart.type === 'builder' ? Builder : Custom;

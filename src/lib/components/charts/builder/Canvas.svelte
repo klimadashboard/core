@@ -8,6 +8,7 @@
 	import XAxisConfig from './XAxisConfig.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import Tooltip from './Tooltip.svelte';
+	import { page } from '$app/state';
 
 	export let data;
 	export let chart;
@@ -37,14 +38,14 @@
 
 	let activeView = 'chart';
 
-	const views = [
+	$: views = [
 		{
 			key: 'chart',
-			label: 'Chart'
+			label: page.data.translations.chart
 		},
 		{
 			key: 'table',
-			label: 'Table'
+			label: page.data.translations.table
 		}
 	];
 </script>

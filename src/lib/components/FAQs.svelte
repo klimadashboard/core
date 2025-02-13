@@ -1,5 +1,5 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	const getFAQs = async function () {
 		const res = await fetch('https://klimadashboard.org/faq.json').then(function (response) {
 			if (!response.ok) {
@@ -16,7 +16,7 @@
 
 <section class="bg-gray-100 dark:bg-gray-900 pt-4">
 	<div class="container">
-		<h2 class="mb-1 font-bold leading-none">{$page.data.translations.questionsAndAnswers}</h2>
+		<h2 class="mb-1 font-bold leading-none">{page.data.translations.questionsAndAnswers}</h2>
 		<div class=" border-t text-lg">
 			{#await promise then faqs}
 				{#each faqs as faq}

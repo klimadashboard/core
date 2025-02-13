@@ -4,7 +4,7 @@
 	import { readItems } from '@directus/sdk';
 	import dayjs from 'dayjs';
 	import RelativeTime from 'dayjs/plugin/relativeTime';
-
+	import { page } from '$app/state';
 	dayjs.extend(RelativeTime);
 
 	$: getNews = async function () {
@@ -26,13 +26,32 @@
 							}
 						]
 					},
+					deep: {
+						translations: {
+							languages_code: {
+								_eq: page.data.language.code
+							}
+						}
+					},
 					sort: ['-date_created'],
 					limit: 3,
 					fields: ['*.*']
 				})
 			);
-			return response;
+
+			console.log(response);
+
+			const data = response.map((item) => {
+				return {
+					...item,
+					text: item.translations[0]?.text
+				};
+			});
+
+			console.log(data);
+			return data;
 		} catch (err) {
+			console.error(err);
 			return [];
 		}
 	};
@@ -43,7 +62,7 @@
 <div class="flex flex-col h-full border border-current/20 rounded-2xl p-3">
 	<div class="flex items-center gap-2 border-b text-red-700">
 		<div class="pulse hidden sm:block" />
-		<h3 class="font-bold">Was heute wichtig ist</h3>
+		<h3 class="font-bold">{page.data.translations.newsTitle}</h3>
 	</div>
 
 	{#await promise then news}
@@ -53,7 +72,7 @@
 			{/each}
 		</ul>
 
-		{#if news[0].author}
+		{#if news[0]?.author}
 			<div class="flex flex-wrap items-center gap-2 mt-auto">
 				<div class="h-12 w-12 rounded-full bg-gray-400 overflow-hidden relative shrink-0">
 					<img
@@ -64,7 +83,8 @@
 				</div>
 				<div class="leading-tight text-sm">
 					<p class="font-bold">
-						Zusammengestellt von {news[0].author.first_name}
+						{page.data.translations.newsCreatedBy}
+						{news[0].author.first_name}
 						{news[0].author.last_name}
 					</p>
 					<p class="opacity-70">Team Klimadashboard</p>
