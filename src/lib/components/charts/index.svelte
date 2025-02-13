@@ -3,22 +3,60 @@
 	import Custom from './custom/index.svelte';
 	import Wrapper from './Wrapper.svelte';
 	import { page } from '$app/state';
-	export let chart;
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItem } from '@directus/sdk';
+	export let id;
 	export let hideWrapper = false;
 
-	/* todo: fix this in API call */
+	$: getChart = async () => {
+		const directus = getDirectusInstance();
+		const response = await directus.request(
+			readItem('charts', id, {
+				fields: ['*', 'translations.*'],
+				deep: {
+					translations: {
+						_filter: {
+							languages_code: {
+								_eq: page.data.language.code
+							}
+						}
+					}
+				}
+			})
+		);
+
+		const chart = {
+			...response,
+			content: response.translations[0]
+		};
+
+		return {
+			chart,
+			chartComponent: response.type === 'builder' ? Builder : Custom
+		};
+	};
+
+	$: promise = getChart();
+
+	/*
+
 	chart = {
 		...chart,
 		content: chart.translations.find((t) => t.languages_code === page.data.language.code)
 	};
 
-	let ChartComponent = chart.type === 'builder' ? Builder : Custom;
+	
+	*/
 </script>
 
-{#if hideWrapper}
-	<svelte:component this={ChartComponent} {chart} />
-{:else}
-	<Wrapper {chart}>
-		<svelte:component this={ChartComponent} {chart} />
-	</Wrapper>
-{/if}
+{#await promise then c}
+	{#if hideWrapper}
+		<svelte:component this={c.chartComponent} chart={c.chart} />
+	{:else}
+		<Wrapper chart={c.chart}>
+			<svelte:component this={c.chartComponent} chart={c.chart} />
+		</Wrapper>
+	{/if}
+{:catch error}
+	<p>Could not load chart.</p>
+{/await}

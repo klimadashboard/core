@@ -5,9 +5,7 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	import dayjs from 'dayjs';
 
-	export let historicalAverages = [];
 	export let recentData = [];
-	export let selectedPeriod;
 	export let selectedStation;
 
 	$: selectedDatapoint = recentData[recentData.length - 1];
@@ -153,7 +151,7 @@
 	</div>
 	<div
 		class="absolute w-32 pointer-events-none left-0 top-0 bottom-0 bg-linear-to-r from-white dark:from-gray-950 to-transparent"
-	/>
+	></div>
 	<svg width={50} height={'100%'} class="absolute left-0 top-0 pointer-events-none">
 		<!-- Y-Axis with ticks -->
 		<g>

@@ -3,6 +3,7 @@
 	import Footer from '$lib/components/sections/footer/index.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 
 	$: description = page.data.content?.seo?.meta_description
 		? page.data.content?.seo?.meta_description
@@ -13,11 +14,24 @@
 			? 'Deutschland'
 			: 'Österreich';
 	$: image = 'https://base.klimadashboard.org/assets/' + page.data.content?.seo?.og_image;
+
+	$: hrefLangLinks = page.data.languages.map((language) => ({
+		lang: language.code,
+		url: page.url.href.replace(page.data.language.code, language.code)
+	}));
+
+	$: onMount(() => {
+		document.documentElement.lang = page.data.language.code;
+	});
 </script>
 
 <svelte:head>
 	<title>{title}</title>
 	<meta name="description" content={description} />
+
+	{#each hrefLangLinks as { lang, url }}
+		<link rel="alternate" hreflang={lang} href={url} />
+	{/each}
 
 	<!-- Facebook Meta Tags -->
 	<meta property="og:url" content={page.url.href} />

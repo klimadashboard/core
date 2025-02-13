@@ -30,8 +30,6 @@
 			}
 		}
 
-		console.log('dayjs locale: ' + dayjs.locale());
-
 		if (page.data?.language?.code) {
 			dayjs.locale(page.data.language.code);
 		}

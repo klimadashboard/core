@@ -7,6 +7,6 @@
 
 <div class="my-4 {hideWrapper ? '' : 'container'}">
 	{#each block.charts as chart}
-		<Chart chart={chart.chart} {hideWrapper} />
+		<Chart id={chart.chart} {hideWrapper} />
 	{/each}
 </div>

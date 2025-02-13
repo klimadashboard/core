@@ -3,7 +3,6 @@
 	import formatNumber from '$lib/stores/formatNumber';
 
 	export let data;
-	export let selectedStation;
 
 	let hottestDay = [...data].sort((a, b) => b.tlmax - a.tlmax)[0];
 	// Find the earliest heat day across all years

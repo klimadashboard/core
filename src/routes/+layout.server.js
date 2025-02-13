@@ -5,6 +5,7 @@ import { PUBLIC_VERSION } from '$env/static/public';
 // src/routes/+layout.server.js
 export async function load({ fetch, params }) {
 	const locale = params.lang ? params.lang : 'de';
+
 	const localeLong = locale == 'de' ? 'de-DE' : 'en-US';
 	const directus = getDirectusInstance(fetch);
 
@@ -37,12 +38,15 @@ export async function load({ fetch, params }) {
 		acc[key] = value; // Add each key-value pair to the object
 		return acc;
 	}, {});
+
+	const languages = await directus.request(readItems('languages'));
 	return {
 		site,
 		translations,
 		language: {
 			code: locale,
 			codeLong: localeLong
-		}
+		},
+		languages
 	};
 }
