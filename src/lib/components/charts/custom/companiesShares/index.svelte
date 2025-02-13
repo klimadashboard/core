@@ -21,7 +21,6 @@
 			temp['weight'] += value.weight;
 			return { ...value, idx: i, cummulated_weight: cum_sum };
 		});
-	console.log([...new Set(companies.map((value) => value.sector))], companies.length); // 20 companies; 15 different sectors -> too many categorical values for color scale
 
 	const grouped_companies = Object.groupBy(companies, (company) => company.sector);
 	const sectors = Object.keys(grouped_companies).map((key) => {

@@ -8,7 +8,24 @@ export async function load({ fetch, params }) {
 	const localeLong = locale == 'de' ? 'de-DE' : 'en-US';
 	const directus = getDirectusInstance(fetch);
 
-	const site = await directus.request(readItem('sites', PUBLIC_VERSION));
+	const site = await directus.request(
+		readItem('sites', PUBLIC_VERSION, {
+			deep: {
+				translations: {
+					filter: {
+						languages_code: {
+							_eq: locale
+						}
+					}
+				}
+			},
+			fields: [
+				'*', // Include all fields from the 'sites' table
+				'translations.*' // Load all translation fields
+			]
+		})
+	);
+
 	const translationsData = await directus.request(
 		readTranslations({
 			filter: {

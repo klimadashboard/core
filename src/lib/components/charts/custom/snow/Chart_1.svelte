@@ -4,7 +4,6 @@
 	import { min, max } from 'd3-array';
 
 	export let data;
-	console.log(data);
 
 	let chartWidth;
 	let marginLeft = 200;

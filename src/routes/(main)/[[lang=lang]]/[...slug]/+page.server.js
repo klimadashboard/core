@@ -50,6 +50,9 @@ export async function load({ fetch, params }) {
 						translations: [
 							'*',
 							{
+								seo: ['*']
+							},
+							{
 								blocks: [
 									'*',
 									{

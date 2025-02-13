@@ -17,7 +17,6 @@
 				skipEmptyLines: true,
 				complete: (results) => {
 					data = results.data;
-					console.log(data);
 					data = data
 						.filter(
 							(d) =>
@@ -29,7 +28,6 @@
 								y: d.total_co2e_t
 							};
 						});
-					console.log(data);
 				}
 			}
 		);

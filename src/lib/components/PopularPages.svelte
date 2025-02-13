@@ -1,5 +1,7 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
+
+	$: popularPages = page.data.site.translations[0].popular_pages;
 </script>
 
 <div class="relative">
@@ -9,7 +11,7 @@
 
 	<div class="overflow-scroll">
 		<div class="flex mt-4 gap-2">
-			{#each $page.data.site.popular_pages as item}
+			{#each popularPages as item}
 				<a href={item.link} class="shrink-0 button">{item.label}</a>
 			{/each}
 		</div>

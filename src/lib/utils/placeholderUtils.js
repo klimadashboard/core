@@ -127,8 +127,6 @@ const getGasUsageData = async () => {
 			period: lastYearDate
 		};
 
-		console.log(latestEntry);
-
 		return {
 			gasUsageCurrent: latestEntry.value,
 			gasUsageCurrentDate: dayjs(latestEntry.period).format('D.M.YYYY'),
