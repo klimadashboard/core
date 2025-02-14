@@ -16,7 +16,7 @@
 
 	$: copyEmbedCode = function () {
 		var copyText =
-			'<iframe src="' + window.location.origin + '/embed/' + chartId + '" width=1200 height=400>';
+			'<iframe src="' + window.location.origin + '/embed/' + chart.id + '" width=1200 height=400>';
 		copyToClipboard(copyText);
 		alert('Der iFrame-Code wurde in die Zwischenablage kopiert.');
 	};

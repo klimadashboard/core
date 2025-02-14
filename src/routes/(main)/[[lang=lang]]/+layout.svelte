@@ -4,6 +4,9 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import dayjs from 'dayjs';
+	import 'dayjs/locale/de';
+	import 'dayjs/locale/en';
 
 	$: description = page.data.content?.seo?.meta_description
 		? page.data.content?.seo?.meta_description
@@ -22,6 +25,7 @@
 
 	$: onMount(() => {
 		document.documentElement.lang = page.data.language.code;
+		dayjs.locale(page.data.language.code);
 	});
 </script>
 

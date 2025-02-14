@@ -4,6 +4,9 @@ import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
+import dayjs from 'dayjs';
+import 'dayjs/locale/de';
+import 'dayjs/locale/en';
 
 function filterTranslations(data, language) {
 	// If data is an array, process each element.
@@ -67,6 +70,7 @@ export async function load({ fetch, params }) {
 	const language = params.lang || 'de';
 	const slug = params.slug || 'home';
 	const site = PUBLIC_VERSION;
+	dayjs.locale(language);
 
 	try {
 		// ---------- Fetch the page + expansions ----------

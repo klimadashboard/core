@@ -1,4 +1,5 @@
 <script>
+	export let block;
 	let values = [
 		{
 			value: '10€',
@@ -21,10 +22,10 @@
 
 <div class="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 py-10">
 	<h2 class="text-center text-3xl font-bold leading-tight">
-		Klimawissenschaft zugänglich machen. <br />Für alle, immer, kostenlos.
+		{@html block.title}
 	</h2>
 	<p class="text-lg text-center mx-auto max-w-md leading-snug mb-4 mt-2 text-balance">
-		Das machen wir als Verein Klimadashboard. Unterstütze unsere Arbeit 2025 mit einer Spende.
+		{@html block.text}
 	</p>
 	<div class="flex items-center gap-4 justify-center text-2xl">
 		{#each values as value}
