@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 </script>
 
-<footer class="bg-gray-300 dark:bg-gray-900">
+<footer class="bg-gray-50 dark:bg-gray-900">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
 		<div class="md:col-span-3 border-b border-gray-700 pb-4">
 			<h2 class="font-bold mb-1">{page.data.translations.questionsAndAnswers}</h2>

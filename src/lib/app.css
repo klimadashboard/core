@@ -3,7 +3,7 @@
 
 @utility container {
 	margin-inline: auto;
-	padding-inline: 0.2rem;
+	padding-inline: 1rem;
 }
 
 @layer base {

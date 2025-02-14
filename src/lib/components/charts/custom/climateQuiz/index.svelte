@@ -109,8 +109,8 @@
 </script>
 
 {#if page.data.language.code == 'de'}
-	<div class="bg-gray-100 dark:bg-gray-800 p-4">
-		<div class="max-w-4xl mx-auto p-4 bg-white dark:bg-gray-700">
+	<div class="bg-gray-50 dark:bg-gray-900 p-4">
+		<div class="container p-4 bg-white dark:bg-gray-700 rounded-2xl">
 			<h2 class="font-bold pb-1">{page.data.translations.climateQuiz}</h2>
 			{#if quizQuestions.length > 0}
 				<!-- Progress indicator -->
@@ -138,7 +138,7 @@
 							<div class="flex flex-col gap-2">
 								{#each currentQuestion.answers as answer}
 									<button
-										class="relative overflow-hidden bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 rounded-2xl p-4 text-lg leading-tight transition duration-500
+										class="relative overflow-hidden bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 rounded-2xl p-4 text-lg leading-tight transition duration-500
 										{selectedAnswerId !== null
 											? answer.is_true
 												? 'bg-green-300 hover:bg-green-300'
