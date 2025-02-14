@@ -82,7 +82,7 @@
 		<!-- Loading State -->
 		<p>Loading...</p>
 	{:then items}
-		<h3 class="font-bold border-b mb-1">{block.title}</h3>
+		<h3 class="font-bold mb-1">{block.title}</h3>
 		<ul class="flex flex-wrap gap-x-4 text-lg">
 			{#each items as item}
 				{@const relativeUrl = item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}

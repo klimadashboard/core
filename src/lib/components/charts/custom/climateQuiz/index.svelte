@@ -1,6 +1,6 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let quizQuestions = [];
 	let questionIndex = 0;
@@ -108,103 +108,105 @@
 	}
 </script>
 
-<div class="bg-gray-100 dark:bg-gray-800 p-4">
-	<div class="max-w-4xl mx-auto p-4 bg-white dark:bg-gray-700">
-		<h2 class="font-bold pb-1">{$page.data.translations.climateQuiz}</h2>
-		{#if quizQuestions.length > 0}
-			<!-- Progress indicator -->
-			<div class="flex gap-1">
-				{#each quizQuestions as q}
-					<div
-						class="h-1 w-full bg-gray-100
+{#if page.data.language.code == 'de'}
+	<div class="bg-gray-100 dark:bg-gray-800 p-4">
+		<div class="max-w-4xl mx-auto p-4 bg-white dark:bg-gray-700">
+			<h2 class="font-bold pb-1">{page.data.translations.climateQuiz}</h2>
+			{#if quizQuestions.length > 0}
+				<!-- Progress indicator -->
+				<div class="flex gap-1">
+					{#each quizQuestions as q}
+						<div
+							class="h-1 w-full bg-gray-100
 							{q.correct === true ? 'bg-green-500' : ''} 
 							{q.correct === false ? 'bg-red-500' : ''}"
-					/>
-				{/each}
-			</div>
+						/>
+					{/each}
+				</div>
 
-			{#if !quizCompleted}
-				{#if currentQuestion}
-					<div class="quiz-container">
-						<h4 class="text-2xl my-4">{@html currentQuestion.question}</h4>
+				{#if !quizCompleted}
+					{#if currentQuestion}
+						<div class="quiz-container">
+							<h4 class="text-2xl my-4">{@html currentQuestion.question}</h4>
 
-						{#if currentQuestion.text_question}
-							<div class="text-lg mb-4">
-								{@html currentQuestion.text_question}
-							</div>
-						{/if}
+							{#if currentQuestion.text_question}
+								<div class="text-lg mb-4">
+									{@html currentQuestion.text_question}
+								</div>
+							{/if}
 
-						<div class="flex flex-col gap-2">
-							{#each currentQuestion.answers as answer}
-								<button
-									class="relative overflow-hidden bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 rounded-2xl p-4 text-lg leading-tight transition duration-500
+							<div class="flex flex-col gap-2">
+								{#each currentQuestion.answers as answer}
+									<button
+										class="relative overflow-hidden bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 rounded-2xl p-4 text-lg leading-tight transition duration-500
 										{selectedAnswerId !== null
-										? answer.is_true
-											? 'bg-green-300 hover:bg-green-300'
-											: 'bg-red-300 hover:bg-red-300'
-										: ''}"
-									on:click={() => handleAnswerClick(answer.id)}
-									disabled={selectedAnswerId !== null}
-								>
-									<!-- Colored bar -->
-									<div
-										class="absolute bottom-0 left-0 top-0
+											? answer.is_true
+												? 'bg-green-300 hover:bg-green-300'
+												: 'bg-red-300 hover:bg-red-300'
+											: ''}"
+										on:click={() => handleAnswerClick(answer.id)}
+										disabled={selectedAnswerId !== null}
+									>
+										<!-- Colored bar -->
+										<div
+											class="absolute bottom-0 left-0 top-0
 											{answer.is_true ? 'bg-green-400' : 'bg-red-400'} 
 											transition-[width]"
-										style="width: {selectedAnswerId !== null ? answer.percentage : 0}%"
-									/>
-									<div class="relative">
-										{answer.label}
-									</div>
-								</button>
-							{/each}
-						</div>
+											style="width: {selectedAnswerId !== null ? answer.percentage : 0}%"
+										/>
+										<div class="relative">
+											{answer.label}
+										</div>
+									</button>
+								{/each}
+							</div>
 
-						<!-- Feedback / Explanation after click -->
-						{#if selectedAnswerId !== null}
-							<div class="space-y-4 mt-4 text-lg">
-								<p>
-									{#if currentQuestion.correct}
-										Korrekt!
-									{:else}
-										Leider falsch.
+							<!-- Feedback / Explanation after click -->
+							{#if selectedAnswerId !== null}
+								<div class="space-y-4 mt-4 text-lg">
+									<p>
+										{#if currentQuestion.correct}
+											Korrekt!
+										{:else}
+											Leider falsch.
+										{/if}
+
+										{Math.round(currentQuestion.answers.find((d) => d.is_true).percentage)}% der
+										{currentQuestion.total_answer_count} Quiz-Teilnehmer:innen haben die Frage richtig
+										beantwortet.
+									</p>
+
+									{#if currentQuestion.text_answer}
+										<div>
+											{@html currentQuestion.text_answer}
+										</div>
 									{/if}
 
-									{Math.round(currentQuestion.answers.find((d) => d.is_true).percentage)}% der
-									{currentQuestion.total_answer_count} Quiz-Teilnehmer:innen haben die Frage richtig
-									beantwortet.
-								</p>
-
-								{#if currentQuestion.text_answer}
-									<div>
-										{@html currentQuestion.text_answer}
+									<div class="flex">
+										<button
+											class="mx-auto bg-gray-100 dark:bg-gray-800 rounded-sm p-4 text-lg leading-tight hover:bg-gray-200 dark:hover:bg-gray-900"
+											on:click={nextQuestion}
+										>
+											Weiter
+										</button>
 									</div>
-								{/if}
-
-								<div class="flex">
-									<button
-										class="mx-auto bg-gray-100 dark:bg-gray-800 rounded-sm p-4 text-lg leading-tight hover:bg-gray-200 dark:hover:bg-gray-900"
-										on:click={nextQuestion}
-									>
-										Weiter
-									</button>
 								</div>
-							</div>
-						{/if}
+							{/if}
+						</div>
+					{/if}
+				{:else}
+					<!-- Quiz complete -->
+					<div class="text-lg">
+						<h3 class="text-xl font-bold my-4">Gratuliere, du hast alle Fragen beantwortet!</h3>
+						<p>
+							Von {quizQuestions.length} Fragen hast du
+							{quizQuestions.filter((d) => d.correct).length} korrekt beantwortet.
+						</p>
 					</div>
 				{/if}
 			{:else}
-				<!-- Quiz complete -->
-				<div class="text-lg">
-					<h3 class="text-xl font-bold my-4">Gratuliere, du hast alle Fragen beantwortet!</h3>
-					<p>
-						Von {quizQuestions.length} Fragen hast du
-						{quizQuestions.filter((d) => d.correct).length} korrekt beantwortet.
-					</p>
-				</div>
+				<p>Loading questions...</p>
 			{/if}
-		{:else}
-			<p>Loading questions...</p>
-		{/if}
+		</div>
 	</div>
-</div>
+{/if}

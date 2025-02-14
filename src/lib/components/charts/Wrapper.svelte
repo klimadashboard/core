@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/state';
 	import domtoimage from 'dom-to-image';
 
 	let item = null;
@@ -248,13 +249,13 @@
 				on:mousedown={() => (showNotices = !showNotices)}
 				class="{!showNotices ? 'bg-white dark:bg-gray-800' : 'border-t '} py-2"
 			>
-				Grafik
+				{page.data.translations.chart}
 			</button>
 			<button
 				on:mousedown={() => (showNotices = !showNotices)}
 				class="{showNotices ? 'bg-white dark:bg-gray-800 ' : 'border-t'} py-2"
 			>
-				Datenhinweise und -methoden
+				{page.data.translations.method}
 			</button>
 		</div>
 	{/if}

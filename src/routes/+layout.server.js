@@ -9,7 +9,7 @@ export async function load({ fetch, params }) {
 	const localeLong = locale == 'de' ? 'de-DE' : 'en-US';
 	const directus = getDirectusInstance(fetch);
 
-	const site = await directus.request(
+	const response = await directus.request(
 		readItem('sites', PUBLIC_VERSION, {
 			deep: {
 				translations: {
@@ -26,6 +26,11 @@ export async function load({ fetch, params }) {
 			]
 		})
 	);
+
+	const site = {
+		...response,
+		content: response.translations[0]
+	};
 
 	const translationsData = await directus.request(
 		readTranslations({
