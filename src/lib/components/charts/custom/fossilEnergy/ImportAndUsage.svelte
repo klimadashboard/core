@@ -823,7 +823,7 @@
 					cx="8"
 					cy="8"
 					r="6"
-					class="stroke-gray-300 fill-transparent stroke-2 fill-white dark:fill-gray-800"
+					class="stroke-gray-300 stroke-2 fill-white dark:fill-gray-800"
 				/>
 			</svg>
 			<h3 class="uppercase tracking-wide text-sm font-semibold mb-2">

@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 </script>
 
-<footer class="text-white bg-gray-900">
+<footer class="bg-gray-300 dark:bg-gray-900">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
 		<div class="md:col-span-3 border-b border-gray-700 pb-4">
 			<h2 class="font-bold mb-1">{page.data.translations.questionsAndAnswers}</h2>
@@ -34,15 +34,11 @@
 							type="email"
 							name="email"
 							id="bd-email"
-							class="appearance-none rounded-l-full border-gray-800 group-hover:border-gray-700 border-2 bg-gray-800 text-white transition py-1 px-2 pl-3 w-36"
+							class="input !rounded-r-none !border-gray-100 dark:!border-gray-800 w-36"
 							placeholder="your@email.com"
 						/>
 					</label>
-					<input
-						type="submit"
-						value="Anmelden"
-						class="appearance-none rounded-r-full bg-gray-800 group-hover:bg-gray-700 text-white py-0 pl-2 pr-3 cursor-pointer transition"
-					/>
+					<input type="submit" value="Anmelden" class="button !rounded-l-none" />
 				</form>
 				<a
 					class="button"

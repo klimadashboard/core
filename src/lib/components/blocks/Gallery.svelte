@@ -19,7 +19,7 @@
 	<div class="flex border-b items-end pb-1">
 		<h3 class="uppercase font-bold tracking-wide">{block.title}</h3>
 		<div class="flex ml-auto splide__arrows">
-			<button class="splide__arrow splide__arrow--prev"
+			<button class="splide__arrow splide__arrow--prev" aria-label="Previous"
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"
@@ -34,7 +34,7 @@
 					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg
 				></button
 			>
-			<button class="splide__arrow splide__arrow--next"
+			<button class="splide__arrow splide__arrow--next" aria-label="Next"
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"

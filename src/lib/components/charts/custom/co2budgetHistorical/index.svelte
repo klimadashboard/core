@@ -153,7 +153,7 @@
 
 		<div class="flex gap-2 items-center">
 			<div>1 Kasten entspricht 10 Mio. t Treibhausgasen</div>
-			<div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current" />
+			<div class="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-current"></div>
 		</div>
 	</div>
 
@@ -247,7 +247,7 @@
 
 	<div class="grid gap-1 mx-auto mt-2 text-budgetDefault budget-grid">
 		{#each arrayBudget as box}
-			<div class="w-3 h-3 bg-current" transition:fade />
+			<div class="w-3 h-3 bg-current" transition:fade></div>
 		{/each}
 	</div>
 
@@ -273,7 +273,7 @@
 
 	<div class="grid gap-1 mx-auto mt-2 text-budgetDark budget-grid">
 		{#each arrayCurrent as box}
-			<div class="w-3 h-3 bg-current" transition:fade />
+			<div class="w-3 h-3 bg-current" transition:fade></div>
 		{/each}
 		<div class="text-sm -translate-y-1" style="grid-column: span 24 / span 24;">
 			80 Mio. Tonnen hat Österreich im Jahr 2021 emittiert

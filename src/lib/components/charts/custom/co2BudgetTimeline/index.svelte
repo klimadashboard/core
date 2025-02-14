@@ -161,7 +161,7 @@
 			bind:clientWidth={chartWidth}
 		>
 			<div class="absolute top-16 left-0 right-0 w-full z-1200">
-				<div class="bg-de h-1" style="width: {progress > 0 ? progress * 100 : 0}%" />
+				<div class="bg-de h-1" style="width: {progress > 0 ? progress * 100 : 0}%"></div>
 			</div>
 			{#if historicalData.length > 0 && chartWidth && chartHeight}
 				<Chart
@@ -188,7 +188,7 @@
 			<div class="absolute bottom-0 w-full">
 				<div class="max-w-3xl mx-auto flex items-center text-xs text-gray-600 p-2 transition">
 					<div class="flex items-center space-x-1 font-bold">
-						<div class="w-1.5 h-1.5 rounded-xl bg-current" />
+						<div class="w-1.5 h-1.5 rounded-xl bg-current"></div>
 						<p class="">
 							entspricht
 							{blockValue} Mio. t CO<sub>2</sub>

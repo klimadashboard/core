@@ -73,7 +73,9 @@
 							? (selectedSource = source.key)
 							: window.location.reload()}
 					on:mouseover={() => (source.key == 'waste' ? (showWaste = true) : (showWaste = false))}
+					on:focus={() => (source.key == 'waste' ? (showWaste = true) : (showWaste = false))}
 					on:mouseout={() => (showWaste = false)}
+					on:blur={() => (showWaste = false)}
 				>
 					{#if source.share > 5}
 						{source.label}
@@ -94,15 +96,3 @@
 		{/if}
 	</div>
 </main>
-
-<style>
-	details {
-		margin: 1rem 0;
-		border: 2px bottom gray;
-	}
-
-	summary {
-		cursor: pointer;
-		font-weight: 600;
-	}
-</style>
