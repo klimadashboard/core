@@ -14,12 +14,12 @@
 {#if !companiesGoalData}
 	<p>Loading...</p>
 {:else if companiesGoalData}
-	<table class="mx-auto">
+	<table class="mx-auto rounded">
 		<thead>
 			<tr class="border-b">
 				<th class="{tableCellClasses} text-left"></th>
 				<th class="{tableCellClasses} text-left">Klimaneutralitätsziel</th>
-				<th class="{tableCellClasses} text-left"
+				<th class="{tableCellClasses} text-center"
 					>Mitglied der <br />Science-Based-Target Initiative</th
 				>
 			</tr>
@@ -39,7 +39,7 @@
 							alt={companiesGoalData.name}
 							width="80"
 							height="80"
-							class="inline-block w-24 h-16 p-1 object-contain"
+							class="inline-block w-24 h-16 p-2 m-1 object-contain dark:bg-gray-100 rounded-xl"
 							title={companiesGoalData.name}
 						/>
 					</td>
