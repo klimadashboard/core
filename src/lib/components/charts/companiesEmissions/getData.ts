@@ -17,7 +17,6 @@ export const getCompanyEmissionData = async () => {
 	const data = await directus.request(
 		readItems('companies_emissions', {
 			fields: ['year', 'company', 'scope', 'value', 'category'],
-
 			limit: -1
 		})
 	);
@@ -37,7 +36,7 @@ export const getCompanyMetaData = async () => {
 				'member_sbt'
 			],
 			sort: ['sectors.companies_sectors_id.name', 'name'],
-			limit: -1
+			limit: -1,
 		})
 	);
 	return flattenCompanies(data);
