@@ -22,7 +22,23 @@
 		}
 	];
 
+	$: description = page.data.content?.seo?.meta_description
+		? page.data.content?.seo?.meta_description
+		: page.data.content?.description;
+	$: title = page.data.content?.seo?.title
+		? page.data.content?.seo?.title
+		: page.data.content?.title + ' | ' + page.data.site.translations[0].title;
+	$: image = 'https://base.klimadashboard.org/assets/' + page.data.content?.seo?.og_image;
+
+	$: hrefLangLinks = page.data.languages.map((language) => ({
+		lang: language.code,
+		url: page.url.href.replace(page.data.language.code, language.code)
+	}));
+
 	onMount(() => {
+		document.documentElement.lang = page.data.language.code;
+		dayjs.locale(page.data.language.code);
+
 		function handleGlobalClick(event) {
 			const button = event.target.closest('button[data-key]');
 			if (button) {
@@ -47,6 +63,30 @@
 
 	$: page.url.pathname, browser && Fathom.trackPageview();
 </script>
+
+<svelte:head>
+	<title>{title}</title>
+	<meta name="description" content={description} />
+
+	{#each hrefLangLinks as { lang, url }}
+		<link rel="alternate" hreflang={lang} href={url} />
+	{/each}
+
+	<!-- Facebook Meta Tags -->
+	<meta property="og:url" content={page.url.href} />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={title} />
+	<meta property="og:description" content={description} />
+	<meta property="og:image" content={image} />
+
+	<!-- Twitter Meta Tags -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta property="twitter:url" content={page.url.href} />
+	<meta property="twitter:site" content="@klimadashboard" />
+	<meta name="twitter:title" content={title} />
+	<meta name="twitter:description" content={description} />
+	<meta name="twitter:image" content={image} />
+</svelte:head>
 
 <div>
 	<div class="dark:bg-gray-950 dark:text-white transition duration-1000">

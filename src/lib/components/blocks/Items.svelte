@@ -1,88 +1,80 @@
 <script>
-	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
-	import '@splidejs/svelte-splide/css/core';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/state';
 
 	export let block;
+	let itemsPromise;
 
-	/**
-	 * Fetch items from a single table
-	 * @param {string} tableName
-	 * @param {number} limit
-	 * @returns {Promise<Array<any>>}
-	 */
-	async function fetchTableItems(tableName, limit = 20) {
-		const directus = getDirectusInstance();
+	// Function to fetch all items
+	async function fetchAllItems(tables, languageCode) {
+		const fetchTableItems = async (tableName, limit = 20) => {
+			const directus = getDirectusInstance();
 
-		let hasSiteField = false;
+			let hasSiteField = false;
 
-		try {
-			// Fetch a single record to check for the existence of the "site" field
-			const [sampleRecord] = await directus.request(
-				readItems(tableName, {
-					limit: 1, // Limit to 1 record for quick check
-					fields: ['*']
-				})
-			);
+			try {
+				const [sampleRecord] = await directus.request(
+					readItems(tableName, {
+						limit: 1,
+						fields: ['*']
+					})
+				);
 
-			// Check if "site" is a key in the sample record
-			hasSiteField = sampleRecord && Object.keys(sampleRecord).includes('site');
-		} catch (err) {
-			console.error(`Failed to fetch sample data for table "${tableName}":`, err);
-		}
+				hasSiteField = sampleRecord && Object.keys(sampleRecord).includes('site');
+			} catch (err) {
+				console.error(`Failed to fetch sample data for table "${tableName}":`, err);
+			}
 
-		try {
-			const response = await directus.request(
-				readItems(tableName, {
-					limit,
-					fields: ['*.*'],
-					filter: {
-						status: {
-							_eq: 'published'
+			try {
+				const response = await directus.request(
+					readItems(tableName, {
+						limit,
+						fields: ['*.*'],
+						filter: {
+							status: {
+								_eq: 'published'
+							},
+							...(hasSiteField && {
+								site: {
+									_eq: PUBLIC_VERSION
+								}
+							})
 						},
-						...(hasSiteField && {
-							site: {
-								_eq: PUBLIC_VERSION
+						deep: {
+							translations: {
+								_filter: {
+									languages_code: {
+										_eq: languageCode
+									}
+								}
 							}
-						})
-					}
-				})
-			);
+						}
+					})
+				);
 
-			return response.map((item) => ({
-				...item,
-				content: item.translations?.find((t) => t.languages_code === 'de'),
-				type: tableName
-			}));
-		} catch (err) {
-			console.error(`Failed to fetch items from table "${tableName}":`, err);
-			return [];
-		}
-	}
+				return response.map((item) => ({
+					...item,
+					content: item.translations?.[0],
+					type: tableName
+				}));
+			} catch (err) {
+				console.error(`Failed to fetch items from table "${tableName}":`, err);
+				return [];
+			}
+		};
 
-	/**
-	 * Fetch items for all tables listed in block.types
-	 * @param {string[]} tables
-	 * @returns {Promise<Array<any>>}
-	 */
-	async function fetchAllItems(tables) {
 		const promises = tables.map((table) => fetchTableItems(table));
 		const results = await Promise.all(promises);
 
-		// Flatten and deduplicate items based on a unique property
-		const uniqueItems = Array.from(
-			new Map(
-				results.flat().map((item) => [item.id, item]) // Use 'id' as the key for uniqueness
-			).values()
-		);
+		const uniqueItems = Array.from(new Map(results.flat().map((item) => [item.id, item])).values());
 
 		return uniqueItems;
 	}
 
-	// We store the Promise itself here
-	let itemsPromise = fetchAllItems(block.types);
+	// Reactive update when language changes
+	$: itemsPromise = fetchAllItems(block.types, page.data.language.code);
 </script>
 
 <div class="container my-4">

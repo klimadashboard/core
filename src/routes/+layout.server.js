@@ -13,7 +13,7 @@ export async function load({ fetch, params }) {
 		readItem('sites', PUBLIC_VERSION, {
 			deep: {
 				translations: {
-					filter: {
+					_filter: {
 						languages_code: {
 							_eq: locale
 						}
