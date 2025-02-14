@@ -4,6 +4,7 @@
 	import { glossaryItem } from '$lib/stores/glossary';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Loader from '$lib/components/Loader.svelte';
+	import { page } from '$app/state';
 
 	let dataset = null;
 	let explanations = null;
@@ -376,6 +377,7 @@
 				ksgSelection = null;
 				crfSelection = null;
 			}}
+			aria-label={page.data.translations.greenhouseGas}
 		>
 			{#each ghGas as ghg}
 				<option value={ghg.key}>{ghg.label}</option>
@@ -551,7 +553,7 @@
 			{/if}
 			<div
 				class="absolute top-0 right-0 bottom-0 w-16 bg-linear-to-r from-transparent to-white dark:to-gray-900"
-			/>
+			></div>
 		</div>
 	</div>
 
