@@ -5,7 +5,6 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let data;
-	export let chart;
 	export let selectedStation;
 
 	const presetID = PUBLIC_VERSION == 'at' ? 105 : 403;

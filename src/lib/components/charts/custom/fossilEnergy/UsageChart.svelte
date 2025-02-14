@@ -106,6 +106,7 @@
 					transform="translate(0, 0)"
 					style="color: {data[0].color}"
 					class="cursor-help"
+					role="tooltip"
 					on:mousedown={() => showGlossary('gas_grossDomesticConsumption')}
 				>
 					<path
@@ -142,8 +143,11 @@
 								class="cursor-help {!selectedParent || selectedParent == category
 									? 'opacity-100'
 									: 'opacity-50'}"
+								role="tooltip"
 								on:mouseover={() => (selectedParent = category)}
+								on:focus={() => (selectedParent = category)}
 								on:mouseout={() => (selectedParent = false)}
+								on:blur={() => (selectedParent = false)}
 								on:mousedown={() => showGlossary(category.glossary)}
 							>
 								{#if xScale(category.total) > 150}
@@ -192,6 +196,7 @@
 											<rect
 												width={xScale(subcategory.total)}
 												height={60}
+												role="tooltip"
 												fill={subcategory.color}
 												on:mouseover={() => (selectedCategory = subcategory)}
 												on:focus={() => (selectedCategory = subcategory)}
@@ -252,6 +257,7 @@
 					<button
 						class="absolute top-0 right-1 text-sm"
 						on:mousedown={() => (selectedCategory = false)}
+						aria-label="Close"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -290,6 +296,7 @@
 						width={'100%'}
 						height="{selectedCategory.children.filter((d) => d.total > 0).length * 40}px"
 						on:mousemove={handleMousemove}
+						role="tooltip"
 						class="mt-2"
 					>
 						{#each [...selectedCategory.children]
@@ -302,6 +309,7 @@
 								on:focus={() => (selectedSubCategory = child)}
 								on:mouseout={() => (selectedSubCategory = null)}
 								on:blur={() => (selectedSubCategory = null)}
+								role="tooltip"
 							>
 								<rect
 									height={36}
@@ -389,9 +397,3 @@
 		</div>
 	{/if}
 {/if}
-
-<style>
-	.chart-bar {
-		paint-order: stroke;
-	}
-</style>

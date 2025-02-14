@@ -105,28 +105,29 @@
 						? 'opacity-60'
 						: 'opacity-100'} cursor-pointer p-4"
 					id="coal-item-{item.properties.id}"
-					on:mousedown={() => (selectedElement = item)}
 				>
-					<h3 class="font-bold">
-						<span
-							class="w-3 h-3 mr-1 inline-block rounded-full {item.properties.already_in_use ==
-							'TRUE'
-								? 'bg-[#347C86]'
-								: 'bg-[#9CB5B8]'}"
-						/>
-						{item.properties.place}
-						<span class="font-normal">{item.properties.operator}</span>
-					</h3>
-					<p>{item.properties.type == 'floating' ? 'Schwimmterminal' : 'Landterminal'}</p>
-					<p>
-						{item.properties.already_in_use == 'TRUE' ? 'In Betrieb ' : '(Noch) nicht in Betrieb'}
-					</p>
-					<p>
-						{#if item.properties.min_capacity !== item.properties.max_capacity}
-							{item.properties.min_capacity} –
-						{/if}
-						{item.properties.max_capacity} Milliarden Kubikmeter/Jahr
-					</p>
+					<button on:mousedown={() => (selectedElement = item)}>
+						<h3 class="font-bold">
+							<span
+								class="w-3 h-3 mr-1 inline-block rounded-full {item.properties.already_in_use ==
+								'TRUE'
+									? 'bg-[#347C86]'
+									: 'bg-[#9CB5B8]'}"
+							></span>
+							{item.properties.place}
+							<span class="font-normal">{item.properties.operator}</span>
+						</h3>
+						<p>{item.properties.type == 'floating' ? 'Schwimmterminal' : 'Landterminal'}</p>
+						<p>
+							{item.properties.already_in_use == 'TRUE' ? 'In Betrieb ' : '(Noch) nicht in Betrieb'}
+						</p>
+						<p>
+							{#if item.properties.min_capacity !== item.properties.max_capacity}
+								{item.properties.min_capacity} –
+							{/if}
+							{item.properties.max_capacity} Milliarden Kubikmeter/Jahr
+						</p>
+					</button>
 				</li>
 			{/each}
 		</ul>

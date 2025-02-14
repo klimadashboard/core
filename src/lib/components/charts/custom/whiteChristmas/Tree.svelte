@@ -5,8 +5,11 @@
 
 <div
 	class="relative w-8 h-8 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain"
+	role="tooltip"
 	on:mouseover={() => (selected = d)}
+	on:focus={() => (selected = d)}
 	on:mouseleave={() => (selected = false)}
+	on:blur={() => (selected = false)}
 >
 	{#if d.sh24 >= 1 && d.sh25 >= 1 && d.sh26 >= 1}
 		<svg
@@ -373,7 +376,7 @@
 				<p>{d.sh26}cm am 26.12.</p>{:else}
 				<p>Keine Daten verfügbar</p>
 			{/if}
-			<div class="arrow-down absolute left-1/2 -translate-x-1/2" />
+			<div class="arrow-down absolute left-1/2 -translate-x-1/2"></div>
 		</div>
 	{/if}
 </div>

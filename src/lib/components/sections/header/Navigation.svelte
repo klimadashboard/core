@@ -5,7 +5,7 @@
 	const dispatch = createEventDispatcher();
 </script>
 
-<div class="container text-base">
+<div class="container text-base mb-4">
 	<ul class="flex gap-4 flex-col sm:flex-row justify-between">
 		{#each page.data.site.translations[0].navigation_primary as c}
 			<li class="flex-1 md:border-r md:last:border-r-0 border-current/20">

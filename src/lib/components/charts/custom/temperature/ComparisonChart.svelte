@@ -128,6 +128,7 @@
 						/>
 						<rect
 							class="fill-transparent"
+							role="tooltip"
 							width={barWidth}
 							height={chartHeight}
 							on:mouseover={() => (selectedDatapoint = datapoint)}

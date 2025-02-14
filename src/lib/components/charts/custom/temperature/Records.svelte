@@ -84,12 +84,14 @@
 							<td>Temperatur</td>
 						</tr>
 					</thead>
-					{#each item.values as day}
-						<tr>
-							<td>{dayjs(day.date).format('D. MMMM YYYY')}</td>
-							<td>{formatNumber(day.t)}°C</td>
-						</tr>
-					{/each}
+					<tbody>
+						{#each item.values as day}
+							<tr>
+								<td>{dayjs(day.date).format('D. MMMM YYYY')}</td>
+								<td>{formatNumber(day.t)}°C</td>
+							</tr>
+						{/each}
+					</tbody>
 				</table>
 			{/if}
 		</div>

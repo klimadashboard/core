@@ -65,6 +65,8 @@
 					<g
 						transform="translate({projection([station.longitude, station.latitude])})"
 						on:click={() => (selectedStation = station)}
+						role="button"
+						tabindex="0"
 						cursor="pointer"
 					>
 						<circle
@@ -91,6 +93,6 @@
 	<div
 		class="w-24 h-3 bg-gray-100"
 		style="background: linear-gradient(90deg, {colors[0]} 0%, {colors[1]} 100%);"
-	/>
+	></div>
 	<span>3.000m</span>
 </div>

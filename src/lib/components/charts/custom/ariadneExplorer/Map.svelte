@@ -45,6 +45,7 @@
 							? 'opacity-70'
 							: 'opacity-100'}
 						id={feature.properties.DEBKG_ID}
+						role="tooltip"
 					/>
 				{/each}
 			</g>

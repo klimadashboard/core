@@ -5,7 +5,7 @@
 
 <footer class="bg-gray-50 dark:bg-gray-900">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
-		<div class="md:col-span-3 border-b border-gray-700 pb-4">
+		<div class="md:col-span-3 border-b border-current/10 pb-4">
 			<h2 class="font-bold mb-1">{page.data.translations.questionsAndAnswers}</h2>
 			<ul>
 				{#each page.data.site.content.faq as item}
@@ -38,7 +38,7 @@
 							placeholder="your@email.com"
 						/>
 					</label>
-					<input type="submit" value="Anmelden" class="button !rounded-l-none" />
+					<input type="submit" value="Anmelden" class="button !rounded-l-none !text-sm" />
 				</form>
 				<a
 					class="button"
@@ -111,7 +111,7 @@
 				>
 			</div>
 		</div>
-		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
+		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-current/10">
 			<h2 class="font-bold">{page.data.translations.footer2Title}</h2>
 			<p>{page.data.translations.footer2Text}</p>
 			<div class="mt-2 flex">
@@ -138,7 +138,7 @@
 				</a>
 			</div>
 		</div>
-		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-gray-700">
+		<div class="border-t pt-4 md:pt-0 md:pl-4 md:border-l md:border-t-0 border-current/10">
 			<h2 class="font-bold">{page.data.translations.footer3Title}</h2>
 			<p>{page.data.translations.footer3Text}</p>
 			<div class="flex items-center space-x-2 flex-wrap mt-2">
@@ -182,7 +182,7 @@
 				</a>
 			</div>
 		</div>
-		<div class="md:col-span-3 pt-4 border-t border-gray-700 flex gap-x-4 flex-wrap">
+		<div class="md:col-span-3 pt-4 border-t border-current/10 flex gap-x-4 flex-wrap">
 			{#each page.data.site.content.navigation_secondary as item}
 				<a
 					href={item.link}

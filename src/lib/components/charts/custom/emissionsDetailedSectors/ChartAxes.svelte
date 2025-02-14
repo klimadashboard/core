@@ -2,7 +2,6 @@
 	import { scaleLinear } from 'd3-scale';
 	import formatNumber from '$lib/stores/formatNumber';
 	export let width;
-	export let height;
 	export let baseline;
 	export let startline;
 	export let dx;
