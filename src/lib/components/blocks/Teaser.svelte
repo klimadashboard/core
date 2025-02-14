@@ -24,10 +24,10 @@
 
 	<div class="p-3 absolute bottom-0 text-white max-w-xl text-balance">
 		<h3 class="font-bold text-3xl lg:text-4xl leading-none mb-2">
-			{block.title}
+			{@html block.title}
 		</h3>
-		<p class="text-lg leading-snug">
-			{block.description}
-		</p>
+		<div class="text-lg leading-snug">
+			{@html block.description}
+		</div>
 	</div>
 </a>

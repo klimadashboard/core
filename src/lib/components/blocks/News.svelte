@@ -4,36 +4,21 @@
 	import { readItems } from '@directus/sdk';
 	import dayjs from 'dayjs';
 	import RelativeTime from 'dayjs/plugin/relativeTime';
-	import { page } from '$app/state';
+	import { page } from '$app/stores';
 	dayjs.extend(RelativeTime);
 
-	let languageCode = $derived(page.data.language.code);
-
-	let getNews = async function () {
+	async function getNews(langCode) {
 		const directus = getDirectusInstance();
 		try {
 			const response = await directus.request(
 				readItems('news', {
 					filter: {
-						_and: [
-							{
-								status: {
-									_eq: 'published'
-								}
-							},
-							{
-								sites: {
-									_icontains: PUBLIC_VERSION
-								}
-							}
-						]
+						_and: [{ status: { _eq: 'published' } }, { sites: { _icontains: PUBLIC_VERSION } }]
 					},
 					deep: {
 						translations: {
 							_filter: {
-								languages_code: {
-									_eq: languageCode
-								}
+								languages_code: { _eq: langCode }
 							}
 						}
 					},
@@ -43,27 +28,24 @@
 				})
 			);
 
-			const data = response.map((item) => {
-				return {
-					...item,
-					text: item.translations[0]?.text
-				};
-			});
-
-			return data;
+			return response.map((item) => ({
+				...item,
+				text: item.translations[0]?.text
+			}));
 		} catch (err) {
 			console.error(err);
 			return [];
 		}
-	};
+	}
 
-	let promise = getNews();
+	// Reactive statement: re-run getNews whenever $page.data.language.code changes.
+	$: promise = getNews($page.data.language.code);
 </script>
 
 <div class="flex flex-col h-full border border-current/20 rounded-2xl p-3">
 	<div class="flex items-center gap-2 border-b text-red-700">
 		<div class="pulse hidden sm:block" />
-		<h3 class="font-bold">{page.data.translations.newsTitle}</h3>
+		<h3 class="font-bold">{$page.data.translations.newsTitle}</h3>
 	</div>
 
 	{#await promise then news}
@@ -84,7 +66,7 @@
 				</div>
 				<div class="leading-tight text-sm">
 					<p class="font-bold">
-						{page.data.translations.newsCreatedBy}
+						{$page.data.translations.newsCreatedBy}
 						{news[0].author.first_name}
 						{news[0].author.last_name}
 					</p>

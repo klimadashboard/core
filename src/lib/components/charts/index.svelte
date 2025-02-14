@@ -2,7 +2,7 @@
 	import Builder from './builder/index.svelte';
 	import Custom from './custom/index.svelte';
 	import Wrapper from './Wrapper.svelte';
-	import { page } from '$app/state';
+	import { page } from '$app/stores';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
 
@@ -10,15 +10,20 @@
 	export let id;
 	export let hideWrapper = false;
 
-	$: getChart = async () => {
+	$: getChart = async (locale) => {
 		const directus = getDirectusInstance();
 		const response = await directus.request(
 			readItem('charts', id, {
 				fields: ['*', 'translations.*'],
 				filter: {
+					status: {
+						_eq: 'published'
+					}
+				},
+				deep: {
 					translations: {
-						languages_code: {
-							_eq: page.data.language.code
+						_filter: {
+							languages_code: { _eq: locale }
 						}
 					}
 				}
@@ -36,7 +41,7 @@
 		};
 	};
 
-	$: promise = getChart();
+	$: promise = getChart($page.data.language.code);
 
 	/*
 

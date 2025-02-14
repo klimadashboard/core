@@ -2,10 +2,11 @@
 	/** @type {import('./$types').PageData} */
 	import Chart from '$lib/components/charts/index.svelte';
 	export let data;
+	console.log(data);
 </script>
 
 <div class="">
 	<div class="container my-16">
-		<Chart chart={data.chart} />
+		<Chart id={data.id} />
 	</div>
 </div>
