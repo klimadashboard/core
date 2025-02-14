@@ -5,6 +5,38 @@ import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
 
+function filterTranslations(data, language) {
+	// If data is an array, process each element.
+	if (Array.isArray(data)) {
+		return data.map((item) => filterTranslations(item, language));
+	}
+	// If data is an object, process its keys.
+	else if (data && typeof data === 'object') {
+		const result = {};
+		for (const key in data) {
+			if (key === 'translations' && Array.isArray(data[key])) {
+				// Find the translation matching the target language.
+				const selected = data[key].find((item) => item.languages_code === language);
+				if (selected) {
+					// Recursively filter the selected translation as well.
+					const filteredTranslation = filterTranslations(selected, language);
+					// Merge the translation fields into the current object.
+					Object.assign(result, filteredTranslation);
+				}
+				// Do not include the original "translations" key.
+			} else {
+				// For all other keys, process them recursively.
+				result[key] = filterTranslations(data[key], language);
+			}
+		}
+		return result;
+	}
+	// For primitives, return the value directly.
+	else {
+		return data;
+	}
+}
+
 // We'll use a small helper to flatten translations recursively.
 function flattenBlockPivot(pivot, language) {
 	// pivot = { id, collection, item, sort, ... }
@@ -35,8 +67,6 @@ export async function load({ fetch, params }) {
 	const language = params.lang || 'de';
 	const slug = params.slug || 'home';
 	const site = PUBLIC_VERSION;
-
-	console.log(language);
 
 	try {
 		// ---------- Fetch the page + expansions ----------
@@ -108,24 +138,9 @@ export async function load({ fetch, params }) {
 					'blocks.item:block_grid.blocks.item:block_quiz.*',
 					'blocks.item:block_grid.blocks.item:block_grid.*'
 					// ^ if you allow nested grids, you'd keep going or do recursion.
-				],
-
-				// ============ DEEP FILTERS ============
-				deep: {
-					// Filter page translations by language
-					translations: {
-						_filter: {
-							languages_code: { _eq: language }
-						}
-					},
-					'blocks.item:block_richtext.translations': {
-						_filter: { languages_code: { _eq: language } }
-					}
-				}
+				]
 			})
 		);
-
-		// console.log(JSON.stringify(pages));
 
 		if (!pages || pages.length === 0) {
 			throw error(404, 'Page not found');
@@ -133,17 +148,12 @@ export async function load({ fetch, params }) {
 
 		const page = pages[0];
 
-		// Typically only 1 translation thanks to our filter
-		const translation = page.translations?.[0] ?? null;
+		const translatedPage = filterTranslations(page, language);
 
 		// Optionally resolve placeholders in the page's own translation
-		const content = translation ? await resolvePlaceholders(translation, language) : null;
+		const content = await resolvePlaceholders(translatedPage, language);
 
-		// Now flatten all block items so that any translated fields
-		// are merged into the top-level block fields
-		page.blocks?.forEach((pivot) => flattenBlockPivot(pivot, language));
-
-		const blocks = await resolvePlaceholders(page.blocks, language);
+		const blocks = content.blocks;
 
 		return {
 			page: {

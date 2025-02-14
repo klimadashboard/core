@@ -16,7 +16,6 @@
 	};
 
 	$: promise = getData();
-	console.log(type);
 </script>
 
 {#await promise then data}

@@ -7,7 +7,9 @@
 	import { page } from '$app/state';
 	dayjs.extend(RelativeTime);
 
-	$: getNews = async function (languageCode) {
+	let languageCode = $derived(page.data.language.code);
+
+	let getNews = async function () {
 		const directus = getDirectusInstance();
 		try {
 			const response = await directus.request(
@@ -55,8 +57,7 @@
 		}
 	};
 
-	$: languageCode = page.data.language.code;
-	$: promise = getNews(languageCode);
+	let promise = getNews();
 </script>
 
 <div class="flex flex-col h-full border border-current/20 rounded-2xl p-3">

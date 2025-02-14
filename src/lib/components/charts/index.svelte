@@ -10,8 +10,6 @@
 	export let id;
 	export let hideWrapper = false;
 
-	console.log(id);
-
 	$: getChart = async () => {
 		const directus = getDirectusInstance();
 		const response = await directus.request(

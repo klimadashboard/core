@@ -3,7 +3,6 @@
 	import Blocks from '$lib/components/blocks/index.svelte';
 
 	export let data;
-	console.log(data);
 </script>
 
 <PageHeader />

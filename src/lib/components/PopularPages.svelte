@@ -1,7 +1,7 @@
 <script>
 	import { page } from '$app/state';
 
-	$: popularPages = page.data.site?.translations[0]?.popular_pages;
+	let popularPages = $derived(page.data.site?.translations[0]?.popular_pages);
 </script>
 
 <div class="relative">
