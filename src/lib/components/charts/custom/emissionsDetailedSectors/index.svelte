@@ -395,8 +395,8 @@
 		{#if memoAvailable}
 			<label
 				class="flex gap-1 text-sm items-center cursor-pointer {showFlightEmissions
-					? 'text-gray-700'
-					: 'text-gray-400'}"
+					? 'opacity-100'
+					: 'opacity-50'}"
 				style=""
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -418,18 +418,19 @@
 					<path d="M12.5 3a17 17 0 0 1 0 18" />
 				</svg>
 				<span class="-translate-y-0.5"
-					>int. Flug- & Schiffverkehr <span
+					>int. Flug- & Schiffverkehr <button
 						class="glossary-label"
+						aria-label="?"
 						on:mousedown={() => glossaryItem.set('memo')}
-					/></span
+					></button></span
 				> <input type="checkbox" bind:checked={showFlightEmissions} /></label
 			>
 		{/if}
 
 		<label
 			class="flex gap-1 text-sm items-center cursor-pointer {useAbsoluteUnits
-				? 'text-gray-700'
-				: 'text-gray-400'}"
+				? 'opacity-100'
+				: 'opacity-50'}"
 			style=""
 		>
 			<span>Absolute Werte</span>

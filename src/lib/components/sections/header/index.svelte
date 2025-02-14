@@ -23,7 +23,11 @@
 				<img src="/logo.svg" alt="Klimadashboard" class="h-13 w-13" />
 				<div class="font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>
-			<button class="button" on:mousedown={() => (showNavigation = !showNavigation)}>
+			<button
+				class="button"
+				aria-label={page.data.translations.navigation}
+				on:mousedown={() => (showNavigation = !showNavigation)}
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"
@@ -44,7 +48,7 @@
 
 			<Breadcrumb />
 
-			<span class="ml-auto" />
+			<span class="ml-auto"></span>
 			<LocaleSwitcher />
 
 			<LightSwitch />

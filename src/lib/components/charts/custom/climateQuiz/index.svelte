@@ -109,7 +109,7 @@
 </script>
 
 {#if page.data.language.code == 'de'}
-	<div class="bg-gray-50 dark:bg-gray-900 p-4">
+	<section class="bg-gray-50 dark:bg-gray-900 p-4">
 		<div class="container p-4 bg-white dark:bg-gray-700 rounded-2xl">
 			<h2 class="font-bold pb-1">{page.data.translations.climateQuiz}</h2>
 			{#if quizQuestions.length > 0}
@@ -127,7 +127,7 @@
 				{#if !quizCompleted}
 					{#if currentQuestion}
 						<div class="quiz-container">
-							<h4 class="text-2xl my-4">{@html currentQuestion.question}</h4>
+							<h3 class="text-2xl my-4">{@html currentQuestion.question}</h3>
 
 							{#if currentQuestion.text_question}
 								<div class="text-lg mb-4">
@@ -208,5 +208,5 @@
 				<p>Loading questions...</p>
 			{/if}
 		</div>
-	</div>
+	</section>
 {/if}
