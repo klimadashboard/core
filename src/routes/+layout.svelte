@@ -27,7 +27,7 @@
 		: page.data.content?.description;
 	$: title = page.data.content?.seo?.title
 		? page.data.content?.seo?.title
-		: page.data.content?.title + ' | ' + page.data.site.translations[0].title;
+		: page.data.content?.title + ' | ' + page.data.site.translations[0]?.title;
 	$: image = 'https://base.klimadashboard.org/assets/' + page.data.content?.seo?.og_image;
 
 	onMount(() => {

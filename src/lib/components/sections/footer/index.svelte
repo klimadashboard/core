@@ -5,19 +5,21 @@
 
 <footer class="bg-gray-50 dark:bg-gray-900">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
-		<div class="md:col-span-3 border-b border-current/10 pb-4">
-			<h2 class="font-bold mb-1">{page.data.translations.questionsAndAnswers}</h2>
-			<ul>
-				{#each page.data.site.content.faq as item}
-					<li class="mb-2">
-						<details class="max-w-2xl">
-							<summary class="hover:underline underline-offset-2">{item.question}</summary>
-							{@html item.answer}
-						</details>
-					</li>
-				{/each}
-			</ul>
-		</div>
+		{#if page.data.site?.content?.faq}
+			<div class="md:col-span-3 border-b border-current/10 pb-4">
+				<h2 class="font-bold mb-1">{page.data.translations.questionsAndAnswers}</h2>
+				<ul>
+					{#each page.data.site.content.faq as item}
+						<li class="mb-2">
+							<details class="max-w-2xl">
+								<summary class="hover:underline underline-offset-2">{item.question}</summary>
+								{@html item.answer}
+							</details>
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
 		<div class="">
 			<h2 class="font-bold">{page.data.translations.footer1Title}</h2>
 			<p>{page.data.translations.footer1Text}</p>
@@ -182,14 +184,16 @@
 				</a>
 			</div>
 		</div>
-		<div class="md:col-span-3 pt-4 border-t border-current/10 flex gap-x-4 flex-wrap">
-			{#each page.data.site.content.navigation_secondary as item}
-				<a
-					href={item.link}
-					class="opacity-80 hover:opacity-100 transition hover:underline underline-offset-2"
-					target="_blank">{item.label}</a
-				>
-			{/each}
-		</div>
+		{#if page.data.site?.content?.navigation_secondary}
+			<div class="md:col-span-3 pt-4 border-t border-current/10 flex gap-x-4 flex-wrap">
+				{#each page.data.site.content.navigation_secondary as item}
+					<a
+						href={item.link}
+						class="opacity-80 hover:opacity-100 transition hover:underline underline-offset-2"
+						target="_blank">{item.label}</a
+					>
+				{/each}
+			</div>
+		{/if}
 	</div>
 </footer>
