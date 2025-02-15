@@ -2,10 +2,10 @@
 	export let data;
 </script>
 
-<div class="">
-	<ul class="m-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+<div class="my-8 container">
+	<ul class="grid grid-cols-2 md:grid-cols-4 gap-1">
 		{#each data.charts as chart}
-			<li class="border p-4">
+			<li class="p-3 rounded-2xl bg-gray-500/20">
 				<a href="/charts/{chart.id}">{chart.translations[0].title}</a>
 			</li>
 		{/each}

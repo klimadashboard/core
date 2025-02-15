@@ -30,11 +30,6 @@
 		: page.data.content?.title + ' | ' + page.data.site.translations[0].title;
 	$: image = 'https://base.klimadashboard.org/assets/' + page.data.content?.seo?.og_image;
 
-	$: hrefLangLinks = page.data.languages.map((language) => ({
-		lang: language.code,
-		url: page.url.href.replace(page.data.language.code, language.code)
-	}));
-
 	onMount(() => {
 		document.documentElement.lang = page.data.language.code;
 		dayjs.locale(page.data.language.code);
@@ -68,8 +63,12 @@
 	<title>{title}</title>
 	<meta name="description" content={description} />
 
-	{#each hrefLangLinks as { lang, url }}
-		<link rel="alternate" hreflang={lang} href={url} />
+	{#each page.data.page?.slugs as { languages_code, slug }}
+		<link
+			rel="alternate"
+			hreflang={languages_code}
+			href={page.url.href + languages_code + '/' + slug}
+		/>
 	{/each}
 
 	<!-- Facebook Meta Tags -->

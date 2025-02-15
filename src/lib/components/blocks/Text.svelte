@@ -15,7 +15,7 @@
 	}
 
 	:global(.text p) {
-		@apply my-4;
+		@apply my-2;
 	}
 
 	:global(.text ul) {

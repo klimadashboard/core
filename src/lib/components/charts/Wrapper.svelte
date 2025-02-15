@@ -89,7 +89,11 @@
 			{chart.content?.title}
 		</h2>
 		<div class="flex items-center gap-3 transition">
-			<a href="/charts/{chart.id}" aria-label="Chart auf eigener Seite öffnen">
+			<a
+				href="/charts/{chart.id}"
+				aria-label="Chart auf eigener Seite öffnen"
+				class="opacity-80 hover:opacity-100 transition cursor-pointer"
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"
@@ -110,7 +114,7 @@
 			</a>
 			<button
 				on:mousedown={() => exportImage()}
-				class="hover:text-black"
+				class="opacity-80 hover:opacity-100 transition cursor-pointer"
 				aria-label="Als Bild exportieren"
 			>
 				<svg
@@ -131,7 +135,11 @@
 					/><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg
 				>
 			</button>
-			<button on:mousedown={() => copyEmbedCode()} class="hover:text-black" aria-label="Einbetten">
+			<button
+				on:mousedown={() => copyEmbedCode()}
+				class="opacity-80 hover:opacity-100 transition cursor-pointer"
+				aria-label="Einbetten"
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="icon icon-tabler icon-tabler-code"
@@ -201,7 +209,7 @@
 			{/if}
 			{#if chart.content?.source}
 				<div class="text-sm">
-					<div class="flex items-center gap-0.5 font-bold -mb-4">
+					<div class="flex items-center gap-0.5 font-bold -mb-2">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							class="icon icon-tabler icon-tabler-table"
@@ -231,13 +239,13 @@
 		<div class="text-lg relative overflow-hidden" style="max-height: 32rem">
 			<div class="overflow-scroll data-notices" style="max-height:32rem;">
 				{@html chart.content?.methods}
-				<div class="bottom-hint" use:observeBottomInView />
+				<div class="bottom-hint" use:observeBottomInView></div>
 			</div>
 			<div
 				class="absolute left-0 right-0 bottom-0 h-16 bg-linear-to-t from-white dark:from-gray-900 pointer-events-none transition-opacity {!showBottomFade
 					? 'opacity-0'
 					: ''}"
-			/>
+			></div>
 		</div>
 	{/if}
 	{#if chart.content?.methods}

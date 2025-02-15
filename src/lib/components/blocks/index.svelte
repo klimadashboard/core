@@ -1,23 +1,12 @@
 <script>
-	import Heading from './Heading.svelte';
-	import Markdown from './Markdown.svelte';
 	import Chart from './Chart.svelte';
 	import Toggle from './Toggle.svelte';
-	import Tabs from './Tabs.svelte';
-	import Navigation from './Navigation.svelte';
-	import Image from './Image.svelte';
-	import Numbers from './Numbers.svelte';
-	import ChartPeople from './ChartPeople.svelte';
-	import ChartBar from './ChartBar.svelte';
-	import Quote from './Quote.svelte';
-	import List from './List.svelte';
 	import Grid from './Grid.svelte';
 	import Text from './Text.svelte';
 	import News from './News.svelte';
 	import Donation from './Donation.svelte';
 	import Quiz from './Quiz.svelte';
 	import Quotes from './Quotes.svelte';
-	import Live from './Live.svelte';
 	import Teaser from './Teaser.svelte';
 	import Items from './Items.svelte';
 	import Gallery from './Gallery.svelte';
@@ -29,10 +18,6 @@
 		{
 			type: 'block_panel',
 			component: Panel
-		},
-		{
-			type: 'block_live',
-			component: Live
 		},
 		{
 			type: 'block_gallery',
@@ -71,52 +56,12 @@
 			component: Items
 		},
 		{
-			type: 'heading',
-			component: Heading
-		},
-		{
-			type: 'markdown',
-			component: Markdown
-		},
-		{
 			type: 'block_chart',
 			component: Chart
 		},
 		{
-			type: 'tabs',
-			component: Tabs
-		},
-		{
 			type: 'block_toggle',
 			component: Toggle
-		},
-		{
-			type: 'navigation',
-			component: Navigation
-		},
-		{
-			type: 'image',
-			component: Image
-		},
-		{
-			type: 'numbers',
-			component: Numbers
-		},
-		{
-			type: 'chartPeople',
-			component: ChartPeople
-		},
-		{
-			type: 'chartBars',
-			component: ChartBar
-		},
-		{
-			type: 'quote',
-			component: Quote
-		},
-		{
-			type: 'list',
-			component: List
 		}
 	];
 </script>

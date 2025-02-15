@@ -7,7 +7,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let chart;
-	
+
 	let selectedStation;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';

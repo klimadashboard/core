@@ -40,7 +40,7 @@
 </script>
 
 {#await promise then data}
-	<WeatherStationPicker {data} {chart} bind:selectedStation />
+	<WeatherStationPicker {data} bind:selectedStation />
 
-		<WeatherStationMap {data} bind:selectedStation />
+	<WeatherStationMap {data} bind:selectedStation />
 {/await}

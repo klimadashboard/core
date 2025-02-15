@@ -18,7 +18,9 @@
 </script>
 
 <a
-	class="p-3 h-full group hover:opacity-90 relative leading-tight flex flex-col break-words hyphens-auto group transition"
+	class="p-3 h-full {block.link
+		? 'group hover:opacity-90'
+		: ''} relative leading-tight flex flex-col break-words hyphens-auto transition"
 	style="background: {block.colorBackground}; color: {block.colorText}"
 	href={block.link}
 >

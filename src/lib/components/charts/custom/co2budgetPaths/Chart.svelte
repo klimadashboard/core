@@ -82,38 +82,38 @@
 	$: areas = selectedKeys.map((key) =>
 		key.replace(chosenBudget.value + '_', '') == 'nochange'
 			? 'M' +
-			  xScaleOffset(currentYear) +
-			  ',' +
-			  yScale(lastTHG) +
-			  'L' +
-			  xScale(getZeroYear(key)) +
-			  ',' +
-			  yScale(lastTHG) +
-			  'L' +
-			  xScale(getZeroYear(key)) +
-			  ',' +
-			  yScale(0) +
-			  'L' +
-			  xScaleOffset(currentYear) +
-			  ',' +
-			  yScale(0) +
-			  'Z'
+				xScaleOffset(currentYear) +
+				',' +
+				yScale(lastTHG) +
+				'L' +
+				xScale(getZeroYear(key)) +
+				',' +
+				yScale(lastTHG) +
+				'L' +
+				xScale(getZeroYear(key)) +
+				',' +
+				yScale(0) +
+				'L' +
+				xScaleOffset(currentYear) +
+				',' +
+				yScale(0) +
+				'Z'
 			: generateArea(key)(dataPaths.filter((d) => d.year >= currentYear))
 	);
 	$: lines = selectedKeys.map((key) =>
 		key.replace(chosenBudget.value + '_', '') == 'nochange'
 			? 'M' +
-			  xScaleOffset(currentYear) +
-			  ',' +
-			  yScale(lastTHG) +
-			  'L' +
-			  xScale(getZeroYear(key)) +
-			  ',' +
-			  yScale(lastTHG) +
-			  'L' +
-			  xScale(getZeroYear(key)) +
-			  ',' +
-			  yScale(0)
+				xScaleOffset(currentYear) +
+				',' +
+				yScale(lastTHG) +
+				'L' +
+				xScale(getZeroYear(key)) +
+				',' +
+				yScale(lastTHG) +
+				'L' +
+				xScale(getZeroYear(key)) +
+				',' +
+				yScale(0)
 			: generateLine(key)(dataPaths.filter((d) => d.year >= currentYear))
 	);
 
@@ -180,7 +180,7 @@
 <div class="relative">
 	<div
 		id="legend"
-		class="flex-col mb-4 mt-4 md:mt-0 md:absolute md:left-10 md:bottom-10 text-sm bg-white z-20 md:p-1"
+		class="flex-col mb-4 mt-4 md:mt-0 md:absolute md:left-10 md:bottom-10 text-sm bg-white dark:bg-gray-950 z-20 md:p-1"
 	>
 		{#each selectedKeys as key, i}
 			{@const selectedKey = keys.find((d) => d.key == key.replace(chosenBudget.value + '_', ''))}

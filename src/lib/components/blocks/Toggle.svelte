@@ -2,19 +2,16 @@
 	export let block;
 </script>
 
-<section class="my-8 text-lg container text">
-	<details
-		class="max-w-2xl mx-auto"
-		itemscope
-		itemprop="mainEntity"
-		itemtype="https://schema.org/Question"
-	>
-		<summary class="text-xl border-b" itemprop="name">{block.question}</summary>
-		<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-			{@html block.answer}
-		</div>
-	</details>
-</section>
+<div class="my-8 text-lg container text">
+	<div class="max-w-2xl mx-auto px-4">
+		<details itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+			<summary class="text-xl border-b" itemprop="name">{block.question}</summary>
+			<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+				{@html block.answer}
+			</div>
+		</details>
+	</div>
+</div>
 
 <style>
 	:global(details[open] summary ~ *) {

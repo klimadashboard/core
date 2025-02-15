@@ -190,13 +190,7 @@
 
 <div id="settings" class="flex items-center gap-2 text-sm mt-2 md:mt-0">
 	<span>Startjahr auswählen</span>
-	<input
-		type="number"
-		min="1990"
-		max="2020"
-		bind:value={selectedStartYear}
-		class="px-3 py-1 w-20 bg-gray-100 rounded-full"
-	/>
+	<input type="number" min="1990" max="2020" bind:value={selectedStartYear} class="input" />
 </div>
 
 {#if chosenProbability == 50 && chosenTemperature == 1.65}

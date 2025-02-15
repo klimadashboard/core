@@ -398,7 +398,7 @@
 			<label
 				class="flex gap-1 text-sm items-center cursor-pointer {showFlightEmissions
 					? 'opacity-100'
-					: 'opacity-50'}"
+					: 'opacity-70'}"
 				style=""
 				><svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -432,7 +432,7 @@
 		<label
 			class="flex gap-1 text-sm items-center cursor-pointer {useAbsoluteUnits
 				? 'opacity-100'
-				: 'opacity-50'}"
+				: 'opacity-70'}"
 			style=""
 		>
 			<span>Absolute Werte</span>
@@ -476,7 +476,7 @@
 						class="underline-offset-2 group-hover:underline group-disabled:no-underline font-bold"
 						>Gesamtemissionen {selectedYear}</span
 					>
-					<span class="text-sm opacity-50 pb-[2px]"
+					<span class="text-sm opacity-70 pb-[2px]"
 						>{totalSelectedYear.toFixed(2).replace('.', ',')} Mt CO₂eq (100%)</span
 					>
 				</span>
@@ -509,7 +509,7 @@
 					<span class="group-hover:underline group-disabled:no-underline underline-offset-2"
 						>{@html sortedData[ksgSelection].label}</span
 					>
-					<span class="text-sm max-sm:hidden opacity-50 pb-[2px]"
+					<span class="text-sm max-sm:hidden opacity-70 pb-[2px]"
 						>{sortedData[ksgSelection].absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(
 							(sortedData[ksgSelection].absolute[_y] / totalSelectedYear) *
 							100
@@ -539,7 +539,7 @@
 					<span>
 						{@html sortedData[ksgSelection].sectors[crfSelection].label}
 					</span>
-					<span class="text-sm max-sm:hidden opacity-50 pb-[2px] ml-1"
+					<span class="text-sm max-sm:hidden opacity-70 pb-[2px] ml-1"
 						>{sortedData[ksgSelection].sectors[crfSelection].absolute[_y]
 							.toFixed(2)
 							.replace('.', ',')} Mt CO₂eq ({(
@@ -552,7 +552,7 @@
 				</span>
 			{/if}
 			<div
-				class="absolute top-0 right-0 bottom-0 w-16 bg-linear-to-r from-transparent to-white dark:to-gray-900"
+				class="absolute top-0 right-0 bottom-0 w-16 bg-linear-to-r from-transparent to-white dark:to-gray-950"
 			></div>
 		</div>
 	</div>

@@ -53,6 +53,16 @@ export async function load({ fetch, params }) {
 	dayjs.locale(language);
 
 	try {
+		const slugs = await directus.request(
+			readItems('pages', {
+				filter: {
+					site: { _eq: site },
+					translations: { slug: { _eq: slug } }
+				},
+				fields: ['translations.slug', 'translations.languages_code']
+			})
+		);
+
 		// ---------- Fetch the page + expansions ----------
 		const pages = await directus.request(
 			readItems('pages', {
@@ -92,6 +102,8 @@ export async function load({ fetch, params }) {
 					'blocks.item:block_items.translations.*',
 					'blocks.item:block_donation.*',
 					'blocks.item:block_donation.translations.*',
+					'blocks.item:block_toggle.*',
+					'blocks.item:block_toggle.translations.*',
 
 					// For block types WITHOUT translations...
 					'blocks.item:block_news.*',
@@ -128,19 +140,9 @@ export async function load({ fetch, params }) {
 
 		if (!pages || pages.length === 0) {
 			// add logic to check if the slug is available in other languages
-			const availableSlugs = await directus.request(
-				readItems('pages', {
-					filter: {
-						site: { _eq: site },
-						translations: { slug: { _eq: slug } }
-					},
-					fields: ['translations.slug', 'translations.languages_code']
-				})
-			);
-			if (availableSlugs.length > 0) {
-				const translatedPage = availableSlugs[0].translations.find(
-					(t) => t.languages_code == language
-				);
+
+			if (slugs.length > 0) {
+				const translatedPage = slugs[0].translations.find((t) => t.languages_code == language);
 				if (translatedPage) {
 					redirect(308, `/${translatedPage.languages_code}/${translatedPage.slug}`);
 				}
@@ -161,7 +163,8 @@ export async function load({ fetch, params }) {
 			page: {
 				id: page.id,
 				date_updated: page.date_updated,
-				blocks: blocks
+				blocks: blocks,
+				slugs: slugs[0].translations
 			},
 			content
 		};

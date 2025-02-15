@@ -2,7 +2,6 @@
 	/** @type {import('./$types').PageData} */
 	import Chart from '$lib/components/charts/index.svelte';
 	export let data;
-	console.log(data);
 </script>
 
 <div class="">

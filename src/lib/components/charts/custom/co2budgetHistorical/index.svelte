@@ -280,7 +280,7 @@
 		</div>
 	</div>
 
-	<div class="border-t pt-1 mt-6 text-gray-600 border-current text-sm">
+	<div class="border-t pt-1 mt-6 opacity-80 border-current text-sm">
 		<p>
 			Quellen:
 			<br />
