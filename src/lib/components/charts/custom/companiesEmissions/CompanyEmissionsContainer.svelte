@@ -130,7 +130,9 @@
 			{#each sectors as sector}
 				<button
 					class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
-        {selectedSector === sector.name ? 'text-black bg-gray-300 ' : 'text-gray-600 bg-gray-100 '}"
+        {selectedSector === sector.name
+						? 'text-black bg-gray-300 '
+						: 'text-gray-700 dark:text-gray-700 bg-gray-100 dark:bg-gray-500 '}"
 					aria-label={sector}
 					title={sector.name}
 					on:click={() => {
@@ -246,7 +248,9 @@
 					</button>
 				{/each}
 				{#if selectedScopes.length > 1 && selectedCompaniesNames.length > 1}
-					<p class="text-gray-600 text-sm">(ausgewählte Scopes werden summiert)</p>
+					<p class="text-gray-600 dark:text-gray-300 text-sm">
+						(ausgewählte Scopes werden summiert)
+					</p>
 				{/if}
 			</div>
 		</div>
