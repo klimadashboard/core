@@ -47,15 +47,13 @@
 			stroke-width="2"
 			stroke-linecap="round"
 			stroke-linejoin="round"
-			class="absolute pointer-events-none"
+			class="absolute left-2 top-1.5"
+			><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+				d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"
+			/><path d="M3.6 9h16.8" /><path d="M3.6 15h16.8" /><path d="M11.5 3a17 17 0 0 0 0 18" /><path
+				d="M12.5 3a17 17 0 0 1 0 18"
+			/></svg
 		>
-			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-			<path d="M4 5h7" />
-			<path d="M9 3v2c0 4.418 -2.239 8 -5 8" />
-			<path d="M5 9c0 2.144 2.952 3.908 6.7 4" />
-			<path d="M12 20l4 -9l4 9" />
-			<path d="M19.1 18h-6.2" />
-		</svg>
 		<select
 			class="appearance-none bg-transparent uppercase pl-7"
 			on:change={(e) => updateLocale(e.target.value)}
@@ -63,7 +61,7 @@
 		>
 			{#each languages as language}
 				<option value={language.code} selected={$page.data.language.code === language.code}>
-					{language.code}
+					{language.code.toUpperCase()}
 				</option>
 			{/each}
 		</select>

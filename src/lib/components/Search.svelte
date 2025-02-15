@@ -108,7 +108,14 @@
 							}
 						]
 					},
-					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
+					fields: ['id', 'translations.title', 'translations.heading', 'translations.text'],
+					deep: {
+						translations: {
+							_filter: {
+								languages_code: { _eq: $page.data.language.code }
+							}
+						}
+					}
 				})
 			);
 
@@ -130,7 +137,14 @@
 							}
 						]
 					},
-					fields: ['id', 'translations.title', 'translations.heading', 'translations.text']
+					fields: ['id', 'translations.title', 'translations.heading', 'translations.text'],
+					deep: {
+						translations: {
+							_filter: {
+								languages_code: { _eq: $page.data.language.code }
+							}
+						}
+					}
 				})
 			);
 
@@ -166,7 +180,14 @@
 							}
 						]
 					},
-					fields: ['id', 'translations.title', 'translations.slug']
+					fields: ['id', 'translations.title', 'translations.slug'],
+					deep: {
+						translations: {
+							_filter: {
+								languages_code: { _eq: $page.data.language.code }
+							}
+						}
+					}
 				})
 			);
 
@@ -182,7 +203,14 @@
 							{ _or: [{ translations: { title: { _icontains: value } } }] }
 						]
 					},
-					fields: ['id', 'translations.title', 'translations.slug']
+					fields: ['id', 'translations.title', 'translations.slug'],
+					deep: {
+						translations: {
+							_filter: {
+								languages_code: { _eq: $page.data.language.code }
+							}
+						}
+					}
 				})
 			);
 
@@ -421,7 +449,7 @@
 			<input
 				type="text"
 				placeholder={$page.data.translations.searchPlaceholder}
-				class="input w-full !pl-10"
+				class="input w-full !pl-10 text-black dark:text-white"
 				bind:value={query}
 				on:input={onInput}
 				on:keydown={onKeyDown}

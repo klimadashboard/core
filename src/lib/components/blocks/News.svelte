@@ -44,7 +44,7 @@
 
 <div class="flex flex-col h-full border border-current/20 rounded-2xl p-3">
 	<div class="flex items-center gap-2 border-b text-red-700">
-		<div class="pulse hidden sm:block" />
+		<div class="pulse"></div>
 		<h3 class="font-bold">{$page.data.translations.newsTitle}</h3>
 	</div>
 
@@ -59,7 +59,7 @@
 			<div class="flex flex-wrap items-center gap-2 mt-auto">
 				<div class="h-12 w-12 rounded-full bg-gray-400 overflow-hidden relative shrink-0">
 					<img
-						src="https://base.klimadashboard.org/assets/{news[0].author.avatar}"
+						src="https://base.klimadashboard.org/assets/{news[0].author.avatar}?key=tiny"
 						alt=""
 						class="absolute w-full h-full object-cover inset-0"
 					/>

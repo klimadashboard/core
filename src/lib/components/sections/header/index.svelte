@@ -19,7 +19,7 @@
 <header class="fixed bg-white/90 dark:bg-gray-900/90 w-screen backdrop-blur-xs z-50">
 	<div class="text-sm sm:text-base">
 		<div class="flex items-center gap-2">
-			<a href="/" class="flex items-center gap-2">
+			<a href="/{page.data.language.code}" class="flex items-center gap-2">
 				<img src="/logo.svg" alt="Klimadashboard" class="h-13 w-13" />
 				<div class="font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>

@@ -34,7 +34,7 @@
 							type="email"
 							name="email"
 							id="bd-email"
-							class="input !rounded-r-none !border-gray-100 dark:!border-gray-800 w-36"
+							class="input !rounded-r-none !border-gray-100 dark:!border-gray-800 w-36 text-black dark:text-white"
 							placeholder="your@email.com"
 						/>
 					</label>

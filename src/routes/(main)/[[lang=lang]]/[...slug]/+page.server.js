@@ -1,5 +1,5 @@
 /** @type {import('./$types').PageLoad} */
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
@@ -40,32 +40,12 @@ function filterTranslations(data, language) {
 	}
 }
 
-// We'll use a small helper to flatten translations recursively.
-function flattenBlockPivot(pivot, language) {
-	// pivot = { id, collection, item, sort, ... }
-	const item = pivot?.item;
-	if (!item) return;
-
-	// 1) If there's a translations array, merge [0] into top-level fields
-	if (Array.isArray(item.translations) && item.translations.length > 0) {
-		const t = item.translations.find((d) => d.language_code == language);
-		// Overwrite or add fields from `t`:
-		Object.assign(item, t);
-		// Remove the translations array to keep things clean:
-		delete item.translations;
-	}
-
-	// 2) If this pivot is a block_grid, flatten its nested blocks
-	//    so we handle any child blocks similarly:
-	if (pivot.collection === 'block_grid' && Array.isArray(item.blocks)) {
-		item.blocks.forEach((nestedPivot) => {
-			flattenBlockPivot(nestedPivot);
-		});
-	}
-}
-
 export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
+
+	if (params.lang == 'de') {
+		redirect(308, '/' + params.slug);
+	}
 
 	const language = params.lang || 'de';
 	const slug = params.slug || 'home';
@@ -147,6 +127,24 @@ export async function load({ fetch, params }) {
 		);
 
 		if (!pages || pages.length === 0) {
+			// add logic to check if the slug is available in other languages
+			const availableSlugs = await directus.request(
+				readItems('pages', {
+					filter: {
+						site: { _eq: site },
+						translations: { slug: { _eq: slug } }
+					},
+					fields: ['translations.slug', 'translations.languages_code']
+				})
+			);
+			if (availableSlugs.length > 0) {
+				const translatedPage = availableSlugs[0].translations.find(
+					(t) => t.languages_code == language
+				);
+				if (translatedPage) {
+					redirect(308, `/${translatedPage.languages_code}/${translatedPage.slug}`);
+				}
+			}
 			throw error(404, 'Page not found');
 		}
 
@@ -168,7 +166,9 @@ export async function load({ fetch, params }) {
 			content
 		};
 	} catch (err) {
-		console.error(err);
+		if (err && 'location' in err) {
+			throw err;
+		}
 		throw error(404, 'Page not found');
 	}
 }

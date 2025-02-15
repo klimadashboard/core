@@ -9,13 +9,13 @@
 	{#if block.image}
 		<img
 			class="inset-0 w-full h-full object-cover object-center absolute group-hover:scale-105 transition duration-500"
-			src="https://base.klimadashboard.org/assets/{block.image}?key=large"
+			src="https://base.klimadashboard.org/assets/{block.image}?key=medium"
 			alt=""
 		/>
 		<div
 			class="bg-linear-to-b from-transparent to-black opacity-90 absolute h-2/3 w-full bottom-0"
-		/>
-		<div class="bg-linear-to-br from-black to-transparent opacity-20 absolute inset-0" />
+		></div>
+		<div class="bg-linear-to-br from-black to-transparent opacity-20 absolute inset-0"></div>
 	{/if}
 
 	<div class="absolute p-3 text-white font-bold hyphens-auto leading-tight">

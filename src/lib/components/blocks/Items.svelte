@@ -84,7 +84,7 @@
 	{:then items}
 		<h3 class="font-bold mb-1">{block.title}</h3>
 		<ul class="flex flex-wrap gap-x-4 text-lg">
-			{#each items as item}
+			{#each items.filter((item) => item.content?.slug !== (page.params.slug ? page.params.slug : 'home')) as item}
 				{@const relativeUrl = item.type == 'pages' ? item.content.slug : item.type + '/' + item.id}
 				<li class="inline hover:underline underline-offset-2 opacity-80 hover:opacity-100">
 					<a href={relativeUrl}>

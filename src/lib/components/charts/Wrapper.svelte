@@ -243,17 +243,17 @@
 	{#if chart.content?.methods}
 		<div
 			id="tab-switcher"
-			class="absolute rounded-b-2xl bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 dark:bg-gray-900 text-sm md:text-base"
+			class="absolute border-t border-current/10 rounded-b-2xl bottom-0 left-0 right-0 grid grid-cols-2 bg-gray-100 dark:bg-gray-900 text-sm md:text-base"
 		>
 			<button
 				on:mousedown={() => (showNotices = !showNotices)}
-				class="{!showNotices ? 'bg-white dark:bg-gray-800' : 'border-t '} py-2"
+				class="{!showNotices ? 'bg-white dark:bg-gray-800' : ' '} py-2"
 			>
 				{page.data.translations.chart}
 			</button>
 			<button
 				on:mousedown={() => (showNotices = !showNotices)}
-				class="{showNotices ? 'bg-white dark:bg-gray-800 ' : 'border-t'} py-2"
+				class="{showNotices ? 'bg-white dark:bg-gray-800 ' : ''} py-2"
 			>
 				{page.data.translations.method}
 			</button>
