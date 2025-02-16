@@ -101,7 +101,7 @@
 				goalScenario={goalScenarios[selectedScenario]}
 			/>
 		{/each}
-		<div class="bg-gray-700 rounded-2xl p-4">
+		<div class="bg-gray-100 dark:bg-gray-800 rounded-2xl p-4">
 			<p>Für Biomasse stehen noch nicht ausreichend Daten zu Verfügung.</p>
 		</div>
 	</div>

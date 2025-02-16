@@ -94,7 +94,7 @@
 	$: gap = nationalGoal - totalGoalsAndProduction;
 </script>
 
-<div class="bg-gray-100 dark:bg-gray-700 rounded-2xl overflow-hidden">
+<div class="bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden">
 	<div class="text-white p-4 flex justify-between items-center" style="background: {type.color}">
 		<h3 class="text-xl">
 			<b>{type.label}</b> Nationales {goalScenario}-Ausbauziel zu {Math.round(percentage)}%

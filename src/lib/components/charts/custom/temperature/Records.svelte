@@ -74,7 +74,7 @@
 
 <div class="grid md:grid-cols-2 gap-4 mt-16">
 	{#each items as item}
-		<div class="rounded-sm border p-4 text-lg">
+		<div class="rounded-sm border-current/10 border p-4 text-lg">
 			<p><b>{item.heading}:</b> {item.text}</p>
 			{#if item.values.length > 0}
 				<table>
