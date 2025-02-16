@@ -80,7 +80,7 @@ const getCO2PriceData = async () => {
 			.catch(() => []);
 
 		const co2PriceNowEUEntry = data.find((d) => d.region === 'EU');
-		const co2PriceNowNationalEntry = data.find((d) => d.region === PUBLIC_VERSION.toUpperCase());
+		const co2PriceNowNationalEntry = data.find((d) => d.region === PUBLIC_VERSION);
 
 		return {
 			co2PriceNowEU: co2PriceNowEUEntry?.value || 'N/A',

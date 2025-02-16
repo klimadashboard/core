@@ -105,6 +105,11 @@
 									{ translations: { heading: { _eq: value } } },
 									{ translations: { text: { _eq: value } } }
 								]
+							},
+							{
+								status: {
+									_eq: 'published'
+								}
 							}
 						]
 					},
@@ -134,6 +139,11 @@
 									{ translations: { heading: { _icontains: value } } },
 									{ translations: { text: { _icontains: value } } }
 								]
+							},
+							{
+								status: {
+									_eq: 'published'
+								}
 							}
 						]
 					},
@@ -177,6 +187,11 @@
 							},
 							{
 								_or: [{ translations: { title: { _eq: value } } }]
+							},
+							{
+								status: {
+									_eq: 'published'
+								}
 							}
 						]
 					},
@@ -200,7 +215,12 @@
 									_eq: PUBLIC_VERSION
 								}
 							},
-							{ _or: [{ translations: { title: { _icontains: value } } }] }
+							{ _or: [{ translations: { title: { _icontains: value } } }] },
+							{
+								status: {
+									_eq: 'published'
+								}
+							}
 						]
 					},
 					fields: ['id', 'translations.title', 'translations.slug'],

@@ -203,7 +203,7 @@
 		<div class="my-4">
 			<slot />
 		</div>
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 pb-10">
 			{#if chart.content?.text}
 				<p class="text-lg text col-span-2">{@html chart.content?.text}</p>
 			{/if}
