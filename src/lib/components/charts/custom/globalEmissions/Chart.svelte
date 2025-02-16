@@ -79,7 +79,7 @@
 								x={margin.left}
 								width={xScale(country.value)}
 								height={yHeight - 10}
-								class="fill-gray-900"
+								class="fill-gray-900 dark:fill-gray-600"
 							/>
 							<image
 								x={margin.left + 10}
