@@ -85,7 +85,7 @@
 	bind:this={item}
 >
 	<div class="flex justify-between items-center mb-1 transition">
-		<h2 class="uppercase tracking-wide font-semibold text-sm break-words w-2/3">
+		<h2 class="font-bold">
 			{chart.content?.title}
 		</h2>
 		<div class="flex items-center gap-3 transition">

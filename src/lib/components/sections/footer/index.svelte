@@ -40,7 +40,11 @@
 							placeholder="your@email.com"
 						/>
 					</label>
-					<input type="submit" value="Anmelden" class="button !rounded-l-none !text-sm" />
+					<input
+						type="submit"
+						value={page.data.translations.signUp}
+						class="button !rounded-l-none !text-sm"
+					/>
 				</form>
 				<a
 					class="button"
