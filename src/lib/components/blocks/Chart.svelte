@@ -5,7 +5,7 @@
 	$: hideWrapper = block.hidewrapper;
 </script>
 
-<div class="my-4 {hideWrapper ? '' : 'container'}">
+<div class="my-4 space-y-4 {hideWrapper ? '' : 'container'}">
 	{#each block.charts as chart}
 		<Chart id={chart.chart} {hideWrapper} />
 	{/each}
