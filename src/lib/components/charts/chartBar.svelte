@@ -145,7 +145,6 @@
 					<g
 						class={datapoint.highlight ? 'text-green-700' : 'text-green-500 '}
 						transform={`translate(${i * (barWidth + padding) || 0} 0)`}
-						in:fade|global={{ delay: i * 62 }}
 					>
 						{#if datapoint.categories !== undefined}
 							{#each datapoint.categories as category, j}

@@ -1,5 +1,5 @@
 <script>
-	import LineChart from '$lib/components/charts/chartLine.svelte';
+	import ChartLine from '$lib/components/charts/chartLine.svelte';
 	import Papa from 'papaparse';
 
 	let rawData;

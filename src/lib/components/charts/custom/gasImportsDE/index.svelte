@@ -1,5 +1,5 @@
 <script>
-	import LineChart from '$lib/components/charts/chartLine.svelte';
+	import ChartLine from '$lib/components/charts/chartLine.svelte';
 	import Papa from 'papaparse';
 	import dayjs from 'dayjs';
 
@@ -72,7 +72,7 @@
 
 <div class="h-80">
 	{#if data}
-		<LineChart
+		<ChartLine
 			showZeroValuesInLegend={false}
 			{data}
 			{labels}

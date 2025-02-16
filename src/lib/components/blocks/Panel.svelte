@@ -24,14 +24,16 @@
 	style="background: {block.colorBackground}; color: {block.colorText}"
 	href={block.link}
 >
-	<div class="flex justify-between font-bold border-b border-current pb-1">
-		<h3 class="">
-			{block.title} <span class="opacity-0 group-hover:opacity-100 transition">&rarr;</span>
-		</h3>
-		{#if block.icon}
-			{@html block.icon}
-		{/if}
-	</div>
+	{#if block.title}
+		<div class="flex justify-between font-bold border-b border-current pb-1">
+			<h3 class="">
+				{block.title} <span class="opacity-0 group-hover:opacity-100 transition">&rarr;</span>
+			</h3>
+			{#if block.icon}
+				{@html block.icon}
+			{/if}
+		</div>
+	{/if}
 	<div>
 		<div class="flex items-end gap-2 mt-1">
 			<p class="text-5xl font-light font-condensed">
