@@ -58,10 +58,7 @@
 			}
 
 			yScale = scaleLinear()
-				.domain([
-					min([...data, ...dataComparison], (d) => d.y),
-					max([...data, ...dataComparison], (d) => d.y)
-				])
+				.domain([0, max([...data, ...dataComparison], (d) => d.y)])
 				.range([chartHeight - margin.top - margin.bottom, 0]);
 		});
 	}
@@ -139,7 +136,7 @@
 						cx={xScale(d.data[d.data.length - 1].x)}
 						cy={yScale(d.data[d.data.length - 1].y)}
 						r="4"
-						class="fill-current"
+						class="fill-current animate-pulse"
 					/>
 
 					{#if labels}

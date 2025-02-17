@@ -4,6 +4,7 @@
 	import { max } from 'd3-array';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	let data = [];
 
@@ -51,17 +52,17 @@
 </script>
 
 {#await promise then data}
-	<div
-		class="flex h-14 mt-2 -mb-1 items-end justify-between relative"
-		bind:clientWidth={chartWidth}
-	>
-		<p class="absolute left-0 top-0 text-xs">{data[0].x}</p>
-		<p class="absolute right-0 top-0 text-xs">{data[data.length - 1].x}</p>
+	<div class="flex h-14 items-end justify-between relative border-b" bind:clientWidth={chartWidth}>
 		{#each data as d}
 			<div
 				style="height: {Math.round(yScale(d.y))}px; width: {chartWidth / data.length - 2}px;"
 				class="bg-current {d == data[data.length - 1] ? 'opacity-100' : 'opacity-50'}"
 			></div>
 		{/each}
+	</div>
+	<div class="flex text-xs gap-2 mt-1">
+		<p class="shrink-0">{data[0].x}: {formatNumber(data[0].y)} t</p>
+		<div class="border-t w-full translate-y-2"></div>
+		<p class="shrink-0">{data[data.length - 1].x}: {formatNumber(data[data.length - 1].y)} t</p>
 	</div>
 {/await}

@@ -369,20 +369,22 @@
 
 {#if sortedData}
 	<div class="flex flex-wrap gap-5 items-center sm:justify-center md:justify-start">
-		<select
-			bind:value={selectedGhGas}
-			class="button"
-			id="emission-detail-ghg"
-			on:input={() => {
-				ksgSelection = null;
-				crfSelection = null;
-			}}
-			aria-label={page.data.translations.greenhouseGas}
-		>
-			{#each ghGas as ghg}
-				<option value={ghg.key}>{ghg.label}</option>
-			{/each}
-		</select>
+		<div class="dropdown">
+			<select
+				bind:value={selectedGhGas}
+				class=""
+				id="emission-detail-ghg"
+				on:input={() => {
+					ksgSelection = null;
+					crfSelection = null;
+				}}
+				aria-label={page.data.translations.greenhouseGas}
+			>
+				{#each ghGas as ghg}
+					<option value={ghg.key}>{ghg.label}</option>
+				{/each}
+			</select>
+		</div>
 
 		<label class="flex gap-1 text-sm items-center">
 			<input

@@ -138,7 +138,7 @@
 							<div class="flex flex-col gap-2">
 								{#each currentQuestion.answers as answer}
 									<button
-										class="relative overflow-hidden bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 rounded-2xl p-4 text-lg leading-tight transition duration-500
+										class="relative overflow-hidden bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:hover:bg-gray-800 rounded-xl cursor-pointer p-4 text-lg leading-tight transition duration-500
 										{selectedAnswerId !== null
 											? answer.is_true
 												? 'bg-green-300 hover:bg-green-300'

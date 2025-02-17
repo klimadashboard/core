@@ -274,6 +274,22 @@ sub {
 	@apply appearance-none cursor-pointer flex items-center gap-1 font-bold rounded-full py-1.5 px-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition;
 }
 
+.dropdown {
+	@apply relative bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition;
+}
+
+.dropdown select {
+	@apply appearance-none py-1.5 pl-3 pr-8;
+}
+
+.dropdown::after {
+	@apply absolute top-1/2 -translate-y-1/2 right-2 block w-6 h-6 pointer-events-none;
+	content: '';
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='icon icon-tabler icons-tabler-outline icon-tabler-selector'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M8 9l4 -4l4 4' /%3E%3Cpath d='M16 15l-4 4l-4 -4' /%3E%3C/svg%3E");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
 .input {
 	@apply appearance-none px-3 py-1.5 rounded-full border border-current/20 hover:bg-current/10 transition bg-transparent;
 }
