@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import * as Fathom from 'fathom-client';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { afterNavigate } from '$app/navigation';
 	import dayjs from 'dayjs';
 	import 'dayjs/locale/de'; // Import necessary locales
 	import 'dayjs/locale/en';
@@ -56,7 +57,11 @@
 		};
 	});
 
-	$: page.url.pathname, browser && Fathom.trackPageview();
+	afterNavigate(() => {
+		if (browser) {
+			Fathom.trackPageview();
+		}
+	});
 </script>
 
 <svelte:head>
