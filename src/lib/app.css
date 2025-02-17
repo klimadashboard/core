@@ -62,12 +62,11 @@ main {
 	background: linear-gradient(90deg, #79ca94 0%, #2e9c5c 100%);
 	font-weight: 600;
 	cursor: help;
-	width: 1.5em;
-	height: 1.5em;
+	width: 1rem;
+	height: 1rem;
 	vertical-align: super;
 	border-radius: 9999px;
-	font-size: 0.5em;
-	transform: translateY(-0.3em);
+	font-size: 0.7rem;
 }
 
 .glossary-label:before {
