@@ -1,33 +1,8 @@
 const colors = require('tailwindcss/colors');
 
 module.exports = {
+	darkMode: 'selector',
 	content: ['./public/index.html', './src/app.html', './src/**/*.svelte', './src/**/**/*.svelte'],
-	safelist: [
-		'bg-energy',
-		'bg-building',
-		'bg-industry',
-		'bg-agriculture',
-		'bg-mobility',
-		'bg-waste',
-		'bg-fluorinatedGases',
-		'bg-economy',
-		'text-energy',
-		'text-building',
-		'text-industry',
-		'text-agriculture',
-		'text-mobility',
-		'text-waste',
-		'text-fluorinatedGases',
-		'text-economy',
-		'border-energy',
-		'border-building',
-		'border-industry',
-		'border-agriculture',
-		'border-mobility',
-		'border-waste',
-		'border-fluorinatedGases',
-		'border-economy'
-	],
 	theme: {
 		colors: {
 			transparent: 'transparent',
@@ -78,7 +53,7 @@ module.exports = {
 				900: '#67000D',
 				1000: '#1A0003'
 			},
-			gray: colors.neutral,
+			gray: colors.zinc,
 			yellow: colors.yellow,
 			orange: colors.orange,
 			amber: colors.amber,

@@ -14,7 +14,7 @@
 			class="mt-4 md:mt-0 w-full md:col-start-1 relative shadow text-left leading-tight tracking-tight p-2 text-lg flex space-x-2 items-center z-20 {tab ==
 			selectedTab
 				? 'bg-gradient-green md:rounded-l md:rounded-t-none rounded-none rounded-t text-white'
-				: 'bg-white  rounded'}"
+				: 'bg-white  rounded-sm'}"
 			on:mousedown={() => (selectedTab = tab)}
 			on:focus={() => (selectedTab = tab)}
 		>

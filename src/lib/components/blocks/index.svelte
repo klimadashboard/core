@@ -1,83 +1,74 @@
 <script>
-	import Heading from './Heading.svelte';
-	import Text from './Text.svelte';
-	import Markdown from './Markdown.svelte';
 	import Chart from './Chart.svelte';
 	import Toggle from './Toggle.svelte';
-	import Tabs from './Tabs.svelte';
-	import Navigation from './Navigation.svelte';
-	import Image from './Image.svelte';
-	import Numbers from './Numbers.svelte';
-	import ChartPeople from './ChartPeople.svelte';
-	import ChartBar from './ChartBar.svelte';
-	import Quote from './Quote.svelte';
-	import List from './List.svelte';
-	import Video from './Video.svelte';
+	import Grid from './Grid.svelte';
+	import Text from './Text.svelte';
+	import News from './News.svelte';
+	import Donation from './Donation.svelte';
+	import Quiz from './Quiz.svelte';
+	import Quotes from './Quotes.svelte';
+	import Teaser from './Teaser.svelte';
+	import Items from './Items.svelte';
+	import Gallery from './Gallery.svelte';
+	import Panel from './Panel.svelte';
 
-	export let content;
+	export let data;
 
 	const blocks = [
 		{
-			type: 'text',
+			type: 'block_panel',
+			component: Panel
+		},
+		{
+			type: 'block_gallery',
+			component: Gallery
+		},
+		{
+			type: 'block_richtext',
 			component: Text
 		},
 		{
-			type: 'heading',
-			component: Heading
+			type: 'block_news',
+			component: News
 		},
 		{
-			type: 'markdown',
-			component: Markdown
+			type: 'block_donation',
+			component: Donation
 		},
 		{
-			type: 'chart',
+			type: 'block_quiz',
+			component: Quiz
+		},
+		{
+			type: 'block_quotes',
+			component: Quotes
+		},
+		{
+			type: 'block_grid',
+			component: Grid
+		},
+		{
+			type: 'block_teaser',
+			component: Teaser
+		},
+		{
+			type: 'block_items',
+			component: Items
+		},
+		{
+			type: 'block_chart',
 			component: Chart
 		},
 		{
-			type: 'tabs',
-			component: Tabs
-		},
-		{
-			type: 'toggle',
+			type: 'block_toggle',
 			component: Toggle
-		},
-		{
-			type: 'navigation',
-			component: Navigation
-		},
-		{
-			type: 'image',
-			component: Image
-		},
-		{
-			type: 'numbers',
-			component: Numbers
-		},
-		{
-			type: 'chartPeople',
-			component: ChartPeople
-		},
-		{
-			type: 'chartBars',
-			component: ChartBar
-		},
-		{
-			type: 'quote',
-			component: Quote
-		},
-		{
-			type: 'list',
-			component: List
-		},
-		{
-			type: 'video',
-			component: Video
 		}
 	];
 </script>
 
-<div>
-	{#each content.filter((d) => !d.isHidden) as block}
-		<svelte:component this={blocks.find((d) => d.type == block.type).component} {block} />
-	{/each}
-</div>
+{#each data as block}
+	<svelte:component
+		this={blocks.find((d) => d.type == block.collection).component}
+		block={block.item}
+	/>
+{/each}

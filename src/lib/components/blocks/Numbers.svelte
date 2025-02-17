@@ -2,7 +2,7 @@
 	export let block;
 </script>
 
-<section class="my-4 container">
+<section class="my-4">
 	{#if block.content.heading}
 		<h2 class="uppercase font-semibold tracking-wider mb-2">{@html block.content.heading}</h2>
 	{/if}

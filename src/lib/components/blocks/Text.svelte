@@ -1,21 +1,28 @@
 <script>
-	import Text from '$lib/components/Text.svelte';
-
 	export let block;
 </script>
 
 <div class="my-8 text-lg container text" id={block.id}>
-	<div class="max-w-4xl">
-		<Text htmlString={block.content.text} />
+	<div class="max-w-2xl mx-auto">
+		{@html block.content}
 	</div>
 </div>
 
 <style>
+	@reference "tailwindcss/theme";
 	:global(.text a) {
 		@apply border-b border-b-gray-300;
 	}
 
 	:global(.text p) {
-		@apply my-4;
+		@apply my-2;
+	}
+
+	:global(.text ul) {
+		@apply list-disc;
+	}
+
+	:global(.text h2) {
+		@apply text-2xl font-bold mt-12;
 	}
 </style>

@@ -9,7 +9,6 @@
 	export let sort = '';
 	export let source = '';
 	export let label = '';
-	export let color = '';
 	export let lines = [];
 	export let visualisation = 'standard'; // can also be »stacked« or »grouped«
 	export let xAxixInterval = 1;
@@ -17,13 +16,10 @@
 	export let show0ValuesInLegend = false;
 	export let freezeYAxis = false;
 	export let marginLeft = 20;
-	export let marginRight = 0;
-	export let highlightYLine = false;
-	export let reverseLegend = false;
 
 	let chartHeight;
 	let chartWidth;
-	$: margin = { top: 20, right: marginRight, bottom: 50, left: marginLeft };
+	$: margin = { top: 20, right: 0, bottom: 50, left: marginLeft };
 
 	$: padding = Math.min(3, Math.round(chartWidth / data.length / 5));
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -127,7 +123,7 @@
 			<g class="y-axis" transform={`translate(0, ${margin.top})`}>
 				{#each yScale.ticks(6) as tick, index}
 					{@const isUppermost = index == yScale.ticks(6).length - 1}
-					<g transform={`translate(0, ${innerChartHeight - yScale(tick)})`} class="text-gray-500">
+					<g transform={`translate(0, ${innerChartHeight - yScale(tick)})`} class="">
 						<line
 							x1="0"
 							x2={chartWidth}
@@ -148,7 +144,6 @@
 				{#each data as datapoint, i}
 					<g
 						class={datapoint.highlight ? 'text-green-700' : 'text-green-500 '}
-						style={color ? `color: ${color};` : ''}
 						transform={`translate(${i * (barWidth + padding) || 0} 0)`}
 					>
 						{#if datapoint.categories !== undefined}
@@ -173,13 +168,13 @@
 										fill={category.estimate
 											? 'transparent'
 											: category.color
-											? 'url(#grad-' + category.color.replace('#', '') + '-' + i + '-' + j + ')'
-											: 'currentColor'}
+												? 'url(#grad-' + category.color.replace('#', '') + '-' + i + '-' + j + ')'
+												: 'currentColor'}
 										stroke={category.estimate
 											? 'currentColor'
 											: category.color
-											? category.color
-											: 'currentColor'}
+												? category.color
+												: 'currentColor'}
 										stroke-width={category.estimate ? '2' : '0'}
 										x={visualisation == 'grouped'
 											? (j * barWidth) / datapoint.categories.length || 0
@@ -214,7 +209,7 @@
 									})`}
 									class="text-sm text-white"
 								>
-									<rect width={barWidth} height="28" class="shadow-sm fill-current" />
+									<rect width={barWidth} height="28" class="shadow-xs fill-current" />
 									<g transform="translate(4,4)" class="text-gray-800">
 										<text class="fill-current">{datapoint.label}</text>
 										<text y="16" class="fill-current"
@@ -230,23 +225,18 @@
 
 						{#if i % xAxixInterval == 0}
 							<g
-								transform="translate(0, {innerChartHeight})"
-								class="text-xs {selectedBar == datapoint
-									? 'text-gray-700 '
-									: 'text-gray-500'} tracking-wide"
+								transform="translate(0, {innerChartHeight + 4})"
+								class="text-xs text-black dark:text-white {selectedBar == datapoint
+									? 'opacity-70 '
+									: 'opacity-50'} tracking-wide"
 							>
 								<rect
 									width={barWidth}
 									height={margin.bottom}
 									x={-4}
-									class="text-white fill-current"
+									class="fill-white dark:fill-gray-900"
 								/>
-								<g transform="translate({barWidth / 2},0)">
-									<line x1="0" x2="0" y1={0} y2={4} class="stroke-gray-500" />
-									<text fill="currentColor" dominant-baseline="hanging" y={6} text-anchor="middle"
-										>{@html datapoint.label}</text
-									>
-								</g>
+								<text class="fill-current" dominant-baseline="hanging">{datapoint.label}</text>
 							</g>
 						{/if}
 
@@ -286,7 +276,6 @@
 				{#each lines as line}
 					<g
 						class="text-gray-500 hover:text-gray-600 transition"
-						style="color: {line.color}"
 						transform={`translate(0, ${innerChartHeight - yScale(line.value) || 0})`}
 					>
 						<line
@@ -295,7 +284,7 @@
 							x2={chartWidth}
 							y2="0"
 							stroke="currentColor"
-							stroke-dasharray="5,10"
+							stroke-dasharray="1,10"
 							stroke-linecap="round"
 							stroke-width="2"
 						/>
@@ -339,22 +328,12 @@
 					<div
 						class="font-semibold tracking-wide px-3 py-1 text-white text-xs rounded-full"
 						style="background-color:{category.color || '#41AB5D'}"
-						transition:fade={{ duration: 300 }}
+						transition:fade|global={{ duration: 300 }}
 					>
-						{#if reverseLegend}
-							<span class="uppercase"
-								><span class="">{prettifyTick(category.value)}</span>
-								{#if unit.length < 8}
-									<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
-								{/if}
-								{@html category.label}</span
-							>
-						{:else}
-							<span class="uppercase">{@html category.label}</span>
-							<span class="">{prettifyTick(category.value)}</span>
-							{#if unit.length < 8}
-								<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
-							{/if}
+						<span class="uppercase">{category.label}</span>
+						<span class="">{prettifyTick(category.value)}</span>
+						{#if unit.length < 8}
+							<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>
 						{/if}
 					</div>
 				{/each}

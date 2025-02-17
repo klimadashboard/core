@@ -6,7 +6,7 @@
 	{#each block.content.navigation as item}
 		<a
 			href={item.link}
-			class="relative border border-gray-200 rounded hover:bg-gray-200 transition overflow-hidden"
+			class="relative border border-gray-200 rounded-sm hover:bg-gray-200 transition overflow-hidden"
 		>
 			{#if item.image.length > 0}
 				<img src="https://klimadashboard.org/@/file/{item.image}" alt={item.image.alt} class="" />

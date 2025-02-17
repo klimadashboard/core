@@ -87,13 +87,13 @@
 				class="text-gray-500"
 			>
 				{#if path}
-					<path class="path-line" d={path} transition:draw />
+					<path class="path-line" d={path} transition:draw|global />
 				{/if}
 
 				{#each data as datapoint, i}
 					<g
 						transform={`translate(${xScale(datapoint.x)}, ${yScale(datapoint.y)})`}
-						in:fade={{ delay: i * 10 }}
+						in:fade|global={{ delay: i * 10 }}
 						class=""
 					>
 						{#if i == data.length - 1}
@@ -133,7 +133,7 @@
 							? xScale(selectedDatapoint.x) - 280 + radius * 2
 							: xScale(selectedDatapoint.x) - radius},{yScale(selectedDatapoint.y) + radius})"
 						class="text-white text-sm uppercase cursor-help"
-						transition:fade
+						transition:fade|global
 					>
 						<rect
 							fill={getColor(selectedDatapoint)}

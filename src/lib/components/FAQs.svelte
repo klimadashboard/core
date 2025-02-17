@@ -1,4 +1,5 @@
 <script>
+	import { page } from '$app/state';
 	const getFAQs = async function () {
 		const res = await fetch('https://klimadashboard.org/faq.json').then(function (response) {
 			if (!response.ok) {
@@ -8,20 +9,19 @@
 		});
 		const json = await res.json();
 		return json;
-		throw error(500, 'Timeout when loading glossary.');
 	};
 
 	$: promise = getFAQs();
 </script>
 
-<section class="bg-gray-100 pt-4">
+<section class="bg-gray-100 dark:bg-gray-900 pt-4">
 	<div class="container">
-		<h2 class="mb-1 font-bold text-gray-700">Fragen und Antworten</h2>
-		<div class=" border-t text-lg py-4">
+		<h2 class="mb-1 font-bold leading-none">{page.data.translations.questionsAndAnswers}</h2>
+		<div class=" border-t text-lg">
 			{#await promise then faqs}
 				{#each faqs as faq}
-					<details class="py-2">
-						<summary class="border-b mb-1">{faq.question.value}</summary>
+					<details class=" my-2">
+						<summary class="hover:underline underline-offset-2 mb-1">{faq.question.value}</summary>
 						<div class="max-w-4xl">
 							{@html faq.answer.value}
 						</div>

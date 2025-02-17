@@ -14,6 +14,6 @@ export async function POST({ params, request }) {
 		return json(updatedItem, { status: 200 });
 	} catch (err) {
 		// Throw a SvelteKit error; SvelteKit can render an error page if desired
-		throw error(500, err.message);
+		error(500, err.message);
 	}
 }

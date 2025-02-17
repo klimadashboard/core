@@ -4,7 +4,6 @@
 	import Input from './Input.svelte';
 
 	export let items;
-	export let placeholder;
 	export let matchCase = false;
 	export let selectedItem = null;
 
