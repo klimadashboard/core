@@ -7,6 +7,7 @@
 	import { line, area } from 'd3-shape';
 	import { scaleLinear } from 'd3-scale';
 	import { min, max } from 'd3-array';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	dayjs.extend(dayOfYear);
 
@@ -118,7 +119,9 @@
 					<g>
 						{#each yScale.ticks(2) as tick}
 							<g transform="translate({-margin.left},{yScale(tick)})">
-								<text class="fill-current text-xs" dominant-baseline="middle">{tick}</text>
+								<text class="fill-current text-xs" dominant-baseline="middle"
+									>{formatNumber(tick)}</text
+								>
 							</g>
 						{/each}
 						<!--

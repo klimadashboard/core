@@ -3,6 +3,7 @@
 	import Chart from '$lib/components/charts/index.svelte';
 	import GasUsage from '$lib/components/charts/small/gasUsage.svelte';
 	import Emissions from '$lib/components/charts/small/emissions.svelte';
+	import Co2Concentration from '$lib/components/charts/small/co2Concentration.svelte';
 	export let block;
 
 	let customCharts = [
@@ -13,6 +14,10 @@
 		{
 			key: 'emissions',
 			component: Emissions
+		},
+		{
+			key: 'co2Concentration',
+			component: Co2Concentration
 		}
 	];
 </script>

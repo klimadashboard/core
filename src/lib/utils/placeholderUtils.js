@@ -8,6 +8,24 @@ import formatNumber from '$lib/stores/formatNumber';
 
 dayjs.extend(relativeTime);
 
+const getSiteData = async () => {
+	const directus = getDirectusInstance(fetch);
+
+	const data = await directus
+		.request(
+			readItems('sites', {
+				filter: { id: { _eq: PUBLIC_VERSION } },
+				fields: ['translations.title', 'translations.region']
+			})
+		)
+		.catch(() => []);
+
+	return {
+		title: data[0].translations[0].title,
+		region: data[0].translations[0].region
+	};
+};
+
 const getRenewableData = async function () {
 	const directus = getDirectusInstance(fetch);
 
@@ -158,7 +176,7 @@ const placeholderHandlers = {
 	gasUsageCurrentDate: async () => (await getGasUsageData()).gasUsageCurrentDate,
 	gasUsageLastYear: async () => (await getGasUsageData()).gasUsageLastYear,
 	gasUsageLastYearDate: async () => (await getGasUsageData()).gasUsageLastYearDate,
-	currentCountry: async () => PUBLIC_VERSION
+	currentCountry: async () => (await getSiteData()).region
 };
 
 const parseTemplate = async (template) => {

@@ -27,8 +27,6 @@ export const GET = async ({ url }) => {
 			})
 		);
 
-		console.log(pages);
-
 		const charts = await directus.request(
 			readItems('charts', {
 				filter: {
@@ -67,8 +65,6 @@ export const GET = async ({ url }) => {
 		} else {
 			companies = [];
 		}
-
-		console.log(url);
 
 		// Generate URLs
 		const urls = [
