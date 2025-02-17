@@ -22,13 +22,24 @@
 	];
 </script>
 
-<a
-	class="p-3 h-full {block.link
-		? 'group hover:opacity-90'
-		: ''} relative leading-tight flex flex-col break-words hyphens-auto transition"
-	style="background: {block.colorBackground}; color: {block.colorText}"
-	href={block.link}
->
+{#if block.link}
+	<a
+		class="p-3 h-full group hover:opacity-90 relative leading-tight flex flex-col break-words hyphens-auto transition"
+		style="background: {block.colorBackground}; color: {block.colorText}"
+		href={block.link}
+	>
+		{@render content()}
+	</a>
+{:else}
+	<div
+		class="p-3 h-full relative leading-tight flex flex-col break-words hyphens-auto transition"
+		style="background: {block.colorBackground}; color: {block.colorText}"
+	>
+		{@render content()}
+	</div>
+{/if}
+
+{#snippet content()}
 	{#if block.title}
 		<div class="flex justify-between font-bold border-b border-current pb-1">
 			<h3 class="">
@@ -65,4 +76,4 @@
 	{#if block.source}
 		<div class="text-xs leading-none mt-auto pt-2">{block.source}</div>
 	{/if}
-</a>
+{/snippet}
