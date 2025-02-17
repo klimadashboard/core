@@ -23,7 +23,7 @@ export const GET = async ({ url }) => {
 						}
 					]
 				},
-				fields: ['id', 'translations.slug']
+				fields: ['id', 'translations.slug', 'translations.languages_code']
 			})
 		);
 
@@ -69,7 +69,12 @@ export const GET = async ({ url }) => {
 		// Generate URLs
 		const urls = [
 			...pages
-				.map((page) => page.translations.map((t) => `${currentUrl}/${t.slug.replace('home', '')}`))
+				.map((page) =>
+					page.translations.map(
+						(t) =>
+							`${currentUrl}/${(t.languages_code == 'de' ? '' : t.languages_code + '/') + t.slug.replace('home', '')}`
+					)
+				)
 				.flat(),
 			...charts.map((chart) => `${currentUrl}/charts/${chart.id}`),
 			...companies.map((company) => `${currentUrl}/companies/${company.id}`)
