@@ -10,6 +10,7 @@
 	import { getCompanyEmissionData, getAllSectors, getCompanyMetaData } from './getData';
 	import Switch from '$lib/components/Switch.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
+	import { page } from '$app/state';
 
 	export let companiesMetaData = [];
 	export let chart;
@@ -37,7 +38,7 @@
 	let selectedScope2Category = 'location_based';
 
 	$: companies = companiesMetaData.map((company) => {
-		if (chart.preset && company.id === chart.preset) {
+		if (page.params.id && company.id === page.params.id) {
 			return {
 				...company,
 				selected: true

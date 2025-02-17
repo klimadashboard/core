@@ -9,5 +9,5 @@
 <PageHeader />
 
 <div class="container">
-	<Chart chart={data.chart} />
+	<Chart id={data.chart.id} />
 </div>
