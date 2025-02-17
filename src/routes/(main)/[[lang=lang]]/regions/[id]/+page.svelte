@@ -66,26 +66,6 @@
 		}
 	];
 
-	const getChart = async function (id) {
-		const directus = getDirectusInstance(fetch);
-		const chart = await directus.request(readItem('charts', id, { fields: ['*.*'] }));
-		return chart;
-	};
-
-	// Store chart data for each section
-	let chartData = {};
-
-	// Load charts for all sections with charts
-	onMount(async () => {
-		for (const section of sections) {
-			if (section.charts) {
-				for (const chart of section.charts) {
-					chartData[chart.id] = await getChart(chart.id);
-				}
-			}
-		}
-	});
-
 	const scrollToTop = function (event) {
 		event.preventDefault(); // Prevent default anchor behavior
 		window.scrollTo({ top: 600, behavior: 'smooth' }); // Smooth scroll to top
@@ -118,11 +98,7 @@
 					<div class="p-1">
 						{#if section.charts}
 							{#each section.charts as chart}
-								{#if chartData[chart.id]}
-									<Chart chart={(coordinates, chartData[chart.id])} />
-								{:else}
-									<p>Loading chart...</p>
-								{/if}
+								<Chart id={chart.id} />
 							{/each}
 						{:else}
 							<div class="bg-gray-100 h-96">Charts</div>
