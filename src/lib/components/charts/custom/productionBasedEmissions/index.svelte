@@ -1,11 +1,9 @@
 <script>
-	import BarChart from '../chartBar.svelte';
+	import BarChart from '$lib/components/charts/chartBar.svelte';
 	import Papa from 'papaparse';
 	import Switch from '$lib/components/Switch.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import { fade } from 'svelte/transition';
-	import formatNumber from '$lib/stores/formatNumber';
-	import formatPercentage from '$lib/stores/formatPercentage';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let rawData;

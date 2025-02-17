@@ -1,37 +1,47 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import Papa from 'papaparse';
 	import { scaleLinear } from 'd3-scale';
 	import { max } from 'd3-array';
-	import { onMount } from 'svelte';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
 
 	let data = [];
 
-	onMount(() => {
-		Papa.parse(
-			'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
-			{
-				download: true,
-				dynamicTyping: true,
-				header: true,
-				skipEmptyLines: true,
-				complete: (results) => {
-					data = results.data;
-					data = data
-						.filter(
-							(d) =>
-								d.region == 'Austria' && d.classification == 'Gesamt' && d.total_co2e_t !== null
-						)
-						.map((d) => {
-							return {
-								x: d.year,
-								y: d.total_co2e_t
-							};
-						});
-				}
-			}
-		);
-	});
+	async function getData() {
+		const directus = getDirectusInstance();
+		try {
+			const response = await directus.request(
+				readItems('emissions', {
+					filter: {
+						_and: [
+							{ region: { _eq: PUBLIC_VERSION } },
+							{
+								category: {
+									_eq: 'total'
+								}
+							}
+						]
+					},
+					sort: ['period'],
+					fields: ['*']
+				})
+			);
+
+			data = await response.map((e) => {
+				return {
+					x: e.period,
+					y: e.value
+				};
+			});
+			return data;
+		} catch (err) {
+			console.error(err);
+			return [];
+		}
+	}
+
+	// Reactive statement: re-run getNews whenever $page.data.language.code changes.
+	$: promise = getData();
 
 	$: yScale = scaleLinear()
 		.domain([0, max(data, (d) => d.y)])
@@ -40,7 +50,7 @@
 	let chartWidth;
 </script>
 
-{#if data.length > 0}
+{#await promise then data}
 	<div
 		class="flex h-14 mt-2 -mb-1 items-end justify-between relative"
 		bind:clientWidth={chartWidth}
@@ -54,4 +64,4 @@
 			></div>
 		{/each}
 	</div>
-{/if}
+{/await}
