@@ -9,27 +9,22 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { afterNavigate } from '$app/navigation';
 	import dayjs from 'dayjs';
-	import 'dayjs/locale/de'; // Import necessary locales
+	import 'dayjs/locale/de';
 	import 'dayjs/locale/en';
 
 	const fathom_ids = [
-		{
-			version: 'de',
-			fathom: 'BKRABNNN'
-		},
-		{
-			version: 'at',
-			fathom: 'RDBKIXJL'
-		}
+		{ version: 'de', fathom: 'BKRABNNN' },
+		{ version: 'at', fathom: 'RDBKIXJL' }
 	];
 
-	$: description = page.data.content?.seo?.meta_description
-		? page.data.content?.seo?.meta_description
-		: page.data.content?.description;
-	$: title = page.data.content?.seo?.title
-		? page.data.content?.seo?.title
-		: page.data.content?.title + ' | ' + page.data.site.translations[0]?.title;
-	$: image = 'https://base.klimadashboard.org/assets/' + page.data.content?.seo?.og_image;
+	let description = $state(
+		page.data.content?.seo?.meta_description || page.data.content?.description
+	);
+	let title = $state(
+		page.data.content?.seo?.title ||
+			page.data.content?.title + ' | ' + page.data.site.translations[0]?.title
+	);
+	let image = $state(`https://base.klimadashboard.org/assets/${page.data.content?.seo?.og_image}`);
 
 	onMount(() => {
 		document.documentElement.lang = page.data.language.code;
@@ -40,10 +35,6 @@
 			if (button) {
 				glossaryItem.set(button.dataset.key);
 			}
-		}
-
-		if (page.data?.language?.code) {
-			dayjs.locale(page.data.language.code);
 		}
 
 		document.addEventListener('click', handleGlobalClick);
@@ -69,11 +60,18 @@
 	<meta name="description" content={description} />
 
 	{#each page.data.page?.slugs as { languages_code, slug }}
-		<link
-			rel="alternate"
-			hreflang={languages_code}
-			href={page.url.href + languages_code + '/' + slug}
-		/>
+		{#if languages_code}
+			<link
+				rel="alternate"
+				hreflang={languages_code}
+				href={(
+					page.url.origin +
+					'/' +
+					languages_code.replace('de', '') +
+					(slug === 'home' ? '' : '/' + slug)
+				).replace(/\/+/g, '/')}
+			/>
+		{/if}
 	{/each}
 
 	<!-- Facebook Meta Tags -->
@@ -97,7 +95,6 @@
 		{#if $glossaryItem}
 			<Glossary />
 		{/if}
-
 		<slot />
 	</div>
 </div>
