@@ -1,5 +1,5 @@
 <script>
-	import BarChart from '$lib/components/charts/chartBar.svelte';
+	import BarChart from '../chartBar.svelte';
 	import Papa from 'papaparse';
 	import Switch from '$lib/components/Switch.svelte';
 	import Loader from '$lib/components/Loader.svelte';
@@ -229,7 +229,7 @@
 			</svg>
 			<select
 				bind:value={selectedRegion}
-				class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded-sm leading-tight focus:outline-hidden focus:bg-white focus:border-gray-500 max-w-sm"
+				class="block appearance-none w-full bg-gray-200 border border-gray-100 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 max-w-sm"
 			>
 				{#each regions as region}
 					<option value={region}>{region}</option>
@@ -242,7 +242,7 @@
 			class="flex gap-1 text-sm items-center {showFlightEmissions
 				? 'text-blue-700'
 				: 'text-gray-400'}"
-			transition:fade|global
+			transition:fade
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -265,7 +265,7 @@
 	{/if}
 	<label
 		class="flex gap-1 text-sm items-center {freezeYAxis ? 'text-gray-700' : 'text-gray-400'}"
-		transition:fade|global
+		transition:fade
 	>
 		<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<path
@@ -302,7 +302,7 @@
 	</label>
 	<label
 		class="flex gap-1 text-sm items-center {showPerCapita ? 'text-gray-700' : 'text-gray-400'}"
-		transition:fade|global
+		transition:fade
 	>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
