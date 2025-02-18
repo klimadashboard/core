@@ -21,8 +21,10 @@
 		(
 			page.data.content?.seo?.meta_description ||
 			page.data.content?.description ||
-			page.data.site?.content?.seo?.meta_description
+			page.data.site?.content?.seo?.meta_description ||
+			''
 		)
+			.toString() // Ensure it's a string
 			.replace(/<[^>]*>/g, '') // Remove HTML tags
 			.replace(/\s+/g, ' ') // Replace all whitespace (including line breaks) with a single space
 	);
