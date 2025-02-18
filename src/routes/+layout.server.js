@@ -33,8 +33,6 @@ export async function load({ fetch, params }) {
 		content: response.translations[0]
 	};
 
-	console.log(site);
-
 	const translationsData = await directus.request(
 		readTranslations({
 			filter: {
