@@ -22,7 +22,8 @@ export async function load({ fetch, params }) {
 			},
 			fields: [
 				'*', // Include all fields from the 'sites' table
-				'translations.*' // Load all translation fields
+				'translations.*',
+				'translations.seo.*' // Load all translation fields
 			]
 		})
 	);
@@ -31,6 +32,8 @@ export async function load({ fetch, params }) {
 		...response,
 		content: response.translations[0]
 	};
+
+	console.log(site);
 
 	const translationsData = await directus.request(
 		readTranslations({

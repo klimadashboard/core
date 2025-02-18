@@ -18,13 +18,18 @@
 	];
 
 	let description = $state(
-		page.data.content?.seo?.meta_description || page.data.content?.description
+		(page.data.content?.seo?.meta_description || page.data.content?.description)
+			.replace(/<[^>]*>/g, '') // Remove HTML tags
+			.replace(/\s+/g, ' ') // Replace all whitespace (including line breaks) with a single space
 	);
+
 	let title = $state(
 		page.data.content?.seo?.title ||
 			page.data.content?.title + ' | ' + page.data.site.translations[0]?.title
 	);
-	let image = $state(`https://base.klimadashboard.org/assets/${page.data.content?.seo?.og_image}`);
+	let image = $state(
+		`https://base.klimadashboard.org/assets/${page.data.content?.seo?.og_image ? page.data.content?.seo?.og_image : page.data.site?.content?.seo?.og_image}`
+	);
 
 	onMount(() => {
 		document.documentElement.lang = page.data.language.code;
