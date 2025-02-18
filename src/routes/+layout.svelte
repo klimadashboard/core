@@ -18,7 +18,11 @@
 	];
 
 	let description = $state(
-		(page.data.content?.seo?.meta_description || page.data.content?.description)
+		(
+			page.data.content?.seo?.meta_description ||
+			page.data.content?.description ||
+			page.data.site?.content?.seo?.meta_description
+		)
 			.replace(/<[^>]*>/g, '') // Remove HTML tags
 			.replace(/\s+/g, ' ') // Replace all whitespace (including line breaks) with a single space
 	);
