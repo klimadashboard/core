@@ -4,9 +4,11 @@
 	import dayjs from 'dayjs';
 	import { types } from '$lib/stores/weather';
 	import relativeTime from 'dayjs/plugin/relativeTime';
+	import 'dayjs/locale/de';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	dayjs.extend(relativeTime);
+	dayjs.locale('de');
 
 	export let data;
 	export let selectedStation;
@@ -160,18 +162,18 @@
 {/if}
 
 {#if compareFirstYear && compareLastYear}
-	<p class="mb-4 mx-auto w-max max-w-full text-center">
+	<p class="text-gray-700 mb-4 mx-auto w-max max-w-full text-center">
 		Wähle ein Jahr und einen Referenzzeitraum:
 		<input
 			type="number"
-			class="inline input mx-1"
+			class="inline k_input mx-1"
 			bind:value={selectedYear}
 			min={dayjs(data[0].date).year()}
 			max={lastDate.year()}
 			id="selectedYear"
 		/>
 		vs.
-		<select bind:value={selectedComparisonDuration} class="input k_dropdown mx-1 appearance-none">
+		<select bind:value={selectedComparisonDuration} class="k_input k_dropdown mx-1">
 			{#each comparisonDurations as duration}
 				<option value={duration}>
 					{duration[0]} - {duration[1]}
@@ -181,7 +183,7 @@
 	</p>
 {/if}
 
-{#if selectedYear == dayjs().year() || daysAvailableInSelectedYear > 360}
+{#if selectedYear == dayjs().year() || daysAvailableInSelectedYear > 350}
 	<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
 		{#each $types as type}
 			<WeatherDaysCard
@@ -202,7 +204,7 @@
 	</p>
 {/if}
 
-<p class="text-sm mt-2 border-t pt-2">
+<p class="text-sm mt-2 text-gray-700 border-t pt-2">
 	{selectedStation.name} (ID {selectedStation.id}); Daten von
 	{#if PUBLIC_VERSION == 'at'}
 		<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>
