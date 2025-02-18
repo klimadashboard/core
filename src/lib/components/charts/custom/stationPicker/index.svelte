@@ -41,6 +41,5 @@
 
 {#await promise then data}
 	<WeatherStationPicker {data} bind:selectedStation />
-
 	<WeatherStationMap {data} bind:selectedStation />
 {/await}

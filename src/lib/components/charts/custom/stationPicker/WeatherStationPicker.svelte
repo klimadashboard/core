@@ -40,7 +40,9 @@
 
 	onMount(() => {
 		// Prevent overriding if the user has already selected a station
-		if (selectedStation) {
+		if (selectedStation?.id) {
+			console.log('selectedStation');
+			console.log(selectedStation.id);
 			selectedStationID = selectedStation.id;
 			return;
 		}

@@ -7,6 +7,8 @@
 	export let data;
 	export let selectedStation;
 
+	$: console.log(selectedStation);
+
 	let mapWidth;
 	let mapHeight;
 
@@ -39,7 +41,12 @@
 	};
 
 	$: isSelected = function (station) {
-		return selectedStation == station;
+		return selectedStation?.id === station.id;
+	};
+
+	$: selectStation = function (station) {
+		console.log(station);
+		selectedStation = { ...station };
 	};
 </script>
 
@@ -64,7 +71,6 @@
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
 					<g
 						transform="translate({projection([station.longitude, station.latitude])})"
-						on:click={() => (selectedStation = station)}
 						role="button"
 						tabindex="0"
 						cursor="pointer"
@@ -73,6 +79,7 @@
 							r={getRadius(station)}
 							fill={isSelected(station) ? selectedColor : getColor(station)}
 							class="opacity-70"
+							on:mousedown={() => selectStation(station)}
 						/>
 						{#if isSelected(station)}
 							<circle
