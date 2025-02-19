@@ -7,11 +7,11 @@
 	export let data;
 	export let selectedStation;
 
-	$: console.log(selectedStation);
-
 	let mapWidth;
 	let mapHeight;
 
+	// Projection scaled to fit the provided GeoJSON
+	// (Germany or Austria, depending on PUBLIC_VERSION)
 	$: projection = geoAlbers()
 		.center([0, 47.8])
 		.rotate([-13.5, 0])
@@ -23,31 +23,28 @@
 			data.geo
 		);
 
-	const colors = ['#209857', '#fdea45']; // from green to blue
-	const selectedColor = '#C7495C';
+	// Simple color and radius scales
+	const colorScale = scaleLinear().range(['#209857', '#fdea45']).domain([0, 3000]);
+	const radiusScale = scaleLinear()
+		.range([5, 5])
+		.domain([min(data.stations, (d) => d.height), max(data.stations, (d) => d.height)]);
 
-	$: getColor = function (station) {
-		const colorScale = scaleLinear().range(colors).domain([0, 3000]);
+	function getColor(station) {
 		return colorScale(station.height);
-	};
+	}
 
-	const radi = [5, 5];
-
-	$: getRadius = function (station) {
-		const radiusScale = scaleLinear()
-			.range(radi)
-			.domain([min(data.stations, (d) => d.height), max(data.stations, (d) => d.height)]);
+	function getRadius(station) {
 		return radiusScale(station.height);
-	};
+	}
 
-	$: isSelected = function (station) {
+	function isSelected(station) {
 		return selectedStation?.id === station.id;
-	};
+	}
 
-	$: selectStation = function (station) {
-		console.log(station);
+	function selectStation(station) {
+		// Update selectedStation directly
 		selectedStation = { ...station };
-	};
+	}
 </script>
 
 <div
@@ -57,7 +54,8 @@
 	bind:clientWidth={mapWidth}
 >
 	{#if mapHeight && mapWidth}
-		<svg width={'100%'} height={'100%'}>
+		<svg width="100%" height="100%">
+			<!-- The country outline -->
 			<g>
 				{#each data.geo.features as feature}
 					<path
@@ -66,6 +64,8 @@
 					/>
 				{/each}
 			</g>
+
+			<!-- Weather stations -->
 			<g>
 				{#each data.stations as station}
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -74,19 +74,15 @@
 						role="button"
 						tabindex="0"
 						cursor="pointer"
+						on:click={() => selectStation(station)}
 					>
 						<circle
 							r={getRadius(station)}
-							fill={isSelected(station) ? selectedColor : getColor(station)}
+							fill={isSelected(station) ? '#C7495C' : getColor(station)}
 							class="opacity-70"
-							on:mousedown={() => selectStation(station)}
 						/>
 						{#if isSelected(station)}
-							<circle
-								r={getRadius(station)}
-								fill={isSelected(station) ? selectedColor : getColor(station)}
-								class="animate-ping"
-							/>
+							<circle r={getRadius(station)} fill="#C7495C" class="animate-ping" />
 						{/if}
 					</g>
 				{/each}
@@ -95,11 +91,11 @@
 	{/if}
 </div>
 
-<div class=" w-max mx-auto flex items-center gap-2 text-sm mb-8">
+<div class="w-max mx-auto flex items-center gap-2 text-sm mb-8">
 	<span>0m Seehöhe</span>
 	<div
 		class="w-24 h-3 bg-gray-100"
-		style="background: linear-gradient(90deg, {colors[0]} 0%, {colors[1]} 100%);"
+		style="background: linear-gradient(90deg, #209857 0%, #fdea45 100%);"
 	></div>
 	<span>3.000m</span>
 </div>

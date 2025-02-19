@@ -7,21 +7,25 @@
 	export let data;
 	export let selectedStation;
 
-	const presetID = PUBLIC_VERSION == 'at' ? 105 : 403;
-
 	let geoLocationStatus = '';
-	let selectedStationID = selectedStation ? selectedStation.id : null;
-	let isUserSelection = false; // Flag to track if user manually selected a station
+	let isUserSelection = false;
 
-	// Compute Euclidean distance (for simplicity)
-	function getDistance(currentCoords, station) {
+	// Default fallback station (IDs differ for Germany/AT)
+	const presetID = PUBLIC_VERSION === 'at' ? 105 : 403;
+
+	/**
+	 * Euclidean distance for simplicity.
+	 * Modify to a more accurate formula if needed.
+	 */
+	function getDistance(coords, station) {
 		return Math.sqrt(
-			Math.pow(currentCoords.latitude - station.latitude, 2) +
-				Math.pow(currentCoords.longitude - station.longitude, 2)
+			(coords.latitude - station.latitude) ** 2 + (coords.longitude - station.longitude) ** 2
 		);
 	}
 
-	// Find the closest weather station from the provided coordinates
+	/**
+	 * Choose the closest station from the user's coords.
+	 */
 	function getClosestStation(currentCoords) {
 		geoLocationStatus = 'Getting closest weather station...';
 
@@ -29,27 +33,63 @@
 			getDistance(currentCoords, a) < getDistance(currentCoords, b) ? a : b
 		);
 
-		// Only update if the user hasn't manually selected a station
 		if (!isUserSelection) {
 			selectedStation = closestStation;
-			selectedStationID = closestStation.id;
 		}
-
 		geoLocationStatus = '';
 	}
 
+	/**
+	 * Hook to request current location.
+	 */
+	async function getCurrentPosition() {
+		try {
+			geoLocationStatus = 'Locating...';
+			const pos = await new Promise((resolve, reject) =>
+				navigator.geolocation.getCurrentPosition(resolve, reject)
+			);
+
+			getClosestStation({
+				latitude: pos.coords.latitude,
+				longitude: pos.coords.longitude
+			});
+		} catch (err) {
+			console.log(err);
+			geoLocationStatus = 'Geolocation not available';
+		}
+	}
+
+	/**
+	 * When the user picks from the <select>, we mark it as a user
+	 * selection and update `selectedStation`.
+	 */
+	function handleSelectionChange(e) {
+		isUserSelection = true;
+
+		const stationId = e.target.value;
+		const found = data.stations.find((s) => s.id === stationId);
+
+		if (found) {
+			selectedStation = found;
+		}
+	}
+
+	/**
+	 * On mount: figure out what station we should show by default.
+	 */
 	onMount(() => {
-		// Prevent overriding if the user has already selected a station
-		if (selectedStation?.id) {
-			console.log('selectedStation');
-			console.log(selectedStation.id);
-			selectedStationID = selectedStation.id;
+		// Check if there's a ?weatherStation= param
+		const weatherStationParam = $page.url.searchParams.get('weatherStation');
+		if (weatherStationParam) {
+			const foundStation = data.stations.find((d) => d.id == weatherStationParam);
+			if (foundStation) {
+				selectedStation = foundStation;
+			}
 			return;
 		}
 
+		// Check localStorage
 		const coordsStr = localStorage.getItem('kd_region_coordinates');
-
-		// Fetch from local storage if it exists
 		if (coordsStr && coordsStr.includes(',')) {
 			const [lng, lat] = coordsStr.split(',').map(Number);
 			if (!isNaN(lng) && !isNaN(lat)) {
@@ -58,48 +98,29 @@
 			}
 		}
 
-		// Check if the weatherStation is in the URL
-		const weatherStationParam = $page.url.searchParams.get('weatherStation');
-		if (weatherStationParam) {
-			const foundStation = data.stations.find((d) => d.id == weatherStationParam);
-			if (foundStation) {
-				selectedStation = foundStation;
-				selectedStationID = foundStation.id;
-			}
-			return;
-		}
-
-		// Default station selection
+		// Otherwise, fall back to a preset
 		selectedStation = data.stations.find((d) => d.id == presetID);
-		selectedStationID = presetID;
 	});
 
-	// Sync `selectedStation` with `selectedStationID`
-	$: {
-		const newStation = data.stations.find((s) => s.id == selectedStationID);
-		if (newStation && newStation.id !== selectedStation?.id) {
-			selectedStation = newStation;
-		}
-	}
-
-	// Ensure the URL updates correctly (only if user didn't manually override)
-	$: if (selectedStation && !isUserSelection) {
+	/**
+	 * Whenever `selectedStation` changes, update the URL (unless
+	 * it was a user override you *don’t* want to reflect).
+	 *
+	 * If you DO want user picks to reflect in URL, remove `!isUserSelection`.
+	 */
+	$: if (selectedStation) {
 		const url = new URL($page.url.href);
-		const currentWeatherStation = url.searchParams.get('weatherStation');
+		const currentParam = url.searchParams.get('weatherStation');
 
-		if (currentWeatherStation !== String(selectedStation.id)) {
+		if (String(selectedStation.id) !== currentParam) {
 			url.searchParams.set('weatherStation', selectedStation.id);
 			goto(url.toString(), { replaceState: true, noScroll: true });
 		}
 	}
 
-	// Track user selections manually to prevent automatic overrides
-	function handleSelectionChange(event) {
-		isUserSelection = true;
-		selectedStationID = event.target.value;
-	}
-
-	// Group stations by state
+	/**
+	 * Group stations by "state" for <optgroup>.
+	 */
 	let groupedOptions = {};
 	data.stations.forEach((option) => {
 		if (!groupedOptions[option.state]) {
@@ -113,27 +134,24 @@
 	<div class="mx-auto w-max mb-4">
 		<p class="text-sm mb-1 font-medium">Wähle deine Wetterstation</p>
 		<div class="flex items-center gap-2">
-			<!-- Bind to `selectedStationID` and track user selection -->
-			<select
-				name="weatherStations"
-				id="weatherStations"
-				class="input"
-				bind:value={selectedStationID}
-				on:change={handleSelectionChange}
-			>
-				{#each Object.keys(groupedOptions).sort((a, b) => a.localeCompare(b)) as state}
+			<!-- A plain <select> that chooses station by ID -->
+			<select on:change={handleSelectionChange} class="input">
+				{#each Object.keys(groupedOptions).sort() as state}
 					<optgroup label={state}>
 						{#each groupedOptions[state].sort((a, b) => a.name.localeCompare(b.name)) as station}
-							<option value={station.id}>{station.name} ({station.height}m)</option>
+							<option value={station.id} selected={station.id === selectedStation.id}>
+								{station.name} ({station.height}m)
+							</option>
 						{/each}
 					</optgroup>
 				{/each}
 			</select>
 
+			<!-- Button to attempt geolocation-based pick -->
 			<button
 				aria-label="Find nearest weather station"
 				class="button"
-				on:mousedown={getCurrentPosition()}
+				on:click={getCurrentPosition}
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -147,7 +165,6 @@
 					stroke-linecap="round"
 					stroke-linejoin="round"
 				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 					<circle cx="12" cy="12" r="3" />
 					<circle cx="12" cy="12" r="8" />
 					<line x1="12" y1="2" x2="12" y2="4" />
