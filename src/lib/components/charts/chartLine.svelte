@@ -309,7 +309,7 @@
 							stroke-dasharray="2 8"
 						/>
 						<text
-							class="text-sm fill-gray-600"
+							class="text-sm fill-gray-600 dark:fill-gray-900"
 							text-anchor="end"
 							x={xScale(invalidX) - 10}
 							y={innerChartHeight - 10}>{invalidText}</text
