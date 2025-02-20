@@ -26,12 +26,12 @@
 	const views = [
 		{
 			key: 'location_based',
-			label: 'location-based',
+			label: 'standortbasiert',
 			icon: null
 		},
 		{
 			key: 'market_based',
-			label: 'market-based',
+			label: 'marktbasiert',
 			icon: null
 		}
 	];
@@ -130,7 +130,7 @@
 		<div class="flex flex-wrap mb-2">
 			{#each sectors as sector}
 				<button
-					class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2
+					class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs mr-2 gap-2 mb-2 hover:cursor-pointer
         {selectedSector === sector.name
 						? 'text-black bg-gray-300 '
 						: 'text-gray-700 dark:text-gray-700 bg-gray-100 dark:bg-gray-500 '}"
@@ -161,7 +161,7 @@
 		<p class="font-semibold text-sm">Unternehmen</p>
 		<div class="flex flex-wrap text-sm text-underline gap-x-3 md:ml-6">
 			<button
-				class="disabled:opacity-50"
+				class="disabled:opacity-50 hover:cursor-pointer"
 				disabled={selectedSector === '' || !isFocusView}
 				on:click={() => {
 					selectAll();
@@ -170,7 +170,7 @@
 				Sektor auswählen
 			</button>
 			<button
-				class="disabled:opacity-50"
+				class="disabled:opacity-50 hover:cursor-pointer"
 				disabled={allDeselected || !isFocusView}
 				on:click={() => {
 					deselectAll();
@@ -179,7 +179,9 @@
 				Auswahl löschen
 			</button>
 			<button
-				class="md:ml-6 flex items-center {isFocusView ? 'text-agriculture' : 'text-energy'}"
+				class="md:ml-6 flex items-center {isFocusView
+					? 'text-agriculture'
+					: 'text-energy'} hover:cursor-pointer"
 				on:click={() => (isFocusView = !isFocusView)}
 			>
 				<span
@@ -196,8 +198,8 @@
 	<div class="flex flex-wrap gap-2 mb-4">
 		{#each companies as company}
 			<button
-				class="flex items-center rounded-xl font-semibold p-1 md:px-3 py-1 gap-1.5 text-black text-xs bg-gray-100
-        {company.selected ? 'border-2 border-green-600' : 'border-2'}
+				class="flex items-center rounded-xl font-semibold p-1 md:px-3 py-1 gap-1.5 text-black text-xs bg-gray-100 hover:cursor-pointer
+        {company.selected ? 'border-2 border-green-600' : 'border-2 border-gray-100'}
         {company.sectors.includes(selectedSector) || selectedSector === '' ? '' : 'opacity-50'}
         {company.sectors.includes(selectedSector) && !company.selected ? 'border-gray-300' : ''}"
 				on:mousedown={() => onClickCompany(company)}
@@ -238,7 +240,7 @@
 			<div class="flex gap-x-3 items-center">
 				{#each scopes as scope}
 					<button
-						class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2 shrink-0
+						class="inline-flex items-center justify-center rounded-full font-semibold px-3 py-1 text-xs gap-2 shrink-0 hover:cursor-pointer
               {selectedScopes.includes(scope)
 							? 'text-black bg-gray-100 border-2 border-green-600'
 							: 'text-gray-600 bg-gray-100 border-2 border-gray-100'}"

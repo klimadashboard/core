@@ -9,6 +9,9 @@
 	export let selectedScopes;
 	export let selectedScope2Category = 'location_based';
 
+	let isScopeThreeSelected;
+	$: isScopeThreeSelected = selectedScopes.includes(3);
+
 	let isSingleCompanySelected;
 	let selectedCompanyNames;
 	$: isSingleCompanySelected = selectedCompanies.length === 1;
@@ -101,14 +104,16 @@
 			marginLeft={50}
 			xTicksInterval={1}
 			unit={'t'}
-			invalidX={6}
-			invalidText={'Daten weniger genau*'}
+			invalidX={isScopeThreeSelected && 6}
+			invalidText={isScopeThreeSelected && 'Daten weniger genau*'}
 		/>
 	</div>
-	<p class="text-sm opacity-80 mt-2">
-		* Vor 2022 führt die Datenungenauigkeit aufgrund unterschiedlicher erfasster Dimensionen der
-		Scope 3 Emissionen zu fehlender Vergleichbarkeit.
-	</p>
+	{#if isScopeThreeSelected}
+		<p class="text-sm opacity-80 mt-2">
+			* Vor 2022 führt die Datenungenauigkeit aufgrund unterschiedlicher erfasster Dimensionen der
+			Scope 3 Emissionen zu fehlender Vergleichbarkeit.
+		</p>
+	{/if}
 {:else if selectedCompanies.length === 0}
 	<div class="h-28"></div>
 	<p class="text-center">Keine Unternehmen ausgewählt.</p>
