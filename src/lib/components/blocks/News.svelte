@@ -86,4 +86,9 @@
 	:global(.kd_news a:hover) {
 		@apply decoration-gray-800;
 	}
+
+	:global(.kd_news li:not(:last-child):after) {
+		content: '–';
+		@apply block opacity-50 -my-2 translate-y-0.5;
+	}
 </style>
