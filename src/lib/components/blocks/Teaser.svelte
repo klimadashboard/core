@@ -4,7 +4,7 @@
 
 <a
 	href={block.link}
-	class="block bg-gray-800 relative overflow-hidden min-h-[50vh] group h-full hover:opacity-90 transition"
+	class="block bg-gray-800 relative overflow-hidden min-h-[40vh] group h-full hover:opacity-90 transition"
 >
 	{#if block.image}
 		<img

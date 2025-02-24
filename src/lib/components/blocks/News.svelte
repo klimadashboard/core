@@ -49,7 +49,7 @@
 	</div>
 
 	{#await promise then news}
-		<ul class="kd_news text-base">
+		<ul class="kd_news text-base mb-2">
 			{#each news as item}
 				<li class="my-2">{@html item.text}</li>
 			{/each}
