@@ -34,7 +34,7 @@
 
 	const isDay = function (key, d) {
 		if (key == 'iceDay') {
-			return d.tlmax <= 0;
+			return d.tlmax < 0;
 		} else if (key == 'summerDay') {
 			return d.tlmax >= 25;
 		} else if (key == 'heatDay') {

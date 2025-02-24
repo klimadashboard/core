@@ -20,11 +20,12 @@
 					filter: {
 						station: {
 							id: {
-								_eq: parseInt(selectedStation.id)
+								_eq: selectedStation.id
 							}
 						}
 					},
-					limit: -1
+					limit: -1,
+					sort: ['date']
 				})
 			);
 			return data;
