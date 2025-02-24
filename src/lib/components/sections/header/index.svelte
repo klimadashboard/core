@@ -6,6 +6,7 @@
 	import ProgressIndicator from './ProgressIndicator.svelte';
 	import Breadcrumb from './Breadcrumb.svelte';
 	import { page } from '$app/state';
+	import { clickOutside } from '$lib/utils/clickOutside';
 
 	let showNavigation = false;
 	let showSearch = false;
@@ -54,7 +55,14 @@
 			<LightSwitch />
 		</div>
 		{#if showNavigation || showSearch}
-			<div class="mt-4 pt-4 border-t border-current/20">
+			<div
+				class="mt-4 pt-4 border-t border-current/20"
+				use:clickOutside
+				on:click_outside={() => {
+					showSearch = false;
+					showNavigation = false;
+				}}
+			>
 				{#if showNavigation}
 					<Navigation on:linkClicked={closeNavigation} />
 				{/if}
