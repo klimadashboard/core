@@ -90,7 +90,9 @@
 
 <div class="w-full">
 	{#await promise then data}
-		<Chart {data} {selectedStation} />
+		{#if data}
+			<Chart {data} {selectedStation} />
+		{/if}
 	{:catch error}
 		{error}
 	{/await}
