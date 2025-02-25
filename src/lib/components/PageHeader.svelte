@@ -13,13 +13,15 @@
 <div class="m-1 py-8 rounded-2xl">
 	<div class="container">
 		{#if $page.data.content}
-			<!--
-		<h1 class="font-bold tracking-wide uppercase">{$page.data.content.title}</h1>
-		-->
+			{#if $page.data.content.eyebrow}
+				<p class="mb-2 font-bold uppercase tracking-wide opacity-80">
+					{$page.data.content.eyebrow}
+				</p>
+			{/if}
 
-			<h2 class="text-3xl md:text-5xl font-bold max-w-2xl text-balance">
+			<h1 class="text-3xl md:text-5xl font-bold max-w-2xl text-balance">
 				{$page.data.content.heading ? $page.data.content.heading : $page.data.content.title}
-			</h2>
+			</h1>
 		{/if}
 
 		<div class="opacity-80 mt-4 text-lg leading-snug max-w-xl text">
