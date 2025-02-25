@@ -27,8 +27,10 @@
 		}
 	];
 
+	// Choose your default classification here:
 	$: selectedClassification = classifications[0].key;
 
+	// Load CSV data
 	Papa.parse(
 		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
 		{
@@ -46,6 +48,7 @@
 		}
 	);
 
+	// Aggregated views
 	const aggregatedViews = [
 		{
 			key: 'total_co2e_t',
@@ -61,6 +64,7 @@
 		}
 	];
 
+	// All defined sectors
 	const sectors = [
 		{
 			key: 'energy_co2e_t',
@@ -106,46 +110,57 @@
 		}
 	];
 
-	$: availableSectors = sectors.filter((d) => rawKeys?.indexOf(d.key) > -1);
+	// Restrict available sectors based on classification
+	$: availableSectors =
+		selectedClassification === 'Emissionshandel'
+			? sectors.filter((d) => ['energy_co2e_t', 'industry_co2e_t'].includes(d.key))
+			: sectors.filter((d) => rawKeys?.indexOf(d.key) > -1);
 
+	// Combine aggregated + filtered sector views
 	$: views = aggregatedViews.concat(availableSectors);
 
+	// Set default region (after data load completes)
 	$: selectedRegion = defaultRegion;
-
+	// Default view
 	$: activeView = 'total_co2e_t';
 
+	// Decide which sectors or aggregated view to show
 	$: selectedSectors =
 		activeView == 'sector_overview' ? availableSectors : views.filter((e) => e.key == activeView);
 
+	// Reducer to shape chart data
 	$: reducer = function (result, entry) {
-		var perCapitaString = showPerCapita ? '_percapita' : '';
-		if (entry.region == selectedRegion) {
-			result.push({
-				label: entry.year,
-				categories: selectedSectors?.map(function (item, index) {
-					if (selectedClassification == 'Emissionshandel') {
-						return {
-							label: item.label + ' ' + entry.year,
-							value: showPerCapita
-								? entry['energy_industry_co2e_t_percapita']
-								: entry['energy_industry_co2e_t'],
-							color: item.color
-						};
-					} else {
-						return {
-							label: item.label + ' ' + entry.year,
-							value: showPerCapita ? entry[item.key + perCapitaString] : entry[item.key],
-							color: item.color
-						};
-					}
-				})
-			});
-		}
+		if (entry.region != selectedRegion) return result;
+
+		let perCapitaString = showPerCapita ? '_percapita' : '';
+
+		result.push({
+			label: entry.year,
+			categories: selectedSectors?.map((item) => {
+				// For Emissionshandel: if user wants total, use the pre-summed energy_industry_co2e_t
+				// otherwise (stacked view), just use the normal item key
+				let dataKey;
+				if (selectedClassification === 'Emissionshandel' && activeView === 'total_co2e_t') {
+					dataKey = showPerCapita ? 'energy_industry_co2e_t_percapita' : 'energy_industry_co2e_t';
+				} else {
+					// default approach
+					dataKey = showPerCapita ? item.key + perCapitaString : item.key;
+				}
+
+				return {
+					label: item.label + ' ' + entry.year,
+					value: entry[dataKey],
+					color: item.color
+				};
+			})
+		});
+
 		return result;
 	};
 
 	$: dataset = [];
 
+	// Region selection
 	$: regions = [...new Set(rawData?.map((d) => d.region))];
 
 	// variables for dynamic text generation
@@ -156,24 +171,26 @@
 
 	function getPercentageChange(oldNumber, newNumber) {
 		var decreaseValue = oldNumber - newNumber;
-
 		return (decreaseValue / oldNumber) * 100;
 	}
 
+	// Per-capita switch
 	$: showPerCapita = false;
 
+	// Optional flight emissions
 	let showFlightEmissions = false;
 	$: allowFlightEmissions =
 		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
 		!showPerCapita &&
 		selectedClassification == 'Gesamt';
 
+	// Build dataset with or without flight emissions
 	$: if (showFlightEmissions && allowFlightEmissions) {
 		dataset = rawData
 			?.filter((d) => d.classification == selectedClassification)
 			.reduce(reducer, [])
 			.map((d) => {
-				var categories = d.categories;
+				var categories = [...d.categories];
 				var index = rawData.findIndex(
 					(e) =>
 						e.year == d.label && e.region == 'Austria' && e.classification == selectedClassification
@@ -193,6 +210,8 @@
 			?.filter((d) => d.classification == selectedClassification)
 			.reduce(reducer, []);
 	}
+
+	// Some default text data from first/last in the CSV
 	$: if (rawData?.length > 0) {
 		lastYear = rawData[rawData.length - 1]['year'];
 		firstYearEmissions = Math.round(rawData[0]['total_co2e_t']);
@@ -200,6 +219,7 @@
 		percentage1990lastYear = getPercentageChange(firstYearEmissions, lastYearEmissions) / 100;
 	}
 
+	// Add a forecast (example logic) if conditions match
 	$: if (
 		dataset &&
 		selectedRegion == 'Austria' &&
@@ -223,8 +243,12 @@
 		});
 	}
 
+	// Optionally freeze Y-axis scale
 	let freezeYAxis = false;
 
+	// If you want to default to Gesamt view when changing classification, you can keep or remove:
+	// This currently forces "Gesamt" when choosing Emissionshandel,
+	// which hides the stacked "Sektoren" unless the user changes it after the assignment.
 	$: if (selectedClassification == 'Emissionshandel') {
 		activeView = 'total_co2e_t';
 	}
