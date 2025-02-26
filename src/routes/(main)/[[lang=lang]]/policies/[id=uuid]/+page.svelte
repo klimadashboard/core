@@ -5,81 +5,35 @@
 	export let data;
 
 	console.log(data);
+
+	$: displayedStatus = page.data.status.filter(
+		(s) =>
+			s.key == data.policy.status ||
+			s.key == 'notStarted' ||
+			s.key == 'implemented' ||
+			s.key == 'inProgress'
+	);
 </script>
 
 <PageHeader />
 
 <div class="container">
-	<div id="status" class=" mb-10 border border-current/10 rounded-full inline-flex gap-2">
-		<span
-			class="rounded-full p-1 {data.policy.status === 'not_started'
-				? 'bg-current/10 font-bold px-3'
-				: ''}"
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="inline w-4 h-4 -translate-y-0.5 mr-1"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-					d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"
-				/><path
-					d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"
-				/><path d="M10 12l4 4m0 -4l-4 4" /></svg
+	<div
+		id="status"
+		class="overflow-scroll mb-10 border border-current/10 rounded-full inline-flex gap-2 text-sm"
+	>
+		{#each displayedStatus as status}
+			{@const isActive = status.key == data.policy.status}
+			<div
+				class="shrink-0 rounded-full p-1 px-2 flex gap-0.5 items-center {isActive
+					? 'font-bold'
+					: ''}"
+				style={isActive ? `background: ${status.color}; color: ${status.colorText};` : ''}
 			>
-			Nicht gestartet</span
-		>
-		{#if data.policy.status === 'deferred' || data.policy.status === 'partially_implemented'}
-			<span class="rounded-full p-1 bg-current/10 font-bold px-3">{data.policy.status}</span>
-		{:else}
-			<span
-				class="rounded-full p-1 {data.policy.status === 'started' ? 'bg-current/10 font-bold' : ''}"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="inline w-4 h-4 -translate-y-0.5 mr-1"
-					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-						d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"
-					/><path d="M7 21l3 -4" /><path d="M16 21l-2 -4l-3 -3l1 -6" /><path
-						d="M6 12l2 -3l4 -1l3 3l3 1"
-					/></svg
-				>
-				Gestartet</span
-			>
-		{/if}
-		<span
-			class="rounded-full p-1 pr-3 {data.policy.status === 'implemented'
-				? 'bg-current/10 font-bold px-3'
-				: ''}"
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="inline w-4 h-4 -translate-y-0.5 mr-1"
-				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l5 5l10 -10" /></svg
-			>Umgesetzt</span
-		>
+				{@html status.icon}
+				{status.label}
+			</div>
+		{/each}
 	</div>
 	<div class="grid md:grid-cols-3 gap-4">
 		<div class="md:col-span-2">
@@ -165,34 +119,40 @@
 						><span>empfohlen vom Klimarat der Bürger:innen 2022</span>
 					</li>
 				{/if}
+				<li class="overflow-scroll">
+					<div class="flex items-center gap-1">
+						{#each data.policy.attributes.filter((d) => d.type == 'topic') as attribute}
+							<a
+								class="rounded-full p-1 bg-current/5 hover:bg-current/30 transition font-bold px-3"
+								href="/policies/{attribute.key}">{attribute.title}</a
+							>
+						{/each}
+					</div>
+				</li>
+
+				{#if data.policy.stakeholders.length}
+					<li>
+						<p>Stakeholder</p>
+						<ul class="my-2">
+							{#each data.policy.stakeholders as stakeholder}
+								<li>
+									{#if stakeholder.stakeholders_id.image}
+										<img
+											src="https://base.klimadashboard.org/assets/{stakeholder.stakeholders_id
+												.image}"
+											alt={stakeholder.stakeholders_id.title}
+											class="h-16 bg-white p-1 rounded-2xl"
+										/>
+									{/if}
+									<p class="opacity-80">{stakeholder.stakeholders_id.title}</p>
+								</li>
+							{/each}
+						</ul>
+					</li>
+				{/if}
 			</ul>
 
-			<div class="mt-4">
-				{#each data.policy.attributes.filter((d) => d.type == 'topic') as attribute}
-					<a
-						class="rounded-full p-1 bg-current/5 hover:bg-current/30 transition font-bold px-3"
-						href="/policies/{attribute.key}">{attribute.title}</a
-					>
-				{/each}
-			</div>
-
-			{#if data.policy.stakeholders.length}
-				<p class="text-lg mt-4">Relevante Stakeholder für diese Handlung sind</p>
-				<ul class="my-2">
-					{#each data.policy.stakeholders as stakeholder}
-						<li>
-							{#if stakeholder.stakeholders_id.image}
-								<img
-									src="https://base.klimadashboard.org/assets/{stakeholder.stakeholders_id.image}"
-									alt={stakeholder.stakeholders_id.title}
-									class="h-16 bg-white p-1 rounded-2xl"
-								/>
-							{/if}
-							<p class="opacity-80">{stakeholder.stakeholders_id.title}</p>
-						</li>
-					{/each}
-				</ul>
-			{/if}
+			<div class="mt-4"></div>
 		</div>
 		<p class="my-8 opacity-80 text">
 			Diese Seite wurde zuletzt am {dayjs(page.data.policy.date_updated).format('D.M.YYYY')} aktualisiert.
@@ -210,6 +170,6 @@
 	}
 
 	.attribute-list li {
-		@apply py-1;
+		@apply py-3;
 	}
 </style>

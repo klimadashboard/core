@@ -2,65 +2,71 @@
 import { error } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
-import dayjs from 'dayjs';
 import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
 
 export async function load({ fetch, params, parent }) {
 	const directus = getDirectusInstance(fetch);
+	const lang = params.lang || 'de';
 
 	try {
-		const policies = await directus.request(
+		const policiesRaw = await directus.request(
 			readItems('policies', {
 				fields: [
 					'*',
-					'translations.*',
+					'translations.title',
 					'updates.*',
-					'stakeholders.stakeholders_id.*',
 					'updates.translations.*',
+					'stakeholders.stakeholders_id.*',
 					'attributes.policies_attributes_key.*',
-					'attributes.policies_attributes_key.translations.*'
+					'attributes.policies_attributes_key.translations.*',
+					'status.*',
+					'status.translations.*'
 				],
-				deep: {
-					translations: {
-						_filter: {
-							languages_code: {
-								_eq: params.lang || 'de'
-							}
-						}
-					},
-					updates: {
-						translations: {
-							_filter: {
-								languages_code: {
-									_eq: params.lang || 'de'
-								}
-							}
-						}
+				filter: {
+					status: {
+						_neq: 'hidden'
 					}
+				},
+				deep: {
+					translations: { _filter: { languages_code: { _eq: lang } } },
+					updates: { translations: { _filter: { languages_code: { _eq: lang } } } },
+					status: { translations: { _filter: { languages_code: { _eq: lang } } } }
 				}
 			})
 		);
 
-		const attributes = await directus.request(
-			readItems('policies_attributes', {
-				fields: ['*', 'translations.*'],
-				deep: {
-					translations: {
-						_filter: { languages_code: { _eq: params.lang || 'de' } }
-					}
-				}
-			})
-		);
+		// Flatten structure for each policy
+		const policies = policiesRaw.map((policy) => {
+			const flatPolicy = {
+				...policy,
+				...policy.translations?.[0], // Flatten translations[0]
+				updates: policy.updates?.map((update) => ({
+					...update,
+					...update.translations?.[0] // Flatten translations[0] for updates
+				})),
+				attributes: policy.attributes?.map((attr) => ({
+					...attr.policies_attributes_key,
+					...attr.policies_attributes_key?.translations?.[0] // Flatten translations[0] for attributes
+				})),
+				status: policy.status ? { ...policy.status, ...policy.status.translations?.[0] } : null
+			};
+
+			// Cleanup unused translation fields
+			delete flatPolicy.translations;
+			flatPolicy.updates?.forEach((update) => delete update.translations);
+			flatPolicy.attributes?.forEach((attr) => delete attr.translations);
+
+			return flatPolicy;
+		});
 
 		const { translations } = await parent();
-
 		const content = {
 			title: 'Maßnahmen',
 			description: translations.policiesDescription
 		};
+
 		return {
-			policies,
-			attributes,
+			policies: await Promise.all(policies.map((policy) => resolvePlaceholders(policy, lang))),
 			content
 		};
 	} catch (err) {

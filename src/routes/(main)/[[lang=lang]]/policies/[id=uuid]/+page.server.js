@@ -18,7 +18,8 @@ export async function load({ fetch, params }) {
 					'updates.translations.*',
 					'stakeholders.stakeholders_id.*',
 					'attributes.policies_attributes_key.*',
-					'attributes.policies_attributes_key.translations.*'
+					'attributes.policies_attributes_key.translations.*',
+					'status'
 				],
 				deep: {
 					translations: { _filter: { languages_code: { _eq: lang } } },
