@@ -229,6 +229,10 @@ sub {
 	list-style-type: '- ';
 }
 
+.text h2 {
+	@apply text-xl font-bold mt-3;
+}
+
 .text li {
 	@apply pl-1;
 }
