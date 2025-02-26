@@ -46,9 +46,32 @@ export const GET = async ({ url }) => {
 			})
 		);
 
-		let companies;
+		let companies, policies, policiesAttributes;
 
 		if (PUBLIC_VERSION == 'at') {
+			policies = await directus.request(
+				readItems('policies', {
+					filter: {
+						_and: [
+							/*
+						{
+							site: {
+								_eq: PUBLIC_VERSION
+							}
+						},
+						*/
+							{
+								status: {
+									_neq: 'hidden'
+								}
+							}
+						]
+					}
+				})
+			);
+
+			policiesAttributes = await directus.request(readItems('policies_attributes'));
+
 			companies = await directus.request(
 				readItems('companies', {
 					filter: {
@@ -64,6 +87,8 @@ export const GET = async ({ url }) => {
 			);
 		} else {
 			companies = [];
+			policies = [];
+			policiesAttributes = [];
 		}
 
 		// Generate URLs
@@ -77,7 +102,11 @@ export const GET = async ({ url }) => {
 				)
 				.flat(),
 			...charts.map((chart) => `${currentUrl}/charts/${chart.id}`),
-			...companies.map((company) => `${currentUrl}/companies/${company.id}`)
+			...companies.map((company) => `${currentUrl}/companies/${company.id}`),
+			...policies.map((policy) => `${currentUrl}/policies/${policy.id}`),
+			...policiesAttributes.map(
+				(policyAttribute) => `${currentUrl}/policies/${policyAttribute.key}`
+			)
 		];
 
 		// Generate XML content
