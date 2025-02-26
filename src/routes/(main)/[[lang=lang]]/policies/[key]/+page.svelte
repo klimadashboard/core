@@ -1,6 +1,6 @@
 <script>
 	import PageHeader from '$lib/components/PageHeader.svelte';
-	import PolicyGrid from '../PolicyGrid.svelte';
+	import PoliciesGrid from '../PoliciesGrid.svelte';
 	import PoliciesStatusSummary from '../PoliciesStatusSummary.svelte';
 	export let data;
 </script>
@@ -9,4 +9,4 @@
 
 <PoliciesStatusSummary policies={data.policies} />
 
-<PolicyGrid policies={data.policies} />
+<PoliciesGrid policies={data.policies} />

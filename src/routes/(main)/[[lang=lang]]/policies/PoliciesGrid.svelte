@@ -2,7 +2,6 @@
 	import dayjs from 'dayjs';
 
 	export let policies;
-	$: console.log(policies);
 </script>
 
 <div class="grid gap-1 grid-cols-2 lg:grid-cols-4 my-8 p-1">
@@ -11,7 +10,7 @@
 			href={`/policies/${policy.id}`}
 			class="p-3 bg-current/5 rounded-2xl hover:opacity-70 transition"
 		>
-			<h3 class="font-bold text-xl leading-tight">
+			<h3 class="font-bold text-xl leading-tight hyphens-auto">
 				{policy.title}
 			</h3>
 			<div class="flex gap-1 items-center mt-2 flex-wrap">

@@ -2,7 +2,6 @@
 	import { page } from '$app/state';
 
 	export let policies;
-	console.log(policies);
 </script>
 
 <div class="container">
@@ -13,12 +12,14 @@
 				? page.data.translations.onePolicyFound
 				: policies.length + ' ' + page.data.translations.policiesFound}
 		{#each page.data.status.filter((d) => policies.filter((p) => p.status.key == d.key).length > 0) as status}
-			<div
-				class="w-2 h-2 rounded-full ml-3 inline-block -translate-y-0.5"
-				style="background: {status.color}"
-			></div>
-			{policies.filter((p) => p.status.key == status.key).length}
-			{status.label}
+			<span>
+				<div
+					class="w-2 h-2 rounded-full ml-3 inline-block -translate-y-0.5"
+					style="background: {status.color}"
+				></div>
+				{policies.filter((p) => p.status.key == status.key).length}
+				{status.label}
+			</span>
 		{/each}
 	</p>
 	<div class="rounded-full h-2 w-full flex overflow-hidden">

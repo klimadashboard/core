@@ -4,17 +4,14 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { replaceState, goto } from '$app/navigation';
-	import PolicyGrid from './PolicyGrid.svelte';
+	import PoliciesGrid from './PoliciesGrid.svelte';
 	import PoliciesStatusSummary from './PoliciesStatusSummary.svelte';
 	export let data;
-
-	console.log(data);
 
 	// Get selected filters from URL as a Set
 	$: selectedFilters = new Set(
 		$page.url.searchParams.get('filter')?.split(',').filter(Boolean) || []
 	);
-	$: console.log(selectedFilters);
 
 	// Update URL and filter policies
 	function setFilter(filterKey) {
@@ -90,4 +87,4 @@
 
 <PoliciesStatusSummary policies={filteredPolicies} />
 
-<PolicyGrid policies={filteredPolicies} />
+<PoliciesGrid policies={filteredPolicies} />

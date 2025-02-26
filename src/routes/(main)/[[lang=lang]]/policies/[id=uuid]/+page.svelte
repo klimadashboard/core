@@ -1,10 +1,10 @@
 <script>
 	import { page } from '$app/state';
 	import PageHeader from '$lib/components/PageHeader.svelte';
+	import PolicyUpdates from '../PolicyUpdates.svelte';
 	import dayjs from 'dayjs';
-	export let data;
 
-	console.log(data);
+	export let data;
 
 	$: displayedStatus = page.data.status.filter(
 		(s) =>
@@ -35,20 +35,11 @@
 			</div>
 		{/each}
 	</div>
+
 	<div class="grid md:grid-cols-3 gap-4">
 		<div class="md:col-span-2">
 			{#if data.policy.content}
 				<div class="text-lg text mb-10">{@html data.policy.content}</div>
-			{/if}
-			{#if data.policy.updates.length}
-				<h2 class="text-2xl font-bold">Updates</h2>
-				{#each data.policy.updates.sort((a, b) => dayjs(b.date).diff(dayjs(a.date))) as update}
-					<div class="border-l-2 py-4 my-2 border-current/20 pl-3">
-						<p class="text-sm opacity-80 font-bold">{dayjs(update.date).format('DD.MM.YYYY')}</p>
-						<h2 class="text-2xl">{update.title}</h2>
-						<div class="text-lg text">{@html update.text}</div>
-					</div>
-				{/each}
 			{/if}
 		</div>
 		<div>
@@ -151,9 +142,14 @@
 					</li>
 				{/if}
 			</ul>
-
-			<div class="mt-4"></div>
 		</div>
+	</div>
+
+	{#if data.policy.updates.length}
+		<PolicyUpdates updates={data.policy.updates} />
+	{/if}
+
+	<div>
 		<p class="my-8 opacity-80 text">
 			Diese Seite wurde zuletzt am {dayjs(page.data.policy.date_updated).format('D.M.YYYY')} aktualisiert.
 			Änderungsvorschläge können an
