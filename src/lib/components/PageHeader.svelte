@@ -19,7 +19,7 @@
 				</p>
 			{/if}
 
-			<h1 class="text-3xl md:text-5xl font-bold max-w-2xl text-balance">
+			<h1 class="text-3xl md:text-5xl font-bold max-w-2xl text-balance hyphens-auto">
 				{$page.data.content.heading ? $page.data.content.heading : $page.data.content.title}
 			</h1>
 		{/if}
