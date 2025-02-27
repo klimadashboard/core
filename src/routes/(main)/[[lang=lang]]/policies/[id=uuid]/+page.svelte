@@ -65,7 +65,11 @@
 								d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"
 							/><path d="M9 12l2 2l4 -4" /></svg
 						>
-						<span> im Regierungsprogramm 2025-30 </span>
+						<span>
+							im <a href="/policies/governmentProgramAT2530" class="underline underline-offset-4"
+								>Regierungsprogramm 2025-30</a
+							>
+						</span>
 					</li>
 				{:else}
 					<li class="flex items-center gap-1 font-bold text-red-800">
@@ -84,7 +88,12 @@
 								d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"
 							/><path d="M10 10l4 4m0 -4l-4 4" /></svg
 						>
-						<span>nicht im Regierungsprogramm 2025-30 </span>
+						<span
+							>nicht im <a
+								href="/policies/governmentProgramAT2530"
+								class="underline underline-offset-4">Regierungsprogramm 2025-30</a
+							>
+						</span>
 					</li>
 				{/if}
 				{#if data.policy.attributes.find((d) => d.key == 'citizensAssemblyAT22')}
@@ -107,7 +116,12 @@
 							/><path d="M17 10h2a2 2 0 0 1 2 2v1" /><path
 								d="M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"
 							/><path d="M3 13v-1a2 2 0 0 1 2 -2h2" /></svg
-						><span>empfohlen vom Klimarat der Bürger:innen 2022</span>
+						><span
+							>empfohlen vom <a
+								href="/policies/citizensAssemblyAT22"
+								class="underline underline-offset-4">Klimarat der Bürger:innen 2022</a
+							></span
+						>
 					</li>
 				{/if}
 				<li class="overflow-scroll">
