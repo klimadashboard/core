@@ -242,7 +242,7 @@ sub {
 }
 
 .text blockquote {
-	@apply border-l border-current/20 pl-4 opacity-80;
+	@apply border-l border-current/20 pl-2 opacity-80;
 }
 
 .splide__pagination__page {

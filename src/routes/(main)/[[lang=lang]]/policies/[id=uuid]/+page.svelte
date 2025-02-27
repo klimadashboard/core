@@ -36,10 +36,32 @@
 		{/each}
 	</div>
 
-	<div class="grid md:grid-cols-3 gap-4">
+	<div class="grid md:grid-cols-3 max-w-[90vw] gap-4">
 		<div class="md:col-span-2">
 			{#if data.policy.content}
-				<div class="text-lg text mb-10">{@html data.policy.content}</div>
+				<div class="text-lg text mb-8">{@html data.policy.content}</div>
+			{/if}
+			{#if data.policy.governmentPlan}
+				<div class="text-lg text mb-8">
+					<h2 class="mb-2 flex items-center gap-2">
+						{@html data.policy.attributes.find((d) => d.key == 'governmentProgramAT2529').icon}
+						<span>Regierungsprogramm 2025-29</span>
+					</h2>
+					<blockquote>
+						{@html data.policy.governmentPlan}
+					</blockquote>
+				</div>
+			{/if}
+			{#if data.policy.citizenDemand}
+				<div class="text-lg text mb-8">
+					<h2 class="mb-2 flex items-center gap-2">
+						{@html data.policy.attributes.find((d) => d.key == 'citizensAssemblyAT22').icon}
+						<span>Forderungen des Klimarats der Bürger:innen 2022</span>
+					</h2>
+					<blockquote>
+						{@html data.policy.citizenDemand}
+					</blockquote>
+				</div>
 			{/if}
 		</div>
 		<div>
@@ -68,30 +90,6 @@
 						<span>
 							im <a href="/policies/governmentProgramAT2529" class="underline underline-offset-4"
 								>Regierungsprogramm 2025-29</a
-							>
-						</span>
-					</li>
-				{:else}
-					<li class="flex items-center gap-1 font-bold text-red-800">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="w-5 h-5"
-							><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-								d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"
-							/><path d="M10 10l4 4m0 -4l-4 4" /></svg
-						>
-						<span
-							>nicht im <a
-								href="/policies/governmentProgramAT2529"
-								class="underline underline-offset-4">Regierungsprogramm 2025-29</a
 							>
 						</span>
 					</li>

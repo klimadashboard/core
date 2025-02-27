@@ -11,10 +11,12 @@
 			: policies.length == 1
 				? page.data.translations.onePolicyFound
 				: policies.length + ' ' + page.data.translations.policiesFound}
+	</p>
+	<p>
 		{#each page.data.status.filter((d) => policies.filter((p) => p.status.key == d.key).length > 0) as status}
-			<span>
+			<span class="mr-3">
 				<div
-					class="w-2 h-2 rounded-full ml-3 inline-block -translate-y-0.5"
+					class="w-2 h-2 rounded-full inline-block -translate-y-0.5"
 					style="background: {status.color}"
 				></div>
 				{policies.filter((p) => p.status.key == status.key).length}

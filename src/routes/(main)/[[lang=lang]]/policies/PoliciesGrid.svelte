@@ -8,7 +8,7 @@
 	{#each policies as policy}
 		<a
 			href={`/policies/${policy.id}`}
-			class="p-3 bg-current/5 rounded-2xl hover:opacity-70 transition text-sm font-bold"
+			class="p-3 bg-current/5 rounded-2xl hover:opacity-70 transition text-sm"
 		>
 			<h3 class="font-bold text-xl lg:text-2xl leading-tight hyphens-auto">
 				{policy.title}
