@@ -6,13 +6,17 @@
 
 	export let data;
 
-	$: displayedStatus = page.data.status.filter(
-		(s) =>
-			s.key == data.policy.status ||
-			s.key == 'notStarted' ||
-			s.key == 'implemented' ||
-			s.key == 'inProgress'
-	);
+	$: displayedStatus = [];
+
+	$: if (data.policy.status == 'noTrack') {
+		displayedStatus = page.data.status.filter((d) => d.key == 'noTrack');
+	} else if (data.policy.status.includes('goal')) {
+		displayedStatus = page.data.status.filter((d) => d.key.includes('goal'));
+	} else {
+		displayedStatus = page.data.status.filter(
+			(d) => d.key == 'notStarted' || d.key == 'implemented'
+		);
+	}
 </script>
 
 <PageHeader />
@@ -20,12 +24,12 @@
 <div class="container">
 	<div
 		id="status"
-		class="overflow-scroll mb-10 border border-current/10 rounded-full inline-flex gap-2 text-sm"
+		class="overflow-scroll -translate-y-8 border border-current/10 text-sm md:text-base rounded-full inline-flex"
 	>
 		{#each displayedStatus as status}
 			{@const isActive = status.key == data.policy.status}
 			<div
-				class="shrink-0 rounded-full p-1 px-2 flex gap-0.5 items-center {isActive
+				class="shrink-0 rounded-full p-1 px-3 flex gap-0.5 items-center {isActive
 					? 'font-bold'
 					: ''}"
 				style={isActive ? `background: ${status.color}; color: ${status.colorText};` : ''}

@@ -15,7 +15,7 @@
 		{#if $page.data.content}
 			{#if $page.data.content.eyebrow}
 				<p class="mb-2 font-bold uppercase tracking-wide opacity-80">
-					{$page.data.content.eyebrow}
+					{@html $page.data.content.eyebrow}
 				</p>
 			{/if}
 

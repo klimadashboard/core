@@ -49,8 +49,8 @@ export async function load({ fetch, params }) {
 
 		// Content for display
 		const content = {
-			title: policyData.title,
-			eyebrow: 'Policy'
+			title: policyData.title
+			// eyebrow: '<a href="/policies">&larr; Maßnahmen</a>'
 		};
 
 		return {

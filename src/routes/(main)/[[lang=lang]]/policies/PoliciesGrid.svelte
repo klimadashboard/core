@@ -13,7 +13,7 @@
 			<h3 class="font-bold text-xl lg:text-2xl leading-tight hyphens-auto">
 				{policy.title}
 			</h3>
-			<div class="flex gap-1 items-center mt-2 flex-wrap">
+			<div class="flex gap-1 items-center mt-2 flex-wrap font-bold">
 				{#each policy.attributes.filter((a) => a.type == 'topic') as attribute}
 					<span class="rounded-full px-3 py-1 bg-current/10">
 						{attribute.title}
