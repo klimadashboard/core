@@ -48,7 +48,7 @@
 					<li>Typ: {data.policy.type}</li>
 				{/if}
 
-				{#if data.policy.attributes.find((d) => d.key == 'governmentProgramAT2530')}
+				{#if data.policy.attributes.find((d) => d.key == 'governmentProgramAT2529')}
 					<li class="flex items-center gap-1 font-bold text-green-800">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -66,8 +66,8 @@
 							/><path d="M9 12l2 2l4 -4" /></svg
 						>
 						<span>
-							im <a href="/policies/governmentProgramAT2530" class="underline underline-offset-4"
-								>Regierungsprogramm 2025-30</a
+							im <a href="/policies/governmentProgramAT2529" class="underline underline-offset-4"
+								>Regierungsprogramm 2025-29</a
 							>
 						</span>
 					</li>
@@ -90,8 +90,8 @@
 						>
 						<span
 							>nicht im <a
-								href="/policies/governmentProgramAT2530"
-								class="underline underline-offset-4">Regierungsprogramm 2025-30</a
+								href="/policies/governmentProgramAT2529"
+								class="underline underline-offset-4">Regierungsprogramm 2025-29</a
 							>
 						</span>
 					</li>
