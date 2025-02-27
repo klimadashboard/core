@@ -61,11 +61,14 @@
 		<div class="flex gap-1 flex-wrap items-center my-1">
 			{#each data.attributes.filter((d) => d.type === 'source') as source}
 				<button
-					class="rounded-full px-3 py-1 text-sm font-bold {selectedFilters.has(source.key)
+					class="rounded-full px-3 py-1 text-sm font-bold flex items-center gap-1 h-7 {selectedFilters.has(
+						source.key
+					)
 						? 'bg-current/30'
 						: 'bg-current/10'}"
 					on:click={() => setFilter(source.key)}
 				>
+					{@html source.icon}
 					{source.title}
 				</button>
 			{/each}
