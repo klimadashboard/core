@@ -7,13 +7,15 @@
 	import Breadcrumb from './Breadcrumb.svelte';
 	import { page } from '$app/state';
 	import { clickOutside } from '$lib/utils/clickOutside';
-
 	let showNavigation = false;
 	let showSearch = false;
 
 	// Function to handle closing the navigation menu
 	function closeNavigation() {
-		showNavigation = false;
+		setTimeout(() => {
+			showNavigation = false;
+			showSearch = false;
+		}, 100);
 	}
 </script>
 
@@ -58,10 +60,7 @@
 			<div
 				class="mt-4 pt-4 border-t border-current/20"
 				use:clickOutside
-				on:click_outside={() => {
-					showSearch = false;
-					showNavigation = false;
-				}}
+				on:click_outside={closeNavigation}
 			>
 				{#if showNavigation}
 					<Navigation on:linkClicked={closeNavigation} />
