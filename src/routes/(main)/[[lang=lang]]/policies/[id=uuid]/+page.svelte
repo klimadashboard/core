@@ -34,13 +34,13 @@
 					: ''}"
 				style={isActive ? `background: ${status.color}; color: ${status.colorText};` : ''}
 			>
-				{@html status.icon}
-				{status.label}
+				{@html status?.icon}
+				{status?.label}
 			</div>
 		{/each}
 	</div>
 
-	<div class="grid md:grid-cols-3 max-w-[90vw] gap-4">
+	<div class="grid md:grid-cols-3 max-w-[90vw] gap-8">
 		<div class="md:col-span-2">
 			{#if data.policy.content}
 				<div class="text-lg text mb-8">{@html data.policy.content}</div>
@@ -48,7 +48,7 @@
 			{#if data.policy.governmentPlan}
 				<div class="text-lg text mb-8">
 					<h2 class="mb-2 flex items-center gap-2">
-						{@html data.policy.attributes.find((d) => d.key == 'governmentProgramAT2529').icon}
+						{@html data.policy.attributes.find((d) => d.key == 'governmentProgramAT2529')?.icon}
 						<span>Regierungsprogramm 2025-29</span>
 					</h2>
 					<blockquote>
@@ -59,7 +59,7 @@
 			{#if data.policy.citizenDemand}
 				<div class="text-lg text mb-8">
 					<h2 class="mb-2 flex items-center gap-2">
-						{@html data.policy.attributes.find((d) => d.key == 'citizensAssemblyAT22').icon}
+						{@html data.policy.attributes.find((d) => d.key == 'citizensAssemblyAT22')?.icon}
 						<span>Forderungen des Klimarats der Bürger:innen 2022</span>
 					</h2>
 					<blockquote>

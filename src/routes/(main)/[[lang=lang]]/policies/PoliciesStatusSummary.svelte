@@ -24,7 +24,7 @@
 			</span>
 		{/each}
 	</p>
-	<div class="rounded-full h-2 w-full flex overflow-hidden">
+	<div class="rounded-full h-2 mt-1 w-full flex overflow-hidden">
 		{#each page.data.status as status, i}
 			<div
 				class=" h-full"
