@@ -1,14 +1,20 @@
 <script>
-	import dayjs from 'dayjs';
+	import { page } from '$app/stores';
 
 	export let policies;
-	console.log(policies);
+	function getUrl(policy) {
+		let url =
+			$page.data.language.code == 'de'
+				? '/policies/' + policy.id
+				: '/' + $page.data.language.code + '/policies/' + policy.id;
+		return url;
+	}
 </script>
 
 <div class="grid gap-1 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 my-8 p-1">
 	{#each policies.sort((a, b) => a.status.sort - b.status.sort) as policy}
 		<a
-			href={`/policies/${policy.id}`}
+			href={getUrl(policy)}
 			class="p-3 bg-current/5 rounded-2xl hover:opacity-70 transition text-sm"
 		>
 			<h3 class="font-bold text-xl lg:text-2xl leading-tight hyphens-auto">

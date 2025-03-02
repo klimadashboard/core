@@ -50,6 +50,9 @@
 					<h2 class="mb-2 flex items-center gap-2">
 						{@html data.policy.attributes.find((d) => d.key == 'governmentProgramAT2529')?.icon}
 						<span>Regierungsprogramm 2025-29</span>
+						{#if data.language.code !== 'de'}
+							<span class="opacity-70 font-normal">auto-translated using AI</span>
+						{/if}
 					</h2>
 					<blockquote>
 						{@html data.policy.governmentPlan}
@@ -61,6 +64,9 @@
 					<h2 class="mb-2 flex items-center gap-2">
 						{@html data.policy.attributes.find((d) => d.key == 'citizensAssemblyAT22')?.icon}
 						<span>Forderungen des Klimarats der Bürger:innen 2022</span>
+						{#if data.language.code !== 'de'}
+							<span class="opacity-70 font-normal">auto-translated using AI</span>
+						{/if}
 					</h2>
 					<blockquote>
 						{@html data.policy.citizenDemand}
