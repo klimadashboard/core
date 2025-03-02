@@ -38,7 +38,6 @@
 		};
 
 		const resolvedChart = await resolvePlaceholders(chart);
-		console.log(resolvedChart);
 
 		return {
 			chart: resolvedChart,
