@@ -48,3 +48,10 @@
 		</a>
 	{/each}
 </div>
+
+<div class="container">
+	<p class="my-8 opacity-80 text max-w-xl">
+		Unser Maßnahmenmonitor wird laufend ergänzt. Änderungsvorschläge und Feedback gerne an
+		<a href="mailto:team@klimadashboard.org">team@klimadashboard.org</a>.
+	</p>
+</div>

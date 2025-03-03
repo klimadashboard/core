@@ -172,10 +172,10 @@
 	{/if}
 
 	<div>
-		<p class="my-8 opacity-80 text">
+		<p class="my-8 opacity-80 text max-w-xl">
 			Diese Seite wurde zuletzt am {dayjs(page.data.policy.date_updated).format('D.M.YYYY')} aktualisiert.
-			Änderungsvorschläge können an
-			<a href="mailto:team@klimadashboard.org">team@klimadashboard.org</a> geschickt werden.
+			Unser Maßnahmenmonitor wird laufend ergänzt. Änderungsvorschläge und Feedback gerne an
+			<a href="mailto:team@klimadashboard.org">team@klimadashboard.org</a>.
 		</p>
 	</div>
 </div>
