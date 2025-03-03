@@ -12,7 +12,7 @@
 				? page.data.translations.onePolicyFound
 				: policies.length + ' ' + page.data.translations.policiesFound}
 	</p>
-	<ul class="flex gap-4">
+	<ul class="flex gap-x-4 gap-y-1 flex-wrap">
 		{#each page.data.status.filter((d) => policies.filter((p) => p.status.key == d.key).length > 0) as status}
 			<li class="flex items-center gap-1">
 				<div
