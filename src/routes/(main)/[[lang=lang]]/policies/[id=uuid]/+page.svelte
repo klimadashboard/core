@@ -173,8 +173,10 @@
 
 	<div>
 		<p class="my-8 opacity-80 text max-w-xl">
-			Diese Seite wurde zuletzt am {dayjs(page.data.policy.date_updated).format('D.M.YYYY')} aktualisiert.
-			Unser Maßnahmenmonitor wird laufend ergänzt. Änderungsvorschläge und Feedback gerne an
+			Diese Seite wurde zuletzt am {page.data.policy.date_updated
+				? dayjs(page.data.policy.date_updated).format('D.M.YYYY')
+				: dayjs(page.data.policy.date_created).format('D.M.YYYY')} aktualisiert. Unser Maßnahmenmonitor
+			wird laufend ergänzt. Änderungsvorschläge und Feedback gerne an
 			<a href="mailto:team@klimadashboard.org">team@klimadashboard.org</a>.
 		</p>
 	</div>
