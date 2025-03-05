@@ -8,10 +8,21 @@
 		const data = await directus.request(
 			readItems('emissions', {
 				filter: {
-					region: {
-						_eq: 'at'
-					}
-				}
+					_and: [
+						{
+							region: {
+								_eq: 'at|wien'
+							}
+						},
+						{
+							value: {
+								_gte: 0
+							}
+						}
+					]
+				},
+				limit: -1,
+				sort: ['period']
 			})
 		);
 		return data;
@@ -20,7 +31,7 @@
 	$: promise = getData();
 </script>
 
-<div class="h-40">
+<div class="">
 	{#await promise then data}
 		<Chart {data} />
 	{/await}
