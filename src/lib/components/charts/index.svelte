@@ -5,9 +5,11 @@
 	import { page } from '$app/stores';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
+	import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
 
 	export let type;
 	export let id;
+	export let options;
 	export let hideWrapper = false;
 
 	$: getChart = async (locale) => {
@@ -35,31 +37,23 @@
 			content: response.translations[0]
 		};
 
+		const resolvedChart = await resolvePlaceholders(chart);
+
 		return {
-			chart,
+			chart: resolvedChart,
 			chartComponent: response.type === 'builder' ? Builder : Custom
 		};
 	};
 
 	$: promise = getChart($page.data.language.code);
-
-	/*
-
-	chart = {
-		...chart,
-		content: chart.translations.find((t) => t.languages_code === page.data.language.code)
-	};
-
-	
-	*/
 </script>
 
 {#await promise then c}
 	{#if hideWrapper || type == 'small'}
-		<svelte:component this={c.chartComponent} chart={c.chart} {type} />
+		<svelte:component this={c.chartComponent} chart={c.chart} {type} {options} />
 	{:else}
 		<Wrapper chart={c.chart}>
-			<svelte:component this={c.chartComponent} chart={c.chart} {type} />
+			<svelte:component this={c.chartComponent} chart={c.chart} {type} {options} />
 		</Wrapper>
 	{/if}
 {:catch error}

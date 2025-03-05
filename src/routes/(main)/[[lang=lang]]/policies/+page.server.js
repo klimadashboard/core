@@ -61,7 +61,7 @@ export async function load({ fetch, params, parent }) {
 
 		const { translations } = await parent();
 		const content = {
-			title: 'Maßnahmen',
+			title: translations.policiesTracker,
 			description: translations.policiesDescription
 		};
 

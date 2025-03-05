@@ -102,7 +102,8 @@ export async function load({ fetch, params }) {
 		// Create content object from attribute translations
 		const content = {
 			title: attribute.title,
-			description: attribute.description
+			description: attribute.description,
+			eyebrow: 'Tracker'
 		};
 
 		return {

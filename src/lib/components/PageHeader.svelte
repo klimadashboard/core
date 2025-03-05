@@ -24,7 +24,7 @@
 			</h1>
 		{/if}
 
-		<div class="opacity-80 mt-4 text-lg leading-snug max-w-xl text">
+		<div class="opacity-80 mt-4 text-lg leading-6 max-w-xl text">
 			<p>
 				{#each tags as tag}
 					{tag}

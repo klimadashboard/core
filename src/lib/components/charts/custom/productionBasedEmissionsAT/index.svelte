@@ -233,8 +233,8 @@
 			annotation: '',
 			categories: [
 				{
-					label: 'Forecast 2024',
-					value: 65600000,
+					label: 'Nowcast 2024',
+					value: 66800000,
 					estimate: true,
 					color: '#4DB263'
 				}

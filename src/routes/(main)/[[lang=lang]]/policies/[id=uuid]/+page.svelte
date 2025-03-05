@@ -34,13 +34,13 @@
 					: ''}"
 				style={isActive ? `background: ${status.color}; color: ${status.colorText};` : ''}
 			>
-				{@html status.icon}
-				{status.label}
+				{@html status?.icon}
+				{status?.label}
 			</div>
 		{/each}
 	</div>
 
-	<div class="grid md:grid-cols-3 max-w-[90vw] gap-4">
+	<div class="grid md:grid-cols-3 max-w-[90vw] gap-8">
 		<div class="md:col-span-2">
 			{#if data.policy.content}
 				<div class="text-lg text mb-8">{@html data.policy.content}</div>
@@ -48,8 +48,11 @@
 			{#if data.policy.governmentPlan}
 				<div class="text-lg text mb-8">
 					<h2 class="mb-2 flex items-center gap-2">
-						{@html data.policy.attributes.find((d) => d.key == 'governmentProgramAT2529').icon}
+						{@html data.policy.attributes.find((d) => d.key == 'governmentProgramAT2529')?.icon}
 						<span>Regierungsprogramm 2025-29</span>
+						{#if data.language.code !== 'de'}
+							<span class="opacity-70 font-normal">auto-translated using AI</span>
+						{/if}
 					</h2>
 					<blockquote>
 						{@html data.policy.governmentPlan}
@@ -59,8 +62,11 @@
 			{#if data.policy.citizenDemand}
 				<div class="text-lg text mb-8">
 					<h2 class="mb-2 flex items-center gap-2">
-						{@html data.policy.attributes.find((d) => d.key == 'citizensAssemblyAT22').icon}
+						{@html data.policy.attributes.find((d) => d.key == 'citizensAssemblyAT22')?.icon}
 						<span>Forderungen des Klimarats der Bürger:innen 2022</span>
+						{#if data.language.code !== 'de'}
+							<span class="opacity-70 font-normal">auto-translated using AI</span>
+						{/if}
 					</h2>
 					<blockquote>
 						{@html data.policy.citizenDemand}
@@ -166,10 +172,12 @@
 	{/if}
 
 	<div>
-		<p class="my-8 opacity-80 text">
-			Diese Seite wurde zuletzt am {dayjs(page.data.policy.date_updated).format('D.M.YYYY')} aktualisiert.
-			Änderungsvorschläge können an
-			<a href="mailto:team@klimadashboard.org">team@klimadashboard.org</a> geschickt werden.
+		<p class="my-8 opacity-80 text max-w-xl">
+			Diese Seite wurde zuletzt am {page.data.policy.date_updated
+				? dayjs(page.data.policy.date_updated).format('D.M.YYYY')
+				: dayjs(page.data.policy.date_created).format('D.M.YYYY')} aktualisiert. Unser Maßnahmenmonitor
+			wird laufend ergänzt. Änderungsvorschläge und Feedback gerne an
+			<a href="mailto:team@klimadashboard.org">team@klimadashboard.org</a>.
 		</p>
 	</div>
 </div>
