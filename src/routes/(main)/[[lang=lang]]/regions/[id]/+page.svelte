@@ -6,6 +6,7 @@
 	import Intro from './Intro.svelte';
 	import Image from './Image.svelte';
 	import Chart from '$lib/components/charts/index.svelte';
+	import Policies from '$lib/components/blocks/Policies.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
 
@@ -115,6 +116,7 @@
 		{
 			title: 'Handlungen',
 			id: 'actions',
+			blocks: [Policies],
 			description: 'Was du in ' + data.page.name + ' tun kannst.',
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-tool'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5' /></svg>",
 			height: 0,
@@ -166,6 +168,11 @@
 								{/each}
 							{:else}
 								<div class="bg-current/10 p-4">{section.description}</div>
+							{/if}
+							{#if section.blocks}
+								{#each section.blocks as block}
+									<svelte:component this={block} />
+								{/each}
 							{/if}
 						</div>
 					</div>
