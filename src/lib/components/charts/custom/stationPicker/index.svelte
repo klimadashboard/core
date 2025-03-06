@@ -4,6 +4,7 @@
 	import WeatherStationMap from './WeatherStationMap.svelte';
 	import WeatherStationPicker from './WeatherStationPicker.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/state';
 
 	export let selectedStation;
 	export let chart;
@@ -40,6 +41,12 @@
 </script>
 
 {#await promise then data}
-	<WeatherStationPicker {data} bind:selectedStation />
-	<WeatherStationMap {data} bind:selectedStation />
+	<div
+		class={localStorage.getItem('kd_region_coordinates') && page.url.pathname.includes('regions')
+			? 'hidden'
+			: ''}
+	>
+		<WeatherStationPicker {data} bind:selectedStation />
+		<WeatherStationMap {data} bind:selectedStation />
+	</div>
 {/await}
