@@ -224,6 +224,14 @@ sub {
 	@apply my-3;
 }
 
+.responsive-video {
+	@apply relative w-full aspect-video my-3 rounded-2xl overflow-hidden;
+}
+
+.responsive-video iframe {
+	@apply absolute w-full h-full;
+}
+
 .text ul {
 	@apply list-outside pl-6 max-w-2xl space-y-2 -translate-x-1.5;
 	list-style-type: '- ';
