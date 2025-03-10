@@ -53,7 +53,8 @@
 	<div>
 		<div class="flex items-end gap-2 mt-1">
 			<p class="text-5xl font-light font-condensed">
-				{formatNumber(block.number)}<span class="text-2xl font-normal">{block.unit}</span>
+				{parseFloat(block.number) ? formatNumber(block.number) : block.number}
+				<span class="text-2xl font-normal">{block.unit}</span>
 			</p>
 		</div>
 		<div class="text-balance">{@html block.subtitle}</div>
