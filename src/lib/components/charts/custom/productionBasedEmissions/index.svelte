@@ -169,38 +169,21 @@
 
 	$: if (
 		dataset &&
-		dataset.findIndex((x) => x.label == 2021) < 0 &&
-		selectedRegion == 'Austria' &&
 		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
 		!showPerCapita
 	) {
-		dataset.push(
-			{
-				label: 2021,
-				categories: [
-					{
-						label: 'Gesamt',
-						value: 77500000,
-						estimate: false,
-						color: '#4DB263'
-					}
-				],
-				estimate: false
-			},
-			{
-				label: 2022,
-				annotation: 'Prognose 2022',
-				categories: [
-					{
-						label: 'Prognose 2022',
-						value: 73600000,
-						estimate: true,
-						color: '#4DB263'
-					}
-				],
-				estimate: true
-			}
-		);
+		dataset.push({
+			label: 2024,
+			categories: [
+				{
+					label: 'Gesamt',
+					value: 649000000,
+					estimate: true,
+					color: '#4DB263'
+				}
+			],
+			estimate: true
+		});
 	}
 
 	let freezeYAxis = false;
