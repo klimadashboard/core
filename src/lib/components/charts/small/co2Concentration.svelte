@@ -155,7 +155,7 @@
 						class="fill-current animate-pulse"
 					/>
 					<g class="text-xs fill-current" transform={`translate(0,${chartHeight - 5})`}>
-						<text y={0} text-anchor="start">{d[0].x}</text>
+						<text y={0} text-anchor="start">{d[0].x > 0 ? d[0].x : ''}</text>
 						<text x={chartWidth - margin.right} text-anchor="end">{d[d.length - 1].x}</text>
 					</g>
 				</g>
