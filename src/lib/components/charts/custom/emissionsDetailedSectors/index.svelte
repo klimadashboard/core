@@ -539,17 +539,21 @@
 				</svg>
 				<span>
 					<span>
-						{@html sortedData[ksgSelection].sectors[crfSelection].label}
+						{@html sortedData[ksgSelection].sectors.find((sector) => sector.code === crfSelection)
+							?.label}
 					</span>
 					<span class="text-sm max-sm:hidden opacity-70 pb-[2px] ml-1"
-						>{sortedData[ksgSelection].sectors[crfSelection].absolute[_y]
-							.toFixed(2)
-							.replace('.', ',')} Mt CO₂eq ({(
-							(sortedData[ksgSelection].sectors[crfSelection].absolute[_y] / totalSelectedYear) *
-							100
-						)
-							.toFixed(2)
-							.replace('.', ',')}%)</span
+						>{sortedData[ksgSelection].sectors
+							.find((sector) => sector.code === crfSelection)
+							?.absolute[_y].toLocaleString('de-AT', {
+								minimumFractionDigits: 1,
+								maximumFractionDigits: 1
+							})} kt ({Math.round(
+							(sortedData[ksgSelection].sectors.find((sector) => sector.code === crfSelection)
+								?.absolute[_y] /
+								totalSelectedYear) *
+								10000
+						) / 100}%)</span
 					>
 				</span>
 			{/if}
