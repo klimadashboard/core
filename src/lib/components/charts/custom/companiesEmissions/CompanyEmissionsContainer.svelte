@@ -1,24 +1,18 @@
-<script>
-	// @ts-nocheck
-	import atxCompanies from '$lib/stores/companies';
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems } from '@directus/sdk';
-	import { PUBLIC_VERSION } from '$env/static/public';
+<script lang="ts">
 	import CompanyEmissionsLineChart from './CompanyEmissionsLineChart.svelte';
 	import CompanyClimateGoals from './CompanyClimateGoals.svelte';
-	import { EMISSION_SCOPE_KEYS } from './constants';
-	import { getCompanyEmissionData, getAllSectors, getCompanyMetaData } from './getData';
+	import { getCompanyEmissionData, getAllSectors } from './getData';
 	import Switch from '$lib/components/Switch.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import { page } from '$app/state';
+	import type { CompanyMetaData, CompanyMetaDataArray } from './schema';
 
-	export let companiesMetaData = [];
+	export let companiesMetaData: CompanyMetaDataArray = [];
 	export let chart;
 
-	const scopes = EMISSION_SCOPE_KEYS;
-	let selectedScopes = [1];
+	const scopes = [1, 2, 3];
+	let selectedScopes: number[] = [1];
 	let selectedSector = '';
-	let emissions;
 	let isFocusView = true;
 	let initialCompany = 'Erste Group Bank AG';
 	let selectedCompaniesNames = [initialCompany];
@@ -37,6 +31,8 @@
 	];
 	let selectedScope2Category = 'location_based';
 
+	type CompanyWithSelected = CompanyMetaData & { selected: boolean };
+
 	$: companies = companiesMetaData.map((company) => {
 		if (page.params.id && company.id === page.params.id) {
 			return {
@@ -49,7 +45,7 @@
 				selected: false
 			};
 		}
-	});
+	}) as CompanyWithSelected[];
 
 	function selectAll() {
 		companies = companies.map((company) => {
@@ -71,7 +67,7 @@
 		});
 	}
 
-	function onClickCompany(company) {
+	function onClickCompany(company: CompanyWithSelected) {
 		if (!isFocusView) {
 			companies = companies.map((c) => {
 				if (c.name === company.name) {
@@ -90,7 +86,6 @@
 	}
 
 	// Filter
-	$: allSelected = companies.reduce((selected, company) => selected && company.selected, true);
 	$: allDeselected = companies.reduce(
 		(deselected, company) => deselected && !company.selected,
 		true
@@ -100,7 +95,7 @@
 		.filter((company) => company.selected)
 		.map((company) => company.name);
 
-	function toggleScope(scope) {
+	function toggleScope(scope: number) {
 		if (selectedScopes.length === 1 && selectedScopes[0] === scope) return;
 		const index = selectedScopes.indexOf(scope);
 		if (index === -1) {
@@ -111,8 +106,9 @@
 		}
 	}
 
-	function handleGlossaryButtonClick(event) {
-		const term = event.target.dataset.term;
+	function handleGlossaryButtonClick(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+		const term = target.dataset.term;
 		if (term) {
 			$glossaryItem = term;
 		}
@@ -134,7 +130,7 @@
         {selectedSector === sector.name
 						? 'text-black bg-gray-300 '
 						: 'text-gray-700 dark:text-gray-700 bg-gray-100 dark:bg-gray-500 '}"
-					aria-label={sector}
+					aria-label={sector.name}
 					title={sector.name}
 					on:click={() => {
 						if (selectedSector === sector.name) {
@@ -145,8 +141,8 @@
 					}}
 				>
 					<img
-						src="https://base.klimadashboard.org/assets/{sector.icon}"
-						alt="Energy"
+						src={`https://base.klimadashboard.org/assets/${sector.icon}`}
+						alt={sector.name}
 						height="60"
 						class="h-4"
 					/>
@@ -188,11 +184,11 @@
 					class="{isFocusView
 						? 'bg-agriculture'
 						: 'bg-energy'} h-3 w-3 inline-block rounded-full mr-1"
-				/>
+				></span>
 				{isFocusView ? 'Mehrfachauswahl: ein' : 'Mehrfachauswahl: aus'}
 			</button>
 		</div>
-		<div class="ml-auto" />
+		<div class="ml-auto"></div>
 	</div>
 	<!-- Companies -->
 	<div class="flex flex-wrap gap-2 mb-4">
@@ -208,13 +204,13 @@
 			>
 				<img
 					src="https://base.klimadashboard.org/assets/{company.sectorIconIds[0]}"
-					alt="Energy"
+					alt={company.sectors.join(', ')}
 					height="60"
 					class="h-4"
 				/>
 				<img
 					src="https://base.klimadashboard.org/assets/{company.logoId}"
-					alt={company.logo}
+					alt={company.name}
 					width="60"
 					height="60"
 					class="inline-block h-6 object-contain"
@@ -244,7 +240,7 @@
               {selectedScopes.includes(scope)
 							? 'text-black bg-gray-100 border-2 border-green-600'
 							: 'text-gray-600 bg-gray-100 border-2 border-gray-100'}"
-						aria-label={scope}
+						aria-label={`Scope ${scope}`}
 						on:click={() => toggleScope(scope)}
 					>
 						<span class="font-semibold tracking-wide">Scope {scope}</span>
