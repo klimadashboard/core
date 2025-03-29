@@ -4,7 +4,9 @@
 	import { cubicInOut } from 'svelte/easing';
 
 	export let sortedData;
+
 	export let sectorlyData;
+
 	export let colorForKey;
 	export let iconForCRFCode;
 	export let selectedYear;
@@ -13,10 +15,17 @@
 	export let useAbsoluteUnits;
 	// interactive
 	export let ksgSelection;
-	export let crfSelection;
+	export let crfSelection; // Now stores the CRF code instead of index
 	export let ksgHover;
 	export let crfHover;
 	export let extensiveList;
+
+	// Add console logs for the requested props
+	$: console.log('SectorsTreeChart - ksgSelection:', ksgSelection);
+	$: console.log('SectorsTreeChart - crfSelection:', crfSelection);
+	$: console.log('SectorsTreeChart - ksgHover:', ksgHover);
+	$: console.log('SectorsTreeChart - crfHover:', crfHover);
+	$: console.log('SectorsTreeChart - extensiveList:', extensiveList);
 
 	// TREE MAP
 	$: mouse = null;
@@ -36,8 +45,8 @@
 					? `${u}t`
 					: '%'
 				: useAbsoluteUnits || forceAbsolute
-				? `${u}t CO₂eq`
-				: '%'
+					? `${u}t CO₂eq`
+					: '%'
 		}`;
 	};
 
@@ -181,7 +190,7 @@
 								}}
 								on:pointerdown|stopPropagation={() => {
 									if (ksgSelection == null) return;
-									crfSelection = c;
+									crfSelection = crfSector.code;
 								}}
 							>
 								{#if crfSector.h2 >= 40}
@@ -190,8 +199,8 @@
 										style="transition: background 0.3s ease; background-color: {ksgSelection == null
 											? 'transparent'
 											: crfHover == crfSector.index
-											? colorForKey(crfSector.key).colorCodeHighlighted
-											: colorForKey(crfSector.key).colorCode}; {ksgHover == s ||
+												? colorForKey(crfSector.key).colorCodeHighlighted
+												: colorForKey(crfSector.key).colorCode}; {ksgHover == s ||
 										ksgSelection != null
 											? 'border-bottom: 4px solid #ffffff44;'
 											: ''} padding-block: {fontSizeCRF < 30
@@ -255,7 +264,9 @@
 				{/if}
 			{/each}
 			{#if ksgSelection != null && crfSelection != null}
-				{@const detailSector = sortedSelection?.sectors[crfSelection]}
+				{@const detailSector = sortedSelection?.sectors.find(
+					(sector) => sector.code === crfSelection
+				)}
 				<foreignObject height={HEIGHT} width={1000} x={0} y={0}>
 					<div
 						class="w-full h-full flex flex-col p-8"
@@ -347,7 +358,7 @@
 								crfHover = crfSector.index;
 							}}
 							on:pointerdown|stopPropagation={() => {
-								crfSelection = c;
+								crfSelection = crfSector.code;
 								extensiveList = false;
 							}}
 						>
