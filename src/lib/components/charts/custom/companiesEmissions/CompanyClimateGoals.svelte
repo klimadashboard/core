@@ -1,5 +1,4 @@
 <script lang="ts">
-	import companies from '$lib/stores/companies';
 	import CheckIcon from './CheckIcon.svelte';
 	import XIcon from './XIcon.svelte';
 	import type { CompanyMetaData } from './schema';
@@ -32,7 +31,6 @@
 				</tr>
 			{/if}
 			{#each companiesGoalData as company (company.name)}
-				{@const companyMetaData = companies.find((c) => c.name == company.name)}
 				<tr class="border-b">
 					<td class={tableCellClasses}>
 						<img
