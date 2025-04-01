@@ -27,7 +27,7 @@
 
 		return scaleLinear()
 			.domain([min, max])
-			.range(['#eeeeee', '#08519c'])
+			.range(['#eeeeee', 'blue'])
 			.interpolate(interpolateRgb)
 			.clamp(true);
 	}

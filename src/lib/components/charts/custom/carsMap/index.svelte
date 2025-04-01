@@ -87,7 +87,6 @@
 		<span>{selectedPeriod}</span>
 	</div>
 	<Switch
-		type="primary"
 		{views}
 		bind:activeView={selectedView}
 		on:itemClick={(event) => {
