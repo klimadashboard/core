@@ -2,6 +2,7 @@
 	import { onMount, createEventDispatcher } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 	import { scaleLinear } from 'd3-scale';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import { interpolateRgb } from 'd3-interpolate';
 
 	export let selectedRegion;
@@ -14,6 +15,9 @@
 
 	const dispatch = createEventDispatcher();
 
+	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
+
+	// Color scale
 	function createColorScale(data) {
 		const values = data.map((d) => d.value).filter((v) => v != null);
 		if (values.length === 0) return () => '#ccc';
@@ -21,13 +25,11 @@
 		const min = Math.min(...values);
 		const max = Math.max(...values);
 
-		if (min === max) {
-			return () => '#08519c';
-		}
+		if (min === max) return () => '#08519c';
 
 		return scaleLinear()
 			.domain([min, max])
-			.range(['#eeeeee', 'blue'])
+			.range(['#e7e1ef', '#dd1c77'])
 			.interpolate(interpolateRgb)
 			.clamp(true);
 	}
@@ -37,62 +39,29 @@
 			container: mapContainer,
 			style: {
 				version: 8,
-				glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
 				sources: {
-					openmaptiles: {
+					labels: {
 						type: 'vector',
-						url: 'https://demotiles.maplibre.org/tiles/tiles.json'
+						url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`
 					}
 				},
 				layers: [
+					// White background (optional)
 					{
 						id: 'background',
 						type: 'background',
 						paint: {
 							'background-color': '#ffffff'
 						}
-					},
-					{
-						id: 'state-labels',
-						source: 'openmaptiles',
-						'source-layer': 'place_label',
-						type: 'symbol',
-						filter: ['==', ['get', 'class'], 'state'],
-						layout: {
-							'text-field': ['get', 'name'],
-							'text-font': ['Open Sans Bold'],
-							'text-size': 14
-						},
-						paint: {
-							'text-color': '#444',
-							'text-halo-color': '#fff',
-							'text-halo-width': 1
-						},
-						minzoom: 4,
-						maxzoom: 7
-					},
-					{
-						id: 'city-labels',
-						source: 'openmaptiles',
-						'source-layer': 'place_label',
-						type: 'symbol',
-						filter: ['==', ['get', 'class'], 'city'],
-						layout: {
-							'text-field': ['get', 'name'],
-							'text-font': ['Open Sans Regular'],
-							'text-size': 12
-						},
-						paint: {
-							'text-color': '#000',
-							'text-halo-color': '#fff',
-							'text-halo-width': 1
-						},
-						minzoom: 8
 					}
+					// Your landkreise and highlight-outline will be added dynamically after load...
 				]
 			},
 			center: [10.45, 51.1657],
-			zoom: 5
+			zoom: 5,
+			minZoom: 4,
+			maxZoom: 8
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -162,14 +131,32 @@
 				map.getCanvas().style.cursor = '';
 			});
 
+			const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase(); // "DE", "AT", etc.
+
+			map.addLayer({
+				id: 'city-labels',
+				source: 'labels',
+				'source-layer': 'place',
+				type: 'symbol',
+				filter: ['==', ['get', 'class'], 'city'],
+				layout: {
+					'text-field': ['get', 'name:de'],
+					'text-font': ['Noto Sans Regular'],
+					'text-size': 12
+				},
+				paint: {
+					'text-color': '#000',
+					'text-halo-color': '#fff',
+					'text-halo-width': 1
+				},
+				minzoom: 4
+			});
+
 			mapReady = true;
 		});
 	});
 
-	$: if (map && selectedRegion) {
-		map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
-	}
-
+	// Color updates
 	$: if (mapReady && map && regions && selectedPeriod) {
 		const dataForPeriod = regions.map((region) => {
 			const match = region.data?.find((d) => String(d.period) === String(selectedPeriod));
@@ -199,6 +186,32 @@
 
 		map.setPaintProperty('landkreise-layer', 'fill-color', matchExpression);
 	}
+
+	// Selection outline + flyTo
+	$: if (mapReady && map) {
+		if (selectedRegion) {
+			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
+			const region = regions.find((r) => r.code === selectedRegion);
+			if (region?.center) {
+				map.flyTo({
+					center: region.center,
+					zoom: 7,
+					duration: 800
+				});
+			}
+		} else {
+			map.setFilter('highlight-outline', ['==', 'RS', '']);
+			map.flyTo({
+				center: [10.45, 51.1657],
+				zoom: 5,
+				duration: 800
+			});
+		}
+	}
 </script>
 
-<div bind:this={mapContainer} id="map" class="w-full h-full"></div>
+<div bind:this={mapContainer} id="map" class="w-full h-full relative">
+	<button on:mousedown={() => (selectedRegion = null)} class="absolute bottom-1 left-4 z-40">
+		Reset
+	</button>
+</div>
