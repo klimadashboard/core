@@ -30,12 +30,11 @@
 						}
 					]
 				},
-				sort: ['-period'],
+				sort: ['period'],
 				limit: -1
 			})
 		);
-		const sortedData = data.sort((a, b) => new Date(a.period) > new Date(b.period));
-		return sortedData;
+		return data;
 	}
 
 	async function getYearlyData() {
