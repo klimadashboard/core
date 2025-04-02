@@ -8,6 +8,7 @@
 	export let selectedRegion;
 	export let selectedPeriod;
 	export let regions;
+	export let colors;
 
 	let mapContainer;
 	let map;
@@ -27,11 +28,7 @@
 
 		if (min === max) return () => '#08519c';
 
-		return scaleLinear()
-			.domain([min, max])
-			.range(['#e7e1ef', '#dd1c77'])
-			.interpolate(interpolateRgb)
-			.clamp(true);
+		return scaleLinear().domain([min, max]).range(colors).interpolate(interpolateRgb).clamp(true);
 	}
 
 	onMount(() => {
@@ -59,7 +56,7 @@
 				]
 			},
 			center: [10.45, 51.1657],
-			zoom: 5,
+			zoom: 4,
 			minZoom: 4,
 			maxZoom: 8
 		});
@@ -203,15 +200,18 @@
 			map.setFilter('highlight-outline', ['==', 'RS', '']);
 			map.flyTo({
 				center: [10.45, 51.1657],
-				zoom: 5,
+				zoom: 4,
 				duration: 800
 			});
 		}
 	}
 </script>
 
-<div bind:this={mapContainer} id="map" class="w-full h-full relative">
-	<button on:mousedown={() => (selectedRegion = null)} class="absolute bottom-1 left-4 z-40">
-		Reset
+<div bind:this={mapContainer} id="map" class="w-full h-full relative my-4 rounded-2xl">
+	<button
+		on:mousedown={() => (selectedRegion = null)}
+		class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-900 rounded-full w-8 h-8 grid shadow"
+	>
+		<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
 	</button>
 </div>

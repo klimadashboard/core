@@ -3,6 +3,7 @@
 	import RelatedRegionCard from './RelatedRegionCard.svelte';
 	import Inspector from './Inspector.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import { colors, scales } from './scales';
 
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
@@ -68,16 +69,16 @@
 
 	let views = [
 		{
-			label: 'Autodichte',
-			key: 'pop'
-		},
-		{
 			label: 'E-Auto Anteil',
 			key: 'electric'
+		},
+		{
+			label: 'Autodichte',
+			key: 'pop'
 		}
 	];
 
-	$: selectedView = views[1].key;
+	$: selectedView = views[0].key;
 
 	$: selectedRegion = null;
 	$: selectedPeriod = maxPeriod;
@@ -100,8 +101,8 @@
 
 		// Min + max
 		const sorted = [...regionsWithValue].sort((a, b) => a.value - b.value);
-		const minRegion = { ...sorted[0], type: 'min' };
-		const maxRegion = { ...sorted[sorted.length - 1], type: 'max' };
+		const minRegion = { ...sorted[0], type: 'min', typeLabel: 'Minimum' };
+		const maxRegion = { ...sorted[sorted.length - 1], type: 'max', typeLabel: 'Maximum' };
 
 		let closestRegions = [];
 
@@ -130,7 +131,7 @@
 					}))
 					.sort((a, b) => a.distance - b.distance)
 					.slice(0, 3)
-					.map((r) => ({ ...r, type: 'nearby' }));
+					.map((r) => ({ ...r, type: 'nearby', typeLabel: 'in der Nähe' }));
 			}
 		}
 
@@ -141,6 +142,7 @@
 		const seen = new Set();
 		const unique = all.filter((r) => {
 			if (seen.has(r.code)) return false;
+			if (r.code == selectedRegion) return false;
 			seen.add(r.code);
 			return true;
 		});
@@ -153,7 +155,7 @@
 			});
 		}
 
-		return unique;
+		return unique.sort((a, b) => b.value - a.value);
 	};
 
 	$: getRegionData = (regions, selectedRegion) => {
@@ -175,10 +177,12 @@
 		// Create average arrays for each period
 		const carsPer1000Inhabitants = allPeriods.map((period) => ({
 			period,
-			value: average(
-				regions
-					.map((r) => r.carsPer1000Inhabitants?.find((d) => d.period === period)?.value)
-					.filter((v) => v != null && isFinite(v))
+			value: Math.round(
+				average(
+					regions
+						.map((r) => r.carsPer1000Inhabitants?.find((d) => d.period === period)?.value)
+						.filter((v) => v != null && isFinite(v))
+				)
 			)
 		}));
 
@@ -194,7 +198,9 @@
 		return {
 			code: 'ALL',
 			label: 'Deutschland',
-			name: 'Gesamt',
+			name: 'Deutschland',
+			type: 'national',
+			typeLabel: 'Nationaler Durchschnitt',
 			center: [10.45, 51.1657],
 			carsPer1000Inhabitants,
 			carsElectricShare
@@ -203,23 +209,32 @@
 </script>
 
 <div>
-	<div class="flex">
-		<input type="range" min={minPeriod} max={maxPeriod} bind:value={selectedPeriod} />
-		<span>{selectedPeriod}</span>
+	<div class="flex flex-col items-center space-y-2">
+		<div class="flex gap-2">
+			<input
+				type="range"
+				class="w-20"
+				min={minPeriod}
+				max={maxPeriod}
+				bind:value={selectedPeriod}
+			/>
+			<span>{selectedPeriod}</span>
+		</div>
+		<Switch
+			type="small"
+			{views}
+			bind:activeView={selectedView}
+			on:itemClick={(event) => {
+				selectedView = event.detail;
+			}}
+		/>
 	</div>
-	<Switch
-		{views}
-		bind:activeView={selectedView}
-		on:itemClick={(event) => {
-			selectedView = event.detail;
-		}}
-	/>
 	{#if selectedView && selectedPeriod}
 		{#await promise then p}
 			{@const data = p.data}
 			{@const regions = p.regions}
-			<div class="grid md:grid-cols-2 h-[60vh]">
-				<div>
+			<div class="">
+				<div class="h-[40vh]">
 					<Map
 						{selectedPeriod}
 						regions={regions.map((d) => {
@@ -231,18 +246,23 @@
 								data: selectedView == 'electric' ? d.carsElectricShare : d.carsPer1000Inhabitants
 							};
 						})}
+						colors={colors[selectedView]}
 						bind:selectedRegion
 						on:selectRegion={(e) => (selectedRegion = e.detail)}
 					/>
 				</div>
-				<div>
+				<div
+					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
+				>
 					<Inspector {selectedPeriod} region={getRegionData(regions, selectedRegion)} />
-					<div>Search Bar</div>
-					<div class="grid grid-cols-2 gap-1">
+					<div>
+						<input type="text" class="input w-full my-2" placeholder="Such nach einer Region..." />
+					</div>
+					<ul class="">
 						{#each getRelatedRegions(regions, selectedRegion) as region}
 							<RelatedRegionCard bind:selectedRegion {selectedPeriod} {region} />
 						{/each}
-					</div>
+					</ul>
 				</div>
 			</div>
 		{/await}
