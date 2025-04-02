@@ -10,6 +10,7 @@
 	import { getCompanyEmissionData, getAllSectors, getCompanyMetaData } from './getData';
 	import Switch from '$lib/components/Switch.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
+	import DataDownload from './DataDownload.svelte';
 	import { page } from '$app/state';
 
 	export let companiesMetaData = [];
@@ -281,6 +282,7 @@
 				{selectedScope2Category}
 			/>
 		</div>
+		<DataDownload data={emissions} />
 	{/await}
 	<h2 class="text-2xl my-4 border-b py-2">Klimaziele</h2>
 	<CompanyClimateGoals
