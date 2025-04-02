@@ -4,6 +4,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { interpolateRgb } from 'd3-interpolate';
+	import { fade } from 'svelte/transition';
 
 	export let selectedRegion;
 	export let selectedPeriod;
@@ -13,6 +14,7 @@
 	let mapContainer;
 	let map;
 	let mapReady = false;
+	let zoomLevel = 0;
 
 	const dispatch = createEventDispatcher();
 
@@ -151,6 +153,10 @@
 
 			mapReady = true;
 		});
+
+		map.on('zoom', () => {
+			zoomLevel = map.getZoom();
+		});
 	});
 
 	// Color updates
@@ -208,10 +214,13 @@
 </script>
 
 <div bind:this={mapContainer} id="map" class="w-full h-full relative my-4 rounded-2xl">
-	<button
-		on:mousedown={() => (selectedRegion = null)}
-		class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-900 rounded-full w-8 h-8 grid shadow"
-	>
-		<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
-	</button>
+	{#if zoomLevel > 4}
+		<button
+			on:mousedown={() => (selectedRegion = null)}
+			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-900 rounded-full w-8 h-8 grid shadow"
+			transition:fade
+		>
+			<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
+		</button>
+	{/if}
 </div>

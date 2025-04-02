@@ -3,6 +3,7 @@
 	import RelatedRegionCard from './RelatedRegionCard.svelte';
 	import Inspector from './Inspector.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import Search from './Search.svelte';
 	import { colors, scales } from './scales';
 
 	import getDirectusInstance from '$lib/utils/directus';
@@ -206,6 +207,8 @@
 			carsElectricShare
 		};
 	};
+
+	let filteredRegions = [];
 </script>
 
 <div>
@@ -255,13 +258,17 @@
 					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
 				>
 					<Inspector {selectedPeriod} region={getRegionData(regions, selectedRegion)} />
-					<div>
-						<input type="text" class="input w-full my-2" placeholder="Such nach einer Region..." />
-					</div>
+					<Search {regions} {selectedRegion} bind:filteredRegions />
 					<ul class="">
-						{#each getRelatedRegions(regions, selectedRegion) as region}
-							<RelatedRegionCard bind:selectedRegion {selectedPeriod} {region} />
-						{/each}
+						{#if filteredRegions.length > 0}
+							{#each filteredRegions as region}
+								<RelatedRegionCard bind:selectedRegion {selectedPeriod} {region} />
+							{/each}
+						{:else}
+							{#each getRelatedRegions(regions, selectedRegion) as region}
+								<RelatedRegionCard bind:selectedRegion {selectedPeriod} {region} />
+							{/each}
+						{/if}
 					</ul>
 				</div>
 			</div>

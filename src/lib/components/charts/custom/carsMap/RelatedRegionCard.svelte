@@ -40,7 +40,7 @@
 				</h3>
 			</div>
 		</div>
-		<div class="flex space-x-2 w-full">
+		<div class="flex space-x-3 w-full">
 			<div class="flex-1" style="color: {colors.electric[1]}">
 				<p>
 					<svg

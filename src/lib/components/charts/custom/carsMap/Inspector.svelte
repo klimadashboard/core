@@ -10,9 +10,12 @@
 
 {#if region}
 	<h2 class="text-2xl">
-		Autos in <span class="underline underline-offset-4 decoration-current/50">{region.name}</span>
+		Autos in <span
+			class="underline underline-offset-4"
+			style="text-decoration-color: {colors.electric[1]}">{region.name}</span
+		>
 	</h2>
-	<div class="grid grid-cols-2 gap-4 mt-2">
+	<div class="grid grid-cols-2 gap-3 mt-2">
 		<div style="color: {colors.electric[1]}">
 			<div class="font-bold">Anteil der Elektromobilität</div>
 
@@ -21,6 +24,13 @@
 					{formatNumber(region.carsElectricShare.find((d) => d.period == selectedPeriod)?.value)}%
 				</p>
 				<SmallLine {selectedPeriod} data={region.carsElectricShare} />
+			</div>
+			<div class="mt-1 bg-current/10 rounded-full h-2 relative overflow-hidden">
+				<div
+					class="h-full relative left-0"
+					style="width: {region.carsElectricShare.find((d) => d.period == selectedPeriod)
+						?.value}%; background: {colors.electric[1]}"
+				></div>
 			</div>
 		</div>
 		<div style="color: {colors.pop[1]}">
@@ -33,6 +43,13 @@
 					)}
 				</p>
 				<SmallLine {selectedPeriod} data={region.carsPer1000Inhabitants} />
+			</div>
+			<div class="mt-1 bg-current/10 rounded-full h-2 relative overflow-hidden">
+				<div
+					class="h-full w-1 absolute"
+					style="left: {region.carsPer1000Inhabitants.find((d) => d.period == selectedPeriod)
+						?.value / 10}%; background: {colors.pop[1]}"
+				></div>
 			</div>
 		</div>
 	</div>
