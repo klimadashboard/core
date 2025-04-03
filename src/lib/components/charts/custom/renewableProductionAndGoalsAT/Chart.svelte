@@ -23,61 +23,42 @@
 		.filter((d) => d.energy_type == type.dataKey)
 		.sort((a, b) => b.value - a.value)[0].value;
 
-	const getProduction = async function (value) {
+		let dataProduction;
+	const getProduction = async function () {
 		try{
 			const directus = getDirectusInstance(fetch);
-			// --- REGIONS ---
-			const regionExactMatches = await directus.request(
-				readItems('regions', {
+			const production = await directus.request(
+				readItems(type.dataKey + '_produktion', {
 					filter: {
 						_and: [
-							{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
-							{
-								_or: [{ name: { _eq: value } }, { postcodes: { _contains: value } }]
+							{ 
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								Jahresproduktion: { _nnull: true }
 							}
 						]
 					},
-					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-					sort: ['name']
+					limit: -1
+					// fields: ['id', 'name', 'postcodes', 'country', 'layer'],
+					// sort: ['name']
 				})
 			);
-			console.log(regionExactMatches)
+			dataProduction = production
+				.map((entry) => {
+					return {
+						x: new Date(entry.DateTime.slice(0, 10)),
+						y: entry.Jahresproduktion
+					};
+				});
+			// console.log("directus", dataProduction)
 			
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
 		}
 	};
 
-	$: promise = getProduction("Peuerbach");
+	$: getProduction();
 
-	let dataProduction;
-	Papa.parse(
-		'https://data.klimadashboard.org/' +
-			PUBLIC_VERSION +
-			'/energy/renewables/' +
-			type.dataKey +
-			'_produktion.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataProduction = results.data
-						.filter((d) => d.Jahresproduktion)
-						.map((entry) => {
-							return {
-								x: new Date(entry.DateTime.slice(0, 10)),
-								y: entry.Jahresproduktion
-							};
-						});
-					console.log("original", dataProduction)
-				}
-			}
-		}
-	);
-
+	
 	let chartWidth;
 	let chartHeight;
 
