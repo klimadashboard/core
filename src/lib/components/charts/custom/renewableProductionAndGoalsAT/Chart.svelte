@@ -23,7 +23,7 @@
 		.filter((d) => d.energy_type == type.dataKey)
 		.sort((a, b) => b.value - a.value)[0].value;
 
-		let dataProduction;
+	let dataProduction;
 	const getProduction = async function () {
 		try{
 			const directus = getDirectusInstance(fetch);
