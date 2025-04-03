@@ -29,30 +29,17 @@
 	};
 	$: getGoals();
 
-	Papa.parse(
-		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_scenarios.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataGoals = results.data;
-				}
-			}
-		}
-	);
 
 	const getProduction = async function (dataKey) {
 		try{
 			const directus = getDirectusInstance(fetch);
 			const production = await directus.request(
-				readItems(dataKey + '_produktion', {
+				readItems('ee_produktion', {
 					filter: {
 						_and: [
 							{ 
 								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								Type: {_eq: dataKey}
 							}
 						]
 					},
@@ -69,7 +56,6 @@
 	let dataPV;
 	const getPVProduction = async function(){
 		dataPV = await getProduction("pv")
-		console.log("directus pv", dataPV)
 	}
 	$: getPVProduction();
 
@@ -77,7 +63,6 @@
 	let dataWind;
 	const getWindProduction = async function(){
 		dataWind = await getProduction("windkraft")
-		console.log("directus wind", dataWind)
 	}
 	$: getWindProduction();
 
