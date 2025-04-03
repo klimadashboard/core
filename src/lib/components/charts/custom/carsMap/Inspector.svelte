@@ -4,28 +4,8 @@
 	import { colors } from './scales';
 
 	export let region;
+	console.log(region);
 	export let selectedPeriod;
-
-	let yearFullElectric = 0;
-
-	$: {
-		const data = region.carsElectricShare?.filter((d) => isFinite(d.value));
-		if (data?.length >= 2) {
-			const prev = data[data.length - 2];
-			const last = data[data.length - 1];
-			const growth = last.value - prev.value;
-
-			if (growth > 0) {
-				const remaining = 100 - last.value;
-				const yearsTo100 = Math.ceil(remaining / growth);
-				yearFullElectric = last.period + yearsTo100;
-			} else {
-				yearFullElectric = 0;
-			}
-		} else {
-			yearFullElectric = 0;
-		}
-	}
 </script>
 
 {#if region}
@@ -73,10 +53,4 @@
 			</div>
 		</div>
 	</div>
-	{#if yearFullElectric > 0}
-		<p class="mb-4 mt-2">
-			Wenn der Anteil der E-Mobilität im Tempo des letzten Jahres weiter ansteigt, wird 100%
-			Elektromobilität in {region.name} im Jahr {yearFullElectric} erreicht.
-		</p>
-	{/if}
 {/if}
