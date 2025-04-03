@@ -6,6 +6,8 @@
 	import dayjs from 'dayjs';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
 
 	export let type;
 	export let unifiedScaling;
@@ -20,6 +22,33 @@
 	$: maxValue = dataGoals
 		.filter((d) => d.energy_type == type.dataKey)
 		.sort((a, b) => b.value - a.value)[0].value;
+
+	const getProduction = async function (value) {
+		try{
+			const directus = getDirectusInstance(fetch);
+			// --- REGIONS ---
+			const regionExactMatches = await directus.request(
+				readItems('regions', {
+					filter: {
+						_and: [
+							{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+							{
+								_or: [{ name: { _eq: value } }, { postcodes: { _contains: value } }]
+							}
+						]
+					},
+					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
+					sort: ['name']
+				})
+			);
+			console.log(regionExactMatches)
+			
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
+		}
+	};
+
+	$: promise = getProduction("Peuerbach");
 
 	let dataProduction;
 	Papa.parse(
@@ -43,6 +72,7 @@
 								y: entry.Jahresproduktion
 							};
 						});
+					console.log("original", dataProduction)
 				}
 			}
 		}
