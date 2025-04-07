@@ -134,7 +134,7 @@
 	};
 	$: getPotentialeTechn();
 
-	const getDataHistoric = async function (/** @type {string} */ potential_class) {
+	const getDataHistoric = async function () {
 		try {
 			const directus = getDirectusInstance(fetch);
 			dataset = await directus.request(
@@ -177,21 +177,33 @@
 
 	$: getDataHistoric();
 
-	// Parse the Ziele CSV
-	Papa.parse(
-		'https://docs.google.com/spreadsheets/u/8/d/1PxvyOSjPAl_5UikGPQpqqMyDPxF1GRpV8gb4mUfG9TQ/export?format=csv&id=1PxvyOSjPAl_5UikGPQpqqMyDPxF1GRpV8gb4mUfG9TQ&gid=1951802472',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					goals = results.data;
-				}
-			}
+	const getDataGoals = async function () {
+		try {
+			const directus = getDirectusInstance(fetch);
+			dataset = await directus.request(
+				readItems('ee_goals', {
+					filter: {
+						_and: [
+							{
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
+							}
+						]
+					},
+					limit: -1,
+					fields: ['Type', "goal_amount", "goal_year", "source_year", 'region.name'],
+				})
+			);
+
+			goals = dataset.map((row) => {
+				return {...row, region: row["region"]["name"], Type: row["Type"][0]};
+			});
+
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+
+	$: getDataGoals();
 
 	$: selectedStartYear = minYear;
 </script>
