@@ -1,14 +1,8 @@
-import { PUBLIC_VERSION, PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
-import { env as publicEnv } from '$env/static/public';
-import { env as privateEnv } from '$env/static/private';
+import { PUBLIC_VERSION } from '$env/static/public';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { json } from '@sveltejs/kit';
 export const GET = async ({ url }) => {
-	console.log(PUBLIC_VERSION, PUBLIC_MAPBOX_TOKEN)
-	console.log(publicEnv)
-	console.log(privateEnv)
-	console.log(process.env)
 	try {
 		const directus = getDirectusInstance();
 		const currentUrl = url.href.replace('/sitemap.xml', '');
