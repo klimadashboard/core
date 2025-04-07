@@ -73,6 +73,13 @@
 							],
 							'fill-opacity': 0.7
 						}
+					},
+					{
+						id: 'climate-hover',
+						type: 'fill',
+						source: 'climate',
+						'source-layer': 'climate',
+						paint: { 'fill-opacity': 0 } // invisible
 					}
 				]
 			},
@@ -86,19 +93,19 @@
 			currentZoom = map.getZoom();
 		});
 
-		map.on('mousemove', 'climate-fill', (e) => {
-			const features = map.queryRenderedFeatures(e.point, {
-				layers: ['climate-fill']
+		map.on('mousemove', (e) => {
+			const allFeatures = map.queryRenderedFeatures(e.point, {
+				layers: ['climate-hover']
 			});
 
-			if (!features || features.length === 0) {
+			if (!allFeatures || allFeatures.length === 0) {
 				selectedFeature = null;
 				tooltipVisible = false;
 				return;
 			}
 
 			const grouped = {};
-			for (const f of features) {
+			for (const f of allFeatures) {
 				const key = `${f.properties.variable}_${f.properties.rcp}`;
 				grouped[key] = f.properties;
 			}
@@ -108,14 +115,14 @@
 			tooltipContent = Object.entries(grouped)
 				.map(([key, props]) => {
 					return `
-					<div style="margin-bottom: 4px">
-						<b>${props.variable} – RCP ${props.rcp}</b><br>
-						<b>Period:</b> ${props.period}<br>
-						<b>Median (q50):</b> ${props.q50}<br>
-						<b>10% (q10):</b> ${props.q10}<br>
-						<b>90% (q90):</b> ${props.q90}<br>
-						<b>Trust:</b> ${props.trust}
-					</div>`;
+				<div style="margin-bottom: 4px">
+					<b>${props.variable} – RCP ${props.rcp}</b><br>
+					<b>Period:</b> ${props.period}<br>
+					<b>Median (q50):</b> ${props.q50}<br>
+					<b>10% (q10):</b> ${props.q10}<br>
+					<b>90% (q90):</b> ${props.q90}<br>
+					<b>Trust:</b> ${props.trust}
+				</div>`;
 				})
 				.join('');
 
@@ -164,7 +171,7 @@
 	</div>
 {/if}
 
-<Inspector {selectedFeature} />
+<Inspector {selectedFeature} {variables} {rcps} />
 
 <style>
 	.tooltip {
