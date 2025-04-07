@@ -2,6 +2,9 @@
 	import Papa from 'papaparse';
 	import Gap from './Gap.svelte';
 	import Loader from '$lib/components/Loader.svelte';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let v;
 
@@ -58,20 +61,29 @@
 	);
 
 	let dataGoals;
-	Papa.parse(
-		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_scenarios.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataGoals = results.data;
-				}
-			}
+	const getGoals = async function () {
+		try{
+			const directus = getDirectusInstance(fetch);
+			const goals = await directus.request(
+				readItems('erneuerbare_2030_scenarios', {
+					filter: {
+						_and: [
+							{ 
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+							}
+						]
+					},
+					limit: -1
+				})
+			);
+			dataGoals = goals;
+			
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+	$: getGoals();
+
 </script>
 
 <!-- <div class="flex flex-wrap gap-2 justify-center items-center"> -->

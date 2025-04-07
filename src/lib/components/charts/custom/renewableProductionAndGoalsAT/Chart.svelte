@@ -50,7 +50,6 @@
 						y: entry.Jahresproduktion
 					};
 				});
-			// console.log("directus", dataProduction)
 			
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);

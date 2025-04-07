@@ -10,24 +10,8 @@
 	export let dataGoal;
 	export let goalScenario;
 
-	// let nationalGoal;
 	let unit = 'TWh';
 	$: nationalGoal = dataGoal.value;
-
-	// Papa.parse(
-	// 	'https://data.klimadashboard.org/at/energy/renewables/' + type.dataKey + '_zielpfad.csv',
-	// 	{
-	// 		download: true,
-	// 		dynamicTyping: true,
-	// 		skipEmptyLines: true,
-	// 		header: true,
-	// 		complete: function (results) {
-	// 			if (results) {
-	// 				nationalGoal = results.data.find((d) => d.DateTime == '2030-12-31').Jahresproduktion;
-	// 			}
-	// 		}
-	// 	}
-	// );
 
 	$: colorScale = scaleLinear()
 		.range(type.colorScale)
