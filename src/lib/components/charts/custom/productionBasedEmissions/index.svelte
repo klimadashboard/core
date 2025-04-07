@@ -167,6 +167,7 @@
 		percentage1990lastYear = getPercentageChange(firstYearEmissions, lastYearEmissions) / 100;
 	}
 
+	/*
 	$: if (
 		dataset &&
 		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
@@ -185,6 +186,7 @@
 			estimate: true
 		});
 	}
+		*/
 
 	let freezeYAxis = false;
 </script>
