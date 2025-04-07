@@ -148,7 +148,7 @@
 					},
 					limit: -1,
 					fields: ['year', 'region.name', 'pv', 'windkraft', 'wasserkraft'],
-					sort: ['year']
+					sort: ['region.name', 'year']
 				})
 			);
 
@@ -206,6 +206,7 @@
 	$: getDataGoals();
 
 	$: selectedStartYear = minYear;
+
 </script>
 
 <div class="flex gap-4 items-center">
@@ -222,7 +223,7 @@
 </div>
 
 <div class="mt-4">
-	{#if energyTypes && potentiale_2030 && energyByBundesland && selectedBundesland && dataset && goals}
+	{#if energyTypes && potentiale_2030 && potentiale_techn && energyByBundesland && selectedBundesland && dataset && goals}
 		<div class="flex flex-wrap gap-2 items-center">
 			{#each Object.keys(energyByBundesland) as bundesland}
 				<button
@@ -240,8 +241,8 @@
 			{#each energyTypes as type}
 				{@const cur_goals = goals.filter(
 					(row) =>
-						row.state_name === selectedBundesland &&
-						row.energy_data_key === type.dataKey &&
+						row.region === selectedBundesland &&
+						row.Type === type.dataKey &&
 						row.goal_amount != 'keinZiel'
 				)}
 				<Details
