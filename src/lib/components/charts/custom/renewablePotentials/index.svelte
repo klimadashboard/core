@@ -134,40 +134,48 @@
 	};
 	$: getPotentialeTechn();
 
+	const getDataHistoric = async function (/** @type {string} */ potential_class) {
+		try {
+			const directus = getDirectusInstance(fetch);
+			dataset = await directus.request(
+				readItems('ee_historisch', {
+					filter: {
+						_and: [
+							{
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
+							}
+						]
+					},
+					limit: -1,
+					fields: ['year', 'region.name', 'pv', 'windkraft', 'wasserkraft'],
+					sort: ['year']
+				})
+			);
 
-	// Parse the Energieerzeugung CSV
-	Papa.parse(
-		'https://docs.google.com/spreadsheets/u/8/d/1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ/export?format=csv&id=1dK_GAqMHt6treYwaQjjPj_Bn5fFLUBHZ&gid=271008028',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataset = results.data;
-					const years = dataset.map((row) => row.year);
-					minYear = Math.min(...years);
-					maxYear = Math.max(...years);
+			dataset = dataset.map((row) => {
+				return {...row, region: row["region"]["name"]};
+			});
 
-					// Group rows by region without lodash using reduce
-					energyByBundesland = dataset.reduce((groups, row) => {
-						const region = row.region;
-						if (!groups[region]) {
-							groups[region] = [];
-						}
-						groups[region].push(row);
-						return groups;
-					}, {});
+			const years = dataset.map((row) => row.year);
+			minYear = Math.min(...years);
+			maxYear = Math.max(...years);
 
-					// Sort each region's data by year
-					Object.keys(energyByBundesland).forEach((bundesland) => {
-						energyByBundesland[bundesland].sort((a, b) => a.year - b.year);
-					});
+			// Group rows by region without lodash using reduce
+			energyByBundesland = dataset.reduce((groups, row) => {
+				const region = row.region;
+				if (!groups[region]) {
+					groups[region] = [];
 				}
-			}
+				groups[region].push(row);
+				return groups;
+			}, {});
+
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+
+	$: getDataHistoric();
 
 	// Parse the Ziele CSV
 	Papa.parse(
