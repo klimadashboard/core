@@ -26,7 +26,7 @@
 
 	onMount(() => {
 		map = new maplibregl.Map({
-			container: 'map',
+			container: 'scenarioMap',
 			style: {
 				version: 8,
 				sources: {
@@ -163,7 +163,7 @@
 
 {currentZoom}
 
-<div id="map" class="w-full h-[60vh] rounded-2xl"></div>
+<div id="scenarioMap" class="w-full h-[60vh] rounded-2xl"></div>
 
 {#if tooltipVisible}
 	<div class="tooltip" style="left: {tooltipX + 10}px; top: {tooltipY + 10}px;">

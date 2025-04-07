@@ -75,6 +75,9 @@
 			expanded: false,
 			charts: [
 				{
+					id: '68b0f853-b1b1-4120-aedd-87de58ea3209'
+				},
+				{
 					id: 'b3301d53-24e0-4171-be78-75882f602fe8'
 				}
 			]
@@ -108,6 +111,11 @@
 		{
 			title: 'Klimazukunft',
 			id: 'scenarios',
+			charts: [
+				{
+					id: '801a3cdf-1197-4b99-9ece-99113940c5fb'
+				}
+			],
 			description: 'Hitzetage und Niederschlag im Jahr 2050/2100 in RCP 4.5 und 8.5',
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-circle-arrow-right'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18' /><path d='M16 12l-4 -4' /><path d='M16 12h-8' /><path d='M12 16l4 -4' /></svg>",
 			height: 0,
@@ -160,7 +168,7 @@
 				>
 					<div bind:clientHeight={section.height}>
 						<h2 class="text-2xl my-4 text-center max-w-2xl mx-auto">{section.title}</h2>
-						<div class="container">
+						<div class="container space-y-4">
 							{#if section.charts}
 								{section.description}
 								{#each section.charts as chart}
