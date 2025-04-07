@@ -15,20 +15,29 @@
 
 	$: getData = async () => {
 		const directus = getDirectusInstance(fetch);
+		const countryCode = PUBLIC_VERSION.toUpperCase();
+
+		// Load car data for selected country
 		const data = await directus.request(
 			readItems('mobility_cars', {
-				fields: ['*'],
+				filter: {
+					country: { _eq: countryCode }
+				},
 				limit: -1
 			})
 		);
+
+		// Load regions: all for AT, exclude municipalities for DE
+		const regionFilter = {
+			country: { _eq: countryCode },
+			...(countryCode === 'AT'
+				? { layer: { _eq: 'municipality' } }
+				: { layer: { _neq: 'municipality' } })
+		};
+
 		const regions = await directus.request(
 			readItems('regions', {
-				filter: {
-					_and: [
-						{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
-						{ layer: { _neq: 'municipality' } }
-					]
-				},
+				filter: regionFilter,
 				limit: -1
 			})
 		);

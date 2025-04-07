@@ -16,6 +16,21 @@
 	let mapReady = false;
 	let zoomLevel = 0;
 
+	const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase();
+
+	const defaultView = {
+		AT: {
+			center: [13.333, 47.5],
+			zoom: 6
+		},
+		DE: {
+			center: [10.45, 51.1657],
+			zoom: 4
+		}
+	};
+
+	const { center, zoom } = defaultView[COUNTRY_CODE] || defaultView.DE;
+
 	const dispatch = createEventDispatcher();
 
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
@@ -46,7 +61,6 @@
 					}
 				},
 				layers: [
-					// White background (optional)
 					{
 						id: 'background',
 						type: 'background',
@@ -54,11 +68,10 @@
 							'background-color': '#ffffff'
 						}
 					}
-					// Your landkreise and highlight-outline will be added dynamically after load...
 				]
 			},
-			center: [10.45, 51.1657],
-			zoom: 4,
+			center,
+			zoom,
 			minZoom: 4,
 			maxZoom: 8
 		});
@@ -205,8 +218,8 @@
 		} else {
 			map.setFilter('highlight-outline', ['==', 'RS', '']);
 			map.flyTo({
-				center: [10.45, 51.1657],
-				zoom: 4,
+				center,
+				zoom,
 				duration: 800
 			});
 		}
