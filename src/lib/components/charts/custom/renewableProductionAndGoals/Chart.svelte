@@ -6,6 +6,8 @@
 	import dayjs from 'dayjs';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
 
 	export let type;
 	export let unifiedScaling;
@@ -20,58 +22,75 @@
 	$: maxValue = 50;
 
 	let dataGoal;
-	Papa.parse(
-		'https://data.klimadashboard.org/' +
-			PUBLIC_VERSION +
-			'/energy/renewables/' +
-			type.dataKey +
-			'_zielpfad.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataGoal = results.data.map((entry) => {
-						return {
-							x: new Date(entry.DateTime.slice(0, 10)),
-							y: entry.Jahresproduktion
-						};
-					});
-					maxValue = results.data[results.data.length - 1].Jahresproduktion;
-					goalYear = new Date(results.data[results.data.length - 1].DateTime).getFullYear();
-				}
-			}
+	const getGoal = async function () {
+		try{
+			const directus = getDirectusInstance(fetch);
+			const goals = await directus.request(
+				readItems('ee_zielpfad', {
+					filter: {
+						_and: [
+							{ 
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								Type: {_eq: type.dataKey}
+							}
+						]
+					},
+					limit: -1,
+					fields: ['id', 'Jahresproduktion', 'DateTime'],
+				})
+			);
+			dataGoal = goals.map((entry) => {
+				return {
+					x: new Date(entry.DateTime.slice(0, 10)),
+					y: entry.Jahresproduktion
+				};
+			});
+			maxValue = goals[goals.length - 1].Jahresproduktion;
+			goalYear = new Date(goals[goals.length - 1].DateTime).getFullYear();
+
+			
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+
+	$: getGoal();
 
 	let dataProduction;
-	Papa.parse(
-		'https://data.klimadashboard.org/' +
-			PUBLIC_VERSION +
-			'/energy/renewables/' +
-			type.dataKey +
-			'_produktion.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataProduction = results.data
-						.filter((d) => d.Jahresproduktion)
-						.map((entry) => {
-							return {
-								x: new Date(entry.DateTime.slice(0, 10)),
-								y: entry.Jahresproduktion
-							};
-						});
-				}
-			}
+	const getProduction = async function () {
+		try{
+			const directus = getDirectusInstance(fetch);
+			const production = await directus.request(
+				readItems('ee_produktion', {
+					filter: {
+						_and: [
+							{ 
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								Jahresproduktion: { _nnull: true },
+								Type: {_eq: type.dataKey}
+							}
+						]
+					},
+					limit: -1,
+					fields: ['id', 'Jahresproduktion', 'DateTime'],
+				})
+			);
+			dataProduction = production
+				.map((entry) => {
+					return {
+						x: new Date(entry.DateTime.slice(0, 10)),
+						y: entry.Jahresproduktion
+					};
+				});
+
+			
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+
+	$: getProduction();
+
 
 	let chartWidth;
 	let chartHeight;
