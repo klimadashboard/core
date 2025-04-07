@@ -44,21 +44,34 @@
 	];
 
 	let dataset;
+	const getEEGoals = async function () {
+		try {
+			const directus = getDirectusInstance(fetch);
+			const dataset_temp = await directus.request(
+				readItems('ee_goals', {
+					filter: {
+						_and: [
+							{
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
+							}
+						]
+					},
+					limit: -1,
+					fields: ["goal_amount", "goal_year", "source_year", "current_production", 'region.name', 'Type', "region.name_short"],
+				})
+			);
 
-	Papa.parse(
-		'https://docs.google.com/spreadsheets/u/8/d/1PxvyOSjPAl_5UikGPQpqqMyDPxF1GRpV8gb4mUfG9TQ/export?format=csv&id=1PxvyOSjPAl_5UikGPQpqqMyDPxF1GRpV8gb4mUfG9TQ&gid=1951802472',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataset = results.data;
-				}
-			}
+			dataset = dataset_temp.map((row) => {
+				return {...row, state_name: row["region"]["name"], energy_data_key: row["Type"][0], state_short: row["region"]["name_short"]};
+			});
+
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+	$: getEEGoals();
+
+
 
 	let dataGoals;
 	const getGoals = async function () {
@@ -101,7 +114,7 @@
 		>
 	{/each}
 </div>
-{#if dataset}
+{#if dataset && dataGoals}
 	<div class="grid md:grid-cols-2 gap-1 my-4">
 		{#each energyTypes as type}
 			<Gap
