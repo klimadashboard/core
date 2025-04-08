@@ -3,31 +3,51 @@
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 
-	let map;
-	let selectedLayer = 'ptpop';
+	export let selectedRegion;
 
-	const tileServerBase = 'https://tiles.klimadashboard.org/data';
+	let map;
+	let selectedLayer = 'mismatch';
+
+	const vectorTilesURL = 'https://tiles.klimadashboard.org/data/pt_mismatch_all';
+
 	const layers = {
-		ptpop: {
-			id: 'ptpop',
+		mismatch: {
+			id: 'mismatch',
 			label: 'Mismatch (PT vs. Population)',
-			url: `${tileServerBase}/kd_raster_ptpop/{z}/{x}/{y}.png`
+			property: 'mismatch',
+			colorStops: [
+				[0, '#ffffff'],
+				[1, '#ffe5d9'],
+				[5, '#fb6a4a'],
+				[10, '#cb181d']
+			]
 		},
 		pt: {
 			id: 'pt',
 			label: 'Public Transport Quality',
-			url: `${tileServerBase}/kd_raster_pt/{z}/{x}/{y}.png`
+			property: 'pt',
+			colorStops: [
+				[0, '#ffffff'],
+				[36, '#f0f9e8'],
+				[109, '#bae4bc'],
+				[255, '#238b45']
+			]
 		},
 		pop: {
 			id: 'pop',
 			label: 'Population Density',
-			url: `${tileServerBase}/kd_raster_pop/{z}/{x}/{y}.png`
+			property: 'pop',
+			colorStops: [
+				[0, '#ffffff'],
+				[5, '#deebf7'],
+				[10, '#9ecae1'],
+				[255, '#084594']
+			]
 		}
 	};
 
 	function switchLayer(id) {
 		selectedLayer = id;
-
 		Object.values(layers).forEach((layer) => {
 			if (map.getLayer(layer.id)) {
 				map.setLayoutProperty(layer.id, 'visibility', layer.id === id ? 'visible' : 'none');
@@ -61,32 +81,52 @@
 			},
 			center: [13.3, 47.5],
 			zoom: 7,
-			minZoom: 6,
+			minZoom: 5,
 			maxZoom: 14
 		});
 
 		map.on('load', () => {
 			Object.values(layers).forEach((layer) => {
 				map.addSource(layer.id, {
-					type: 'raster',
-					tiles: [layer.url],
-					tileSize: 256
+					type: 'vector',
+					tiles: [`${vectorTilesURL}/{z}/{x}/{y}.pbf`],
+					tileSize: 512,
+					minzoom: 5,
+					maxzoom: 14
 				});
 
 				map.addLayer({
 					id: layer.id,
-					type: 'raster',
+					type: 'fill',
 					source: layer.id,
+					'source-layer': 'ptmismatch',
+					paint: {
+						'fill-color': [
+							'interpolate',
+							['linear'],
+							['get', layer.property],
+							...layer.colorStops.flat()
+						],
+						'fill-opacity': [
+							'interpolate',
+							['linear'],
+							['get', layer.property],
+							0,
+							0, // fully transparent at 0
+							1,
+							0.3, // semi-transparent
+							10,
+							0.6, // more visible
+							255,
+							0.9 // almost solid
+						]
+					},
 					layout: {
 						visibility: layer.id === selectedLayer ? 'visible' : 'none'
-					},
-					paint: {
-						'raster-opacity': 1
 					}
 				});
 			});
 
-			// Add all raster sources and layers (above basemap)
 			map.addSource('austria-mask', {
 				type: 'geojson',
 				data: 'https://data.klimadashboard.org/at/austria.json'
@@ -100,7 +140,34 @@
 					'fill-color': '#ffffff',
 					'fill-opacity': 1
 				},
-				filter: ['!=', '$type', 'Polygon'] // We'll invert this in the next step
+				filter: ['!=', '$type', 'Polygon']
+			});
+
+			map.on('zoom', () => {
+				// console.log(map.getZoom());
+			});
+
+			map.on('click', (e) => {
+				const features = map.queryRenderedFeatures(e.point, {
+					layers: Object.values(layers).map((l) => l.id)
+				});
+
+				if (features.length > 0) {
+					const feature = features[0];
+					const props = feature.properties;
+					const coords = e.lngLat;
+
+					selectedRegion = {
+						coordinates: [coords.lng, coords.lat],
+						geometry: feature.geometry,
+						properties: {
+							pop: props.pop,
+							pt: props.pt,
+							mismatch: props.mismatch
+						}
+					};
+					console.log('Selected Region:', selectedRegion);
+				}
 			});
 		});
 	});
