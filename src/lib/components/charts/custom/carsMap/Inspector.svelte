@@ -16,7 +16,7 @@
 		>
 	</h2>
 	<div class="grid grid-cols-2 gap-3 mt-2">
-		<div style="color: {colors.electric[1]}">
+		<div style="color: {colors.electric[1]}" class="dark:brightness-175">
 			<div class="font-bold">Anteil der Elektromobilität</div>
 
 			<div class="flex">
@@ -33,7 +33,7 @@
 				></div>
 			</div>
 		</div>
-		<div style="color: {colors.pop[1]}">
+		<div style="color: {colors.pop[1]}" class="dark:brightness-175">
 			<div class="font-bold">Autos pro 1000 Einwohner:innen</div>
 
 			<div class="flex">

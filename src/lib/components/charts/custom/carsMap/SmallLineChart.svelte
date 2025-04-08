@@ -42,7 +42,7 @@
 				{/each}
 				<g class="text-xs opacity-70">
 					{#each data as d}
-						<g transform="translate({xScale(d.period)},{chartHeight})">
+						<g transform="translate({xScale(d.period)},{chartHeight})" class="dark:fill-white">
 							<text text-anchor="middle" class={selectedPeriod == d.period ? 'font-bold' : ''}
 								>{d.period}</text
 							>

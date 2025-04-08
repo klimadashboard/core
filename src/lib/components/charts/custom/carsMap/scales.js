@@ -1,7 +1,7 @@
 import { scaleLinear } from 'd3-scale';
 
-const colorsPop = ['#CDE6F1', '#1F77B4'];
-const colorsElectric = ['#EDFFE6', '#187E8B'];
+const colorsPop = ['#E5F3FA', '#003B80'];
+const colorsElectric = ['#F0FFF0', '#005E61'];
 
 export const colors = {
 	electric: colorsElectric,

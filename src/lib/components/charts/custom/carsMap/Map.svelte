@@ -57,7 +57,7 @@
 				sources: {
 					labels: {
 						type: 'vector',
-						url: `https://api.maptiler.com/tiles/v3/tiles.json?key=${MAPTILER_KEY}`
+						url: 'https://tiles.klimadashboard.org/data/labels-' + PUBLIC_VERSION + '.json'
 					}
 				},
 				layers: [
@@ -65,7 +65,7 @@
 						id: 'background',
 						type: 'background',
 						paint: {
-							'background-color': '#ffffff'
+							'background-color': 'transparent'
 						}
 					}
 				]
@@ -148,11 +148,10 @@
 			map.addLayer({
 				id: 'city-labels',
 				source: 'labels',
-				'source-layer': 'place',
+				'source-layer': 'city-labels', // from Tippecanoe: -l city-labels
 				type: 'symbol',
-				filter: ['==', ['get', 'class'], 'city'],
 				layout: {
-					'text-field': ['get', 'name:de'],
+					'text-field': ['get', 'name'],
 					'text-font': ['Noto Sans Regular'],
 					'text-size': 12
 				},
@@ -226,11 +225,15 @@
 	}
 </script>
 
-<div bind:this={mapContainer} id="map" class="w-full h-full relative my-4 rounded-2xl">
+<div
+	bind:this={mapContainer}
+	id="map"
+	class="w-full h-full relative my-4 rounded-2xl bg-white dark:bg-gray-950"
+>
 	{#if zoomLevel > 4}
 		<button
 			on:mousedown={() => (selectedRegion = null)}
-			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-900 rounded-full w-8 h-8 grid shadow"
+			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-500 rounded-full w-8 h-8 grid shadow"
 			transition:fade
 		>
 			<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />

@@ -41,7 +41,7 @@
 			</div>
 		</div>
 		<div class="flex space-x-3 w-full">
-			<div class="flex-1" style="color: {colors.electric[1]}">
+			<div class="flex-1 dark:brightness-175" style="color: {colors.electric[1]}">
 				<p>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -71,7 +71,7 @@
 					></div>
 				</div>
 			</div>
-			<div class="flex-1" style="color: {colors.pop[1]}">
+			<div class="flex-1 dark:brightness-175" style="color: {colors.pop[1]}">
 				<p>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
