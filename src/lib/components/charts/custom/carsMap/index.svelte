@@ -21,7 +21,8 @@
 		const data = await directus.request(
 			readItems('mobility_cars', {
 				filter: {
-					country: { _eq: countryCode }
+					country: { _eq: countryCode },
+					category: { _in: ['Elektro', 'Plug-in-Hybrid', 'Insgesamt'] }
 				},
 				limit: -1,
 				fields: ['period', 'region', 'category', 'value']
@@ -73,11 +74,21 @@
 						100
 				};
 			});
+			const carsHybridShare = periods.map((p) => {
+				return {
+					period: parseInt(p),
+					value:
+						(regionData.find((d) => d.category === 'Plug-in-Hybrid' && d.period === p)?.value /
+							regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value) *
+						100
+				};
+			});
 			return {
 				...region,
 				outline: region.outline_simple,
 				carsPer1000Inhabitants,
-				carsElectricShare
+				carsElectricShare,
+				carsHybridShare
 			};
 		});
 		console.log(regionsWithData);
@@ -91,11 +102,30 @@
 	let views = [
 		{
 			label: 'E-Auto Anteil',
-			key: 'electric'
+			key: 'electric',
+			description: 'Anteil der Elektromobilität',
+			color: colors.electric[1],
+			dataKey: 'carsElectricShare',
+			unit: '%',
+			chart: 'progressBar'
+		},
+		{
+			label: 'Plug-In-Hybrid Anteil',
+			key: 'hybrid',
+			description: 'Anteil der Plug-In-Hybride',
+			color: colors.hybrid[1],
+			dataKey: 'carsHybridShare',
+			unit: '%',
+			chart: 'progressBar'
 		},
 		{
 			label: 'Autodichte',
-			key: 'pop'
+			key: 'pop',
+			description: 'Autos pro 1000 Einwohner:innen',
+			color: colors.pop[1],
+			dataKey: 'carsPer1000Inhabitants',
+			unit: '',
+			chart: ''
 		}
 	];
 
@@ -106,7 +136,12 @@
 	$: relatedRegions = [];
 
 	$: getRelatedRegions = (regions, selectedRegion) => {
-		const valueKey = selectedView === 'electric' ? 'carsElectricShare' : 'carsPer1000Inhabitants';
+		const valueKey =
+			selectedView === 'electric'
+				? 'carsElectricShare'
+				: selectedView === 'hybrid'
+					? 'carsHybridShare'
+					: 'carsPer1000Inhabitants';
 
 		const regionsWithValue = regions
 			.map((region) => {
@@ -216,6 +251,15 @@
 			)
 		}));
 
+		const carsHybridShare = allPeriods.map((period) => ({
+			period,
+			value: average(
+				regions
+					.map((r) => r.carsHybridShare?.find((d) => d.period === period)?.value)
+					.filter((v) => v != null && isFinite(v))
+			)
+		}));
+
 		return {
 			code: 'ALL',
 			label: countryName,
@@ -224,7 +268,8 @@
 			typeLabel: 'Nationaler Durchschnitt',
 			center: [10.45, 51.1657],
 			carsPer1000Inhabitants,
-			carsElectricShare
+			carsElectricShare,
+			carsHybridShare
 		};
 	};
 
@@ -268,7 +313,12 @@
 								outline: d.outline,
 								center: d.center,
 								name: d.name,
-								data: selectedView == 'electric' ? d.carsElectricShare : d.carsPer1000Inhabitants
+								data:
+									selectedView == 'electric'
+										? d.carsElectricShare
+										: selectedView == 'hybrid'
+											? d.carsHybridShare
+											: d.carsPer1000Inhabitants
 							};
 						})}
 						colors={colors[selectedView]}
@@ -280,6 +330,7 @@
 					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
 				>
 					<Inspector
+						{views}
 						{selectedPeriod}
 						region={getRegionData(regions, selectedRegion, countryName)}
 					/>
@@ -287,11 +338,11 @@
 					<ul class="">
 						{#if filteredRegions.length > 0}
 							{#each filteredRegions as region}
-								<RelatedRegionCard bind:selectedRegion {selectedPeriod} {region} />
+								<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
 							{/each}
 						{:else}
 							{#each getRelatedRegions(regions, selectedRegion) as region}
-								<RelatedRegionCard bind:selectedRegion {selectedPeriod} {region} />
+								<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
 							{/each}
 						{/if}
 					</ul>
