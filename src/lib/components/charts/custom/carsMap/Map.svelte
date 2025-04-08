@@ -72,8 +72,8 @@
 			},
 			center,
 			zoom,
-			minZoom: 4,
-			maxZoom: 8
+			minZoom: zoom - 1,
+			maxZoom: zoom + 4
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -153,7 +153,8 @@
 				layout: {
 					'text-field': ['get', 'name'],
 					'text-font': ['Noto Sans Regular'],
-					'text-size': 12
+					'text-size': 12,
+					'symbol-sort-key': ['get', 'population']
 				},
 				paint: {
 					'text-color': '#000',
@@ -210,7 +211,7 @@
 			if (region?.center) {
 				map.flyTo({
 					center: region.center,
-					zoom: 7,
+					zoom: 10,
 					duration: 800
 				});
 			}

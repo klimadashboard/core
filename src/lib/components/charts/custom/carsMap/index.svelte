@@ -7,7 +7,7 @@
 	import { colors, scales } from './scales';
 
 	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems } from '@directus/sdk';
+	import { readItem, readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let minPeriod;
@@ -23,7 +23,8 @@
 				filter: {
 					country: { _eq: countryCode }
 				},
-				limit: -1
+				limit: -1,
+				fields: ['period', 'region', 'category', 'value']
 			})
 		);
 
@@ -38,9 +39,14 @@
 		const regions = await directus.request(
 			readItems('regions', {
 				filter: regionFilter,
-				limit: -1
+				limit: -1,
+				fields: ['name', 'code', 'outline_simple', 'population', 'center']
 			})
 		);
+
+		const country = await directus.request(readItem('countries', countryCode));
+
+		const countryName = country?.name_de ?? countryCode;
 		// console.log(data);
 		// console.log(regions);
 		const regionsWithData = regions.map((region) => {
@@ -67,12 +73,17 @@
 						100
 				};
 			});
-			return { ...region, carsPer1000Inhabitants, carsElectricShare };
+			return {
+				...region,
+				outline: region.outline_simple,
+				carsPer1000Inhabitants,
+				carsElectricShare
+			};
 		});
 		console.log(regionsWithData);
 		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
 		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
-		return { data, regions: regionsWithData, minPeriod, maxPeriod };
+		return { data, regions: regionsWithData, minPeriod, maxPeriod, countryName };
 	};
 
 	$: promise = getData();
@@ -168,7 +179,7 @@
 		return unique.sort((a, b) => b.value - a.value);
 	};
 
-	$: getRegionData = (regions, selectedRegion) => {
+	$: getRegionData = (regions, selectedRegion, countryName) => {
 		if (selectedRegion) return regions.find((r) => r.code === selectedRegion);
 
 		// Helper: average array of numbers
@@ -207,8 +218,8 @@
 
 		return {
 			code: 'ALL',
-			label: 'Deutschland',
-			name: 'Deutschland',
+			label: countryName,
+			name: countryName,
 			type: 'national',
 			typeLabel: 'Nationaler Durchschnitt',
 			center: [10.45, 51.1657],
@@ -245,6 +256,8 @@
 		{#await promise then p}
 			{@const data = p.data}
 			{@const regions = p.regions}
+			{@const countryName = p.countryName}
+
 			<div class="">
 				<div class="h-[40vh]">
 					<Map
@@ -266,7 +279,10 @@
 				<div
 					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
 				>
-					<Inspector {selectedPeriod} region={getRegionData(regions, selectedRegion)} />
+					<Inspector
+						{selectedPeriod}
+						region={getRegionData(regions, selectedRegion, countryName)}
+					/>
 					<Search {regions} {selectedRegion} bind:filteredRegions />
 					<ul class="">
 						{#if filteredRegions.length > 0}
