@@ -1,44 +1,75 @@
 <script>
-    import Panel from "$lib/components/blocks/Panel.svelte";
+	import Panel from '$lib/components/blocks/Panel.svelte';
+	import Loader from '$lib/components/Loader.svelte';
+	import formatNumber from '$lib/stores/formatNumber';
+	import { types } from '$lib/stores/weather';
+	import { onMount } from 'svelte';
 
-    export let data;
-    
-    $: place = data.page.name;
+	export let data;
 
-    let panels = [{
-        title: "Eine erste Statistik, live aus der Region",
-        text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        colorBackground: "#FEB904",
-        colorText: "#0C485E",
-        number: 10,
-        unit: "%"
-    }, {
-        title: "Eine zweite Statistik, live aus der Region",
-        text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        colorBackground: "#28292B",
-        colorText: "#EED974"
-    },
-    {
-        title: "Eine dritte Statistik, live aus der Region",
-        colorBackground: "#28292B",
-        colorText: "#EED974"
-    },
-    {
-        title: "Eine vierte Statistik, live aus der Region",
-        colorBackground: "#FEB904",
-        colorText: "#0C485E",
-    }]
+	let place = '';
+	let station = null;
+	let indicators = null;
+	let panels = [];
+
+	onMount(async () => {
+		place = data.page.name;
+
+		const [lon, lat] = data.page.center;
+		const stationRes = await fetch(
+			`https://base.klimadashboard.org/get-nearest-stations?lat=${lat}&lon=${lon}&limit=1`
+		);
+		const stations = await stationRes.json();
+		station = stations[0];
+
+		const table = station.source === 'de_dwd_stations' ? 'de_dwd_data' : 'at_geosphere_data';
+
+		const indicatorsRes = await fetch(
+			`https://base.klimadashboard.org/get-weather-indicators-for-station?station=${station.id}&table=${table}`
+		);
+		indicators = await indicatorsRes.json();
+		console.log(indicatorsRes);
+
+		panels = Object.entries(indicators)
+			.map(([key, value]) => ({
+				title: $types.find((d) => d.key == key)?.label,
+				subtitle: `im letzten Jahr`,
+				colorBackground: $types.find((d) => d.key == key)?.color,
+				colorText: '#fff',
+				number: value.lastYear ?? '-',
+				unit: 'Tage',
+				source:
+					station.name +
+					(station.distance_km > 6
+						? ' | ' + formatNumber(Math.round(station.distance_km)) + 'km entfernt'
+						: ''),
+				mostRecentOccurrence: value.mostRecentOccurrence,
+				list: [
+					{ text: `${value.historicAverage1961to1990} im Durchschnitt 1961–1990` },
+					{ text: `${value.thisYear} bisher in ${new Date().getFullYear()}` }
+				]
+			}))
+			.sort((a, b) => (a.mostRecentOccurrence ?? Infinity) - (b.mostRecentOccurrence ?? Infinity));
+	});
 </script>
 
-<div class="grid md:grid-cols-2 container my-8 gap-4">
-    <div class="grid">
-        <p class="font-bold my-auto text-xl">In {place} gab es YZ Hitzetage dieses Jahr, das sind YZ% mehr als im Durchschnitt. Als YZ hat {place} vielfältige Herausforderungen in der Anpassung an die Klimakrise zu bewältigen. Die Emissionen in der Region {place} sind im letzten Jahr um ZY% gesunken.</p>
-    </div>
-    <div class="grid grid-cols-2 gap-1">
-        {#each panels as panel}
-        <div class="rounded-2xl overflow-hidden">
-        <Panel block={panel} />
-        </div>
-        {/each}
-    </div>
-</div>
+{#if station && indicators}
+	<div class="container my-8">
+		<div class="">
+			<p class="font-bold my-auto text-xl">
+				In {place} lorem ipsum dolor sit amet. <br />Algorithmisch generierter Text wird hier
+				eingefügt.
+			</p>
+		</div>
+		<h2 class="border-b mt-6 mb-2 font-bold">Auf einen Blick</h2>
+		<div class="grid grid-cols-2 md:grid-cols-4 gap-1">
+			{#each panels.splice(0, 4) as panel}
+				<div class="rounded-2xl overflow-hidden">
+					<Panel block={panel} />
+				</div>
+			{/each}
+		</div>
+	</div>
+{:else}
+	<Loader />
+{/if}

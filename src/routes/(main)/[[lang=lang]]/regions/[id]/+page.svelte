@@ -4,7 +4,6 @@
 	import { browser } from '$app/environment';
 	import Map from './Map.svelte';
 	import Intro from './Intro.svelte';
-	import Image from './Image.svelte';
 	import Chart from '$lib/components/charts/index.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
@@ -14,7 +13,7 @@
 
 	const coordinates = data.page.center.map((d) => parseFloat(d)).join(',');
 
-	$: allowedHeight = 600;
+	$: allowedHeight = 800;
 
 	onMount(() => {
 		localStorage.setItem('kd_region_id', data.page.id);
@@ -68,8 +67,6 @@
 		{
 			title: 'Mobilität',
 			id: 'mobility',
-			description:
-				'Modal Split pro Region; Öffi-Anbindung Raster; Zulassungsstatistiken nach Antriebsart auf Bezirksebene',
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-steering-wheel'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' /><path d='M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' /><path d='M12 14l0 7' /><path d='M10 12l-6.75 -2' /><path d='M14 12l6.75 -2' /></svg>",
 			height: 0,
 			expanded: false,
@@ -116,7 +113,6 @@
 					id: '801a3cdf-1197-4b99-9ece-99113940c5fb'
 				}
 			],
-			description: 'Hitzetage und Niederschlag im Jahr 2050/2100 in RCP 4.5 und 8.5',
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-circle-arrow-right'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18' /><path d='M16 12l-4 -4' /><path d='M16 12h-8' /><path d='M12 16l4 -4' /></svg>",
 			height: 0,
 			expanded: false
@@ -125,7 +121,6 @@
 			title: 'Handlungen',
 			id: 'actions',
 			blocks: [Policies],
-			description: 'Was du in ' + data.page.name + ' tun kannst.',
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-tool'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5' /></svg>",
 			height: 0,
 			expanded: false
@@ -180,8 +175,6 @@
 				</div>
 			</div>
 
-			<Image />
-
 			{#each sections as section}
 				<section
 					id={section.id}
@@ -191,12 +184,9 @@
 						<h2 class="text-2xl my-4 text-center max-w-2xl mx-auto">{section.title}</h2>
 						<div class="container space-y-4">
 							{#if section.charts}
-								{section.description}
 								{#each section.charts as chart}
 									<Chart id={chart.id} />
 								{/each}
-							{:else}
-								<div class="bg-current/10 p-4">{section.description}</div>
 							{/if}
 							{#if section.blocks}
 								{#each section.blocks as block}
@@ -208,7 +198,7 @@
 
 					{#if section.height > allowedHeight}
 						<div
-							class="h-32 absolute bottom-0 left-0 right-0 bg-gradient-to-b from-transparent to-white dark:to-gray-950"
+							class="h-32 absolute bottom-0 left-0 right-0 bg-gradient-to-b from-transparent to-white dark:to-gray-950 z-50"
 						>
 							<div class="absolute bottom-0 left-1/2 -translate-x-1/2">
 								<button on:mousedown={(section.expanded = !section.expanded)} class="button"
