@@ -297,57 +297,59 @@
 			}}
 		/>
 	</div>
-	{#if selectedView && selectedPeriod}
-		{#await promise then p}
-			{@const data = p.data}
-			{@const regions = p.regions}
-			{@const countryName = p.countryName}
+	<div class="min-h-[80vh]">
+		{#if selectedView && selectedPeriod}
+			{#await promise then p}
+				{@const data = p.data}
+				{@const regions = p.regions}
+				{@const countryName = p.countryName}
 
-			<div class="">
-				<div class="h-[40vh]">
-					<Map
-						{selectedPeriod}
-						regions={regions.map((d) => {
-							return {
-								code: d.code,
-								outline: d.outline,
-								center: d.center,
-								name: d.name,
-								data:
-									selectedView == 'electric'
-										? d.carsElectricShare
-										: selectedView == 'hybrid'
-											? d.carsHybridShare
-											: d.carsPer1000Inhabitants
-							};
-						})}
-						colors={colors[selectedView]}
-						bind:selectedRegion
-						on:selectRegion={(e) => (selectedRegion = e.detail)}
-					/>
+				<div class="">
+					<div class="h-[40vh]">
+						<Map
+							{selectedPeriod}
+							regions={regions.map((d) => {
+								return {
+									code: d.code,
+									outline: d.outline,
+									center: d.center,
+									name: d.name,
+									data:
+										selectedView == 'electric'
+											? d.carsElectricShare
+											: selectedView == 'hybrid'
+												? d.carsHybridShare
+												: d.carsPer1000Inhabitants
+								};
+							})}
+							colors={colors[selectedView]}
+							bind:selectedRegion
+							on:selectRegion={(e) => (selectedRegion = e.detail)}
+						/>
+					</div>
+					<div
+						class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
+					>
+						<Inspector
+							{views}
+							{selectedPeriod}
+							region={getRegionData(regions, selectedRegion, countryName)}
+						/>
+						<Search {regions} {selectedRegion} bind:filteredRegions />
+						<ul class="">
+							{#if filteredRegions.length > 0}
+								{#each filteredRegions as region}
+									<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
+								{/each}
+							{:else}
+								{#each getRelatedRegions(regions, selectedRegion) as region}
+									<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
+								{/each}
+							{/if}
+						</ul>
+					</div>
 				</div>
-				<div
-					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
-				>
-					<Inspector
-						{views}
-						{selectedPeriod}
-						region={getRegionData(regions, selectedRegion, countryName)}
-					/>
-					<Search {regions} {selectedRegion} bind:filteredRegions />
-					<ul class="">
-						{#if filteredRegions.length > 0}
-							{#each filteredRegions as region}
-								<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
-							{/each}
-						{:else}
-							{#each getRelatedRegions(regions, selectedRegion) as region}
-								<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
-							{/each}
-						{/if}
-					</ul>
-				</div>
-			</div>
-		{/await}
-	{/if}
+			{/await}
+		{/if}
+	</div>
 </div>
