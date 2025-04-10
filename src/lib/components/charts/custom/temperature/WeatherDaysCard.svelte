@@ -25,7 +25,7 @@
 </script>
 
 <div
-	class="rounded-sm overflow-hidden bg-gray-100 flex flex-col justify-between"
+	class="rounded-sm overflow-hidden bg-gray-100 dark:bg-gray-900 flex flex-col justify-between"
 	style="border: 2px solid {type.color}"
 >
 	<div
@@ -65,7 +65,8 @@
 			</p>
 			<p class="leading-none font-semibold hyphens-auto text-balance min-w-0">
 				{type.label}
-				{#if currentDate} bis {dayjs(currentDate).format('D.M.')}{/if} im Schnitt {compareFirstYear}-{compareLastYear}
+				{#if currentDate}
+					bis {dayjs(currentDate).format('D.M.')}{/if} im Schnitt {compareFirstYear}-{compareLastYear}
 			</p>
 		</div>
 		<div class="flex items-end space-x-2">
