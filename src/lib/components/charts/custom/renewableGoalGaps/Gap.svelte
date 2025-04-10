@@ -10,61 +10,45 @@
 	export let dataGoal;
 	export let goalScenario;
 
-	// let nationalGoal;
 	let unit = 'TWh';
 	$: nationalGoal = dataGoal.value;
-
-	// Papa.parse(
-	// 	'https://data.klimadashboard.org/at/energy/renewables/' + type.dataKey + '_zielpfad.csv',
-	// 	{
-	// 		download: true,
-	// 		dynamicTyping: true,
-	// 		skipEmptyLines: true,
-	// 		header: true,
-	// 		complete: function (results) {
-	// 			if (results) {
-	// 				nationalGoal = results.data.find((d) => d.DateTime == '2030-12-31').Jahresproduktion;
-	// 			}
-	// 		}
-	// 	}
-	// );
 
 	$: colorScale = scaleLinear()
 		.range(type.colorScale)
 		.domain([max(federalStates, (d) => d.goal), min(federalStates, (d) => d.goal)]);
 
 	$: federalStates = [...new Set(dataset?.map((d) => d.state_name))]
-		.map((entry) => {
+		.map((state) => {
 			const goal = dataset.find(
-				(d) => d.state_name == entry && d.energy_type == type.key && d.goal_year > dayjs().year()
+				(d) => d.state_name == state && d.energy_data_key == type.dataKey && d.goal_year > dayjs().year()
 			)
 				? dataset.find(
 						(d) =>
-							d.state_name == entry && d.energy_type == type.key && d.goal_year > dayjs().year()
+							d.state_name == state && d.energy_data_key == type.dataKey && d.goal_year > dayjs().year()
 					).goal_amount
 				: 0;
 			const goalYear = dataset.find(
-				(d) => d.state_name == entry && d.energy_type == type.key && d.goal_year > dayjs().year()
+				(d) => d.state_name == state && d.energy_data_key == type.dataKey && d.goal_year > dayjs().year()
 			)
 				? dataset.find(
 						(d) =>
-							d.state_name == entry && d.energy_type == type.key && d.goal_year > dayjs().year()
+							d.state_name == state && d.energy_data_key == type.dataKey && d.goal_year > dayjs().year()
 					).goal_year
 				: 2030;
 			const currentProduction =
-				dataset.find((d) => d.state_name == entry && d.energy_type == type.key).current_production >
+				dataset.find((d) => d.state_name == state && d.energy_data_key == type.dataKey).current_production >
 				0
-					? dataset.find((d) => d.state_name == entry && d.energy_type == type.key)
+					? dataset.find((d) => d.state_name == state && d.energy_data_key == type.dataKey)
 							.current_production
 					: 0;
 
 			return {
-				state: entry,
-				goal: goal,
-				goalYear: goalYear,
-				currentProduction: currentProduction,
-				goalAndProduction: goal + currentProduction,
-				abbreviation: dataset?.find((d) => d.state_name == entry).state_short
+				state: state,
+				goal: +goal,
+				goalYear: +goalYear,
+				currentProduction: +currentProduction,
+				goalAndProduction: +goal + currentProduction,
+				abbreviation: dataset?.find((d) => d.state_name == state).state_short
 			};
 		})
 		.sort((a, b) => b.goal - a.goal);
@@ -181,7 +165,7 @@
 						{selectedState.state} hat kein definiertes Ziel bis {selectedState.goalYear}.
 					{/if}
 					{#if selectedState.currentProduction > 0}
-						{#if type.key == 'Wasserkraft'}
+						{#if type.dataKey == 'wasserkraft'}
 							<br />Durchschnittsproduktion 2018-2020:
 						{:else}
 							<br />Aktuelle Produktion:

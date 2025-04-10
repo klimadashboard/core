@@ -28,12 +28,13 @@
 		try{
 			const directus = getDirectusInstance(fetch);
 			const production = await directus.request(
-				readItems(type.dataKey + '_produktion', {
+				readItems('ee_produktion', {
 					filter: {
 						_and: [
 							{ 
 								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								Jahresproduktion: { _nnull: true }
+								Jahresproduktion: { _nnull: true },
+								Type: {_eq: type.dataKey}
 							}
 						]
 					},
@@ -49,7 +50,6 @@
 						y: entry.Jahresproduktion
 					};
 				});
-			// console.log("directus", dataProduction)
 			
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
@@ -58,6 +58,7 @@
 
 	$: getProduction();
 
+	
 	let chartWidth;
 	let chartHeight;
 
