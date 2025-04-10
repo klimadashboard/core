@@ -162,7 +162,7 @@
 				visualisations might be incomplete or show incorrect readings.
 			</div>
 			<Intro {data} />
-			<div class="sticky top-12 py-4 bg-white dark:bg-dark-950 z-50" id="top">
+			<div class="sticky top-12 py-4 bg-white dark:bg-gray-900 z-50" id="top">
 				<div class="container overflow-scroll">
 					<div class="flex justify-between gap-4">
 						{#each sections as section}
