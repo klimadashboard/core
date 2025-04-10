@@ -31,7 +31,7 @@
 
 		try {
 			const response = await fetch(
-				`https://base.klimadashboard.org/get-search-results?q=${encodeURIComponent(value)}&lang=${$page.data.language.code}&site=${PUBLIC_VERSION}`,
+				`https://base.klimadashboard.org/get-search-results?q=${encodeURIComponent(value)}&lang=${$page.data.language.code}&site=${PUBLIC_VERSION}&country=${PUBLIC_VERSION.toUpperCase()}`,
 				{ method: 'GET' }
 			);
 
