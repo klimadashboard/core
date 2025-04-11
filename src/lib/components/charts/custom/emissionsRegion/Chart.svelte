@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
+	import { page } from '$app/state';
 	import { scaleLinear } from 'd3-scale';
 	export let data;
-	console.log(data);
 
 	$: sectors = [
 		{
@@ -48,56 +48,75 @@
 		}
 	];
 
-	$: selectedYear = data[data.length - 1].period;
-	$: console.log(selectedYear);
-
-	$: dataForSectors = sectors
-		.map((s) => {
-			return {
-				sector: s.key,
-				label: s.label,
-				color: s.color,
-				icon: s.icon,
-				value: data.find((d) => d.period == selectedYear && d.category == s.key).value
-			};
-		})
-		.sort((a, b) => b.value - a.value);
-	$: console.log(dataForSectors);
-
 	let chartWidth;
+	let chartHeight = 200; // fixed height for each bar
+	const barGap = 8;
 
-	$: xScale = scaleLinear()
-		.domain([0, dataForSectors.reduce((acc, d) => acc + d.value, 0)])
-		.range([0, chartWidth]);
+	// group data by period
+	$: years = [...new Set(data.map((d) => d.period))].sort();
+
+	// map of known sector definitions
+	$: sectorMap = new Map(sectors.map((s) => [s.key, s]));
+
+	// get all unique sectors present in the data
+	$: uniqueSectorKeys = [...new Set(data.map((d) => d.category).filter((c) => c !== 'total'))];
+
+	// group data by year and assign sector info (falling back to raw category if needed)
+	$: grouped = years.map((year) => {
+		const values = uniqueSectorKeys.map((key) => {
+			const match = data.find((d) => d.period === year && d.category === key);
+			const info = sectorMap.get(key);
+			return {
+				sector: key,
+				label: info?.label ?? key,
+				color: info?.color ?? 'gray-500', // default Tailwind color
+				icon: info?.icon ?? '',
+				value: match?.value ?? 0
+			};
+		});
+
+		return {
+			period: year,
+			sectors: values,
+			total: values.reduce((sum, d) => sum + d.value, 0)
+		};
+	});
+
+	$: maxTotal = Math.max(...grouped.map((g) => g.total));
+
+	$: xScale = scaleLinear().domain([0, maxTotal]).range([0, chartWidth]);
 </script>
 
-<div class="flex gap-1">
-	<input
-		type="range"
-		min={data[0].period}
-		max={data[data.length - 1].period}
-		bind:value={selectedYear}
-	/>
-	<span>{selectedYear}</span>
-</div>
-<div class="h-20 flex" bind:clientWidth={chartWidth}>
-	{#if chartWidth}
-		{#each dataForSectors as d, i}
-			<div class="bg-{d.sector} h-full relative" style="width: {xScale(d.value)}px">
-				<div class="absolute left-2 bottom-2">
-					{@html d.icon}
-				</div>
+{#if grouped.length > 0}
+	<div>
+		<p class="text-xl mt-4">
+			Die Sektoren mit dem größten Anteil an Emissionen im Jahr {grouped[grouped.length - 1].period}
+			in {page.data.page.name} sind
+			{#each grouped[grouped.length - 1].sectors
+				.slice()
+				.sort((a, b) => b.value - a.value)
+				.slice(0, 3) as s, i}
+				<span class="bg-{s.color} p-1">{s.label}</span>{i < 2 ? ', ' : '.'}
+			{/each}
+		</p>
+	</div>
+
+	<div bind:clientWidth={chartWidth} class="mt-4">
+		{#if chartWidth}
+			<div class="flex flex-col gap-2">
+				{#each grouped as yearData}
+					<div class="flex items-center gap-2 h-[{chartHeight / grouped.length}px]">
+						<div class="w-14 text-sm text-right pr-2 shrink-0">{yearData.period}</div>
+						<div class="flex h-6 w-full">
+							{#each yearData.sectors as s (s.sector)}
+								<div class="relative h-full bg-{s.color}" style="width: {xScale(s.value)}px">
+									<div class="absolute left-1 bottom-1 scale-[0.8]">{@html s.icon}</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/each}
 			</div>
-		{/each}
-	{/if}
-</div>
-
-<div>
-	<p class="text-xl mt-4">
-		Die Sektoren mit dem größten Anteil an Emissionen im Jahr {selectedYear} in Wien sind {#each dataForSectors.slice(0, 3) as s, i}
-			<span class="bg-{s.color} p-1">{s.label}</span>{i < dataForSectors.length - 1 ? ', ' : '.'}
-		{/each}
-	</p>
-</div>
-
-<!-- bg-transport bg-buildings text-buildings -->
+		{/if}
+	</div>
+{/if}
