@@ -4,7 +4,6 @@
 	import { onMount } from 'svelte';
 	import type { MobilityRenewableShare, Countries } from './schema';
 	import { transformDataForChart, type LineChartData } from './transformData';
-	import { browser } from '$app/environment';
 
 	let loading = true;
 	let error: Error | null = null;
