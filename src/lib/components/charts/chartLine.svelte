@@ -1,4 +1,5 @@
 <script>
+	// @ts-nocheck
 	import { max, min, extent, bisector } from 'd3-array';
 	import { scaleLinear, scaleTime } from 'd3-scale';
 	import formatNumber from '$lib/stores/formatNumber';
@@ -24,8 +25,8 @@
 	export let minValue = 0;
 	export let preselectedIndex = 0;
 	export let showPulse = false;
-	export let invalidX;
-	export let invalidText;
+	export let invalidX = 0;
+	export let invalidText = '';
 	export let additionalYAxisUnit = '';
 
 	let chartHeight;
