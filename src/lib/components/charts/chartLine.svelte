@@ -23,6 +23,7 @@
 	export let marginTop = 0;
 	export let xTicksInterval = 10;
 	export let minValue = 0;
+	export let maxValue;
 	export let preselectedIndex = 0;
 	export let showPulse = false;
 	export let invalidX = 0;
@@ -51,32 +52,32 @@
 		.range([innerChartHeight, 0])
 		.domain([
 			minValue,
-			max(
-				data.map((item) => {
-					if (visualisation == 'stacked') {
-						// get total of all values for keys
-						let total = 0;
-						for (let k = 0; k < shownKeys.length; k++) {
-							// Use let instead of var
-							if (!isNaN(item[shownKeys[k]])) {
-								total += item[shownKeys[k]];
+			maxValue ??
+				max(
+					data.map((item) => {
+						if (visualisation == 'stacked') {
+							// get total of all values for keys
+							let total = 0;
+							for (let k = 0; k < shownKeys.length; k++) {
+								// Use let instead of var
+								if (!isNaN(item[shownKeys[k]])) {
+									total += item[shownKeys[k]];
+								}
 							}
-						}
-						return total;
-					} else {
-						// get max of values
-						const values = [];
-						for (let k = 0; k < shownKeys.length; k++) {
-							// Use let instead of var
-							if (!isNaN(item[shownKeys[k]])) {
-								values.push(item[shownKeys[k]]);
+							return total;
+						} else {
+							// get max of values
+							const values = [];
+							for (let k = 0; k < shownKeys.length; k++) {
+								// Use let instead of var
+								if (!isNaN(item[shownKeys[k]])) {
+									values.push(item[shownKeys[k]]);
+								}
 							}
+							return Math.max(...values);
 						}
-						return Math.max(...values);
-					}
-				})
-			) +
-				1 * 1.1
+					})
+				) + (maxValue ? 1 * 1.1 : 0)
 		]);
 
 	$: shownKeys = [...keys];

@@ -1,17 +1,17 @@
 import type { MobilityRenewableShare, Countries } from './schema';
 
-const DEFAULT_COLOR = '#a3a3a3';
+const DEFAULT_COLOR = '#bababa';
 
 // Define colors for different regions
 export const regionColors = {
-	DE: '#7CBAB3',
-	AT: '#575C75',
-	FR: '#71665B',
-	ES: '#B28834',
-	IT: '#8CAED9',
-	PT: '#E0A906',
-	GB: '#CF6317',
-	highlighted: '#1eaf90'
+	// DE: '#7CBAB3',
+	// AT: '#575C75',
+	// FR: '#71665B',
+	// ES: '#B28834',
+	// IT: '#8CAED9',
+	// PT: '#E0A906',
+	// GB: '#CF6317',
+	highlighted: '#1e88af'
 };
 
 // Type for chart data structure
@@ -39,9 +39,15 @@ export function transformDataForChart(
 	// Get unique periods and regions
 	const periods = [...new Set(apiData.map((item) => item.period))].sort();
 	// Sort regions to ensure consistent ordering
-	const regions = [...new Set(apiData.map((item) => item.region))].sort((a, b) =>
+	let regions = [...new Set(apiData.map((item) => item.region))].sort((a, b) =>
 		a.localeCompare(b)
 	);
+
+	// Move the current country to the end so it's drawn last (on top)
+	if (regions.includes(currentCountry)) {
+		regions = regions.filter(region => region !== currentCountry);
+		regions.push(currentCountry);
+	}
 
 	// Create a lookup map for quick access to values
 	const dataMap: Record<string, Record<string, number>> = {};
