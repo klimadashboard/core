@@ -1,0 +1,14 @@
+query GetMobilityRenewableShare {
+	mobility(filter: { category: { _eq: "share_renewable" } }, limit: -1) {
+		period
+		region
+		value
+	}
+}
+
+query GetCountries {
+	countries(limit: -1) {
+		id
+		name_de
+	}
+}

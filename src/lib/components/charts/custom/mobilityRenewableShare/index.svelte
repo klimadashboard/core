@@ -4,6 +4,11 @@
 	import { onMount } from 'svelte';
 	import type { MobilityRenewableShare, Countries } from './schema';
 	import { transformDataForChart, type LineChartData } from './transformData';
+	import {
+		AsyncGetMobilityRenewableShare,
+		GetCountries,
+		GetMobilityRenewableShare
+	} from './__generated__/mobilityRenewableShare.generated';
 
 	let loading = true;
 	let error: Error | null = null;
@@ -48,6 +53,19 @@
 		} finally {
 			loading = false;
 		}
+	});
+
+	// Test GraphQL data fetching
+	$: mobilityRenewableShare = GetMobilityRenewableShare({});
+	$: console.log('GraphQL mobilityRenewableShare', $mobilityRenewableShare.data.mobility);
+
+	$: graphQLcountries = GetCountries({});
+	$: console.log('GraphQL countries', $graphQLcountries.data.countries);
+
+	// Test async GraphQL data fetching
+	onMount(async () => {
+		const { data: mobilityData, error, loading } = await AsyncGetMobilityRenewableShare({});
+		console.log('Async mobilityRenewableShare', mobilityData, error, loading);
 	});
 </script>
 
