@@ -7,6 +7,7 @@
 	let chartHeight;
 
 	export let data;
+	export let colors;
 
 	$: xScale = scaleLinear()
 		.domain([data[0].year, data[data.length - 1].year])
@@ -39,6 +40,6 @@
 				</g>
 			{/each}
 		</g>
-		<path d={generateLine(data)} class="fill-none stroke-[#E0A906] opacity-50 stroke-2" />
+		<path d={generateLine(data)} class="fill-none opacity-50 stroke-2" stroke={colors[1]} />
 	</svg>
 </div>

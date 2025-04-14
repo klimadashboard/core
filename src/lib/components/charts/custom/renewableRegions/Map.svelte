@@ -9,8 +9,7 @@
 	export let selectedRegion;
 	export let data = [];
 	export let regions;
-
-	const colors = ['#F0E1C2', '#E0A906'];
+	export let colors;
 
 	let mapContainer;
 	let map;
