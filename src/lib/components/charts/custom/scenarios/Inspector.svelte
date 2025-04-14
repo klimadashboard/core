@@ -1,7 +1,7 @@
 <script>
 	export let selectedFeature;
-	export let variables;
-	export let rcps;
+	export let indicators;
+	export let warmingLevels;
 
 	$: console.log(selectedFeature);
 </script>
@@ -10,17 +10,17 @@
 	<h2>Inspector</h2>
 	{#if selectedFeature}
 		<div class="grid md:grid-cols-2 gap-4">
-			{#each variables as variable}
+			{#each indicators as indicator}
 				<div>
-					<h3 class="font-bold">{variable.label}</h3>
+					<h3 class="font-bold">{indicator.label}</h3>
 					<p>Definition</p>
-					{#each rcps as rcp}
-						<h4>{rcp.label}</h4>
-						<div>{selectedFeature[variable.key + '_' + rcp.key].q50}</div>
-						{#if selectedFeature[variable.key + '_' + rcp.key].trust < 1}
+					{#each warmingLevels as warmingLevel}
+						<h4>{warmingLevel.label}</h4>
+						<div>{selectedFeature[indicator.key + '_' + warmingLevel.key].q50}</div>
+						{#if selectedFeature[indicator.key + '_' + warmingLevel.key].trust < 1}
 							<div>
 								<span>Trust:</span>
-								{selectedFeature[variable.key + '_' + rcp.key].trust}
+								{selectedFeature[indicator.key + '_' + warmingLevel.key].trust}
 							</div>
 						{/if}
 					{/each}
