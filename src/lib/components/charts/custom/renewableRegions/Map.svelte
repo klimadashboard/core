@@ -1,0 +1,251 @@
+<script>
+	import { onMount, createEventDispatcher } from 'svelte';
+	import maplibregl from 'maplibre-gl';
+	import { scaleLinear } from 'd3-scale';
+	import { PUBLIC_VERSION } from '$env/static/public';
+	import { interpolateRgb } from 'd3-interpolate';
+	import { fade } from 'svelte/transition';
+
+	export let selectedRegion;
+	export let data = [];
+	export let regions;
+
+	const colors = ['#F0E1C2', '#E0A906'];
+
+	let mapContainer;
+	let map;
+	let mapReady = false;
+	let zoomLevel = 0;
+
+	const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase();
+
+	const defaultView = {
+		AT: {
+			center: [13.333, 47.5],
+			zoom: 6
+		},
+		DE: {
+			center: [10.45, 51.1657],
+			zoom: 4
+		}
+	};
+
+	const { center, zoom } = defaultView[COUNTRY_CODE] || defaultView.DE;
+
+	const dispatch = createEventDispatcher();
+
+	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
+
+	// Color scale
+	function createColorScale(data) {
+		if (!Array.isArray(data)) {
+			console.warn('Invalid data passed to createColorScale:', data);
+			return () => '#ccc';
+		}
+
+		const values = data.map((d) => d.value).filter((v) => v != null);
+		if (values.length === 0) return () => '#ccc';
+
+		const min = Math.min(...values);
+		const max = Math.max(...values);
+
+		if (min === max) return () => '#08519c';
+
+		return scaleLinear().domain([min, max]).range(colors).interpolate(interpolateRgb).clamp(true);
+	}
+
+	onMount(() => {
+		map = new maplibregl.Map({
+			container: mapContainer,
+			style: {
+				version: 8,
+				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
+				sources: {
+					labels: {
+						type: 'vector',
+						url: 'https://tiles.klimadashboard.org/data/labels-' + PUBLIC_VERSION + '.json'
+					}
+				},
+				layers: [
+					{
+						id: 'background',
+						type: 'background',
+						paint: {
+							'background-color': 'transparent'
+						}
+					}
+				]
+			},
+			center,
+			zoom,
+			minZoom: zoom - 1,
+			maxZoom: zoom + 5
+		});
+
+		map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+		map.on('load', () => {
+			const geojson = {
+				type: 'FeatureCollection',
+				features: regions
+					.filter((r) => r.outline)
+					.map((r) => ({
+						type: 'Feature',
+						properties: {
+							RS: r.code
+						},
+						geometry: r.outline
+					}))
+			};
+
+			map.addSource('regions', {
+				type: 'geojson',
+				data: geojson
+			});
+
+			map.addLayer({
+				id: 'regions-layer',
+				type: 'fill',
+				source: 'regions',
+				paint: {
+					'fill-color': '#ccc',
+					'fill-opacity': 0.8
+				}
+			});
+
+			map.addLayer({
+				id: 'regions-outline',
+				type: 'line',
+				source: 'regions',
+				paint: {
+					'line-color': '#fff',
+					'line-width': 0.1
+				}
+			});
+
+			map.addLayer({
+				id: 'highlight-outline',
+				type: 'line',
+				source: 'regions',
+				paint: {
+					'line-color': '#000',
+					'line-width': 2
+				},
+				filter: ['==', 'RS', '']
+			});
+
+			map.on('click', 'regions-layer', (e) => {
+				const feature = e.features?.[0];
+				if (feature) {
+					const regionId = feature.properties?.RS;
+					dispatch('selectRegion', regionId);
+				}
+			});
+
+			map.on('mouseenter', 'regions-layer', () => {
+				map.getCanvas().style.cursor = 'pointer';
+			});
+			map.on('mouseleave', 'regions-layer', () => {
+				map.getCanvas().style.cursor = '';
+			});
+
+			const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase(); // "DE", "AT", etc.
+
+			map.addLayer({
+				id: 'city-labels',
+				source: 'labels',
+				'source-layer': 'city-labels', // from Tippecanoe: -l city-labels
+				type: 'symbol',
+				layout: {
+					'text-field': ['get', 'name'],
+					'text-font': ['Noto Sans Regular'],
+					'text-size': 12,
+					'symbol-sort-key': ['get', 'population']
+				},
+				paint: {
+					'text-color': '#000',
+					'text-halo-color': '#fff',
+					'text-halo-width': 1
+				},
+				minzoom: 4
+			});
+
+			mapReady = true;
+		});
+
+		map.on('zoom', () => {
+			zoomLevel = map.getZoom();
+		});
+	});
+
+	// Color updates
+	$: if (mapReady && map && regions && Array.isArray(data) && data.length > 0) {
+		try {
+			const uniqueData = new Map();
+			for (const row of data) {
+				if (row.region && row.power_per_area_kw_per_km2 != null && !uniqueData.has(row.region)) {
+					uniqueData.set(row.region, row.power_per_area_kw_per_km2);
+				}
+			}
+
+			const entriesArray = Array.from(uniqueData.entries());
+
+			// Only proceed if we have valid entries
+			if (entriesArray.length > 0) {
+				const colorScale = createColorScale(
+					entriesArray.map(([region, value]) => ({ region, value }))
+				);
+
+				const matchExpression = ['match', ['get', 'RS']];
+				for (const [region, value] of uniqueData.entries()) {
+					const color = value != null ? colorScale(value) : '#ccc';
+					matchExpression.push(region, color);
+				}
+				matchExpression.push('#ccc');
+
+				map.setPaintProperty('regions-layer', 'fill-color', matchExpression);
+			}
+		} catch (err) {
+			console.error('Error updating fill colors:', err);
+		}
+	}
+
+	// Selection outline + flyTo
+	$: if (mapReady && map) {
+		if (selectedRegion) {
+			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
+			const region = regions.find((r) => r.code === selectedRegion);
+			console.log(region);
+			if (region?.center) {
+				map.flyTo({
+					center: region.center,
+					zoom: 10,
+					duration: 800
+				});
+			}
+		} else {
+			map.setFilter('highlight-outline', ['==', 'RS', '']);
+			map.flyTo({
+				center,
+				zoom,
+				duration: 800
+			});
+		}
+	}
+</script>
+
+<div
+	bind:this={mapContainer}
+	id="map"
+	class="w-full h-full relative my-4 rounded-2xl bg-white dark:bg-gray-950"
+>
+	{#if zoomLevel > 4}
+		<button
+			on:mousedown={() => (selectedRegion = null)}
+			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-500 rounded-full w-8 h-8 grid shadow"
+			transition:fade
+		>
+			<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
+		</button>
+	{/if}
+</div>
