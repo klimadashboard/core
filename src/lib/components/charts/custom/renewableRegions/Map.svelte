@@ -39,11 +39,11 @@
 	function createColorScale(data) {
 		if (!Array.isArray(data)) {
 			console.warn('Invalid data passed to createColorScale:', data);
-			return () => '#ccc';
+			return () => '#F2F2F2';
 		}
 
 		const values = data.map((d) => d.value).filter((v) => v != null);
-		if (values.length === 0) return () => '#ccc';
+		if (values.length === 0) return () => '#F2F2F2';
 
 		const min = Math.min(...values);
 		const max = Math.max(...values);
@@ -197,10 +197,10 @@
 
 				const matchExpression = ['match', ['get', 'RS']];
 				for (const [region, value] of uniqueData.entries()) {
-					const color = value != null ? colorScale(value) : '#ccc';
+					const color = value != null ? colorScale(value) : '#F2F2F2';
 					matchExpression.push(region, color);
 				}
-				matchExpression.push('#ccc');
+				matchExpression.push('#F2F2F2');
 
 				map.setPaintProperty('regions-layer', 'fill-color', matchExpression);
 			}
