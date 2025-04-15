@@ -91,6 +91,7 @@
 				colors={colors.find((c) => c.key === selectedEnergy).colors}
 				{data}
 				{regions}
+				{selectedEnergy}
 				bind:selectedRegion
 				on:selectRegion={(e) => (selectedRegion = e.detail)}
 			/>

@@ -1,56 +1,131 @@
-<script>
+<script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 	import { scaleLinear } from 'd3-scale';
-	import { PUBLIC_VERSION } from '$env/static/public';
 	import { interpolateRgb } from 'd3-interpolate';
 	import { fade } from 'svelte/transition';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let selectedRegion;
 	export let data = [];
 	export let regions;
 	export let colors;
+	export let selectedEnergy;
 
 	let mapContainer;
 	let map;
 	let mapReady = false;
 	let zoomLevel = 0;
 
+	const dispatch = createEventDispatcher();
+
 	const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase();
 
 	const defaultView = {
-		AT: {
-			center: [13.333, 47.5],
-			zoom: 6
-		},
-		DE: {
-			center: [10.45, 51.1657],
-			zoom: 4
-		}
+		AT: { center: [13.333, 47.5], zoom: 6 },
+		DE: { center: [10.45, 51.1657], zoom: 4 }
 	};
 
 	const { center, zoom } = defaultView[COUNTRY_CODE] || defaultView.DE;
 
-	const dispatch = createEventDispatcher();
-
-	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
-
-	// Color scale
 	function createColorScale(data) {
-		if (!Array.isArray(data)) {
-			console.warn('Invalid data passed to createColorScale:', data);
-			return () => '#F2F2F2';
-		}
-
+		if (!Array.isArray(data)) return () => '#F2F2F2';
 		const values = data.map((d) => d.value).filter((v) => v != null);
 		if (values.length === 0) return () => '#F2F2F2';
-
 		const min = Math.min(...values);
 		const max = Math.max(...values);
-
 		if (min === max) return () => '#08519c';
-
 		return scaleLinear().domain([min, max]).range(colors).interpolate(interpolateRgb).clamp(true);
+	}
+
+	async function loadNearbyWindUnits() {
+		if (!map || zoomLevel <= 8 || selectedEnergy !== 'wind') return;
+		const center = map.getCenter();
+		const lat = center.lat;
+		const lon = center.lng;
+		try {
+			const response = await fetch(
+				`https://base.klimadashboard.org/get-nearby-wind-units?lat=${lat}&lon=${lon}&radius_km=50&status=31,35`
+			);
+			const data = await response.json();
+			const geojson = {
+				type: 'FeatureCollection',
+				features: data.map((unit) => ({
+					type: 'Feature',
+					properties: {
+						name: unit.name,
+						status: unit.status,
+						power_kw: unit.power_kw,
+						district: unit.district,
+						municipality: unit.municipality
+					},
+					geometry: { type: 'Point', coordinates: [unit.lon, unit.lat] }
+				}))
+			};
+			if (map.getSource('wind-units')) {
+				map.getSource('wind-units').setData(geojson);
+			} else {
+				map.addSource('wind-units', {
+					type: 'geojson',
+					data: geojson,
+					cluster: true,
+					clusterMaxZoom: 12,
+					clusterRadius: 40
+				});
+				map.addLayer({
+					id: 'wind-clusters',
+					type: 'circle',
+					source: 'wind-units',
+					filter: ['has', 'point_count'],
+					paint: {
+						'circle-color': '#007acc',
+						'circle-radius': ['step', ['get', 'point_count'], 12, 10, 16, 50, 24],
+						'circle-opacity': 0.6
+					}
+				});
+				map.addLayer({
+					id: 'wind-cluster-count',
+					type: 'symbol',
+					source: 'wind-units',
+					filter: ['has', 'point_count'],
+					layout: {
+						'text-field': '{point_count_abbreviated}',
+						'text-font': ['Noto Sans Regular'],
+						'text-size': 12
+					}
+				});
+				map.addLayer({
+					id: 'wind-points',
+					type: 'circle',
+					source: 'wind-units',
+					filter: ['!', ['has', 'point_count']],
+					paint: {
+						'circle-radius': 5,
+						'circle-color': '#007acc',
+						'circle-stroke-color': '#fff',
+						'circle-stroke-width': 1
+					}
+				});
+				map.on('click', 'wind-points', (e) => {
+					const props = e.features?.[0]?.properties;
+					if (!props) return;
+					new maplibregl.Popup()
+						.setLngLat(e.lngLat)
+						.setHTML(
+							`<b>${props.name}</b><br />${props.municipality}, ${props.district}<br />${props.power_kw} kW<br />Status: ${props.status}`
+						)
+						.addTo(map);
+				});
+				map.on('mouseenter', 'wind-points', () => {
+					map.getCanvas().style.cursor = 'pointer';
+				});
+				map.on('mouseleave', 'wind-points', () => {
+					map.getCanvas().style.cursor = '';
+				});
+			}
+		} catch (err) {
+			console.error('Failed to load wind units:', err);
+		}
 	}
 
 	onMount(() => {
@@ -58,7 +133,7 @@
 			container: mapContainer,
 			style: {
 				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
+				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=C9NLXahOLRDRQl9OB6yH`,
 				sources: {
 					labels: {
 						type: 'vector',
@@ -90,9 +165,7 @@
 					.filter((r) => r.outline)
 					.map((r) => ({
 						type: 'Feature',
-						properties: {
-							RS: r.code
-						},
+						properties: { RS: r.code },
 						geometry: r.outline
 					}))
 			};
@@ -148,12 +221,10 @@
 				map.getCanvas().style.cursor = '';
 			});
 
-			const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase(); // "DE", "AT", etc.
-
 			map.addLayer({
 				id: 'city-labels',
 				source: 'labels',
-				'source-layer': 'city-labels', // from Tippecanoe: -l city-labels
+				'source-layer': 'city-labels',
 				type: 'symbol',
 				layout: {
 					'text-field': ['get', 'name'],
@@ -170,14 +241,44 @@
 			});
 
 			mapReady = true;
+			if (selectedEnergy === 'wind' && zoomLevel > 8) {
+				loadNearbyWindUnits();
+			}
 		});
 
 		map.on('zoom', () => {
 			zoomLevel = map.getZoom();
+			if (zoomLevel <= 8 && map.getSource('wind-units')) {
+				map.removeLayer('wind-points');
+				map.removeLayer('wind-cluster-count');
+				map.removeLayer('wind-clusters');
+				map.removeSource('wind-units');
+			}
+		});
+
+		map.on('moveend', () => {
+			zoomLevel = map.getZoom();
+			if (selectedEnergy === 'wind' && zoomLevel > 8) {
+				loadNearbyWindUnits();
+			}
 		});
 	});
 
-	// Color updates
+	// Highlight + fly to selected region
+	$: if (mapReady && map) {
+		if (selectedRegion) {
+			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
+			const region = regions.find((r) => r.code === selectedRegion);
+			if (region?.center) {
+				map.flyTo({ center: region.center, zoom: 10, duration: 800 });
+			}
+		} else {
+			map.setFilter('highlight-outline', ['==', 'RS', '']);
+			map.flyTo({ center, zoom, duration: 800 });
+		}
+	}
+
+	// Color fill updates
 	$: if (mapReady && map && regions && Array.isArray(data) && data.length > 0) {
 		try {
 			const uniqueData = new Map();
@@ -186,22 +287,17 @@
 					uniqueData.set(row.region, row.power_per_area_kw_per_km2);
 				}
 			}
-
 			const entriesArray = Array.from(uniqueData.entries());
-
-			// Only proceed if we have valid entries
 			if (entriesArray.length > 0) {
 				const colorScale = createColorScale(
 					entriesArray.map(([region, value]) => ({ region, value }))
 				);
-
 				const matchExpression = ['match', ['get', 'RS']];
 				for (const [region, value] of uniqueData.entries()) {
 					const color = value != null ? colorScale(value) : '#F2F2F2';
 					matchExpression.push(region, color);
 				}
 				matchExpression.push('#F2F2F2');
-
 				map.setPaintProperty('regions-layer', 'fill-color', matchExpression);
 			}
 		} catch (err) {
@@ -209,26 +305,13 @@
 		}
 	}
 
-	// Selection outline + flyTo
-	$: if (mapReady && map) {
-		if (selectedRegion) {
-			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
-			const region = regions.find((r) => r.code === selectedRegion);
-			console.log(region);
-			if (region?.center) {
-				map.flyTo({
-					center: region.center,
-					zoom: 10,
-					duration: 800
-				});
-			}
-		} else {
-			map.setFilter('highlight-outline', ['==', 'RS', '']);
-			map.flyTo({
-				center,
-				zoom,
-				duration: 800
-			});
+	// Wind layers cleanup when energy type changes
+	$: if (mapReady && map && selectedEnergy !== 'wind') {
+		if (map.getSource('wind-units')) {
+			map.removeLayer('wind-points');
+			map.removeLayer('wind-cluster-count');
+			map.removeLayer('wind-clusters');
+			map.removeSource('wind-units');
 		}
 	}
 </script>
@@ -248,3 +331,6 @@
 		</button>
 	{/if}
 </div>
+
+<style>
+</style>
