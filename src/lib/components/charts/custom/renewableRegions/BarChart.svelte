@@ -15,7 +15,12 @@
 <div class="flex gap-2 items-end h-64" style="color: {colors[1]}" bind:clientHeight={chartHeight}>
 	{#each data as item}
 		<div class="flex-1 bg-current relative" style="height: {yScale(item.added_power_kw)}px">
-			<p class="text-xs text-center absolute -top-6 left-1/2 -translate-x-1/2">{item.year}</p>
+			{#if item.added_power_kw > 0}
+			<p class="text-xs text-center absolute -top-6 left-1/2 -translate-x-1/2">
+				{item.year}
+			</p>
+			{/if}
 		</div>
 	{/each}
 </div>
+
