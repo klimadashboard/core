@@ -153,7 +153,7 @@
 			center,
 			zoom,
 			minZoom: zoom - 1,
-			maxZoom: zoom + 5
+			maxZoom: 14
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -181,7 +181,7 @@
 				source: 'regions',
 				paint: {
 					'fill-color': '#ccc',
-					'fill-opacity': 0.8
+					'fill-opacity': ['interpolate', ['linear'], ['zoom'], 6, 1, 8, 0.8, 10, 0.4]
 				}
 			});
 
@@ -205,6 +205,31 @@
 				},
 				filter: ['==', 'RS', '']
 			});
+
+			map.addSource('carto-voyager', {
+				type: 'raster',
+				tiles: [
+					'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+					'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+					'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+					'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+				],
+				tileSize: 256,
+				maxzoom: 20
+			});
+
+			map.addLayer(
+				{
+					id: 'carto-voyager',
+					type: 'raster',
+					source: 'carto-voyager',
+					paint: {
+						'raster-opacity': 0
+					},
+					minzoom: 9
+				},
+				'regions-layer' // Insert below your vector layer
+			);
 
 			map.on('click', 'regions-layer', (e) => {
 				const feature = e.features?.[0];
@@ -248,12 +273,18 @@
 
 		map.on('zoom', () => {
 			zoomLevel = map.getZoom();
-			if (zoomLevel <= 8 && map.getSource('wind-units')) {
+			console.log(zoomLevel);
+			if (zoomLevel <= 9 && map.getSource('wind-units')) {
 				map.removeLayer('wind-points');
 				map.removeLayer('wind-cluster-count');
 				map.removeLayer('wind-clusters');
 				map.removeSource('wind-units');
 			}
+			const fadeTarget = zoomLevel > 9 ? 1 : 0;
+			map.setPaintProperty('carto-voyager', 'raster-opacity', fadeTarget);
+
+			// Optional: Smooth transition (over ~300ms)
+			map.setPaintProperty('carto-voyager', 'raster-fade-duration', 300);
 		});
 
 		map.on('moveend', () => {
