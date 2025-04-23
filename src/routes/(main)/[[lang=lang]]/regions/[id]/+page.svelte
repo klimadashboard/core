@@ -84,7 +84,17 @@
 				}
 			]
 		},
-
+		{
+			title: 'Zersiedelung',
+			id: 'sprawl',
+			height: 0,
+			expanded: false,
+			charts: [
+				{
+					id: '4b721d01-0598-48e4-ab3b-10d96ed46a53'
+				}
+			]
+		},
 		{
 			title: 'Temperatur',
 			id: 'temperature',
