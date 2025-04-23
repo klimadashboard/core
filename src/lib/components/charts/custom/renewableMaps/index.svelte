@@ -46,7 +46,7 @@
 				return {
 					energy: row['Type'][0],
 					potential_class: row['potential_class'][0],
-					region: row['region']['name'],
+					region: row?.region?.name,
 					value_TWh: row['value_TWh']
 				};
 			});
@@ -65,8 +65,10 @@
 				)?.value_TWh;
 				potentiale_temp[bundesland]['windkraft'] = wind;
 				const pv =
-					+potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_area')?.value_TWh +
-					potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_roof')?.value_TWh;
+					+potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_area')
+						?.value_TWh +
+					potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_roof')
+						?.value_TWh;
 				potentiale_temp[bundesland]['pv'] = pv;
 			});
 

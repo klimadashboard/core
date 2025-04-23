@@ -57,32 +57,42 @@
 						]
 					},
 					limit: -1,
-					fields: ["goal_amount", "goal_year", "source_year", "current_production", 'region.name', 'Type', "region.name_short"],
+					fields: [
+						'goal_amount',
+						'goal_year',
+						'source_year',
+						'current_production',
+						'region.name',
+						'Type',
+						'region.name_short'
+					]
 				})
 			);
 
 			dataset = dataset_temp.map((row) => {
-				return {...row, state_name: row["region"]["name"], energy_data_key: row["Type"][0], state_short: row["region"]["name_short"]};
+				return {
+					...row,
+					state_name: row?.region?.name,
+					energy_data_key: row?.Type[0],
+					state_short: row?.region?.name_short
+				};
 			});
-
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
 		}
 	};
 	$: getEEGoals();
 
-
-
 	let dataGoals;
 	const getGoals = async function () {
-		try{
+		try {
 			const directus = getDirectusInstance(fetch);
 			const goals = await directus.request(
 				readItems('erneuerbare_2030_scenarios', {
 					filter: {
 						_and: [
-							{ 
-								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+							{
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
 							}
 						]
 					},
@@ -90,13 +100,11 @@
 				})
 			);
 			dataGoals = goals;
-			
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
 		}
 	};
 	$: getGoals();
-
 </script>
 
 <!-- <div class="flex flex-wrap gap-2 justify-center items-center"> -->

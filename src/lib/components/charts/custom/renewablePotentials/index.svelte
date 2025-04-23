@@ -94,7 +94,7 @@
 				return {
 					energy: row['Type'][0],
 					potential_class: row['potential_class'][0],
-					region: row['region']['name'],
+					region: row?.region?.name,
 					value_TWh: row['value_TWh']
 				};
 			});
@@ -113,8 +113,10 @@
 				)?.value_TWh;
 				potentiale_temp[bundesland]['windkraft'] = wind;
 				const pv =
-					+potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_area')?.value_TWh +
-					potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_roof')?.value_TWh;
+					+potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_area')
+						?.value_TWh +
+					potentiale_data.find((row) => row.region === bundesland && row.energy === 'pv_roof')
+						?.value_TWh;
 				potentiale_temp[bundesland]['pv'] = pv;
 			});
 
@@ -153,7 +155,7 @@
 			);
 
 			dataset = dataset.map((row) => {
-				return {...row, region: row["region"]["name"]};
+				return { ...row, region: row?.region?.name };
 			});
 
 			const years = dataset.map((row) => row.year);
@@ -169,7 +171,6 @@
 				groups[region].push(row);
 				return groups;
 			}, {});
-
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
 		}
@@ -190,14 +191,13 @@
 						]
 					},
 					limit: -1,
-					fields: ['Type', "goal_amount", "goal_year", "source_year", 'region.name'],
+					fields: ['Type', 'goal_amount', 'goal_year', 'source_year', 'region.name']
 				})
 			);
 
 			goals = dataset.map((row) => {
-				return {...row, region: row["region"]["name"], Type: row["Type"][0]};
+				return { ...row, region: row?.region?.name, Type: row?.Type[0] };
 			});
-
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
 		}
@@ -206,7 +206,6 @@
 	$: getDataGoals();
 
 	$: selectedStartYear = minYear;
-
 </script>
 
 <div class="flex gap-4 items-center">
