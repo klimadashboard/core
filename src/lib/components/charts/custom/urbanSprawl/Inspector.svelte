@@ -28,14 +28,9 @@
 		<h2 class="text-2xl">{region.name}</h2>
 		<p class="text-lg">
 			In der Region leben {formatNumber(popTotalNow)} Menschen, davon leben {formatNumber(popNow)} Menschen
-			({Math.round(shareNow * 100)}%) in stark zersiedelten Gebieten. Das sind
-			{#if percentDifference > 0}
-				<b>{percentDifference}% mehr</b>
-			{:else if percentDifference < 0}
-				<b>{Math.abs(percentDifference)}% weniger</b>
-			{:else}
-				<b>genauso viele</b>
-			{/if} als vor 40 Jahren im Jahr 1980.
+			({Math.round(shareNow * 100)}%) in stark zersiedelten Gebieten. Im Jahr 1980 waren es nur {Math.round(
+				shareThen * 100
+			)}%.
 		</p>
 
 		<Chart data={dataForRegion} />
