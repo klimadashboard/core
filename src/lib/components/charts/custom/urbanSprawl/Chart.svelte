@@ -16,16 +16,17 @@
 
 			return {
 				x: year,
+				label: year,
 				categories: [
-					{ label: 'pop1', value: getValue('pop1'), color: '#11998E' },
-					{ label: 'pop2', value: getValue('pop2'), color: '#0D22B6' },
-					{ label: 'pop3', value: getValue('pop3'), color: '#01A2D1' }
+					{ label: 'Geringe Zersiedelung', value: getValue('pop1'), color: '#7fcdbb' },
+					{ label: 'Mittlere Zersiedelung', value: getValue('pop2'), color: '#1d91c0' },
+					{ label: 'Starke Zersiedelung', value: getValue('pop3'), color: '#253494' }
 				]
 			};
 		});
 	}
 </script>
 
-<div class="h-80">
-	<ChartBar data={chartData} visualisation="stacked" />
+<div class="h-80 mt-4">
+	<ChartBar data={chartData} visualisation="stacked" marginLeft={50} />
 </div>

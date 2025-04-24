@@ -51,7 +51,7 @@
 
 	// === 3. Color scale ===
 	const colorDomain = [0, 1];
-	const colorRange = ['#fef0d9', '#b30000'];
+	const colorRange = ['#c7e9b4', '#253494'];
 	const colorScale = scaleLinear().domain(colorDomain).range(colorRange).clamp(true);
 
 	// === 4. Initialize map ===
@@ -101,7 +101,12 @@
 			});
 			matchExpr.push('#ccc');
 
-			map.addLayer({ id: 'carto-voyager', type: 'raster', source: 'carto-voyager' });
+			map.addLayer({
+				id: 'carto-voyager',
+				type: 'raster',
+				source: 'carto-voyager',
+				paint: { 'raster-opacity': 0.5 }
+			});
 
 			map.addLayer({
 				id: 'regions-fill',
@@ -252,7 +257,7 @@
 	}
 </script>
 
-<div id="mapUrbanSprawl" class="w-full h-[500px] rounded-2xl">
+<div id="mapUrbanSprawl" class="w-full h-full rounded-2xl">
 	{#if zoomLevel > 4}
 		<button
 			on:mousedown={() => (selectedRegion = null)}

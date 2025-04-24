@@ -9,17 +9,37 @@
 	$: region = regions.find((d) => d.code === selectedRegion) || false;
 	$: dataForRegion = data.filter((d) => d.region == region.code);
 	$: latestDataForRegion = dataForRegion.filter((d) => d.period == selectedPeriod);
-	$: console.log(dataForRegion);
+	$: dataFor1980 = dataForRegion.filter((d) => d.period == 1980);
+
+	$: popNow = latestDataForRegion.find((d) => d.category == 'pop3')?.value || 0;
+	$: popTotalNow = latestDataForRegion.find((d) => d.category == 'population')?.value || 0;
+	$: shareNow = popNow / popTotalNow;
+
+	$: popThen = dataFor1980.find((d) => d.category == 'pop3')?.value || 0;
+	$: popTotalThen = dataFor1980.find((d) => d.category == 'population')?.value || 0;
+	$: shareThen = popThen / popTotalThen;
+
+	$: difference = shareNow - shareThen;
+	$: percentDifference = Math.round(difference * 100);
 </script>
 
 {#if region}
 	<div>
-		<h2 class="font-bold">{region.name}</h2>
-		<p>
-			In der Region leben {formatNumber(
-				latestDataForRegion.find((d) => d.category == 'population')?.value
-			)} Menschen.
+		<h2 class="text-2xl">{region.name}</h2>
+		<p class="text-lg">
+			In der Region leben {formatNumber(popTotalNow)} Menschen, davon leben {formatNumber(popNow)} Menschen
+			({Math.round(shareNow * 100)}%) in stark zersiedelten Gebieten. Das sind
+			{#if percentDifference > 0}
+				<b>{percentDifference}% mehr</b>
+			{:else if percentDifference < 0}
+				<b>{Math.abs(percentDifference)}% weniger</b>
+			{:else}
+				<b>genauso viele</b>
+			{/if} als vor 40 Jahren im Jahr 1980.
 		</p>
+
 		<Chart data={dataForRegion} />
 	</div>
+{:else}
+	<div>Wähle eine Region aus, um mehr Informationen zur Zersiedelung zu erhalten.</div>
 {/if}
