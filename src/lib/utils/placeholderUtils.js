@@ -121,28 +121,31 @@ const getGasUsageData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
-		const data = await directus
-			.request(
-				readItems('energy', {
-					filter: {
-						_and: [
-							{
-								category: { _eq: 'gas|usage' }
-							},
-							{ region: { _eq: PUBLIC_VERSION } }
-						]
-					},
-					sort: ['-period'],
-					limit: 1000
-				})
-			)
-			.catch(() => []);
+		const data = await directus.request(
+			readItems('energy', {
+				filter: {
+					_and: [{ category: { _eq: 'gas|usage' } }, { region: { _eq: PUBLIC_VERSION } }]
+				},
+				sort: ['-period'],
+				limit: 1000
+			})
+		);
 
 		const latestEntry = data[0] || { value: 'N/A', period: 'N/A' };
-		const lastYearDate = dayjs(latestEntry.period).subtract(1, 'year').format('YYYY-MM-DD');
-		const lastYearEntry = data.find((item) => item.period === lastYearDate) || {
+		const lastYearTarget = dayjs(latestEntry.period).subtract(1, 'year');
+
+		// Find the closest entry to the "last year" target date
+		const lastYearEntry = data.reduce((closest, item) => {
+			const itemDate = dayjs(item.period);
+			const diff = Math.abs(itemDate.diff(lastYearTarget, 'day'));
+
+			if (!closest || diff < closest.diff) {
+				return { ...item, diff };
+			}
+			return closest;
+		}, null) || {
 			value: 'N/A',
-			period: lastYearDate
+			period: lastYearTarget.format('YYYY-MM-DD')
 		};
 
 		return {
