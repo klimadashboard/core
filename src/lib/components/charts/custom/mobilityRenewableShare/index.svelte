@@ -1,4 +1,4 @@
-<script context="module">
+<script context="module" lang="ts">
 	// Directive to handle clicks outside of an element
 	function clickOutside(node: HTMLElement, handler: (event: MouseEvent) => void) {
 		const handleClick = (event: MouseEvent) => {
