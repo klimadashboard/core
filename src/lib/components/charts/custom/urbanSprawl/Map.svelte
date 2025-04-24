@@ -35,7 +35,7 @@
 
 	onMount(() => {
 		map = new maplibregl.Map({
-			container: 'map',
+			container: 'mapUrbanSprawl',
 			style: {
 				version: 8,
 				sources: {
@@ -95,4 +95,4 @@
 	});
 </script>
 
-<div id="map" class="w-full h-[500px]"></div>
+<div id="mapUrbanSprawl" class="w-full h-[500px]"></div>

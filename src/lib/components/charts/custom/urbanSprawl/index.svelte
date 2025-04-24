@@ -4,6 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Map from './Map.svelte';
 	import Loader from '$lib/components/Loader.svelte';
+	import Inspector from './Inspector.svelte';
 
 	$: getData = async (selectedPeriod, selectedVariable) => {
 		const directus = getDirectusInstance(fetch);
@@ -54,6 +55,8 @@
 	$: selectedPeriod = 2020;
 	$: selectedVariable = 'pop3';
 	$: console.log(selectedPeriod, selectedVariable);
+
+	let selectedRegion = null;
 </script>
 
 <select bind:value={selectedVariable}>
@@ -65,8 +68,16 @@
 <input type="range" bind:value={selectedPeriod} min="1975" max="2020" step="5" />
 {selectedPeriod}
 
-{#await promise}
-	<Loader />
-{:then { data, regions }}
-	<Map {data} {regions} />
-{/await}
+<div class="min-h-[80vh]">
+	{#await promise}
+		<Loader />
+	{:then { data, regions }}
+		<Map {data} {regions} bind:selectedRegion />
+
+		<div
+			class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
+		>
+			<Inspector bind:selectedRegion {data} />
+		</div>
+	{/await}
+</div>
