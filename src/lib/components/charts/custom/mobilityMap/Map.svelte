@@ -24,13 +24,17 @@
 		},
 		pt: {
 			id: 'pt',
-			label: 'Public Transport Quality',
+			label: 'Public Transport Quality (A–G)',
 			property: 'pt',
 			colorStops: [
-				[0, '#ffffff'],
-				[36, '#f0f9e8'],
-				[109, '#bae4bc'],
-				[255, '#238b45']
+				[0, '#ffffff'], // no PT
+				[1, '#f7fbff'], // G
+				[2, '#deebf7'], // F
+				[3, '#c6dbef'], // E
+				[4, '#9ecae1'], // D
+				[5, '#6baed6'], // C
+				[6, '#3182bd'], // B
+				[7, '#08519c'] // A
 			]
 		},
 		pop: {
@@ -38,10 +42,10 @@
 			label: 'Population Density',
 			property: 'pop',
 			colorStops: [
-				[0, '#ffffff'],
-				[5, '#deebf7'],
-				[10, '#9ecae1'],
-				[255, '#084594']
+				[0, '#f2f0f7'],
+				[5, '#cbc9e2'],
+				[10, '#9e9ac8'],
+				[255, '#6a51a3']
 			]
 		}
 	};
@@ -112,13 +116,15 @@
 							['linear'],
 							['get', layer.property],
 							0,
-							0, // fully transparent at 0
+							0.1, // very transparent for 0 values
 							1,
-							0.3, // semi-transparent
+							0.3,
+							5,
+							0.5,
 							10,
-							0.6, // more visible
+							0.7,
 							255,
-							0.9 // almost solid
+							0.9
 						]
 					},
 					layout: {
@@ -141,10 +147,6 @@
 					'fill-opacity': 1
 				},
 				filter: ['!=', '$type', 'Polygon']
-			});
-
-			map.on('zoom', () => {
-				// console.log(map.getZoom());
 			});
 
 			map.on('click', (e) => {
@@ -173,7 +175,7 @@
 	});
 </script>
 
-<div class="">
+<div class="controls">
 	<select bind:value={selectedLayer} on:change={() => switchLayer(selectedLayer)} class="input">
 		{#each Object.values(layers) as layer}
 			<option value={layer.id}>{layer.label}</option>
