@@ -5,6 +5,9 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { interpolateRgb } from 'd3-interpolate';
 	import { fade } from 'svelte/transition';
+	import { select } from 'd3-selection';
+    import { axisBottom, axisLeft } from 'd3-axis';
+    import { histogram, max } from 'd3-array';
 
 	export let selectedRegion;
 	export let selectedPeriod;
@@ -38,6 +41,8 @@
 	// Color scale
 	function createColorScale(data) {
 		const values = data.map((d) => d.value).filter((v) => v != null);
+		createHistogram(values);
+		console.log(values)
 		if (values.length === 0) return () => '#ccc';
 
 		const min = Math.min(...values);
@@ -112,7 +117,7 @@
 				type: 'line',
 				source: 'landkreise',
 				paint: {
-					'line-color': '#000',
+					'line-color': '#fff',
 					'line-width': 0.5
 				}
 			});
@@ -170,6 +175,7 @@
 		map.on('zoom', () => {
 			zoomLevel = map.getZoom();
 		});
+
 	});
 
 	// Color updates
@@ -224,6 +230,55 @@
 			});
 		}
 	}
+
+	// TODO: remove; the following code just creates a histogram that shows us the distribution of values
+
+	let svg;
+	let margin = { top: 20, right: 30, bottom: 30, left: 40 };
+    let width = 200 - margin.left - margin.right;
+    let height = 150 - margin.top - margin.bottom;
+	function createHistogram(data) {
+        svg = select(svg)
+            .attr('width', width + margin.left + margin.right)
+            .attr('height', height + margin.top + margin.bottom)
+            .append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Create histogram generator
+        let hist = histogram()
+            .value(d => d)
+            .domain([0, max(data)])
+            .thresholds(20); // Number of bins
+
+        let bins = hist(data);
+
+        // Scales
+        let x = scaleLinear()
+            .domain([0, max(data)])
+            .range([0, width]);
+
+        let y = scaleLinear()
+            .domain([0, max(bins, d => d.length)])
+            .range([height, 0]);
+
+        // Axes
+        svg.append('g')
+            .attr('transform', `translate(0,${height})`)
+            .call(axisBottom(x));
+
+        svg.append('g')
+            .call(axisLeft(y));
+
+        // Bars
+        svg.selectAll('.bar')
+            .data(bins)
+            .enter().append('rect')
+            .attr('class', 'bar')
+            .attr('x', d => x(d.x0) + 1)
+            .attr('width', d => x(d.x1) - x(d.x0) - 1)
+            .attr('y', d => y(d.length))
+            .attr('height', d => height - y(d.length));
+    }
 </script>
 
 <div
@@ -241,3 +296,12 @@
 		</button>
 	{/if}
 </div>
+
+<!-- TODO: remove -->
+<svg bind:this={svg}></svg>
+
+<style>
+    .bar {
+        fill: steelblue;
+    }
+</style>

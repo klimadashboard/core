@@ -272,13 +272,40 @@
 			carsHybridShare
 		};
 	};
+	const values = Array.from({ length: 11 }, (_, i) => i * 10);
 
 	let filteredRegions = [];
+
+	$: color_scale = scales[selectedView];
 </script>
+
+<!--TODO: this css is for the colorscale div; either adapt or remove-->
+<style>
+    .color-bar {
+        height: 20px;
+        margin: 5px 0;
+        color: white;
+        text-align: center;
+        line-height: 20px;
+    }
+</style>
 
 <div>
 	<div class="flex flex-col items-center space-y-2">
 		<div class="flex gap-2">
+			<!--TODO: this div only shows the colorscale; either adapt or remove-->
+			<div>
+				<span>{values[0]}</span>
+				{#each values as value}
+					<div
+						class="color-bar"
+						style="background-color: {color_scale(value)}; width: 10px; display: inline-block;"
+					>
+				</div>
+				{/each}
+				<span>{values[values.length-1]}</span>
+			</div>
+
 			<input
 				type="range"
 				class="w-20"
