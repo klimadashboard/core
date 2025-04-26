@@ -17,7 +17,7 @@ const directus = getDirectusInstance(fetch);
 export const getCompanyEmissionData = async () => {
 	const data = await directus.request(
 		readItems('companies_emissions', {
-			fields: ['year', 'company', 'scope', 'value', 'category'],
+			fields: ['year', 'company', 'scope', 'value', 'category', 'source'],
 
 			limit: -1
 		})

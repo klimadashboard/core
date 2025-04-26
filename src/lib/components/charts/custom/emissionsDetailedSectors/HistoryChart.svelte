@@ -10,7 +10,7 @@
 	export let maxYear;
 	// interactive
 	export let ksgSelection;
-	export let crfSelection;
+	export let crfSelection; // Now stores the CRF code instead of index
 	export let ksgHover;
 	export let crfHover;
 
@@ -31,7 +31,11 @@
 	$: mouse = null;
 
 	$: ksgSectorSum = (s, yi) => {
-		if (crfSelection != null) return sectorlyData[ksgSelection].sectors[crfSelection].absolute[yi];
+		// Find the CRF sector by code instead of index
+		if (crfSelection != null && ksgSelection != null) {
+			const crfSector = sectorlyData[ksgSelection].sectors.find(sector => sector.code === crfSelection);
+			return crfSector ? crfSector.absolute[yi] : 0;
+		}
 		if (ksgSelection != null) return sectorlyData[ksgSelection].absolute[yi];
 		const ksgSum = sectorlyData
 			.slice(0, sectorlyData.length - s)
@@ -112,7 +116,7 @@
 
 					<!-- biggest CRF Lines? -->
 					{#each [...ksgSector.sectors].reverse() as crfSector, c}
-						{#if (ksgHover != null && ksgHover == sectorlyData.length - s - 1) || (ksgSelection != null && (crfSelection == null || crfSelection == ksgSector.sectors.length - c - 1))}
+						{#if (ksgHover != null && ksgHover == sectorlyData.length - s - 1) || (ksgSelection != null && (crfSelection == null || crfSelection == crfSector.code))}
 							{@const crfPath = crfSector.absolute
 								.filter((_, yi) => 1990 + yi <= maxYear)
 								.map((year, yi) => {
@@ -139,7 +143,7 @@
 							<path
 								d={crfPath}
 								data-path="crf-{ksgSector.key}-{c}"
-								fill={ksgHover == sectorlyData.length - s - 1 || crfHover == c
+								fill={ksgHover == sectorlyData.length - s - 1 || crfHover == crfSector.code
 									? colorForKey(ksgSector.key).colorCodeHighlighted
 									: colorForKey(ksgSector.key).colorCode}
 								stroke={ksgHover == sectorlyData.length - s - 1 || ksgSelection != null
@@ -149,11 +153,11 @@
 								class="{ksgSelection == null ? 'pointer-events-none' : ''} cursor-pointer"
 								on:mousemove={(e) => {
 									if (crfSelection != null) return;
-									crfHover = c;
+									crfHover = crfSector.code;
 								}}
 								on:mousedown={(e) => {
 									if (crfSelection != null) return;
-									crfSelection = c;
+									crfSelection = crfSector.code;
 								}}
 							/>
 							<text x={chartWidth - 40} y={crfPath.split(' ')[crfPath.split(' ').length - 1] - 100}

@@ -504,7 +504,7 @@
 		<ul
 			class="absolute top-full left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm border overflow-scroll z-10 max-h-64 rounded-2xl"
 		>
-			{#each suggestions.filter((s) => s.source !== 'region' && s.source !== 'company') as suggestion, index}
+			{#each suggestions.filter((s) => s.source !== 'region') as suggestion, index}
 				<li
 					class="p-2 cursor-pointer hover:bg-gray-600 hover:text-white border-b border-b-gray-600 {index ===
 					activeSuggestionIndex

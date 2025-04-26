@@ -23,6 +23,7 @@
 	const grey = '#A3A3A3';
 	const green = '#4FB365';
 
+
 	$: has_goals = goals != null && goals.length > 0;
 
 	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2060);
