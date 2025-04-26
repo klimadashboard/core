@@ -1,5 +1,5 @@
 import { convertObjectToArray, type EmissionsYearRecord } from './utils';
-import type { CompanyEmissionArray } from './schema';
+import type { CompanyEmissionArray } from './types';
 
 // Define the emissions per year object type
 type EmissionsPerYear = Record<number, EmissionsYearRecord>;
@@ -67,7 +67,6 @@ export const transformDataMultipleCompanies = (
 		}
 	});
 
-	console.log('🚀 ~ emissionsPerYear:', emissionsPerYear);
 	// Convert the emissionsPerYear object into a sorted array and add the 'x' counter
 	return convertObjectToArray(emissionsPerYear);
 };

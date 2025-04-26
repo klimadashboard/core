@@ -6,7 +6,7 @@
 	import { glossaryItem } from '$lib/stores/glossary';
 	import DataDownload from './DataDownload.svelte';
 	import { page } from '$app/state';
-	import type { CompanyMetaData, CompanyMetaDataArray } from './schema';
+	import type { CompanyMetaData, CompanyMetaDataArray } from './types';
 
 	export let companiesMetaData: CompanyMetaDataArray = [];
 	export let chart;

@@ -1,7 +1,7 @@
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { flattenCompanies } from './utils';
-import { parseCompanyEmission, parseCompanyMetaData, parseSectors, type Company } from './schema';
+import type { Company, CompanyEmissionArray } from './types';
 
 // NOTE: Use these filters to filter directly via the API call,
 // instead of fetching all data and filtering client side:
@@ -18,11 +18,10 @@ export const getCompanyEmissionData = async () => {
 	const data = await directus.request(
 		readItems('companies_emissions', {
 			fields: ['year', 'company', 'scope', 'value', 'category', 'source'],
-
 			limit: -1
 		})
 	);
-	return parseCompanyEmission(data);
+	return data as CompanyEmissionArray;
 };
 
 export const getCompanyMetaData = async () => {
@@ -46,8 +45,7 @@ export const getCompanyMetaData = async () => {
 	// Flatten data for easier usage in the chart components
 	const flattenedData = flattenCompanies(data as Company[]);
 
-	// Parse data against zod schema and return typed data
-	return parseCompanyMetaData(flattenedData);
+	return flattenedData;
 };
 
 export const getAllSectors = async () => {
@@ -57,5 +55,5 @@ export const getAllSectors = async () => {
 			sort: ['name']
 		})
 	);
-	return parseSectors(sectors);
+	return sectors;
 };

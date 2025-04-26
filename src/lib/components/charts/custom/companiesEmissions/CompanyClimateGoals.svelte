@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CheckIcon from './CheckIcon.svelte';
 	import XIcon from './XIcon.svelte';
-	import type { CompanyMetaData } from './schema';
+	import type { CompanyMetaData } from './types';
 
 	export let companiesGoalData: CompanyMetaData[] = [];
 

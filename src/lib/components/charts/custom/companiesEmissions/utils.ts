@@ -1,4 +1,4 @@
-import type { Company } from './schema';
+import type { Company } from './types';
 
 export const flattenCompanies = (companies: Company[]) => {
 	return companies.map((company) => {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import LineChart from '$lib/components/charts/chartLine.svelte';
 	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
-	import type { CompanyEmissionArray, CompanyMetaData } from './schema';
+	import type { CompanyEmissionArray, CompanyMetaData } from './types';
 
 	export let emissions: CompanyEmissionArray;
 	export let selectedCompanies: CompanyMetaData[];
