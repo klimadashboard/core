@@ -57,7 +57,11 @@
 
 	$: getRegionData = (regions, selectedRegion, countryName) => {
 		const name = regions.find((d) => d.code == selectedRegion)?.name || countryName;
-		return { name, code: selectedRegion };
+		return {
+			name,
+			code: selectedRegion,
+			center: regions.find((d) => d.code == selectedRegion)?.center
+		};
 	};
 
 	let selectedRegion;

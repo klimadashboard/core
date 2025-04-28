@@ -273,7 +273,6 @@
 
 		map.on('zoom', () => {
 			zoomLevel = map.getZoom();
-			console.log(zoomLevel);
 			if (zoomLevel <= 9 && map.getSource('wind-units')) {
 				map.removeLayer('wind-points');
 				map.removeLayer('wind-cluster-count');

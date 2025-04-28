@@ -7,16 +7,20 @@
 	let chartWidth;
 	let chartHeight;
 
+	$: console.log(data);
+
+	$: maxValue = data
+		.map((d) => d.data)
+		.flat()
+		.map((d) => d.cumulative_power_kw)
+		.sort((a, b) => b - a)[0];
+	$: console.log(maxValue);
+
 	export let data;
-	export let colors;
 
-	$: xScale = scaleLinear()
-		.domain([data[0].year, data[data.length - 1].year])
-		.range([0, chartWidth]);
+	$: xScale = scaleLinear().domain([2000, 2025]).range([0, chartWidth]);
 
-	$: yScale = scaleLinear()
-		.domain([0, max(data, (d) => d.cumulative_power_kw)])
-		.range([chartHeight, 0]);
+	$: yScale = scaleLinear().domain([0, maxValue]).range([chartHeight, 0]);
 
 	$: generateLine = line()
 		.x((d) => xScale(d.year))
@@ -41,6 +45,8 @@
 				</g>
 			{/each}
 		</g>
-		<path d={generateLine(data)} class="fill-none opacity-50 stroke-2" stroke={colors[1]} />
+		{#each data as d}
+			<path d={generateLine(d.data)} class="fill-none stroke-2 stroke-agriculture" />
+		{/each}
 	</svg>
 </div>
