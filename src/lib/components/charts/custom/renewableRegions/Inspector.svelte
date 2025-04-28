@@ -95,7 +95,7 @@
 				)} installiert
 			</h3>
 			<p class="text-lg mb-2">Kumulierte installierte Leistung in Megawatt</p>
-			<Comparison {data} {regions} {region} {colors} />
+			<Comparison {data} {regions} {region} {colors} {selectedEnergy} />
 			<p class="text-lg mt-2 border-b pb-4 mb-4 border-current/20">
 				Hier noch Vergleich mit anderen Gemeinden beschreiben falls wir das bauen
 			</p>

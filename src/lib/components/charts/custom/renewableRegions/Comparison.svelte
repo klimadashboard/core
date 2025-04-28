@@ -6,6 +6,7 @@
 
 	export let regions;
 	export let region;
+	export let selectedEnergy;
 
 	const getDistance = (center1, center2) => {
 		if (!center1 || !center2) return Infinity;
@@ -78,7 +79,7 @@
 			// Add region
 			selectedRegions = [...selectedRegions, r];
 
-			const result = await getDataForRegion(r.code);
+			const result = await getDataForRegion(r.code, selectedEnergy);
 			data = [...data, { code: r.code, name: r.name, data: result }];
 		}
 	}
@@ -89,7 +90,7 @@
 
 	// Load initial region data
 	onMount(async () => {
-		const initialData = await getDataForRegion(region.code);
+		const initialData = await getDataForRegion(region.code, selectedEnergy);
 		data = [{ code: region.code, name: region.name, data: initialData }];
 	});
 </script>
