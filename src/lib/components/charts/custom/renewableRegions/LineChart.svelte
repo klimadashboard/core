@@ -2,6 +2,7 @@
 	import { line } from 'd3-shape';
 	import { scaleLinear } from 'd3-scale';
 	import { max } from 'd3-array';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	let chartWidth;
 	let chartHeight;
@@ -36,7 +37,7 @@
 			{#each yScale.ticks() as tick}
 				<g transform="translate(0,{yScale(tick)})" class="text-xs opacity-70">
 					<line x1="40" x2={chartWidth} y1="0" y2="0" class="stroke-current opacity-20" />
-					<text dominant-baseline="middle">{tick}</text>
+					<text dominant-baseline="middle">{formatNumber(tick)}</text>
 				</g>
 			{/each}
 		</g>
