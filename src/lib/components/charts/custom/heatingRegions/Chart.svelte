@@ -2,39 +2,7 @@
 	import formatNumber from '$lib/stores/formatNumber';
 
 	export let data;
-
-	let categories = [
-		{
-			key: 'gas',
-			label: 'Gasheizungen',
-			color: '#005E61'
-		},
-		{
-			key: 'district heating (various energy sources)',
-			label: 'Fernwärme',
-			color: '#800044'
-		},
-		{
-			key: 'heating oil',
-			label: 'Heizölheizungen',
-			color: '#895129'
-		},
-		{
-			key: 'electricity (without heat pump)',
-			label: 'Strom',
-			color: '#B28F27'
-		},
-		{
-			key: 'wood, wood pellets',
-			label: 'Holz',
-			color: '#895129'
-		},
-		{
-			key: 'Erneuerbare',
-			label: 'Wärmepumpe',
-			color: '#00734D'
-		}
-	];
+	export let categories;
 
 	let processedData = data
 		.filter((d) => d.category !== 'total')
@@ -53,10 +21,14 @@
 <div class="mt-2 text-lg">
 	<ul>
 		{#each categoriesVisualised as datapoint}
-			<li>
-				<p>{datapoint.category} {datapoint.icon}</p>
+			{@const category = categories.find((d) => d.key == datapoint.category)}
+			<li class="my-1" style="color: {category?.color}">
+				<p class="leading-tight font-bold">
+					{category?.label}
+					{datapoint.icon}
+				</p>
 				<div class="flex items-center gap-2">
-					<div class="h-2 rounded-full bg-energy" style="width: {datapoint.percentage}%"></div>
+					<div class="h-2 rounded-full bg-current" style="    width: {datapoint.percentage}%"></div>
 					<p>
 						<strong>{formatNumber(datapoint.percentage)}%</strong> | Anzahl: {formatNumber(
 							datapoint.value
@@ -70,8 +42,9 @@
 	{#if categoriesOther.length > 0}
 		<p class="opacity-80 mt-2">
 			<b>Sonstige:</b>
-			{#each categoriesOther as category, i}
-				{category.category} ({formatNumber(category.percentage)}%)
+			{#each categoriesOther as datapoint, i}
+				{@const category = categories.find((d) => d.key == datapoint.category)}
+				{category?.label || datapoint.category} ({formatNumber(datapoint.percentage)}%)
 				{#if i !== categoriesOther.length - 1}
 					,
 				{/if}

@@ -4,6 +4,8 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 
+	let selectedRegion;
+
 	const getData = async () => {
 		const directus = getDirectusInstance();
 		const regions = await directus.request(
@@ -23,17 +25,16 @@
 						}
 					]
 				},
-				fields: ['name', 'code', 'outline_simple']
+				fields: ['name', 'code', 'outline_simple', 'population', 'center']
 			})
 		);
 		// console.log(data);
 		console.log(regions);
+		selectedRegion = regions.find((d) => d.code === '091880139139');
 		return { regions };
 	};
 
 	$: promise = getData();
-
-	let selectedRegion = '091880139139';
 </script>
 
 <div class="min-h-[90vh]">
@@ -43,6 +44,6 @@
 			<Map {regions} {data} bind:selectedRegion />
 		</div>
         -->
-		<Inspector bind:selectedRegion />
+		<Inspector {regions} bind:selectedRegion />
 	{/await}
 </div>
