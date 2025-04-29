@@ -57,8 +57,7 @@
 	<div class="container my-8">
 		<div class="">
 			<p class="font-bold my-auto text-xl">
-				In {place} lorem ipsum dolor sit amet. <br />Algorithmisch generierter Text wird hier
-				eingefügt.
+				Das Klimadashboard {place} zeigt auf, wo {place} in der Klimakrise steht.
 			</p>
 		</div>
 		<h2 class="border-b mt-6 mb-2 font-bold">Auf einen Blick</h2>

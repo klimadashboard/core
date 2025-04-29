@@ -6,6 +6,7 @@
 	import Intro from './Intro.svelte';
 	import Chart from '$lib/components/charts/index.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
 
@@ -51,7 +52,8 @@
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-cloud'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878' /></svg>",
 			charts: [
 				{
-					id: 'cae6032b-86a9-45d0-bc11-17343845b25a'
+					id: 'cae6032b-86a9-45d0-bc11-17343845b25a',
+					countries: ['at', 'de']
 				}
 			],
 			height: 0,
@@ -64,10 +66,12 @@
 			expanded: false,
 			charts: [
 				{
-					id: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f'
+					id: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
+					countries: ['at', 'de']
 				},
 				{
-					id: '8267b6b9-605d-4603-a8b4-4ad9e6a3c553'
+					id: '8267b6b9-605d-4603-a8b4-4ad9e6a3c553',
+					countries: ['de']
 				}
 			],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-bolt'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11' /></svg>"
@@ -80,10 +84,12 @@
 			expanded: false,
 			charts: [
 				{
-					id: '68b0f853-b1b1-4120-aedd-87de58ea3209'
+					id: '68b0f853-b1b1-4120-aedd-87de58ea3209',
+					countries: ['at', 'de']
 				},
 				{
-					id: 'b3301d53-24e0-4171-be78-75882f602fe8'
+					id: 'b3301d53-24e0-4171-be78-75882f602fe8',
+					countries: ['at']
 				}
 			]
 		},
@@ -94,7 +100,8 @@
 			expanded: false,
 			charts: [
 				{
-					id: '4b721d01-0598-48e4-ab3b-10d96ed46a53'
+					id: '4b721d01-0598-48e4-ab3b-10d96ed46a53',
+					countries: ['at']
 				}
 			]
 		},
@@ -104,7 +111,8 @@
 			toggle: true,
 			charts: [
 				{
-					id: '8378b7bc-10db-4373-9941-1ca014e70353'
+					id: '8378b7bc-10db-4373-9941-1ca014e70353',
+					countries: ['at', 'de']
 				}
 			],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-temperature'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5' /><path d='M10 9l4 0' /></svg>",
@@ -116,7 +124,8 @@
 			id: 'snow',
 			charts: [
 				{
-					id: 'd88601f8-40de-4753-beb1-a0e824aa048c'
+					id: 'd88601f8-40de-4753-beb1-a0e824aa048c',
+					countries: ['at', 'de']
 				}
 			],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-snowman'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a4 4 0 0 1 2.906 6.75a6 6 0 1 1 -5.81 0a4 4 0 0 1 2.904 -6.75z' /><path d='M17.5 11.5l2.5 -1.5' /><path d='M6.5 11.5l-2.5 -1.5' /><path d='M12 13h.01' /><path d='M12 16h.01' /></svg>",
@@ -128,7 +137,8 @@
 			id: 'scenarios',
 			charts: [
 				{
-					id: '801a3cdf-1197-4b99-9ece-99113940c5fb'
+					id: '801a3cdf-1197-4b99-9ece-99113940c5fb',
+					countries: ['at']
 				}
 			],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-circle-arrow-right'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18' /><path d='M16 12l-4 -4' /><path d='M16 12h-8' /><path d='M12 16l4 -4' /></svg>",
@@ -202,7 +212,7 @@
 						<h2 class="text-2xl my-4 text-center max-w-2xl mx-auto">{section.title}</h2>
 						<div class="container space-y-4">
 							{#if section.charts}
-								{#each section.charts as chart}
+								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
 									<Chart id={chart.id} />
 								{/each}
 							{/if}
