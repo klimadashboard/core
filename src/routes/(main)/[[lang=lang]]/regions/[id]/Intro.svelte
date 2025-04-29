@@ -56,8 +56,8 @@
 {#if station && indicators}
 	<div class="container my-8">
 		<div class="">
-			<p class="font-bold my-auto text-xl">
-				Das Klimadashboard {place} zeigt auf, wo {place} in der Klimakrise steht.
+			<p class="font-bold my-auto text-xl max-w-md">
+				Das Klimadashboard {place} zeigt aktuelle Daten & Fakten zu Klima, Energie, Mobilität und mehr.
 			</p>
 		</div>
 		<h2 class="border-b mt-6 mb-2 font-bold">Auf einen Blick</h2>
