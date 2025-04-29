@@ -4,9 +4,10 @@
 	import { browser } from '$app/environment';
 	import Map from './Map.svelte';
 	import Intro from './Intro.svelte';
-	import Chart from '$lib/components/charts/index.svelte';
+	import LazyChart from './LazyChart.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import Support from './Support.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
 	import { regionColors } from '$lib/components/charts/custom/mobilityRenewableShare/transformData';
@@ -15,8 +16,6 @@
 	export let data;
 
 	const coordinates = data.page.center.map((d) => parseFloat(d)).join(',');
-
-	$: allowedHeight = 800;
 
 	onMount(() => {
 		if (data.page.country !== PUBLIC_VERSION.toUpperCase()) {
@@ -29,16 +28,6 @@
 		localStorage.setItem('kd_region_id', data.page.id);
 		localStorage.setItem('kd_region_name', data.page.name);
 		localStorage.setItem('kd_region_coordinates', coordinates);
-		setTimeout(() => {
-			const sectionElements = document.querySelectorAll('section');
-			console.log(sectionElements);
-			sectionElements.forEach((element, i) => {
-				if (sections[i]) {
-					sections[i].height = element.clientHeight;
-				}
-			}, 2000);
-			console.log(sections);
-		});
 	});
 
 	let index, offset, progress;
@@ -54,7 +43,7 @@
 		}
 	}
 
-	let sections = [
+	const sections = [
 		{
 			title: 'Emissionen',
 			countries: ['at', 'de'],
@@ -65,16 +54,12 @@
 					id: 'cae6032b-86a9-45d0-bc11-17343845b25a',
 					countries: ['at', 'de']
 				}
-			],
-			height: 0,
-			expanded: false
+			]
 		},
 		{
 			title: 'Energie',
 			countries: ['de'],
 			id: 'energy',
-			height: 0,
-			expanded: false,
 			charts: [
 				{
 					id: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
@@ -92,8 +77,6 @@
 			id: 'mobility',
 			countries: ['at', 'de'],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-steering-wheel'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' /><path d='M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' /><path d='M12 14l0 7' /><path d='M10 12l-6.75 -2' /><path d='M14 12l6.75 -2' /></svg>",
-			height: 0,
-			expanded: false,
 			charts: [
 				{
 					id: '68b0f853-b1b1-4120-aedd-87de58ea3209',
@@ -109,8 +92,6 @@
 			title: 'Zersiedelung',
 			countries: ['at'],
 			id: 'sprawl',
-			height: 0,
-			expanded: false,
 			charts: [
 				{
 					id: '4b721d01-0598-48e4-ab3b-10d96ed46a53',
@@ -129,9 +110,7 @@
 					countries: ['at', 'de']
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-temperature'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5' /><path d='M10 9l4 0' /></svg>",
-			height: 0,
-			expanded: false
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-temperature'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5' /><path d='M10 9l4 0' /></svg>"
 		},
 		{
 			title: 'Schnee',
@@ -143,9 +122,7 @@
 					countries: ['at', 'de']
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-snowman'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a4 4 0 0 1 2.906 6.75a6 6 0 1 1 -5.81 0a4 4 0 0 1 2.904 -6.75z' /><path d='M17.5 11.5l2.5 -1.5' /><path d='M6.5 11.5l-2.5 -1.5' /><path d='M12 13h.01' /><path d='M12 16h.01' /></svg>",
-			height: 0,
-			expanded: false
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-snowman'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a4 4 0 0 1 2.906 6.75a6 6 0 1 1 -5.81 0a4 4 0 0 1 2.904 -6.75z' /><path d='M17.5 11.5l2.5 -1.5' /><path d='M6.5 11.5l-2.5 -1.5' /><path d='M12 13h.01' /><path d='M12 16h.01' /></svg>"
 		},
 		{
 			title: 'Klimazukunft',
@@ -157,24 +134,15 @@
 					countries: ['at']
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-circle-arrow-right'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18' /><path d='M16 12l-4 -4' /><path d='M16 12h-8' /><path d='M12 16l4 -4' /></svg>",
-			height: 0,
-			expanded: false
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-circle-arrow-right'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18' /><path d='M16 12l-4 -4' /><path d='M16 12h-8' /><path d='M12 16l4 -4' /></svg>"
 		},
 		{
 			title: 'Handlungen',
 			id: 'actions',
 			blocks: [Policies],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-tool'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5' /></svg>",
-			height: 0,
-			expanded: false
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-tool'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5' /></svg>"
 		}
 	];
-
-	const scrollToTop = function (event) {
-		event.preventDefault(); // Prevent default anchor behavior
-		window.scrollTo({ top: 600, behavior: 'smooth' }); // Smooth scroll to top
-	};
 </script>
 
 <main class="">
@@ -220,16 +188,13 @@
 			</div>
 
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
-				<section
-					id={section.id}
-					class="mt-16 relative {section.expanded ? '' : 'max-h-[600px]'} overflow-hidden"
-				>
-					<div bind:clientHeight={section.height}>
+				<section id={section.id} class="mt-16 relative overflow-hidden">
+					<div>
 						<h2 class="text-2xl my-4 text-center max-w-2xl mx-auto">{section.title}</h2>
 						<div class="container space-y-4">
 							{#if section.charts}
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
-									<Chart id={chart.id} />
+									<LazyChart id={chart.id} />
 								{/each}
 							{/if}
 							{#if section.blocks}
@@ -239,83 +204,10 @@
 							{/if}
 						</div>
 					</div>
-
-					{#if section.height > allowedHeight}
-						<div
-							class="h-32 absolute bottom-0 left-0 right-0 bg-gradient-to-b from-transparent to-white dark:to-gray-950 z-50"
-						>
-							<div class="absolute bottom-0 left-1/2 -translate-x-1/2">
-								<button on:mousedown={(section.expanded = !section.expanded)} class="button"
-									>{#if section.expanded}
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-up"
-											><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-												d="M6 15l6 -6l6 6"
-											/></svg
-										>
-										<span>Weniger zeigen</span>{:else}
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="24"
-											height="24"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-down"
-											><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-												d="M6 9l6 6l6 -6"
-											/></svg
-										>
-										<span>Mehr zeigen</span>
-									{/if}</button
-								>
-							</div>
-						</div>
-					{:else}
-						<button on:mousedown={scrollToTop} class="button my-4 mx-auto">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-up"
-								><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 5l0 14" /><path
-									d="M18 11l-6 -6"
-								/><path d="M6 11l6 -6" /></svg
-							>
-							<span>Zurück zum Überblick</span>
-						</button>
-					{/if}
 				</section>
 			{/each}
 		</div></Scroller
 	>
 
-	<div class="my-16 flex flex-col items-center gap-2">
-		<p class="opacity-80 max-w-sm text-center leading-tight">
-			Regionale Klimadashboards werden gefördert durch die
-		</p>
-		<img
-			src="https://base.klimadashboard.org/assets/e4b67105-06e9-405b-82cd-6ffac435f9c1"
-			alt="Wirtschaftsagentur Wien"
-			class="h-24"
-		/>
-	</div>
+	<Support />
 </main>

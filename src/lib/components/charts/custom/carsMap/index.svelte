@@ -5,6 +5,8 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import Search from './Search.svelte';
 	import { colors, scales } from './scales';
+	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
+	import { page } from '$app/state';
 
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem, readItems } from '@directus/sdk';
@@ -34,22 +36,21 @@
 			country: { _eq: countryCode },
 			...(countryCode === 'AT'
 				? { layer: { _eq: 'municipality' } }
-				: { layer: { _neq: 'municipality' } })
+				: { layer: { _eq: 'district' } })
 		};
 
 		const regions = await directus.request(
 			readItems('regions', {
 				filter: regionFilter,
 				limit: -1,
-				fields: ['name', 'code', 'outline_simple', 'population', 'center']
+				fields: ['id', 'name', 'code', 'outline_simple', 'population', 'center']
 			})
 		);
 
 		const country = await directus.request(readItem('countries', countryCode));
 
 		const countryName = country?.name_de ?? countryCode;
-		// console.log(data);
-		// console.log(regions);
+
 		const regionsWithData = regions.map((region) => {
 			const regionData = data.filter((d) => d.region === region.code);
 			const periods = [
@@ -91,7 +92,14 @@
 				carsHybridShare
 			};
 		});
-		console.log(regionsWithData);
+
+		const foundRegionCode = findMatchingRegion(page.data.page, regions);
+		console.log(foundRegionCode);
+
+		if (foundRegionCode) {
+			selectedRegion = foundRegionCode;
+		}
+
 		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
 		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
 		return { data, regions: regionsWithData, minPeriod, maxPeriod, countryName };

@@ -6,6 +6,10 @@
 	import Inspector from './Inspector.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
+	import { page } from '$app/state';
+
+	let selectedRegion;
 
 	const colors = [
 		{
@@ -46,10 +50,14 @@
 			outline: r.outline_simple
 		}));
 
+		const foundRegionCode = findMatchingRegion(page.data.page, regions);
+
+		if (foundRegionCode) {
+			selectedRegion = foundRegionCode;
+		}
+
 		const countryName = PUBLIC_VERSION;
 
-		console.log(regions);
-		console.log(data);
 		return { data, regions, countryName };
 	};
 
@@ -64,7 +72,6 @@
 		};
 	};
 
-	let selectedRegion;
 	let selectedEnergy = 'wind';
 	let views = [
 		{

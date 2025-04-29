@@ -3,6 +3,8 @@
 	import Inspector from './Inspector.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
+	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
+	import { page } from '$app/state';
 
 	let selectedRegion;
 
@@ -25,12 +27,17 @@
 						}
 					]
 				},
-				fields: ['name', 'code', 'outline_simple', 'population', 'center']
+				fields: ['id', 'name', 'code', 'outline_simple', 'population', 'center']
 			})
 		);
-		// console.log(data);
-		console.log(regions);
-		selectedRegion = regions.find((d) => d.code === '091880139139');
+
+		const foundRegionCode = findMatchingRegion(page.data.page, regions);
+
+		if (foundRegionCode) {
+			console.log(foundRegionCode);
+			selectedRegion = regions.find((d) => d.code == foundRegionCode);
+		}
+
 		return { regions };
 	};
 

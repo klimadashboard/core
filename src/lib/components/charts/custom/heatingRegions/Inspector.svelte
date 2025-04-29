@@ -62,7 +62,7 @@
 		}
 	];
 
-	$: promise = getDataForSelectedRegion(selectedRegion.code);
+	$: promise = getDataForSelectedRegion(selectedRegion?.code);
 </script>
 
 <div class="bg-white dark:bg-gray-800 rounded-2xl p-3">
