@@ -9,6 +9,8 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
+	import { regionColors } from '$lib/components/charts/custom/mobilityRenewableShare/transformData';
+	import { goto } from '$app/navigation';
 
 	export let data;
 
@@ -17,6 +19,13 @@
 	$: allowedHeight = 800;
 
 	onMount(() => {
+		if (data.page.country !== PUBLIC_VERSION.toUpperCase()) {
+			// replace current url de with at or at with de, leave everything else as is
+			console.log('referring to ', data.page.country);
+			const url = new URL(window.location);
+			url.pathname = url.pathname.replace(PUBLIC_VERSION.toUpperCase(), data.page.country);
+			goto(url.toString());
+		}
 		localStorage.setItem('kd_region_id', data.page.id);
 		localStorage.setItem('kd_region_name', data.page.name);
 		localStorage.setItem('kd_region_coordinates', coordinates);
@@ -48,6 +57,7 @@
 	let sections = [
 		{
 			title: 'Emissionen',
+			countries: ['at', 'de'],
 			id: 'emissions',
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-cloud'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878' /></svg>",
 			charts: [
@@ -61,6 +71,7 @@
 		},
 		{
 			title: 'Energie',
+			countries: ['de'],
 			id: 'energy',
 			height: 0,
 			expanded: false,
@@ -79,6 +90,7 @@
 		{
 			title: 'Mobilität',
 			id: 'mobility',
+			countries: ['at', 'de'],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-steering-wheel'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' /><path d='M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' /><path d='M12 14l0 7' /><path d='M10 12l-6.75 -2' /><path d='M14 12l6.75 -2' /></svg>",
 			height: 0,
 			expanded: false,
@@ -95,6 +107,7 @@
 		},
 		{
 			title: 'Zersiedelung',
+			countries: ['at'],
 			id: 'sprawl',
 			height: 0,
 			expanded: false,
@@ -107,6 +120,7 @@
 		},
 		{
 			title: 'Temperatur',
+			countries: ['at', 'de'],
 			id: 'temperature',
 			toggle: true,
 			charts: [
@@ -122,6 +136,7 @@
 		{
 			title: 'Schnee',
 			id: 'snow',
+			countries: ['at', 'de'],
 			charts: [
 				{
 					id: 'd88601f8-40de-4753-beb1-a0e824aa048c',
@@ -135,6 +150,7 @@
 		{
 			title: 'Klimazukunft',
 			id: 'scenarios',
+			countries: ['at'],
 			charts: [
 				{
 					id: '801a3cdf-1197-4b99-9ece-99113940c5fb',
@@ -203,7 +219,7 @@
 				</div>
 			</div>
 
-			{#each sections as section}
+			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
 				<section
 					id={section.id}
 					class="mt-16 relative {section.expanded ? '' : 'max-h-[600px]'} overflow-hidden"
