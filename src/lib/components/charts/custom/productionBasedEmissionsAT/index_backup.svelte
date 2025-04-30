@@ -5,10 +5,7 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { pivot_multikey } from './getData';
-
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems } from '@directus/sdk';
+	import { getEmissionsData } from './getData';
 
 	let rawData;
 	let rawKeys;
@@ -29,71 +26,42 @@
 		}
 	];
 
-	// TODO: emissionsdaten mit umlauten sind noch fehlerhaft in der datenbank... niederösterreich, oberösterreich, österreich
-	// --> fixen
-	// Österreichweite daten gibt es nur von nowcast
-
 	// Choose your default classification here:
 	$: selectedClassification = classifications[0].key;
 
-
-	export const getEmissionsData = async function () {
-		// sources: "BLI 2024 (1990-2022)", ?"NowCast (1990-2023)"?...not used
-		try{
-			const directus = getDirectusInstance(fetch);
-			let data = await directus.request(
-				readItems('emissions_data', {
-					filter: {
-						_and: [
-							{ 
-								country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source: { _eq: "BLI 2024 (1990-2022)" }
-							}
-						]
-					},
-					sort: "year,region.name",
-					fields: ["country.name","country.population","category.label","gas.name","gas.unit","id","region.name","region.population","source","type","value","year"],
-					limit: -1
-				})
-			);
-
-			data = data.map((row, i) => ({
-				id: row.id,
-				source: row.source,
-				value: row.value,
-				year: row.year,
-				region: row.region === null ? row.country.name : row.region.name,
-				population: row.region === null ? row.country.population : row.region.population,
-				sektor: row.category.label,
-				pollutant: row.gas.name,
-				unit: row.gas.unit,
-				classification: row.type,
-			}));
-
-			const pivot_table = pivot_multikey(data, ["year", "classification", "pollutant", "region", "source", "unit"], "sektor")
-			
-			rawData = pivot_table;
-			defaultRegion = rawData[rawData.length-1].region;
-			rawKeys = Object.keys(rawData.data[rawData.length-1]);
-
-			
-		} catch (error) {
-			console.error('Error fetching suggestions:', error);
-		}
-	};
-
 	$: getEmissionsData();
+
+	// Load CSV data
+	Papa.parse(
+		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
+		{
+			download: true,
+			dynamicTyping: true,
+			header: true,
+			skipEmptyLines: true,
+			complete: function (results) {
+				if (results) {
+					rawData = results.data;
+					defaultRegion = rawData[0].region;
+					rawKeys = Object.keys(results.data[0]);
+					console.log(rawData)//.filter(row => row.source == "BLI 2024 (1990-2022)"), rawKeys)
+				}
+			}
+		}
+	);
 
 	// Aggregated views
 	const aggregatedViews = [
 		{
-			key: 'KSG',
+			key: 'total_co2e_t',
+			key_db: 'KSG',
 			label: 'Gesamt',
 			icon: null,
 			color: '#4DB263'
 		},
 		{
 			key: 'sector_overview',
+			key_db: 'sector_overview',
 			label: 'Sektoren',
 			icon: null,
 			color: '#4DB263'
@@ -103,42 +71,49 @@
 	// All defined sectors
 	const sectors = [
 		{
-			key: 'Energie',
+			key: 'energy_co2e_t',
+			key_db: 'Energie',
 			label: 'Energie',
 			color: '#BD3737',
 			icon: "<svg width='16' height='20' viewBox='0 0 16 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 1V8H15L7 19V12H1L9 1Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		},
 		{
-			key: 'Industrie',
+			key: 'industry_co2e_t',
+			key_db: 'Industrie',
 			label: 'Industrie',
 			color: '#373949',
 			icon: "<svg width='20' height='18' viewBox='0 0 20 18' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M19 17H1L1.00017 5.75676L8.10537 9.21622V5.75676L14.7369 9.21622V1H19V17Z' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/></svg>"
 		},
 		{
-			key: 'Gebäude',
+			key: 'buildings_co2e_t',
+			key_db: 'Gebäude',
 			label: 'Gebäude',
 			color: '#4880A8',
 			icon: "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 10H1L10 1L19 10H17' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3 10V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19H15C15.5304 19 16.0391 18.7893 16.4142 18.4142C16.7893 18.0391 17 17.5304 17 17V10' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M12 10H8V14H12V10Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		},
 		{
-			key: 'Verkehr',
+			key: 'traffic_co2e_t',
+			key_db: 'Verkehr',
 			label: 'Verkehr',
 			color: '#F5AF4A',
 			icon: "<svg width='20' height='15' viewBox='0 0 20 15' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M5 14C6.10457 14 7 13.1046 7 12C7 10.8954 6.10457 10 5 10C3.89543 10 3 10.8954 3 12C3 13.1046 3.89543 14 5 14Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M15 14C16.1046 14 17 13.1046 17 12C17 10.8954 16.1046 10 15 10C13.8954 10 13 10.8954 13 12C13 13.1046 13.8954 14 15 14Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3 12H1V6M1 6L3 1H12L16 6M1 6H16M16 6H17C17.5304 6 18.0391 6.21071 18.4142 6.58579C18.7893 6.96086 19 7.46957 19 8V12H17M10 6V1' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M7 12H13' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/></svg>"
 		},
 		{
-			key: 'Landwirtschaft',
+			key: 'agriculture_co2e_t',
+			key_db: 'Landwirtschaft',
 			label: 'Landwirtschaft',
 			color: '#65987D',
 			icon: "<svg width='20' height='16' viewBox='0 0 20 16' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M5 15C7.20914 15 9 13.2091 9 11C9 8.79086 7.20914 7 5 7C2.79086 7 1 8.79086 1 11C1 13.2091 2.79086 15 5 15Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M5 11V11.01' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M17 15C18.1046 15 19 14.1046 19 13C19 11.8954 18.1046 11 17 11C15.8954 11 15 11.8954 15 13C15 14.1046 15.8954 15 17 15Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M8.5 13H15' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M18 11.2V7C18 6.73478 17.8946 6.48043 17.7071 6.29289C17.5196 6.10536 17.2652 6 17 6H11L9 1H3V7.5' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M16 1H15C14.7348 1 14.4804 1.10536 14.2929 1.29289C14.1054 1.48043 14 1.73478 14 2V6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		},
 		{
-			key: 'Müll',
+			key: 'waste_co2e_t',
+			key_db: 'Müll',
 			label: 'Abfallwirtschaft',
 			color: '#B7693D',
 			icon: "<svg width='22' height='21' viewBox='0 0 22 21' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M10 18H19C19.3186 17.9836 19.6287 17.8912 19.9043 17.7305C20.1799 17.5698 20.4131 17.3456 20.5843 17.0764C20.7556 16.8073 20.86 16.501 20.8888 16.1833C20.9177 15.8656 20.8701 15.5456 20.75 15.25L20.2 14.25M12 16L10 18L12 20V16Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M7.80319 7.26807L3.30319 15.0623C3.15811 15.3464 3.08311 15.6611 3.08444 15.9802C3.08578 16.2992 3.16342 16.6133 3.31087 16.8962C3.45832 17.1791 3.67131 17.4226 3.93206 17.6064C4.19281 17.7903 4.49375 17.909 4.80976 17.9528L5.95078 17.9765M8.53524 10.0001L7.80319 7.26807L5.07114 8.00012L8.53524 10.0001Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M18.1968 10.7319L13.6968 2.93771C13.5233 2.67 13.2882 2.44769 13.0113 2.28933C12.7343 2.13098 12.4235 2.04117 12.1048 2.02742C11.7861 2.01366 11.4687 2.07635 11.1791 2.21026C10.8895 2.34417 10.6362 2.5454 10.4402 2.79716L9.84922 3.77347M15.4648 9.99988L18.1968 10.7319L18.9289 7.99988L15.4648 9.99988Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		},
 		{
+			key: 'fluorinated_gases_co2e_t',
 			key_db: 'F-Gase',
 			label: 'Fluorierte Gase',
 			color: '#7CAFBA',
@@ -149,7 +124,7 @@
 	// Restrict available sectors based on classification
 	$: availableSectors =
 		selectedClassification === 'Emissionshandel'
-			? sectors.filter((d) => ['Energie', 'Industrie'].includes(d.key))
+			? sectors.filter((d) => ['energy_co2e_t', 'industry_co2e_t'].includes(d.key))
 			: sectors.filter((d) => rawKeys?.indexOf(d.key) > -1);
 
 	// Combine aggregated + filtered sector views
@@ -158,7 +133,7 @@
 	// Set default region (after data load completes)
 	$: selectedRegion = defaultRegion;
 	// Default view
-	$: activeView = 'KSG';
+	$: activeView = 'total_co2e_t';
 
 	// Decide which sectors or aggregated view to show
 	$: selectedSectors =
@@ -176,12 +151,12 @@
 				// For Emissionshandel: if user wants total, use the pre-summed energy_industry_co2e_t
 				// otherwise (stacked view), just use the normal item key
 				let dataKey;
-				// if (selectedClassification === 'Emissionshandel' && activeView === 'KSG') {
-				// 	dataKey = showPerCapita ? 'energy_industry_co2e_t_percapita' : 'energy_industry_co2e_t';
-				// } else {
+				if (selectedClassification === 'Emissionshandel' && activeView === 'total_co2e_t') {
+					dataKey = showPerCapita ? 'energy_industry_co2e_t_percapita' : 'energy_industry_co2e_t';
+				} else {
 					// default approach
-				dataKey = showPerCapita ? item.key + perCapitaString : item.key;
-				// }
+					dataKey = showPerCapita ? item.key + perCapitaString : item.key;
+				}
 
 				return {
 					label: item.label + ' ' + entry.year,
@@ -216,7 +191,7 @@
 	// Optional flight emissions
 	let showFlightEmissions = false;
 	$: allowFlightEmissions =
-		(activeView == 'sector_overview' || activeView == 'KSG') &&
+		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
 		!showPerCapita &&
 		selectedClassification == 'Gesamt';
 
@@ -250,8 +225,8 @@
 	// Some default text data from first/last in the CSV
 	$: if (rawData?.length > 0) {
 		lastYear = rawData[rawData.length - 1]['year'];
-		firstYearEmissions = Math.round(rawData[0]['KSG']);
-		lastYearEmissions = Math.round(rawData[rawData.length - 1]['KSG']);
+		firstYearEmissions = Math.round(rawData[0]['total_co2e_t']);
+		lastYearEmissions = Math.round(rawData[rawData.length - 1]['total_co2e_t']);
 		percentage1990lastYear = getPercentageChange(firstYearEmissions, lastYearEmissions) / 100;
 	}
 
@@ -259,7 +234,7 @@
 	$: if (
 		dataset &&
 		selectedRegion == 'Austria' &&
-		(activeView == 'sector_overview' || activeView == 'KSG') &&
+		(activeView == 'sector_overview' || activeView == 'total_co2e_t') &&
 		selectedClassification == 'Gesamt' &&
 		!showPerCapita &&
 		!showFlightEmissions
@@ -286,7 +261,7 @@
 	// This currently forces "Gesamt" when choosing Emissionshandel,
 	// which hides the stacked "Sektoren" unless the user changes it after the assignment.
 	$: if (selectedClassification == 'Emissionshandel') {
-		activeView = 'KSG';
+		activeView = 'total_co2e_t';
 	}
 
 	$: console.log("dataset", dataset)
