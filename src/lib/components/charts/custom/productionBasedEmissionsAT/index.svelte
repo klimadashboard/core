@@ -21,7 +21,7 @@
 		},
 		{
 			label: 'Emissionshandel (ETS)',
-			key: 'Emissionshandel'
+			key: 'EH'
 		},
 		{
 			label: 'Nicht-Emissionshandel (Non-ETS)',
@@ -29,16 +29,12 @@
 		}
 	];
 
-	// TODO: emissionsdaten mit umlauten sind noch fehlerhaft in der datenbank... niederösterreich, oberösterreich, österreich
-	// --> fixen
-	// Österreichweite daten gibt es nur von nowcast
-
 	// Choose your default classification here:
 	$: selectedClassification = classifications[0].key;
 
 
 	export const getEmissionsData = async function () {
-		// sources: "BLI 2024 (1990-2022)", ?"NowCast (1990-2023)"?...not used
+		// sources: "BLI 2024 (1990-2022)", "NowCast (1990-2023)"
 		try{
 			const directus = getDirectusInstance(fetch);
 			let data = await directus.request(
@@ -47,7 +43,7 @@
 						_and: [
 							{ 
 								country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source: { _eq: "BLI 2024 (1990-2022)" }
+								source: { _in: ["BLI 2024 (1990-2022)", "NowCast (1990-2023)"] }
 							}
 						]
 					},
@@ -74,7 +70,7 @@
 			
 			rawData = pivot_table;
 			defaultRegion = rawData[rawData.length-1].region;
-			rawKeys = Object.keys(rawData.data[rawData.length-1]);
+			rawKeys = Object.keys(rawData[rawData.length-1]);
 
 			
 		} catch (error) {
@@ -139,7 +135,7 @@
 			icon: "<svg width='22' height='21' viewBox='0 0 22 21' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M10 18H19C19.3186 17.9836 19.6287 17.8912 19.9043 17.7305C20.1799 17.5698 20.4131 17.3456 20.5843 17.0764C20.7556 16.8073 20.86 16.501 20.8888 16.1833C20.9177 15.8656 20.8701 15.5456 20.75 15.25L20.2 14.25M12 16L10 18L12 20V16Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M7.80319 7.26807L3.30319 15.0623C3.15811 15.3464 3.08311 15.6611 3.08444 15.9802C3.08578 16.2992 3.16342 16.6133 3.31087 16.8962C3.45832 17.1791 3.67131 17.4226 3.93206 17.6064C4.19281 17.7903 4.49375 17.909 4.80976 17.9528L5.95078 17.9765M8.53524 10.0001L7.80319 7.26807L5.07114 8.00012L8.53524 10.0001Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M18.1968 10.7319L13.6968 2.93771C13.5233 2.67 13.2882 2.44769 13.0113 2.28933C12.7343 2.13098 12.4235 2.04117 12.1048 2.02742C11.7861 2.01366 11.4687 2.07635 11.1791 2.21026C10.8895 2.34417 10.6362 2.5454 10.4402 2.79716L9.84922 3.77347M15.4648 9.99988L18.1968 10.7319L18.9289 7.99988L15.4648 9.99988Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		},
 		{
-			key_db: 'F-Gase',
+			key: 'F-Gase',
 			label: 'Fluorierte Gase',
 			color: '#7CAFBA',
 			icon: "<svg width='21' height='20' viewBox='0 0 21 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6.00003H11.5C11.9644 6.00892 12.4222 5.88823 12.8218 5.65152C13.2215 5.4148 13.5473 5.07141 13.7627 4.65986C13.9782 4.24832 14.0747 3.78489 14.0414 3.32156C14.0082 2.85824 13.8465 2.41334 13.5745 2.03676C13.3026 1.66019 12.931 1.36683 12.5017 1.1896C12.0723 1.01237 11.602 0.958278 11.1436 1.03338C10.6852 1.10849 10.2568 1.30982 9.90643 1.6148C9.55606 1.91979 9.29758 2.31636 9.16 2.76003' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M1 9.99997H16.5C16.9644 9.99108 17.4222 10.1118 17.8218 10.3485C18.2215 10.5852 18.5473 10.9286 18.7627 11.3401C18.9782 11.7517 19.0747 12.2151 19.0414 12.6784C19.0082 13.1418 18.8465 13.5867 18.5745 13.9632C18.3026 14.3398 17.931 14.6332 17.5017 14.8104C17.0723 14.9876 16.602 15.0417 16.1436 14.9666C15.6852 14.8915 15.2568 14.6902 14.9064 14.3852C14.5561 14.0802 14.2976 13.6836 14.16 13.24' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M2 14H7.5C7.96443 13.9911 8.42216 14.1118 8.82183 14.3485C9.22151 14.5852 9.54733 14.9286 9.76274 15.3401C9.97816 15.7517 10.0747 16.2151 10.0414 16.6784C10.0082 17.1418 9.8465 17.5867 9.57453 17.9632C9.30256 18.3398 8.93105 18.6332 8.50167 18.8104C8.07229 18.9876 7.60203 19.0417 7.14362 18.9666C6.68522 18.8915 6.2568 18.6902 5.90643 18.3852C5.55605 18.0802 5.29758 17.6836 5.16 17.24' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
@@ -148,9 +144,10 @@
 
 	// Restrict available sectors based on classification
 	$: availableSectors =
-		selectedClassification === 'Emissionshandel'
+		selectedClassification === 'EH'
 			? sectors.filter((d) => ['Energie', 'Industrie'].includes(d.key))
 			: sectors.filter((d) => rawKeys?.indexOf(d.key) > -1);
+
 
 	// Combine aggregated + filtered sector views
 	$: views = aggregatedViews.concat(availableSectors);
@@ -166,6 +163,7 @@
 
 	// Reducer to shape chart data
 	$: reducer = function (result, entry) {
+		console.log("reducer", entry);
 		if (entry.region != selectedRegion) return result;
 
 		let perCapitaString = showPerCapita ? '_percapita' : '';
@@ -173,19 +171,22 @@
 		result.push({
 			label: entry.year,
 			categories: selectedSectors?.map((item) => {
-				// For Emissionshandel: if user wants total, use the pre-summed energy_industry_co2e_t
+				// For Emissionshandel: if user wants total, use the summed energy and industry values
 				// otherwise (stacked view), just use the normal item key
-				let dataKey;
-				// if (selectedClassification === 'Emissionshandel' && activeView === 'KSG') {
-				// 	dataKey = showPerCapita ? 'energy_industry_co2e_t_percapita' : 'energy_industry_co2e_t';
-				// } else {
+				let value;
+				if (selectedClassification === 'EH' && activeView === 'KSG') {
+					const dataKeyEnergy = showPerCapita ? 'Energie' + perCapitaString : 'Energie';
+					const dataKeyIndustry = showPerCapita ? 'Industrie' + perCapitaString : 'Industrie';
+					value = entry[dataKeyEnergy] + entry[dataKeyIndustry];
+				} else {
 					// default approach
-				dataKey = showPerCapita ? item.key + perCapitaString : item.key;
-				// }
+					const dataKey = showPerCapita ? item.key + perCapitaString : item.key;
+					value = entry[dataKey];
+				}
 
 				return {
 					label: item.label + ' ' + entry.year,
-					value: entry[dataKey],
+					value: value,
 					color: item.color
 				};
 			})
@@ -242,6 +243,7 @@
 				};
 			});
 	} else {
+		console.log("filter", selectedClassification, rawData)
 		dataset = rawData
 			?.filter((d) => d.classification == selectedClassification)
 			.reduce(reducer, []);
@@ -285,7 +287,7 @@
 	// If you want to default to Gesamt view when changing classification, you can keep or remove:
 	// This currently forces "Gesamt" when choosing Emissionshandel,
 	// which hides the stacked "Sektoren" unless the user changes it after the assignment.
-	$: if (selectedClassification == 'Emissionshandel') {
+	$: if (selectedClassification == 'EH') {
 		activeView = 'KSG';
 	}
 
