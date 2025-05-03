@@ -1,6 +1,5 @@
 <script>
 	import BarChart from '$lib/components/charts/chartBar.svelte';
-	import Papa from 'papaparse';
 	import Switch from '$lib/components/Switch.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import { fade } from 'svelte/transition';
@@ -8,7 +7,7 @@
 	import { pivot_multikey, getYearlyPopulationByRegionID } from './getData';
 
 	import getDirectusInstance from '$lib/utils/directus';
-	import { readFlow, readItems } from '@directus/sdk';
+	import { readItems } from '@directus/sdk';
 
 	let rawData;
 	let rawKeys;
