@@ -416,7 +416,7 @@
 				<path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z" />
 			</svg>
 			<span>Int. Flugverkehr</span>
-			<input type="checkbox" bind:checked={showFlightEmissions} />
+			<input type="checkbox" bind:checked={showFlightEmissions} disabled={intl_flights===null} />
 		</label>
 	{/if}
 	<label
@@ -479,7 +479,7 @@
 			<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
 		</svg>
 		<span>Pro-Kopf Emissionen?</span>
-		<input type="checkbox" bind:checked={showPerCapita} />
+		<input type="checkbox" bind:checked={showPerCapita} disabled={populations===null} />
 	</label>
 </div>
 <div class="h-80">
