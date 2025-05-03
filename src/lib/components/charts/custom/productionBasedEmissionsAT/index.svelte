@@ -5,10 +5,10 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { pivot_multikey } from './getData';
+	import { pivot_multikey, getYearlyPopulationByRegionID } from './getData';
 
 	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems } from '@directus/sdk';
+	import { readFlow, readItems } from '@directus/sdk';
 
 	let rawData;
 	let rawKeys;
@@ -31,9 +31,8 @@
 
 	// Choose your default classification here:
 	$: selectedClassification = classifications[0].key;
-
-
-	export const getEmissionsData = async function () {
+	
+	const getEmissionsData = async function () {
 		// sources: "BLI 2024 (1990-2022)", "NowCast (1990-2023)"
 		try{
 			const directus = getDirectusInstance(fetch);
@@ -48,7 +47,7 @@
 						]
 					},
 					sort: "year,region.name",
-					fields: ["country.name","country.population","category.label","gas.name","gas.unit","id","region.name","region.population","source","type","value","year"],
+					fields: ["category.label","gas.name","gas.unit","id","region.id","region.name","source","type","value","year"],
 					limit: -1
 				})
 			);
@@ -58,26 +57,42 @@
 				source: row.source,
 				value: row.value,
 				year: row.year,
-				region: row.region === null ? row.country.name : row.region.name,
-				population: row.region === null ? row.country.population : row.region.population,
-				sektor: row.category.label,
-				pollutant: row.gas.name,
-				unit: row.gas.unit,
+				region_id: row.region?.id,
+				region: row.region?.name,
+				sektor: row.category?.label,
+				pollutant: row.gas?.name,
+				unit: row.gas?.unit,
 				classification: row.type,
 			}));
 
-			const pivot_table = pivot_multikey(data, ["year", "classification", "pollutant", "region", "source", "unit"], "sektor")
+			const pivot_table = pivot_multikey(data, ["year", "classification", "pollutant", "region", "region_id", "source", "unit"], "sektor")
 			
 			rawData = pivot_table;
 			defaultRegion = rawData[rawData.length-1].region;
-			rawKeys = Object.keys(rawData[rawData.length-1]);
+			rawKeys = Array.from(new Set(data.map((row, i) => row.sektor)));
+
 			
 		} catch (error) {
-			console.error('Error fetching suggestions:', error);
+			console.error('Error fetching emission data:', error);
 		}
 	};
 
 	$: getEmissionsData();
+
+
+	let populations;
+	export const getPopulationData = async function (regions){
+		if(regions === null)
+			return;
+
+		const temp_populations = {};
+		for (const i in regions) {
+			temp_populations[regions[i]] = await getYearlyPopulationByRegionID(regions[i]);
+		}
+		populations = temp_populations;
+	}
+
+	$: getPopulationData(region_ids);
 
 	// Aggregated views
 	const aggregatedViews = [
@@ -162,10 +177,7 @@
 
 	// Reducer to shape chart data
 	$: reducer = function (result, entry) {
-		console.log("reducer", entry);
 		if (entry.region != selectedRegion) return result;
-
-		let perCapitaString = showPerCapita ? '_percapita' : '';
 
 		result.push({
 			label: entry.year,
@@ -174,13 +186,17 @@
 				// otherwise (stacked view), just use the normal item key
 				let value;
 				if (selectedClassification === 'EH' && activeView === 'KSG') {
-					const dataKeyEnergy = showPerCapita ? 'Energie' + perCapitaString : 'Energie';
-					const dataKeyIndustry = showPerCapita ? 'Industrie' + perCapitaString : 'Industrie';
-					value = entry[dataKeyEnergy] + entry[dataKeyIndustry];
+					const valueEnergy = entry['Energie'];
+					const valueIndustry = entry['Industrie'];
+					value = valueEnergy + valueIndustry;
 				} else {
 					// default approach
-					const dataKey = showPerCapita ? item.key + perCapitaString : item.key;
-					value = entry[dataKey];
+					value = entry[item.key];
+				}
+
+				if(showPerCapita){
+					const population = populations[entry.region_id].find(pop_row => entry.year === new Date(pop_row.period).getFullYear());
+					value /= population?.value;
 				}
 
 				return {
@@ -198,6 +214,7 @@
 
 	// Region selection
 	$: regions = [...new Set(rawData?.map((d) => d.region))];
+	$: region_ids = [...new Set(rawData?.map((d) => d.region_id))];
 
 	// variables for dynamic text generation
 	let lastYear;
@@ -229,7 +246,7 @@
 				var categories = [...d.categories];
 				var index = rawData.findIndex(
 					(e) =>
-						e.year == d.label && e.region == 'Austria' && e.classification == selectedClassification
+						e.year == d.label && e.region == 'Österreich' && e.classification == selectedClassification
 				);
 				categories.push({
 					label: 'Flug',
@@ -242,7 +259,6 @@
 				};
 			});
 	} else {
-		console.log("filter", selectedClassification, rawData)
 		dataset = rawData
 			?.filter((d) => d.classification == selectedClassification)
 			.reduce(reducer, []);
@@ -259,7 +275,7 @@
 	// Add a forecast (example logic) if conditions match
 	$: if (
 		dataset &&
-		selectedRegion == 'Austria' &&
+		selectedRegion == 'Österreich' &&
 		(activeView == 'sector_overview' || activeView == 'KSG') &&
 		selectedClassification == 'Gesamt' &&
 		!showPerCapita &&
@@ -290,7 +306,6 @@
 		activeView = 'KSG';
 	}
 
-	$: console.log("dataset", dataset)
 </script>
 
 <div class="flex flex-wrap gap-4 items-center sm:justify-between">
