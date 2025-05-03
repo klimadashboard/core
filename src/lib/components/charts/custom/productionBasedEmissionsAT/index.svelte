@@ -66,7 +66,7 @@
 			}));
 
 			const pivot_table = pivot_multikey(data, ["year", "classification", "pollutant", "region", "region_id", "source", "unit"], "sektor")
-			
+
 			rawData = pivot_table;
 			defaultRegion = rawData[rawData.length-1].region;
 			rawKeys = Array.from(new Set(data.map((row, i) => row.sektor)));
@@ -81,7 +81,7 @@
 
 
 	let populations;
-	export const getPopulationData = async function (regions){
+	const getPopulationData = async function (regions){
 		if(regions === null)
 			return;
 
@@ -93,6 +93,34 @@
 	}
 
 	$: getPopulationData(region_ids);
+
+	let intl_flights;
+	const getInternationalFlightsData = async function (){
+		try{
+			const directus = getDirectusInstance(fetch);
+			let data = await directus.request(
+				readItems('emissions_data', {
+					filter: {
+						_and: [
+							{ 
+								country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								category: { _eq: "Memo 1 D 1 a" },
+								gas: {_eq: "THG" },
+							}
+						]
+					},
+					sort: "year,region.name",
+					fields: ["value","year"],
+					limit: -1
+				})
+			);
+			intl_flights = data;
+		} catch (error) {
+			console.error('Error fetching population:', error);
+		}
+	}
+	$: getInternationalFlightsData();
+
 
 	// Aggregated views
 	const aggregatedViews = [
@@ -244,13 +272,13 @@
 			.reduce(reducer, [])
 			.map((d) => {
 				var categories = [...d.categories];
-				var index = rawData.findIndex(
+				var flight = intl_flights.find(
 					(e) =>
-						e.year == d.label && e.region == 'Österreich' && e.classification == selectedClassification
+						e.year == d.label
 				);
 				categories.push({
 					label: 'Flug',
-					value: Math.round(index > -1 ? rawData[index].international_flight_co2e_t : 0),
+					value: Math.round(flight?.value),
 					color: '#7586C1'
 				});
 				return {
