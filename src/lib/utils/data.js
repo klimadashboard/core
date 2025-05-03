@@ -85,3 +85,43 @@ export const mapAndFilterData = (chart, data) => {
 
 	return processedData;
 };
+
+
+
+export const pivot_multikey = (data, keys, category) => {
+	// creates a pivot table of an object array given multiple keys
+	// Example usage
+	// const data = [
+	// 	{ year: 2021, category1: 'Fruit', category2: 'Fresh', type: 'Apple', value: 10 },
+	// 	{ year: 2021, category1: 'Fruit', category2: 'Fresh', type: 'Banana', value: 15 },
+	// 	{ year: 2021, category1: 'Vegetable', category2: 'Fresh', type: 'Carrot', value: 20 },
+	// 	{ year: 2021, category1: 'Vegetable', category2: 'Frozen', type: 'Broccoli', value: 25 },
+	// 	{ year: 2022, category1: 'Fruit', category2: 'Fresh', type: 'Apple', value: 12 },
+	// 	{ year: 2022, category1: 'Fruit', category2: 'Fresh', type: 'Banana', value: 18 }
+	// ];
+	// const result = pivot(data, 'year', ['category1', 'category2', 'type']);
+
+
+    // Step 1: Create a map to track the rows by composite key
+    const map = {};
+
+    // Step 2: Iterate over the data array and populate the map
+    data.forEach((item) => {
+        // Create a composite key from the provided keys
+        const compositeKey = keys.map(key => item[key]).join('-');
+
+        if (!map[compositeKey]) {
+            // If a row for this composite key doesn't exist, create a new row
+            map[compositeKey] = {};
+            keys.forEach(key => {
+                map[compositeKey][key] = item[key];
+            });
+        }
+
+        // Set the value for the category dynamically
+        map[compositeKey][item[category]] = item.value;
+    });
+
+    // Step 3: Convert the map values to an array
+    return Object.values(map);
+};

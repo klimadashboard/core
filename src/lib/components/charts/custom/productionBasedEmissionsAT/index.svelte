@@ -4,7 +4,8 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { pivot_multikey, getYearlyPopulationByRegionID } from './getData';
+	import { pivot_multikey } from '$lib/utils/data';
+	import { getYearlyPopulationByRegionID } from '$lib/utils/directus.helper';
 
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
