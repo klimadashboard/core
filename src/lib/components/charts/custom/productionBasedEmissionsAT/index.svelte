@@ -71,7 +71,6 @@
 			rawData = pivot_table;
 			defaultRegion = rawData[rawData.length-1].region;
 			rawKeys = Object.keys(rawData[rawData.length-1]);
-
 			
 		} catch (error) {
 			console.error('Error fetching suggestions:', error);
