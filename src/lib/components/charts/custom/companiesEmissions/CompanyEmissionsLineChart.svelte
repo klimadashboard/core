@@ -1,64 +1,47 @@
-<script>
-	// @ts-nocheck
+<script lang="ts">
 	import LineChart from '$lib/components/charts/chartLine.svelte';
-	import { EMISSION_SCOPE_KEYS } from './constants';
 	import { transformDataSingleCompany, transformDataMultipleCompanies } from './transformData';
+	import type { CompanyEmissionArray, CompanyMetaData } from './types';
 
-	export let emissions;
-	export let selectedCompanies;
-	export let selectedScopes;
-	export let selectedScope2Category = 'location_based';
+	export let emissions: CompanyEmissionArray;
+	export let selectedCompanies: CompanyMetaData[];
+	export let selectedScopes: number[];
+	export let selectedScope2Category: string = 'location_based';
 
-	let isScopeThreeSelected;
+	let isScopeThreeSelected: boolean;
 	$: isScopeThreeSelected = selectedScopes.includes(3);
 
-	let isSingleCompanySelected;
-	let selectedCompanyNames;
+	let isSingleCompanySelected: boolean;
+	let selectedCompanyNames: string[];
 	$: isSingleCompanySelected = selectedCompanies.length === 1;
 	$: selectedCompanyNames = [...selectedCompanies].map((company) => company.name);
 
-	const rawColors = ['#7CBAB3', '#575C75', '#71665B', '#B28834', '#8CAED9', '#E0A906', '#CF6317'];
-	const selectedScopesToColors = {
+	const rawColors: string[] = [
+		'#7CBAB3',
+		'#575C75',
+		'#71665B',
+		'#B28834',
+		'#8CAED9',
+		'#E0A906',
+		'#CF6317'
+	];
+	const selectedScopesToColors: Record<number, string> = {
 		1: '#4e79a7',
 		2: '#f28e2c',
 		3: '#e15759'
 	};
 
-	const selectedScopesToLabels = {
+	const selectedScopesToLabels: Record<number, string> = {
 		1: 'Scope 1',
 		2: 'Scope 2',
 		3: 'Scope 3'
 	};
 	const maxCompanies = 7;
 
-	// // Magazine Visuation Companies & Colors
-	// const rawColors = [
-	// 	'#19A6E2',
-	// 	'#08779A',
-	// 	'#910505',
-	// 	'#000000',
-	// 	'#036041',
-	// 	'#31B159',
-	// 	'#F2380F',
-	// 	'#0F469A',
-	// 	'#6787A6'
-	// ];
-	// selectedCompanyNames = [
-	// 	'Voestalpine AG',
-	// 	'OMV AG',
-	// 	'Wienerberger AG',
-	// 	'EVN AG',
-	// 	'Mayr-Melnhof Karton AG',
-	// 	'Lenzing AG',
-	// 	'STRABAG SE',
-	// 	'Verbund AG',
-	// 	'Austria Technologie & Systemtechnik AG'
-	// ];
-
-	let dataset = [];
-	let keys;
-	let labels;
-	let colors;
+	let dataset: Array<Record<string, any>> = [];
+	let keys: number[] | string[];
+	let labels: string[];
+	let colors: string[];
 	$: {
 		if (emissions && selectedCompanies && selectedScopes) {
 			if (isSingleCompanySelected) {
@@ -115,13 +98,16 @@
 		</p>
 	{/if}
 {:else if selectedCompanies.length === 0}
-	<div class="h-28"></div>
+	<div class="h-20"></div>
 	<p class="text-center">Keine Unternehmen ausgewählt.</p>
 	<p class="text-center">⬆ Wähle oben bis zu sieben Unternehmen aus! ⬆</p>
+	<div class="h-20"></div>
 {:else if selectedCompanies.length > maxCompanies}
-	<div class="h-28"></div>
+	<div class="h-20"></div>
 	<p class="text-center">Zu viele Unternehmen ausgewählt. Wähle maximal 7 Unternehmen.</p>
+	<div class="h-20"></div>
 {:else}
-	<div class="h-28"></div>
+	<div class="h-20"></div>
 	<p class="text-center">Laden...</p>
+	<div class="h-20"></div>
 {/if}

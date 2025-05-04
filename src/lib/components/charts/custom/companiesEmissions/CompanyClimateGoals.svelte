@@ -1,11 +1,11 @@
-<script>
-	import companies from '$lib/stores/companies';
+<script lang="ts">
 	import CheckIcon from './CheckIcon.svelte';
 	import XIcon from './XIcon.svelte';
+	import type { CompanyMetaData } from './types';
 
-	export let companiesGoalData = [];
+	export let companiesGoalData: CompanyMetaData[] = [];
 
-	let isOMV = false;
+	let isOMV: boolean = false;
 	$: isOMV = !!companiesGoalData.filter((company) => company.name === 'OMV AG').length;
 
 	const tableCellClasses = 'text-semibold text-sm text-center px-1 leading-tight py-1';
@@ -31,16 +31,15 @@
 				</tr>
 			{/if}
 			{#each companiesGoalData as company (company.name)}
-				{@const companyMetaData = companies.find((c) => c.name == company.name)}
 				<tr class="border-b">
 					<td class={tableCellClasses}>
 						<img
 							src="https://base.klimadashboard.org/assets/{company.logoId}"
-							alt={companiesGoalData.name}
+							alt={company.name}
 							width="80"
 							height="80"
 							class="inline-block w-24 h-16 p-2 m-1 object-contain dark:bg-gray-100 rounded-xl"
-							title={companiesGoalData.name}
+							title={company.name}
 						/>
 					</td>
 					<td class={tableCellClasses}>
@@ -56,7 +55,7 @@
 							{/if}
 						{/if}
 					</td>
-					<td class={tableCellClasses} title={company.member_sbt}>
+					<td class={tableCellClasses}>
 						{#if company.member_sbt}
 							<CheckIcon additionalClasses="mx-auto" />
 						{:else}
@@ -68,10 +67,10 @@
 			{/each}
 		</tbody>
 	</table>
-	{#if isOMV}
-		<p class="text-sm pt-4">
-			*Öl und Gaskonzerne wie die OMV können aktuell nicht an der Science Based Target Initative
-			teilnehmen (SBTi Oil and Gas) und ihre Emmissionsziele validieren lassen.
-		</p>
-	{/if}
+{/if}
+{#if isOMV}
+	<p class="text-sm pt-4">
+		*Öl und Gaskonzerne wie die OMV können aktuell nicht an der Science Based Target Initative
+		teilnehmen (SBTi Oil and Gas) und ihre Emmissionsziele validieren lassen.
+	</p>
 {/if}

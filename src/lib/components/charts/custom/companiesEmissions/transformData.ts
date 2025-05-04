@@ -1,13 +1,16 @@
-// @ts-nocheck
-import { convertObjectToArray } from './utils';
+import { convertObjectToArray, type EmissionsYearRecord } from './utils';
+import type { CompanyEmissionArray } from './types';
+
+// Define the emissions per year object type
+type EmissionsPerYear = Record<number, EmissionsYearRecord>;
 
 export const transformDataSingleCompany = (
-	emissionsData,
-	selectedCompany,
-	selectedScopes,
-	selectedScope2Category
+	emissionsData: CompanyEmissionArray,
+	selectedCompany: string,
+	selectedScopes: number[],
+	selectedScope2Category: string
 ) => {
-	const emissionsPerYear = {};
+	const emissionsPerYear: EmissionsPerYear = {};
 
 	// Iterate over each item in the rawData
 	emissionsData.forEach(({ year, company, scope, value, category }) => {
@@ -33,19 +36,18 @@ export const transformDataSingleCompany = (
 };
 
 export const transformDataMultipleCompanies = (
-	emissionsData,
-	selectedCompanies,
-	selectedScopes,
-	selectedScope2Category
+	emissionsData: CompanyEmissionArray,
+	selectedCompanies: string[],
+	selectedScopes: number[],
+	selectedScope2Category: string
 ) => {
-	const emissionsPerYear = {};
+	const emissionsPerYear: EmissionsPerYear = {};
 
 	emissionsData.forEach(({ year, company, scope, value, category }) => {
 		// Skip items that are not included in the companies array
 		if (
 			!selectedCompanies.includes(company) ||
 			!selectedScopes.includes(scope) ||
-			// TODO: Add logic to filter by category! location and market based should not be mixed!
 			(scope === 2 && category !== selectedScope2Category)
 		) {
 			return;
@@ -59,7 +61,7 @@ export const transformDataMultipleCompanies = (
 		if (!value) {
 			emissionsPerYear[year][company] = 'na';
 		} else if (!emissionsPerYear[year][company]) {
-			emissionsPerYear[year][company] = parseInt(value); // TODO: check why directus returns string instead of integer!
+			emissionsPerYear[year][company] = parseInt(value);
 		} else if (value && emissionsPerYear[year][company] !== 'na') {
 			emissionsPerYear[year][company] += parseInt(value);
 		}
