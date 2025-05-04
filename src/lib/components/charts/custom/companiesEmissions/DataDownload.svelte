@@ -1,9 +1,10 @@
-<script>
+<script lang="ts">
 	import { page } from '$app/state';
+	import type { CompanyEmission, CompanyEmissionArray } from './types';
 
-	export let data;
+	export let data: CompanyEmissionArray;
 
-	function escapeCSVValue(value) {
+	function escapeCSVValue(value: string | number | null | undefined) {
 		if (typeof value === 'string') {
 			// Escape double quotes by doubling them
 			const escaped = value.replace(/"/g, '""');
@@ -23,7 +24,7 @@
 			return;
 		}
 
-		const headers = Object.keys(data[0]);
+		const headers = Object.keys(data[0]) as (keyof CompanyEmission)[];
 		const rows = data.map((row) => headers.map((header) => escapeCSVValue(row[header])).join(','));
 		const csvContent = [headers.join(','), ...rows].join('\n');
 
