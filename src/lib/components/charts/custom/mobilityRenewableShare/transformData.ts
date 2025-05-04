@@ -37,13 +37,14 @@ export function transformDataForChart(
 	countries: GetCountriesQuery['countries'],
 	currentCountry: string = 'DE'
 ): LineChartData {
-	if (!apiData || apiData.length === 0) {
+	if (!apiData?.length) {
 		return { chartData: [], keys: [], labels: [], colors: [] };
 	}
 
 	// Get unique periods and regions
 	const periods = [...new Set(apiData.map((item) => item.period))].sort();
-	// Sort regions to ensure consistent ordering
+
+	// Extract and filter regions to ensure they are valid strings
 	let regions = [...new Set(apiData.map((item) => item.region))]
 		.filter((region): region is string => region !== null && region !== undefined)
 		.sort((a, b) => a.localeCompare(b));
@@ -56,9 +57,17 @@ export function transformDataForChart(
 
 	// Create a lookup map for quick access to values
 	const dataMap: Record<string, Record<string, number>> = {};
+
+	// Populate the data map with values from the API
 	apiData.forEach((item) => {
-		if (!dataMap[item.period ?? '']) dataMap[item.period ?? ''] = {};
-		dataMap[item.period ?? ''][item.region ?? ''] = item.value ?? NaN;
+		const period = item.period ?? '';
+		const region = item.region ?? '';
+
+		// Initialize period entry if it doesn't exist
+		dataMap[period] = dataMap[period] ?? {};
+
+		// Store the value, defaulting to NaN if null/undefined
+		dataMap[period][region] = item.value ?? NaN;
 	});
 
 	// Create chart data with the format expected by chartLine
@@ -68,7 +77,7 @@ export function transformDataForChart(
 			label: period
 		};
 
-		// Add each region as a property
+		// Add each region's value as a property
 		regions.forEach((region) => {
 			dataPoint[region] = dataMap[period ?? '']?.[region] ?? NaN;
 		});
@@ -77,14 +86,12 @@ export function transformDataForChart(
 	});
 
 	// Create colors array matching the regions order
-	const colors = regions.map((region) => {
-		// Use highlighted color for the current country
-		if (region === currentCountry) {
-			return regionColors.highlighted;
-		}
-		// Otherwise use the region's default color or gray if not defined
-		return regionColors[region as keyof typeof regionColors] ?? DEFAULT_COLOR;
-	});
+	const colors = regions.map((region) =>
+		// Use highlighted color for the current country, otherwise default
+		region === currentCountry
+			? regionColors.highlighted
+			: (regionColors[region as keyof typeof regionColors] ?? DEFAULT_COLOR)
+	);
 
 	// Create labels using country names when available
 	const labels = regions.map((region) => {
