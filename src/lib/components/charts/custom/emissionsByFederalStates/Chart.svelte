@@ -75,11 +75,9 @@
 	$: colorScale = scaleLinear().range(['#6EC051', '#2C6319']).domain(domain);
 
 	$: getColor = (feature) => {
-		console.log("getColor", feature.properties['name'])
 		const dataForFeature = data.find(
 			(d) => d.region == feature.properties['name'] && d.year == selectedYear
 		);
-		console.log("getColor", dataForFeature)
 		if (dataForFeature) return colorScale(dataForFeature['KSG_percapita']);
 	};
 
@@ -125,27 +123,24 @@
 		var result = 0;
 		if (cumulative) {
 			var currentRow = data.filter((d) => d.region == state && d.year == selectedYear)[0];
-			var keys = Object.keys(currentRow);
-			var selectedIndex = 0;
-			if (sector == false) {
-				selectedIndex = 25;
-			} else {
-				selectedIndex = keys.indexOf(sector);
-			}
-			var indexes = [];
-			for (var i = 0; i < keys.length; i++) {
-				if (selectedSectors.includes(keys[i])) {
-					indexes.push(i);
-				}
-			}
 
-			var values = Object.values(currentRow).filter((value, index) => {
-				return indexes.includes(index) && index < selectedIndex;
-			});
-
-			result = values.reduce(function (a, b) {
-				return a + b;
-			}, 0);
+			if(selectedSectors.length <= 0){
+				return 0;
+			}
+			
+			var subset_sectors;
+			if(sector == false){
+				subset_sectors = [...selectedSectors]
+			}else{
+				const subset_id = selectedSectors.findIndex(item => item === sector);
+				subset_sectors = selectedSectors.slice(0, subset_id);
+			}
+			if(subset_sectors.length > 0){
+				result = subset_sectors.reduce((a, b) => {
+					return a + currentRow[b];
+				}, 0)
+			}
+			
 		} else {
 			result = data.filter((d) => d.region == state && d.year == selectedYear)[0][sector];
 		}
@@ -195,7 +190,12 @@
 		} else {
 			selectedSectors.push(sector.key);
 		}
-		selectedSectors = selectedSectors;
+		// sort the selected sectors so that the order is always according to the order of the select buttons
+		selectedSectors = selectedSectors.sort((a,b) => {
+			const idxA = sectors.findIndex(row => row.key == a)
+			const idxB = sectors.findIndex(row => row.key == b)
+			return idxA - idxB;
+		});
 	};
 
 	$: sortKey = 'emissions';
@@ -447,7 +447,7 @@
 									<g class="text-gray-400 text-xs fill-current">
 										<text dominant-baseline="hanging" y="6"
 											>{formatNumber(
-												data.find((d) => d.region == state && d.year == selectedYear).total_co2e_t
+												data.find((d) => d.region == state && d.year == selectedYear).KSG
 											)} t gesamt</text
 										>
 										<text dominant-baseline="hanging" y="20"
@@ -476,7 +476,7 @@
 										>
 											<text dominant-baseline="auto"
 												>{formatNumber(
-													data.find((d) => d.region == state && d.year == selectedYear).total_co2e_t
+													data.find((d) => d.region == state && d.year == selectedYear).KSG
 												)} t gesamt</text
 											>
 											<text dominant-baseline="hanging"

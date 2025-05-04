@@ -7,31 +7,8 @@
 	import { pivot_multikey } from '$lib/utils/data';
 	import { getYearlyPopulationByRegionID } from '$lib/utils/directus.helper';
 
-
-
 	$: dataset = null;
 	let maxYear;
-
-	Papa.parse(
-		'https://data.klimadashboard.org/' + PUBLIC_VERSION + '/emissions/emissions_by_sectors.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					const dataset_old = results.data.filter(
-						(d) => d.region !== 'Austria' && d.classification == 'Gesamt' && d.total_co2e_t
-					);
-					maxYear = [...dataset_old]
-						.filter((d) => d.region == 'Wien' && d.total_co2e_t > 0)
-						.sort((a, b) => b.year - a.year)[0].year;
-
-					console.log("dataset", dataset_old)
-				}
-			}
-		}
-	);
 
 	const getEmissionsData = async function () {
 		// sources: "BLI 2024 (1990-2022)"
@@ -48,7 +25,7 @@
 							}
 						]
 					},
-					sort: "year,region.name",
+					sort: "year,category.label",
 					fields: ["category.label","gas.name","gas.unit","id","region.id","region.name","source","type","value","year"],
 					limit: -1
 				})
@@ -87,10 +64,9 @@
 					const sektor = sektors[key];
 					new_row[sektor + "_percapita"] = row[sektor] / pop?.value;
 				}
+				new_row["population"] = pop?.value;
 				return new_row;
 			})
-			console.log("directus", dataset)
-			console.log("population", temp_populations)
 
 			maxYear = [...dataset]
 						.filter((d) => d.region == 'Wien' && d.KSG > 0)
