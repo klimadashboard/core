@@ -2,22 +2,33 @@
 	import Chart from './Chart.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Papa from 'papaparse';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
 
 	let dataGoals;
-	Papa.parse(
-		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_scenarios.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataGoals = results.data;
-				}
-			}
+	const getDataGoals = async function () {
+		try{
+			const directus = getDirectusInstance(fetch);
+			const goals = await directus.request(
+				readItems('erneuerbare_2030_scenarios', {
+					filter: {
+						_and: [
+							{ 
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+							}
+						]
+					},
+					limit: -1
+				})
+			);
+			dataGoals = goals;
+			
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+
+	$: getDataGoals();
 
 	const energyTypes = [
 		{

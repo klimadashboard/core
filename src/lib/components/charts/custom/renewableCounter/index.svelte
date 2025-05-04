@@ -1,49 +1,71 @@
 <script>
 	import Chart from './Chart.svelte';
 	import Papa from 'papaparse';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let dataGoals;
-
-	Papa.parse(
-		'https://data.klimadashboard.org/at/energy/renewables/erneuerbare_2030_scenarios.csv',
-		{
-			download: true,
-			dynamicTyping: true,
-			skipEmptyLines: true,
-			header: true,
-			complete: function (results) {
-				if (results) {
-					dataGoals = results.data;
-				}
-			}
+	const getGoals = async function () {
+		try{
+			const directus = getDirectusInstance(fetch);
+			const goals = await directus.request(
+				readItems('erneuerbare_2030_scenarios', {
+					filter: {
+						_and: [
+							{ 
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+							}
+						]
+					},
+					limit: -1
+				})
+			);
+			dataGoals = goals;
+			
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
 		}
-	);
+	};
+	$: getGoals();
+
+
+	const getProduction = async function (dataKey) {
+		try{
+			const directus = getDirectusInstance(fetch);
+			const production = await directus.request(
+				readItems('ee_produktion', {
+					filter: {
+						_and: [
+							{ 
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								Type: {_eq: dataKey}
+							}
+						]
+					},
+					limit: -1
+				})
+			);
+			return production
+			
+		} catch (error) {
+			console.error('Error fetching suggestions:', error);
+		}
+	};
 
 	let dataPV;
-	Papa.parse('https://data.klimadashboard.org/at/energy/renewables/pv_produktion.csv', {
-		download: true,
-		dynamicTyping: true,
-		skipEmptyLines: true,
-		header: true,
-		complete: function (results) {
-			if (results) {
-				dataPV = results.data;
-			}
-		}
-	});
+	const getPVProduction = async function(){
+		dataPV = await getProduction("pv")
+	}
+	$: getPVProduction();
+
 
 	let dataWind;
-	Papa.parse('https://data.klimadashboard.org/at/energy/renewables/windkraft_produktion.csv', {
-		download: true,
-		dynamicTyping: true,
-		skipEmptyLines: true,
-		header: true,
-		complete: function (results) {
-			if (results) {
-				dataWind = results.data;
-			}
-		}
-	});
+	const getWindProduction = async function(){
+		dataWind = await getProduction("windkraft")
+	}
+	$: getWindProduction();
+
 </script>
 
 {#if dataPV && dataWind && dataGoals}

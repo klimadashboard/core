@@ -96,7 +96,7 @@
 					{#each recentData as datapoint, i}
 						{#if datapoint.period % 10 == 0 || (datapoint.period.includes('Sommer') && parseInt(datapoint.period.slice(-4)) % 10 == 0) || (datapoint.period.includes(dayjs().format('MMMM')) && parseInt(datapoint.period.slice(-4)) % 2 == 0)}
 							<g transform="translate({xScale(i)},{10})">
-								<text class="text-xs fill-gray-600" text-anchor="middle">
+								<text class="text-xs opacity-80 fill-current" text-anchor="middle">
 									{datapoint.period}
 								</text>
 							</g>
@@ -158,7 +158,7 @@
 		<g>
 			{#each yScale.ticks(5) as tick}
 				<g transform="translate(0,{yScale(tick)})">
-					<text y={-5} class="text-xs fill-gray-600">
+					<text y={-5} class="text-xs opacity-80 fill-current">
 						{#if tick == 0}
 							Ø
 						{:else}

@@ -162,7 +162,7 @@
 {/if}
 
 {#if compareFirstYear && compareLastYear}
-	<p class="text-gray-700 mb-4 mx-auto w-max max-w-full text-center">
+	<p class="opacity-80 mb-4 mx-auto w-max max-w-full text-center">
 		Wähle ein Jahr und einen Referenzzeitraum:
 		<input
 			type="number"
@@ -204,7 +204,7 @@
 	</p>
 {/if}
 
-<p class="text-sm mt-2 text-gray-700 border-t pt-2">
+<p class="text-sm mt-2 opacity-80 border-t pt-2">
 	{selectedStation.name} (ID {selectedStation.id}); Daten von
 	{#if PUBLIC_VERSION == 'at'}
 		<a href="https://www.geosphere.at" class="underline underline-offset-2">Geosphere</a>

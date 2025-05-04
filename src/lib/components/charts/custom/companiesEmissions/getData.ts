@@ -1,6 +1,7 @@
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { flattenCompanies } from './utils';
+import type { Company, CompanyEmissionArray } from './types';
 
 // NOTE: Use these filters to filter directly via the API call,
 // instead of fetching all data and filtering client side:
@@ -16,12 +17,11 @@ const directus = getDirectusInstance(fetch);
 export const getCompanyEmissionData = async () => {
 	const data = await directus.request(
 		readItems('companies_emissions', {
-			fields: ['year', 'company', 'scope', 'value', 'category'],
-
+			fields: ['year', 'company', 'scope', 'value', 'category', 'source'],
 			limit: -1
 		})
 	);
-	return data;
+	return data as CompanyEmissionArray;
 };
 
 export const getCompanyMetaData = async () => {
@@ -41,7 +41,11 @@ export const getCompanyMetaData = async () => {
 			limit: -1
 		})
 	);
-	return flattenCompanies(data);
+
+	// Flatten data for easier usage in the chart components
+	const flattenedData = flattenCompanies(data as Company[]);
+
+	return flattenedData;
 };
 
 export const getAllSectors = async () => {
