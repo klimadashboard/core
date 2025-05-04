@@ -194,14 +194,38 @@ export type Query = {
   emissions_aggregated: Array<Emissions_Aggregated>;
   emissions_by_id?: Maybe<Emissions>;
   emissions_by_version?: Maybe<Version_Emissions>;
+  emissions_category: Array<Emissions_Category>;
+  emissions_category_aggregated: Array<Emissions_Category_Aggregated>;
+  emissions_category_by_id?: Maybe<Emissions_Category>;
+  emissions_category_by_version?: Maybe<Version_Emissions_Category>;
+  emissions_category_emissions_category: Array<Emissions_Category_Emissions_Category>;
+  emissions_category_emissions_category_aggregated: Array<Emissions_Category_Emissions_Category_Aggregated>;
+  emissions_category_emissions_category_by_id?: Maybe<Emissions_Category_Emissions_Category>;
+  emissions_category_emissions_category_by_version?: Maybe<Version_Emissions_Category_Emissions_Category>;
+  emissions_data: Array<Emissions_Data>;
+  emissions_data_aggregated: Array<Emissions_Data_Aggregated>;
+  emissions_data_by_id?: Maybe<Emissions_Data>;
+  emissions_data_by_version?: Maybe<Version_Emissions_Data>;
   energy: Array<Energy>;
   energy_aggregated: Array<Energy_Aggregated>;
   energy_by_id?: Maybe<Energy>;
   energy_by_version?: Maybe<Version_Energy>;
+  energy_heating_systems: Array<Energy_Heating_Systems>;
+  energy_heating_systems_aggregated: Array<Energy_Heating_Systems_Aggregated>;
+  energy_heating_systems_by_id?: Maybe<Energy_Heating_Systems>;
+  energy_heating_systems_by_version?: Maybe<Version_Energy_Heating_Systems>;
   energy_renewable_share: Array<Energy_Renewable_Share>;
   energy_renewable_share_aggregated: Array<Energy_Renewable_Share_Aggregated>;
   energy_renewable_share_by_id?: Maybe<Energy_Renewable_Share>;
   energy_renewable_share_by_version?: Maybe<Version_Energy_Renewable_Share>;
+  energy_solar_units: Array<Energy_Solar_Units>;
+  energy_solar_units_aggregated: Array<Energy_Solar_Units_Aggregated>;
+  energy_solar_units_by_id?: Maybe<Energy_Solar_Units>;
+  energy_solar_units_by_version?: Maybe<Version_Energy_Solar_Units>;
+  energy_wind_units: Array<Energy_Wind_Units>;
+  energy_wind_units_aggregated: Array<Energy_Wind_Units_Aggregated>;
+  energy_wind_units_by_id?: Maybe<Energy_Wind_Units>;
+  energy_wind_units_by_version?: Maybe<Version_Energy_Wind_Units>;
   erneuerbare_2030_scenarios: Array<Erneuerbare_2030_Scenarios>;
   erneuerbare_2030_scenarios_aggregated: Array<Erneuerbare_2030_Scenarios_Aggregated>;
   erneuerbare_2030_scenarios_by_id?: Maybe<Erneuerbare_2030_Scenarios>;
@@ -210,6 +234,10 @@ export type Query = {
   gas_imports_aggregated: Array<Gas_Imports_Aggregated>;
   gas_imports_by_id?: Maybe<Gas_Imports>;
   gas_imports_by_version?: Maybe<Version_Gas_Imports>;
+  gases: Array<Gases>;
+  gases_aggregated: Array<Gases_Aggregated>;
+  gases_by_id?: Maybe<Gases>;
+  gases_by_version?: Maybe<Version_Gases>;
   global_co2_concentration: Array<Global_Co2_Concentration>;
   global_co2_concentration_aggregated: Array<Global_Co2_Concentration_Aggregated>;
   global_co2_concentration_by_id?: Maybe<Global_Co2_Concentration>;
@@ -298,6 +326,10 @@ export type Query = {
   policies_updates_translations_aggregated: Array<Policies_Updates_Translations_Aggregated>;
   policies_updates_translations_by_id?: Maybe<Policies_Updates_Translations>;
   policies_updates_translations_by_version?: Maybe<Version_Policies_Updates_Translations>;
+  population: Array<Population>;
+  population_aggregated: Array<Population_Aggregated>;
+  population_by_id?: Maybe<Population>;
+  population_by_version?: Maybe<Version_Population>;
   pv_produktion: Array<Pv_Produktion>;
   pv_produktion_aggregated: Array<Pv_Produktion_Aggregated>;
   pv_produktion_by_id?: Maybe<Pv_Produktion>;
@@ -346,6 +378,10 @@ export type Query = {
   stakeholders_aggregated: Array<Stakeholders_Aggregated>;
   stakeholders_by_id?: Maybe<Stakeholders>;
   stakeholders_by_version?: Maybe<Version_Stakeholders>;
+  urban_sprawl: Array<Urban_Sprawl>;
+  urban_sprawl_aggregated: Array<Urban_Sprawl_Aggregated>;
+  urban_sprawl_by_id?: Maybe<Urban_Sprawl>;
+  urban_sprawl_by_version?: Maybe<Version_Urban_Sprawl>;
   wasserkraft_produktion: Array<Wasserkraft_Produktion>;
   wasserkraft_produktion_aggregated: Array<Wasserkraft_Produktion_Aggregated>;
   wasserkraft_produktion_by_id?: Maybe<Wasserkraft_Produktion>;
@@ -1751,6 +1787,105 @@ export type QueryEmissions_By_VersionArgs = {
 };
 
 
+export type QueryEmissions_CategoryArgs = {
+  filter?: InputMaybe<Emissions_Category_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEmissions_Category_AggregatedArgs = {
+  filter?: InputMaybe<Emissions_Category_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEmissions_Category_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEmissions_Category_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryEmissions_Category_Emissions_CategoryArgs = {
+  filter?: InputMaybe<Emissions_Category_Emissions_Category_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEmissions_Category_Emissions_Category_AggregatedArgs = {
+  filter?: InputMaybe<Emissions_Category_Emissions_Category_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEmissions_Category_Emissions_Category_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEmissions_Category_Emissions_Category_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryEmissions_DataArgs = {
+  filter?: InputMaybe<Emissions_Data_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEmissions_Data_AggregatedArgs = {
+  filter?: InputMaybe<Emissions_Data_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEmissions_Data_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEmissions_Data_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
 export type QueryEnergyArgs = {
   filter?: InputMaybe<Energy_Filter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1784,6 +1919,39 @@ export type QueryEnergy_By_VersionArgs = {
 };
 
 
+export type QueryEnergy_Heating_SystemsArgs = {
+  filter?: InputMaybe<Energy_Heating_Systems_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Heating_Systems_AggregatedArgs = {
+  filter?: InputMaybe<Energy_Heating_Systems_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Heating_Systems_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEnergy_Heating_Systems_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
 export type QueryEnergy_Renewable_ShareArgs = {
   filter?: InputMaybe<Energy_Renewable_Share_Filter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1812,6 +1980,72 @@ export type QueryEnergy_Renewable_Share_By_IdArgs = {
 
 
 export type QueryEnergy_Renewable_Share_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryEnergy_Solar_UnitsArgs = {
+  filter?: InputMaybe<Energy_Solar_Units_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Solar_Units_AggregatedArgs = {
+  filter?: InputMaybe<Energy_Solar_Units_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Solar_Units_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEnergy_Solar_Units_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryEnergy_Wind_UnitsArgs = {
+  filter?: InputMaybe<Energy_Wind_Units_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Wind_Units_AggregatedArgs = {
+  filter?: InputMaybe<Energy_Wind_Units_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Wind_Units_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEnergy_Wind_Units_By_VersionArgs = {
   id: Scalars['ID']['input'];
   version: Scalars['String']['input'];
 };
@@ -1878,6 +2112,39 @@ export type QueryGas_Imports_By_IdArgs = {
 
 
 export type QueryGas_Imports_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryGasesArgs = {
+  filter?: InputMaybe<Gases_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryGases_AggregatedArgs = {
+  filter?: InputMaybe<Gases_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryGases_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryGases_By_VersionArgs = {
   id: Scalars['ID']['input'];
   version: Scalars['String']['input'];
 };
@@ -2609,6 +2876,39 @@ export type QueryPolicies_Updates_Translations_By_VersionArgs = {
 };
 
 
+export type QueryPopulationArgs = {
+  filter?: InputMaybe<Population_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryPopulation_AggregatedArgs = {
+  filter?: InputMaybe<Population_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryPopulation_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryPopulation_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
 export type QueryPv_ProduktionArgs = {
   filter?: InputMaybe<Pv_Produktion_Filter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -3005,6 +3305,39 @@ export type QueryStakeholders_By_VersionArgs = {
 };
 
 
+export type QueryUrban_SprawlArgs = {
+  filter?: InputMaybe<Urban_Sprawl_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryUrban_Sprawl_AggregatedArgs = {
+  filter?: InputMaybe<Urban_Sprawl_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryUrban_Sprawl_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryUrban_Sprawl_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
 export type QueryWasserkraft_ProduktionArgs = {
   filter?: InputMaybe<Wasserkraft_Produktion_Filter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -3183,11 +3516,18 @@ export type Subscription = {
   ee_potentiale_mutated?: Maybe<Ee_Potentiale_Mutated>;
   ee_produktion_mutated?: Maybe<Ee_Produktion_Mutated>;
   ee_zielpfad_mutated?: Maybe<Ee_Zielpfad_Mutated>;
+  emissions_category_emissions_category_mutated?: Maybe<Emissions_Category_Emissions_Category_Mutated>;
+  emissions_category_mutated?: Maybe<Emissions_Category_Mutated>;
+  emissions_data_mutated?: Maybe<Emissions_Data_Mutated>;
   emissions_mutated?: Maybe<Emissions_Mutated>;
+  energy_heating_systems_mutated?: Maybe<Energy_Heating_Systems_Mutated>;
   energy_mutated?: Maybe<Energy_Mutated>;
   energy_renewable_share_mutated?: Maybe<Energy_Renewable_Share_Mutated>;
+  energy_solar_units_mutated?: Maybe<Energy_Solar_Units_Mutated>;
+  energy_wind_units_mutated?: Maybe<Energy_Wind_Units_Mutated>;
   erneuerbare_2030_scenarios_mutated?: Maybe<Erneuerbare_2030_Scenarios_Mutated>;
   gas_imports_mutated?: Maybe<Gas_Imports_Mutated>;
+  gases_mutated?: Maybe<Gases_Mutated>;
   global_co2_concentration_mutated?: Maybe<Global_Co2_Concentration_Mutated>;
   glossary_mutated?: Maybe<Glossary_Mutated>;
   glossary_translations_mutated?: Maybe<Glossary_Translations_Mutated>;
@@ -3210,6 +3550,7 @@ export type Subscription = {
   policies_translations_mutated?: Maybe<Policies_Translations_Mutated>;
   policies_updates_mutated?: Maybe<Policies_Updates_Mutated>;
   policies_updates_translations_mutated?: Maybe<Policies_Updates_Translations_Mutated>;
+  population_mutated?: Maybe<Population_Mutated>;
   pv_produktion_mutated?: Maybe<Pv_Produktion_Mutated>;
   pv_zielpfad_mutated?: Maybe<Pv_Zielpfad_Mutated>;
   quiz_answers_mutated?: Maybe<Quiz_Answers_Mutated>;
@@ -3222,6 +3563,7 @@ export type Subscription = {
   sites_mutated?: Maybe<Sites_Mutated>;
   sites_translations_mutated?: Maybe<Sites_Translations_Mutated>;
   stakeholders_mutated?: Maybe<Stakeholders_Mutated>;
+  urban_sprawl_mutated?: Maybe<Urban_Sprawl_Mutated>;
   wasserkraft_produktion_mutated?: Maybe<Wasserkraft_Produktion_Mutated>;
   wasserkraft_zielpfad_mutated?: Maybe<Wasserkraft_Zielpfad_Mutated>;
   windkraft_produktion_mutated?: Maybe<Windkraft_Produktion_Mutated>;
@@ -3454,7 +3796,27 @@ export type SubscriptionEe_Zielpfad_MutatedArgs = {
 };
 
 
+export type SubscriptionEmissions_Category_Emissions_Category_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionEmissions_Category_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionEmissions_Data_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
 export type SubscriptionEmissions_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionEnergy_Heating_Systems_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
@@ -3469,12 +3831,27 @@ export type SubscriptionEnergy_Renewable_Share_MutatedArgs = {
 };
 
 
+export type SubscriptionEnergy_Solar_Units_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionEnergy_Wind_Units_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
 export type SubscriptionErneuerbare_2030_Scenarios_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
 
 export type SubscriptionGas_Imports_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionGases_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
@@ -3589,6 +3966,11 @@ export type SubscriptionPolicies_Updates_Translations_MutatedArgs = {
 };
 
 
+export type SubscriptionPopulation_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
 export type SubscriptionPv_Produktion_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
@@ -3645,6 +4027,11 @@ export type SubscriptionSites_Translations_MutatedArgs = {
 
 
 export type SubscriptionStakeholders_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionUrban_Sprawl_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
@@ -6759,6 +7146,263 @@ export type Emissions_Aggregated_Fields = {
   value?: Maybe<Scalars['Float']['output']>;
 };
 
+export type Emissions_Category = {
+  __typename?: 'emissions_category';
+  children?: Maybe<Array<Maybe<Emissions_Category_Emissions_Category>>>;
+  children_func?: Maybe<Count_Functions>;
+  code: Scalars['ID']['output'];
+  explanation?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  note?: Maybe<Scalars['String']['output']>;
+  oli_names?: Maybe<Scalars['String']['output']>;
+  unfccc_names?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type Emissions_CategoryChildrenArgs = {
+  filter?: InputMaybe<Emissions_Category_Emissions_Category_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Emissions_Category_Aggregated = {
+  __typename?: 'emissions_category_aggregated';
+  count?: Maybe<Emissions_Category_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Emissions_Category_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+};
+
+export type Emissions_Category_Aggregated_Count = {
+  __typename?: 'emissions_category_aggregated_count';
+  children?: Maybe<Scalars['Int']['output']>;
+  code?: Maybe<Scalars['Int']['output']>;
+  explanation?: Maybe<Scalars['Int']['output']>;
+  label?: Maybe<Scalars['Int']['output']>;
+  note?: Maybe<Scalars['Int']['output']>;
+  oli_names?: Maybe<Scalars['Int']['output']>;
+  unfccc_names?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Emissions_Category_Emissions_Category = {
+  __typename?: 'emissions_category_emissions_category';
+  emissions_category_code?: Maybe<Emissions_Category>;
+  id: Scalars['ID']['output'];
+  related_emissions_category_code?: Maybe<Emissions_Category>;
+};
+
+
+export type Emissions_Category_Emissions_CategoryEmissions_Category_CodeArgs = {
+  filter?: InputMaybe<Emissions_Category_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type Emissions_Category_Emissions_CategoryRelated_Emissions_Category_CodeArgs = {
+  filter?: InputMaybe<Emissions_Category_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Emissions_Category_Emissions_Category_Aggregated = {
+  __typename?: 'emissions_category_emissions_category_aggregated';
+  avg?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Fields>;
+  avgDistinct?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Fields>;
+  count?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Fields>;
+  min?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Fields>;
+  sum?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Fields>;
+  sumDistinct?: Maybe<Emissions_Category_Emissions_Category_Aggregated_Fields>;
+};
+
+export type Emissions_Category_Emissions_Category_Aggregated_Count = {
+  __typename?: 'emissions_category_emissions_category_aggregated_count';
+  emissions_category_code?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  related_emissions_category_code?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Emissions_Category_Emissions_Category_Aggregated_Fields = {
+  __typename?: 'emissions_category_emissions_category_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Emissions_Category_Emissions_Category_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Emissions_Category_Emissions_Category_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Emissions_Category_Emissions_Category_Filter>>>;
+  emissions_category_code?: InputMaybe<Emissions_Category_Filter>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  related_emissions_category_code?: InputMaybe<Emissions_Category_Filter>;
+};
+
+export type Emissions_Category_Emissions_Category_Mutated = {
+  __typename?: 'emissions_category_emissions_category_mutated';
+  data?: Maybe<Emissions_Category_Emissions_Category>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Emissions_Category_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Emissions_Category_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Emissions_Category_Filter>>>;
+  children?: InputMaybe<Emissions_Category_Emissions_Category_Filter>;
+  children_func?: InputMaybe<Count_Function_Filter_Operators>;
+  code?: InputMaybe<String_Filter_Operators>;
+  explanation?: InputMaybe<String_Filter_Operators>;
+  label?: InputMaybe<String_Filter_Operators>;
+  note?: InputMaybe<String_Filter_Operators>;
+  oli_names?: InputMaybe<String_Filter_Operators>;
+  unfccc_names?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Emissions_Category_Mutated = {
+  __typename?: 'emissions_category_mutated';
+  data?: Maybe<Emissions_Category>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Emissions_Data = {
+  __typename?: 'emissions_data';
+  category?: Maybe<Emissions_Category>;
+  country?: Maybe<Countries>;
+  day?: Maybe<Scalars['Int']['output']>;
+  gas?: Maybe<Gases>;
+  id: Scalars['ID']['output'];
+  month?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Regions>;
+  source?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+  update?: Maybe<Scalars['Date']['output']>;
+  update_func?: Maybe<Datetime_Functions>;
+  value?: Maybe<Scalars['Float']['output']>;
+  /** value weighted by gas.ghg_weight */
+  value_weighted?: Maybe<Scalars['Float']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+
+export type Emissions_DataCategoryArgs = {
+  filter?: InputMaybe<Emissions_Category_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type Emissions_DataCountryArgs = {
+  filter?: InputMaybe<Countries_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type Emissions_DataGasArgs = {
+  filter?: InputMaybe<Gases_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type Emissions_DataRegionArgs = {
+  filter?: InputMaybe<Regions_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Emissions_Data_Aggregated = {
+  __typename?: 'emissions_data_aggregated';
+  avg?: Maybe<Emissions_Data_Aggregated_Fields>;
+  avgDistinct?: Maybe<Emissions_Data_Aggregated_Fields>;
+  count?: Maybe<Emissions_Data_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Emissions_Data_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Emissions_Data_Aggregated_Fields>;
+  min?: Maybe<Emissions_Data_Aggregated_Fields>;
+  sum?: Maybe<Emissions_Data_Aggregated_Fields>;
+  sumDistinct?: Maybe<Emissions_Data_Aggregated_Fields>;
+};
+
+export type Emissions_Data_Aggregated_Count = {
+  __typename?: 'emissions_data_aggregated_count';
+  category?: Maybe<Scalars['Int']['output']>;
+  country?: Maybe<Scalars['Int']['output']>;
+  day?: Maybe<Scalars['Int']['output']>;
+  gas?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  month?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  source?: Maybe<Scalars['Int']['output']>;
+  type?: Maybe<Scalars['Int']['output']>;
+  update?: Maybe<Scalars['Int']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+  /** value weighted by gas.ghg_weight */
+  value_weighted?: Maybe<Scalars['Int']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Emissions_Data_Aggregated_Fields = {
+  __typename?: 'emissions_data_aggregated_fields';
+  day?: Maybe<Scalars['Float']['output']>;
+  id?: Maybe<Scalars['Float']['output']>;
+  month?: Maybe<Scalars['Float']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+  /** value weighted by gas.ghg_weight */
+  value_weighted?: Maybe<Scalars['Float']['output']>;
+  year?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Emissions_Data_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Emissions_Data_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Emissions_Data_Filter>>>;
+  category?: InputMaybe<Emissions_Category_Filter>;
+  country?: InputMaybe<Countries_Filter>;
+  day?: InputMaybe<Number_Filter_Operators>;
+  gas?: InputMaybe<Gases_Filter>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  month?: InputMaybe<Number_Filter_Operators>;
+  region?: InputMaybe<Regions_Filter>;
+  source?: InputMaybe<String_Filter_Operators>;
+  type?: InputMaybe<String_Filter_Operators>;
+  update?: InputMaybe<Date_Filter_Operators>;
+  update_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  value?: InputMaybe<Number_Filter_Operators>;
+  value_weighted?: InputMaybe<Number_Filter_Operators>;
+  year?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Emissions_Data_Mutated = {
+  __typename?: 'emissions_data_mutated';
+  data?: Maybe<Emissions_Data>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Emissions_Filter = {
   _and?: InputMaybe<Array<InputMaybe<Emissions_Filter>>>;
   _or?: InputMaybe<Array<InputMaybe<Emissions_Filter>>>;
@@ -6846,6 +7490,70 @@ export type Energy_Filter = {
   value?: InputMaybe<Number_Filter_Operators>;
 };
 
+export type Energy_Heating_Systems = {
+  __typename?: 'energy_heating_systems';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  period?: Maybe<Scalars['String']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  region_label?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  unit?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Energy_Heating_Systems_Aggregated = {
+  __typename?: 'energy_heating_systems_aggregated';
+  avg?: Maybe<Energy_Heating_Systems_Aggregated_Fields>;
+  avgDistinct?: Maybe<Energy_Heating_Systems_Aggregated_Fields>;
+  count?: Maybe<Energy_Heating_Systems_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Energy_Heating_Systems_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Energy_Heating_Systems_Aggregated_Fields>;
+  min?: Maybe<Energy_Heating_Systems_Aggregated_Fields>;
+  sum?: Maybe<Energy_Heating_Systems_Aggregated_Fields>;
+  sumDistinct?: Maybe<Energy_Heating_Systems_Aggregated_Fields>;
+};
+
+export type Energy_Heating_Systems_Aggregated_Count = {
+  __typename?: 'energy_heating_systems_aggregated_count';
+  category?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  period?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  region_label?: Maybe<Scalars['Int']['output']>;
+  source?: Maybe<Scalars['Int']['output']>;
+  unit?: Maybe<Scalars['Int']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Energy_Heating_Systems_Aggregated_Fields = {
+  __typename?: 'energy_heating_systems_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Energy_Heating_Systems_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Energy_Heating_Systems_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Energy_Heating_Systems_Filter>>>;
+  category?: InputMaybe<String_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  period?: InputMaybe<String_Filter_Operators>;
+  region?: InputMaybe<String_Filter_Operators>;
+  region_label?: InputMaybe<String_Filter_Operators>;
+  source?: InputMaybe<String_Filter_Operators>;
+  unit?: InputMaybe<String_Filter_Operators>;
+  value?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Energy_Heating_Systems_Mutated = {
+  __typename?: 'energy_heating_systems_mutated';
+  data?: Maybe<Energy_Heating_Systems>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Energy_Mutated = {
   __typename?: 'energy_mutated';
   data?: Maybe<Energy>;
@@ -6919,6 +7627,207 @@ export type Energy_Renewable_Share_Filter = {
 export type Energy_Renewable_Share_Mutated = {
   __typename?: 'energy_renewable_share_mutated';
   data?: Maybe<Energy_Renewable_Share>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Energy_Solar_Units = {
+  __typename?: 'energy_solar_units';
+  commissioning_date?: Maybe<Scalars['Date']['output']>;
+  commissioning_date_func?: Maybe<Date_Functions>;
+  country?: Maybe<Scalars['String']['output']>;
+  district?: Maybe<Scalars['String']['output']>;
+  federal_state?: Maybe<Scalars['String']['output']>;
+  grid_operator_review_status?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  last_update?: Maybe<Scalars['Date']['output']>;
+  last_update_func?: Maybe<Datetime_Functions>;
+  module_count?: Maybe<Scalars['Float']['output']>;
+  municipality?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  orientation?: Maybe<Scalars['String']['output']>;
+  postcode?: Maybe<Scalars['String']['output']>;
+  power_kw?: Maybe<Scalars['Float']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  shutdown_date?: Maybe<Scalars['Date']['output']>;
+  shutdown_date_func?: Maybe<Date_Functions>;
+  status?: Maybe<Scalars['String']['output']>;
+  storage_installed?: Maybe<Scalars['Boolean']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+};
+
+export type Energy_Solar_Units_Aggregated = {
+  __typename?: 'energy_solar_units_aggregated';
+  avg?: Maybe<Energy_Solar_Units_Aggregated_Fields>;
+  avgDistinct?: Maybe<Energy_Solar_Units_Aggregated_Fields>;
+  count?: Maybe<Energy_Solar_Units_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Energy_Solar_Units_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Energy_Solar_Units_Aggregated_Fields>;
+  min?: Maybe<Energy_Solar_Units_Aggregated_Fields>;
+  sum?: Maybe<Energy_Solar_Units_Aggregated_Fields>;
+  sumDistinct?: Maybe<Energy_Solar_Units_Aggregated_Fields>;
+};
+
+export type Energy_Solar_Units_Aggregated_Count = {
+  __typename?: 'energy_solar_units_aggregated_count';
+  commissioning_date?: Maybe<Scalars['Int']['output']>;
+  country?: Maybe<Scalars['Int']['output']>;
+  district?: Maybe<Scalars['Int']['output']>;
+  federal_state?: Maybe<Scalars['Int']['output']>;
+  grid_operator_review_status?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  last_update?: Maybe<Scalars['Int']['output']>;
+  module_count?: Maybe<Scalars['Int']['output']>;
+  municipality?: Maybe<Scalars['Int']['output']>;
+  name?: Maybe<Scalars['Int']['output']>;
+  orientation?: Maybe<Scalars['Int']['output']>;
+  postcode?: Maybe<Scalars['Int']['output']>;
+  power_kw?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  shutdown_date?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['Int']['output']>;
+  storage_installed?: Maybe<Scalars['Int']['output']>;
+  type?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Energy_Solar_Units_Aggregated_Fields = {
+  __typename?: 'energy_solar_units_aggregated_fields';
+  module_count?: Maybe<Scalars['Float']['output']>;
+  power_kw?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Energy_Solar_Units_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Energy_Solar_Units_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Energy_Solar_Units_Filter>>>;
+  commissioning_date?: InputMaybe<Date_Filter_Operators>;
+  commissioning_date_func?: InputMaybe<Date_Function_Filter_Operators>;
+  country?: InputMaybe<String_Filter_Operators>;
+  district?: InputMaybe<String_Filter_Operators>;
+  federal_state?: InputMaybe<String_Filter_Operators>;
+  grid_operator_review_status?: InputMaybe<String_Filter_Operators>;
+  id?: InputMaybe<String_Filter_Operators>;
+  last_update?: InputMaybe<Date_Filter_Operators>;
+  last_update_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  module_count?: InputMaybe<Number_Filter_Operators>;
+  municipality?: InputMaybe<String_Filter_Operators>;
+  name?: InputMaybe<String_Filter_Operators>;
+  orientation?: InputMaybe<String_Filter_Operators>;
+  postcode?: InputMaybe<String_Filter_Operators>;
+  power_kw?: InputMaybe<Number_Filter_Operators>;
+  region?: InputMaybe<String_Filter_Operators>;
+  shutdown_date?: InputMaybe<Date_Filter_Operators>;
+  shutdown_date_func?: InputMaybe<Date_Function_Filter_Operators>;
+  status?: InputMaybe<String_Filter_Operators>;
+  storage_installed?: InputMaybe<Boolean_Filter_Operators>;
+  type?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Energy_Solar_Units_Mutated = {
+  __typename?: 'energy_solar_units_mutated';
+  data?: Maybe<Energy_Solar_Units>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Energy_Wind_Units = {
+  __typename?: 'energy_wind_units';
+  commissioning_date?: Maybe<Scalars['Date']['output']>;
+  commissioning_date_func?: Maybe<Date_Functions>;
+  country?: Maybe<Scalars['String']['output']>;
+  district?: Maybe<Scalars['String']['output']>;
+  federal_state?: Maybe<Scalars['String']['output']>;
+  height?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  last_update?: Maybe<Scalars['Date']['output']>;
+  last_update_func?: Maybe<Date_Functions>;
+  lat?: Maybe<Scalars['Float']['output']>;
+  lon?: Maybe<Scalars['Float']['output']>;
+  municipality?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  net_power_kw?: Maybe<Scalars['Float']['output']>;
+  power_kw?: Maybe<Scalars['Float']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  rotor_diameter?: Maybe<Scalars['Float']['output']>;
+  shutdown_date?: Maybe<Scalars['Date']['output']>;
+  shutdown_date_func?: Maybe<Date_Functions>;
+  status?: Maybe<Scalars['String']['output']>;
+};
+
+export type Energy_Wind_Units_Aggregated = {
+  __typename?: 'energy_wind_units_aggregated';
+  avg?: Maybe<Energy_Wind_Units_Aggregated_Fields>;
+  avgDistinct?: Maybe<Energy_Wind_Units_Aggregated_Fields>;
+  count?: Maybe<Energy_Wind_Units_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Energy_Wind_Units_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Energy_Wind_Units_Aggregated_Fields>;
+  min?: Maybe<Energy_Wind_Units_Aggregated_Fields>;
+  sum?: Maybe<Energy_Wind_Units_Aggregated_Fields>;
+  sumDistinct?: Maybe<Energy_Wind_Units_Aggregated_Fields>;
+};
+
+export type Energy_Wind_Units_Aggregated_Count = {
+  __typename?: 'energy_wind_units_aggregated_count';
+  commissioning_date?: Maybe<Scalars['Int']['output']>;
+  country?: Maybe<Scalars['Int']['output']>;
+  district?: Maybe<Scalars['Int']['output']>;
+  federal_state?: Maybe<Scalars['Int']['output']>;
+  height?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  last_update?: Maybe<Scalars['Int']['output']>;
+  lat?: Maybe<Scalars['Int']['output']>;
+  lon?: Maybe<Scalars['Int']['output']>;
+  municipality?: Maybe<Scalars['Int']['output']>;
+  name?: Maybe<Scalars['Int']['output']>;
+  net_power_kw?: Maybe<Scalars['Int']['output']>;
+  power_kw?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  rotor_diameter?: Maybe<Scalars['Int']['output']>;
+  shutdown_date?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Energy_Wind_Units_Aggregated_Fields = {
+  __typename?: 'energy_wind_units_aggregated_fields';
+  height?: Maybe<Scalars['Float']['output']>;
+  lat?: Maybe<Scalars['Float']['output']>;
+  lon?: Maybe<Scalars['Float']['output']>;
+  net_power_kw?: Maybe<Scalars['Float']['output']>;
+  power_kw?: Maybe<Scalars['Float']['output']>;
+  rotor_diameter?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Energy_Wind_Units_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Energy_Wind_Units_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Energy_Wind_Units_Filter>>>;
+  commissioning_date?: InputMaybe<Date_Filter_Operators>;
+  commissioning_date_func?: InputMaybe<Date_Function_Filter_Operators>;
+  country?: InputMaybe<String_Filter_Operators>;
+  district?: InputMaybe<String_Filter_Operators>;
+  federal_state?: InputMaybe<String_Filter_Operators>;
+  height?: InputMaybe<Number_Filter_Operators>;
+  id?: InputMaybe<String_Filter_Operators>;
+  last_update?: InputMaybe<Date_Filter_Operators>;
+  last_update_func?: InputMaybe<Date_Function_Filter_Operators>;
+  lat?: InputMaybe<Number_Filter_Operators>;
+  lon?: InputMaybe<Number_Filter_Operators>;
+  municipality?: InputMaybe<String_Filter_Operators>;
+  name?: InputMaybe<String_Filter_Operators>;
+  net_power_kw?: InputMaybe<Number_Filter_Operators>;
+  power_kw?: InputMaybe<Number_Filter_Operators>;
+  region?: InputMaybe<String_Filter_Operators>;
+  rotor_diameter?: InputMaybe<Number_Filter_Operators>;
+  shutdown_date?: InputMaybe<Date_Filter_Operators>;
+  shutdown_date_func?: InputMaybe<Date_Function_Filter_Operators>;
+  status?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Energy_Wind_Units_Mutated = {
+  __typename?: 'energy_wind_units_mutated';
+  data?: Maybe<Energy_Wind_Units>;
   event?: Maybe<EventEnum>;
   key: Scalars['ID']['output'];
 };
@@ -7075,6 +7984,54 @@ export type Gas_Imports_Filter = {
 export type Gas_Imports_Mutated = {
   __typename?: 'gas_imports_mutated';
   data?: Maybe<Gas_Imports>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Gases = {
+  __typename?: 'gases';
+  gwp_100?: Maybe<Scalars['Int']['output']>;
+  name: Scalars['ID']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
+};
+
+export type Gases_Aggregated = {
+  __typename?: 'gases_aggregated';
+  avg?: Maybe<Gases_Aggregated_Fields>;
+  avgDistinct?: Maybe<Gases_Aggregated_Fields>;
+  count?: Maybe<Gases_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Gases_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Gases_Aggregated_Fields>;
+  min?: Maybe<Gases_Aggregated_Fields>;
+  sum?: Maybe<Gases_Aggregated_Fields>;
+  sumDistinct?: Maybe<Gases_Aggregated_Fields>;
+};
+
+export type Gases_Aggregated_Count = {
+  __typename?: 'gases_aggregated_count';
+  gwp_100?: Maybe<Scalars['Int']['output']>;
+  name?: Maybe<Scalars['Int']['output']>;
+  unit?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Gases_Aggregated_Fields = {
+  __typename?: 'gases_aggregated_fields';
+  gwp_100?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Gases_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Gases_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Gases_Filter>>>;
+  gwp_100?: InputMaybe<Number_Filter_Operators>;
+  name?: InputMaybe<String_Filter_Operators>;
+  unit?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Gases_Mutated = {
+  __typename?: 'gases_mutated';
+  data?: Maybe<Gases>;
   event?: Maybe<EventEnum>;
   key: Scalars['ID']['output'];
 };
@@ -8818,6 +9775,78 @@ export type Policies_Updates_Translations_Mutated = {
   key: Scalars['ID']['output'];
 };
 
+export type Population = {
+  __typename?: 'population';
+  id: Scalars['ID']['output'];
+  period?: Maybe<Scalars['Date']['output']>;
+  period_func?: Maybe<Date_Functions>;
+  region?: Maybe<Regions>;
+  source?: Maybe<Scalars['String']['output']>;
+  update?: Maybe<Scalars['Date']['output']>;
+  update_func?: Maybe<Date_Functions>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
+
+export type PopulationRegionArgs = {
+  filter?: InputMaybe<Regions_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Population_Aggregated = {
+  __typename?: 'population_aggregated';
+  avg?: Maybe<Population_Aggregated_Fields>;
+  avgDistinct?: Maybe<Population_Aggregated_Fields>;
+  count?: Maybe<Population_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Population_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Population_Aggregated_Fields>;
+  min?: Maybe<Population_Aggregated_Fields>;
+  sum?: Maybe<Population_Aggregated_Fields>;
+  sumDistinct?: Maybe<Population_Aggregated_Fields>;
+};
+
+export type Population_Aggregated_Count = {
+  __typename?: 'population_aggregated_count';
+  id?: Maybe<Scalars['Int']['output']>;
+  period?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  source?: Maybe<Scalars['Int']['output']>;
+  update?: Maybe<Scalars['Int']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Population_Aggregated_Fields = {
+  __typename?: 'population_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Population_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Population_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Population_Filter>>>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  period?: InputMaybe<Date_Filter_Operators>;
+  period_func?: InputMaybe<Date_Function_Filter_Operators>;
+  region?: InputMaybe<Regions_Filter>;
+  source?: InputMaybe<String_Filter_Operators>;
+  update?: InputMaybe<Date_Filter_Operators>;
+  update_func?: InputMaybe<Date_Function_Filter_Operators>;
+  value?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Population_Mutated = {
+  __typename?: 'population_mutated';
+  data?: Maybe<Population>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Pv_Produktion = {
   __typename?: 'pv_produktion';
   Country?: Maybe<Countries>;
@@ -9240,9 +10269,11 @@ export type Regions = {
   attributes_func?: Maybe<Count_Functions>;
   center?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   code?: Maybe<Scalars['String']['output']>;
+  code_short?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Countries>;
   id: Scalars['ID']['output'];
   layer?: Maybe<Scalars['String']['output']>;
+  layer_label?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   name_short?: Maybe<Scalars['String']['output']>;
   nuts?: Maybe<Scalars['String']['output']>;
@@ -9250,6 +10281,8 @@ export type Regions = {
   outline_func?: Maybe<Count_Functions>;
   outline_simple?: Maybe<Scalars['JSON']['output']>;
   outline_simple_func?: Maybe<Count_Functions>;
+  parents?: Maybe<Scalars['JSON']['output']>;
+  parents_func?: Maybe<Count_Functions>;
   population?: Maybe<Scalars['Int']['output']>;
   postcodes?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
 };
@@ -9284,14 +10317,17 @@ export type Regions_Aggregated_Count = {
   attributes?: Maybe<Scalars['Int']['output']>;
   center?: Maybe<Scalars['Int']['output']>;
   code?: Maybe<Scalars['Int']['output']>;
+  code_short?: Maybe<Scalars['Int']['output']>;
   country?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
   layer?: Maybe<Scalars['Int']['output']>;
+  layer_label?: Maybe<Scalars['Int']['output']>;
   name?: Maybe<Scalars['Int']['output']>;
   name_short?: Maybe<Scalars['Int']['output']>;
   nuts?: Maybe<Scalars['Int']['output']>;
   outline?: Maybe<Scalars['Int']['output']>;
   outline_simple?: Maybe<Scalars['Int']['output']>;
+  parents?: Maybe<Scalars['Int']['output']>;
   population?: Maybe<Scalars['Int']['output']>;
   postcodes?: Maybe<Scalars['Int']['output']>;
 };
@@ -9310,9 +10346,11 @@ export type Regions_Filter = {
   attributes_func?: InputMaybe<Count_Function_Filter_Operators>;
   center?: InputMaybe<String_Filter_Operators>;
   code?: InputMaybe<String_Filter_Operators>;
+  code_short?: InputMaybe<String_Filter_Operators>;
   country?: InputMaybe<Countries_Filter>;
   id?: InputMaybe<String_Filter_Operators>;
   layer?: InputMaybe<String_Filter_Operators>;
+  layer_label?: InputMaybe<String_Filter_Operators>;
   name?: InputMaybe<String_Filter_Operators>;
   name_short?: InputMaybe<String_Filter_Operators>;
   nuts?: InputMaybe<String_Filter_Operators>;
@@ -9320,6 +10358,8 @@ export type Regions_Filter = {
   outline_func?: InputMaybe<Count_Function_Filter_Operators>;
   outline_simple?: InputMaybe<String_Filter_Operators>;
   outline_simple_func?: InputMaybe<Count_Function_Filter_Operators>;
+  parents?: InputMaybe<String_Filter_Operators>;
+  parents_func?: InputMaybe<Count_Function_Filter_Operators>;
   population?: InputMaybe<Number_Filter_Operators>;
   postcodes?: InputMaybe<String_Filter_Operators>;
 };
@@ -9773,6 +10813,67 @@ export type String_Filter_Operators = {
   _starts_with?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Urban_Sprawl = {
+  __typename?: 'urban_sprawl';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  period?: Maybe<Scalars['String']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  unit?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Urban_Sprawl_Aggregated = {
+  __typename?: 'urban_sprawl_aggregated';
+  avg?: Maybe<Urban_Sprawl_Aggregated_Fields>;
+  avgDistinct?: Maybe<Urban_Sprawl_Aggregated_Fields>;
+  count?: Maybe<Urban_Sprawl_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Urban_Sprawl_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Urban_Sprawl_Aggregated_Fields>;
+  min?: Maybe<Urban_Sprawl_Aggregated_Fields>;
+  sum?: Maybe<Urban_Sprawl_Aggregated_Fields>;
+  sumDistinct?: Maybe<Urban_Sprawl_Aggregated_Fields>;
+};
+
+export type Urban_Sprawl_Aggregated_Count = {
+  __typename?: 'urban_sprawl_aggregated_count';
+  category?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  period?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  source?: Maybe<Scalars['Int']['output']>;
+  unit?: Maybe<Scalars['Int']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Urban_Sprawl_Aggregated_Fields = {
+  __typename?: 'urban_sprawl_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Urban_Sprawl_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Urban_Sprawl_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Urban_Sprawl_Filter>>>;
+  category?: InputMaybe<String_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  period?: InputMaybe<String_Filter_Operators>;
+  region?: InputMaybe<String_Filter_Operators>;
+  source?: InputMaybe<String_Filter_Operators>;
+  unit?: InputMaybe<String_Filter_Operators>;
+  value?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Urban_Sprawl_Mutated = {
+  __typename?: 'urban_sprawl_mutated';
+  data?: Maybe<Urban_Sprawl>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Version_At_Geosphere_Data = {
   __typename?: 'version_at_geosphere_data';
   date?: Maybe<Scalars['Date']['output']>;
@@ -10212,6 +11313,44 @@ export type Version_Emissions = {
   value?: Maybe<Scalars['Float']['output']>;
 };
 
+export type Version_Emissions_Category = {
+  __typename?: 'version_emissions_category';
+  children?: Maybe<Scalars['JSON']['output']>;
+  children_func?: Maybe<Count_Functions>;
+  code: Scalars['ID']['output'];
+  explanation?: Maybe<Scalars['String']['output']>;
+  label?: Maybe<Scalars['String']['output']>;
+  note?: Maybe<Scalars['String']['output']>;
+  oli_names?: Maybe<Scalars['String']['output']>;
+  unfccc_names?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Emissions_Category_Emissions_Category = {
+  __typename?: 'version_emissions_category_emissions_category';
+  emissions_category_code?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  related_emissions_category_code?: Maybe<Scalars['JSON']['output']>;
+};
+
+export type Version_Emissions_Data = {
+  __typename?: 'version_emissions_data';
+  category?: Maybe<Scalars['JSON']['output']>;
+  country?: Maybe<Scalars['JSON']['output']>;
+  day?: Maybe<Scalars['Int']['output']>;
+  gas?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  month?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['JSON']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+  update?: Maybe<Scalars['Date']['output']>;
+  update_func?: Maybe<Datetime_Functions>;
+  value?: Maybe<Scalars['Float']['output']>;
+  /** value weighted by gas.ghg_weight */
+  value_weighted?: Maybe<Scalars['Float']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Version_Energy = {
   __typename?: 'version_energy';
   category?: Maybe<Scalars['String']['output']>;
@@ -10227,6 +11366,18 @@ export type Version_Energy = {
   value?: Maybe<Scalars['Float']['output']>;
 };
 
+export type Version_Energy_Heating_Systems = {
+  __typename?: 'version_energy_heating_systems';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  period?: Maybe<Scalars['String']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  region_label?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  unit?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Version_Energy_Renewable_Share = {
   __typename?: 'version_energy_renewable_share';
   category?: Maybe<Scalars['String']['output']>;
@@ -10236,6 +11387,55 @@ export type Version_Energy_Renewable_Share = {
   period?: Maybe<Scalars['Date']['output']>;
   period_func?: Maybe<Datetime_Functions>;
   value?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Version_Energy_Solar_Units = {
+  __typename?: 'version_energy_solar_units';
+  commissioning_date?: Maybe<Scalars['Date']['output']>;
+  commissioning_date_func?: Maybe<Date_Functions>;
+  country?: Maybe<Scalars['String']['output']>;
+  district?: Maybe<Scalars['String']['output']>;
+  federal_state?: Maybe<Scalars['String']['output']>;
+  grid_operator_review_status?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  last_update?: Maybe<Scalars['Date']['output']>;
+  last_update_func?: Maybe<Datetime_Functions>;
+  module_count?: Maybe<Scalars['Float']['output']>;
+  municipality?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  orientation?: Maybe<Scalars['String']['output']>;
+  postcode?: Maybe<Scalars['String']['output']>;
+  power_kw?: Maybe<Scalars['Float']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  shutdown_date?: Maybe<Scalars['Date']['output']>;
+  shutdown_date_func?: Maybe<Date_Functions>;
+  status?: Maybe<Scalars['String']['output']>;
+  storage_installed?: Maybe<Scalars['Boolean']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Energy_Wind_Units = {
+  __typename?: 'version_energy_wind_units';
+  commissioning_date?: Maybe<Scalars['Date']['output']>;
+  commissioning_date_func?: Maybe<Date_Functions>;
+  country?: Maybe<Scalars['String']['output']>;
+  district?: Maybe<Scalars['String']['output']>;
+  federal_state?: Maybe<Scalars['String']['output']>;
+  height?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  last_update?: Maybe<Scalars['Date']['output']>;
+  last_update_func?: Maybe<Date_Functions>;
+  lat?: Maybe<Scalars['Float']['output']>;
+  lon?: Maybe<Scalars['Float']['output']>;
+  municipality?: Maybe<Scalars['String']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  net_power_kw?: Maybe<Scalars['Float']['output']>;
+  power_kw?: Maybe<Scalars['Float']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  rotor_diameter?: Maybe<Scalars['Float']['output']>;
+  shutdown_date?: Maybe<Scalars['Date']['output']>;
+  shutdown_date_func?: Maybe<Date_Functions>;
+  status?: Maybe<Scalars['String']['output']>;
 };
 
 export type Version_Erneuerbare_2030_Scenarios = {
@@ -10260,6 +11460,13 @@ export type Version_Gas_Imports = {
   /** alternative to "import_country". will be used if "import_country" is null. */
   import_source?: Maybe<Scalars['String']['output']>;
   value?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Version_Gases = {
+  __typename?: 'version_gases';
+  gwp_100?: Maybe<Scalars['Int']['output']>;
+  name: Scalars['ID']['output'];
+  unit?: Maybe<Scalars['String']['output']>;
 };
 
 export type Version_Global_Co2_Concentration = {
@@ -10503,6 +11710,18 @@ export type Version_Policies_Updates_Translations = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
+export type Version_Population = {
+  __typename?: 'version_population';
+  id: Scalars['ID']['output'];
+  period?: Maybe<Scalars['Date']['output']>;
+  period_func?: Maybe<Date_Functions>;
+  region?: Maybe<Scalars['JSON']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  update?: Maybe<Scalars['Date']['output']>;
+  update_func?: Maybe<Date_Functions>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Version_Pv_Produktion = {
   __typename?: 'version_pv_produktion';
   Country?: Maybe<Scalars['JSON']['output']>;
@@ -10578,9 +11797,11 @@ export type Version_Regions = {
   attributes_func?: Maybe<Count_Functions>;
   center?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   code?: Maybe<Scalars['String']['output']>;
+  code_short?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['JSON']['output']>;
   id: Scalars['ID']['output'];
   layer?: Maybe<Scalars['String']['output']>;
+  layer_label?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   name_short?: Maybe<Scalars['String']['output']>;
   nuts?: Maybe<Scalars['String']['output']>;
@@ -10588,6 +11809,8 @@ export type Version_Regions = {
   outline_func?: Maybe<Count_Functions>;
   outline_simple?: Maybe<Scalars['JSON']['output']>;
   outline_simple_func?: Maybe<Count_Functions>;
+  parents?: Maybe<Scalars['JSON']['output']>;
+  parents_func?: Maybe<Count_Functions>;
   population?: Maybe<Scalars['Int']['output']>;
   postcodes?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
 };
@@ -10656,6 +11879,17 @@ export type Version_Stakeholders = {
   type?: Maybe<Scalars['String']['output']>;
   user_created?: Maybe<Scalars['JSON']['output']>;
   user_updated?: Maybe<Scalars['JSON']['output']>;
+};
+
+export type Version_Urban_Sprawl = {
+  __typename?: 'version_urban_sprawl';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  period?: Maybe<Scalars['String']['output']>;
+  region?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  unit?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
 };
 
 export type Version_Wasserkraft_Produktion = {

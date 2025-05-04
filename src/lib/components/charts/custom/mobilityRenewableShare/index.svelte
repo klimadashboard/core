@@ -1,4 +1,4 @@
-<script context="module">
+<script context="module" lang="ts">
 	// Directive to handle clicks outside of an element
 	function clickOutside(node: HTMLElement, handler: (event: MouseEvent) => void) {
 		const handleClick = (event: MouseEvent) => {
@@ -18,16 +18,18 @@
 </script>
 
 <script lang="ts">
-	import { getCountries, getMobilityRenewableShare } from './getData';
+	import {
+		AsyncGetMobilityRenewableShare,
+		AsyncGetCountries,
+		type GetMobilityRenewableShareQuery,
+		type GetCountriesQuery
+	} from './__generated__/getData.generated';
 	import ChartLine from '$lib/components/charts/chartLine.svelte';
 	import { onMount } from 'svelte';
-	import type { MobilityRenewableShare, Countries } from './schema';
 	import { transformDataForChart, type LineChartData } from './transformData';
 
 	let loading = true;
 	let error: Error | null = null;
-	let data: MobilityRenewableShare = [];
-	let countries: Countries = [];
 	let lineChartData: LineChartData = {
 		chartData: [],
 		keys: [],
@@ -52,7 +54,9 @@
 	currentCountry = getCountryFromDomain();
 
 	// Country selection functionality
-	let availableCountries: { id: string; name: string; selected: boolean }[] = [];
+	let availableCountries: { id: string; name: string | null | undefined; selected: boolean }[] = [];
+	let data: GetMobilityRenewableShareQuery['mobility'];
+	let countries: GetCountriesQuery['countries'];
 	let selectedCountries: string[] = [];
 	let isDropdownOpen = false;
 
@@ -69,7 +73,7 @@
 
 		lineChartData = transformDataForChart(
 			// Filter data to only include selected countries
-			data.filter((item) => selectedCountries.includes(item.region)),
+			data.filter((item) => selectedCountries.includes(item.region ?? '')),
 			countries,
 			currentCountry
 		);
@@ -117,12 +121,12 @@
 		try {
 			loading = true;
 			const [mobilityData, countriesData] = await Promise.all([
-				getMobilityRenewableShare(),
-				getCountries()
+				AsyncGetMobilityRenewableShare({}),
+				AsyncGetCountries({})
 			]);
 
-			data = mobilityData;
-			countries = countriesData;
+			data = mobilityData.data.mobility;
+			countries = countriesData.data.countries;
 
 			// Initialize available countries with default selections
 			availableCountries = countries
@@ -132,7 +136,7 @@
 					name: country.name_de,
 					selected: defaultCountries.includes(country.id)
 				}))
-				.sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+				.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')); // Sort alphabetically
 
 			updateChartData();
 		} catch (e) {

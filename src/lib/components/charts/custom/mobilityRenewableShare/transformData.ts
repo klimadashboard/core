@@ -1,4 +1,7 @@
-import type { MobilityRenewableShare, Countries } from './schema';
+import type {
+	GetCountriesQuery,
+	GetMobilityRenewableShareQuery
+} from './__generated__/getData.generated';
 
 const DEFAULT_COLOR = '#bababa';
 
@@ -30,30 +33,32 @@ export type LineChartData = {
  * @returns Formatted data for the chart component
  */
 export function transformDataForChart(
-	apiData: MobilityRenewableShare,
-	countries: Countries = [],
+	apiData: GetMobilityRenewableShareQuery['mobility'],
+	countries: GetCountriesQuery['countries'],
 	currentCountry: string = 'DE'
 ): LineChartData {
-	if (!apiData || apiData.length === 0) return { chartData: [], keys: [], labels: [], colors: [] };
+	if (!apiData || apiData.length === 0) {
+		return { chartData: [], keys: [], labels: [], colors: [] };
+	}
 
 	// Get unique periods and regions
 	const periods = [...new Set(apiData.map((item) => item.period))].sort();
 	// Sort regions to ensure consistent ordering
-	let regions = [...new Set(apiData.map((item) => item.region))].sort((a, b) =>
-		a.localeCompare(b)
-	);
+	let regions = [...new Set(apiData.map((item) => item.region))]
+		.filter((region): region is string => region !== null && region !== undefined)
+		.sort((a, b) => a.localeCompare(b));
 
 	// Move the current country to the end so it's drawn last (on top)
 	if (regions.includes(currentCountry)) {
-		regions = regions.filter(region => region !== currentCountry);
+		regions = regions.filter((region) => region !== currentCountry);
 		regions.push(currentCountry);
 	}
 
 	// Create a lookup map for quick access to values
 	const dataMap: Record<string, Record<string, number>> = {};
 	apiData.forEach((item) => {
-		if (!dataMap[item.period]) dataMap[item.period] = {};
-		dataMap[item.period][item.region] = item.value;
+		if (!dataMap[item.period ?? '']) dataMap[item.period ?? ''] = {};
+		dataMap[item.period ?? ''][item.region ?? ''] = item.value ?? NaN;
 	});
 
 	// Create chart data with the format expected by chartLine
@@ -65,7 +70,7 @@ export function transformDataForChart(
 
 		// Add each region as a property
 		regions.forEach((region) => {
-			dataPoint[region] = dataMap[period]?.[region] || NaN;
+			dataPoint[region] = dataMap[period ?? '']?.[region] ?? NaN;
 		});
 
 		return dataPoint;
@@ -84,7 +89,7 @@ export function transformDataForChart(
 	// Create labels using country names when available
 	const labels = regions.map((region) => {
 		const country = countries.find((country) => country.id === region);
-		return country ? country.name_de : region;
+		return country?.name_de ?? region;
 	});
 
 	return {
