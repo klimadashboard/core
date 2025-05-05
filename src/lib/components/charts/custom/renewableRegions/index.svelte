@@ -72,17 +72,17 @@
 		};
 	};
 
-	let selectedEnergy = 'wind';
+	let selectedEnergy = 'solar';
 	let views = [
-		{
-			key: 'wind',
-			label: 'Wind',
-			color: '#003B80'
-		},
 		{
 			key: 'solar',
 			label: 'Solar',
 			color: '#E0A906'
+		},
+		{
+			key: 'wind',
+			label: 'Wind',
+			color: '#003B80'
 		}
 	];
 </script>
