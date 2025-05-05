@@ -3,7 +3,7 @@ name: 'Deploy emissions-federal-states branch'
 on:
   push:
     branches:
-      - feat/emissions-federal-states-de
+      - feat/de-federal-states-emissions
 
 jobs:
   ploi-deploy:
