@@ -1,9 +1,9 @@
 <script>
-	import { min, max } from 'd3-array';
-	import { scaleLinear } from 'd3-scale';
-	import { fade } from 'svelte/transition';
-	import { pointer } from 'd3-selection';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { max } from 'd3-array';
+	import { scaleLinear } from 'd3-scale';
+	import { pointer } from 'd3-selection';
+	import { fade } from 'svelte/transition';
 
 	export let data;
 	export let sort = '';
@@ -16,6 +16,7 @@
 	export let show0ValuesInLegend = false;
 	export let freezeYAxis = false;
 	export let marginLeft = 20;
+	export let useDataColors = false; // Whether to use colors from data points
 
 	let chartHeight;
 	let chartWidth;
@@ -192,9 +193,13 @@
 								class="bar"
 								width={barWidth || 0}
 								height={yScale(datapoint.value) || 0}
-								fill={datapoint.estimate ? 'estimate' : 'currentColor'}
-								stroke="currentColor"
-								stroke-width="2"
+								fill={datapoint.estimate
+									? 'transparent'
+									: useDataColors && datapoint.color
+										? datapoint.color
+										: 'currentColor'}
+								stroke={useDataColors && datapoint.color ? datapoint.color : 'currentColor'}
+								stroke-width={datapoint.estimate ? '2' : '0'}
 								x="0"
 								y={innerChartHeight - yScale(datapoint.value) || 0}
 								on:mouseover={(e) => (selectedBar = datapoint)}
