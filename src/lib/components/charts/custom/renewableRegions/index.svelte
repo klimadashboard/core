@@ -31,7 +31,7 @@
 		const directus = getDirectusInstance();
 		const regionsRaw = await directus.request(
 			readItems('regions', {
-				fields: ['id', 'name', 'code_short', 'outline_simple', 'center'],
+				fields: ['id', 'name', 'code_short', 'outline_simple', 'center', 'area'],
 				filter: {
 					_and: [
 						{

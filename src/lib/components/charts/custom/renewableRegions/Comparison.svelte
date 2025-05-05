@@ -1,13 +1,18 @@
 <script>
 	import getDirectusInstance from '$lib/utils/directus';
 	import LineChart from './LineChart.svelte';
+	import RegionSearch from './RegionSearch.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
+	import Loader from '$lib/components/Loader.svelte';
+
 	import { onMount } from 'svelte';
 
 	export let regions;
 	export let region;
 	export let selectedEnergy;
 	export let colors;
+
+	let loading = false;
 
 	const palette = [
 		'#e41a1c',
@@ -88,11 +93,14 @@
 			selectedRegions = selectedRegions.filter((s) => s.code !== r.code);
 			data = data.filter((d) => d.code !== r.code);
 		} else {
-			// Add region
-			selectedRegions = [...selectedRegions, r];
-
-			const result = await getDataForRegion(r.code, selectedEnergy);
-			data = [...data, { code: r.code, name: r.name, data: result }];
+			loading = true;
+			try {
+				selectedRegions = [...selectedRegions, r];
+				const result = await getDataForRegion(r.code, selectedEnergy);
+				data = [...data, { code: r.code, name: r.name, data: result }];
+			} finally {
+				loading = false;
+			}
 		}
 	}
 
@@ -102,51 +110,63 @@
 
 	// Load initial region data
 	onMount(async () => {
+		loading = true;
 		const initialData = await getDataForRegion(region.code, selectedEnergy);
 		data = [{ code: region.code, name: region.name, data: initialData }];
+		loading = false;
 	});
+
+	let selectedUnit = 'absolute';
 </script>
 
-<div>
-	<label for="region-search" class="sr-only">Suche Regionen</label>
-	<input
-		id="region-search"
-		type="text"
-		placeholder="Region suchen..."
-		bind:value={searchTerm}
-		class="border p-2 rounded w-full mb-2"
-		aria-label="Region suchen"
-	/>
+<div class="flex items-center gap-4">
+	<RegionSearch {regions} {region} {selectedRegions} on:toggle={(e) => toggleSelection(e.detail)} />
 
-	<div role="listbox" aria-multiselectable="true" class="border rounded max-h-64 overflow-y-auto">
-		{#each filteredRegions as r (r.code)}
-			<div
-				role="option"
-				aria-selected={isSelected(r)}
-				class="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
-			>
-				<input
-					type="checkbox"
-					checked={isSelected(r)}
-					on:change={() => toggleSelection(r)}
-					id={`region-${r.code}`}
-					class="mr-2"
-				/>
-				<label for={`region-${r.code}`} class="flex-1">
-					{r.name}
-					{#if r.distance !== null}({formatNumber(r.distance)} km){/if}
-				</label>
-			</div>
-		{/each}
+	<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-1 text-sm inline-block">
+		<label
+			><input
+				type="radio"
+				name="unit"
+				value="absolute"
+				checked={selectedUnit === 'absolute'}
+				on:change={() => (selectedUnit = 'absolute')}
+			/>Absolute</label
+		>
+		<label
+			><input
+				type="radio"
+				name="unit"
+				value="perArea"
+				checked={selectedUnit === 'perArea'}
+				on:change={() => (selectedUnit = 'perArea')}
+			/>Per Area</label
+		>
 	</div>
 </div>
 
 {#if data.length > 0}
-	<LineChart
-		data={data.map((d, i) => ({
-			label: d.name,
-			data: d.data.by_year,
-			color: i === 0 ? colors[1] : palette[(i - 1) % palette.length]
-		}))}
-	/>
+	<div class="relative">
+		{#if loading}
+			<div
+				class="absolute inset-0 bg-white/70 flex items-center justify-center z-10 pointer-events-none"
+			>
+				<Loader />
+			</div>
+		{/if}
+		<div class:opacity-30={loading} class:pointer-events-none={loading}>
+			<LineChart
+				data={data.map((d, i) => ({
+					label: d.name,
+					data: d.data.by_year.map((entry) => ({
+						...entry,
+						value:
+							selectedUnit === 'perArea' && region.area
+								? entry.value / (regions.find((r) => r.code === d.code)?.area || 1)
+								: entry.value
+					})),
+					color: i === 0 ? colors[1] : palette[(i - 1) % palette.length]
+				}))}
+			/>
+		</div>
+	</div>
 {/if}
