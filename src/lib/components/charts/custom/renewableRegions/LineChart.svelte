@@ -2,18 +2,11 @@
 	import { line } from 'd3-shape';
 	import { scaleLinear } from 'd3-scale';
 	import { max } from 'd3-array';
+	import { getPowerUnit, convertToPowerUnit } from './formatPower';
 	import formatNumber from '$lib/stores/formatNumber';
 
 	let chartWidth;
 	let chartHeight;
-
-	$: console.log(data);
-
-	$: maxValue = data
-		.map((d) => d.data)
-		.flat()
-		.map((d) => d.cumulative_power_kw)
-		.sort((a, b) => b - a)[0];
 
 	export let data;
 
@@ -22,18 +15,26 @@
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 
+	// Determine max value across all series
+	$: maxRawValue = Math.max(...data.flatMap((d) => d.data.map((d) => d.value)));
+
+	$: powerUnit = getPowerUnit(maxRawValue);
+	$: convertedMax = convertToPowerUnit(maxRawValue, maxRawValue);
+
 	$: xScale = scaleLinear().domain([2000, 2025]).range([0, innerChartWidth]);
 
 	$: yScale = scaleLinear()
-		.domain([0, maxValue * 1.1])
+		.domain([0, convertedMax * 1.1])
 		.range([innerChartHeight, 0]);
 
 	$: generateLine = line()
 		.x((d) => xScale(d.year))
-		.y((d) => yScale(d.cumulative_power_kw));
+		.y((d) => yScale(convertToPowerUnit(d.value, maxRawValue)));
 </script>
 
-<div class="flex gap-2 flex-wrap mt-4">
+<h3 class="my-2">Kumulative Leistung</h3>
+
+<div class="flex gap-2 flex-wrap">
 	{#each data as d}
 		<span
 			class="text-xs opacity-70 rounded-full px-1.5 py-0.5 text-white font-bold"
@@ -42,24 +43,32 @@
 	{/each}
 </div>
 
-<div class="h-64" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
+<div class="h-60" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 	<svg width={'100%'} height={'100%'} class="overflow-visible">
+		<!-- X-Axis -->
 		<g transform="translate({margin.left},0)">
 			{#each xScale.ticks(10) as year}
 				<g transform="translate({xScale(year)},{chartHeight})" class="text-xs opacity-70">
-					<text text-anchor="middle">{year}</text>
+					<text text-anchor="middle" class="fill-current">{year}</text>
 					<line x1={0} x2={0} y1={-20} y2={-15} stroke="currentColor" />
 				</g>
 			{/each}
 		</g>
+
+		<!-- Y-Axis -->
 		<g transform="translate(0,{margin.top})">
 			{#each yScale.ticks() as tick}
 				<g transform="translate(0,{yScale(tick)})" class="text-xs opacity-70">
 					<line x1="40" x2={chartWidth} y1="0" y2="0" class="stroke-current opacity-20" />
-					<text dominant-baseline="middle">{formatNumber(tick)}</text>
+					<text x="" text-anchor="start" dominant-baseline="middle" class="fill-current">
+						{formatNumber(tick)}
+						{#if tick === yScale.ticks().at(-1)}{powerUnit}{/if}
+					</text>
 				</g>
 			{/each}
 		</g>
+
+		<!-- Lines -->
 		<g transform="translate({margin.left},{margin.top})">
 			{#each data as d}
 				<g style="color: {d.color}">

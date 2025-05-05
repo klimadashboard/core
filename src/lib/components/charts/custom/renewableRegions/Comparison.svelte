@@ -86,8 +86,14 @@
 		return result;
 	};
 
+	let selectedUnitHasChanged = false;
+
 	// Call getDataForRegion when toggling
 	async function toggleSelection(r) {
+		if (!selectedUnitHasChanged) {
+			selectedUnit = 'perArea';
+			selectedUnitHasChanged = true;
+		}
 		if (isSelected(r)) {
 			// Remove region
 			selectedRegions = selectedRegions.filter((s) => s.code !== r.code);
@@ -117,35 +123,38 @@
 	});
 
 	let selectedUnit = 'absolute';
+	let selectedVariable = 'cumulative_power_kw';
 </script>
 
 <div class="flex items-center gap-4">
 	<RegionSearch {regions} {region} {selectedRegions} on:toggle={(e) => toggleSelection(e.detail)} />
 
-	<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-1 text-sm inline-block">
+	<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-1 px-2 text-sm inline-flex gap-2">
 		<label
 			><input
 				type="radio"
 				name="unit"
 				value="absolute"
+				class="mr-1"
 				checked={selectedUnit === 'absolute'}
 				on:change={() => (selectedUnit = 'absolute')}
-			/>Absolute</label
+			/>absolut</label
 		>
 		<label
 			><input
 				type="radio"
 				name="unit"
+				class="mr-1"
 				value="perArea"
 				checked={selectedUnit === 'perArea'}
 				on:change={() => (selectedUnit = 'perArea')}
-			/>Per Area</label
+			/>pro km2</label
 		>
 	</div>
 </div>
 
-{#if data.length > 0}
-	<div class="relative">
+<div class="relative min-h-64">
+	{#if data.length > 0}
 		{#if loading}
 			<div
 				class="absolute inset-0 bg-white/70 flex items-center justify-center z-10 pointer-events-none"
@@ -161,12 +170,12 @@
 						...entry,
 						value:
 							selectedUnit === 'perArea' && region.area
-								? entry.value / (regions.find((r) => r.code === d.code)?.area || 1)
-								: entry.value
+								? entry[selectedVariable] / (regions.find((r) => r.code === d.code)?.area || 1)
+								: entry[selectedVariable]
 					})),
 					color: i === 0 ? colors[1] : palette[(i - 1) % palette.length]
 				}))}
 			/>
 		</div>
-	</div>
-{/if}
+	{/if}
+</div>

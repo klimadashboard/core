@@ -55,7 +55,7 @@
 		placeholder="Vergleiche deine Gemeinde mit..."
 		bind:value={searchTerm}
 		on:focus={() => (showDropdown = true)}
-		class="border p-2 w-full text-base rounded-full"
+		class="border p-2 w-full text-base rounded-full leading-none"
 		aria-label="Region suchen"
 	/>
 

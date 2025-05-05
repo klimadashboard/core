@@ -1,9 +1,10 @@
 <script>
 	import { scaleLinear } from 'd3-scale';
 	import { max } from 'd3-array';
+	import { formatPower, getPowerUnit, convertToPowerUnit } from './formatPower';
 	import formatNumber from '$lib/stores/formatNumber';
 
-	export let data; // expects the whole API result
+	export let data;
 	export let colors;
 
 	let chartHeight;
@@ -12,16 +13,17 @@
 
 	let margin = { top: 0, right: 30, bottom: 20, left: 50 };
 
-	$: console.log(data);
-
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
 	$: barWidth =
 		chartWidth > 600 ? innerChartWidth / data.length - 5 : innerChartWidth / data.length - 2;
 
+	$: maxValue = max(data, (d) => d[selectedVariable]);
+	$: powerUnit = getPowerUnit(maxValue);
+
 	$: yScale = scaleLinear()
-		.domain([0, max(data, (d) => d[selectedVariable])])
+		.domain([0, convertToPowerUnit(maxValue, maxValue)])
 		.range([innerChartHeight, 0]);
 
 	$: xScale = scaleLinear()
@@ -29,41 +31,48 @@
 		.range([margin.left, chartWidth - margin.right]);
 </script>
 
+<h3>Netto-Zubau pro Jahr</h3>
 {#if data.length > 0}
 	<div
 		class="flex gap-2 items-end h-64"
-		style="color: {colors[1]}"
 		bind:clientHeight={chartHeight}
 		bind:clientWidth={chartWidth}
 	>
 		<svg width="100%" height="100%">
+			<!-- x-axis -->
 			<g>
 				{#each xScale.ticks(chartWidth > 600 ? 10 : 5) as year}
 					<g
 						transform="translate({xScale(year) + barWidth / 2},{chartHeight})"
 						class="text-xs opacity-70"
 					>
-						<text text-anchor="middle">{year}</text>
+						<text text-anchor="middle" class="fill-current">{year}</text>
 						<line x1={0} x2={0} y1={-20} y2={-12} stroke="currentColor" />
 					</g>
 				{/each}
 			</g>
+
+			<!-- y-axis -->
 			<g>
 				{#each yScale.ticks() as tick}
 					<g transform="translate(0,{yScale(tick)})" class="text-xs opacity-70">
 						<line x1="40" x2={chartWidth} y1="0" y2="0" class="stroke-current opacity-20" />
-						<text dominant-baseline="middle">{formatNumber(tick)}</text>
+						<text x="0" text-anchor="left" dominant-baseline="middle" class="fill-current">
+							{formatNumber(tick)}
+							{#if tick === yScale.ticks().at(-1)}{powerUnit}{/if}
+						</text>
 					</g>
 				{/each}
 			</g>
+
 			<!-- bars -->
-			<g>
+			<g style="color: {colors[1]}">
 				{#each data as item}
 					<rect
 						x={xScale(item.year)}
-						y={yScale(item[selectedVariable])}
+						y={yScale(convertToPowerUnit(item[selectedVariable], maxValue))}
 						width={barWidth}
-						height={innerChartHeight - yScale(item[selectedVariable])}
+						height={innerChartHeight - yScale(convertToPowerUnit(item[selectedVariable], maxValue))}
 						fill={colors[1]}
 					/>
 				{/each}

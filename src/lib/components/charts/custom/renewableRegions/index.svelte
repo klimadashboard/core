@@ -12,21 +12,22 @@
 	let selectedRegion;
 
 	const colors = [
-		{
-			key: 'wind',
-			colors: ['#E5F3FA', '#003B80']
-		},
-		{
-			key: 'solar',
-			colors: ['#F0E1C2', '#E0A906']
-		}
+		{ key: 'wind', colors: ['#E5F3FA', '#003B80'] },
+		{ key: 'solar', colors: ['#F0E1C2', '#E0A906'] }
 	];
 
-	$: getData = async (selectedEnergy) => {
-		const response = await fetch(
-			`https://base.klimadashboard.org/get-region-stats-for-renewables?table=energy_${selectedEnergy}_units`
-		);
-		const data = await response.json();
+	let selectedEnergy = 'solar';
+	let views = [
+		{ key: 'solar', label: 'Solar', color: '#E0A906' },
+		{ key: 'wind', label: 'Wind', color: '#003B80' }
+	];
+
+	// --- In-memory cache (lost on full reload) ---
+	let cachedRegions = null;
+	let cachedCountryName = null;
+
+	const fetchRegions = async () => {
+		if (cachedRegions) return { regions: cachedRegions, countryName: cachedCountryName };
 
 		const directus = getDirectusInstance();
 		const regionsRaw = await directus.request(
@@ -36,7 +37,7 @@
 					_and: [
 						{
 							country: { _eq: PUBLIC_VERSION.toUpperCase() },
-							layer: { _eq: 'municipality' }
+							_or: [{ layer: { _eq: 'municipality' } }, { layer: { _eq: 'country' } }]
 						}
 					]
 				},
@@ -50,13 +51,24 @@
 			outline: r.outline_simple
 		}));
 
-		const foundRegionCode = findMatchingRegion(page.data.page, regions);
+		cachedRegions = regions;
+		cachedCountryName = PUBLIC_VERSION;
 
+		return { regions, countryName: PUBLIC_VERSION };
+	};
+
+	$: getData = async (selectedEnergy) => {
+		const [{ regions, countryName }, data] = await Promise.all([
+			fetchRegions(),
+			fetch(
+				`https://base.klimadashboard.org/get-region-stats-for-renewables?table=energy_${selectedEnergy}_units`
+			).then((r) => r.json())
+		]);
+
+		const foundRegionCode = findMatchingRegion(page.data.page, regions);
 		if (foundRegionCode) {
 			selectedRegion = foundRegionCode;
 		}
-
-		const countryName = PUBLIC_VERSION;
 
 		return { data, regions, countryName };
 	};
@@ -64,27 +76,14 @@
 	$: promise = getData(selectedEnergy);
 
 	$: getRegionData = (regions, selectedRegion, countryName) => {
-		const name = regions.find((d) => d.code == selectedRegion)?.name || countryName;
+		const region = regions.find((d) => d.code == selectedRegion);
 		return {
-			name,
+			name: region?.name || countryName,
 			code: selectedRegion,
-			center: regions.find((d) => d.code == selectedRegion)?.center
+			center: region?.center,
+			area: region?.area
 		};
 	};
-
-	let selectedEnergy = 'solar';
-	let views = [
-		{
-			key: 'solar',
-			label: 'Solar',
-			color: '#E0A906'
-		},
-		{
-			key: 'wind',
-			label: 'Wind',
-			color: '#003B80'
-		}
-	];
 </script>
 
 <Switch
