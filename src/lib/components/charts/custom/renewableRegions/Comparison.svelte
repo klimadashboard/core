@@ -7,6 +7,18 @@
 	export let regions;
 	export let region;
 	export let selectedEnergy;
+	export let colors;
+
+	const palette = [
+		'#e41a1c',
+		'#377eb8',
+		'#4daf4a',
+		'#984ea3',
+		'#ff7f00',
+		'#a65628',
+		'#f781bf',
+		'#999999'
+	];
 
 	const getDistance = (center1, center2) => {
 		if (!center1 || !center2) return Infinity;
@@ -130,5 +142,11 @@
 </div>
 
 {#if data.length > 0}
-	<LineChart {data} />
+	<LineChart
+		data={data.map((d, i) => ({
+			label: d.name,
+			data: d.data.by_year,
+			color: i === 0 ? colors[1] : palette[(i - 1) % palette.length]
+		}))}
+	/>
 {/if}

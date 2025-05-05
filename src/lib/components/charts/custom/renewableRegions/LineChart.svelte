@@ -14,7 +14,6 @@
 		.flat()
 		.map((d) => d.cumulative_power_kw)
 		.sort((a, b) => b - a)[0];
-	$: console.log(maxValue);
 
 	export let data;
 
@@ -46,7 +45,9 @@
 			{/each}
 		</g>
 		{#each data as d}
-			<path d={generateLine(d.data)} class="fill-none stroke-2 stroke-agriculture" />
+			<g style="color: {d.color}">
+				<path d={generateLine(d.data)} class="fill-none stroke-2 stroke-current" />
+			</g>
 		{/each}
 	</svg>
 </div>
