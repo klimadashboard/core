@@ -71,7 +71,7 @@
 	});
 
 	function loadCsvData() {
-		Papa.parse('/data/de-federal-states-emissions.csv', {
+		Papa.parse('/de-federal-states-emissions.csv', {
 			download: true,
 			header: true,
 			dynamicTyping: true,
