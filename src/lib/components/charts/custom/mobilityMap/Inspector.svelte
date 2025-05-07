@@ -45,7 +45,7 @@
 					<div class="relative h-4 bg-gray-200 rounded overflow-hidden">
 						<div
 							class="bg-[#9ecae1] h-full"
-							style={scaleBar(selectedRegion.properties.mismatch, 10)}
+							style={scaleBar(selectedRegion.properties.pop, 200)}
 						></div>
 					</div>
 				</div>
@@ -59,18 +59,6 @@
 					<div class="bg-green-500 h-full" style={scaleBar(selectedRegion.properties.pt, 7)}></div>
 				</div>
 				<p class="text-sm mt-1">{selectedRegion.properties.pt}</p>
-			</div>
-
-			<!-- Mismatch -->
-			<div>
-				<p class="text-sm text-gray-500">Mismatch (0–10)</p>
-				<div class="relative h-4 bg-gray-200 rounded overflow-hidden">
-					<div
-						class="bg-red-500 h-full"
-						style={scaleBar(selectedRegion.properties.mismatch, 10)}
-					></div>
-				</div>
-				<p class="text-sm mt-1">{selectedRegion.properties.mismatch}</p>
 			</div>
 
 			<div class="col-span-3">
