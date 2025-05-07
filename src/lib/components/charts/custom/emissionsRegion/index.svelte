@@ -29,6 +29,17 @@
 							{ region: { _in: regionCandidates } },
 							{ value: { _gte: 0 } },
 							{ category: { _neq: 'ksg' } },
+							{ category: { _neq: 'Emissions|CO2' } },
+							{
+								_or: [
+									{ category: { _neq: 'Emissions|Kyoto Gases' } },
+									{
+										source: {
+											_eq: 'climate-target'
+										}
+									}
+								]
+							},
 							{
 								_or: [{ type: { _null: true } }, { type: { _nin: ['EH', 'KSG'] } }]
 							}

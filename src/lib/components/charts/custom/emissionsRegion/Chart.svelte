@@ -12,23 +12,28 @@
 	let chartHeight;
 
 	$: barWidth = chartWidth && maxYear && minYear ? chartWidth / (maxYear - minYear) - 4 : 8;
-	$: margin = { top: 0, right: 20, bottom: 20, left: 50 };
+	$: margin = { top: 0, right: 20, bottom: 20, left: 72 };
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
 	// group data by period
+
 	$: years = [...new Set(data.map((d) => d.year))].sort();
+	$: historicYears = [
+		...new Set(data.filter((d) => d.source !== 'climate-target').map((d) => d.year))
+	].sort();
 
 	$: categoryOrder = region.categoryOrder ?? [];
 
-	$: grouped = years.map((year) => {
+	$: grouped = historicYears.map((year) => {
 		const values = categoryOrder.map((cat) => {
 			const match = data.find((d) => d.year === year && d.category === cat);
 			return {
 				sector: cat,
 				label: match?.category_label ?? cat,
 				color: match?.category_color ?? '#ccc',
-				value: match?.value ?? 0
+				value: match?.value ?? 0,
+				source: match?.source ?? 'unknown'
 			};
 		});
 
@@ -53,16 +58,23 @@
 	let unit = 'Mt CO2eq';
 
 	$: maxTotal = Math.max(...grouped.map((g) => g.total));
-	$: minYear = 1990;
-	$: maxYear = 2050;
+	$: minYear = years[0];
+	$: maxYear = years[years.length - 1];
 
 	$: xScale = scaleLinear().domain([minYear, maxYear]).range([0, innerChartWidth]);
 	$: yScale = scaleLinear().domain([0, maxTotal]).range([innerChartHeight, 0]);
+
+	$: climateTargets = data
+		.filter((d) => d.source === 'climate-target')
+		.sort((a, b) => a.year - b.year);
+	$: latestYear = Math.max(...historicYears);
+	$: latestTotal = grouped.find((g) => g.year === latestYear)?.total ?? 0;
+	$: lastTarget = climateTargets[climateTargets.length - 1];
 </script>
 
 {#if grouped.length > 0}
 	<div>
-		<p class="text-xl mt-4">
+		<p class="text-xl max-w-xl mt-4">
 			Die Sektoren mit dem größten Anteil an Emissionen im Jahr {grouped[grouped.length - 1].year}
 			in
 			<span class="underline underline-offset-4 decoration-current/40"
@@ -80,6 +92,9 @@
 					{s.label}
 				</span>{i < 2 ? ', ' : '.'}
 			{/each}
+			{#if lastTarget}
+				Bis {lastTarget.year} möchte {region.name} {lastTarget.value}{unit} erreicht haben.
+			{/if}
 		</p>
 	</div>
 
@@ -102,10 +117,10 @@
 				<g transform={`translate(0,${margin.top})`}>
 					{#each yScale.ticks() as tick, i}
 						<g transform={`translate(0, ${yScale(tick)})`} class="text-xs">
-							<line x1={0} y1={0} x2={chartWidth} y2={0} class="stroke-current/10" />
-							<text class="fill-current/70" x={4}>
-								{formatNumber(tick / 1_000_000)}
-								{i === 0 ? unit : ''}
+							<line x1={margin.left} y1={0} x2={chartWidth} y2={0} class="stroke-current/10" />
+							<text class="fill-current/70" x={4} dominant-baseline="middle">
+								{formatNumber(tick)}
+								{i === yScale.ticks().length - 1 ? unit : ''}
 							</text>
 						</g>
 					{/each}
@@ -129,6 +144,46 @@
 						</g>
 					{/each}
 				</g>
+				{#if climateTargets.length > 0 && historicYears.length > 0}
+					<g transform={`translate(${margin.left},${margin.top})`}>
+						{#each climateTargets as target}
+							<rect
+								x={xScale(target.year) - barWidth / 2}
+								y={yScale(target.value)}
+								width={barWidth}
+								height={innerChartHeight - yScale(target.value)}
+								fill="#000"
+								opacity={0.1}
+							>
+								<title>Ziel {target.year}: {formatNumber(target.value)} {unit}</title>
+							</rect>
+						{/each}
+					</g>
+					<g
+						transform={`translate(${margin.left},${margin.top})`}
+						fill="none"
+						stroke="black"
+						stroke-width="2"
+					>
+						<path
+							d={[
+								`M ${xScale(latestYear)},${yScale(latestTotal)}`,
+								...climateTargets.map((d) => `L ${xScale(d.year)},${yScale(d.value)}`)
+							].join(' ')}
+							stroke-dasharray="4"
+							opacity={0.5}
+						/>
+					</g>
+
+					<!-- Annotation for last climate target -->
+					<g
+						transform={`translate(${xScale(lastTarget.year) + margin.left + 5}, ${yScale(lastTarget.value) + margin.top - 5})`}
+					>
+						<text class="text-xs fill-current" x={-30} y={-10}
+							>{formatNumber(lastTarget.value)}{unit} Ziel in {lastTarget.year}</text
+						>
+					</g>
+				{/if}
 			</svg>
 		{/if}
 	</div>
