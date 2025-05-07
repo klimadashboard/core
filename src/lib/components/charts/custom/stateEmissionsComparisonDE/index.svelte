@@ -32,13 +32,13 @@
 			color: '#4DB263'
 		},
 		{
-			key: 'Emissions|Kyoto Gases|Energy',
+			key: 'Energie',
 			label: 'Energie',
 			color: '#BD3737',
 			icon: "<svg width='16' height='20' viewBox='0 0 16 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 1V8H15L7 19V12H1L9 1Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		},
 		{
-			key: 'Emissions|Kyoto Gases|Industrial Processes',
+			key: 'Industrie',
 			label: 'Industrie',
 			color: '#373949',
 			icon: "<svg width='20' height='18' viewBox='0 0 20 18' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M19 17H1L1.00017 5.75676L8.10537 9.21622V5.75676L14.7369 9.21622V1H19V17Z' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/></svg>"
@@ -65,13 +65,7 @@
 			key: 'Müll',
 			label: 'Abfallwirtschaft',
 			color: '#B7693D',
-			icon: "<svg width='22' height='21' viewBox='0 0 22 21' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M10 18H19C19.3186 17.9836 19.6287 17.8912 19.9043 17.7305C20.1799 17.5698 20.4131 17.3456 20.5843 17.0764C20.7556 16.8073 20.86 16.501 20.8888 16.1833C20.9177 15.8656 20.8701 15.5456 20.75 15.25L20.2 14.25M12 16L10 18L12 20V16Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M7.80319 7.26807L3.30319 15.0623C3.15811 15.3464 3.08311 15.6611 3.08444 15.9802C3.08578 16.2992 3.16342 16.6133 3.31087 16.8962C3.45832 17.1791 3.67131 17.4226 3.93206 17.6064C4.19281 17.7903 4.49375 17.909 4.80976 17.9528L5.95078 17.9765M8.53524 10.0001L7.80319 7.26807L5.07114 8.00012L8.53524 10.0001Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M18.1968 10.7319L13.6968 2.93771C13.5233 2.67 13.2882 2.44769 13.0113 2.28933C12.7343 2.13098 12.4235 2.04117 12.1048 2.02742C11.7861 2.01366 11.4687 2.07635 11.1791 2.21026C10.8895 2.34417 10.6362 2.5454 10.4402 2.79716L9.84922 3.77347M15.4648 9.99988L18.1968 10.7319L18.9289 7.99988L15.4648 9.99988Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
-		},
-		{
-			key: 'F-Gase',
-			label: 'Fluorierte Gase',
-			color: '#7CAFBA',
-			icon: "<svg width='21' height='20' viewBox='0 0 21 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6.00003H11.5C11.9644 6.00892 12.4222 5.88823 12.8218 5.65152C13.2215 5.4148 13.5473 5.07141 13.7627 4.65986C13.9782 4.24832 14.0747 3.78489 14.0414 3.32156C14.0082 2.85824 13.8465 2.41334 13.5745 2.03676C13.3026 1.66019 12.931 1.36683 12.5017 1.1896C12.0723 1.01237 11.602 0.958278 11.1436 1.03338C10.6852 1.10849 10.2568 1.30982 9.90643 1.6148C9.55606 1.91979 9.29758 2.31636 9.16 2.76003' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M1 9.99997H16.5C16.9644 9.99108 17.4222 10.1118 17.8218 10.3485C18.2215 10.5852 18.5473 10.9286 18.7627 11.3401C18.9782 11.7517 19.0747 12.2151 19.0414 12.6784C19.0082 13.1418 18.8465 13.5867 18.5745 13.9632C18.3026 14.3398 17.931 14.6332 17.5017 14.8104C17.0723 14.9876 16.602 15.0417 16.1436 14.9666C15.6852 14.8915 15.2568 14.6902 14.9064 14.3852C14.5561 14.0802 14.2976 13.6836 14.16 13.24' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M2 14H7.5C7.96443 13.9911 8.42216 14.1118 8.82183 14.3485C9.22151 14.5852 9.54733 14.9286 9.76274 15.3401C9.97816 15.7517 10.0747 16.2151 10.0414 16.6784C10.0082 17.1418 9.8465 17.5867 9.57453 17.9632C9.30256 18.3398 8.93105 18.6332 8.50167 18.8104C8.07229 18.9876 7.60203 19.0417 7.14362 18.9666C6.68522 18.8915 6.2568 18.6902 5.90643 18.3852C5.55605 18.0802 5.29758 17.6836 5.16 17.24' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+			icon: "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M5 2V1' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M15 2V1' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M10 6L10 13' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M6 10L14 10' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M19 6C19 7.65685 17.6569 9 16 9C14.3431 9 13 7.65685 13 6H7C7 7.65685 5.65685 9 4 9C2.34315 9 1 7.65685 1 6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M13 6V16C13 17.1046 12.1046 18 11 18H9C7.89543 18 7 17.1046 7 16V6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		}
 	];
 
@@ -84,7 +78,7 @@
 		'Emissions|Kyoto Gases|Buildings': 'Gebäude',
 		'Emissions|Kyoto Gases|Mobility': 'Verkehr',
 		'Emissions|Kyoto Gases|Agriculture': 'Landwirtschaft',
-		'Emissions|Kyoto Gases|Waste and Other': 'Abfallwirtschaft'
+		'Emissions|Kyoto Gases|Waste and Other': 'Müll'
 	};
 
 	// Reverse mapping from display names to actual data categories
@@ -97,7 +91,8 @@
 		Gebäude: 'Emissions|Kyoto Gases|Buildings',
 		Verkehr: 'Emissions|Kyoto Gases|Mobility',
 		Landwirtschaft: 'Emissions|Kyoto Gases|Agriculture',
-		Abfallwirtschaft: 'Emissions|Kyoto Gases|Waste and Other'
+		Müll: 'Emissions|Kyoto Gases|Waste and Other',
+		Abfallwirtschaft: 'Emissions|Kyoto Gases|Waste and Other' // Keep this for backward compatibility
 	};
 
 	// Mapping for sector colors in the UI
@@ -137,7 +132,15 @@
 					const emissionsData = rawData.filter(
 						(row) => row.category && row.category.startsWith('Emissions')
 					);
-					regions = [...new Set(emissionsData.map((d) => d.region))];
+
+					// Get regions with emissions data
+					const regionsWithEmissions = [...new Set(emissionsData.map((d) => d.region))];
+
+					// States to specifically exclude from the dropdown
+					const excludeStates = ['de-hamburg', 'de-mecklenburg-vorpommern', 'de-stadtstaaten'];
+
+					// Filter regions to exclude specific states
+					regions = regionsWithEmissions.filter((region) => !excludeStates.includes(region));
 
 					// Get available sectors and filter out those not in our mapping
 					const availableSectors = [...new Set(rawData.map((d) => d.category))];
@@ -153,6 +156,10 @@
 		});
 	}
 
+	$: if (perCapita !== undefined && selectedState) {
+		updateChartForState(selectedState);
+	}
+
 	function updateChartForState(state) {
 		// Get all data for the selected state and sector
 		const stateData = rawData.filter(
@@ -164,21 +171,39 @@
 		);
 
 		// Create a simplified data structure compatible with the chart component
-		chartData = stateData.map((d) => {
+		let processedData = stateData.map((d) => {
 			// Check if this is a target year (2030 or 2040)
 			const isTargetYear = d.period === 2030 || d.period === 2040;
-			console.log(d.category);
+
+			// Get the emissions value
+			let emissionValue = Number(d.value);
+
+			// If per capita is enabled, divide by population
+			if (perCapita) {
+				// Find population data for this state and year
+				const populationData = rawData.find(
+					(p) => p.region === state && p.period === d.period && p.category === 'Population'
+				);
+
+				// If population data exists and is valid, calculate per capita emissions
+				if (populationData && populationData.value > 0) {
+					// Convert from Mt to t and divide by population (gives t CO₂e per person)
+					emissionValue = (emissionValue * 1000000) / populationData.value;
+				} else {
+					console.warn(`No population data for ${state} in ${d.period}`);
+				}
+			}
 
 			return {
 				label: String(d.period),
+				year: d.period, // Store the actual year for sorting
 				categories: [
 					{
 						label: '',
-						value: Number(d.value),
-						// Assign color based on whether it's a target year
+						value: emissionValue,
 						color: isTargetYear
 							? '#E31A1C'
-							: sectors.find((s) => s.key == d.category)?.color || 'grey', // Match the green from the example for historical data
+							: sectors.find((s) => s.key == d.category)?.color || 'grey',
 						estimate: false
 					}
 				]
@@ -186,7 +211,38 @@
 		});
 
 		// Sort by year
-		chartData.sort((a, b) => parseInt(a.label) - parseInt(b.label));
+		processedData.sort((a, b) => parseInt(a.year) - parseInt(b.year));
+
+		// Create a new array with proper spacing for years
+		chartData = [];
+		const years = processedData.map((d) => parseInt(d.year));
+		const minYear = Math.min(...years);
+		const maxYear = Math.max(...years);
+
+		// Add entries for all years to ensure proper spacing
+		for (let year = minYear; year <= maxYear; year++) {
+			const existingData = processedData.find((d) => parseInt(d.year) === year);
+
+			if (existingData) {
+				// Real data exists for this year
+				chartData.push(existingData);
+			} else {
+				// Only add placeholder for years that should be shown on the timeline
+				// To create a proper metric scale
+				chartData.push({
+					label: String(year),
+					year: year,
+					categories: [
+						{
+							label: '',
+							value: 0,
+							color: 'transparent', // Make the bar invisible
+							estimate: true
+						}
+					]
+				});
+			}
+		}
 
 		console.log('Chart data:', chartData);
 		console.log(
@@ -230,7 +286,8 @@
 			Landwirtschaft:
 				"<svg width='20' height='18' viewBox='0 0 20 18' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M13 13C13 14.3594 12.6839 15.5134 11.9497 16.2426C11.2155 16.9718 10.0616 17.2857 8.7 17.3V6.50001C10.0616 6.53571 11.2155 6.90766 11.9497 7.63688C12.6839 8.36609 13 9.51999 13 11V13Z' stroke='currentColor' stroke-width='2'/><path d='M13 11C17 10.5 18 8.5 18 5C14.5 5.5 13 7.5 13 11Z' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/><path d='M8.7 6.5C8.7 6.5 8.7 5.9 8.7 4.9C8.7 3.9 9.2 1 5 1C5 5.5 8.7 5.8 8.7 6.5Z' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/></svg>",
 			Abfallwirtschaft:
-				"<svg width='20' height='18' viewBox='0 0 20 18' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M1 4L19 4' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M7 8V14' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M13 8V14' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3.85714 4L5.27778 16.5714C5.27778 16.5714 6.00001 17.5714 10 17.5714C14 17.5714 14.6667 16.5714 14.6667 16.5714L16.1429 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M6.66667 4L7.15757 2.07142C7.44486 0.904755 8.1222 0 10 0C11.8778 0 12.5551 0.904765 12.8424 2.07143L13.3333 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+				"<svg width='20' height='18' viewBox='0 0 20 18' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M1 4L19 4' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M7 8V14' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M13 8V14' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3.85714 4L5.27778 16.5714C5.27778 16.5714 6.00001 17.5714 10 17.5714C14 17.5714 14.6667 16.5714 14.6667 16.5714L16.1429 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M6.66667 4L7.15757 2.07142C7.44486 0.904755 8.1222 0 10 0C11.8778 0 12.5551 0.904765 12.8424 2.07143L13.3333 4' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>",
+			Müll: "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M5 2V1' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M15 2V1' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M10 6L10 13' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M6 10L14 10' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M19 6C19 7.65685 17.6569 9 16 9C14.3431 9 13 7.65685 13 6H7C7 7.65685 5.65685 9 4 9C2.34315 9 1 7.65685 1 6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M13 6V16C13 17.1046 12.1046 18 11 18H9C7.89543 18 7 17.1046 7 16V6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		};
 
 		return icons[sector] || '';
@@ -331,7 +388,7 @@
 		<label class="flex gap-1 text-sm items-center text-gray-400">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5 icon icon-tabler icon-tabler-users"
+				class="icon icon-tabler icon-tabler-users"
 				width="24"
 				height="24"
 				viewBox="0 0 24 24"
@@ -358,7 +415,7 @@
 	{#if chartData?.length > 0}
 		<BarChart
 			data={chartData}
-			unit=" Mt CO₂e"
+			unit={perCapita ? ' t CO₂e pro Person' : ' Mt CO₂e'}
 			xAxixInterval={2}
 			useDataColors={true}
 			freezeYAxis={yAxisFixed}
@@ -382,8 +439,10 @@
 <!-- Legend and additional information -->
 <div class="text-sm text-gray-600 flex flex-wrap gap-4 mt-4">
 	<p>Datenquellen: Regionalstatistik (Tabelle 86431-Z-01)</p>
+
+	<!-- Simple legend with historic emissions and climate goals -->
 	<div class="flex items-center">
-		<span class="inline-block w-4 h-4 mr-1 bg-[#4DB263]"></span>
+		<span class="inline-block w-4 h-4 mr-1 bg-[#333333]"></span>
 		<span>Historische Emissionen</span>
 	</div>
 	<div class="flex items-center">
