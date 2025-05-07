@@ -312,7 +312,20 @@
 	});
 </script>
 
-<div id="mobilityMap"></div>
+<div id="mobilityMap" class="relative">
+	<div class="absolute top-2 p-1 left-2 text-xs flex items-center gap-3 z-20 bg-white">
+		<div class="flex gap-1 items-center">
+			<span style="background:#c6dbef" class="w-4 h-4 block"></span> <span>Low mismatch</span>
+		</div>
+		<div class="flex gap-1 items-center">
+			<span style="background:#fb6a4a" class="w-4 h-4 block"></span> <span>High mismatch</span>
+		</div>
+		<div class="flex gap-1 items-center">
+			<span style="background:#41ab5d" class="w-4 h-4 block"></span> <span>Excellent match</span>
+		</div>
+		<div>(preview version)</div>
+	</div>
+</div>
 
 <style>
 	#mobilityMap {
