@@ -132,10 +132,16 @@
 						'#41ab5d',
 						'#ffffff'
 					],
-					'fill-opacity': 0.5
+					'fill-opacity': [
+						'case',
+						['boolean', ['feature-state', 'hover'], false],
+						0.8, // Opacity when hovered
+						0.5 // Default opacity
+					]
 				}
 			});
 
+			// Outline layer AFTER fill layer
 			map.addLayer({
 				id: 'bivariate-outline',
 				type: 'line',
@@ -151,24 +157,33 @@
 					'line-color': [
 						'case',
 						['boolean', ['feature-state', 'selected'], true],
-						'#000',
+						'#000000', // strong black for selected
 						['boolean', ['feature-state', 'hover'], true],
-						'#666',
+						'#666666', // dark gray for hover
 						['boolean', ['feature-state', 'nearby'], true],
-						'#999',
-						'#000'
+						'#999999', // light gray for nearby
+						'#000000'
 					],
 					'line-width': [
 						'case',
 						['boolean', ['feature-state', 'selected'], true],
-						2,
+						3, // thicker outline for selected
 						['boolean', ['feature-state', 'hover'], true],
-						1,
+						1.5,
 						['boolean', ['feature-state', 'nearby'], true],
 						1,
 						0
 					],
-					'line-opacity': 1
+					'line-opacity': [
+						'case',
+						['boolean', ['feature-state', 'selected'], true],
+						1,
+						['boolean', ['feature-state', 'hover'], true],
+						0.9,
+						['boolean', ['feature-state', 'nearby'], true],
+						0.6,
+						0
+					]
 				}
 			});
 
@@ -228,8 +243,10 @@
 				}
 			});
 
+			// Hover handling
 			map.on('mousemove', 'bivariate-layer', (e) => {
 				if (e.features.length > 0) {
+					map.getCanvas().style.cursor = 'pointer';
 					if (hoveredId !== null) {
 						updateFeatureState(hoveredId, { hover: false });
 					}
@@ -239,12 +256,14 @@
 			});
 
 			map.on('mouseleave', 'bivariate-layer', () => {
+				map.getCanvas().style.cursor = '';
 				if (hoveredId !== null) {
 					updateFeatureState(hoveredId, { hover: false });
 				}
 				hoveredId = null;
 			});
 
+			// Click handler
 			map.on('click', async (e) => {
 				if (map.getZoom() < 10) return;
 
@@ -255,7 +274,6 @@
 				const coords = e.lngLat;
 				const props = feature.properties;
 
-				// Clear previous selection/nearby
 				map.queryRenderedFeatures({ layers: ['bivariate-layer'] }).forEach((f) => {
 					updateFeatureState(f.id, { selected: false, nearby: false });
 				});
@@ -263,7 +281,6 @@
 				selectedId = feature.id;
 				updateFeatureState(selectedId, { selected: true });
 
-				// Highlight "star" around selected
 				const getCenter = (f) => {
 					const ring = f.geometry.coordinates?.[0];
 					if (!ring) return [0, 0];
@@ -282,10 +299,7 @@
 					if (isNearby) updateFeatureState(f.id, { nearby: true });
 				});
 
-				map.flyTo({
-					center: coords,
-					zoom: Math.max(map.getZoom(), 14)
-				});
+				map.flyTo({ center: coords, zoom: Math.max(map.getZoom(), 14) });
 
 				const response = await fetch(
 					`https://base.klimadashboard.org/get-nearby-stops?lat=${coords.lat}&lon=${coords.lng}&radius_km=0.5`
