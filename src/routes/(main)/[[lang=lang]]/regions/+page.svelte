@@ -2,10 +2,24 @@
 	import { onMount } from 'svelte';
 	import Search from '$lib/components/Search.svelte';
 	import { PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import mapboxgl from 'mapbox-gl';
 	import 'mapbox-gl/dist/mapbox-gl.css';
 
 	export let data;
+
+	const defaultView = {
+		at: {
+			center: [13.333, 47.5],
+			zoom: 6
+		},
+		de: {
+			center: [10.45, 51.1657],
+			zoom: 4.5
+		}
+	};
+
+	const { center, zoom } = defaultView[PUBLIC_VERSION] || defaultView.de;
 
 	let geoJson = data.regions
 		.filter((d) => d.center)
@@ -36,8 +50,8 @@
 		map = new mapboxgl.Map({
 			container: 'map',
 			style: 'mapbox://styles/davidjablonski/cllkz3m0801c401plbd0y9r8x',
-			center: [14, 48.2082],
-			zoom: 6
+			center: center,
+			zoom: zoom
 		});
 
 		map.on('load', () => {
