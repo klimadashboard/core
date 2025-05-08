@@ -2,9 +2,13 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
+	import { page } from '$app/state';
 	import Map from './Map.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import Inspector from './Inspector.svelte';
+
+	let selectedRegion = null;
 
 	$: getData = async () => {
 		const directus = getDirectusInstance(fetch);
@@ -37,9 +41,16 @@
 						}
 					]
 				},
-				fields: ['name', 'code', 'outline_simple', 'center']
+				fields: ['id', 'name', 'code', 'outline_simple', 'center']
 			})
 		);
+
+		const foundRegionCode = findMatchingRegion(page.data.page, regions);
+		console.log(foundRegionCode);
+
+		if (foundRegionCode) {
+			selectedRegion = foundRegionCode;
+		}
 
 		return { data, regions };
 	};
@@ -49,7 +60,6 @@
 	$: selectedPeriod = 2020;
 	$: selectedVariable = 'pop3';
 
-	let selectedRegion = null;
 	let selectedView = 'change';
 </script>
 

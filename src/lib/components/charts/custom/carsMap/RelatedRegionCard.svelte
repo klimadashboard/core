@@ -36,13 +36,13 @@
 			</div>
 		</div>
 
-		<div class="flex space-x-3 w-full">
+		<div class="grid grid-cols-3 gap-3 w-full">
 			{#each views as view}
 				{@const trend = getTrend(region[view.dataKey], selectedPeriod)}
 				{#if region[view.dataKey]}
 					{#key view.dataKey}
 						<div class="flex-1 dark:brightness-175" style="color: {view.color}">
-							<p class="leading-2">
+							<p class="leading-tight">
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									width="24"

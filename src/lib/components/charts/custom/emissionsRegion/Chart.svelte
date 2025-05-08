@@ -77,9 +77,7 @@
 		<p class="text-xl max-w-xl mt-4">
 			Die Sektoren mit dem größten Anteil an Emissionen im Jahr {grouped[grouped.length - 1].year}
 			in
-			<span class="underline underline-offset-4 decoration-current/40"
-				>{region.name} ({region.layer_label})</span
-			>
+			<span class="font-bold">{region.name} ({region.layer_label})</span>
 			sind
 			{#each grouped[grouped.length - 1].sectors
 				.slice()
@@ -188,3 +186,7 @@
 		{/if}
 	</div>
 {/if}
+
+<div class="max-w-2xl text-sm leading-tight mt-4 opacity-80">
+	<p>Datenquelle: {data[0].source}</p>
+</div>

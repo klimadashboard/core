@@ -94,7 +94,6 @@
 		});
 
 		const foundRegionCode = findMatchingRegion(page.data.page, regions);
-		console.log(foundRegionCode);
 
 		if (foundRegionCode) {
 			selectedRegion = foundRegionCode;

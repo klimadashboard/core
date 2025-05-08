@@ -21,7 +21,7 @@
 				<div class="font-bold">{view.description}</div>
 
 				<div class="flex">
-					<p class="text-5xl font-light tabular-nums">
+					<p class="text-4xl sm:text-5xl font-light tabular-nums">
 						{formatNumber(
 							region[view.dataKey].find((d) => d.period == selectedPeriod)?.value
 						)}{view.unit}

@@ -29,6 +29,7 @@
 							{ region: { _in: regionCandidates } },
 							{ value: { _gte: 0 } },
 							{ category: { _neq: 'ksg' } },
+							{ category: { _neq: 'total' } },
 							{ category: { _neq: 'Emissions|CO2' } },
 							{
 								_or: [

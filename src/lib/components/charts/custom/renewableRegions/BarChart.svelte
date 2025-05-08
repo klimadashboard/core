@@ -1,6 +1,6 @@
 <script>
 	import { scaleLinear } from 'd3-scale';
-	import { max } from 'd3-array';
+	import { min, max } from 'd3-array';
 	import { formatPower, getPowerUnit, convertToPowerUnit } from './formatPower';
 	import formatNumber from '$lib/stores/formatNumber';
 
@@ -19,11 +19,13 @@
 	$: barWidth =
 		chartWidth > 600 ? innerChartWidth / data.length - 5 : innerChartWidth / data.length - 2;
 
+	$: minValue = min(data, (d) => d[selectedVariable]);
 	$: maxValue = max(data, (d) => d[selectedVariable]);
-	$: powerUnit = getPowerUnit(maxValue);
+
+	$: powerUnit = getPowerUnit(Math.max(Math.abs(minValue), Math.abs(maxValue)));
 
 	$: yScale = scaleLinear()
-		.domain([0, convertToPowerUnit(maxValue, maxValue)])
+		.domain([convertToPowerUnit(minValue, maxValue), convertToPowerUnit(maxValue, maxValue)])
 		.range([innerChartHeight, 0]);
 
 	$: xScale = scaleLinear()
@@ -68,13 +70,25 @@
 			<!-- bars -->
 			<g style="color: {colors[1]}">
 				{#each data as item}
-					<rect
-						x={xScale(item.year)}
-						y={yScale(convertToPowerUnit(item[selectedVariable], maxValue))}
-						width={barWidth}
-						height={innerChartHeight - yScale(convertToPowerUnit(item[selectedVariable], maxValue))}
-						fill={colors[1]}
-					/>
+					{#if item[selectedVariable] >= 0}
+						<rect
+							x={xScale(item.year)}
+							y={yScale(convertToPowerUnit(item[selectedVariable], maxValue))}
+							width={barWidth}
+							height={yScale(convertToPowerUnit(0, maxValue)) -
+								yScale(convertToPowerUnit(item[selectedVariable], maxValue))}
+							fill={colors[1]}
+						/>
+					{:else}
+						<rect
+							x={xScale(item.year)}
+							y={yScale(convertToPowerUnit(0, maxValue))}
+							width={barWidth}
+							height={yScale(convertToPowerUnit(item[selectedVariable], maxValue)) -
+								yScale(convertToPowerUnit(0, maxValue))}
+							fill={colors[1]}
+						/>
+					{/if}
 				{/each}
 			</g>
 		</svg>
