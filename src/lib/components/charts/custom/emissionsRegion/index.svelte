@@ -5,6 +5,7 @@
 	import Chart from './Chart.svelte';
 	import ChartHorizontal from './ChartHorizontal.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import { downloadCSV, downloadJSON } from '$lib/utils/downloadData';
 
 	let views = [];
 	let activeLayer = null;
@@ -143,5 +144,12 @@
 				{/if}
 			{/if}
 		{/each}
+		<div class="mt-4 text-sm flex gap-2">
+			<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">CSV</button
+			>
+			<button on:click={() => downloadJSON(results, 'emissions_data.json')} class="button"
+				>JSON</button
+			>
+		</div>
 	</div>
 {/if}
