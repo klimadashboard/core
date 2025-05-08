@@ -65,7 +65,7 @@
 	});
 </script>
 
-<svg width="200" height="120" viewBox="0 0 200 120">
+<svg width="200" height="120" viewBox="0 0 200 120" class="mx-auto">
 	<!-- Base arc -->
 	<path
 		d={describeArc(CX, CY, RADIUS, START, START + TOTAL)}
@@ -103,7 +103,7 @@
 	<circle cx={CX} cy={CY} r="4" fill="#000" />
 </svg>
 
-<div class="flex gap-4 text-sm mt-2 px-4">
+<div class="flex gap-4 text-sm mt-2 px-4 w-max mx-auto">
 	<div>
 		<span class="font-bold text-[#7e57c2]">{Math.round($ptTween)}/100</span> Öffentliche Anbindung
 	</div>

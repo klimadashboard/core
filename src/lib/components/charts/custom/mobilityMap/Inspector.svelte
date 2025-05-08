@@ -114,39 +114,70 @@
 		if (interval < 120) return `alle ${Math.round(interval)} min.`;
 		return `alle ${Math.round(interval / 60)} Std.`;
 	};
+
+	$: mismatch = ptPercent - popPercent;
 </script>
 
 <div
-	class="bg-white dark:bg-gray-900 border border-current/10 shadow p-4 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
+	class="bg-white text-lg dark:bg-gray-900 border border-current/10 shadow p-4 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
 >
 	{#if selectedTiles.length > 0}
 		<h2 class="text-2xl font-bold mb-2">
-			{#if selectedTiles.length === 1}
-				Mobilität Nähe {locationName || 'unbekannt'}
-			{:else}
-				Durchschnittswerte ({selectedTiles.length} Zellen)
-			{/if}
+			Qualität des öffentlichen Verkehrs <span class="font-normal"
+				>nahe <span class="underline underline-offset-4 decoration-current/20"
+					>{locationName || 'unbekannt'}</span
+				>
+
+				im Vergleich zur Bevölkerungsdichte {#if selectedTiles.length > 1}(Durchschnittswerte über {selectedTiles.length}
+					Zellen){/if}</span
+			>
 		</h2>
 
-		<p>
-			{#if selectedTiles.length === 1}
-				{selectedTiles[0].properties.pt} PT // {selectedTiles[0].properties.pop} Pop
+		<div class="mb-2">
+			{#if mismatch < -10}
+				<p>
+					Dieses Gebiet ist <span class="underline underline-offset-4 decoration-[#e53e3e]"
+						>nicht ausreichend</span
+					> an den öffentlichen Verkehr angebunden.
+				</p>
+			{:else if mismatch > 30}
+				<p>
+					Dieses Gebiet ist <span class="underline underline-offset-4 decoration-[#3FB375]"
+						>besonders gut</span
+					> an den öffentlichen Verkehr angebunden.
+				</p>
 			{:else}
-				Durchschnittlicher PT-Score und Bevölkerung aus {selectedTiles.length} Zellen
+				<p>Die Anbindung an den öffentlichen Verkehr in diesem Gebiet ist relativ ausgewogen.</p>
 			{/if}
-		</p>
-
-		{#if popPercent > ptPercent}
-			<p>Dieses Gebiet ist nicht ausreichend an den öffentlichen Verkehr angebunden.</p>
-		{/if}
+		</div>
 
 		{#if popPercent && ptPercent}
 			<Tachometer {popPercent} {ptPercent} />
 		{/if}
 
+		<h3 class="mb-2 mt-6 font-bold">Regionen mit Ausbaupotential</h3>
+		<table class="text-sm">
+			<thead>
+				<tr>
+					<th>Priorität</th>
+					<th>Region</th>
+					<th>Ausbaulücke</th>
+					<th>Link zur Karte</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>#1</td>
+					<td>Region ABC</td>
+					<td>(in Entwicklung)</td>
+					<td> </td>
+				</tr>
+			</tbody>
+		</table>
+
 		{#if stops.length > 0}
-			<h3 class="text-sm text-gray-500 mt-3">Haltestellen in deiner Nähe</h3>
-			<div class="max-w-full overflow-scroll">
+			<h3 class="mb-2 mt-6 font-bold">Haltestellen in deiner Nähe</h3>
+			<div class="max-w-full overflow-scroll text-sm">
 				<table>
 					<thead>
 						<tr>
@@ -193,6 +224,6 @@
 
 	td,
 	th {
-		@apply p-1 border border-gray-200;
+		@apply py-1 border-b border-current/20;
 	}
 </style>
