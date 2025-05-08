@@ -2,8 +2,12 @@
 	import { onMount } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
+	import { PUBLIC_VERSION } from '$env/static/public';
+	import { page } from '$app/state';
+	import { buildTileOutlines } from './mapUtils';
 
 	export let selectedRegion;
+	export let selectedTiles = [];
 
 	let map;
 	let stopsSourceId = 'stops-json';
@@ -11,7 +15,59 @@
 	let hoveredId = null;
 	let selectedId = null;
 
+	function pointInPolygon(point, polygon) {
+		const [x, y] = point;
+		let inside = false;
+		const ring = polygon[0]; // assuming outer ring only
+
+		for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+			const xi = ring[i][0],
+				yi = ring[i][1];
+			const xj = ring[j][0],
+				yj = ring[j][1];
+
+			const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+			if (intersect) inside = !inside;
+		}
+
+		return inside;
+	}
+
 	const vectorTilesURL = 'https://tiles.klimadashboard.org/data/pt_mismatch_all';
+	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
+
+	const clearSelectedStates = () => {
+		selectedTiles.forEach((tile) => {
+			if (tile.id != null) updateFeatureState(tile.id, { selected: false });
+		});
+		selectedTiles = [];
+
+		if (map && map.getSource('selected-outline')) {
+			map.getSource('selected-outline').setData({
+				type: 'FeatureCollection',
+				features: []
+			});
+		}
+	};
+
+	const setSelectedTiles = (features) => {
+		clearSelectedStates();
+
+		selectedTiles = features.map((f) => ({
+			id: f.id,
+			properties: f.properties,
+			geometry: f.geometry
+		}));
+
+		selectedTiles.forEach((tile) => {
+			if (tile.id != null) updateFeatureState(tile.id, { selected: true });
+		});
+
+		if (map && map.getSource('selected-outline')) {
+			const outlineGeoJSON = buildTileOutlines(selectedTiles);
+			map.getSource('selected-outline').setData(outlineGeoJSON);
+		}
+	};
 
 	const updateFeatureState = (id, newState) => {
 		if (!map || id == null) return;
@@ -64,12 +120,17 @@
 			container: 'mobilityMap',
 			style: {
 				version: 8,
+				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
 				sources: {
 					carto: {
 						type: 'raster',
 						tiles: ['https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'],
 						tileSize: 256,
 						attribution: '© OpenStreetMap contributors © CARTO'
+					},
+					labels: {
+						type: 'vector',
+						url: 'https://tiles.klimadashboard.org/data/labels-' + PUBLIC_VERSION + '.json'
 					}
 				},
 				layers: [
@@ -99,6 +160,10 @@
 				maxzoom: 14
 			});
 
+			// 1. Compute your original pop‐class (0–2) and pt‐class, but bump pt to 5 buckets (0–4)
+			const popClass = ['min', 2, ['floor', ['/', ['get', 'pop'], 10]]];
+			const ptClass = ['min', 4, ['floor', ['/', ['get', 'pt'], 1]]];
+
 			map.addLayer({
 				id: 'bivariate-layer',
 				type: 'fill',
@@ -106,38 +171,65 @@
 				'source-layer': 'ptmismatch',
 				paint: {
 					'fill-color': [
-						'match',
+						'case',
+						// ─── pop = 0 row: various blues ───────────────────────────────
+						['==', popClass, 0],
 						[
-							'+',
-							['*', ['min', 2, ['floor', ['/', ['get', 'pop'], 10]]], 3],
-							['min', 2, ['floor', ['/', ['get', 'pt'], 2]]]
+							'interpolate',
+							['linear'],
+							ptClass,
+							0,
+							'#deebf7', // orig index 0
+							1,
+							'#c6dbef', // orig index 1
+							2,
+							'#9ecae1', // orig index 2
+							3,
+							'#6baed6', // extra midpoint
+							4,
+							'#2171b5' // deep blue
 						],
-						0,
-						'#deebf7',
-						1,
-						'#c6dbef',
-						2,
-						'#9ecae1',
-						3,
-						'#fcbba1',
-						4,
-						'#bdbdbd',
-						5,
-						'#a1d99b',
-						6,
-						'#fb6a4a',
-						7,
-						'#fcae91',
-						8,
-						'#41ab5d',
+
+						// ─── pop = 1 row: salmon → grey → green ─────────────────────
+						['==', popClass, 1],
+						[
+							'interpolate',
+							['linear'],
+							ptClass,
+							0,
+							'#fcbba1', // orig index 3
+							1,
+							'#e79a8f', // between 3→4
+							2,
+							'#bdbdbd', // orig index 4
+							3,
+							'#a1d99b', // orig index 5
+							4,
+							'#74c476' // extra midpoint toward green
+						],
+
+						// ─── pop = 2 row: red → pink → dark‐green ────────────────────
+						['==', popClass, 2],
+						[
+							'interpolate',
+							['linear'],
+							ptClass,
+							0,
+							'#fb6a4a', // orig index 6
+							1,
+							'#fa836c', // between 6→7
+							2,
+							'#fcae91', // orig index 7
+							3,
+							'#82a360', // between 7→8
+							4,
+							'#41ab5d' // orig index 8
+						],
+
+						// ─── fallback ────────────────────────────────────────────────
 						'#ffffff'
 					],
-					'fill-opacity': [
-						'case',
-						['boolean', ['feature-state', 'hover'], false],
-						0.8, // Opacity when hovered
-						0.5 // Default opacity
-					]
+					'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.8, 0.5]
 				}
 			});
 
@@ -177,11 +269,11 @@
 					'line-opacity': [
 						'case',
 						['boolean', ['feature-state', 'selected'], true],
-						1,
-						['boolean', ['feature-state', 'hover'], true],
-						0.9,
-						['boolean', ['feature-state', 'nearby'], true],
 						0.6,
+						['boolean', ['feature-state', 'hover'], true],
+						0.8,
+						['boolean', ['feature-state', 'nearby'], true],
+						0.4,
 						0
 					]
 				}
@@ -218,30 +310,82 @@
 				paint: {
 					'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 4],
 					'circle-color': [
-						'match',
-						['get', 'category'],
-						'I',
-						'#67001f',
-						'II',
-						'#980043',
-						'III',
-						'#ce1256',
-						'IV',
-						'#e7298a',
-						'V',
-						'#ab47bc',
-						'VI',
-						'#5c6bc0',
-						'VII',
-						'#26c6da',
-						'VIII',
-						'#ffca28',
-						'#9e9e9e'
+						'interpolate',
+						['linear'],
+						['get', 'interval'],
+						0,
+						'#eff3ff',
+						15,
+						'#bdd7e7',
+						30,
+						'#6baed6',
+						60,
+						'#2171b5'
 					],
 					'circle-stroke-color': '#ffffff',
 					'circle-stroke-width': 1
 				}
 			});
+
+			map.addLayer({
+				id: 'city-labels',
+				source: 'labels',
+				'source-layer': 'city-labels', // from Tippecanoe: -l city-labels
+				type: 'symbol',
+				layout: {
+					'text-field': ['get', 'name'],
+					'text-font': ['Noto Sans Regular'],
+					'text-size': 12,
+					'symbol-sort-key': ['get', 'population']
+				},
+				paint: {
+					'text-color': '#000',
+					'text-halo-color': '#fff',
+					'text-halo-width': 1
+				},
+				minzoom: 4
+			});
+
+			const outline = page.data.page.outline || false;
+			console.log(outline);
+
+			const bounds = outline.coordinates[0].reduce(
+				(b, [lon, lat]) => b.extend([lon, lat]),
+				new maplibregl.LngLatBounds(outline.coordinates[0][0], outline.coordinates[0][0])
+			);
+			map.fitBounds(bounds, { padding: 10, duration: 0 });
+
+			if (outline && outline.type === 'Polygon') {
+				// Zoom to the outline first
+				const bounds = outline.coordinates[0].reduce(
+					(b, [lon, lat]) => b.extend([lon, lat]),
+					new maplibregl.LngLatBounds(outline.coordinates[0][0], outline.coordinates[0][0])
+				);
+				map.fitBounds(bounds, { padding: 10, duration: 0 });
+
+				// Wait until tiles are loaded and rendered
+				map.once('idle', () => {
+					const tiles = map.queryRenderedFeatures({ layers: ['bivariate-layer'] });
+					console.log('Found tiles:', tiles.length);
+
+					const selected = tiles.filter((tile) => {
+						const coords = tile.geometry?.coordinates?.[0];
+						if (!coords || coords.length < 3) return false;
+
+						// Use centroid of tile (simplified bounding box)
+						const x = (coords[0][0] + coords[2][0]) / 2;
+						const y = (coords[0][1] + coords[2][1]) / 2;
+
+						return pointInPolygon([x, y], outline.coordinates);
+					});
+
+					console.log('Selected in outline:', selected.length);
+
+					if (selected.length > 0) {
+						setSelectedTiles(selected);
+					}
+				});
+			}
 
 			// Hover handling
 			map.on('mousemove', 'bivariate-layer', (e) => {
@@ -271,54 +415,99 @@
 				if (features.length === 0) return;
 
 				const feature = features[0];
-				const coords = e.lngLat;
-				const props = feature.properties;
+				if (feature.id == null) return;
 
-				map.queryRenderedFeatures({ layers: ['bivariate-layer'] }).forEach((f) => {
-					updateFeatureState(f.id, { selected: false, nearby: false });
-				});
+				setSelectedTiles([feature]);
+			});
 
-				selectedId = feature.id;
-				updateFeatureState(selectedId, { selected: true });
+			map.addSource('selected-outline', {
+				type: 'geojson',
+				data: {
+					type: 'FeatureCollection',
+					features: []
+				}
+			});
 
-				const getCenter = (f) => {
-					const ring = f.geometry.coordinates?.[0];
-					if (!ring) return [0, 0];
-					const x = (ring[0][0] + ring[2][0]) / 2;
-					const y = (ring[0][1] + ring[2][1]) / 2;
-					return [x, y];
-				};
-
-				const [cx, cy] = getCenter(feature);
-				map.queryRenderedFeatures({ layers: ['bivariate-layer'] }).forEach((f) => {
-					if (f.id === selectedId) return;
-					const [fx, fy] = getCenter(f);
-					const dx = Math.abs(fx - cx);
-					const dy = Math.abs(fy - cy);
-					const isNearby = (dx === 0 || dy === 0) && dx <= 0.08 && dy <= 0.08;
-					if (isNearby) updateFeatureState(f.id, { nearby: true });
-				});
-
-				map.flyTo({ center: coords, zoom: Math.max(map.getZoom(), 14) });
-
-				const response = await fetch(
-					`https://base.klimadashboard.org/get-nearby-stops?lat=${coords.lat}&lon=${coords.lng}&radius_km=0.5`
-				);
-				const nearbyStops = await response.json();
-
-				selectedRegion = {
-					coordinates: [coords.lng, coords.lat],
-					geometry: feature.geometry,
-					properties: {
-						pop: props.pop,
-						pt: props.pt,
-						mismatch: props.mismatch,
-						nearbyStops
-					}
-				};
+			map.addLayer({
+				id: 'selected-outline-layer',
+				type: 'line',
+				source: 'selected-outline',
+				paint: {
+					'line-color': '#000',
+					'line-width': 2,
+					'line-opacity': 0.5
+				}
 			});
 
 			updateStops();
+
+			// Shift+Drag selection
+			let dragStart = null;
+			let dragBoxEl = null;
+
+			map.on('mousedown', (e) => {
+				if (!e.originalEvent.shiftKey) return;
+
+				dragStart = e.point;
+
+				dragBoxEl = document.createElement('div');
+				dragBoxEl.style.position = 'absolute';
+				dragBoxEl.style.border = '2px dashed black';
+				dragBoxEl.style.background = 'rgba(0, 0, 0, 0.1)';
+				dragBoxEl.style.zIndex = '999';
+				dragBoxEl.style.pointerEvents = 'none';
+				document.body.appendChild(dragBoxEl);
+
+				const canvas = map.getCanvasContainer();
+				const startX = dragStart.x;
+				const startY = dragStart.y;
+
+				function onMouseMove(eMove) {
+					const curr = eMove.point;
+					const minX = Math.min(startX, curr.x);
+					const maxX = Math.max(startX, curr.x);
+					const minY = Math.min(startY, curr.y);
+					const maxY = Math.max(startY, curr.y);
+
+					dragBoxEl.style.left = minX + 'px';
+					dragBoxEl.style.top = minY + 'px';
+					dragBoxEl.style.width = maxX - minX + 'px';
+					dragBoxEl.style.height = maxY - minY + 'px';
+				}
+
+				function onMouseUp(eUp) {
+					map.off('mousemove', onMouseMove);
+					map.off('mouseup', onMouseUp);
+
+					if (dragBoxEl) {
+						document.body.removeChild(dragBoxEl);
+						dragBoxEl = null;
+					}
+
+					const end = eUp.point;
+					const bounds = [
+						[Math.min(startX, end.x), Math.min(startY, end.y)],
+						[Math.max(startX, end.x), Math.max(startY, end.y)]
+					];
+
+					const features = map.queryRenderedFeatures(bounds, { layers: ['bivariate-layer'] });
+
+					const selected = features
+						.filter((f) => f.id != null)
+						.map((f) => ({
+							id: f.id,
+							properties: f.properties,
+							geometry: f.geometry
+						}));
+
+					if (selected.length > 0) {
+						setSelectedTiles(selected);
+					}
+				}
+
+				map.on('mousemove', onMouseMove);
+				map.on('mouseup', onMouseUp);
+			});
 		});
 
 		map.on('moveend', () => updateStops());
@@ -338,6 +527,17 @@
 			<span style="background:#41ab5d" class="w-4 h-4 block"></span> <span>Excellent match</span>
 		</div>
 		<div>(preview version)</div>
+	</div>
+
+	<div class="absolute top-2 right-2 z-20 p-2 bg-white bg-opacity-90 text-xs rounded shadow">
+		<div class="mb-1 font-semibold">Interval (min)</div>
+		<div class="flex items-center gap-1">
+			<span class="w-3 h-3" style="background: #eff3ff"></span>
+			<span>0</span>
+			<span class="flex-1 h-1 bg-gradient-to-r from-[#eff3ff] via-[#bdd7e7] to-[#2171b5] mx-2"
+			></span>
+			<span>60+</span>
+		</div>
 	</div>
 </div>
 
