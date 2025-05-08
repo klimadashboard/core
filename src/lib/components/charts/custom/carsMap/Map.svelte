@@ -240,4 +240,15 @@
 			<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
 		</button>
 	{/if}
+
+	<div
+		class="text-xs absolute top-2 left-2 z-40 flex bg-white px-1.5 py-0.5 rounded-full gap-1 items-center"
+	>
+		<p>Niedrig</p>
+		<div
+			class="w-6 h-2 r rounded-full"
+			style="background: linear-gradient(to right, {colors[0]}, {colors[1]});"
+		></div>
+		<p>Hoch</p>
+	</div>
 </div>

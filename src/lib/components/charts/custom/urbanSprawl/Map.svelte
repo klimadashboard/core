@@ -258,6 +258,17 @@
 </script>
 
 <div id="mapUrbanSprawl" class="w-full h-full rounded-2xl">
+	<div
+		class="text-xs absolute top-2 right-2 z-40 flex bg-white px-1.5 py-0.5 rounded-full gap-1 items-center"
+	>
+		<p>Niedrig</p>
+		<div
+			class="w-6 h-2 r rounded-full"
+			style="background: linear-gradient(to right, {colorRange[0]}, {colorRange[1]});"
+		></div>
+		<p>Hoch</p>
+	</div>
+
 	{#if zoomLevel > 4}
 		<button
 			on:mousedown={() => (selectedRegion = null)}
