@@ -78,11 +78,13 @@
 	$: console.log(data);
 
 	const getDataForRegion = async (regionCode = false, selectedEnergy = 'solar') => {
+		console.log(regionCode);
 		const url = regionCode
 			? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year&region=${regionCode}`
 			: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year`;
 		const response = await fetch(url);
 		const result = await response.json();
+		console.log(result);
 		return result;
 	};
 
@@ -95,6 +97,7 @@
 			selectedUnitHasChanged = true;
 		}
 		if (isSelected(r)) {
+			console.log(r);
 			// Remove region
 			selectedRegions = selectedRegions.filter((s) => s.code !== r.code);
 			data = data.filter((d) => d.code !== r.code);
@@ -102,7 +105,8 @@
 			loading = true;
 			try {
 				selectedRegions = [...selectedRegions, r];
-				const result = await getDataForRegion(r.code, selectedEnergy);
+				const code = r.layer == 'country' ? null : r.code;
+				const result = await getDataForRegion(code, selectedEnergy);
 				data = [...data, { code: r.code, name: r.name, data: result }];
 			} finally {
 				loading = false;
@@ -117,7 +121,8 @@
 	// Load initial region data
 	onMount(async () => {
 		loading = true;
-		const initialData = await getDataForRegion(region.code, selectedEnergy);
+		const code = region.layer == 'country' ? null : region.code;
+		const initialData = await getDataForRegion(code, selectedEnergy);
 		data = [{ code: region.code, name: region.name, data: initialData }];
 		loading = false;
 	});

@@ -162,7 +162,7 @@
 			const geojson = {
 				type: 'FeatureCollection',
 				features: regions
-					.filter((r) => r.outline)
+					.filter((r) => r.outline && r.layer === 'municipality')
 					.map((r) => ({
 						type: 'Feature',
 						properties: { RS: r.code },
@@ -296,11 +296,10 @@
 
 	// Highlight + fly to selected region
 	$: if (mapReady && map) {
-		if (selectedRegion) {
-			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
-			const region = regions.find((r) => r.code === selectedRegion);
-			if (region?.center) {
-				map.flyTo({ center: region.center, zoom: 10, duration: 800 });
+		if (selectedRegion && selectedRegion.layer !== 'country') {
+			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion.code]);
+			if (selectedRegion?.center) {
+				map.flyTo({ center: selectedRegion.center, zoom: 10, duration: 800 });
 			}
 		} else {
 			map.setFilter('highlight-outline', ['==', 'RS', '']);
@@ -353,7 +352,7 @@
 >
 	{#if zoomLevel > 4}
 		<button
-			on:mousedown={() => (selectedRegion = null)}
+			on:mousedown={() => (selectedRegion = regions.find((d) => d.layer == 'country'))}
 			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-500 rounded-full w-8 h-8 grid shadow"
 			transition:fade
 		>

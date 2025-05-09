@@ -4,6 +4,7 @@
 	import Types from './Types.svelte';
 	import Comparison from './Comparison.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let region;
 	export let data;
@@ -12,13 +13,16 @@
 	export let selectedEnergy;
 
 	$: getDataForRegion = async (regionCode = false, selectedEnergy) => {
-		const url = regionCode
-			? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year&region=${regionCode}`
-			: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year`;
+		const url =
+			regionCode && regionCode !== PUBLIC_VERSION
+				? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year&region=${regionCode}`
+				: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year`;
 		const response = await fetch(url);
 		const data = await response.json();
 		return data;
 	};
+
+	$: console.log(region);
 
 	$: promise = getDataForRegion(region.code, selectedEnergy);
 
@@ -69,20 +73,24 @@
 			{#if selectedEnergy === 'solar'}
 				{#if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
 					<h3 class="font-bold text-2xl">
-						Seit Jahresbeginn wurden keine Solaranlagen installiert
+						Seit Jahresbeginn wurden in {region.name} keine Solaranlagen installiert
 					</h3>
 				{:else}
 					<h3 class="font-bold text-2xl">
-						Seit Jahresbeginn wurden {getFormattedCapacity(
+						Seit Jahresbeginn wurden in {region.name}
+						{getFormattedCapacity(
 							result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw ?? 0
 						)} Solarkapazität installiert
 					</h3>
 				{/if}
 			{:else if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
-				<h3 class="font-bold text-2xl">Seit Jahresbeginn wurden keine Windräder angeschlossen</h3>
+				<h3 class="font-bold text-2xl">
+					Seit Jahresbeginn wurden in {region.name} keine Windräder angeschlossen
+				</h3>
 			{:else}
 				<h3 class="font-bold text-2xl">
-					Seit Jahresbeginn wurden {getFormattedCapacity(
+					Seit Jahresbeginn wurden in {region.name}
+					{getFormattedCapacity(
 						result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw ?? 0
 					)} Kapazität Windenergie installiert
 				</h3>
@@ -102,7 +110,8 @@
 			</p>
 
 			<h3 class="font-bold text-2xl mb-2">
-				Insgesamt wurden bisher {getFormattedCapacity(
+				Insgesamt wurden bisher in {region.name}
+				{getFormattedCapacity(
 					result.by_year.find((d) => d.year === new Date().getFullYear())?.cumulative_power_kw
 				)} installiert
 			</h3>

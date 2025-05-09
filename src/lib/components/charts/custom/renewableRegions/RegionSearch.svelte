@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { clickOutside } from '$lib/utils/clickOutside';
 
 	export let regions = [];
 	export let region = {};
@@ -9,7 +10,7 @@
 	const dispatch = createEventDispatcher();
 
 	const getDistance = (center1, center2) => {
-		if (!center1 || !center2) return Infinity;
+		if (!center1 || !center2) return null;
 		const toRad = (d) => (d * Math.PI) / 180;
 		const R = 6371;
 		const dLat = toRad(center2[1] - center1[1]);
@@ -27,9 +28,20 @@
 	$: searchable = regions
 		.map((r) => ({
 			...r,
-			distance: r.center && region.center ? getDistance(r.center, region.center) : 0
+			distance: getDistance(r.center, region.center),
+			isParent: region.parents?.some((p) => p.id === r.id)
 		}))
-		.sort((a, b) => a.distance - b.distance);
+		.sort((a, b) => {
+			// Parent region first
+			if (a.isParent && !b.isParent) return -1;
+			if (!a.isParent && b.isParent) return 1;
+
+			// Then by distance (nulls last)
+			if (a.distance === null && b.distance === null) return 0;
+			if (a.distance === null) return 1;
+			if (b.distance === null) return -1;
+			return a.distance - b.distance;
+		});
 
 	$: filtered =
 		searchTerm.length < 2
@@ -45,7 +57,7 @@
 	}
 
 	function isSelected(r) {
-		return selectedRegions.find((s) => s.code === r.code);
+		return selectedRegions.some((s) => s.id === r.id);
 	}
 </script>
 
@@ -64,8 +76,10 @@
 			class="absolute z-10 bg-white border rounded shadow max-h-64 overflow-y-auto mt-1 w-full"
 			role="listbox"
 			aria-multiselectable="true"
+			use:clickOutside
+			on:click_outside={() => (showDropdown = false)}
 		>
-			{#each filtered as r (r.code)}
+			{#each filtered as r}
 				<div
 					role="option"
 					aria-selected={isSelected(r)}
@@ -74,8 +88,8 @@
 				>
 					<input type="checkbox" checked={isSelected(r)} readonly class="mr-2" />
 					<span class="flex-1">
-						{r.name}
-						{#if r.distance !== null}
+						{r.name} ({r.layer_label})
+						{#if r.distance !== null && r.distance > 1 && r.layer == 'municipality'}
 							({formatNumber(r.distance)} km){/if}
 					</span>
 				</div>

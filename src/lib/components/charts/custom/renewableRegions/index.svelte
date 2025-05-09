@@ -24,20 +24,32 @@
 
 	// --- In-memory cache (lost on full reload) ---
 	let cachedRegions = null;
-	let cachedCountryName = null;
 
 	const fetchRegions = async () => {
-		if (cachedRegions) return { regions: cachedRegions, countryName: cachedCountryName };
+		// if (cachedRegions) return { regions: cachedRegions, countryName: cachedCountryName };
 
 		const directus = getDirectusInstance();
 		const regionsRaw = await directus.request(
 			readItems('regions', {
-				fields: ['id', 'name', 'code_short', 'outline_simple', 'center', 'area'],
+				fields: [
+					'id',
+					'name',
+					'code_short',
+					'outline_simple',
+					'center',
+					'area',
+					'layer',
+					'layer_label',
+					'code',
+					'parents'
+				],
 				filter: {
 					_and: [
 						{
-							country: { _eq: PUBLIC_VERSION.toUpperCase() },
+							country: { _eq: PUBLIC_VERSION.toUpperCase() }
+							/*
 							_or: [{ layer: { _eq: 'municipality' } }, { layer: { _eq: 'country' } }]
+							*/
 						}
 					]
 				},
@@ -47,43 +59,36 @@
 
 		const regions = regionsRaw.map((r) => ({
 			...r,
-			code: r.code_short,
+			code: r.code_short ? r.code_short : r.code,
 			outline: r.outline_simple
 		}));
 
 		cachedRegions = regions;
-		cachedCountryName = PUBLIC_VERSION;
 
-		return { regions, countryName: PUBLIC_VERSION };
+		return regions;
 	};
 
-	$: getData = async (selectedEnergy) => {
-		const [{ regions, countryName }, data] = await Promise.all([
-			fetchRegions(),
-			fetch(
-				`https://base.klimadashboard.org/get-region-stats-for-renewables?table=energy_${selectedEnergy}_units`
-			).then((r) => r.json())
-		]);
+	async function getData(selectedEnergy) {
+		try {
+			const [regions, data] = await Promise.all([
+				fetchRegions(),
+				fetch(
+					`https://base.klimadashboard.org/get-region-stats-for-renewables?table=energy_${selectedEnergy}_units`
+				).then((r) => r.json())
+			]);
 
-		const foundRegionCode = findMatchingRegion(page.data.page, regions);
-		if (foundRegionCode) {
-			selectedRegion = foundRegionCode;
+			const foundRegion = findMatchingRegion(page.data.page, regions);
+			selectedRegion = foundRegion || regions.find((d) => d.layer == 'country');
+
+			console.log(selectedRegion);
+			return { data, regions };
+		} catch (err) {
+			console.error('Error in getData:', err);
+			throw err;
 		}
-
-		return { data, regions, countryName };
-	};
+	}
 
 	$: promise = getData(selectedEnergy);
-
-	$: getRegionData = (regions, selectedRegion, countryName) => {
-		const region = regions.find((d) => d.code == selectedRegion);
-		return {
-			name: region?.name || countryName,
-			code: selectedRegion,
-			center: region?.center,
-			area: region?.area
-		};
-	};
 </script>
 
 <Switch
@@ -95,7 +100,7 @@
 <div class="min-h-[70vh]">
 	{#await promise}
 		<Loader />
-	{:then { data, regions, countryName }}
+	{:then { data, regions }}
 		<div class="h-96">
 			<Map
 				colors={colors.find((c) => c.key === selectedEnergy).colors}
@@ -103,7 +108,7 @@
 				{regions}
 				{selectedEnergy}
 				bind:selectedRegion
-				on:selectRegion={(e) => (selectedRegion = e.detail)}
+				on:selectRegion={(e) => (selectedRegion = regions.find((d) => d.code == e.detail))}
 			/>
 		</div>
 		<div
@@ -114,9 +119,11 @@
 				{regions}
 				{data}
 				{selectedEnergy}
-				region={getRegionData(regions, selectedRegion, countryName)}
+				region={selectedRegion}
 				bind:selectedRegion
 			/>
 		</div>
+	{:catch error}
+		<p>{error.message}</p>
 	{/await}
 </div>
