@@ -77,7 +77,8 @@
 				).then((r) => r.json())
 			]);
 
-			const foundRegion = findMatchingRegion(page.data.page, regions);
+			const foundRegion = findMatchingRegion(page.data.page, regions, true);
+			console.log(foundRegion);
 			selectedRegion = foundRegion || regions.find((d) => d.layer == 'country');
 
 			console.log(selectedRegion);

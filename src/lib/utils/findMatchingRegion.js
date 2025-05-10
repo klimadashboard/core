@@ -1,6 +1,6 @@
 // src/lib/utils/findMatchingRegion.js
 
-export function findMatchingRegion(page, regions) {
+export function findMatchingRegion(page, regions, returnRegion = false) {
 	if (!page || !regions || regions.length === 0) return null;
 
 	const pageId = page.id;
@@ -12,5 +12,5 @@ export function findMatchingRegion(page, regions) {
 	// Try to find a matching region
 	const match = regions.find((region) => idsToCheck.includes(region.id));
 
-	return match ? match.code : null;
+	return match ? (returnRegion ? match : match.code) : null;
 }
