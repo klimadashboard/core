@@ -6,11 +6,21 @@ export function findMatchingRegion(page, regions, returnRegion = false) {
 	const pageId = page.id;
 	const parentIds = page.parents ? page.parents.map((p) => p.id) : [];
 
-	// List of IDs to check: page itself + its parents
+	// Create a Set for quick lookup
 	const idsToCheck = [pageId, ...parentIds];
+	const idOrder = new Map(idsToCheck.map((id, index) => [id, index]));
 
-	// Try to find a matching region
-	const match = regions.find((region) => idsToCheck.includes(region.id));
+	let bestMatch = null;
+	let bestOrder = Infinity;
 
-	return match ? (returnRegion ? match : match.code) : null;
+	for (const region of regions) {
+		const order = idOrder.get(region.id);
+		if (order !== undefined && order < bestOrder) {
+			bestMatch = region;
+			bestOrder = order;
+			if (order === 0) break; // Exact page ID match found, no need to continue
+		}
+	}
+
+	return bestMatch ? (returnRegion ? bestMatch : bestMatch.code) : null;
 }
