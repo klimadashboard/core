@@ -16,5 +16,6 @@ export const getDataForSelectedRegion = async (region) => {
 		...d,
 		percentage: (d.value / rawData.find((d) => d.category == 'total')?.value) * 100
 	}));
+	console.log(data);
 	return data;
 };

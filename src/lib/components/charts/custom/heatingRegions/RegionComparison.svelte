@@ -52,20 +52,24 @@
 					<div class="" style="color: {category.color}">
 						<p class="font-bold">{category.label}</p>
 						{#await getDataForSelectedRegion(region.code) then data}
-							<p>
-								<strong
-									>{formatNumber(
-										data?.find((d) => d.category == category.key)?.percentage
-									)}%</strong
-								>
-								| Anzahl: {formatNumber(data?.find((d) => d.category == category.key)?.value)}
-							</p>
-							<div class="mt-1">
-								<div
-									class="bg-current h-2 rounded-full"
-									style="width: {data?.find((d) => d.category == category.key)?.percentage}%"
-								></div>
-							</div>
+							{#if data.length > 0}
+								<p>
+									<strong
+										>{formatNumber(
+											data?.find((d) => d.category == category.key)?.percentage
+										)}%</strong
+									>
+									| Anzahl: {formatNumber(data?.find((d) => d.category == category.key)?.value)}
+								</p>
+								<div class="mt-1">
+									<div
+										class="bg-current h-2 rounded-full"
+										style="width: {data?.find((d) => d.category == category.key)?.percentage}%"
+									></div>
+								</div>
+							{:else}
+								<p class="opacity-80">Keine Daten verfügbar.</p>
+							{/if}
 						{/await}
 					</div>
 				{/each}
