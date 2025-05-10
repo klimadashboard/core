@@ -347,7 +347,6 @@
 			});
 
 			const outline = page.data.page.outline || false;
-			console.log(outline);
 
 			const bounds = outline.coordinates[0].reduce(
 				(b, [lon, lat]) => b.extend([lon, lat]),
@@ -366,7 +365,6 @@
 				// Wait until tiles are loaded and rendered
 				map.once('idle', () => {
 					const tiles = map.queryRenderedFeatures({ layers: ['bivariate-layer'] });
-					console.log('Found tiles:', tiles.length);
 
 					const selected = tiles.filter((tile) => {
 						const coords = tile.geometry?.coordinates?.[0];
@@ -378,8 +376,6 @@
 
 						return pointInPolygon([x, y], outline.coordinates);
 					});
-
-					console.log('Selected in outline:', selected.length);
 
 					if (selected.length > 0) {
 						setSelectedTiles(selected);

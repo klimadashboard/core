@@ -6,8 +6,6 @@
 	export let data;
 	export let region;
 
-	console.log(data);
-
 	let chartWidth;
 	let chartHeight;
 

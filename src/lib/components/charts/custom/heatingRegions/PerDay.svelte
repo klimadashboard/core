@@ -1,7 +1,6 @@
 <script>
 	import formatNumber from '$lib/stores/formatNumber';
 	export let data;
-	console.log(data);
 
 	// Find the needed entries
 	const gasEntry = data.find((d) => d.category === 'gas');

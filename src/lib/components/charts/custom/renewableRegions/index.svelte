@@ -78,10 +78,7 @@
 			]);
 
 			const foundRegion = findMatchingRegion(page.data.page, regions, true);
-			console.log(foundRegion);
 			selectedRegion = foundRegion || regions.find((d) => d.layer == 'country');
-
-			console.log(selectedRegion);
 			return { data, regions };
 		} catch (err) {
 			console.error('Error in getData:', err);

@@ -22,8 +22,6 @@
 		return data;
 	};
 
-	$: console.log(region);
-
 	$: promise = getDataForRegion(region.code, selectedEnergy);
 
 	$: getFormattedCapacity = (capacity) => {

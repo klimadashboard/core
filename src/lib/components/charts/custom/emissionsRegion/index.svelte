@@ -20,8 +20,6 @@
 			const parentIds = page.data?.page?.parents?.map((p) => p.id) || [];
 			const regionCandidates = [currentId, ...parentIds].filter(Boolean);
 
-			console.log(regionCandidates);
-
 			// Fetch emissions
 			const emissions = await directus.request(
 				readItems('emissions_data', {
@@ -52,8 +50,6 @@
 				})
 			);
 
-			console.log(emissions);
-
 			// Fetch region metadata
 			const regions = await directus.request(
 				readItems('regions', {
@@ -70,8 +66,6 @@
 				})
 			);
 			const categoryMap = new Map((categories ?? []).map((c) => [c.code, c]));
-			console.log(categories);
-			console.log(categoryMap);
 
 			const categoryOrder = (categories ?? []).map((c) => c.code).filter(Boolean); // Ensures only valid codes
 

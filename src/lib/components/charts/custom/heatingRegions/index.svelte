@@ -34,7 +34,6 @@
 		const foundRegionCode = findMatchingRegion(page.data.page, regions);
 
 		if (foundRegionCode) {
-			console.log(foundRegionCode);
 			selectedRegion = regions.find((d) => d.code == foundRegionCode);
 		}
 

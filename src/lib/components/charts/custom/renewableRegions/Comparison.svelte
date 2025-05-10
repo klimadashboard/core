@@ -75,16 +75,12 @@
 	let selectedRegions = [region];
 	let data = [];
 
-	$: console.log(data);
-
 	const getDataForRegion = async (regionCode = false, selectedEnergy = 'solar') => {
-		console.log(regionCode);
 		const url = regionCode
 			? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year&region=${regionCode}`
 			: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year`;
 		const response = await fetch(url);
 		const result = await response.json();
-		console.log(result);
 		return result;
 	};
 
@@ -97,7 +93,6 @@
 			selectedUnitHasChanged = true;
 		}
 		if (isSelected(r)) {
-			console.log(r);
 			// Remove region
 			selectedRegions = selectedRegions.filter((s) => s.code !== r.code);
 			data = data.filter((d) => d.code !== r.code);
