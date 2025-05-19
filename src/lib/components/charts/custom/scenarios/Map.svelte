@@ -168,11 +168,10 @@
 
 			const features = map.queryRenderedFeatures(e.point, { layers: ['climate-layer'] });
 
-			console.log(features);
 			if (features.length === 0) return;
 
 			selection = aggregateCells(features);
-			map.getSource('outline')?.setData(features[0]);
+			map.getSource('outline')?.setData(selection);
 		});
 	});
 
@@ -239,7 +238,6 @@
 	}
 
 	const aggregateCells = (features) => {
-		// console.log(features);
 		// {
 		// 	indicator: 'heatdays_30'
 		// 	current: 8.3,
@@ -256,11 +254,6 @@
 		// 	const id = feature.properties.id ?? c.geometry.coordinates.join('-');
 		// 	return { ...feature, properties: { ...feature.properties, centroid: c, id } };
 		// });
-		// console.log(featuresWithCentroid.map(({ properties }) => properties.id));
-		// console.log(
-		// 	[...new Set(featuresWithCentroid.map(({ properties }) => properties.id))],
-		// 	[...new Set(featuresWithCentroid.map(({ properties }) => properties.id))].length
-		// );
 
 		return {
 			type: 'Feature',
