@@ -1,12 +1,12 @@
-<script>
+<script lang="ts">
 	import Map from './Map.svelte';
 	import Inspector from './Inspector.svelte';
+	import type { GeoJSONFeature } from 'maplibre-gl';
 
-	let selectedRegion;
-	let selectedTiles;
+	let selection: GeoJSONFeature;
 </script>
 
 <div>
-	<Map bind:selectedRegion bind:selectedTiles />
-	<Inspector bind:selectedRegion bind:selectedTiles />
+	<Map bind:selection />
+	<Inspector bind:selection />
 </div>

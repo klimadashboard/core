@@ -5,13 +5,15 @@
 	import { bbox } from '@turf/bbox';
 	import { union } from '@turf/union';
 	import { onMount } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import maplibregl, {
+		type GeoJSONFeature,
+		type GeoJSONSource,
+		type LngLatLike
+	} from 'maplibre-gl';
 	import { page } from '$app/state';
 	import Switch from '$lib/components/Switch.svelte';
 
-	export let selectedRegion;
 	export let selection;
-	export let selectedTiles = [];
 
 	let map: maplibregl.Map;
 
@@ -135,8 +137,8 @@
 
 				selection = aggregateCells(tilesInRegion);
 
-				map.fitBounds(getBounds(selection), { padding: 25, duration: 0 });
-				map.getSource('outline')?.setData(selection);
+				map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 25, duration: 0 });
+				(map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 			});
 		});
 
@@ -171,7 +173,7 @@
 			if (features.length === 0) return;
 
 			selection = aggregateCells(features);
-			map.getSource('outline')?.setData(selection);
+			(map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 		});
 	});
 
@@ -237,7 +239,7 @@
 		map.setPaintProperty('climate-fill', 'fill-color', colorStops);
 	}
 
-	const aggregateCells = (features) => {
+	const aggregateCells = (features: GeoJSONFeature[]) => {
 		// {
 		// 	indicator: 'heatdays_30'
 		// 	current: 8.3,
@@ -261,7 +263,7 @@
 				features.length >= 2
 					? union({
 							type: 'FeatureCollection',
-							features: features
+							features: features as any
 						})?.geometry
 					: (features[0]?.geometry ?? null),
 			properties: Object.fromEntries(
@@ -297,18 +299,18 @@
 		};
 	};
 
-	const propertyMean = (arr, key) => {
+	const propertyMean = (arr: { [name: string]: any }[], key: string) => {
 		const values = arr.map((obj) => obj?.[key]).filter((value) => value != null && !isNaN(value));
 		if (values.length === 0) return null;
 		return values.reduce((a, b) => a + b) / values.length;
 	};
 
-	const getBounds = (feature) => {
+	const getBounds = (feature: GeoJSONFeature) => {
 		const bounds = bbox(feature);
 		return [
 			[bounds[0], bounds[1]],
 			[bounds[2], bounds[3]]
-		];
+		] as [LngLatLike, LngLatLike];
 	};
 </script>
 
