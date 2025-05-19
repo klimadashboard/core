@@ -2,9 +2,10 @@
 	import { page } from '$app/state';
 	import centroid from '@turf/centroid';
 	import type { GeoJSONFeature } from 'maplibre-gl';
+	import BoxPlotChart from './BoxPlotChart.svelte';
 
 	export let selection: GeoJSONFeature;
-	// export let indicators;
+	export let indicators;
 	// export let warmingLevels;
 
 	$: if (selection) {
@@ -14,11 +15,12 @@
 	let locationName: String | null;
 	let debounceTimeout: string | number | NodeJS.Timeout | undefined;
 
-	$: customSelection = selection?.properties?.customSelection;
 	$: if (selection != null) {
 		clearTimeout(debounceTimeout);
 		debounceTimeout = setTimeout(handleSelection, 100);
 	}
+
+	// $: indicators = Object.keys(selection.properties.indicators);
 
 	async function handleSelection() {
 		if (!selection?.properties?.customSelection) {
@@ -56,10 +58,11 @@
 					>
 				</span>
 			</h2>
-			<!-- {#each indicators as indicator}
+			{#each indicators as indicator}
 				<div>
 					<h3 class="font-bold">{indicator.label}</h3>
-					<p>Definition</p>
+					<BoxPlotChart data={selection.properties[indicator.key]} />
+					<!-- <p>Definition</p>
 					{#each warmingLevels as warmingLevel}
 						<h4>{warmingLevel.label}</h4>
 						<div>{selectedFeature[indicator.key + '_' + warmingLevel.key].q50}</div>
@@ -69,14 +72,11 @@
 								{selectedFeature[indicator.key + '_' + warmingLevel.key].trust}
 							</div>
 						{/if}
-					{/each}
+					{/each} -->
 				</div>
-			{/each} -->
+			{/each}
 		</div>
 	{:else}
-		<p>
-			Wähle eine Region aus, um mehr Informationen zu der Anbindung an den öffentlichen Nahverkehr
-			zu erhalten.
-		</p>
+		<p>Wähle eine Region aus, um mehr Informationen zu den lokalen Klimaszenarien zu erhalten.</p>
 	{/if}
 </div>

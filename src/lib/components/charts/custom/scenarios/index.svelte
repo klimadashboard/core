@@ -4,9 +4,10 @@
 	import type { GeoJSONFeature } from 'maplibre-gl';
 
 	let selection: GeoJSONFeature;
+	let indicators: any;
 </script>
 
 <div>
-	<Map bind:selection />
-	<Inspector bind:selection />
+	<Map bind:selection bind:indicators />
+	<Inspector bind:selection bind:indicators />
 </div>

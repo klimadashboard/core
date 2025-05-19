@@ -13,6 +13,7 @@
 		"@sveltejs/adapter-node": "^5.2.12",
 		"@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
 		"@tailwindcss/postcss": "^4.0.0",
+		"@types/d3-scale": "^4.0.9",
 		"@types/node": "^20.12.12",
 		"@typescript-eslint/eslint-plugin": "5.45.0",
 		"@typescript-eslint/parser": "5.45.0",

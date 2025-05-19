@@ -23,7 +23,7 @@
 		{ key: '3.0C', label: '3.0° C' },
 		{ key: '4.0C', label: '4.0° C' }
 	];
-	let indicators = [
+	export let indicators = [
 		{ key: 'heatdays_30', label: 'Hitzetage ≥30°C' },
 		{ key: 'summerdays_25', label: 'Sommertage ≥25°C' }
 	];
@@ -127,7 +127,7 @@
 
 			if (!outline) return;
 
-			map.fitBounds(getBounds(outline), { padding: 10, duration: 0 });
+			map.fitBounds(getBounds(outline), { padding: 100, duration: 0 });
 
 			map.once('idle', () => {
 				const tiles = map.queryRenderedFeatures({ layers: ['climate-layer'] });
@@ -137,7 +137,7 @@
 
 				selection = aggregateCells(tilesInRegion);
 
-				map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 25, duration: 0 });
+				map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 100, duration: 0 });
 				(map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 			});
 		});
@@ -268,22 +268,23 @@
 					: (features[0]?.geometry ?? null),
 			properties: {
 				...Object.fromEntries(
-					indicators.map(({ key }) => {
+					indicators.map((indicator) => {
 						return [
-							key,
+							indicator.key,
 							Object.fromEntries(
-								[...warmingLevels, 'current'].map((warmingLevel) => {
+								warmingLevels.map((warmingLevel) => {
 									const properties = features
 										.filter(
 											({ properties }) =>
-												properties.indicator === key &&
-												(properties.warming_level === warmingLevel || warmingLevel == 'current')
+												properties.indicator === indicator.key &&
+												(properties.warming_level === warmingLevel.key ||
+													warmingLevel.key == 'current')
 										)
 										.map(({ properties }) => properties);
 
 									return [
-										warmingLevel,
-										warmingLevel === 'current'
+										warmingLevel.key,
+										warmingLevel.key === 'current'
 											? propertyMean(properties, 'current')
 											: {
 													q10: propertyMean(properties, 'q10'),
