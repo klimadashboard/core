@@ -121,28 +121,31 @@ const getGasUsageData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
-		const data = await directus
-			.request(
-				readItems('energy', {
-					filter: {
-						_and: [
-							{
-								category: { _eq: 'gas|usage' }
-							},
-							{ region: { _eq: PUBLIC_VERSION } }
-						]
-					},
-					sort: ['-period'],
-					limit: 1000
-				})
-			)
-			.catch(() => []);
+		const data = await directus.request(
+			readItems('energy', {
+				filter: {
+					_and: [{ category: { _eq: 'gas|usage' } }, { region: { _eq: PUBLIC_VERSION } }]
+				},
+				sort: ['-period'],
+				limit: 1000
+			})
+		);
 
 		const latestEntry = data[0] || { value: 'N/A', period: 'N/A' };
-		const lastYearDate = dayjs(latestEntry.period).subtract(1, 'year').format('YYYY-MM-DD');
-		const lastYearEntry = data.find((item) => item.period === lastYearDate) || {
+		const lastYearTarget = dayjs(latestEntry.period).subtract(1, 'year');
+
+		// Find the closest entry to the "last year" target date
+		const lastYearEntry = data.reduce((closest, item) => {
+			const itemDate = dayjs(item.period);
+			const diff = Math.abs(itemDate.diff(lastYearTarget, 'day'));
+
+			if (!closest || diff < closest.diff) {
+				return { ...item, diff };
+			}
+			return closest;
+		}, null) || {
 			value: 'N/A',
-			period: lastYearDate
+			period: lastYearTarget.format('YYYY-MM-DD')
 		};
 
 		return {
@@ -162,6 +165,44 @@ const getGasUsageData = async () => {
 	}
 };
 
+const getBalkonStats = async () => {
+	try {
+		const res = await fetch('https://base.klimadashboard.org/get-balkonkraftwerke');
+		const json = await res.json();
+
+		const data = json.result;
+		const cacheCreated = json.cache_created;
+
+		if (!Array.isArray(data)) throw new Error('Invalid response format');
+
+		const currentYear = dayjs().year();
+		const lastYear = currentYear - 1;
+
+		const thisYearStats = data.find((d) => Number(d.year) === currentYear);
+		const lastYearStats = data.find((d) => Number(d.year) === lastYear);
+		const totalStats = data[data.length - 1];
+
+		return {
+			balkonkraftUnitsThisYear: thisYearStats?.added_units || 0,
+			balkonkraftUnitsLastYear: formatNumber(lastYearStats?.added_units || 0),
+			balkonkraftUnitsTotal: formatNumber(totalStats?.cumulative_units || 0),
+			balkonkraftPowerTotal: formatNumber(Math.round((totalStats?.cumulative_kw || 0) * 10) / 10),
+			balkonkraftDate: cacheCreated
+				? dayjs(cacheCreated).format('D.M.YYYY')
+				: dayjs().format('D.M.YYYY')
+		};
+	} catch (error) {
+		console.error('Error fetching Balkonkraftwerke stats:', error);
+		return {
+			balkonkraftUnitsThisYear: 'N/A',
+			balkonkraftUnitsLastYear: 'N/A',
+			balkonkraftUnitsTotal: 'N/A',
+			balkonkraftPowerTotal: 'N/A',
+			balkonkraftDate: 'N/A'
+		};
+	}
+};
+
 const placeholderHandlers = {
 	renewablePercentageNow: async () => (await getRenewableData()).renewablePercentageNow,
 	renewablePercentageNowDate: async () => (await getRenewableData()).renewablePercentageNowDate,
@@ -176,7 +217,12 @@ const placeholderHandlers = {
 	gasUsageCurrentDate: async () => (await getGasUsageData()).gasUsageCurrentDate,
 	gasUsageLastYear: async () => (await getGasUsageData()).gasUsageLastYear,
 	gasUsageLastYearDate: async () => (await getGasUsageData()).gasUsageLastYearDate,
-	currentCountry: async () => (await getSiteData()).region
+	currentCountry: async () => (await getSiteData()).region,
+	balkonkraftUnitsThisYear: async () => (await getBalkonStats()).balkonkraftUnitsThisYear,
+	balkonkraftUnitsLastYear: async () => (await getBalkonStats()).balkonkraftUnitsLastYear,
+	balkonkraftUnitsTotal: async () => (await getBalkonStats()).balkonkraftUnitsTotal,
+	balkonkraftPowerTotal: async () => (await getBalkonStats()).balkonkraftPowerTotal,
+	balkonkraftDate: async () => (await getBalkonStats()).balkonkraftDate
 };
 
 const parseTemplate = async (template) => {

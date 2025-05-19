@@ -18,22 +18,26 @@
 </script>
 
 <script lang="ts">
-	import { getCountries, getMobilityRenewableShare } from './getData';
+	import {
+		AsyncGetMobilityRenewableShare,
+		AsyncGetCountries,
+		type GetMobilityRenewableShareQuery,
+		type GetCountriesQuery
+	} from './__generated__/getData.generated';
 	import ChartLine from '$lib/components/charts/chartLine.svelte';
 	import { onMount } from 'svelte';
-	import type { MobilityRenewableShare, Countries } from './schema';
 	import { transformDataForChart, type LineChartData } from './transformData';
+	import { FOSSIL_COLOR } from './constants';
 
 	let loading = true;
 	let error: Error | null = null;
-	let data: MobilityRenewableShare = [];
-	let countries: Countries = [];
 	let lineChartData: LineChartData = {
 		chartData: [],
 		keys: [],
 		labels: [],
 		colors: []
 	};
+	let compareCountries: boolean = false;
 
 	// Detect country from domain
 	let currentCountry = 'DE'; // Default to DE
@@ -52,12 +56,14 @@
 	currentCountry = getCountryFromDomain();
 
 	// Country selection functionality
-	let availableCountries: { id: string; name: string; selected: boolean }[] = [];
+	let availableCountries: { id: string; name: string | null | undefined; selected: boolean }[] = [];
+	let data: GetMobilityRenewableShareQuery['mobility'];
+	let countries: GetCountriesQuery['countries'];
 	let selectedCountries: string[] = [];
 	let isDropdownOpen = false;
 
-	// Default countries to show: current country, Sweden, France, and Poland
-	const defaultCountries = [currentCountry, 'SE', 'FR', 'PL'];
+	// Create a reactive declaration for defaultCountries based on compareCountries
+	$: defaultCountries = compareCountries ? [currentCountry, 'SE', 'FR', 'PL'] : [currentCountry];
 
 	// Update chart data based on selected countries
 	function updateChartData() {
@@ -69,10 +75,33 @@
 
 		lineChartData = transformDataForChart(
 			// Filter data to only include selected countries
-			data.filter((item) => selectedCountries.includes(item.region)),
+			data.filter((item) => selectedCountries.includes(item.region ?? '')),
 			countries,
 			currentCountry
 		);
+
+		// If only one country is selected, add the fossil category
+		if (selectedCountries.length === 1) {
+			const chartDataWithFossil = [...lineChartData.chartData];
+			const singleCountryKey = selectedCountries[0];
+
+			// Add the fossil category to each data point
+			chartDataWithFossil.forEach((dataPoint) => {
+				const renewableValue = dataPoint[singleCountryKey] ?? 0;
+				// Calculate the fossil value (remaining percentage)
+				dataPoint['fossil'] = Math.max(0, 100 - renewableValue);
+			});
+
+			lineChartData.labels[0] = 'Erneuerbar';
+
+			// Update the chart data with the new data points
+			lineChartData = {
+				chartData: chartDataWithFossil,
+				keys: [...lineChartData.keys, 'fossil'],
+				labels: [...lineChartData.labels, 'Fossil'],
+				colors: [...lineChartData.colors, FOSSIL_COLOR]
+			};
+		}
 	}
 
 	// Toggle country selection
@@ -117,12 +146,12 @@
 		try {
 			loading = true;
 			const [mobilityData, countriesData] = await Promise.all([
-				getMobilityRenewableShare(),
-				getCountries()
+				AsyncGetMobilityRenewableShare({}),
+				AsyncGetCountries({})
 			]);
 
-			data = mobilityData;
-			countries = countriesData;
+			data = mobilityData.data.mobility;
+			countries = countriesData.data.countries;
 
 			// Initialize available countries with default selections
 			availableCountries = countries
@@ -132,7 +161,7 @@
 					name: country.name_de,
 					selected: defaultCountries.includes(country.id)
 				}))
-				.sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+				.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')); // Sort alphabetically
 
 			updateChartData();
 		} catch (e) {
@@ -154,38 +183,56 @@
 		</div>
 	{:else if data && data.length > 0}
 		<!-- Country selection dropdown -->
-		<div class="mb-4 relative">
-			<div class="flex items-center gap-2">
-				<button
-					id="dropdown-button"
-					class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-2 border border-gray-300"
-					on:click={toggleDropdown}
-				>
-					<span class="font-medium">Länder auswählen</span>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
+		<div class="flex flex-col sm:flex-row gap-2 mb-4 items-center justify-between relative">
+			<label class="flex items-center gap-2 cursor-pointer py-1.5">
+				<input
+					type="checkbox"
+					class="cursor-pointer"
+					bind:checked={compareCountries}
+					on:change={() => {
+						// Update available countries selection based on new defaultCountries
+						availableCountries = availableCountries.map((country) => ({
+							...country,
+							selected: defaultCountries.includes(country.id)
+						}));
+						updateChartData();
+					}}
+				/>
+				<span>Mit anderen Ländern vergleichen</span>
+			</label>
+			{#if compareCountries}
+				<div class="flex items-center gap-2 relative">
+					<span class="text-sm text-gray-600">
+						{selectedCountries.length} von {availableCountries.length} ausgewählt
+					</span>
+					<button
+						id="dropdown-button"
+						class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-2 border border-gray-300"
+						on:click={toggleDropdown}
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M19 9l-7 7-7-7"
-						/>
-					</svg>
-				</button>
-				<span class="text-sm text-gray-600">
-					{selectedCountries.length} von {availableCountries.length} ausgewählt
-				</span>
-			</div>
+						<span class="font-medium">Länderauswahl</span>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
+						</svg>
+					</button>
+				</div>
+			{/if}
 
 			{#if isDropdownOpen}
 				<div
 					id="country-dropdown"
-					class="absolute z-10 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 max-h-80 overflow-y-auto"
+					class="absolute z-10 top-full right-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 max-h-80 overflow-y-auto"
 					use:clickOutside={handleClickOutside}
 				>
 					<div class="p-2 border-b border-gray-200">
@@ -234,7 +281,7 @@
 				{colors}
 				visualisation="normal"
 				unit="%"
-				showAreas={false}
+				showAreas={keys.includes('fossil') ? true : false}
 				showDots={true}
 				showLegend={true}
 				lineWidth={2}
