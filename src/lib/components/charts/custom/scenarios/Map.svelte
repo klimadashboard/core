@@ -172,7 +172,7 @@
 
 			if (features.length === 0) return;
 
-			selection = aggregateCells(features);
+			selection = aggregateCells(features, { customSelection: true });
 			(map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 		});
 	});
@@ -239,7 +239,7 @@
 		map.setPaintProperty('climate-fill', 'fill-color', colorStops);
 	}
 
-	const aggregateCells = (features: GeoJSONFeature[]) => {
+	const aggregateCells = (features: GeoJSONFeature[], properties = {}) => {
 		// {
 		// 	indicator: 'heatdays_30'
 		// 	current: 8.3,
@@ -266,36 +266,39 @@
 							features: features as any
 						})?.geometry
 					: (features[0]?.geometry ?? null),
-			properties: Object.fromEntries(
-				indicators.map(({ key }) => {
-					return [
-						key,
-						Object.fromEntries(
-							[...warmingLevels, 'current'].map((warmingLevel) => {
-								const properties = features
-									.filter(
-										({ properties }) =>
-											properties.indicator === key &&
-											(properties.warming_level === warmingLevel || warmingLevel == 'current')
-									)
-									.map(({ properties }) => properties);
+			properties: {
+				...Object.fromEntries(
+					indicators.map(({ key }) => {
+						return [
+							key,
+							Object.fromEntries(
+								[...warmingLevels, 'current'].map((warmingLevel) => {
+									const properties = features
+										.filter(
+											({ properties }) =>
+												properties.indicator === key &&
+												(properties.warming_level === warmingLevel || warmingLevel == 'current')
+										)
+										.map(({ properties }) => properties);
 
-								return [
-									warmingLevel,
-									warmingLevel === 'current'
-										? propertyMean(properties, 'current')
-										: {
-												q10: propertyMean(properties, 'q10'),
-												q50: propertyMean(properties, 'q50'),
-												q90: propertyMean(properties, 'q90'),
-												delta: propertyMean(properties, 'delta')
-											}
-								];
-							})
-						)
-					];
-				})
-			)
+									return [
+										warmingLevel,
+										warmingLevel === 'current'
+											? propertyMean(properties, 'current')
+											: {
+													q10: propertyMean(properties, 'q10'),
+													q50: propertyMean(properties, 'q50'),
+													q90: propertyMean(properties, 'q90'),
+													delta: propertyMean(properties, 'delta')
+												}
+									];
+								})
+							)
+						];
+					})
+				),
+				...properties
+			}
 		};
 	};
 
@@ -342,7 +345,7 @@
 <div id="scenarioMap" class="w-full h-[60vh] rounded-2xl relative"></div>
 
 <!-- Legend -->
-<div class="legend mt-2">
+<div class="legend mt-2 absolute">
 	{#if viewMode === 'delta'}
 		<div><span style="background:#0571b0"></span> -5</div>
 		<div><span style="background:#f7f7f7"></span> 0</div>
