@@ -183,7 +183,7 @@
 		</div>
 	{:else if data && data.length > 0}
 		<!-- Country selection dropdown -->
-		<div class="flex flex-row gap-2 mb-4 items-center justify-between relative">
+		<div class="flex flex-col sm:flex-row gap-2 mb-4 items-center justify-between relative">
 			<label class="flex items-center gap-2 cursor-pointer py-1.5">
 				<input
 					type="checkbox"
@@ -210,7 +210,7 @@
 						class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-2 border border-gray-300"
 						on:click={toggleDropdown}
 					>
-						<span class="font-medium">Länderauswahl anpassen</span>
+						<span class="font-medium">Länderauswahl</span>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							class="h-4 w-4"
@@ -232,7 +232,7 @@
 			{#if isDropdownOpen}
 				<div
 					id="country-dropdown"
-					class="absolute z-10 top-full right-0 w-64 bg-white rounded-md shadow-lg border border-gray-200 max-h-80 overflow-y-auto"
+					class="absolute z-10 top-full right-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 max-h-80 overflow-y-auto"
 					use:clickOutside={handleClickOutside}
 				>
 					<div class="p-2 border-b border-gray-200">
