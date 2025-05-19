@@ -2,20 +2,7 @@ import type {
 	GetCountriesQuery,
 	GetMobilityRenewableShareQuery
 } from './__generated__/getData.generated';
-
-const DEFAULT_COLOR = '#bababa';
-
-// Define colors for different regions
-export const regionColors = {
-	// DE: '#7CBAB3',
-	// AT: '#575C75',
-	// FR: '#71665B',
-	// ES: '#B28834',
-	// IT: '#8CAED9',
-	// PT: '#E0A906',
-	// GB: '#CF6317',
-	highlighted: '#1e88af'
-};
+import { DEFAULT_COLOR, REGION_COLORS } from './constants';
 
 // Type for chart data structure
 export type LineChartData = {
@@ -89,8 +76,8 @@ export function transformDataForChart(
 	const colors = regions.map((region) =>
 		// Use highlighted color for the current country, otherwise default
 		region === currentCountry
-			? regionColors.highlighted
-			: (regionColors[region as keyof typeof regionColors] ?? DEFAULT_COLOR)
+			? REGION_COLORS.highlighted
+			: (REGION_COLORS[region as keyof typeof REGION_COLORS] ?? DEFAULT_COLOR)
 	);
 
 	// Create labels using country names when available
