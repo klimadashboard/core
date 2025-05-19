@@ -35,16 +35,11 @@
 
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
 
-	// Color scale
+	const min = 0;
+	const max = 20;
+	const unit = '%';
+
 	function createColorScale(data) {
-		const values = data.map((d) => d.value).filter((v) => v != null);
-		if (values.length === 0) return () => '#ccc';
-
-		const min = Math.min(...values);
-		const max = Math.max(...values);
-
-		if (min === max) return () => '#08519c';
-
 		return scaleLinear().domain([min, max]).range(colors).interpolate(interpolateRgb).clamp(true);
 	}
 
@@ -244,11 +239,11 @@
 	<div
 		class="text-xs absolute top-2 left-2 z-40 flex bg-white px-1.5 py-0.5 rounded-full gap-1 items-center"
 	>
-		<p>Niedrig</p>
+		<p>{min}{unit}</p>
 		<div
 			class="w-6 h-2 r rounded-full"
 			style="background: linear-gradient(to right, {colors[0]}, {colors[1]});"
 		></div>
-		<p>Hoch</p>
+		<p>{max}{unit}</p>
 	</div>
 </div>
