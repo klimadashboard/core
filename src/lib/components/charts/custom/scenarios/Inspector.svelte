@@ -61,7 +61,7 @@
 			{#each indicators as indicator}
 				<div>
 					<h3 class="font-bold">{indicator.label}</h3>
-					<BoxPlotChart data={selection.properties[indicator.key]} />
+					<BoxPlotChart data={selection.properties[indicator.key]} tint="rgb(245, 73, 0)" />
 					<!-- <p>Definition</p>
 					{#each warmingLevels as warmingLevel}
 						<h4>{warmingLevel.label}</h4>
@@ -80,3 +80,7 @@
 		<p>Wähle eine Region aus, um mehr Informationen zu den lokalen Klimaszenarien zu erhalten.</p>
 	{/if}
 </div>
+
+<style>
+	/* @import 'tailwindcss'; */
+</style>
