@@ -58,23 +58,14 @@
 					>
 				</span>
 			</h2>
-			{#each indicators as indicator}
-				<div>
-					<h3 class="font-bold">{indicator.label}</h3>
-					<BoxPlotChart data={selection.properties[indicator.key]} tint="rgb(245, 73, 0)" />
-					<!-- <p>Definition</p>
-					{#each warmingLevels as warmingLevel}
-						<h4>{warmingLevel.label}</h4>
-						<div>{selectedFeature[indicator.key + '_' + warmingLevel.key].q50}</div>
-						{#if selectedFeature[indicator.key + '_' + warmingLevel.key].trust < 1}
-							<div>
-								<span>Trust:</span>
-								{selectedFeature[indicator.key + '_' + warmingLevel.key].trust}
-							</div>
-						{/if}
-					{/each} -->
-				</div>
-			{/each}
+			<div class="grid md:grid-cols-2 gap-10">
+				{#each indicators as indicator}
+					<div>
+						<h3 class="font-bold">Anzahl {indicator.label} pro Jahr</h3>
+						<BoxPlotChart data={selection.properties[indicator.key]} tint="rgb(245, 73, 0)" />
+					</div>
+				{/each}
+			</div>
 		</div>
 	{:else}
 		<p>Wähle eine Region aus, um mehr Informationen zu den lokalen Klimaszenarien zu erhalten.</p>
