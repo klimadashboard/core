@@ -44,6 +44,18 @@
 	);
 
 	let current = $derived(data.current);
+	let currentY = $derived(yScale(current));
+
+	let yTicks = $derived(
+		yScale.ticks(5).map((tick) => {
+			const y = yScale(tick);
+			return {
+				value: tick,
+				y,
+				showValue: currentY == null || Math.abs(y - currentY) > 10
+			};
+		})
+	);
 
 	let columnWidth = $derived(innerChartWidth / warmingLevels.length);
 	let columnPadding = 10;
@@ -64,18 +76,19 @@
 	{...attributes}
 >
 	<g style:color={tint}>
-		<Gradient direction="top" id="box-plot-gradient-top" fromOpacity="0.4" toOpacity="0.15" />
-		<Gradient direction="bottom" id="box-plot-gradient-bottom" fromOpacity="0.4" toOpacity="0.15" />
+		<Gradient direction="top" id="box-plot-gradient-top" fromOpacity="0.25" toOpacity="0.1" />
+		<Gradient direction="bottom" id="box-plot-gradient-bottom" fromOpacity="0.25" toOpacity="0.1" />
 	</g>
 	<!-- y-axis -->
 	<g transform="translate(0,{paddingTop})">
-		{#each yScale.ticks() as tick}
-			<g transform="translate(0,{yScale(tick)})" class="text-xs opacity-70">
+		{#each yTicks as tick}
+			<g transform="translate(0,{tick.y})" class="text-xs opacity-70">
 				<line x1={axisWidth} x2={chartWidth} y1="0" y2="0" class="stroke-current opacity-20" />
-				<text x="" text-anchor="start" dominant-baseline="middle" class="fill-current">
-					{formatNumber(tick)}
-					<!-- {#if tick === yScale.ticks().at(-1)}{powerUnit}{/if} -->
-				</text>
+				{#if tick.showValue}
+					<text x="" text-anchor="start" dominant-baseline="middle" class="fill-current">
+						{formatNumber(tick.value)}
+					</text>
+				{/if}
 			</g>
 		{/each}
 	</g>
@@ -107,8 +120,15 @@
 						width={boxWidth}
 						corners={[0, 0, 5, 5]}
 					/>
-
-					<line transform="translate(0,{yScale(warmingLevel.q50)})" stroke={tint} x2={boxWidth} />
+					<g transform="translate(0,{yScale(warmingLevel.q50)})" style:color={tint}>
+						<text
+							class="text-xs opacity-70"
+							fill="currentColor"
+							transform="translate({boxWidth / 2},-5)"
+							text-anchor="middle">{formatNumber(warmingLevel.q50)}</text
+						>
+						<line stroke="currentColor" x2={boxWidth} />
+					</g>
 				{/if}
 			</g>
 		{/each}
@@ -116,10 +136,11 @@
 
 	<!-- reference -->
 	{#if current != null}
-		<g transform="translate(0,{paddingTop})">
+		<g transform="translate(0,{paddingTop})" class="text-blue-600">
 			<g transform="translate(0,{yScale(current)})">
-				<line stroke="blue" stroke-dasharray="8,4" x2={chartWidth} />
-				<text class="text-xs" y="12" fill="blue">Heute {formatNumber(current)}</text>
+				<line stroke="currentColor" stroke-dasharray="8,4" x2={chartWidth} />
+				<text class="text-xs" y={-5} fill="currentColor">Heute</text>
+				<text class="text-xs" y={13} fill="currentColor">{formatNumber(current)}</text>
 			</g>
 		</g>
 	{/if}
