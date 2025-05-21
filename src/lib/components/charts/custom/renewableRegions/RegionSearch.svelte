@@ -61,13 +61,13 @@
 	}
 </script>
 
-<div class="relative min-w-64">
+<div class="relative min-w-56">
 	<input
 		type="text"
 		placeholder="Vergleiche deine Gemeinde mit..."
 		bind:value={searchTerm}
 		on:focus={() => (showDropdown = true)}
-		class="border p-2 w-full text-base rounded-full leading-none"
+		class="input text-sm w-full"
 		aria-label="Region suchen"
 	/>
 

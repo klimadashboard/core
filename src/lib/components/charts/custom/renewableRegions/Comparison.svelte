@@ -124,32 +124,35 @@
 
 	let selectedUnit = 'absolute';
 	let selectedVariable = 'cumulative_power_kw';
+
+	let variables = [
+		{
+			label: 'absolut',
+			key: 'absolute'
+		},
+		{
+			label: 'pro km<sup>2</sup>',
+			key: 'perArea'
+		}
+	];
 </script>
 
-<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
 	<RegionSearch {regions} {region} {selectedRegions} on:toggle={(e) => toggleSelection(e.detail)} />
 
-	<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-1 px-2 text-sm inline-flex gap-2">
-		<label
-			><input
-				type="radio"
-				name="unit"
-				value="absolute"
-				class="mr-1"
-				checked={selectedUnit === 'absolute'}
-				on:change={() => (selectedUnit = 'absolute')}
-			/>absolut</label
-		>
-		<label
-			><input
-				type="radio"
-				name="unit"
-				class="mr-1"
-				value="perArea"
-				checked={selectedUnit === 'perArea'}
-				on:change={() => (selectedUnit = 'perArea')}
-			/>pro km2</label
-		>
+	<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2">
+		{#each variables as variable}
+			<label class={selectedUnit == variable.key ? 'font-bold' : ''}
+				><input
+					type="radio"
+					name="unit"
+					value={variable.key}
+					class="mr-1"
+					checked={selectedUnit === variable.key}
+					on:change={() => (selectedUnit = variable.key)}
+				/>{@html variable.label}</label
+			>
+		{/each}
 	</div>
 </div>
 
