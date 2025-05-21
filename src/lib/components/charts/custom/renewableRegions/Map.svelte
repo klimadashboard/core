@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import maplibregl from 'maplibre-gl';
-	import { scaleLinear } from 'd3-scale';
+	import { scaleThreshold } from 'd3-scale';
 	import { interpolateRgb } from 'd3-interpolate';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -28,14 +28,37 @@
 
 	const { center, zoom } = defaultView[COUNTRY_CODE] || defaultView.DE;
 
+	function getInterpolatedColors(start: string, end: string, steps: number): string[] {
+		const interpolate = interpolateRgb(start, end);
+		return Array.from({ length: steps }, (_, i) => interpolate(i / (steps - 1)));
+	}
+
+	function createSteppedColorScale(values: number[], steps = 7, colors = ['#fee5d9', '#a50f15']) {
+		if (!values.length) return () => '#F2F2F2';
+
+		// Option 1: Use percentiles as breakpoints
+		const sorted = [...values].sort((a, b) => a - b);
+		const thresholds = Array.from({ length: steps - 1 }, (_, i) => {
+			const p = (i + 1) / steps;
+			return sorted[Math.floor(p * sorted.length)];
+		});
+
+		// Option 2: Use logarithmic or square root steps (alternative!)
+		// const min = Math.min(...values);
+		// const max = Math.max(...values);
+		// const thresholds = d3.range(1, steps).map(i => min + (max - min) * Math.pow(i / steps, 0.5));
+
+		const colorRange = getInterpolatedColors(colors[0], colors[1], steps);
+
+		return scaleThreshold().domain(thresholds).range(colorRange);
+	}
+
 	function createColorScale(data) {
 		if (!Array.isArray(data)) return () => '#F2F2F2';
 		const values = data.map((d) => d.value).filter((v) => v != null);
-		if (values.length === 0) return () => '#F2F2F2';
-		const min = Math.min(...values);
-		const max = Math.max(...values);
-		if (min === max) return () => '#08519c';
-		return scaleLinear().domain([min, max]).range(colors).interpolate(interpolateRgb).clamp(true);
+		if (!values.length) return () => '#F2F2F2';
+
+		return createSteppedColorScale(values, 7, colors); // e.g. 7 steps
 	}
 
 	async function loadNearbyWindUnits() {
@@ -191,7 +214,7 @@
 				source: 'regions',
 				paint: {
 					'line-color': '#fff',
-					'line-width': 0.1
+					'line-width': 0.05
 				}
 			});
 

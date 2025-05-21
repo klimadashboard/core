@@ -12,14 +12,14 @@
 	let selectedRegion;
 
 	const colors = [
-		{ key: 'wind', colors: ['#E5F3FA', '#003B80'] },
-		{ key: 'solar', colors: ['#F0E1C2', '#E0A906'] }
+		{ key: 'solar', colors: ['#F0E1C2', '#E0A906'] },
+		{ key: 'wind', colors: ['#E5F3FA', '#003B80'] }
 	];
 
 	let selectedEnergy = 'solar';
 	let views = [
-		{ key: 'solar', label: 'Solar', color: '#E0A906' },
-		{ key: 'wind', label: 'Wind', color: '#003B80' }
+		{ key: 'solar', label: 'Solar', color: colors.find((c) => c.key === 'solar').colors },
+		{ key: 'wind', label: 'Wind', color: colors.find((c) => c.key === 'wind').colors }
 	];
 
 	// --- In-memory cache (lost on full reload) ---
