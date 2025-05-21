@@ -21,7 +21,7 @@
 	$: powerUnit = getPowerUnit(maxRawValue);
 	$: convertedMax = convertToPowerUnit(maxRawValue, maxRawValue);
 
-	$: xScale = scaleLinear().domain([2000, 2025]).range([0, innerChartWidth]);
+	$: xScale = scaleLinear().domain([2000, new Date().getFullYear()]).range([0, innerChartWidth]);
 
 	$: yScale = scaleLinear()
 		.domain([0, convertedMax * 1.1])
@@ -30,6 +30,21 @@
 	$: generateLine = line()
 		.x((d) => xScale(d.year))
 		.y((d) => yScale(convertToPowerUnit(d.value, maxRawValue)));
+
+	$: lastYear = data[data.length - 1]?.year;
+
+	let hoveredYear = lastYear;
+
+	function onMouseMove(event) {
+		const { left } = event.currentTarget.getBoundingClientRect();
+		const x = event.clientX - left - margin.left;
+		const year = Math.round(xScale.invert(x));
+		hoveredYear = year;
+	}
+
+	function onMouseLeave() {
+		hoveredYear = lastYear;
+	}
 </script>
 
 <h3 class="my-2">Kumulative Leistung</h3>
@@ -38,12 +53,32 @@
 	{#each data as d}
 		<span
 			class="text-xs opacity-70 rounded-full px-1.5 py-0.5 text-white font-bold"
-			style="background: {d.color}">{d.label}</span
+			style="background: {d.color}"
 		>
+			{d.label}
+			{#if hoveredYear}
+				{#if d.data.find((point) => point.year === hoveredYear)}
+					:
+					{formatNumber(
+						convertToPowerUnit(
+							d.data.find((point) => point.year === hoveredYear)?.value,
+							maxRawValue
+						)
+					)}
+					<span class="opacity-60 ml-1">{powerUnit}</span>
+				{/if}
+			{/if}
+		</span>
 	{/each}
 </div>
 
-<div class="h-60" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
+<div
+	class="h-60 relative"
+	bind:clientWidth={chartWidth}
+	bind:clientHeight={chartHeight}
+	on:mousemove={onMouseMove}
+	on:mouseleave={onMouseLeave}
+>
 	<svg width={'100%'} height={'100%'} class="overflow-visible">
 		<!-- X-Axis -->
 		<g transform="translate({margin.left},0)">
@@ -76,5 +111,26 @@
 				</g>
 			{/each}
 		</g>
+		{#if hoveredYear}
+			<g transform="translate({margin.left},0)">
+				<line
+					x1={xScale(hoveredYear)}
+					x2={xScale(hoveredYear)}
+					y1={margin.top}
+					y2={chartHeight - margin.bottom}
+					stroke="currentColor"
+					stroke-dasharray="4 2"
+					class="opacity-40"
+				/>
+				<text
+					x={xScale(hoveredYear)}
+					y={innerChartHeight + margin.bottom}
+					text-anchor="middle"
+					class="text-xs fill-current font-bold"
+				>
+					{hoveredYear}
+				</text>
+			</g>
+		{/if}
 	</svg>
 </div>

@@ -96,17 +96,6 @@
 
 			<BarChart data={result.by_year} {colors} />
 
-			<p class="text-lg mt-2 border-b pb-4 mb-4 border-current/20">
-				Im vergangenen Jahr wurden {getFormattedCapacity(
-					result.by_year.find((d) => d.year === new Date().getFullYear() - 1)?.added_power_kw
-				)} neu installiert. Das waren {Math.round(
-					result.by_year.find((d) => d.year === new Date().getFullYear() - 1)?.added_power_kw /
-						result.by_year.find((d) => d.year === new Date().getFullYear() - 11)?.added_power_kw
-				)} Mal mehr als zehn Jahre zuvor ({new Date().getFullYear() - 11}: {getFormattedCapacity(
-					result.by_year.find((d) => d.year === new Date().getFullYear() - 11)?.added_power_kw
-				)}).
-			</p>
-
 			<h3 class="font-bold text-2xl mb-2">
 				Insgesamt wurden bisher in {region.name}
 				{getFormattedCapacity(
