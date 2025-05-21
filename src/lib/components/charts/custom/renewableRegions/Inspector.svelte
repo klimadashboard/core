@@ -68,6 +68,9 @@
 				>
 				{region.name}
 			</h2>
+
+			<h3 class="font-bold">Netto-Zubau pro Jahr</h3>
+
 			{#if selectedEnergy === 'solar'}
 				{#if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
 					<h3 class="font-bold text-2xl">
@@ -95,6 +98,8 @@
 			{/if}
 
 			<BarChart data={result.by_year} {colors} />
+
+			<h3 class="mt-6 font-bold">Kumulative Leistung</h3>
 
 			<h3 class="font-bold text-2xl mb-2">
 				Insgesamt wurden bisher in {region.name}

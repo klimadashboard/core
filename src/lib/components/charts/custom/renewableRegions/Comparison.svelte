@@ -156,7 +156,7 @@
 	</div>
 </div>
 
-<div class="relative min-h-64">
+<div class="relative min-h-64 mt-2">
 	{#if data.length > 0}
 		{#if loading}
 			<div

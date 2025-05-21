@@ -48,8 +48,6 @@
 	}
 </script>
 
-<h3>Netto-Zubau pro Jahr</h3>
-
 {#if hoveredYear}
 	{#if data.find((d) => d.year === hoveredYear)}
 		<div

@@ -47,8 +47,6 @@
 	}
 </script>
 
-<h3 class="my-2">Kumulative Leistung</h3>
-
 <div class="flex gap-2 flex-wrap">
 	{#each data as d}
 		<span
