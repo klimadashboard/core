@@ -1,6 +1,5 @@
 <script>
 	import { scaleLinear } from 'd3-scale';
-	import { regionColors } from '../mobilityRenewableShare/transformData';
 
 	export let data;
 	export let region;

@@ -2,15 +2,11 @@
 	import { onMount } from 'svelte';
 	import Scroller from '@sveltejs/svelte-scroller';
 	import { browser } from '$app/environment';
-	import Map from './Map.svelte';
 	import Intro from './Intro.svelte';
 	import LazyChart from './LazyChart.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Support from './Support.svelte';
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItem } from '@directus/sdk';
-	import { regionColors } from '$lib/components/charts/custom/mobilityRenewableShare/transformData';
 	import { goto } from '$app/navigation';
 
 	export let data;
@@ -58,7 +54,7 @@
 			]
 		},
 		{
-			title: 'Energie',
+			title: 'Erneuerbare Energie',
 			countries: ['de'],
 			id: 'energy',
 			description: `Die Energieverbrauch in ${data.page.name} zeigt, wo wir beim Klimaschutz ansetzen können.`,
@@ -66,13 +62,21 @@
 				{
 					id: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
 					countries: ['at', 'de']
-				},
+				}
+			],
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-bolt'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11' /></svg>"
+		},
+		{
+			title: 'Heizungen',
+			id: 'heating',
+			description: '',
+			countries: ['de'],
+			charts: [
 				{
 					id: '8267b6b9-605d-4603-a8b4-4ad9e6a3c553',
 					countries: ['de']
 				}
-			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-bolt'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11' /></svg>"
+			]
 		},
 		{
 			title: 'Mobilität',
