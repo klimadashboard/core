@@ -9,8 +9,13 @@
 	let {
 		data,
 		tint = 'gray',
+		maxDays,
 		...attributes
-	}: { data: { current: number } & Record<string, BoxPlotData>; tint: string } = $props();
+	}: {
+		data: { current: number } & Record<string, BoxPlotData>;
+		tint: string;
+		maxDays: number;
+	} = $props();
 
 	let chartHeight = $state(0);
 	let chartWidth = $state(0);
@@ -27,15 +32,16 @@
 	let innerChartHeight = $derived(chartHeight - paddingTop - paddingBottom);
 	let innerChartWidth = $derived(chartWidth - axisWidth);
 
-	let maxDays = $derived(
-		Math.max(
-			...Object.entries(data)
-				.filter(([key]) => key != 'current')
-				.map(([key, value]) => (value as BoxPlotData).q90),
-			10
-		)
+	let maxDaysLocal = $derived(
+		maxDays ??
+			Math.max(
+				...Object.entries(data)
+					.filter(([key]) => key != 'current')
+					.map(([key, value]) => (value as BoxPlotData).q90),
+				10
+			)
 	);
-	let yScale = $derived(scaleLinear().domain([0, maxDays]).range([innerChartHeight, 0]));
+	let yScale = $derived(scaleLinear().domain([0, maxDaysLocal]).range([innerChartHeight, 0]));
 
 	let warmingLevels = $derived(
 		Object.entries(data)

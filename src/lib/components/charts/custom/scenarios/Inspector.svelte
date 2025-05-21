@@ -4,8 +4,15 @@
 	import type { GeoJSONFeature } from 'maplibre-gl';
 	import BoxPlotChart from './BoxPlotChart.svelte';
 
+	type BoxPlotData = {
+		q90: number;
+		q50: number;
+		q10: number;
+		delta: number;
+	};
+
 	export let selection: GeoJSONFeature;
-	export let indicators;
+	export let indicators: { key: string; label: string }[];
 	// export let warmingLevels;
 
 	$: if (selection) {
@@ -19,6 +26,32 @@
 		clearTimeout(debounceTimeout);
 		debounceTimeout = setTimeout(handleSelection, 100);
 	}
+
+	let syncAxis = true;
+
+	$: maxDays =
+		(syncAxis &&
+			Math.max(
+				...indicators.map(({ key }) => {
+					const indicator = selection.properties[key];
+					return Math.max(
+						...Object.entries(indicator)
+							.filter(([key]) => key != 'current')
+							.map(([key, value]) => (value as BoxPlotData).q90),
+						10
+					);
+				})
+			)) ??
+		null;
+
+	// let maxDays = $derived(
+	// 	Math.max(
+	// 		...Object.entries(data)
+	// 			.filter(([key]) => key != 'current')
+	// 			.map(([key, value]) => (value as BoxPlotData).q90),
+	// 		10
+	// 	)
+	// );
 
 	// $: indicators = Object.keys(selection.properties.indicators);
 
@@ -62,7 +95,11 @@
 				{#each indicators as indicator}
 					<div>
 						<h3 class="font-bold">Anzahl {indicator.label} pro Jahr</h3>
-						<BoxPlotChart data={selection.properties[indicator.key]} tint="rgb(245, 73, 0)" />
+						<BoxPlotChart
+							data={selection.properties[indicator.key]}
+							tint="rgb(245, 73, 0)"
+							{maxDays}
+						/>
 					</div>
 				{/each}
 			</div>
