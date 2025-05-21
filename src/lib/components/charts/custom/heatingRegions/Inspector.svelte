@@ -39,7 +39,7 @@
 		},
 		{
 			key: 'solar/geothermal energy, heat pumps',
-			label: 'Erneuerbare',
+			label: 'Wärmepumpen, Solar-/Geothermie',
 			color: '#00734D',
 			featured: true
 		},
