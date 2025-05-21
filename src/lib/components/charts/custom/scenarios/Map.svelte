@@ -29,7 +29,8 @@
 	];
 	let viewModes = [
 		{ key: 'absolute', label: 'Zukunft (q50)' },
-		{ key: 'delta', label: 'Differenz zu heute' }
+		{ key: 'delta', label: 'Differenz zu heute' },
+		{ key: 'uncertainty', label: 'Unsicherheit' }
 	];
 
 	let activeIndicator = indicators[0].key;
@@ -204,37 +205,53 @@
 						15,
 						'#67001f'
 					]
-				: activeWarming === 'current'
+				: viewMode === 'uncertainty'
 					? [
 							'interpolate',
 							['linear'],
-							['get', 'current'],
+							['-', ['get', 'q90'], ['get', 'q10']],
 							0,
-							'#ffffb2',
+							'#f2f0f7',
+							5,
+							'#cbc9e2',
 							10,
-							'#fecc5c',
+							'#9e9ac8',
+							15,
+							'#756bb1',
 							20,
-							'#fd8d3c',
-							40,
-							'#e31a1c',
-							60,
-							'#800026'
+							'#54278f'
 						]
-					: [
-							'interpolate',
-							['linear'],
-							['get', 'q50'],
-							0,
-							'#ffffb2',
-							10,
-							'#fecc5c',
-							20,
-							'#fd8d3c',
-							40,
-							'#e31a1c',
-							60,
-							'#800026'
-						];
+					: activeWarming === 'current'
+						? [
+								'interpolate',
+								['linear'],
+								['get', 'current'],
+								0,
+								'#ffffb2',
+								10,
+								'#fecc5c',
+								20,
+								'#fd8d3c',
+								40,
+								'#e31a1c',
+								60,
+								'#800026'
+							]
+						: [
+								'interpolate',
+								['linear'],
+								['get', 'q50'],
+								0,
+								'#ffffb2',
+								10,
+								'#fecc5c',
+								20,
+								'#fd8d3c',
+								40,
+								'#e31a1c',
+								60,
+								'#800026'
+							];
 
 		map.setPaintProperty('climate-fill', 'fill-color', colorStops);
 	}
@@ -353,6 +370,12 @@
 		<div><span style="background:#ca0020"></span> +5</div>
 		<div><span style="background:#a50026"></span> +10</div>
 		<div><span style="background:#67001f"></span> +15</div>
+	{:else if viewMode === 'uncertainty'}
+		<div><span style="background:#f2f0f7"></span> 0</div>
+		<div><span style="background:#cbc9e2"></span> 5</div>
+		<div><span style="background:#9e9ac8"></span> 10</div>
+		<div><span style="background:#756bb1"></span> 15</div>
+		<div><span style="background:#54278f"></span> 20</div>
 	{:else}
 		<div><span style="background:#ffffb2"></span> 0</div>
 		<div><span style="background:#fecc5c"></span> 10</div>
