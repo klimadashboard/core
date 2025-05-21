@@ -1,5 +1,6 @@
 <script>
 	import formatNumber from '$lib/stores/formatNumber';
+	import { page } from '$app/state';
 	export let data;
 
 	// Find the needed entries
@@ -39,14 +40,16 @@
 		<p class="text-6xl font-light tabular-nums">{formatNumber(formatRate(gasPerDay)[0])}</p>
 		<p class="text-lg leading-snug">
 			<strong>Gasheizungen</strong> müssen im Schnitt zwischen Mitte 2022 & Anfang 2045
-			<strong>pro {formatRate(gasPerDay)[1]}</strong> getauscht werden, um die Klimaziele einzuhalten.
+			<strong>pro {page.data.translations[formatRate(gasPerDay)[1]]}</strong> getauscht werden, um die
+			Klimaziele einzuhalten.
 		</p>
 	</div>
 	<div class="rounded-2xl p-3 border border-current/20">
 		<p class="text-6xl font-light tabular-nums">{formatNumber(formatRate(oilPerDay)[0])}</p>
 		<p class="text-lg leading-snug">
 			<strong>Ölheizungen</strong> müssen im Schnitt zwischen Mitte 2022 & Anfang 2045
-			<strong>pro {formatRate(oilPerDay)[1]}</strong> getauscht werden, um die Klimaziele einzuhalten.
+			<strong>pro {page.data.translations[formatRate(oilPerDay)[1]]}</strong> getauscht werden, um die
+			Klimaziele einzuhalten.
 		</p>
 	</div>
 </div>
