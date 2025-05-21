@@ -4,7 +4,7 @@
 	import type { GeoJSONFeature } from 'maplibre-gl';
 
 	let selection: GeoJSONFeature;
-	let indicators: any;
+	let indicators: { key: string; label: string }[];
 </script>
 
 <div>

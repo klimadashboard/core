@@ -4,6 +4,7 @@
 		q50: number;
 		q10: number;
 		delta: number;
+		label: string;
 	};
 
 	let {
@@ -46,7 +47,7 @@
 	let warmingLevels = $derived(
 		Object.entries(data)
 			.filter(([key]) => key != 'current')
-			.map(([key, value]) => ({ label: key, ...(value as BoxPlotData) }))
+			.map(([key, value]) => ({ key, ...(value as BoxPlotData) }))
 	);
 
 	let current = $derived(data.current);

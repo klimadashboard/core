@@ -9,11 +9,11 @@
 		q50: number;
 		q10: number;
 		delta: number;
+		label: string;
 	};
 
 	export let selection: GeoJSONFeature;
 	export let indicators: { key: string; label: string }[];
-	// export let warmingLevels;
 
 	$: if (selection) {
 		console.log(selection);

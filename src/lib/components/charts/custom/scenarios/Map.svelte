@@ -307,7 +307,8 @@
 													q10: propertyMean(properties, 'q10'),
 													q50: propertyMean(properties, 'q50'),
 													q90: propertyMean(properties, 'q90'),
-													delta: propertyMean(properties, 'delta')
+													delta: propertyMean(properties, 'delta'),
+													label: warmingLevel.label
 												}
 									];
 								})
