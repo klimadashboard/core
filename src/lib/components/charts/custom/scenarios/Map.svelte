@@ -333,6 +333,16 @@
 			[bounds[2], bounds[3]]
 		] as [LngLatLike, LngLatLike];
 	};
+
+	$: warmingLevelsSwitch = warmingLevels.map((warmingLevel) => {
+		if ((viewMode === 'delta' || viewMode === 'uncertainty') && warmingLevel.key === 'current')
+			return { ...warmingLevel, disabled: true };
+		return warmingLevel;
+	});
+
+	$: if ((viewMode === 'delta' || viewMode === 'uncertainty') && activeWarming === 'current') {
+		activeWarming = warmingLevels.find(({ key }) => key !== 'current')?.key as string;
+	}
 </script>
 
 <!-- UI Controls -->
@@ -352,7 +362,7 @@
 	/>
 
 	<Switch
-		views={warmingLevels}
+		views={warmingLevelsSwitch}
 		bind:activeView={activeWarming}
 		type="small"
 		on:itemClick={(e) => (activeWarming = e.detail)}
