@@ -15,10 +15,6 @@
 	export let selection: GeoJSONFeature;
 	export let indicators: { key: string; label: string }[];
 
-	$: if (selection) {
-		console.log(selection);
-	}
-
 	let locationName: String | null;
 	let debounceTimeout: string | number | NodeJS.Timeout | undefined;
 
@@ -44,17 +40,6 @@
 				})
 			)) ??
 		null;
-
-	// let maxDays = $derived(
-	// 	Math.max(
-	// 		...Object.entries(data)
-	// 			.filter(([key]) => key != 'current')
-	// 			.map(([key, value]) => (value as BoxPlotData).q90),
-	// 		10
-	// 	)
-	// );
-
-	// $: indicators = Object.keys(selection.properties.indicators);
 
 	async function handleSelection() {
 		if (!selection?.properties?.customSelection) {

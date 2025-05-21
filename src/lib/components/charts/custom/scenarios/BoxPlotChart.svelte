@@ -68,11 +68,6 @@
 	let columnPadding = 10;
 
 	let boxWidth = $derived(Math.min(80, columnWidth - columnPadding * 2));
-
-	$effect(() => {
-		console.log('aaaa', yScale.ticks(), yScale(10), innerChartHeight);
-		console.log(warmingLevels);
-	});
 </script>
 
 <svg

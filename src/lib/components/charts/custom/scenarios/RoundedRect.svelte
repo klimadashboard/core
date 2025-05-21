@@ -43,9 +43,6 @@
 			.join('')
 			.replace(/^L/, 'M')
 	);
-
-	// let path = $derived(`M${points.map((p) => p.join(',')).join('L')}`);
-	$effect(() => console.log(path));
 </script>
 
 <path d={path} {...svgAttributes} />
