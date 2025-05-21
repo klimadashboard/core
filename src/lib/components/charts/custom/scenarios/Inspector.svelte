@@ -33,7 +33,8 @@
 		(syncAxis &&
 			Math.max(
 				...indicators.map(({ key }) => {
-					const indicator = selection.properties[key];
+					const indicator = selection?.properties?.[key];
+					if (indicator == null) return 0;
 					return Math.max(
 						...Object.entries(indicator)
 							.filter(([key]) => key != 'current')
