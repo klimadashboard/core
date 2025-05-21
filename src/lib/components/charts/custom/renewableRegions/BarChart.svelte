@@ -36,7 +36,7 @@
 <h3>Netto-Zubau pro Jahr</h3>
 {#if data.length > 0}
 	<div
-		class="flex gap-2 items-end h-64"
+		class="flex gap-2 items-end h-64 mt-2"
 		bind:clientHeight={chartHeight}
 		bind:clientWidth={chartWidth}
 	>
