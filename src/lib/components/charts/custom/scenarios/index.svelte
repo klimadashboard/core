@@ -4,6 +4,8 @@
 	import maplibregl from 'maplibre-gl';
 	import Switch from '$lib/components/Switch.svelte';
 
+	// test
+
 	let map: maplibregl.Map;
 	let tooltipContent = '';
 	let tooltipVisible = false;
