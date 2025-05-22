@@ -59,7 +59,7 @@
 			return {
 				value: tick,
 				y,
-				showValue: currentY == null || Math.abs(y - currentY) > 10
+				showValue: currentY == null || Math.abs(y - currentY) > 20
 			};
 		})
 	);
