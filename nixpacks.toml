@@ -1,3 +1,5 @@
-# nixpacks.toml
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
 [variables]
 NODE_VERSION = "20"
