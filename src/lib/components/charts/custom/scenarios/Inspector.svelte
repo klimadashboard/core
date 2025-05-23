@@ -117,7 +117,7 @@
 	{:else}
 		<p>Wähle eine Region aus, um mehr Informationen zu den lokalen Klimaszenarien zu erhalten.</p>
 	{/if}
-	<p class="text-sm mt-4">Datenquelle: ???</p>
+	<p class="text-sm mt-4">Datenquelle: BOKU [Platzhalter, tbc]; SPARTACUS</p>
 </div>
 
 <style>
