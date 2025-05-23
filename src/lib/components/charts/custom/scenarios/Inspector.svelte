@@ -13,7 +13,10 @@
 	};
 
 	export let selection: GeoJSONFeature;
-	export let indicators: { key: string; label: string }[];
+	export let indicators: { key: string; label: string; labelLong: string }[];
+	export let warmingLevels: { key: string; label: string }[];
+	export let activeIndicator: string;
+	export let activeWarming: string;
 
 	let locationName: String | null;
 	let debounceTimeout: string | number | NodeJS.Timeout | undefined;
@@ -63,6 +66,20 @@
 			}
 		}
 	}
+
+	$: indicatorLabel = indicators.find(({ key }) => key === activeIndicator)?.labelLong;
+	$: warmingLabel = warmingLevels.find(({ key }) => key === activeWarming)?.label;
+	$: selectionValue =
+		activeWarming === 'current'
+			? selection?.properties[activeIndicator][activeWarming]
+			: selection?.properties[activeIndicator][activeWarming].q50;
+
+	$: selectionChange =
+		selectionValue && selectionValue / selection?.properties[activeIndicator].current;
+
+	function formatValue(value: number, fractionDigits = 0) {
+		return value?.toFixed(fractionDigits) ?? '?';
+	}
 </script>
 
 <div
@@ -77,6 +94,13 @@
 					>
 				</span>
 			</h2>
+			<p>
+				Bei einer Erwärmung von {warmingLabel} gibt es etwa {formatValue(selectionValue)}
+				{indicatorLabel} im Jahr.
+				{#if activeWarming !== 'current'}
+					Das sind {formatValue(selectionChange, 1)} mal so viele wie heute.
+				{/if}
+			</p>
 			<div class="grid md:grid-cols-2 gap-10">
 				{#each indicators as indicator}
 					<div>
@@ -93,6 +117,7 @@
 	{:else}
 		<p>Wähle eine Region aus, um mehr Informationen zu den lokalen Klimaszenarien zu erhalten.</p>
 	{/if}
+	<p class="text-sm mt-4">Datenquelle: ???</p>
 </div>
 
 <style>

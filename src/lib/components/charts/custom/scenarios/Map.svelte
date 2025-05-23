@@ -17,15 +17,23 @@
 
 	let map: maplibregl.Map;
 
-	let warmingLevels = [
+	export let warmingLevels = [
 		{ key: 'current', label: 'Heute' },
-		{ key: '2.0C', label: '2.0° C' },
-		{ key: '3.0C', label: '3.0° C' },
-		{ key: '4.0C', label: '4.0° C' }
+		{ key: '2.0C', label: '2.0 °C' },
+		{ key: '3.0C', label: '3.0 °C' },
+		{ key: '4.0C', label: '4.0 °C' }
 	];
 	export let indicators = [
-		{ key: 'heatdays_30', label: 'Hitzetage ≥30°C' },
-		{ key: 'summerdays_25', label: 'Sommertage ≥25°C' }
+		{
+			key: 'heatdays_30',
+			label: 'Hitzetage ≥30°C',
+			labelLong: 'Hitzetage (Tage mit Höchsttemperaturen von über 30 °C)'
+		},
+		{
+			key: 'summerdays_25',
+			label: 'Sommertage ≥25°C',
+			labelLong: 'Sommertage (Tage mit Höchsttemperaturen von über 25 °C)'
+		}
 	];
 	let viewModes = [
 		{ key: 'absolute', label: 'Zukunft (q50)' },
@@ -33,8 +41,8 @@
 		{ key: 'uncertainty', label: 'Unsicherheit' }
 	];
 
-	let activeIndicator = indicators[0].key;
-	let activeWarming = warmingLevels[1].key;
+	export let activeIndicator = indicators[0].key;
+	export let activeWarming = warmingLevels[1].key;
 	let viewMode = 'absolute';
 
 	onMount(() => {

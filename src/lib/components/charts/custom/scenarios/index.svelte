@@ -4,10 +4,19 @@
 	import type { GeoJSONFeature } from 'maplibre-gl';
 
 	let selection: GeoJSONFeature;
-	let indicators: { key: string; label: string }[];
+	export let indicators: { key: string; label: string; labelLong: string }[];
+	export let warmingLevels: { key: string; label: string }[];
+	export let activeIndicator: string;
+	export let activeWarming: string;
 </script>
 
 <div>
-	<Map bind:selection bind:indicators />
-	<Inspector bind:selection bind:indicators />
+	<Map bind:selection bind:indicators bind:warmingLevels bind:activeIndicator bind:activeWarming />
+	<Inspector
+		bind:selection
+		bind:indicators
+		bind:warmingLevels
+		bind:activeIndicator
+		bind:activeWarming
+	/>
 </div>
