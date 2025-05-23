@@ -95,7 +95,7 @@
 				</span>
 			</h2>
 			<p>
-				Bei einer Erwärmung von {warmingLabel} gibt es etwa {formatValue(selectionValue)}
+				Bei einer globalen Erwärmung von {warmingLabel} gibt es etwa {formatValue(selectionValue)}
 				{indicatorLabel} im Jahr.
 				{#if activeWarming !== 'current'}
 					Das sind {formatValue(selectionChange, 1)} mal so viele wie heute.
