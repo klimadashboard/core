@@ -55,9 +55,11 @@
 		<button
 			data-key={view.key}
 			on:click={() => handleClick(view)}
+			disabled={view.disabled}
 			class="relative z-10 flex items-center rounded-full transition duration-200
 			       px-4 {view.key === activeView ? 'font-bold' : ''}
-			       {type === 'small' ? 'text-sm' : 'py-1'}"
+			       {type === 'small' ? 'text-sm' : 'py-1'}
+						 disabled:opacity-40 disabled:line-through"
 		>
 			{#if view.icon}
 				<span class="mr-2" style="color: {view.color}">{@html view.icon}</span>
@@ -77,6 +79,7 @@
 		transition: all 300ms ease;
 		z-index: 0;
 	}
+
 	:global(.dark) .switch-indicator {
 		background-color: #374151;
 	}
