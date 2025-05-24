@@ -4,6 +4,8 @@
 	import { onMount, tick } from 'svelte';
 	import '@splidejs/svelte-splide/css/core';
 	import Time from './Time.svelte';
+	import formatNumber from '$lib/stores/formatNumber';
+	import { page } from '$app/state';
 
 	export let data;
 
@@ -115,7 +117,54 @@
 				></div>
 				<div class="p-4 flex flex-col h-full">
 					<div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between">
-						<p class="text-xl font-bold max-w-md leading-snug">{intro}</p>
+						<div>
+							<p class="text-xl font-bold max-w-md leading-snug">{intro}</p>
+							<div class="flex gap-2 mt-2">
+								<div class="flex items-center gap-1">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="24"
+										height="24"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="w-4 h-4"
+										><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+											d="M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"
+										/><path d="M8 21v-1a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v1" /><path
+											d="M15 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"
+										/><path d="M17 10h2a2 2 0 0 1 2 2v1" /><path
+											d="M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"
+										/><path d="M3 13v-1a2 2 0 0 1 2 -2h2" /></svg
+									>
+									<p>{formatNumber(page.data.page.population)}</p>
+								</div>
+								<div>
+									<p>{formatNumber(page.data.page.area)} km²</p>
+								</div>
+								<div class="flex items-center gap-0.5">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="24"
+										height="24"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="w-4 h-4"
+										><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+											d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"
+										/><path d="M12 12l-2 3" /><path d="M12 7v5" /></svg
+									>
+									<Time />
+								</div>
+							</div>
+						</div>
 
 						<div class="flex items-center gap-2">
 							<p class="leading-none w-20 text-right">Scrollen für mehr Daten</p>
