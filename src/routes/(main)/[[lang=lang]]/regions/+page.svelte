@@ -3,7 +3,9 @@
 	import Search from '$lib/components/Search.svelte';
 	import { PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import ComingSoon from './ComingSoon.svelte';
 	import mapboxgl from 'mapbox-gl';
+	import formatNumber from '$lib/stores/formatNumber';
 	import 'mapbox-gl/dist/mapbox-gl.css';
 
 	export let data;
@@ -178,12 +180,24 @@
 </script>
 
 <div class="">
+	<ComingSoon />
+
+	<div class="py-8 bg-gradient-green">
+		<div class="container">
+			<h1 class="text-2xl font-bold max-w-md mb-3 leading-tight">
+				Wie ist das Klima bei dir vor Ort? <br />Gib eine Region ein oder lass dich orten!
+			</h1>
+			<Search />
+			<p class="text-lg mt-3 max-w-md text-balance leading-tight">
+				{formatNumber(data.regions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
+				stehen.
+			</p>
+		</div>
+	</div>
 	<!-- Map Container -->
 	<div id="map"></div>
 
 	<div class="container pb-20">
-		<Search />
-
 		<!-- Suggestion Block -->
 		<div class="mt-8">
 			<div class="text-lg text">
@@ -246,7 +260,8 @@
 <style>
 	#map {
 		width: 100%;
-		height: 500px;
+		height: 70vh;
+		max-height: 400px;
 		margin-bottom: 2rem;
 	}
 

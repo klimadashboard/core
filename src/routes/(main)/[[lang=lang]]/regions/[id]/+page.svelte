@@ -7,6 +7,7 @@
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Support from './Support.svelte';
+	import ComingSoon from '../ComingSoon.svelte';
 	import { goto } from '$app/navigation';
 
 	export let data;
@@ -162,6 +163,7 @@
 	<Scroller bind:index bind:offset bind:progress>
 		<div slot="background" />
 		<div slot="foreground">
+			<ComingSoon />
 			<Intro {data} />
 			<div class="sticky top-12 py-4 bg-white dark:bg-gray-900 z-50" id="top">
 				<div class="container overflow-auto">
