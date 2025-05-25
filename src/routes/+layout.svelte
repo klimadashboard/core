@@ -42,10 +42,14 @@
 		dayjs.locale(page.data.language.code);
 
 		function handleGlobalClick(event) {
-			const button = event.target.closest('button[data-key]');
-			if (button) {
-				glossaryItem.set(button.dataset.key);
-			}
+			// only catch real glossary buttons…
+			const btn = event.target.closest('button[data-key]');
+			if (!btn) return;
+
+			// …but ignore any inside your switch (or other UX controls)
+			if (btn.closest('.switch')) return;
+
+			glossaryItem.set(btn.dataset.key);
 		}
 
 		document.addEventListener('click', handleGlobalClick);

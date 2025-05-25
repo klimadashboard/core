@@ -8,15 +8,17 @@ export async function load({ fetch, params }) {
 
 	try {
 		return {
-			regions: await directus.request(readItems('regions', {
-				fields: ['id', 'name', 'center'],
-				filter: {
-					country: {
-						_eq: PUBLIC_VERSION.toUpperCase()
-					}
-				},
-				limit: -1
-			}))
+			regions: await directus.request(
+				readItems('regions', {
+					fields: ['id', 'name', 'center', 'layer', 'layer_label', 'population', 'area'],
+					filter: {
+						country: {
+							_eq: PUBLIC_VERSION.toUpperCase()
+						}
+					},
+					limit: -1
+				})
+			)
 		};
 	} catch (err) {
 		error(404, 'Page not found');

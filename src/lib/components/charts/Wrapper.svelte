@@ -77,13 +77,7 @@
 	}
 </script>
 
-<div
-	class="p-3 border border-gray-200 rounded-2xl relative overflow-hidden {chart.methods
-		? 'pb-16'
-		: ''}"
-	id={chart.identifier_string}
-	bind:this={item}
->
+<div class="relative {chart.methods ? 'pb-16' : ''}" id={chart.identifier_string} bind:this={item}>
 	<div class="flex justify-between items-center mb-1 transition">
 		<h2 class="font-bold">
 			{chart.content?.title}

@@ -1,0 +1,16 @@
+# Equivalent to getMobilityRenewableShare function
+query GetMobilityRenewableShare {
+	mobility(filter: { category: { _eq: "share_renewable" } }, limit: -1) {
+		period
+		region
+		value
+	}
+}
+
+# Equivalent to getCountries function
+query GetCountries {
+	countries(limit: -1) {
+		id
+		name_de
+	}
+}

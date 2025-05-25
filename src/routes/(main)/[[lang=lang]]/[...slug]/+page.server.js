@@ -139,14 +139,30 @@ export async function load({ fetch, params }) {
 		);
 
 		if (!pages || pages.length === 0) {
-			// add logic to check if the slug is available in other languages
-
+			// Check if the slug exists in any other language first
 			if (slugs.length > 0) {
 				const translatedPage = slugs[0].translations.find((t) => t.languages_code == language);
 				if (translatedPage) {
 					redirect(308, `/${translatedPage.languages_code}/${translatedPage.slug}`);
 				}
 			}
+
+			//Check if slug matches a region
+			const regionMatch = await directus.request(
+				readItems('regions', {
+					filter: {
+						slug: { _icontains: slug }
+					},
+					fields: ['id'],
+					limit: 1
+				})
+			);
+
+			if (regionMatch && regionMatch.length > 0) {
+				const regionId = regionMatch[0].id;
+				redirect(308, `/regions/${regionId}`);
+			}
+
 			throw error(404, 'Page not found');
 		}
 

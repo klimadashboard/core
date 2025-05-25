@@ -147,7 +147,7 @@ main {
 }
 
 .bg-gradient-green {
-	background: linear-gradient(90deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
+	background: linear-gradient(90deg, #7ac68a 0%, #28a88a 100%);
 }
 
 .bg-at {
