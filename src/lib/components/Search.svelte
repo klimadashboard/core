@@ -481,7 +481,7 @@
 			/>
 		</div>
 		{#if includeRegions}
-			<button aria-label="Find location" class="button !hidden" on:click={findClosestRegion}>
+			<button aria-label="Find location" class="button" on:click={findClosestRegion}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"

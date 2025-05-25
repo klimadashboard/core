@@ -187,7 +187,7 @@
 			<h1 class="text-2xl font-bold max-w-md mb-3 leading-tight">
 				Wie ist das Klima bei dir vor Ort? <br />Gib eine Region ein oder lass dich orten!
 			</h1>
-			<Search />
+			<Search includeRegions={true} />
 			<p class="text-lg mt-3 max-w-md text-balance leading-tight">
 				{formatNumber(data.regions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
 				stehen.
