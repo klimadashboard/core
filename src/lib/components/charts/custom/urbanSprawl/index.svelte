@@ -4,6 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
 	import { page } from '$app/state';
+	import { getRegions } from '$lib/utils/regions';
 	import Map from './Map.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import Inspector from './Inspector.svelte';
@@ -25,25 +26,8 @@
 				limit: -1
 			})
 		);
-		const regions = await directus.request(
-			readItems('regions', {
-				filter: {
-					_and: [
-						{
-							country: {
-								_eq: PUBLIC_VERSION.toUpperCase()
-							}
-						},
-						{
-							layer: {
-								_eq: 'district'
-							}
-						}
-					]
-				},
-				fields: ['id', 'name', 'code', 'outline_simple', 'center']
-			})
-		);
+
+		const regions = await getRegions().then((r) => r.filter((r) => r.layer === 'district'));
 
 		const foundRegionCode = findMatchingRegion(page.data.page, regions);
 		console.log(foundRegionCode);

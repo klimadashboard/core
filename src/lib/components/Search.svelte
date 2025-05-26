@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems } from '@directus/sdk';
+	import { getRegions } from '$lib/utils/regions';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -11,7 +10,7 @@
 	let showSuggestions = false;
 	let activeSuggestionIndex = -1;
 	let debounceTimeout;
-	export let includeRegions = false;
+	let requestCounter = 0;
 
 	// Debounce function to limit API calls
 	function debounce(func, delay) {
@@ -27,290 +26,39 @@
 			return;
 		}
 
+		const currentRequest = ++requestCounter;
+
 		try {
-			const directus = getDirectusInstance(fetch);
-
-			// --- REGIONS ---
-			const regionExactMatches = await directus.request(
-				readItems('regions', {
-					filter: {
-						_and: [
-							{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
-							{
-								_or: [{ name: { _eq: value } }, { postcodes: { _contains: value } }]
-							}
-						]
-					},
-					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-					sort: ['name']
-				})
+			const response = await fetch(
+				`https://base.klimadashboard.org/get-search-results?q=${encodeURIComponent(value)}&lang=${$page.data.language.code}&site=${PUBLIC_VERSION}&country=${PUBLIC_VERSION.toUpperCase()}`,
+				{ method: 'GET' }
 			);
 
-			const regionPartialMatches = await directus.request(
-				readItems('regions', {
-					filter: {
-						_and: [
-							{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
-							{
-								_or: [{ name: { _icontains: value } }, { postcodes: { _contains: value } }]
-							}
-						]
-					},
-					fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-					sort: ['name']
-				})
-			);
+			if (currentRequest !== requestCounter) return;
 
-			const mapRegions = (regions, searchValue) =>
-				regions.map((r) => {
-					let subtitle = '';
+			const results = await response.json();
 
-					if (Array.isArray(r.postcodes) && r.postcodes.length > 0) {
-						// Check if the search value matches any postcode
-						const matchedPostcode = r.postcodes.find((pc) => pc.startsWith(searchValue));
-
-						// If there's a match, use it, otherwise default to the first postcode
-						subtitle = matchedPostcode || r.postcodes[0];
-					}
-
-					return {
-						id: r.id,
-						title: r.name,
-						subtitle,
-						source: 'region',
-						country: r.country,
-						layer: r.layer
-					};
-				});
-
-			const mappedRegionExact = mapRegions(regionExactMatches, value);
-			const regionExactIds = mappedRegionExact.map((r) => r.id);
-			const mappedRegionPartial = mapRegions(
-				regionPartialMatches.filter((r) => !regionExactIds.includes(r.id)),
-				value
-			);
-
-			// --- CHARTS ---
-			const chartExactMatches = await directus.request(
-				readItems('charts', {
-					filter: {
-						_and: [
-							{
-								site: {
-									_eq: PUBLIC_VERSION
-								}
-							},
-							{
-								_or: [
-									{ translations: { title: { _eq: value } } },
-									{ translations: { heading: { _eq: value } } },
-									{ translations: { text: { _eq: value } } }
-								]
-							},
-							{
-								status: {
-									_eq: 'published'
-								}
-							}
-						]
-					},
-					fields: ['id', 'translations.title', 'translations.heading', 'translations.text'],
-					deep: {
-						translations: {
-							_filter: {
-								languages_code: { _eq: $page.data.language.code }
-							}
-						}
-					}
-				})
-			);
-
-			const chartPartialMatches = await directus.request(
-				readItems('charts', {
-					filter: {
-						_and: [
-							{
-								site: {
-									_eq: PUBLIC_VERSION
-								}
-							},
-							{
-								_or: [
-									{ translations: { title: { _icontains: value } } },
-									{ translations: { heading: { _icontains: value } } },
-									{ translations: { text: { _icontains: value } } }
-								]
-							},
-							{
-								status: {
-									_eq: 'published'
-								}
-							}
-						]
-					},
-					fields: ['id', 'translations.title', 'translations.heading', 'translations.text'],
-					deep: {
-						translations: {
-							_filter: {
-								languages_code: { _eq: $page.data.language.code }
-							}
-						}
-					}
-				})
-			);
-
-			const mappedChartExact = chartExactMatches.map((c) => ({
-				id: c.id,
-				title: c.translations[0].title,
-				subtitle: '',
-				source: 'chart'
+			suggestions = results.map((item) => ({
+				...item,
+				subtitle: item.subtitle || ''
 			}));
-
-			const chartExactIds = mappedChartExact.map((c) => c.id);
-			const mappedChartPartial = chartPartialMatches
-				.filter((c) => !chartExactIds.includes(c.id))
-				.map((c) => ({
-					id: c.id,
-					title: c.translations[0].title,
-					subtitle: '',
-					source: 'chart'
-				}));
-
-			// --- PAGES ---
-			const pageExactMatches = await directus.request(
-				readItems('pages', {
-					filter: {
-						_and: [
-							{
-								site: {
-									_eq: PUBLIC_VERSION
-								}
-							},
-							{
-								_or: [{ translations: { title: { _eq: value } } }]
-							},
-							{
-								status: {
-									_eq: 'published'
-								}
-							}
-						]
-					},
-					fields: ['id', 'translations.title', 'translations.slug'],
-					deep: {
-						translations: {
-							_filter: {
-								languages_code: { _eq: $page.data.language.code }
-							}
-						}
-					}
-				})
-			);
-
-			const pagePartialMatches = await directus.request(
-				readItems('pages', {
-					filter: {
-						_and: [
-							{
-								site: {
-									_eq: PUBLIC_VERSION
-								}
-							},
-							{ _or: [{ translations: { title: { _icontains: value } } }] },
-							{
-								status: {
-									_eq: 'published'
-								}
-							}
-						]
-					},
-					fields: ['id', 'translations.title', 'translations.slug'],
-					deep: {
-						translations: {
-							_filter: {
-								languages_code: { _eq: $page.data.language.code }
-							}
-						}
-					}
-				})
-			);
-
-			const mappedPageExact = pageExactMatches.map((p) => ({
-				id: p.id,
-				title: p.translations[0].title,
-				subtitle: '',
-				source: 'page',
-				slug: p.translations[0].slug
-			}));
-
-			const pageExactIds = mappedPageExact.map((p) => p.id);
-			const mappedPagePartial = pagePartialMatches
-				.filter((p) => !pageExactIds.includes(p.id))
-				.map((p) => ({
-					id: p.id,
-					title: p.translations[0].title,
-					subtitle: '',
-					slug: p.translations[0].slug,
-					source: 'page'
-				}));
-
-			// --- COMPANIES ---
-			const companyExactMatches = await directus.request(
-				readItems('companies', {
-					filter: {
-						name: { _eq: value }
-					},
-					fields: ['id', 'name']
-				})
-			);
-
-			const companyPartialMatches = await directus.request(
-				readItems('companies', {
-					filter: {
-						name: { _icontains: value }
-					},
-					fields: ['id', 'name']
-				})
-			);
-
-			const mappedCompanyExact = companyExactMatches.map((company) => ({
-				id: company.id,
-				title: company.name,
-				subtitle: '',
-				source: 'company'
-			}));
-
-			const companyExactIds = mappedCompanyExact.map((c) => c.id);
-			const mappedCompanyPartial = companyPartialMatches
-				.filter((company) => !companyExactIds.includes(company.id))
-				.map((company) => ({
-					id: company.id,
-					title: company.name,
-					subtitle: '',
-					source: 'company'
-				}));
-
-			// Combine all suggestions
-			suggestions = [
-				...mappedPageExact,
-				...mappedChartExact,
-				...mappedRegionExact,
-				...mappedPagePartial,
-				...mappedChartPartial,
-				...mappedRegionPartial,
-				...mappedCompanyExact,
-				...mappedCompanyPartial
-			];
 
 			showSuggestions = true;
 		} catch (error) {
-			console.error('Error fetching suggestions:', error);
+			if (currentRequest === requestCounter) {
+				console.error('Search error:', error);
+				suggestions = [];
+				showSuggestions = false;
+			}
 		}
 	}
 
 	function onInput(event) {
 		query = event.target.value;
-		debounce(() => fetchSuggestions(query), 100);
+		clearTimeout(debounceTimeout);
+		debounceTimeout = setTimeout(() => {
+			fetchSuggestions(query);
+		}, 200);
 	}
 
 	function selectSuggestion(item) {
@@ -398,20 +146,7 @@
 				const { latitude, longitude } = position.coords;
 
 				try {
-					const directus = getDirectusInstance(fetch);
-
-					// Fetch all regions with their centers
-					const regions = await directus.request(
-						readItems('regions', {
-							fields: ['id', 'name', 'center'],
-							filter: {
-								country: {
-									_eq: PUBLIC_VERSION.toUpperCase()
-								}
-							},
-							limit: -1
-						})
-					);
+					const regions = await getRegions();
 
 					// Parse regions and calculate distances
 					let closestRegion = null;
@@ -469,9 +204,7 @@
 			</svg>
 			<input
 				type="text"
-				placeholder={includeRegions
-					? 'Suchen nach Regionen, Themen, Diagrammen...'
-					: $page.data.translations.searchPlaceholder}
+				placeholder={$page.data.translations.searchPlaceholder}
 				class="input w-full !pl-10 text-black dark:text-white"
 				bind:value={query}
 				on:input={onInput}
@@ -480,36 +213,34 @@
 				autocomplete="off"
 			/>
 		</div>
-		{#if includeRegions}
-			<button aria-label="Find location" class="button" on:click={findClosestRegion}>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="m-auto"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-					<path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" />
-					<path d="M12 2l0 2" />
-					<path d="M12 20l0 2" />
-					<path d="M20 12l2 0" />
-					<path d="M2 12l2 0" />
-				</svg>
-			</button>
-		{/if}
+		<button aria-label="Find location" class="button" on:click={findClosestRegion}>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="m-auto"
+			>
+				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+				<path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+				<path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" />
+				<path d="M12 2l0 2" />
+				<path d="M12 20l0 2" />
+				<path d="M20 12l2 0" />
+				<path d="M2 12l2 0" />
+			</svg>
+		</button>
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
 			class="absolute top-full left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm border overflow-scroll z-10 max-h-64 rounded-2xl"
 		>
-			{#each suggestions.filter( (s) => (includeRegions ? s.source : s.source !== 'region') ) as suggestion, index}
+			{#each suggestions as suggestion, index}
 				<li
 					class="p-2 cursor-pointer hover:bg-gray-600 hover:text-white border-b border-b-gray-600 {index ===
 					activeSuggestionIndex

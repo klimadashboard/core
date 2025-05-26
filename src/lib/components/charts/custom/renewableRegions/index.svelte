@@ -8,6 +8,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
 	import { page } from '$app/state';
+	import { getRegions } from '$lib/utils/regions';
 
 	let selectedRegion;
 
@@ -28,34 +29,7 @@
 	const fetchRegions = async () => {
 		// if (cachedRegions) return { regions: cachedRegions, countryName: cachedCountryName };
 
-		const directus = getDirectusInstance();
-		const regionsRaw = await directus.request(
-			readItems('regions', {
-				fields: [
-					'id',
-					'name',
-					'code_short',
-					'outline_simple',
-					'center',
-					'area',
-					'layer',
-					'layer_label',
-					'code',
-					'parents'
-				],
-				filter: {
-					_and: [
-						{
-							country: { _eq: PUBLIC_VERSION.toUpperCase() }
-							/*
-							_or: [{ layer: { _eq: 'municipality' } }, { layer: { _eq: 'country' } }]
-							*/
-						}
-					]
-				},
-				limit: -1
-			})
-		);
+		const regionsRaw = await getRegions();
 
 		const regions = regionsRaw.map((r) => ({
 			...r,
