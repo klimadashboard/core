@@ -2,6 +2,7 @@ import { PUBLIC_VERSION } from '$env/static/public';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { json } from '@sveltejs/kit';
+
 export const GET = async ({ url }) => {
 	try {
 		const directus = getDirectusInstance();
@@ -10,18 +11,7 @@ export const GET = async ({ url }) => {
 		const pages = await directus.request(
 			readItems('pages', {
 				filter: {
-					_and: [
-						{
-							site: {
-								_eq: PUBLIC_VERSION
-							}
-						},
-						{
-							status: {
-								_eq: 'published'
-							}
-						}
-					]
+					_and: [{ site: { _eq: PUBLIC_VERSION } }, { status: { _eq: 'published' } }]
 				},
 				fields: ['id', 'translations.slug', 'translations.languages_code']
 			})
@@ -30,43 +20,19 @@ export const GET = async ({ url }) => {
 		const charts = await directus.request(
 			readItems('charts', {
 				filter: {
-					_and: [
-						{
-							site: {
-								_eq: PUBLIC_VERSION
-							}
-						},
-						{
-							status: {
-								_eq: 'published'
-							}
-						}
-					]
+					_and: [{ site: { _eq: PUBLIC_VERSION } }, { status: { _eq: 'published' } }]
 				}
 			})
 		);
 
-		let companies, policies, policiesAttributes;
+		let companies = [],
+			policies = [],
+			policiesAttributes = [];
 
-		if (PUBLIC_VERSION == 'at') {
+		if (PUBLIC_VERSION === 'at') {
 			policies = await directus.request(
 				readItems('policies', {
-					filter: {
-						_and: [
-							/*
-						{
-							site: {
-								_eq: PUBLIC_VERSION
-							}
-						},
-						*/
-							{
-								status: {
-									_neq: 'hidden'
-								}
-							}
-						]
-					}
+					filter: { status: { _neq: 'hidden' } }
 				})
 			);
 
@@ -74,58 +40,47 @@ export const GET = async ({ url }) => {
 
 			companies = await directus.request(
 				readItems('companies', {
-					filter: {
-						_and: [
-							{
-								status: {
-									_eq: 'published'
-								}
-							}
-						]
-					}
+					filter: { status: { _eq: 'published' } }
 				})
 			);
-		} else {
-			companies = [];
-			policies = [];
-			policiesAttributes = [];
 		}
 
-		// Generate URLs
+		const regions = await directus.request(
+			readItems('regions', {
+				filter: { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+				limit: -1,
+				fields: ['id']
+			})
+		);
+
 		const urls = [
-			...pages
-				.map((page) =>
-					page.translations.map(
-						(t) =>
-							`${currentUrl}/${(t.languages_code == 'de' ? '' : t.languages_code + '/') + t.slug.replace('home', '')}`
-					)
+			`${currentUrl}/regions`, // static regions overview route
+			...pages.flatMap((page) =>
+				page.translations.map(
+					(t) =>
+						`${currentUrl}/${(t.languages_code === 'de' ? '' : t.languages_code + '/') + t.slug.replace('home', '')}`
 				)
-				.flat(),
+			),
 			...charts.map((chart) => `${currentUrl}/charts/${chart.id}`),
 			...companies.map((company) => `${currentUrl}/companies/${company.id}`),
 			...policies.map((policy) => `${currentUrl}/policies/${policy.id}`),
-			...policiesAttributes.map(
-				(policyAttribute) => `${currentUrl}/policies/${policyAttribute.key}`
-			)
+			...policiesAttributes.map((attr) => `${currentUrl}/policies/${attr.key}`),
+			...regions.map((region) => `${currentUrl}/regions/${region.id}`)
 		];
 
-		// Generate XML content
 		const xml = `<?xml version="1.0" encoding="UTF-8"?>
-        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-            ${urls
-							.map(
-								(url) => `
-                <url>
-                    <loc>${url}</loc>
-                    <changefreq>weekly</changefreq>
-                    <priority>0.8</priority>
-                </url>
-            `
-							)
-							.join('\n')}
-        </urlset>`;
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+	.map(
+		(url) => `  <url>
+    <loc>${url}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`
+	)
+	.join('\n')}
+</urlset>`;
 
-		// Return XML response
 		return new Response(xml, {
 			headers: {
 				'Content-Type': 'application/xml'
