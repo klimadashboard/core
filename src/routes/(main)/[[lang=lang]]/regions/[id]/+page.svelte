@@ -8,6 +8,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Support from './Support.svelte';
 	import ComingSoon from '../ComingSoon.svelte';
+	import Navigation from './Navigation.svelte';
 	import { goto } from '$app/navigation';
 
 	export let data;
@@ -165,18 +166,7 @@
 		<div slot="foreground">
 			<ComingSoon />
 			<Intro {data} />
-			<div class="sticky top-12 py-4 bg-white dark:bg-gray-900 z-50" id="top">
-				<div class="container overflow-auto">
-					<div class="flex justify-between gap-4">
-						{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
-							<a href="#{section.id}" class="button">
-								{@html section.icon}
-								<span>{section.title}</span></a
-							>
-						{/each}
-					</div>
-				</div>
-			</div>
+			<Navigation {sections} />
 
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
 				<section id={section.id} class="mt-16 relative overflow-hidden">
