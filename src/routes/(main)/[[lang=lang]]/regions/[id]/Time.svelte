@@ -26,4 +26,4 @@
 	});
 </script>
 
-<p>{time}</p>
+<p class="tabular-nums">{time}</p>
