@@ -8,6 +8,7 @@
 	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
 	import { page } from '$app/state';
 
+	import { getRegions } from '$lib/utils/regions';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem, readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -15,7 +16,7 @@
 	let minPeriod;
 	let maxPeriod;
 
-	$: getData = async () => {
+	async function getData() {
 		const directus = getDirectusInstance(fetch);
 		const countryCode = PUBLIC_VERSION.toUpperCase();
 
@@ -32,19 +33,10 @@
 		);
 
 		// Load regions: all for AT, exclude municipalities for DE
-		const regionFilter = {
-			country: { _eq: countryCode },
-			...(countryCode === 'AT'
-				? { layer: { _eq: 'municipality' } }
-				: { layer: { _eq: 'district' } })
-		};
+		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
 
-		const regions = await directus.request(
-			readItems('regions', {
-				filter: regionFilter,
-				limit: -1,
-				fields: ['id', 'name', 'code', 'outline_simple', 'population', 'center']
-			})
+		const regions = await getRegions().then((r) =>
+			r.filter((r) => r.country === countryCode && r.layer === layerFilter)
 		);
 
 		const country = await directus.request(readItem('countries', countryCode));
@@ -102,7 +94,7 @@
 		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
 		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
 		return { data, regions: regionsWithData, minPeriod, maxPeriod, countryName };
-	};
+	}
 
 	$: promise = getData();
 

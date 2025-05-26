@@ -29,12 +29,14 @@
 	$: regionsWithDistance = regions
 		.map((region) => ({
 			...region,
-			distance: getDistance(selectedRegion.center, region.center) || Infinity
+			distance: selectedRegion?.center
+				? getDistance(selectedRegion.center, region.center)
+				: Infinity
 		}))
 		.sort((a, b) => a.distance - b.distance);
 
 	$: shownRegions =
-		selectedRegion.population > 100000
+		selectedRegion?.population > 100000
 			? regions.filter((d) => cityRegions.includes(d.code))
 			: regionsWithDistance.slice(0, 5);
 </script>

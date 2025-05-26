@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems } from '@directus/sdk';
+	import { getRegions } from '$lib/utils/regions';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -147,20 +146,7 @@
 				const { latitude, longitude } = position.coords;
 
 				try {
-					const directus = getDirectusInstance(fetch);
-
-					// Fetch all regions with their centers
-					const regions = await directus.request(
-						readItems('regions', {
-							fields: ['id', 'name', 'center'],
-							filter: {
-								country: {
-									_eq: PUBLIC_VERSION.toUpperCase()
-								}
-							},
-							limit: -1
-						})
-					);
+					const regions = await getRegions();
 
 					// Parse regions and calculate distances
 					let closestRegion = null;
