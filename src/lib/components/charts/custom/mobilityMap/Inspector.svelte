@@ -83,10 +83,10 @@
 		if (selectedTiles.length === 1) {
 			try {
 				const res = await fetch(
-					`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=pk.eyJ1Ijoia2xpbWFkYXNoYm9hcmQiLCJhIjoiY2x5eTl3cGR5MXQ5ZTJscXNmNXR5aG44eiJ9.iPxhi0LuuA0Nxzzp8cXU7Q&language=de`
+					`https://base.klimadashboard.org/get-location-name?lat=${lat}&lon=${lng}`
 				);
 				const data = await res.json();
-				locationName = data.features?.[0]?.place_name || null;
+				locationName = data.name;
 			} catch (e) {
 				console.error('Geocoding failed', e);
 				locationName = null;
