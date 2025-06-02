@@ -16,13 +16,6 @@
 	const coordinates = data.page.center.map((d) => parseFloat(d)).join(',');
 
 	onMount(() => {
-		if (data.page.country !== PUBLIC_VERSION.toUpperCase()) {
-			// replace current url de with at or at with de, leave everything else as is
-			console.log('referring to ', data.page.country);
-			const url = new URL(window.location);
-			url.pathname = url.pathname.replace(PUBLIC_VERSION.toUpperCase(), data.page.country);
-			goto(url.toString());
-		}
 		localStorage.setItem('kd_region_id', data.page.id);
 		localStorage.setItem('kd_region_name', data.page.name);
 		localStorage.setItem('kd_region_coordinates', coordinates);
