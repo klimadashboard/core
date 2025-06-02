@@ -27,7 +27,9 @@
 			})
 		);
 
-		const regions = await getRegions().then((r) => r.filter((r) => r.layer === 'district'));
+		const regions = await getRegions().then((r) =>
+			r.filter((r) => r.layer === 'district' && r.country == 'AT')
+		);
 
 		const foundRegionCode = findMatchingRegion(page.data.page, regions);
 		console.log(foundRegionCode);
