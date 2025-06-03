@@ -152,18 +152,22 @@
 					let closestRegion = null;
 					let minDistance = Infinity;
 
-					regions.forEach((region) => {
-						if (region.center) {
-							const [regionLng, regionLat] = region.center.map((coord) => parseFloat(coord.trim()));
+					regions
+						.filter((region) => region.layer == 'municipality')
+						.forEach((region) => {
+							if (region.center) {
+								const [regionLng, regionLat] = region.center.map((coord) =>
+									parseFloat(coord.trim())
+								);
 
-							const distance = haversineDistance(latitude, longitude, regionLat, regionLng);
+								const distance = haversineDistance(latitude, longitude, regionLat, regionLng);
 
-							if (distance < minDistance) {
-								minDistance = distance;
-								closestRegion = region;
+								if (distance < minDistance) {
+									minDistance = distance;
+									closestRegion = region;
+								}
 							}
-						}
-					});
+						});
 
 					if (closestRegion) {
 						// Redirect to the closest region's page

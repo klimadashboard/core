@@ -1,5 +1,6 @@
 // src/lib/cache/regionCache.ts
 import getDirectusInstance from '$lib/utils/directus';
+import { PUBLIC_VERSION } from '$env/static/public';
 import { readItems } from '@directus/sdk';
 
 let memoryCache: any[] | null = null;
@@ -76,6 +77,11 @@ export async function getRegions(forceRefresh = false): Promise<any[]> {
 	const regions = await directus.request(
 		readItems('regions', {
 			limit: -1,
+			filter: {
+				country: {
+					_eq: PUBLIC_VERSION.toUpperCase()
+				}
+			},
 			fields: [
 				'id',
 				'name',
