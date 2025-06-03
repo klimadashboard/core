@@ -29,7 +29,13 @@
 	const fetchRegions = async () => {
 		// if (cachedRegions) return { regions: cachedRegions, countryName: cachedCountryName };
 
-		const regionsRaw = await getRegions();
+		const regionsRaw = await getRegions().then((r) =>
+			r.filter(
+				(r) =>
+					r.country === PUBLIC_VERSION.toUpperCase() &&
+					(r.layer == 'country' || r.layer == 'municipality')
+			)
+		);
 
 		const regions = regionsRaw.map((r) => ({
 			...r,
