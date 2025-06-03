@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 
-	export let center = [11.57, 48.13];
+	export let center;
 	export let zoom = 7;
 	export let darkMode = false;
 	export let outline;

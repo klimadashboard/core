@@ -12,7 +12,7 @@
 
 	export let data;
 
-	const coordinates = data.page.center.map((d) => parseFloat(d)).join(',');
+	const coordinates = data.page?.center?.map((d) => parseFloat(d)).join(',') || [];
 
 	onMount(() => {
 		localStorage.setItem('kd_region_id', data.page.id);

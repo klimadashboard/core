@@ -82,11 +82,13 @@
 	<SplideTrack>
 		<SplideSlide>
 			<div class="reg-card sm:max-w-[60vw]! relative">
-				<StaticMap
-					center={data.page.center}
-					zoom={data.page.area < 10000 ? 13 : 10}
-					outline={data.page.outline}
-				/>
+				{#if data.page.center}
+					<StaticMap
+						center={data.page.center}
+						zoom={data.page.area < 10000 ? 13 : 10}
+						outline={data.page.outline}
+					/>
+				{/if}
 				<div
 					class="-z-40 absolute bottom-0 w-full h-1/2 bg-gradient-to-b from-transparent to-white dark:to-black"
 				></div>
