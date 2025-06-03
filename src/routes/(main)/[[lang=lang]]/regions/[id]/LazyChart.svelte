@@ -44,6 +44,6 @@
 			<Chart {id} />
 		</div>
 	{:else}
-		<div class="animate-pulse h-64 w-full bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+		<div class="animate-pulse h-[50vh] w-full bg-gray-200 dark:bg-gray-700 rounded-md"></div>
 	{/if}
 </div>
