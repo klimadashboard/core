@@ -16,6 +16,7 @@
 	let map;
 	let mapReady = false;
 	let zoomLevel = 0;
+	let legendSteps = [];
 
 	const dispatch = createEventDispatcher();
 
@@ -54,11 +55,22 @@
 	}
 
 	function createColorScale(data) {
-		if (!Array.isArray(data)) return () => '#F2F2F2';
-		const values = data.map((d) => d.value).filter((v) => v != null);
-		if (!values.length) return () => '#F2F2F2';
+		if (!Array.isArray(data)) return { scale: () => '#F2F2F2', range: [], thresholds: [] };
 
-		return createSteppedColorScale(values, 7, colors); // e.g. 7 steps
+		const values = data.map((d) => d.value).filter((v) => v != null);
+		if (!values.length) return { scale: () => '#F2F2F2', range: [], thresholds: [] };
+
+		const sorted = [...values].sort((a, b) => a - b);
+		const steps = 7;
+		const thresholds = Array.from({ length: steps - 1 }, (_, i) => {
+			const p = (i + 1) / steps;
+			return sorted[Math.floor(p * sorted.length)];
+		});
+
+		const colorRange = getInterpolatedColors(colors[0], colors[1], steps);
+		const scale = scaleThreshold(thresholds, colorRange);
+
+		return { scale, range: colorRange, thresholds };
 	}
 
 	async function loadNearbyWindUnits() {
@@ -339,21 +351,37 @@
 					uniqueData.set(row.region, row.power_per_area_kw_per_km2);
 				}
 			}
-			const entriesArray = Array.from(uniqueData.entries());
+
+			const entriesArray = Array.from(uniqueData.entries()).map(([region, value]) => ({
+				region,
+				value
+			}));
+
 			if (entriesArray.length > 0) {
-				const colorScale = createColorScale(
-					entriesArray.map(([region, value]) => ({ region, value }))
-				);
+				const { scale, range, thresholds } = createColorScale(entriesArray);
+
+				// 🟢 Set map color
 				const matchExpression = ['match', ['get', 'RS']];
-				for (const [region, value] of uniqueData.entries()) {
-					const color = value != null ? colorScale(value) : '#F2F2F2';
+				for (const { region, value } of entriesArray) {
+					const color = value != null ? scale(value) : '#F2F2F2';
 					matchExpression.push(region, color);
 				}
 				matchExpression.push('#F2F2F2');
 				map.setPaintProperty('regions-layer', 'fill-color', matchExpression);
+
+				// 🟢 Set legend
+				legendSteps = range.map((color, i) => {
+					const lower = i === 0 ? 0 : thresholds[i - 1];
+					const upper = thresholds[i];
+					const label =
+						upper !== undefined
+							? `${Math.round(lower)}–${Math.round(upper)}`
+							: `> ${Math.round(lower)}`;
+					return { color, label };
+				});
 			}
 		} catch (err) {
-			console.error('Error updating fill colors:', err);
+			console.error('Error updating fill colors or legend:', err);
 		}
 	}
 
@@ -381,6 +409,21 @@
 		>
 			<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
 		</button>
+	{/if}
+	{#if mapReady && data.length > 0}
+		<div
+			class="legend absolute top-2 left-2 z-40 bg-white dark:bg-gray-800 text-xs rounded shadow p-2"
+		>
+			<div class="font-semibold mb-1">Leistung (kW/km²)</div>
+			{#each legendSteps as step, i}
+				<div class="flex items-center gap-1 mb-0.5">
+					<span class="inline-block w-4 h-4 rounded" style="background-color: {step.color}"></span>
+					<span>
+						{step.label}
+					</span>
+				</div>
+			{/each}
+		</div>
 	{/if}
 </div>
 
