@@ -56,7 +56,7 @@
 	$: other.power_pct = totalPower ? Math.round((other.power_kw / totalPower) * 100) : 0;
 </script>
 
-<div class="grid md:grid-cols-3 gap-1 mt-8 leading-none" style="color: {colors[1]}">
+<div class="grid md:grid-cols-3 gap-1 mt-1 leading-none" style="color: {colors[1]}">
 	{#each enrichedTypes as type}
 		<div class="border rounded-2xl overflow-hidden">
 			<div class="text-white px-3 py-2 text-xl font-bold" style="background: {colors[1]}">

@@ -3,6 +3,7 @@
 	import BarChart from './BarChart.svelte';
 	import Types from './Types.svelte';
 	import Comparison from './Comparison.svelte';
+	import Disclaimer from './Disclaimer.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
@@ -110,6 +111,7 @@
 
 			<Comparison data={result.by_year} {regions} {region} {colors} {selectedEnergy} />
 			{#if selectedEnergy == 'solar'}
+				<Disclaimer {region} ratio={result.grid_operator_checked_ratio} {colors} />
 				<Types data={result.current_by_type} {colors} {region} />
 			{/if}
 		{/if}
