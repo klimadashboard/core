@@ -85,12 +85,14 @@
 	{/each}
 </div>
 
-<div class="mt-4">
-	<p>
-		Neben den Freiflächenanlagen, Dachanlagen und Balkonkraftwerken, gibt es noch weitere Arten von
-		PV-Anlagen. Diese sind den Kategorien "Bauliche Anlage (Sonstige)", "Gewässer" und
-		"Großparkplatz" zuzuordnen. In {region.name} gibt es {formatNumber(other.units)} Anlagen, die dieser
-		Kategorie zuzuordnen sind. Diese haben eine Leistung von {formatNumber(other.power_kw)} kW, was einen
-		Anteil an der Gesamtleistung von {formatNumber(other.power_pct)} Prozent ausmacht.
-	</p>
-</div>
+{#if other.units > 0}
+	<div class="mt-4 leading-snug opacity-80">
+		<p>
+			Neben den Freiflächenanlagen, Dachanlagen und Balkonkraftwerken, gibt es noch weitere Arten
+			von PV-Anlagen. Diese sind den Kategorien "Bauliche Anlage (Sonstige)", "Gewässer" und
+			"Großparkplatz" zuzuordnen. In {region.name} gibt es {formatNumber(other.units)} Anlagen, die dieser
+			Kategorie zuzuordnen sind. Diese haben eine Leistung von {formatNumber(other.power_kw)} kW, was
+			einen Anteil an der Gesamtleistung von {formatNumber(other.power_pct)} Prozent ausmacht.
+		</p>
+	</div>
+{/if}
