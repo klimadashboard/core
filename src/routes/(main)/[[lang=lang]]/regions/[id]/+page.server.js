@@ -20,6 +20,10 @@ export async function load({ fetch, params, url }) {
 	try {
 		const page = await directus.request(readItem('regions', params.id));
 
+		if (!page.visible) {
+			throw error(404, 'Page not found');
+		}
+
 		return {
 			page,
 			content: {
