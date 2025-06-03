@@ -214,7 +214,7 @@
 			zu erhalten.
 		</p>
 	{/if}
-	<p class="text-sm opacity-70">
+	<p class="text-sm opacity-70 mt-2">
 		Datenquelle: <a
 			class="underline underline-offset-2"
 			href="https://www.oerok.gv.at/raum/themen/raumordnung-und-mobilitaet">ÖROK ÖV-Güteklassen</a
