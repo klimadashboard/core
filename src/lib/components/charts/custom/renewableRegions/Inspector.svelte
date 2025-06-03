@@ -13,6 +13,8 @@
 	export let colors;
 	export let selectedEnergy;
 
+	let source = 'Datenquelle: Bundesnetzagentur | Marktstammdatenregister';
+
 	$: getDataForRegion = async (regionCode = false, selectedEnergy) => {
 		const url =
 			regionCode && regionCode !== PUBLIC_VERSION
@@ -99,6 +101,7 @@
 			{/if}
 
 			<BarChart data={result.by_year} {colors} />
+			<p class="text-sm mt-2 opacity-80">{source}</p>
 
 			<h3 class="mt-6 font-bold">Kumulative Leistung</h3>
 
@@ -110,6 +113,7 @@
 			</h3>
 
 			<Comparison data={result.by_year} {regions} {region} {colors} {selectedEnergy} />
+			<p class="text-sm mt-2 opacity-80">{source}</p>
 			{#if selectedEnergy == 'solar'}
 				<Disclaimer {region} ratio={result.grid_operator_checked_ratio} {colors} />
 				<Types data={result.current_by_type} {colors} {region} />
