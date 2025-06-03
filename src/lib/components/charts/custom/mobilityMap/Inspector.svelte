@@ -214,6 +214,18 @@
 			zu erhalten.
 		</p>
 	{/if}
+	<p class="text-sm opacity-70">
+		Datenquelle: <a
+			class="underline underline-offset-2"
+			href="https://www.oerok.gv.at/raum/themen/raumordnung-und-mobilitaet">ÖROK ÖV-Güteklassen</a
+		>
+		|
+		<a
+			class="underline underline-offset-2"
+			href="https://human-settlement.emergency.copernicus.eu/download.php?ds=pop"
+			>POP Global Human Settlement Layer</a
+		>
+	</p>
 </div>
 
 <style>
