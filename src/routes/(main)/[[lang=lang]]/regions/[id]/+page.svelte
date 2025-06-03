@@ -9,7 +9,6 @@
 	import Support from './Support.svelte';
 	import ComingSoon from '../ComingSoon.svelte';
 	import Navigation from './Navigation.svelte';
-	import { goto } from '$app/navigation';
 
 	export let data;
 

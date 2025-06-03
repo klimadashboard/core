@@ -1,5 +1,4 @@
 <script>
-	import { PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
 	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import { onMount, tick } from 'svelte';
 	import '@splidejs/svelte-splide/css/core';
