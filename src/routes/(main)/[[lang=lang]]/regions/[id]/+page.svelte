@@ -152,6 +152,13 @@
 	];
 </script>
 
+<svelte:head>
+	<title>Klimadashboard {data.page.name} | Klimadashboard.{PUBLIC_VERSION}</title>
+	<meta name="description" content={data.page.description} />
+	<meta property="og:title" content="Klimadashboard {data.page.name}" />
+	<meta property="og:description" content={data.page.description} />
+</svelte:head>
+
 <main class="">
 	<Scroller bind:index bind:offset bind:progress>
 		<div slot="background" />
