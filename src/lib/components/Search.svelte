@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
+	export let showRegions = true;
 	let query = '';
 	let suggestions = [];
 	let showSuggestions = false;
@@ -217,34 +218,36 @@
 				autocomplete="off"
 			/>
 		</div>
-		<button aria-label="Find location" class="button" on:click={findClosestRegion}>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				class="m-auto"
-			>
-				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-				<path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
-				<path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" />
-				<path d="M12 2l0 2" />
-				<path d="M12 20l0 2" />
-				<path d="M20 12l2 0" />
-				<path d="M2 12l2 0" />
-			</svg>
-		</button>
+		{#if showRegions}
+			<button aria-label="Find location" class="button" on:click={findClosestRegion}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="m-auto"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+					<path d="M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" />
+					<path d="M12 2l0 2" />
+					<path d="M12 20l0 2" />
+					<path d="M20 12l2 0" />
+					<path d="M2 12l2 0" />
+				</svg>
+			</button>
+		{/if}
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
 			class="absolute top-full left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm border overflow-scroll z-10 max-h-64 rounded-2xl"
 		>
-			{#each suggestions as suggestion, index}
+			{#each suggestions.filter( (s) => (!showRegions ? s.source !== 'region' : true) ) as suggestion, index}
 				<li
 					class="p-2 cursor-pointer hover:bg-gray-600 hover:text-white border-b border-b-gray-600 {index ===
 					activeSuggestionIndex
