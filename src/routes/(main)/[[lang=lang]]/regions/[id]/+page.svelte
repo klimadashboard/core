@@ -9,20 +9,12 @@
 	import Support from './Support.svelte';
 	import ComingSoon from '../ComingSoon.svelte';
 	import Navigation from './Navigation.svelte';
-	import { goto } from '$app/navigation';
 
 	export let data;
 
-	const coordinates = data.page.center.map((d) => parseFloat(d)).join(',');
+	const coordinates = data.page?.center?.map((d) => parseFloat(d)).join(',') || [];
 
 	onMount(() => {
-		if (data.page.country !== PUBLIC_VERSION.toUpperCase()) {
-			// replace current url de with at or at with de, leave everything else as is
-			console.log('referring to ', data.page.country);
-			const url = new URL(window.location);
-			url.pathname = url.pathname.replace(PUBLIC_VERSION.toUpperCase(), data.page.country);
-			goto(url.toString());
-		}
 		localStorage.setItem('kd_region_id', data.page.id);
 		localStorage.setItem('kd_region_name', data.page.name);
 		localStorage.setItem('kd_region_coordinates', coordinates);
@@ -159,6 +151,13 @@
 		}
 	];
 </script>
+
+<svelte:head>
+	<title>Klimadashboard {data.page.name} | Klimadashboard.{PUBLIC_VERSION}</title>
+	<meta name="description" content={data.page.description} />
+	<meta property="og:title" content="Klimadashboard {data.page.name}" />
+	<meta property="og:description" content={data.page.description} />
+</svelte:head>
 
 <main class="">
 	<Scroller bind:index bind:offset bind:progress>

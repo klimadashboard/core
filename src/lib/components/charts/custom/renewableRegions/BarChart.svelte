@@ -40,6 +40,7 @@
 		const { left } = event.currentTarget.getBoundingClientRect();
 		const x = event.clientX - left;
 		const year = Math.round(xScale.invert(x));
+		if (year < data[0].year || year > data[data.length - 1].year) return;
 		hoveredYear = year;
 	}
 

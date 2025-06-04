@@ -1,8 +1,8 @@
 <script>
-	import { PUBLIC_MAPBOX_TOKEN } from '$env/static/public';
 	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import { onMount, tick } from 'svelte';
 	import '@splidejs/svelte-splide/css/core';
+	import StaticMap from './StaticMap.svelte';
 	import Time from './Time.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { page } from '$app/state';
@@ -32,30 +32,6 @@
 		mainSlider.splide?.refresh(); // Now safe to refresh
 		loading = false;
 	});
-
-	let chartWidth = 0;
-	let chartHeight = 0;
-	let staticMapUrl = '';
-	let markerOffsetX = 0;
-	let markerOffsetY = 0;
-
-	$: getImage = () => {
-		// Extract center coordinates and zoom level
-		const centerLng = parseFloat(data.page.center[0]);
-		const centerLat = parseFloat(data.page.center[1]);
-		const zoom = 7; // Adjust zoom level as needed
-
-		// Generate the Mapbox Static Image API URL
-		staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${centerLng},${centerLat},${zoom}/${Math.round(chartWidth / 2)}x${Math.round(chartHeight / 2)}?access_token=${PUBLIC_MAPBOX_TOKEN}`;
-
-		// Marker position relative to the map center
-		markerOffsetX = chartWidth / 2; // Center of the image (X-axis)
-		markerOffsetY = chartHeight / 2; // Center of the image (Y-axis)
-	};
-
-	$: if (chartWidth) {
-		getImage();
-	}
 </script>
 
 <Splide
@@ -105,17 +81,18 @@
 
 	<SplideTrack>
 		<SplideSlide>
-			<div
-				class="reg-card sm:max-w-[60vw]! relative"
-				bind:clientWidth={chartWidth}
-				bind:clientHeight={chartHeight}
-			>
-				<img class="-z-50 absolute h-full w-full opacity-50" src={staticMapUrl} alt="Static Map" />
-				<div class="marker" style="top: {markerOffsetY}px; left: {markerOffsetX}px;" />
+			<div class="reg-card sm:max-w-[60vw]! relative">
+				{#if data.page.center}
+					<StaticMap
+						center={data.page.center}
+						zoom={data.page.area < 10000 ? 13 : 10}
+						outline={data.page.outline}
+					/>
+				{/if}
 				<div
 					class="-z-40 absolute bottom-0 w-full h-1/2 bg-gradient-to-b from-transparent to-white dark:to-black"
 				></div>
-				<div class="p-4 flex flex-col h-full">
+				<div class="p-4 flex flex-col h-full absolute bottom-0 left-0 right-0">
 					<div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between">
 						<div>
 							<p class="text-xl font-bold max-w-md leading-snug">{intro}</p>
@@ -290,28 +267,6 @@
 		100% {
 			transform: translateY(15px);
 			opacity: 0;
-		}
-	}
-
-	.marker {
-		position: absolute;
-		width: 20px;
-		height: 20px;
-		background-color: green;
-		border-radius: 50%;
-		animation: pulse 2s infinite;
-		transform: translate(-50%, -50%); /* Center the marker */
-	}
-
-	@keyframes pulse {
-		0% {
-			box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4);
-		}
-		70% {
-			box-shadow: 0 0 0 20px rgba(0, 255, 0, 0);
-		}
-		100% {
-			box-shadow: 0 0 0 0 rgba(0, 255, 0, 0);
 		}
 	}
 </style>

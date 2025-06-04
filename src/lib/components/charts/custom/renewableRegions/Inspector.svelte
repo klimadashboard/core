@@ -3,6 +3,7 @@
 	import BarChart from './BarChart.svelte';
 	import Types from './Types.svelte';
 	import Comparison from './Comparison.svelte';
+	import Disclaimer from './Disclaimer.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
@@ -11,6 +12,8 @@
 	export let regions;
 	export let colors;
 	export let selectedEnergy;
+
+	let source = 'Datenquelle: Bundesnetzagentur | Marktstammdatenregister';
 
 	$: getDataForRegion = async (regionCode = false, selectedEnergy) => {
 		const url =
@@ -98,6 +101,7 @@
 			{/if}
 
 			<BarChart data={result.by_year} {colors} />
+			<p class="text-sm mt-2 opacity-80">{source}</p>
 
 			<h3 class="mt-6 font-bold">Kumulative Leistung</h3>
 
@@ -109,7 +113,9 @@
 			</h3>
 
 			<Comparison data={result.by_year} {regions} {region} {colors} {selectedEnergy} />
+			<p class="text-sm mt-2 opacity-80">{source}</p>
 			{#if selectedEnergy == 'solar'}
+				<Disclaimer {region} ratio={result.grid_operator_checked_ratio} {colors} />
 				<Types data={result.current_by_type} {colors} {region} />
 			{/if}
 		{/if}

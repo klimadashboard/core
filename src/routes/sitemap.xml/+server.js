@@ -47,7 +47,9 @@ export const GET = async ({ url }) => {
 
 		const regions = await directus.request(
 			readItems('regions', {
-				filter: { country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+				filter: {
+					_and: [{ visible: { _eq: true } }, { country: { _eq: PUBLIC_VERSION.toUpperCase() } }]
+				},
 				limit: -1,
 				fields: ['id']
 			})

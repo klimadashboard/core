@@ -50,16 +50,13 @@
 		} else {
 			try {
 				const { geometry } = centroid(selection);
+				const [lon, lat] = geometry.coordinates;
+
 				const res = await fetch(
-					`https://api.mapbox.com/geocoding/v5/mapbox.places/${geometry.coordinates[0]},${geometry.coordinates[1]}.json?access_token=pk.eyJ1Ijoia2xpbWFkYXNoYm9hcmQiLCJhIjoiY2x5eTl3cGR5MXQ5ZTJscXNmNXR5aG44eiJ9.iPxhi0LuuA0Nxzzp8cXU7Q&language=de`
+					`https://base.klimadashboard.org/get-location-name?lat=${lat}&lon=${lon}`
 				);
 				const data = await res.json();
-				locationName = data.features
-					.filter(
-						({ place_type = '' }) => place_type.includes('place') || place_type.includes('region')
-					)
-					.map(({ text = '' }) => text)
-					.join(', ');
+				locationName = data.name;
 			} catch (e) {
 				console.error('Geocoding failed', e);
 				locationName = null;

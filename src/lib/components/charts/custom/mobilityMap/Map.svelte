@@ -115,6 +115,80 @@
 		});
 	}
 
+	function getFillColor(mode) {
+		if (mode === 'pop') {
+			return [
+				'interpolate',
+				['linear'],
+				['get', 'pop'],
+				0,
+				'#deebf7',
+				10,
+				'#9ecae1',
+				20,
+				'#2171b5'
+			];
+		} else if (mode === 'pt') {
+			return ['interpolate', ['linear'], ['get', 'pt'], 0, '#edf8e9', 2, '#a1d99b', 4, '#31a354'];
+		} else {
+			const popClass = ['min', 2, ['floor', ['/', ['get', 'pop'], 10]]];
+			const ptClass = ['min', 4, ['floor', ['/', ['get', 'pt'], 1]]];
+
+			return [
+				'case',
+				['==', popClass, 0],
+				[
+					'interpolate',
+					['linear'],
+					ptClass,
+					0,
+					'#deebf7',
+					1,
+					'#c6dbef',
+					2,
+					'#9ecae1',
+					3,
+					'#6baed6',
+					4,
+					'#2171b5'
+				],
+				['==', popClass, 1],
+				[
+					'interpolate',
+					['linear'],
+					ptClass,
+					0,
+					'#fcbba1',
+					1,
+					'#e79a8f',
+					2,
+					'#bdbdbd',
+					3,
+					'#a1d99b',
+					4,
+					'#74c476'
+				],
+				['==', popClass, 2],
+				[
+					'interpolate',
+					['linear'],
+					ptClass,
+					0,
+					'#fb6a4a',
+					1,
+					'#fa836c',
+					2,
+					'#fcae91',
+					3,
+					'#82a360',
+					4,
+					'#41ab5d'
+				],
+				'#ffffff'
+			];
+		}
+	}
+
 	onMount(() => {
 		map = new maplibregl.Map({
 			container: 'mobilityMap',
@@ -170,65 +244,7 @@
 				source: 'bivariate',
 				'source-layer': 'ptmismatch',
 				paint: {
-					'fill-color': [
-						'case',
-						// ─── pop = 0 row: various blues ───────────────────────────────
-						['==', popClass, 0],
-						[
-							'interpolate',
-							['linear'],
-							ptClass,
-							0,
-							'#deebf7', // orig index 0
-							1,
-							'#c6dbef', // orig index 1
-							2,
-							'#9ecae1', // orig index 2
-							3,
-							'#6baed6', // extra midpoint
-							4,
-							'#2171b5' // deep blue
-						],
-
-						// ─── pop = 1 row: salmon → grey → green ─────────────────────
-						['==', popClass, 1],
-						[
-							'interpolate',
-							['linear'],
-							ptClass,
-							0,
-							'#fcbba1', // orig index 3
-							1,
-							'#e79a8f', // between 3→4
-							2,
-							'#bdbdbd', // orig index 4
-							3,
-							'#a1d99b', // orig index 5
-							4,
-							'#74c476' // extra midpoint toward green
-						],
-
-						// ─── pop = 2 row: red → pink → dark‐green ────────────────────
-						['==', popClass, 2],
-						[
-							'interpolate',
-							['linear'],
-							ptClass,
-							0,
-							'#fb6a4a', // orig index 6
-							1,
-							'#fa836c', // between 6→7
-							2,
-							'#fcae91', // orig index 7
-							3,
-							'#82a360', // between 7→8
-							4,
-							'#41ab5d' // orig index 8
-						],
-
-						// ─── fallback ────────────────────────────────────────────────
-						'#ffffff'
-					],
+					'fill-color': getFillColor(),
 					'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.8, 0.5]
 				}
 			});
@@ -509,6 +525,15 @@
 		map.on('moveend', () => updateStops());
 		map.on('zoom', () => updateStops());
 	});
+
+	$: updateLayerStyle(viewMode);
+
+	function updateLayerStyle(mode) {
+		if (!map || !map.getLayer('bivariate-layer')) return;
+		map.setPaintProperty('bivariate-layer', 'fill-color', getFillColor(mode));
+	}
+
+	let viewMode = 'mismatch';
 </script>
 
 <div id="mobilityMap" class="relative">
@@ -523,6 +548,13 @@
 			<span style="background:#41ab5d" class="w-4 h-4 block"></span> <span>Excellent match</span>
 		</div>
 		<div>(preview version)</div>
+		<div class="controls">
+			<select id="viewMode" bind:value={viewMode}>
+				<option value="mismatch">Mismatch</option>
+				<option value="pop">Population</option>
+				<option value="pt">PT Quality</option>
+			</select>
+		</div>
 	</div>
 
 	<div class="absolute top-2 right-2 z-20 p-2 bg-white bg-opacity-90 text-xs rounded shadow">
@@ -541,19 +573,5 @@
 	#mobilityMap {
 		width: 100%;
 		height: 60vh;
-	}
-	.controls {
-		position: absolute;
-		top: 10px;
-		left: 10px;
-		z-index: 10;
-		background: white;
-		padding: 0.5rem;
-		border-radius: 4px;
-		box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-	}
-	select {
-		font-size: 1rem;
-		padding: 0.25rem;
 	}
 </style>

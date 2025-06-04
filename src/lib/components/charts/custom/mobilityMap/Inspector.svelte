@@ -83,10 +83,10 @@
 		if (selectedTiles.length === 1) {
 			try {
 				const res = await fetch(
-					`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=pk.eyJ1Ijoia2xpbWFkYXNoYm9hcmQiLCJhIjoiY2x5eTl3cGR5MXQ5ZTJscXNmNXR5aG44eiJ9.iPxhi0LuuA0Nxzzp8cXU7Q&language=de`
+					`https://base.klimadashboard.org/get-location-name?lat=${lat}&lon=${lng}`
 				);
 				const data = await res.json();
-				locationName = data.features?.[0]?.place_name || null;
+				locationName = data.name;
 			} catch (e) {
 				console.error('Geocoding failed', e);
 				locationName = null;
@@ -214,6 +214,18 @@
 			zu erhalten.
 		</p>
 	{/if}
+	<p class="text-sm opacity-70 mt-2">
+		Datenquelle: <a
+			class="underline underline-offset-2"
+			href="https://www.oerok.gv.at/raum/themen/raumordnung-und-mobilitaet">ÖROK ÖV-Güteklassen</a
+		>
+		|
+		<a
+			class="underline underline-offset-2"
+			href="https://human-settlement.emergency.copernicus.eu/download.php?ds=pop"
+			>POP Global Human Settlement Layer</a
+		>
+	</p>
 </div>
 
 <style>

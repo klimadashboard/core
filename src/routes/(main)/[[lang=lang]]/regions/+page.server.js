@@ -12,9 +12,23 @@ export async function load({ fetch, params }) {
 				readItems('regions', {
 					fields: ['id', 'name', 'center', 'layer', 'layer_label', 'population', 'area'],
 					filter: {
-						country: {
-							_eq: PUBLIC_VERSION.toUpperCase()
-						}
+						_and: [
+							{
+								country: {
+									_eq: PUBLIC_VERSION.toUpperCase()
+								}
+							},
+							{
+								layer: {
+									_neq: 'country'
+								}
+							},
+							{
+								visible: {
+									_eq: true
+								}
+							}
+						]
 					},
 					limit: -1
 				})
