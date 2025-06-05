@@ -24,7 +24,7 @@
 
 	const defaultView = {
 		AT: { center: [13.333, 47.5], zoom: 6 },
-		DE: { center: [10.45, 51.1657], zoom: 4 }
+		DE: { center: [10.45, 51.1657], zoom: 5 }
 	};
 
 	const { center, zoom } = defaultView[COUNTRY_CODE] || defaultView.DE;
@@ -187,33 +187,25 @@
 			},
 			center,
 			zoom,
-			minZoom: zoom - 1,
+			minZoom: zoom,
 			maxZoom: 14
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
-			const geojson = {
-				type: 'FeatureCollection',
-				features: regions
-					.filter((r) => r.outline && r.layer === 'municipality')
-					.map((r) => ({
-						type: 'Feature',
-						properties: { RS: r.code },
-						geometry: r.outline
-					}))
-			};
-
 			map.addSource('regions', {
-				type: 'geojson',
-				data: geojson
+				type: 'vector',
+				tiles: ['https://tiles.klimadashboard.org/data/municipalities-de/{z}/{x}/{y}.pbf'],
+				minzoom: 4,
+				maxzoom: 12
 			});
 
 			map.addLayer({
 				id: 'regions-layer',
 				type: 'fill',
 				source: 'regions',
+				'source-layer': 'gemeinden',
 				paint: {
 					'fill-color': '#ccc',
 					'fill-opacity': ['interpolate', ['linear'], ['zoom'], 6, 1, 8, 0.8, 10, 0.4]
@@ -224,6 +216,7 @@
 				id: 'regions-outline',
 				type: 'line',
 				source: 'regions',
+				'source-layer': 'gemeinden',
 				paint: {
 					'line-color': '#fff',
 					'line-width': 0.05
@@ -234,11 +227,12 @@
 				id: 'highlight-outline',
 				type: 'line',
 				source: 'regions',
+				'source-layer': 'gemeinden',
 				paint: {
 					'line-color': '#000',
 					'line-width': 2
 				},
-				filter: ['==', 'RS', '']
+				filter: ['==', 'AGS', '']
 			});
 
 			map.addSource('carto-voyager', {
@@ -267,9 +261,10 @@
 			);
 
 			map.on('click', 'regions-layer', (e) => {
+				console.log('Clicked feature properties:', e.features?.[0]?.properties);
 				const feature = e.features?.[0];
 				if (feature) {
-					const regionId = feature.properties?.RS;
+					const regionId = feature.properties?.AGS;
 					dispatch('selectRegion', regionId);
 				}
 			});
@@ -297,7 +292,8 @@
 					'text-halo-color': '#fff',
 					'text-halo-width': 1
 				},
-				minzoom: 4
+				minzoom: 4,
+				maxzoom: 10
 			});
 
 			mapReady = true;
@@ -332,18 +328,20 @@
 	// Highlight + fly to selected region
 	$: if (mapReady && map) {
 		if (selectedRegion && selectedRegion.layer !== 'country') {
-			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion.code]);
+			map.setFilter('highlight-outline', ['==', 'AGS', selectedRegion.code]);
+
+			// Only fly if you have coordinates
 			if (selectedRegion?.center) {
 				map.flyTo({ center: selectedRegion.center, zoom: 10, duration: 800 });
 			}
 		} else {
-			map.setFilter('highlight-outline', ['==', 'RS', '']);
+			map.setFilter('highlight-outline', ['==', 'AGS', '']);
 			map.flyTo({ center, zoom, duration: 800 });
 		}
 	}
 
 	// Color fill updates
-	$: if (mapReady && map && regions && Array.isArray(data) && data.length > 0) {
+	$: if (mapReady && map && Array.isArray(data) && data.length > 0) {
 		try {
 			const uniqueData = new Map();
 			for (const row of data) {
@@ -361,7 +359,7 @@
 				const { scale, range, thresholds } = createColorScale(entriesArray);
 
 				// 🟢 Set map color
-				const matchExpression = ['match', ['get', 'RS']];
+				const matchExpression = ['match', ['get', 'AGS']];
 				for (const { region, value } of entriesArray) {
 					const color = value != null ? scale(value) : '#F2F2F2';
 					matchExpression.push(region, color);
