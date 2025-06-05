@@ -3,7 +3,6 @@
 	import { onMount, tick } from 'svelte';
 	import '@splidejs/svelte-splide/css/core';
 	import StaticMap from './StaticMap.svelte';
-	import Time from './Time.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { page } from '$app/state';
 
@@ -119,9 +118,6 @@
 									>
 									<p>{formatNumber(page.data.page.population)}</p>
 								</div>
-								<div>
-									<p>{formatNumber(page.data.page.area)} km²</p>
-								</div>
 
 								<div class="flex items-center gap-0.5">
 									<svg
@@ -136,11 +132,13 @@
 										stroke-linejoin="round"
 										class="w-4 h-4"
 										><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-											d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"
-										/><path d="M12 12l-2 3" /><path d="M12 7v5" /></svg
-									>
-									<Time />
+											d="M3 7l6 -3l6 3l6 -3v13l-6 3l-6 -3l-6 3v-13"
+										/>
+										<path d="M9 4v13" /><path d="M15 7v13" />
+									</svg>
+									<p>{formatNumber(page.data.page.area)} km²</p>
 								</div>
+
 								{#if page.data.page.slug}
 									<div>
 										<a href="{page.url.host}/{page.data.page.slug.split(',')[0]}" target="_blank">
