@@ -71,7 +71,7 @@
 
 	$: minYear = years[0];
 	$: maxYear = years[years.length - 1];
-	$: barWidth = chartWidth && maxYear && minYear ? chartWidth / (maxYear - minYear) - 10 : 8;
+	$: barWidth = Math.round(chartWidth / (maxYear - minYear) - 3);
 
 	$: xScale = scaleLinear().domain([minYear, maxYear]).range([0, innerChartWidth]);
 	$: yScale = scaleLinear().domain([0, visibleMax]).range([innerChartHeight, 0]);

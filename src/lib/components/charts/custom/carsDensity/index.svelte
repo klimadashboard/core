@@ -4,10 +4,9 @@
 	import Inspector from './Inspector.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import Search from './Search.svelte';
-	import { colors, scales } from './scales';
+	import { colors } from './scales';
 	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
 	import { page } from '$app/state';
-
 	import { getRegions } from '$lib/utils/regions';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem, readItems } from '@directus/sdk';
@@ -15,81 +14,74 @@
 
 	let minPeriod;
 	let maxPeriod;
+	let source;
 
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
 		const countryCode = PUBLIC_VERSION.toUpperCase();
 
-		// Load car data for selected country
 		const data = await directus.request(
 			readItems('mobility_cars', {
 				filter: {
 					country: { _eq: countryCode },
-					category: { _in: ['Elektro', 'Plug-in-Hybrid', 'Insgesamt'] }
+					category: { _in: ['Privat', 'Firmen', 'Insgesamt'] }
 				},
 				limit: -1,
-				fields: ['period', 'region', 'category', 'value']
+				fields: ['period', 'region', 'category', 'value', 'source']
 			})
 		);
 
-		// Load regions: all for AT, exclude municipalities for DE
-		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
+		source = data[0]?.source;
 
+		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
 		const regions = await getRegions().then((r) =>
 			r.filter((r) => r.country === countryCode && r.layer === layerFilter)
 		);
 
 		const country = await directus.request(readItem('countries', countryCode));
-
 		const countryName = country?.name_de ?? countryCode;
 
 		const regionsWithData = regions.map((region) => {
 			const regionData = data.filter((d) => d.region === region.code);
-			const periods = [
-				...new Set(regionData.map((d) => d.period).sort((a, b) => parseInt(a) - parseInt(b)))
-			];
+			const periods = [...new Set(regionData.map((d) => d.period).sort((a, b) => a - b))];
+
 			const carsPer1000Inhabitants = periods.map((p) => {
+				const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
 				return {
 					period: parseInt(p),
-					value: Math.round(
-						(regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value /
-							region.population) *
-							1000
-					)
+					value: total && region.population ? Math.round((total / region.population) * 1000) : null
 				};
 			});
-			const carsElectricShare = periods.map((p) => {
+
+			const carsPrivateShare = periods.map((p) => {
+				const privat = regionData.find((d) => d.category === 'Privat' && d.period === p)?.value;
+				const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
 				return {
 					period: parseInt(p),
-					value:
-						(regionData.find((d) => d.category === 'Elektro' && d.period === p)?.value /
-							regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value) *
-						100
+					value: privat && total ? (privat / total) * 100 : null
 				};
 			});
-			const carsHybridShare = periods.map((p) => {
+
+			const carsCompanyShare = periods.map((p) => {
+				const firmen = regionData.find((d) => d.category === 'Firmen' && d.period === p)?.value;
+				const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
 				return {
 					period: parseInt(p),
-					value:
-						(regionData.find((d) => d.category === 'Plug-in-Hybrid' && d.period === p)?.value /
-							regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value) *
-						100
+					value: firmen && total ? (firmen / total) * 100 : null
 				};
 			});
+
 			return {
 				...region,
 				outline: region.outline_simple,
 				carsPer1000Inhabitants,
-				carsElectricShare,
-				carsHybridShare
+				carsPrivateShare,
+				carsCompanyShare
 			};
 		});
 
 		const foundRegionCode = findMatchingRegion(page.data.page, regions);
-
-		if (foundRegionCode) {
-			selectedRegion = foundRegionCode;
-		}
+		if (foundRegionCode) selectedRegion = foundRegionCode;
 
 		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
 		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
@@ -100,24 +92,6 @@
 
 	let views = [
 		{
-			label: 'E-Auto Anteil',
-			key: 'electric',
-			description: 'Anteil der Elektromobilität',
-			color: colors.electric[1],
-			dataKey: 'carsElectricShare',
-			unit: '%',
-			chart: 'progressBar'
-		},
-		{
-			label: 'Plug-In-Hybrid Anteil',
-			key: 'hybrid',
-			description: 'Anteil der Plug-In-Hybride',
-			color: colors.hybrid[1],
-			dataKey: 'carsHybridShare',
-			unit: '%',
-			chart: 'progressBar'
-		},
-		{
 			label: 'Autodichte',
 			key: 'pop',
 			description: 'Autos pro 1000 Einwohner:innen',
@@ -125,22 +99,35 @@
 			dataKey: 'carsPer1000Inhabitants',
 			unit: '',
 			chart: ''
+		},
+		{
+			label: 'Privat',
+			key: 'private',
+			description: 'Anteil privater PKW',
+			color: colors.private[1],
+			dataKey: 'carsPrivateShare',
+			unit: '%',
+			chart: 'progressBar'
+		},
+		{
+			label: 'Firmen',
+			key: 'company',
+			description: 'Anteil gewerblicher PKW',
+			color: colors.company[1],
+			dataKey: 'carsCompanyShare',
+			unit: '%',
+			chart: 'progressBar'
 		}
 	];
 
 	$: selectedView = views[0].key;
-
 	$: selectedRegion = null;
 	$: selectedPeriod = maxPeriod;
 	$: relatedRegions = [];
 
 	$: getRelatedRegions = (regions, selectedRegion) => {
-		const valueKey =
-			selectedView === 'electric'
-				? 'carsElectricShare'
-				: selectedView === 'hybrid'
-					? 'carsHybridShare'
-					: 'carsPer1000Inhabitants';
+		const view = views.find((v) => v.key === selectedView);
+		const valueKey = view.dataKey;
 
 		const regionsWithValue = regions
 			.map((region) => {
@@ -154,7 +141,6 @@
 
 		if (regionsWithValue.length === 0) return [];
 
-		// Min + max
 		const sorted = [...regionsWithValue].sort((a, b) => a.value - b.value);
 		const minRegion = { ...sorted[0], type: 'min', typeLabel: 'Minimum' };
 		const maxRegion = { ...sorted[sorted.length - 1], type: 'max', typeLabel: 'Maximum' };
@@ -190,10 +176,7 @@
 			}
 		}
 
-		// Combine all
 		const all = [minRegion, maxRegion, ...closestRegions];
-
-		// Remove duplicates (e.g. min == nearby)
 		const seen = new Set();
 		const unique = all.filter((r) => {
 			if (seen.has(r.code)) return false;
@@ -202,7 +185,6 @@
 			return true;
 		});
 
-		// ✅ Also include Germany if a region is selected
 		if (selectedRegion) {
 			unique.push({
 				...getRegionData(regions, null),
@@ -216,20 +198,18 @@
 	$: getRegionData = (regions, selectedRegion, countryName) => {
 		if (selectedRegion) return regions.find((r) => r.code === selectedRegion);
 
-		// Helper: average array of numbers
 		const average = (arr) => (arr.length ? arr.reduce((sum, v) => sum + v, 0) / arr.length : null);
 
-		// Get all unique periods from the data
 		const allPeriods = Array.from(
 			new Set(
 				regions.flatMap((r) => [
 					...(r.carsPer1000Inhabitants || []).map((d) => d.period),
-					...(r.carsElectricShare || []).map((d) => d.period)
+					...(r.carsPrivateShare || []).map((d) => d.period),
+					...(r.carsCompanyShare || []).map((d) => d.period)
 				])
 			)
 		).sort((a, b) => a - b);
 
-		// Create average arrays for each period
 		const carsPer1000Inhabitants = allPeriods.map((period) => ({
 			period,
 			value: Math.round(
@@ -241,20 +221,20 @@
 			)
 		}));
 
-		const carsElectricShare = allPeriods.map((period) => ({
+		const carsPrivateShare = allPeriods.map((period) => ({
 			period,
 			value: average(
 				regions
-					.map((r) => r.carsElectricShare?.find((d) => d.period === period)?.value)
+					.map((r) => r.carsPrivateShare?.find((d) => d.period === period)?.value)
 					.filter((v) => v != null && isFinite(v))
 			)
 		}));
 
-		const carsHybridShare = allPeriods.map((period) => ({
+		const carsCompanyShare = allPeriods.map((period) => ({
 			period,
 			value: average(
 				regions
-					.map((r) => r.carsHybridShare?.find((d) => d.period === period)?.value)
+					.map((r) => r.carsCompanyShare?.find((d) => d.period === period)?.value)
 					.filter((v) => v != null && isFinite(v))
 			)
 		}));
@@ -267,8 +247,8 @@
 			typeLabel: 'Nationaler Durchschnitt',
 			center: [10.45, 51.1657],
 			carsPer1000Inhabitants,
-			carsElectricShare,
-			carsHybridShare
+			carsPrivateShare,
+			carsCompanyShare
 		};
 	};
 
@@ -314,13 +294,17 @@
 									center: d.center,
 									name: d.name,
 									data:
-										selectedView == 'electric'
-											? d.carsElectricShare
-											: selectedView == 'hybrid'
-												? d.carsHybridShare
-												: d.carsPer1000Inhabitants
+										selectedView == 'pop'
+											? d.carsPer1000Inhabitants
+											: selectedView == 'private'
+												? d.carsPrivateShare
+												: selectedView == 'company'
+													? d.carsCompanyShare
+													: d.carsPer1000Inhabitants
 								};
 							})}
+							max={selectedView == 'pop' ? 1000 : 100}
+							unit={selectedView == 'pop' ? '' : '%'}
 							colors={colors[selectedView]}
 							bind:selectedRegion
 							on:selectRegion={(e) => (selectedRegion = e.detail)}
@@ -346,6 +330,7 @@
 								{/each}
 							{/if}
 						</ul>
+						<p class="text-sm opacity-80 mt-4">Datenquelle: {source}</p>
 					</div>
 				</div>
 			{/await}

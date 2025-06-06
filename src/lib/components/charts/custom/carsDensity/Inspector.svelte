@@ -10,15 +10,14 @@
 
 {#if region}
 	<h2 class="text-2xl">
-		Autos in <span
-			class="underline underline-offset-4"
-			style="text-decoration-color: {colors.electric[1]}">{region.name}</span
+		Autos in <span class="underline underline-offset-4" style="text-decoration-color: "
+			>{region.name}</span
 		>
 	</h2>
 	<div class="grid grid-cols-3 gap-3 mt-2">
 		{#each views as view}
 			<div style="color: {view.color}" class="dark:brightness-175">
-				<div class="font-bold">{view.description}</div>
+				<div class="font-bold leading-tight">{view.description}</div>
 
 				<div class="flex">
 					<p class="text-4xl sm:text-5xl font-light tabular-nums">

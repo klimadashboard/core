@@ -261,7 +261,6 @@
 			);
 
 			map.on('click', 'regions-layer', (e) => {
-				console.log('Clicked feature properties:', e.features?.[0]?.properties);
 				const feature = e.features?.[0];
 				if (feature) {
 					const regionId = feature.properties?.AGS;

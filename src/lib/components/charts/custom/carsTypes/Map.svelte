@@ -10,6 +10,8 @@
 	export let selectedPeriod;
 	export let regions;
 	export let colors;
+	export let min;
+	export let max;
 
 	let mapContainer;
 	let map;
@@ -34,14 +36,11 @@
 	const dispatch = createEventDispatcher();
 
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
-
-	const min = 0;
-	const max = 20;
 	const unit = '%';
 
-	function createColorScale(data) {
-		return scaleLinear().domain([min, max]).range(colors).interpolate(interpolateRgb).clamp(true);
-	}
+	const duplicateCodes = regions
+		.map((r) => r.code)
+		.filter((code, i, arr) => arr.indexOf(code) !== i);
 
 	onMount(() => {
 		map = new maplibregl.Map({
@@ -77,7 +76,7 @@
 			const geojson = {
 				type: 'FeatureCollection',
 				features: regions
-					.filter((r) => r.outline)
+					.filter((r) => r.outline && r.layer !== 'country')
 					.map((r) => ({
 						type: 'Feature',
 						properties: {
@@ -138,8 +137,6 @@
 				map.getCanvas().style.cursor = '';
 			});
 
-			const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase(); // "DE", "AT", etc.
-
 			map.addLayer({
 				id: 'city-labels',
 				source: 'labels',
@@ -168,39 +165,44 @@
 	});
 
 	// Color updates
-	$: if (mapReady && map && regions && selectedPeriod) {
-		const dataForPeriod = regions.map((region) => {
-			const match = region.data?.find((d) => String(d.period) === String(selectedPeriod));
-			return {
-				region: String(region.code),
-				value: match ? match.value : null
-			};
-		});
+	// Color updates
+	$: if (
+		mapReady &&
+		map &&
+		Array.isArray(colors) &&
+		colors.length >= 2 &&
+		regions &&
+		selectedPeriod
+	) {
+		const colorScale = scaleLinear()
+			.domain([min, max])
+			.range(colors)
+			.interpolate(interpolateRgb)
+			.clamp(true);
 
-		const uniqueData = new Map();
-		for (const row of dataForPeriod) {
-			if (!uniqueData.has(row.region)) {
-				uniqueData.set(row.region, row.value);
+		const matchExpression = ['match', ['get', 'RS']];
+		let hasAtLeastOneValid = false;
+
+		for (const region of regions) {
+			const value = region.data?.find((d) => String(d.period) === String(selectedPeriod))?.value;
+			if (value != null && isFinite(value)) {
+				matchExpression.push(region.code, colorScale(value));
+				hasAtLeastOneValid = true;
 			}
 		}
 
-		const colorScale = createColorScale(
-			Array.from(uniqueData.entries()).map(([region, value]) => ({ region, value }))
-		);
-
-		const matchExpression = ['match', ['get', 'RS']];
-		for (const [region, value] of uniqueData.entries()) {
-			const color = value != null ? colorScale(value) : '#ccc';
-			matchExpression.push(region, color);
+		if (!hasAtLeastOneValid) {
+			matchExpression.push('__dummy__', '#ccc');
 		}
-		matchExpression.push('#ccc');
+
+		matchExpression.push('#ccc'); // fallback color
 
 		map.setPaintProperty('landkreise-layer', 'fill-color', matchExpression);
 	}
 
 	// Selection outline + flyTo
 	$: if (mapReady && map) {
-		if (selectedRegion) {
+		if (regions.find((d) => d.code === selectedRegion).layer !== 'country') {
 			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
 			const region = regions.find((r) => r.code === selectedRegion);
 			if (region?.center) {
@@ -228,7 +230,7 @@
 >
 	{#if zoomLevel > 4}
 		<button
-			on:mousedown={() => (selectedRegion = null)}
+			on:mousedown={() => (selectedRegion = regions.find((d) => d.layer == 'country').code)}
 			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-500 rounded-full w-8 h-8 grid shadow"
 			transition:fade
 		>
