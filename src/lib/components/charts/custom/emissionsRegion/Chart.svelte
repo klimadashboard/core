@@ -71,7 +71,7 @@
 
 	$: minYear = years[0];
 	$: maxYear = years[years.length - 1];
-	$: barWidth = Math.round(chartWidth / (maxYear - minYear) - 3);
+	$: barWidth = Math.round(chartWidth / (maxYear - minYear) - 4);
 
 	$: xScale = scaleLinear().domain([minYear, maxYear]).range([0, innerChartWidth]);
 	$: yScale = scaleLinear().domain([0, visibleMax]).range([innerChartHeight, 0]);
@@ -133,7 +133,8 @@
 							<g transform={`translate(0, ${yScale(tick)})`} class="text-xs">
 								<line x1={margin.left} y1={0} x2={chartWidth} y2={0} class="stroke-current/10" />
 								<text class="fill-current/70" x={4} dominant-baseline="middle">
-									{formatNumber(tick)}{i === yScale.ticks().length - 1 ? unit : ''}
+									{tick}
+									{i === yScale.ticks().length - 1 ? unit : ''}
 								</text>
 							</g>
 						{/each}
