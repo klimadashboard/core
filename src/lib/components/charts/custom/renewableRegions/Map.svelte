@@ -205,7 +205,7 @@
 				id: 'regions-layer',
 				type: 'fill',
 				source: 'regions',
-				'source-layer': 'gemeinden',
+				'source-layer': 'municipalities',
 				paint: {
 					'fill-color': '#ccc',
 					'fill-opacity': ['interpolate', ['linear'], ['zoom'], 6, 1, 8, 0.8, 10, 0.4]
@@ -216,7 +216,7 @@
 				id: 'regions-outline',
 				type: 'line',
 				source: 'regions',
-				'source-layer': 'gemeinden',
+				'source-layer': 'municipalities',
 				paint: {
 					'line-color': '#fff',
 					'line-width': 0.05
@@ -227,7 +227,7 @@
 				id: 'highlight-outline',
 				type: 'line',
 				source: 'regions',
-				'source-layer': 'gemeinden',
+				'source-layer': 'municipalities',
 				paint: {
 					'line-color': '#000',
 					'line-width': 2
