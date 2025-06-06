@@ -78,6 +78,7 @@
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
+		map.scrollZoom.disable();
 
 		map.on('load', () => {
 			const geojson = {
