@@ -18,7 +18,7 @@
 	let categoriesOther = processedData.filter((d) => d.percentage <= 1);
 </script>
 
-<div class="mt-2 text-lg">
+<div class="mt-2">
 	<ul>
 		{#each categoriesVisualised as datapoint}
 			{@const category = categories.find((d) => d.key == datapoint.category)}
@@ -40,7 +40,7 @@
 	</ul>
 
 	{#if categoriesOther.length > 0}
-		<p class="opacity-80 mt-2">
+		<p class="opacity-80 mt-2 leading-tight">
 			<b>Sonstige:</b>
 			{#each categoriesOther as datapoint, i}
 				{@const category = categories.find((d) => d.key == datapoint.category)}

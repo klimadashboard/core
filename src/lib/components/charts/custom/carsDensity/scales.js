@@ -1,8 +1,8 @@
 import { scaleLinear } from 'd3-scale';
 
-const colorsPop = ['#E5F3FA', '#00234D'];
-const colorsPrivate = ['#F0FFF0', '#003133'];
-const colorsCompany = ['#FFF0E5', '#4D3800'];
+const colorsPop = ['#DBEAFE', '#1E40AF']; // light blue → royal blue
+const colorsPrivate = ['#DCFCE7', '#166534']; // pale green → dark green
+const colorsCompany = ['#FEF3C7', '#B45309']; // light amber → rich amber
 
 export const colors = {
 	private: colorsPrivate,

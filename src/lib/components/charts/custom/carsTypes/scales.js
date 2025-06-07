@@ -1,10 +1,10 @@
 import { scaleLinear } from 'd3-scale';
 
-const colorsElectric = ['#F0FFF0', '#003133'];
-const colorsHybrid = ['#FFF0E5', '#4D3800'];
-const colorsBenzin = ['#FFF5F0', '#661A00'];
-const colorsDiesel = ['#F2F2FF', '#1A005C'];
-const colorsOther = ['#F7F7F7', '#666'];
+const colorsElectric = ['#D1FAE5', '#065F46']; // teal-green
+const colorsHybrid = ['#FEF3C7', '#92400E']; // amber-brown
+const colorsBenzin = ['#FEE2E2', '#991B1B']; // red
+const colorsDiesel = ['#E0E7FF', '#3730A3']; // blue-indigo
+const colorsOther = ['#E5E7EB', '#374151']; // gray
 
 export const colors = {
 	electric: colorsElectric,

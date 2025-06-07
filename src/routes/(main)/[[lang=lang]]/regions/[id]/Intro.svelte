@@ -41,7 +41,7 @@
 	}}
 >
 	<div class="flex justify-between items-end p-3">
-		<h1 class="font-bold text-2xl md:text-4xl">Klimadashboard {data.page.name}</h1>
+		<h1 class="font-bold text-2xl md:text-4xl leading-tight">Klimadashboard {data.page.name}</h1>
 		<div class="flex items-end">
 			<div class="splide__arrows flex">
 				<button class="splide__arrow splide__arrow--prev"
@@ -94,7 +94,7 @@
 				<div class="p-4 flex flex-col h-full absolute bottom-0 left-0 right-0">
 					<div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between">
 						<div>
-							<p class="text-xl font-bold max-w-md leading-snug">{intro}</p>
+							<p class="text-xl font-bold max-w-md leading-tight">{intro}</p>
 							<div class="flex gap-2 mt-2 items-center flex-wrap leading-none">
 								<div class="flex items-center gap-1">
 									<svg

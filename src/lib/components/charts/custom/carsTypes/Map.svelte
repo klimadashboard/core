@@ -240,7 +240,7 @@
 	{/if}
 
 	<div
-		class="text-xs absolute top-2 left-2 z-40 flex bg-white px-1.5 py-0.5 rounded-full gap-1 items-center"
+		class="text-xs absolute top-2 left-2 z-40 flex bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded-full gap-1 items-center"
 	>
 		<p>{min}{unit}</p>
 		<div

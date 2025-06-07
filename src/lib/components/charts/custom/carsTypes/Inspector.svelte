@@ -15,7 +15,7 @@
 			style="text-decoration-color: {colors.electric[1]}">{region.name}</span
 		>
 	</h2>
-	<div class="grid grid-cols-5 gap-3 mt-2">
+	<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-2">
 		{#each selectedRegionData as view}
 			<div style="color: {view.color}" class="dark:brightness-175">
 				<div class={view.selected ? 'font-bold' : ''}>{view.label}</div>

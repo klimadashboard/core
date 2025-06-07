@@ -80,7 +80,7 @@
 	<svg width={'100%'} height={'100%'} class="overflow-visible">
 		<!-- X-Axis -->
 		<g transform="translate({margin.left},0)">
-			{#each xScale.ticks(10) as year}
+			{#each xScale.ticks(Math.max(2, Math.floor(innerChartWidth / 50))) as year}
 				<g transform="translate({xScale(year)},{chartHeight})" class="text-xs opacity-70">
 					<text text-anchor="middle" class="fill-current">{year}</text>
 					<line x1={0} x2={0} y1={-20} y2={-15} stroke="currentColor" />
