@@ -12,58 +12,58 @@
 		{
 			key: 'gas',
 			label: 'Gasheizungen',
-			color: '#005E61',
+			color: '#0C4A6E', // deep cyan-blue
 			featured: true
 		},
 		{
 			key: 'district heating (various energy sources)',
 			label: 'Fernwärme',
-			color: '#800044',
+			color: '#9D174D', // rich magenta
 			featured: true
 		},
 		{
 			key: 'heating oil',
 			label: 'Heizöl',
-			color: '#895129',
+			color: '#9C3A03', // earthy brown
 			featured: true
 		},
 		{
 			key: 'electricity (without heat pump)',
 			label: 'Strom',
-			color: '#B28F27'
+			color: '#B45309' // amber-brown
 		},
 		{
 			key: 'wood, wood pellets',
 			label: 'Holz',
-			color: '#000'
+			color: '#4B5563' // slate gray
 		},
 		{
 			key: 'solar/geothermal energy, heat pumps',
 			label: 'Wärmepumpen, Solar-/Geothermie',
-			color: '#00734D',
+			color: '#047857', // emerald green
 			featured: true
 		},
 		{
 			key: 'no energy source (no heating)',
 			label: 'Keine Heizung',
-			color: '#000'
+			color: '#6B7280' // neutral gray
 		},
 		{
 			key: 'coal',
 			label: 'Kohle',
-			color: '#000'
+			color: '#374151' // dark slate
 		},
 		{
 			key: 'biomass (excluding wood), biogas',
 			label: 'Biomasse & Biogas',
-			color: '#000'
+			color: '#3F6212' // olive green
 		}
 	];
 
 	$: promise = getDataForSelectedRegion(selectedRegion?.code);
 </script>
 
-<div class="bg-white dark:bg-gray-800 rounded-2xl p-3">
+<div class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3">
 	<RegionSearch {regions} bind:selectedRegion />
 	{#if selectedRegion}
 		{#await promise then data}
@@ -87,8 +87,10 @@
 						/></svg
 					><span>{data?.[0]?.region_label}</span>
 				</p>
-				<h2 class="text-2xl">Die Wärmewende stockt – Fossile Heizungen oftmals noch Standard</h2>
-				<h3 class="text-lg">Heizungen nach Art des Energieträgers</h3>
+				<h2 class="text-2xl leading-tight">
+					Die Wärmewende stockt – Fossile Heizungen oftmals noch Standard
+				</h2>
+				<h3 class="text-lg leading-tight mt-2">Heizungen nach Art des Energieträgers</h3>
 
 				<Chart {data} {categories} />
 

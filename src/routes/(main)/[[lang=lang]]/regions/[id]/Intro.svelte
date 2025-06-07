@@ -3,7 +3,6 @@
 	import { onMount, tick } from 'svelte';
 	import '@splidejs/svelte-splide/css/core';
 	import StaticMap from './StaticMap.svelte';
-	import Time from './Time.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { page } from '$app/state';
 
@@ -42,7 +41,7 @@
 	}}
 >
 	<div class="flex justify-between items-end p-3">
-		<h1 class="font-bold text-2xl md:text-4xl">Klimadashboard {data.page.name}</h1>
+		<h1 class="font-bold text-2xl md:text-4xl leading-tight">Klimadashboard {data.page.name}</h1>
 		<div class="flex items-end">
 			<div class="splide__arrows flex">
 				<button class="splide__arrow splide__arrow--prev"
@@ -95,7 +94,7 @@
 				<div class="p-4 flex flex-col h-full absolute bottom-0 left-0 right-0">
 					<div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between">
 						<div>
-							<p class="text-xl font-bold max-w-md leading-snug">{intro}</p>
+							<p class="text-xl font-bold max-w-md leading-tight">{intro}</p>
 							<div class="flex gap-2 mt-2 items-center flex-wrap leading-none">
 								<div class="flex items-center gap-1">
 									<svg
@@ -119,9 +118,6 @@
 									>
 									<p>{formatNumber(page.data.page.population)}</p>
 								</div>
-								<div>
-									<p>{formatNumber(page.data.page.area)} km²</p>
-								</div>
 
 								<div class="flex items-center gap-0.5">
 									<svg
@@ -136,11 +132,13 @@
 										stroke-linejoin="round"
 										class="w-4 h-4"
 										><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
-											d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"
-										/><path d="M12 12l-2 3" /><path d="M12 7v5" /></svg
-									>
-									<Time />
+											d="M3 7l6 -3l6 3l6 -3v13l-6 3l-6 -3l-6 3v-13"
+										/>
+										<path d="M9 4v13" /><path d="M15 7v13" />
+									</svg>
+									<p>{formatNumber(page.data.page.area)} km²</p>
 								</div>
+
 								{#if page.data.page.slug}
 									<div>
 										<a href="{page.url.host}/{page.data.page.slug.split(',')[0]}" target="_blank">

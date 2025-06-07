@@ -1,7 +1,6 @@
 <script>
 	import { createEventDispatcher, tick, onMount } from 'svelte';
 
-	/** Props **/
 	export let views = [];
 	export let activeView;
 	export let type; // undefined | "small" | "primary"
@@ -25,16 +24,12 @@
 		const btnRect = btn.getBoundingClientRect();
 		const parentRect = container.getBoundingClientRect();
 
-		// compute x,y,width,height exactly matching the button
 		const x = btnRect.left - parentRect.left;
-		const y = btnRect.top - parentRect.top;
 		const w = btnRect.width;
-		const h = btnRect.height;
 
 		indicatorStyle = `
-			transform: translate(${x}px, ${y}px);
+			transform: translateX(${x}px);
 			width: ${w}px;
-			height: ${h}px;
 		`;
 	}
 
@@ -45,11 +40,12 @@
 <div
 	bind:this={container}
 	class="switch relative inline-flex rounded-full overflow-x-auto max-w-full
-	       bg-gray-100 dark:bg-gray-900 p-1 {type !== 'small' ? 'border-2 border-current/10' : ''}"
+	       bg-gray-100 dark:bg-gray-900
+py-1 border-2 border-current/10"
 	class:bg-white={type === 'primary'}
 >
-	<!-- now overlays the button exactly -->
-	<div class="switch-indicator" style={indicatorStyle}></div>
+	<!-- overlay the indicator behind buttons -->
+	<div class="switch-indicator inset-y-0.5 absolute" style={indicatorStyle}></div>
 
 	{#each views as view (view.key)}
 		<button
@@ -58,8 +54,8 @@
 			disabled={view.disabled}
 			class="relative z-10 flex items-center rounded-full transition duration-200
 			       px-4 {view.key === activeView ? 'font-bold' : ''}
-			       {type === 'small' ? 'text-sm' : 'py-1'}
-						 disabled:opacity-40 disabled:line-through"
+			       {type === 'small' ? 'text-sm' : ''}
+			       disabled:opacity-40 disabled:line-through"
 		>
 			{#if view.icon}
 				<span class="mr-2" style="color: {view.color}">{@html view.icon}</span>
@@ -71,8 +67,6 @@
 
 <style>
 	.switch-indicator {
-		position: absolute;
-		top: 0;
 		left: 0;
 		border-radius: 9999px;
 		background-color: white;

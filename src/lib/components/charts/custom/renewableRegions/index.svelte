@@ -79,7 +79,7 @@
 	{#await promise}
 		<Loader />
 	{:then { data, regions }}
-		<div class="h-96">
+		<div class="h-[38rem]">
 			<Map
 				colors={colors.find((c) => c.key === selectedEnergy).colors}
 				{data}

@@ -17,8 +17,6 @@
 			selectedRegion = regions.find((d) => d.code == foundRegionCode);
 		}
 
-		console.log(selectedRegion);
-
 		return { regions };
 	}
 

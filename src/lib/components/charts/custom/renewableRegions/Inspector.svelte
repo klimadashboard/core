@@ -36,7 +36,7 @@
 	};
 
 	$: filteredData = (data) => {
-		return data.by_year.filter((d) => d.added_power_kw > 0);
+		return data.by_year.filter((d) => d.cumulative_power_kw > 0);
 	};
 </script>
 
@@ -44,11 +44,11 @@
 	{#await promise}
 		<Loader />
 	{:then result}
-		{#if filteredData(result).length === 0}
+		{#if result.by_year[result.by_year.length - 1].cumulative_power_kw === 0}
 			<h2 class="font-bold text-xl">
-				In {region.name} wurden bisher keine {selectedEnergy === 'solar'
+				In {region.name} sind aktuell keine aktiven {selectedEnergy === 'solar'
 					? 'Solaranlagen'
-					: 'Windräder'} angeschlossen.
+					: 'Windräder'} registriert.
 			</h2>
 		{:else}
 			<h2 class="text-xl mb-4">
@@ -72,36 +72,42 @@
 				{region.name}
 			</h2>
 
-			<h3 class="font-bold">Netto-Zubau pro Jahr</h3>
+			{#if result.by_year.reduce((acc, d) => acc + d.added_power_kw, 0) === 0}
+				<p class="text-lg">
+					Die Anlagen in dieser Region wurden alle vor dem Jahr 2000 in Betrieb genommen.
+				</p>
+			{:else}
+				<h3 class="font-bold">Netto-Zubau pro Jahr</h3>
 
-			{#if selectedEnergy === 'solar'}
-				{#if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
+				{#if selectedEnergy === 'solar'}
+					{#if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
+						<h3 class="font-bold text-2xl">
+							Seit Jahresbeginn wurden in {region.name} keine Solaranlagen installiert
+						</h3>
+					{:else}
+						<h3 class="font-bold text-2xl">
+							Seit Jahresbeginn wurden in {region.name}
+							{getFormattedCapacity(
+								result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw ?? 0
+							)} Solarkapazität installiert
+						</h3>
+					{/if}
+				{:else if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
 					<h3 class="font-bold text-2xl">
-						Seit Jahresbeginn wurden in {region.name} keine Solaranlagen installiert
+						Seit Jahresbeginn wurden in {region.name} keine Windräder angeschlossen
 					</h3>
 				{:else}
 					<h3 class="font-bold text-2xl">
 						Seit Jahresbeginn wurden in {region.name}
 						{getFormattedCapacity(
 							result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw ?? 0
-						)} Solarkapazität installiert
+						)} Kapazität Windenergie installiert
 					</h3>
 				{/if}
-			{:else if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
-				<h3 class="font-bold text-2xl">
-					Seit Jahresbeginn wurden in {region.name} keine Windräder angeschlossen
-				</h3>
-			{:else}
-				<h3 class="font-bold text-2xl">
-					Seit Jahresbeginn wurden in {region.name}
-					{getFormattedCapacity(
-						result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw ?? 0
-					)} Kapazität Windenergie installiert
-				</h3>
-			{/if}
 
-			<BarChart data={result.by_year} {colors} />
-			<p class="text-sm mt-2 opacity-80">{source}</p>
+				<BarChart data={result.by_year} {colors} />
+				<p class="text-sm mt-2 opacity-80">{source}</p>
+			{/if}
 
 			<h3 class="mt-6 font-bold">Kumulative Leistung</h3>
 

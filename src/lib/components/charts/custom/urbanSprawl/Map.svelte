@@ -79,6 +79,8 @@
 			zoom
 		});
 
+		map.scrollZoom.disable();
+
 		map.on('load', () => {
 			mapLoaded = true;
 

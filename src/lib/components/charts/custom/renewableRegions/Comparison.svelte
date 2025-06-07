@@ -137,7 +137,7 @@
 	];
 </script>
 
-<div class="flex items-center gap-2">
+<div class="flex items-center gap-2 flex-wrap">
 	<RegionSearch {regions} {region} {selectedRegions} on:toggle={(e) => toggleSelection(e.detail)} />
 
 	<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2">
