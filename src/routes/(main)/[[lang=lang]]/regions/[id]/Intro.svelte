@@ -37,7 +37,8 @@
 	bind:this={mainSlider}
 	hasTrack={false}
 	options={{
-		autoWidth: true
+		autoWidth: true,
+		pagination: false
 	}}
 >
 	<div class="flex justify-between items-end p-3">
