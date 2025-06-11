@@ -139,7 +139,7 @@
 		},
 		{
 			title: 'Klimazukunft',
-			description: `Auf welche Veränderungen müssen wir uns in ${data.page.name} für die Zukunft einstellen? Klimaszenarien zeigen, welche Auswirkungen die globale Erwärmung in unserer Region hat. Die globale Erwärmung zu begrenzen hat also auch für ${data.page.name} direkte Auswirkungen.`,
+			description: `Auf welche Veränderungen müssen wir uns in ${data.page.name} für die Zukunft einstellen? Klimaszenarien zeigen, welche Auswirkungen die globale Erwärmung in unserer Region hat.`,
 
 			id: 'scenarios',
 			countries: ['at'],
