@@ -243,7 +243,7 @@
 			}}
 		/>
 	</div>
-	<div class="min-h-[80vh]">
+	<div class="min-h-[60vh]">
 		{#if selectedView && selectedPeriod}
 			{#await promise then p}
 				{@const regions = p.regions}

@@ -310,7 +310,7 @@ sub {
 }
 
 .input {
-	@apply appearance-none px-3 py-1.5 rounded-full border border-current/20 hover:bg-current/10 transition bg-transparent;
+	@apply appearance-none px-3 py-1.5 rounded-3xl border border-current/20 hover:bg-current/10 transition bg-transparent;
 }
 
 @keyframes hero-gradient-animation {
@@ -435,7 +435,8 @@ sub {
 	--y-2: 89%;
 	--c-2: hsla(210, 51%, 60%, 1);
 	background-color: hsla(95, 55%, 63%, 1);
-	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1288 1288' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+	background-image:
+		url("data:image/svg+xml,%3Csvg viewBox='0 0 1288 1288' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
 		radial-gradient(
 			circle at var(--x-0) var(--y-0),
 			var(--c-0) var(--s-start-0),

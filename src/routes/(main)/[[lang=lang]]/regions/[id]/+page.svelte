@@ -9,6 +9,7 @@
 	import Support from './Support.svelte';
 	import ComingSoon from '../ComingSoon.svelte';
 	import Navigation from './Navigation.svelte';
+	import ComingSoonChart from './ComingSoonChart.svelte';
 
 	export let data;
 
@@ -61,19 +62,6 @@
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-bolt'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11' /></svg>"
 		},
 		{
-			title: 'Heizungen',
-			id: 'heating',
-			description: '',
-			countries: ['de'],
-			charts: [
-				{
-					id: '8267b6b9-605d-4603-a8b4-4ad9e6a3c553',
-					countries: ['de']
-				}
-			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-brand-walmart'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 8.04v-5.04' /><path d='M15.5 10l4.5 -2.5' /><path d='M15.5 14l4.5 2.5' /><path d='M12 15.96v5.04' /><path d='M8.5 14l-4.5 2.5' /><path d='M8.5 10l-4.5 -2.505' /></svg>"
-		},
-		{
 			title: 'Mobilität',
 			id: 'mobility',
 			description: `Der Verkehrsbereich verursacht einen großen Teil der Treibhausgasemissionen. Wie klimafreundlich Mobilität in ${data.page.name} ist, hängt unter anderem von Infrastruktur, Verkehrsangebot und Alltagsgewohnheiten ab – und hat direkten Einfluss auf das Klima.`,
@@ -89,11 +77,26 @@
 					countries: ['at', 'de']
 				},
 				{
-					id: 'b3301d53-24e0-4171-be78-75882f602fe8',
-					countries: ['at']
+					// id: 'b3301d53-24e0-4171-be78-75882f602fe8',
+					countries: ['at'],
+					text: 'Wie ist deine Region an den Öffentlichen Verkehr angebunden? Wo sollten mehr Haltestellen errichtet werden? Dazu erfährst du hier bald mehr.'
 				}
 			]
 		},
+		{
+			title: 'Heizungen',
+			id: 'heating',
+			description: '',
+			countries: ['de'],
+			charts: [
+				{
+					id: '8267b6b9-605d-4603-a8b4-4ad9e6a3c553',
+					countries: ['de']
+				}
+			],
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-brand-walmart'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 8.04v-5.04' /><path d='M15.5 10l4.5 -2.5' /><path d='M15.5 14l4.5 2.5' /><path d='M12 15.96v5.04' /><path d='M8.5 14l-4.5 2.5' /><path d='M8.5 10l-4.5 -2.505' /></svg>"
+		},
+		/*
 		{
 			title: 'Zersiedelung',
 			description:
@@ -102,11 +105,12 @@
 			id: 'sprawl',
 			charts: [
 				{
-					id: '4b721d01-0598-48e4-ab3b-10d96ed46a53',
+					// id: '4b721d01-0598-48e4-ab3b-10d96ed46a53',
 					countries: ['at']
 				}
 			]
 		},
+		*/
 		{
 			title: 'Temperatur',
 			description: `Die Aufzeichnungen von Wetterstationen zeigen, wie die Temperaturen in ${data.page.name} in den letzten Jahrzehnten gestiegen sind.`,
@@ -141,7 +145,8 @@
 			countries: ['at'],
 			charts: [
 				{
-					id: '801a3cdf-1197-4b99-9ece-99113940c5fb',
+					// id: '801a3cdf-1197-4b99-9ece-99113940c5fb',
+					text: 'Wie viel heißer wird es bei mir vor Ort, wenn sich die Erde weiter erhitzt? Wo muss ich mit extremem Niederschlag rechnen? Die aktuellsten Klimaszenarien stehen in Kürze hier in einem interaktiven Explorer zu Verfügung.',
 					countries: ['at']
 				}
 			],
@@ -183,7 +188,11 @@
 						<div class="container space-y-4">
 							{#if section.charts}
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
-									<LazyChart id={chart.id} />
+									{#if chart.id}
+										<LazyChart id={chart.id} />
+									{:else}
+										<ComingSoonChart text={chart.text} />
+									{/if}
 								{/each}
 							{/if}
 							{#if section.blocks}

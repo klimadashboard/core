@@ -12,13 +12,13 @@
 		{
 			key: 'gas',
 			label: 'Gasheizungen',
-			color: '#0C4A6E', // deep cyan-blue
+			color: '#118BD2', // deep cyan-blue
 			featured: true
 		},
 		{
 			key: 'district heating (various energy sources)',
 			label: 'Fernwärme',
-			color: '#9D174D', // rich magenta
+			color: '#BF1A5C', // rich magenta
 			featured: true
 		},
 		{
@@ -30,12 +30,12 @@
 		{
 			key: 'electricity (without heat pump)',
 			label: 'Strom',
-			color: '#B45309' // amber-brown
+			color: '#EA2643' // amber-brown
 		},
 		{
 			key: 'wood, wood pellets',
 			label: 'Holz',
-			color: '#4B5563' // slate gray
+			color: '#9F987A' // slate gray
 		},
 		{
 			key: 'solar/geothermal energy, heat pumps',
@@ -94,12 +94,11 @@
 
 				<Chart {data} {categories} />
 
-				<PerDay {data} {categories} />
-
-				<p class="opacity-80 leading-tight mt-4">
-					<strong>Datenquelle</strong><br />Statistisches Bundesamt (2024): Zensus 2022, Eigene
-					Berechnung
+				<p class="opacity-80 leading-tight mt-2 pt-2 border-t border-current/20">
+					<strong>Datenquelle</strong> Statistisches Bundesamt (2024): Zensus 2022, Eigene Berechnung
 				</p>
+
+				<PerDay {data} {categories} />
 			{:else}
 				<p class="opacity-80 my-4">
 					Keine Daten für die ausgewählte Region verfügbar. Wähle eine andere Region.
