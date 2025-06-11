@@ -73,15 +73,23 @@ export async function getRegions(forceRefresh = false): Promise<any[]> {
 
 	const directus = getDirectusInstance();
 
+	let filter;
+
+	if (PUBLIC_VERSION == 'org') {
+		filter = {};
+	} else {
+		filter = {
+			country: {
+				_eq: PUBLIC_VERSION.toUpperCase()
+			}
+		};
+	}
+
 	// Fetch from Directus
 	const regions = await directus.request(
 		readItems('regions', {
 			limit: -1,
-			filter: {
-				country: {
-					_eq: PUBLIC_VERSION.toUpperCase()
-				}
-			},
+			filter: filter,
 			fields: [
 				'id',
 				'name',
@@ -94,7 +102,8 @@ export async function getRegions(forceRefresh = false): Promise<any[]> {
 				'center',
 				'parents',
 				'layer',
-				'layer_label'
+				'layer_label',
+				'visible'
 			]
 		})
 	);
