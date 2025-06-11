@@ -10,7 +10,7 @@
 
 <Team />
 
-<div class="grid grid-cols-3">
+<div class="grid grid-cols-3 container my-10">
 	<div>
 		<p>Open Data</p>
 	</div>

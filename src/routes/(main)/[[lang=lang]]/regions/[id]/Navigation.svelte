@@ -3,7 +3,7 @@
 	export let sections;
 </script>
 
-<div class="sticky top-12 py-4 bg-white dark:bg-gray-900 z-50" id="top">
+<div class="sticky top-12 py-4 bg-white dark:bg-gray-950 z-50" id="top">
 	<div class="container overflow-auto">
 		<div class="flex md:justify-between gap-4">
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}

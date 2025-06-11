@@ -19,6 +19,7 @@
 	let mainSlider;
 
 	let illustrations = [];
+	let combinedSlides = new Array(10).fill({ type: 'loading' });
 
 	onMount(async () => {
 		place = data.page.name;
@@ -42,13 +43,6 @@
 
 		panels = result.panels;
 		intro = result.intro;
-		await tick(); // Wait for DOM to reflect updated panels
-		mainSlider.splide?.refresh(); // Now safe to refresh
-		loading = false;
-	});
-
-	$: combinedSlides = [];
-	$: {
 		if (illustrations.length && panels.length) {
 			const max = Math.max(illustrations.length, panels.length);
 			combinedSlides = [];
@@ -57,7 +51,11 @@
 				if (panels[i]) combinedSlides.push({ type: 'panel', data: panels[i] });
 			}
 		}
-	}
+		combinedSlides = combinedSlides.splice(0, 9);
+		await tick(); // Wait for DOM to reflect updated panels
+		mainSlider.splide?.refresh(); // Now safe to refresh
+		loading = false;
+	});
 </script>
 
 <Splide
@@ -117,12 +115,15 @@
 					/>
 				{/if}
 				<div
-					class="-z-40 absolute bottom-0 w-full h-1/2 bg-gradient-to-b from-transparent to-white dark:to-black"
+					class="-z-40 absolute bottom-0 w-full h-1/2 bg-gradient-to-b from-transparent to-white dark:to-gray-950"
 				></div>
 				<div class="p-4 flex flex-col h-full absolute bottom-0 left-0 right-0">
 					<div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between">
-						<div>
-							<p class="text-xl font-bold max-w-md leading-tight">{intro}</p>
+						<div class="">
+							<p class="text-xl font-bold max-w-md leading-tight">
+								Das Klimadashboard {data.page.name} zeigt die Auswirkungen der Klimakrise in deiner Region
+								und begleitet die Umsetzung der Energie-, Mobilitäts- und Klimawende bei dir vor Ort.
+							</p>
 							<div class="flex gap-2 mt-2 items-center flex-wrap leading-none">
 								<div class="flex items-center gap-1">
 									<svg
@@ -208,7 +209,18 @@
 			</div>
 		</SplideSlide>
 		{#each combinedSlides as item}
-			{#if item.type === 'illustration'}
+			{#if item.type === 'loading'}
+				<SplideSlide>
+					<div
+						class="reg-card animate-pulse flex flex-col border-l border-white dark:border-dark-950 bg-gray-50 dark:bg-gray-900 space-y-2 p-4"
+					>
+						<div class="bg-current/80 w-24 h-4 rounded"></div>
+						<div class="mt-auto bg-current/80 w-24 h-32 rounded"></div>
+						<div class="bg-current/80 w-2/3 h-16 rounded"></div>
+						<div class="bg-current/80 w-1/3 h-8 rounded"></div>
+					</div>
+				</SplideSlide>
+			{:else if item.type === 'illustration'}
 				<SplideSlide>
 					<IntroIllustration data={item.data} />
 				</SplideSlide>
