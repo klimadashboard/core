@@ -11,10 +11,15 @@
 	import Items from './Items.svelte';
 	import Gallery from './Gallery.svelte';
 	import Panel from './Panel.svelte';
+	import Regions from './Regions.svelte';
 
 	export let data;
 
 	const blocks = [
+		{
+			type: 'block_regions',
+			component: Regions
+		},
 		{
 			type: 'block_panel',
 			component: Panel
