@@ -3,8 +3,12 @@
 	import { onMount, tick } from 'svelte';
 	import '@splidejs/svelte-splide/css/core';
 	import StaticMap from './StaticMap.svelte';
+	import getDirectusInstance from '@/lib/utils/directus';
+	import { readItems } from '@directus/sdk';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { page } from '$app/state';
+	import IntroPanel from './IntroPanel.svelte';
+	import IntroIllustration from './IntroIllustration.svelte';
 
 	export let data;
 
@@ -14,8 +18,20 @@
 	let loading = true;
 	let mainSlider;
 
+	let illustrations = [];
+
 	onMount(async () => {
 		place = data.page.name;
+
+		const directus = getDirectusInstance();
+		illustrations = await directus.request(
+			readItems('illustrations', {
+				fields: ['files.*', 'translations.*', 'attributes']
+			})
+		);
+		illustrations = illustrations.filter((i) =>
+			i.attributes.some((attr) => data.page.attributes.includes(attr))
+		);
 
 		const regionId = data.page.id;
 
@@ -25,12 +41,23 @@
 		const result = await res.json();
 
 		panels = result.panels;
-		console.log(panels);
 		intro = result.intro;
 		await tick(); // Wait for DOM to reflect updated panels
 		mainSlider.splide?.refresh(); // Now safe to refresh
 		loading = false;
 	});
+
+	$: combinedSlides = [];
+	$: {
+		if (illustrations.length && panels.length) {
+			const max = Math.max(illustrations.length, panels.length);
+			combinedSlides = [];
+			for (let i = 0; i < max; i++) {
+				if (illustrations[i]) combinedSlides.push({ type: 'illustration', data: illustrations[i] });
+				if (panels[i]) combinedSlides.push({ type: 'panel', data: panels[i] });
+			}
+		}
+	}
 </script>
 
 <Splide
@@ -180,60 +207,24 @@
 				</div>
 			</div>
 		</SplideSlide>
-		<SplideSlide>
-			<div class="reg-card flex flex-col">
-				<div class="relative flex-1 w-full">
-					<div
-						class="absolute top-2 left-3 -rotate-12 w-28 h-28 rounded-full grid place-items-center bg-white z-20 font-bold"
-					>
-						Preview
-					</div>
-					<img src="/images/image1.jpeg" class="absolute object-cover w-full h-full" alt="" />
-					<img
-						src="/images/image0.jpeg"
-						class="absolute object-cover hover:opacity-0 transition w-full h-full"
-						alt=""
-					/>
-				</div>
-				<div class="p-4">
-					Die Klimakrise führt in Städten zunehmend zu intensiveren und häufigeren Hitzewellen, da
-					versiegelte Flächen und fehlende Begrünung die Temperaturen zusätzlich ansteigen lassen.
-					Maßnahmen wie die Entsiegelung von Flächen, mehr Stadtgrün und kühlende Wasserelemente
-					können helfen, urbane Hitzeinseln zu reduzieren und die Lebensqualität zu verbessern.
-				</div>
-			</div></SplideSlide
-		>
-
-		{#each panels as panel}
-			<SplideSlide>
-				<div
-					class="reg-card flex flex-col p-4"
-					style="background: {panel.colorBackground}; color: {panel.colorText}"
-				>
-					<h3 class="font-bold uppercase">{panel.title}</h3>
-
-					<p class="text-6xl font-light mt-auto">{panel.number}</p>
-					<p class="text-lg">{panel.unit} {panel.subtitle}</p>
-					<ul class="mt-2">
-						{#if panel.list}
-							{#each panel.list as item}
-								<li class="border-t py-1">{item.text}</li>
-							{/each}
-						{/if}
-					</ul>
-					<p class="text-sm opacity-80">
-						{panel.source}
-					</p>
-				</div>
-			</SplideSlide>
+		{#each combinedSlides as item}
+			{#if item.type === 'illustration'}
+				<SplideSlide>
+					<IntroIllustration data={item.data} />
+				</SplideSlide>
+			{:else if item.type === 'panel'}
+				<SplideSlide>
+					<IntroPanel data={item.data} />
+				</SplideSlide>
+			{/if}
 		{/each}
 	</SplideTrack>
 </Splide>
 
 <style>
 	@reference "tailwindcss/theme";
-	.reg-card {
-		@apply w-[90vw] max-w-[50vh] h-[70vh] shrink-0 border-t border-b border-r;
+	:global(.reg-card) {
+		@apply w-[90vw] max-w-[50vh] h-[70vh] shrink-0;
 	}
 
 	.mousey {
