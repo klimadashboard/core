@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import Switch from '$lib/components/Switch.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
+	import { downloadCSV, downloadJSON } from '$lib/utils/downloadData';
 	import { readItems } from '@directus/sdk';
 	import Chart from './Chart.svelte';
 	import ChartHorizontal from './ChartHorizontal.svelte';
-	import Switch from '$lib/components/Switch.svelte';
-	import { downloadCSV, downloadJSON } from '$lib/utils/downloadData';
 
 	let views = [];
 	let activeLayer = null;
@@ -131,10 +131,14 @@
 	<div class="mt-4">
 		{#each results as r}
 			{#if r.key === activeLayer}
-				{#if new Set(r.data.map((d) => d.year)).size === 1}
+				{#if new Set(r.data.map((d) => d.year)).size === 1 && r.data.length > 1}
 					<ChartHorizontal data={r.data} region={r} />
-				{:else}
+				{:else if r.data.length > 1}
 					<Chart data={r.data} region={r} />
+				{:else}
+					<p class="text-sm text-gray-500 mt-4">
+						Nicht genug Daten verfügbar für eine aussagekräftige Darstellung.
+					</p>
 				{/if}
 			{/if}
 		{/each}
