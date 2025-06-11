@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { scaleLinear } from 'd3-scale';
-	import formatNumber from '$lib/stores/formatNumber';
 	import Switch from '$lib/components/Switch.svelte';
+	import formatNumber from '$lib/stores/formatNumber';
+	import { scaleLinear } from 'd3-scale';
 
 	export let data;
 	export let region;
@@ -102,7 +101,7 @@
 					{s.label}
 				</span>{i < 2 ? ', ' : '.'}
 			{/each}
-			{#if lastTarget}
+			{#if lastTarget && activeCategory === 'all'}
 				Bis {lastTarget.year} möchte {region.name} {lastTarget.value}{unit} erreicht haben.
 			{/if}
 		</p>
@@ -174,7 +173,7 @@
 					</g>
 
 					<!-- Climate targets -->
-					{#if climateTargets.length > 0 && historicYears.length > 0}
+					{#if climateTargets.length > 0 && historicYears.length > 0 && activeCategory === 'all'}
 						<g transform={`translate(${margin.left},${margin.top})`}>
 							{#each climateTargets as target}
 								<rect
