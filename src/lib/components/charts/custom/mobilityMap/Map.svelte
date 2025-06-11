@@ -558,7 +558,7 @@
 		</div>
 	</div>
 
-	<div class="absolute top-2 right-2 z-20 p-2 bg-white bg-opacity-90 text-xs rounded shadow">
+	<div class="absolute top-2 right-10 z-20 p-2 bg-white bg-opacity-90 text-xs rounded shadow">
 		<div class="mb-1 font-semibold">Interval (min)</div>
 		<div class="flex items-center gap-1">
 			<span class="w-3 h-3" style="background: #eff3ff"></span>
