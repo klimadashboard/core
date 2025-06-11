@@ -26,7 +26,11 @@
 		/>
 	</div>
 
-	<p class="absolute left-2 top-2 text-white text-xs">Illustratorin: Laura Mayer</p>
+	<h3
+		class="font-bold absolute left-4 top-4 right-16 leading-tight text-white uppercase text-shadow"
+	>
+		{data.translations[0].title}
+	</h3>
 
 	<button
 		class="cursor-pointer absolute top-2 right-2 w-16 h-16 shadow-2xl rounded-full bg-amber-200 rotate-3 hover:-rotate-2 transition flex items-center justify-center"
@@ -74,15 +78,21 @@
 	>
 		<div class="bg-gradient-to-b from-transparent to-black/70 h-16"></div>
 		<div
-			class="bg-black/70 px-3 py-2 transition-all duration-300 max-h-32 overflow-hidden"
+			class="bg-black/70 px-4 py-4 transition-all duration-300 max-h-32 overflow-hidden"
 			class:max-h-96={expanded[data.id]}
 		>
-			<h3 class="font-bold">{data.translations[0].title}</h3>
 			<p
-				class="whitespace-pre-line overflow-hidden leading-snug text-ellipsis"
+				class="whitespace-pre-line overflow-hidden leading-snug text-ellipsis text-lg"
 				class:line-clamp-2={!expanded[data.id]}
 			>
 				{@html data.translations[0].text}
+			</p>
+			<p class="opacity-70 text-sm mt-1">
+				Illustratorin: <a
+					href="https://lauramayer.space"
+					target="_blank"
+					class="underline underline-offset-2">Laura Mayer</a
+				>
 			</p>
 		</div>
 	</div>
