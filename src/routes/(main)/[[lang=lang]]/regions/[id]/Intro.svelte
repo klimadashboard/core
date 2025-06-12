@@ -14,8 +14,6 @@
 
 	let place = '';
 	let panels = [];
-	let intro = '';
-	let loading = true;
 	let mainSlider;
 
 	let illustrations = [];
@@ -42,8 +40,7 @@
 		const result = await res.json();
 
 		panels = result.panels;
-		intro = result.intro;
-		if (illustrations.length && panels.length) {
+		if (illustrations.length || panels.length) {
 			const max = Math.max(illustrations.length, panels.length);
 			combinedSlides = [];
 			for (let i = 0; i < max; i++) {
@@ -54,7 +51,6 @@
 		combinedSlides = combinedSlides.splice(0, 9);
 		await tick(); // Wait for DOM to reflect updated panels
 		mainSlider.splide?.refresh(); // Now safe to refresh
-		loading = false;
 	});
 </script>
 

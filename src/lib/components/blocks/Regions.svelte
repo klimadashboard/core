@@ -35,7 +35,7 @@
 	});
 </script>
 
-<div class="rounded-2xl p-3 bg-red-700 text-white h-full">
+<div class="rounded-2xl p-3 bg-red-700 text-white">
 	<h2 class="font-bold border-b">Die Klimakrise in deiner Region</h2>
 
 	<div

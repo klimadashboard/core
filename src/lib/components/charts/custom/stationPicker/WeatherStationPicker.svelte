@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { replaceState } from '$app/navigation';
 
 	export let data;
 	export let selectedStation;
@@ -108,13 +109,18 @@
 	 *
 	 * If you DO want user picks to reflect in URL, remove `!isUserSelection`.
 	 */
-	$: if (selectedStation) {
-		const url = new URL($page.url.href);
-		const currentParam = url.searchParams.get('weatherStation');
+	let lastSetStationId = null;
 
-		if (String(selectedStation.id) !== currentParam) {
-			url.searchParams.set('weatherStation', selectedStation.id);
-			goto(url.toString(), { replaceState: true, noScroll: true });
+	$: if (selectedStation) {
+		const selectedId = String(selectedStation.id);
+		const currentParam = $page.url.searchParams.get('weatherStation');
+
+		// Avoid infinite loop by comparing with last set value
+		if (selectedId !== currentParam && selectedId !== lastSetStationId) {
+			const url = new URL($page.url.href);
+			url.searchParams.set('weatherStation', selectedId);
+			replaceState(url.toString(), $page.state);
+			lastSetStationId = selectedId;
 		}
 	}
 

@@ -32,23 +32,6 @@
 		transformedData = transformDataForMap(data, selectedView, selectedVariable, selectedPeriod);
 	}
 
-	// === 2. Create geojson from regions and transformed values ===
-	let geojson;
-	$: geojson = {
-		type: 'FeatureCollection',
-		features: regions.map((region) => {
-			const entry = transformedData.find((d) => d.region === region.code);
-			return {
-				type: 'Feature',
-				properties: {
-					code: region.code,
-					value: entry?.value ?? 0
-				},
-				geometry: region.outline_simple
-			};
-		})
-	};
-
 	// === 3. Color scale ===
 	const colorDomain = [0, 1];
 	const colorRange = ['#c7e9b4', '#253494'];
@@ -85,7 +68,13 @@
 		map.on('load', () => {
 			mapLoaded = true;
 
-			map.addSource('regions', { type: 'geojson', data: geojson });
+			map.addSource('regions', {
+				type: 'vector',
+				url: 'https://tiles.klimadashboard.org/data/districts-at.json'
+			});
+
+			const REGION_LAYER = 'districts';
+
 			map.addSource('carto-voyager', {
 				type: 'raster',
 				tiles: [
@@ -98,9 +87,9 @@
 				maxzoom: 20
 			});
 
-			const matchExpr = ['match', ['get', 'code']];
-			geojson.features.forEach((f) => {
-				matchExpr.push(f.properties.code, colorScale(f.properties.value));
+			const matchExpr = ['match', ['get', 'RS']];
+			transformedData.forEach((d) => {
+				matchExpr.push(d.region, colorScale(d.value));
 			});
 			matchExpr.push('#ccc');
 
@@ -115,6 +104,7 @@
 				id: 'regions-fill',
 				type: 'fill',
 				source: 'regions',
+				'source-layer': REGION_LAYER,
 				paint: {
 					'fill-color': matchExpr,
 					'fill-opacity': 0.7
@@ -125,6 +115,7 @@
 				id: 'regions-outline',
 				type: 'line',
 				source: 'regions',
+				'source-layer': REGION_LAYER,
 				paint: {
 					'line-color': '#333',
 					'line-width': 1
@@ -135,11 +126,12 @@
 				id: 'highlight-outline',
 				type: 'line',
 				source: 'regions',
+				'source-layer': REGION_LAYER,
 				paint: {
 					'line-color': '#000',
 					'line-width': 2
 				},
-				filter: ['==', 'code', '']
+				filter: ['==', 'RS', '']
 			});
 
 			map.addLayer({
@@ -165,7 +157,7 @@
 		map.on('click', 'regions-fill', (e) => {
 			const feature = e.features?.[0];
 			if (feature) {
-				selectedRegion = feature.properties.code;
+				selectedRegion = feature.properties.RS;
 			}
 		});
 
@@ -184,27 +176,22 @@
 	// === 5. Highlight selected region ===
 	$: if (map && mapLoaded) {
 		if (selectedRegion) {
-			map.setFilter('highlight-outline', ['==', 'code', selectedRegion]);
+			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
 			const region = regions.find((r) => r.code === selectedRegion);
 			if (region?.center) {
 				map.flyTo({ center: region.center, zoom: 8.5, duration: 800 });
 			}
 		} else {
-			map.setFilter('highlight-outline', ['==', 'code', '']);
+			map.setFilter('highlight-outline', ['==', 'RS', '']); // ✅ fallback when nothing is selected
 			map.flyTo({ center, zoom, duration: 800 });
 		}
 	}
 
 	// === 6. Update source + color scale reactively ===
-	$: if (map && mapLoaded && geojson) {
-		const source = map.getSource('regions');
-		if (source) {
-			source.setData(geojson);
-		}
-
-		const matchExpr = ['match', ['get', 'code']];
-		geojson.features.forEach((f) => {
-			matchExpr.push(f.properties.code, colorScale(f.properties.value));
+	$: if (map && mapLoaded && transformedData.length > 0) {
+		const matchExpr = ['match', ['get', 'RS']];
+		transformedData.forEach((d) => {
+			matchExpr.push(d.region, colorScale(d.value));
 		});
 		matchExpr.push('#ccc');
 

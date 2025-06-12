@@ -72,6 +72,7 @@
 			/><path d="M5 3l-1 -1" /><path d="M4 7h-1" /><path d="M14 3l1 -1" /><path d="M15 6h1" /></svg
 		>
 	</button>
+
 	<div
 		class="absolute bottom-0 left-0 right-0 text-white cursor-pointer"
 		on:click={() => toggleText(data.id)}
@@ -82,18 +83,16 @@
 			class:max-h-96={expanded[data.id]}
 		>
 			<p
-				class="whitespace-pre-line overflow-hidden leading-snug text-ellipsis text-lg"
+				class="whitespace-pre-line overflow-hidden w-5/6 leading-snug text-ellipsis text-lg"
 				class:line-clamp-2={!expanded[data.id]}
 			>
 				{@html data.translations[0].text}
 			</p>
-			<p class="opacity-70 text-sm mt-1">
-				Illustratorin: <a
-					href="https://lauramayer.space"
-					target="_blank"
-					class="underline underline-offset-2">Laura Mayer</a
-				>
-			</p>
 		</div>
 	</div>
+	<p
+		class=" text-white text-xs mt-1 -rotate-90 translate-x-1/2 -translate-y-full absolute bottom-13 right-5 text-right"
+	>
+		Illustration: Laura Mayer
+	</p>
 </div>

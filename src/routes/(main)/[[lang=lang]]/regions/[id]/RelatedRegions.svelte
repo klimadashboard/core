@@ -1,11 +1,10 @@
 <script>
 	import { getRegions } from '@/lib/utils/regions';
-	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
 
-	export let relatedRegions = [];
+	export let data;
 
-	let region = page.data.page;
+	let relatedRegions = [];
 	let regions = [];
 
 	function haversineDistance([lng1, lat1], [lng2, lat2]) {
@@ -24,13 +23,11 @@
 		return R * c;
 	}
 
-	async function loadRegions() {
+	async function loadRegions(region) {
 		regions = await getRegions();
 
-		// Filter out current region
 		const otherRegions = regions.filter((r) => r.id !== region.id && r.center && r.population);
 
-		// Find 3 closest by geographic distance
 		const closestByLocation = [...otherRegions]
 			.sort(
 				(a, b) =>
@@ -38,23 +35,18 @@
 			)
 			.slice(0, 7);
 
-		// Find 1 most similar by population
 		const closestByPopulation = [...otherRegions]
-			.filter((r) => !closestByLocation.find((cr) => cr.id === r.id)) // avoid duplicates
+			.filter((r) => !closestByLocation.find((cr) => cr.id === r.id))
 			.sort(
 				(a, b) =>
 					Math.abs(region.population - a.population) - Math.abs(region.population - b.population)
 			)[0];
 
-		// Prepare relatedRegions with labels
 		relatedRegions = [...closestByLocation, closestByPopulation];
-		console.log(relatedRegions);
 	}
 
-	loadRegions();
-
-	$: console.log(region);
-	$: console.log(relatedRegions);
+	// Reactively re-run when `page.data.page` changes
+	$: loadRegions(data.page);
 </script>
 
 <div class="grid grid-cols-2 gap-1 md:grid-cols-4 my-1">
