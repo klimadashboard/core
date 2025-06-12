@@ -75,6 +75,13 @@
 							type: 'FeatureCollection',
 							features: []
 						}
+					},
+					secondaryOutline: {
+						type: 'geojson',
+						data: {
+							type: 'FeatureCollection',
+							features: []
+						}
 					}
 				},
 				layers: [
@@ -122,13 +129,24 @@
 						]
 					},
 					{
+						id: 'secondary-outline-layer',
+						type: 'line',
+						source: 'secondaryOutline',
+						paint: {
+							'line-color': '#666',
+							'line-width': 2,
+							'line-opacity': 1,
+							'line-dasharray': [1, 1]
+						}
+					},
+					{
 						id: 'outline-layer',
 						type: 'line',
 						source: 'outline',
 						paint: {
 							'line-color': '#000',
 							'line-width': 2,
-							'line-opacity': 0.5
+							'line-opacity': 1
 						}
 					}
 				]
@@ -203,7 +221,15 @@
 
 			// selection = aggregateCells(tilesInRegion);
 
-			// console.log(selection);
+			const cellsGeometry = union({
+				type: 'FeatureCollection',
+				features: cells as any
+			});
+
+			(map.getSource('secondaryOutline') as GeoJSONSource)?.setData(
+				cellsGeometry as GeoJSONFeature
+			);
+
 			// // map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 100, duration: 0 });
 			// (map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 		});
@@ -221,8 +247,6 @@
 	});
 
 	$: (() => {
-		console.log(cells, viewMode, activeIndicator, centerCell);
-
 		if (cells.length === 0 || centerCell == null) return;
 
 		const range = 0.1;
