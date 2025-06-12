@@ -67,6 +67,11 @@
 			map.remove();
 		});
 	});
+
+	// ✅ Recenter map when `center` changes
+	$: if (map && center) {
+		map.setCenter(center);
+	}
 </script>
 
 <div bind:this={mapContainer} class="w-full h-full absolute -z-50 opacity-70"></div>

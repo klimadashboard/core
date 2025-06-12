@@ -146,14 +146,23 @@
 		(r, i, self) => self.findIndex((s) => s.id === r.id) === i
 	);
 
-	function getRegionParent(region, regionIndex: Map<string, any>) {
+	const regionIndex = new Map(data.regions.map((r) => [r.id, r]));
+	const parentCache = new Map();
+
+	function getRegionParent(region) {
 		if (!region?.parents || !Array.isArray(region.parents)) return false;
+
+		if (parentCache.has(region.id)) return parentCache.get(region.id);
 
 		for (const parent of region.parents) {
 			const match = regionIndex.get(parent.id);
-			if (match?.layer === 'state') return match.name;
+			if (match?.layer === 'state') {
+				parentCache.set(region.id, match.name);
+				return match.name;
+			}
 		}
 
+		parentCache.set(region.id, false);
 		return false;
 	}
 </script>
@@ -224,10 +233,8 @@
 									class="hover:underline underline-offset-2 leading-1"
 									href={`/regions/${region.id}`}
 									>{region.name} ({region.layer_label})<br />
-									{#if getRegionParent(region, new Map(data.regions.map((r) => [r.id, r])))}
-										<span class="opacity-70"
-											>{getRegionParent(region, new Map(data.regions.map((r) => [r.id, r])))}</span
-										>{/if}
+									{#if getRegionParent(region)}
+										<span class="opacity-70">{getRegionParent(region)}</span>{/if}
 								</a>
 							</li>
 						{/each}

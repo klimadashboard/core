@@ -151,7 +151,7 @@ export async function load({ fetch, params }) {
 			const regionMatch = await directus.request(
 				readItems('regions', {
 					filter: {
-						slug: { _icontains: slug }
+						slug: { _eq: slug }
 					},
 					fields: ['id'],
 					limit: 1

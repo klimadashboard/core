@@ -208,5 +208,5 @@
 	>
 
 	<Support />
-	<RelatedRegions />
+	<RelatedRegions {data} />
 </main>
