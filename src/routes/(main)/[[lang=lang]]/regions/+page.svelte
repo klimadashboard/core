@@ -114,7 +114,7 @@
 
 	let layerFilter = 'all';
 
-	$: filteredRegions = data.regions
+	$: filteredRegions = [...data.regions]
 		.filter((r) => r.name && (!r.layer || layerFilter === 'all' || r.layer === layerFilter))
 		.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -145,6 +145,17 @@
 	let suggestions = [...top5, lowestPop, smallestArea, popClosestCurrentYear, lastAlpha].filter(
 		(r, i, self) => self.findIndex((s) => s.id === r.id) === i
 	);
+
+	function getRegionParent(region, regionIndex: Map<string, any>) {
+		if (!region?.parents || !Array.isArray(region.parents)) return false;
+
+		for (const parent of region.parents) {
+			const match = regionIndex.get(parent.id);
+			if (match?.layer === 'state') return match.name;
+		}
+
+		return false;
+	}
 </script>
 
 <div class="">
@@ -209,9 +220,15 @@
 					<ul class="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
 						{#each groupedRegions[letter] as region}
 							<li>
-								<a class="hover:underline" href={`/regions/${region.id}`}
-									>{region.name} ({region.layer_label})</a
-								>
+								<a
+									class="hover:underline underline-offset-2 leading-1"
+									href={`/regions/${region.id}`}
+									>{region.name} ({region.layer_label})<br />
+									{#if getRegionParent(region, new Map(data.regions.map((r) => [r.id, r])))}
+										<span class="opacity-70"
+											>{getRegionParent(region, new Map(data.regions.map((r) => [r.id, r])))}</span
+										>{/if}
+								</a>
 							</li>
 						{/each}
 					</ul>

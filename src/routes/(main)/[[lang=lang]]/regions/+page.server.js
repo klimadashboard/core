@@ -10,7 +10,7 @@ export async function load({ fetch, params }) {
 		return {
 			regions: await directus.request(
 				readItems('regions', {
-					fields: ['id', 'name', 'center', 'layer', 'layer_label', 'population', 'area'],
+					fields: ['id', 'name', 'center', 'layer', 'layer_label', 'population', 'area', 'parents'],
 					filter: {
 						_and: [
 							{

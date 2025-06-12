@@ -3,8 +3,7 @@
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
 
-	export let relatedRegions = [];
-
+	let relatedRegions = [];
 	let region = page.data.page;
 	let regions = [];
 
@@ -48,13 +47,9 @@
 
 		// Prepare relatedRegions with labels
 		relatedRegions = [...closestByLocation, closestByPopulation];
-		console.log(relatedRegions);
 	}
 
-	loadRegions();
-
-	$: console.log(region);
-	$: console.log(relatedRegions);
+	$: loadRegions();
 </script>
 
 <div class="grid grid-cols-2 gap-1 md:grid-cols-4 my-1">
