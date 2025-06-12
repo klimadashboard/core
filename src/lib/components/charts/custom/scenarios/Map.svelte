@@ -4,6 +4,7 @@
 	import { booleanContains } from '@turf/boolean-contains';
 	import { bbox } from '@turf/bbox';
 	import { union } from '@turf/union';
+	import { difference } from '@turf/difference';
 	import { destination } from '@turf/destination';
 	import { onMount } from 'svelte';
 	import maplibregl, {
@@ -130,13 +131,12 @@
 					},
 					{
 						id: 'secondary-outline-layer',
-						type: 'line',
+						type: 'fill',
 						source: 'secondaryOutline',
 						paint: {
-							'line-color': '#666',
-							'line-width': 2,
-							'line-opacity': 1,
-							'line-dasharray': [1, 1]
+							'fill-color': '#000',
+							'fill-opacity': 0.2
+							// 'line-dasharray': [1, 1]
 						}
 					},
 					{
@@ -221,15 +221,6 @@
 
 			// selection = aggregateCells(tilesInRegion);
 
-			const cellsGeometry = union({
-				type: 'FeatureCollection',
-				features: cells as any
-			});
-
-			(map.getSource('secondaryOutline') as GeoJSONSource)?.setData(
-				cellsGeometry as GeoJSONFeature
-			);
-
 			// // map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 100, duration: 0 });
 			// (map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 		});
@@ -263,6 +254,21 @@
 
 		// map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 100, duration: 0 });
 		(map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
+
+		const cellsGeometry = union({
+			type: 'FeatureCollection',
+			features: cells as any
+		});
+
+		const diff = difference({
+			type: 'FeatureCollection',
+			features: [cellsGeometry, selection as any]
+		}) ?? {
+			type: 'FeatureCollection',
+			features: []
+		};
+
+		(map.getSource('secondaryOutline') as GeoJSONSource)?.setData(diff as GeoJSONFeature);
 		// const filteredCells =
 	})();
 
