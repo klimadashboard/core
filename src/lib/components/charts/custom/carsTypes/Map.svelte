@@ -66,36 +66,29 @@
 			},
 			center,
 			zoom,
-			minZoom: zoom - 1,
-			maxZoom: zoom + 4
+			minZoom: zoom,
+			maxZoom: 11
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 		map.scrollZoom.disable();
 
 		map.on('load', () => {
-			const geojson = {
-				type: 'FeatureCollection',
-				features: regions
-					.filter((r) => r.outline && r.layer !== 'country')
-					.map((r) => ({
-						type: 'Feature',
-						properties: {
-							RS: r.code
-						},
-						geometry: r.outline
-					}))
-			};
-
-			map.addSource('landkreise', {
-				type: 'geojson',
-				data: geojson
+			map.addSource('regions', {
+				type: 'vector',
+				url:
+					PUBLIC_VERSION === 'at'
+						? 'https://tiles.klimadashboard.org/data/municipalities-at.json'
+						: 'https://tiles.klimadashboard.org/data/districts-de.json'
 			});
 
+			let sourceLayer = PUBLIC_VERSION === 'at' ? 'municipalities' : 'districts';
+
 			map.addLayer({
-				id: 'landkreise-layer',
+				id: 'regions-layer',
 				type: 'fill',
-				source: 'landkreise',
+				source: 'regions',
+				'source-layer': sourceLayer,
 				paint: {
 					'fill-color': '#ccc',
 					'fill-opacity': 0.8
@@ -103,9 +96,10 @@
 			});
 
 			map.addLayer({
-				id: 'landkreise-outline',
+				id: 'regions-outline',
 				type: 'line',
-				source: 'landkreise',
+				source: 'regions',
+				'source-layer': sourceLayer,
 				paint: {
 					'line-color': '#000',
 					'line-width': 0.5
@@ -115,15 +109,16 @@
 			map.addLayer({
 				id: 'highlight-outline',
 				type: 'line',
-				source: 'landkreise',
+				source: 'regions',
+				'source-layer': sourceLayer,
 				paint: {
 					'line-color': '#000',
 					'line-width': 3
 				},
-				filter: ['==', 'RS', '']
+				filter: ['==', 'AGS', '']
 			});
 
-			map.on('click', 'landkreise-layer', (e) => {
+			map.on('click', 'regions-layer', (e) => {
 				const feature = e.features?.[0];
 				if (feature) {
 					const regionId = feature.properties?.RS;
@@ -131,10 +126,10 @@
 				}
 			});
 
-			map.on('mouseenter', 'landkreise-layer', () => {
+			map.on('mouseenter', 'regions-layer', () => {
 				map.getCanvas().style.cursor = 'pointer';
 			});
-			map.on('mouseleave', 'landkreise-layer', () => {
+			map.on('mouseleave', 'regions-layer', () => {
 				map.getCanvas().style.cursor = '';
 			});
 
@@ -181,7 +176,7 @@
 			.interpolate(interpolateRgb)
 			.clamp(true);
 
-		const matchExpression = ['match', ['get', 'RS']];
+		const matchExpression = ['match', ['get', 'AGS']];
 		let hasAtLeastOneValid = false;
 
 		for (const region of regions) {
@@ -198,13 +193,13 @@
 
 		matchExpression.push('#ccc'); // fallback color
 
-		map.setPaintProperty('landkreise-layer', 'fill-color', matchExpression);
+		map.setPaintProperty('regions-layer', 'fill-color', matchExpression);
 	}
 
 	// Selection outline + flyTo
 	$: if (mapReady && map) {
 		if (regions.find((d) => d.code === selectedRegion).layer !== 'country') {
-			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
+			map.setFilter('highlight-outline', ['==', 'AGS', selectedRegion]);
 			const region = regions.find((r) => r.code === selectedRegion);
 			if (region?.center) {
 				map.flyTo({
@@ -214,7 +209,7 @@
 				});
 			}
 		} else {
-			map.setFilter('highlight-outline', ['==', 'RS', '']);
+			map.setFilter('highlight-outline', ['==', 'AGS', '']);
 			map.flyTo({
 				center,
 				zoom,
