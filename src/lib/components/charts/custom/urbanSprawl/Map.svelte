@@ -173,8 +173,6 @@
 		});
 	});
 
-	$: console.log(selectedRegion);
-
 	// === 5. Highlight selected region ===
 	$: if (map && mapLoaded) {
 		if (selectedRegion) {
