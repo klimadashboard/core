@@ -49,7 +49,7 @@
 
 	let hoverCellId: string | null = null;
 
-	let centerCell: maplibregl.MapGeoJSONFeature;
+	let centerCells: maplibregl.MapGeoJSONFeature[] = [];
 	let cells: maplibregl.MapGeoJSONFeature[] = [];
 
 	onMount(() => {
@@ -192,16 +192,15 @@
 		// });
 
 		map.on('mousemove', (e) => {
-			const features = map.queryRenderedFeatures(e.point, {
+			centerCells = map.queryRenderedFeatures(e.point, {
 				layers: ['climate-layer']
 			});
 
-			map.getCanvas().style.cursor = features.length > 0 ? 'default' : 'grab';
+			map.getCanvas().style.cursor = centerCells.length > 0 ? 'default' : 'grab';
 
-			if (features.length === 0) return;
+			if (centerCells.length === 0) return;
 
-			centerCell = features[0];
-			const center = centroid(features[0]).geometry.coordinates;
+			const center = centroid(centerCells[0]).geometry.coordinates;
 
 			const cellId = center.join('-');
 			if (cellId === hoverCellId) return;
@@ -238,16 +237,20 @@
 	});
 
 	$: (() => {
-		if (cells.length === 0 || centerCell == null) return;
+		if (cells.length === 0 || centerCells.length === 0) return;
 
 		const range = 0.1;
-		const current = centerCell.properties.current;
+		const current = centerCells.find((cell) => cell.properties.indicator === activeIndicator)!
+			.properties.current;
 
 		const min = current * (1 - range);
 		const max = current * (1 + range);
 
 		const similarCells = cells.filter(
-			(cell) => cell.properties.current >= min && cell.properties.current <= max
+			(cell) =>
+				cell.properties.indicator === activeIndicator &&
+				cell.properties.current >= min &&
+				cell.properties.current <= max
 		);
 
 		selection = aggregateCells(similarCells);
