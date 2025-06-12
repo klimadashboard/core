@@ -4,6 +4,7 @@
 	import { booleanContains } from '@turf/boolean-contains';
 	import { bbox } from '@turf/bbox';
 	import { union } from '@turf/union';
+	import { destination } from '@turf/destination';
 	import { onMount } from 'svelte';
 	import maplibregl, {
 		type GeoJSONFeature,
@@ -44,6 +45,11 @@
 	export let activeIndicator = indicators[0].key;
 	export let activeWarming = warmingLevels[1].key;
 	let viewMode = 'absolute';
+
+	let hoverCellId: string | null = null;
+
+	let centerCell: maplibregl.MapGeoJSONFeature;
+	let cells: maplibregl.MapGeoJSONFeature[] = [];
 
 	onMount(() => {
 		map = new maplibregl.Map({
@@ -128,7 +134,8 @@
 				]
 			},
 			center: [13.3, 47.5],
-			zoom: 6
+			zoom: 6,
+			minZoom: 6
 		});
 
 		map.on('load', () => {
@@ -171,7 +178,34 @@
 				layers: ['climate-layer']
 			});
 
-			map.getCanvas().style.cursor = features.length > 0 ? 'pointer' : 'default';
+			map.getCanvas().style.cursor = features.length > 0 ? 'default' : 'grab';
+
+			if (features.length === 0) return;
+
+			centerCell = features[0];
+			const center = centroid(features[0]).geometry.coordinates;
+
+			const cellId = center.join('-');
+			if (cellId === hoverCellId) return;
+			hoverCellId = cellId;
+
+			const radius = 3;
+			const southWest = destination(center, radius, -135).geometry.coordinates;
+			const southWestPoint = map.project(southWest as LngLatLike);
+			const northEast = destination(center, radius, 45).geometry.coordinates;
+			const northEastPoint = map.project(northEast as LngLatLike);
+
+			const tilesInRegion = map.queryRenderedFeatures([southWestPoint, northEastPoint], {
+				layers: ['climate-layer']
+			});
+
+			cells = tilesInRegion;
+
+			// selection = aggregateCells(tilesInRegion);
+
+			// console.log(selection);
+			// // map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 100, duration: 0 });
+			// (map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 		});
 
 		map.on('click', async (e) => {
@@ -185,6 +219,28 @@
 			(map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
 		});
 	});
+
+	$: (() => {
+		console.log(cells, viewMode, activeIndicator, centerCell);
+
+		if (cells.length === 0 || centerCell == null) return;
+
+		const range = 0.1;
+		const current = centerCell.properties.current;
+
+		const min = current * (1 - range);
+		const max = current * (1 + range);
+
+		const similarCells = cells.filter(
+			(cell) => cell.properties.current >= min && cell.properties.current <= max
+		);
+
+		selection = aggregateCells(similarCells);
+
+		// map.fitBounds(getBounds(selection as GeoJSONFeature), { padding: 100, duration: 0 });
+		(map.getSource('outline') as GeoJSONSource)?.setData(selection as GeoJSONFeature);
+		// const filteredCells =
+	})();
 
 	// $: activeWarming = warmingLevels[activeWarmingIndex];
 

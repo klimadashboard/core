@@ -45,6 +45,7 @@
 		"@turf/bbox": "^7.2.0",
 		"@turf/boolean-contains": "^7.2.0",
 		"@turf/centroid": "^7.2.0",
+		"@turf/destination": "^7.2.0",
 		"@turf/union": "^7.2.0",
 		"d3": "^7.6.1",
 		"dayjs": "^1.11.3",
