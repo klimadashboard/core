@@ -96,7 +96,6 @@ export async function getRegions(forceRefresh = false): Promise<any[]> {
 				'code',
 				'code_short',
 				'country',
-				'outline_simple',
 				'population',
 				'area',
 				'center',
