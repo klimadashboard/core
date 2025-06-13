@@ -15,9 +15,7 @@
 		de: { center: [10.45, 51.5], zoom: 4.5 }
 	};
 
-	const regionInfoMap = new Map(
-		regions.filter((r) => r.code).map((r) => [String(r.code).padStart(8, '0'), r])
-	);
+	const regionInfoMap = new Map(regions.filter((r) => r.code).map((r) => [String(r.code), r]));
 
 	function getBaseMapStyle(isDark: boolean) {
 		return {
