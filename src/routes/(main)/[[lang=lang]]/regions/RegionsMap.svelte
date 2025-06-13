@@ -12,10 +12,8 @@
 
 	const defaultView = {
 		at: { center: [13.333, 47.5], zoom: 6 },
-		de: { center: [10.45, 51.1657], zoom: 4.5 }
+		de: { center: [10.45, 51.5], zoom: 4.5 }
 	};
-
-	const { center, zoom } = defaultView[PUBLIC_VERSION] || defaultView.de;
 
 	const regionInfoMap = new Map(
 		regions.filter((r) => r.code).map((r) => [String(r.code).padStart(8, '0'), r])
@@ -75,14 +73,27 @@
 
 		const isDark = document.body.classList.contains('dark');
 
+		// Helper to offset center
+		function offsetCenter([lng, lat]: [number, number]): [number, number] {
+			const isLargeScreen = typeof window !== 'undefined' && window.innerWidth >= 1024;
+			const latOffset = 0.5; // move map content slightly down
+			const lngOffset = isLargeScreen ? -4 : 0; // shift right only on large screens
+			return [lng + lngOffset, lat + latOffset];
+		}
+
+		const rawCenter = (defaultView[PUBLIC_VERSION] || defaultView.de).center;
+		const center = offsetCenter(rawCenter);
+
 		map = new maplibregl.Map({
 			container: 'map',
 			style: getBaseMapStyle(isDark),
 			center,
-			zoom
+			zoom: defaultView[PUBLIC_VERSION].zoom,
+			minZoom: 4.5,
+			maxZoom: 12
 		});
 
-		map.addControl(new maplibregl.NavigationControl(), 'top-right');
+		map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
 		const observer = new MutationObserver(() => {
 			const nowDark = document.body.classList.contains('dark');
@@ -204,7 +215,7 @@
 </script>
 
 <div class="relative">
-	<div id="map" class="rounded-lg" />
+	<div id="map" class="" />
 	<div
 		id="tooltip"
 		class="absolute z-10 hidden p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-2xl leading-tight"
@@ -214,7 +225,7 @@
 <style>
 	#map {
 		width: 100%;
-		height: 50vh;
+		height: 60vh;
 		margin-bottom: 2rem;
 	}
 

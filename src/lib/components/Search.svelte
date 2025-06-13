@@ -188,7 +188,7 @@
 </script>
 
 <div class="relative">
-	<div class="flex gap-2">
+	<div class="flex flex-col">
 		<div class="relative w-full">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -217,7 +217,11 @@
 				autocomplete="off"
 			/>
 		</div>
-		<button aria-label="Find location" class="button" on:click={findClosestRegion}>
+		<button
+			aria-label="Find location"
+			class="button bg-green-500! mt-2 cursor-pointer transition hover:bg-green-600!"
+			on:click={findClosestRegion}
+		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"
@@ -228,7 +232,7 @@
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class="m-auto"
+				class=""
 			>
 				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 				<path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
@@ -238,7 +242,9 @@
 				<path d="M20 12l2 0" />
 				<path d="M2 12l2 0" />
 			</svg>
+			<span>Finde meine Region</span>
 		</button>
+		<p class="text-xs opacity-80 mt-1">Deine Koordinaten werden nicht gespeichert.</p>
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
