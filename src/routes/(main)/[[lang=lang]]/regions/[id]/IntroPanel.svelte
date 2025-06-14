@@ -26,13 +26,13 @@
 
 	{#if data.title == 'Eistage'}
 		<img
-			src="https://base.klimadashboard.org/assets/4dc04fc5-069d-4831-9738-4717ddcc6538?key=medium"
+			src="https://base.klimadashboard.org/assets/177f2233-3658-4616-b6af-cce005996ff0"
 			class="absolute right-0 top-0 left-0 bottom-0 object-cover opacity-20 mix-blend-overlay"
 			alt=""
 		/>
 	{:else if data.title == 'Hitzetage'}
 		<img
-			src="https://base.klimadashboard.org/assets/879fb8e5-3e8f-4110-a5f6-b4b3b76a26a2?key=medium"
+			src="https://base.klimadashboard.org/assets/9cffb1fd-93cc-410c-aff2-915abe603f53"
 			class="absolute right-0 left-0 -top-32 bottom-0 w-full h-[140%] object-cover opacity-40 mix-blend-overlay"
 			alt=""
 		/>
@@ -44,13 +44,13 @@
 		/>
 	{:else if data.title == 'Frosttage'}
 		<img
-			src="https://base.klimadashboard.org/assets/aed3240d-e8cd-4229-bfc3-ef0fa554c4c0?key=medium"
+			src="https://base.klimadashboard.org/assets/5e9f03e0-c775-452d-b691-8801e616749e"
 			class="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay z-0"
 			alt=""
 		/>
 	{:else if data.title == 'Autos je 1.000 Einwohner:innen'}
 		<img
-			src="https://base.klimadashboard.org/assets/3027bc77-6dfc-4d61-99ba-e59cffa4f9dc?key=medium"
+			src="https://base.klimadashboard.org/assets/5abed827-5533-48bc-b17c-6879a36514dc"
 			class="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay z-0"
 			alt=""
 		/>

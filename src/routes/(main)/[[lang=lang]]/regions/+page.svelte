@@ -64,26 +64,32 @@
 <div class="">
 	<ComingSoon />
 
-	<div class="py-8 bg-gradient-green">
-		<div class="container">
-			<h1 class="text-2xl font-bold max-w-md mb-3 leading-tight">
-				Wie ist das Klima bei dir vor Ort? <br />Gib eine Region ein oder lass dich orten!
-			</h1>
-			<Search />
-			<p class="text-lg mt-3 max-w-md text-balance leading-tight">
-				{formatNumber(data.regions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
-				stehen.
-			</p>
+	<div class="relative">
+		<div class="absolute z-20 inset-0 pointer-events-none">
+			<div class="container py-4">
+				<div
+					class="max-w-xl pointer-events-auto bg-white/40 dark:bg-gray-700/40 backdrop-blur-sm rounded-2xl p-4 shadow-md"
+				>
+					<h1 class="text-2xl font-bold max-w-md mb-3 leading-tight">
+						Klima, Energie und Mobilität bei dir vor Ort
+					</h1>
+					<Search />
+				</div>
+			</div>
 		</div>
-	</div>
 
-	<RegionsMap />
+		<RegionsMap />
+	</div>
 
 	<div class="container pb-20">
 		<div class="mt-8 text-lg text">
-			<p>
-				Du kannst dir einfach eine Region auf der Karte oder der Liste unten aussuchen oder dich
-				orten lassen und wir wählen deine Region ganz automatisch aus!
+			<p class="">
+				<strong
+					>{formatNumber(data.regions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
+					stehen.</strong
+				>
+				Du kannst dir einfach eine Region auf der Karte oder der Liste unten aussuchen oder dich orten
+				lassen und wir wählen deine Region ganz automatisch aus!
 			</p>
 			<p>
 				Du weißt nicht, wohin du reisen magst? Wie wär’s mit den größten Regionen
