@@ -128,7 +128,7 @@
 			map.on('click', 'regions-layer', (e) => {
 				const feature = e.features?.[0];
 				if (feature) {
-					const regionId = feature.properties?.RS;
+					const regionId = feature.properties?.AGS;
 					dispatch('selectRegion', regionId);
 				}
 			});
@@ -206,7 +206,7 @@
 			if (region?.center) {
 				map.flyTo({
 					center: region.center,
-					zoom: 10,
+					zoom: zoom + 3,
 					duration: 800
 				});
 			}
