@@ -111,10 +111,14 @@
 			</p>
 		</div>
 
-		<div class="mt-8">
-			<label for="layerFilter" class="block font-medium mb-1">Filtern nach Ebene</label>
-			<select id="layerFilter" bind:value={layerFilter} class="border rounded p-1">
-				<option value="all">Alle</option>
+		<div class="mt-8 flex gap-1 items-center">
+			<select
+				id="layerFilter"
+				bind:value={layerFilter}
+				aria-label="Filter"
+				class="border rounded p-1 input"
+			>
+				<option value="all">Alle Ebenen anzeigen</option>
 				<option value="state">Bundesland</option>
 				<option value="district">Landkreis</option>
 				<option value="municipality">Gemeinde</option>
@@ -126,11 +130,11 @@
 			{#each Object.keys(groupedRegions).sort() as letter}
 				<div class="mb-8">
 					<h3 class="text-5xl font-light">{letter}</h3>
-					<ul class="grid gap-2 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
+					<ul class="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
 						{#each groupedRegions[letter] as region}
 							<li>
 								<a
-									class="hover:underline underline-offset-2 leading-1"
+									class="hover:underline underline-offset-2 leading-[0.1em]!"
 									href={`/regions/${region.id}`}
 									>{region.name} ({region.layer_label})<br />
 									{#if getRegionParent(region)}
