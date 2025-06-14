@@ -173,7 +173,7 @@
 				clearTimeout(hoverTimeout);
 				hoverTimeout = setTimeout(() => {
 					map.setFilter('region-hover', ['==', codeProperty, hoveredCode]);
-				}, 50);
+				}, 30);
 
 				const region = regionInfoMap.get(hoveredCode);
 				if (region) {
