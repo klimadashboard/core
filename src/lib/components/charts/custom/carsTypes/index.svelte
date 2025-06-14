@@ -25,7 +25,10 @@
 			readItems('mobility_cars', {
 				filter: {
 					country: { _eq: countryCode },
-					category: { _in: ['Elektro', 'Plug-in-Hybrid', 'Benzin', 'Diesel', 'Insgesamt'] }
+					_or: [
+						{ category: { _in: ['Elektro', 'Benzin', 'Diesel', 'Insgesamt'] } },
+						{ category: { _contains: 'Hybrid' } }
+					]
 				},
 				limit: -1,
 				fields: ['period', 'region', 'category', 'value', 'source']
@@ -54,18 +57,36 @@
 
 			const absoluteByCategory = {};
 			const sharesByCategory = {};
+			const categories = ['Elektro', 'Hybrid', 'Benzin', 'Diesel'];
 
-			['Elektro', 'Plug-in-Hybrid', 'Benzin', 'Diesel'].forEach((category) => {
-				absoluteByCategory[category] = periods.map((p) => {
-					const val = regionData.find((d) => d.category === category && d.period === p)?.value || 0;
-					return { period: parseInt(p), value: val };
-				});
-				sharesByCategory[category] = periods.map((p, i) => {
-					const total =
-						regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value || 0;
-					const val = absoluteByCategory[category][i]?.value || 0;
-					return { period: parseInt(p), value: total > 0 ? (val / total) * 100 : 0 };
-				});
+			categories.forEach((catKey) => {
+				if (catKey === 'Hybrid') {
+					// sum all categories containing 'Hybrid'
+					absoluteByCategory.Hybrid = periods.map((p) => {
+						const sum = regionData
+							.filter((d) => /Hybrid/i.test(d.category) && d.period === p)
+							.reduce((acc, d) => acc + d.value, 0);
+						return { period: parseInt(p), value: sum };
+					});
+					sharesByCategory.Hybrid = periods.map((p, i) => {
+						const total =
+							regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value || 0;
+						const val = absoluteByCategory.Hybrid[i].value;
+						return { period: parseInt(p), value: total > 0 ? (val / total) * 100 : 0 };
+					});
+				} else {
+					// original per‐category logic
+					absoluteByCategory[catKey] = periods.map((p) => {
+						const val = regionData.find((d) => d.category === catKey && d.period === p)?.value || 0;
+						return { period: parseInt(p), value: val };
+					});
+					sharesByCategory[catKey] = periods.map((p, i) => {
+						const total =
+							regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value || 0;
+						const val = absoluteByCategory[catKey][i]?.value || 0;
+						return { period: parseInt(p), value: total > 0 ? (val / total) * 100 : 0 };
+					});
+				}
 			});
 
 			absoluteByCategory['Sonstige'] = periods.map((p, i) => {
@@ -117,13 +138,13 @@
 			selected: selectedView === 'Elektro'
 		},
 		{
-			label: 'Plug-in-Hybrid',
-			key: 'Plug-in-Hybrid',
+			label: 'Hybrid',
+			key: 'Hybrid',
 			colorKey: 'hybrid',
 			chart: 'progressBar',
 			min: 0,
 			max: 20,
-			selected: selectedView === 'Plug-in-Hybrid'
+			selected: selectedView === 'Hybrid'
 		},
 		{
 			label: 'Benzin',
@@ -275,7 +296,9 @@
 							region={regions.find((d) => d.code === selectedRegion)}
 							{selectedPeriod}
 						/>
-						<p class="text-sm opacity-80 mt-4">Datenquelle: {source}</p>
+						<p class="text-sm opacity-80 mt-4 leading-tight">
+							Datenquelle: {source}<br />Hybrid beinhaltet Plug-In-Hybrid und Hybrid.
+						</p>
 					</div>
 				</div>
 			{/await}
