@@ -404,6 +404,7 @@
 			on:mousedown={() => (selectedRegion = regions.find((d) => d.layer == 'country'))}
 			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-200 rounded-full w-8 h-8 grid shadow"
 			transition:fade
+			aria-label="Zurück zur nationalen Ansicht"
 		>
 			<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
 		</button>

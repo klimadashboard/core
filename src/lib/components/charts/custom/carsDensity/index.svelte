@@ -1,96 +1,32 @@
-<script>
+<script lang="ts">
+	import { onMount } from 'svelte';
 	import Map from './Map.svelte';
-	import RelatedRegionCard from './RelatedRegionCard.svelte';
 	import Inspector from './Inspector.svelte';
-	import Switch from '$lib/components/Switch.svelte';
 	import Search from './Search.svelte';
+	import Switch from '$lib/components/Switch.svelte';
 	import { colors } from './scales';
-	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
-	import { page } from '$app/state';
-	import { getRegions } from '$lib/utils/regions';
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItem, readItems } from '@directus/sdk';
-	import { PUBLIC_VERSION } from '$env/static/public';
+	import type { RegionWithData } from './mobilityData';
+	import { loadMobilityData, getRegionData, getRelatedRegions } from './mobilityData';
 
-	let minPeriod;
-	let maxPeriod;
-	let source;
+	let promise: Promise<{
+		regions: RegionWithData[];
+		periods: string[];
+		source: string;
+		countryName: string;
+		preselected?: string;
+	}>;
 
-	async function getData() {
-		const directus = getDirectusInstance(fetch);
-		const countryCode = PUBLIC_VERSION.toUpperCase();
+	let regions: RegionWithData[] = [];
+	let availablePeriods: string[] = [];
+	let selectedPeriodIndex = 0;
+	let selectedPeriod: string;
+	let selectedView: 'pop' | 'private' | 'company' = 'pop';
+	let selectedRegion: string | null = null;
+	let source: string;
+	let countryName: string;
+	let filteredRegions: RegionWithData[] = [];
 
-		const data = await directus.request(
-			readItems('mobility_cars', {
-				filter: {
-					country: { _eq: countryCode },
-					category: { _in: ['Privat', 'Firmen', 'Insgesamt'] }
-				},
-				limit: -1,
-				fields: ['period', 'region', 'category', 'value', 'source']
-			})
-		);
-
-		source = data[0]?.source;
-
-		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
-		const regions = await getRegions().then((r) =>
-			r.filter((r) => r.country === countryCode && r.layer === layerFilter)
-		);
-
-		const country = await directus.request(readItem('countries', countryCode));
-		const countryName = country?.name_de ?? countryCode;
-
-		const regionsWithData = regions.map((region) => {
-			const regionData = data.filter((d) => d.region === region.code);
-			const periods = [...new Set(regionData.map((d) => d.period).sort((a, b) => a - b))];
-
-			const carsPer1000Inhabitants = periods.map((p) => {
-				const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
-				return {
-					period: parseInt(p),
-					value: total && region.population ? Math.round((total / region.population) * 1000) : null
-				};
-			});
-
-			const carsPrivateShare = periods.map((p) => {
-				const privat = regionData.find((d) => d.category === 'Privat' && d.period === p)?.value;
-				const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
-				return {
-					period: parseInt(p),
-					value: privat && total ? (privat / total) * 100 : null
-				};
-			});
-
-			const carsCompanyShare = periods.map((p) => {
-				const firmen = regionData.find((d) => d.category === 'Firmen' && d.period === p)?.value;
-				const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
-				return {
-					period: parseInt(p),
-					value: firmen && total ? (firmen / total) * 100 : null
-				};
-			});
-
-			return {
-				...region,
-				outline: region.outline_simple,
-				carsPer1000Inhabitants,
-				carsPrivateShare,
-				carsCompanyShare
-			};
-		});
-
-		const foundRegionCode = findMatchingRegion(page.data.page, regions);
-		if (foundRegionCode) selectedRegion = foundRegionCode;
-
-		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
-		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
-		return { data, regions: regionsWithData, minPeriod, maxPeriod, countryName };
-	}
-
-	$: promise = getData();
-
-	let views = [
+	const views = [
 		{
 			label: 'Autodichte',
 			key: 'pop',
@@ -120,139 +56,22 @@
 		}
 	];
 
-	$: selectedView = views[0].key;
-	$: selectedRegion = null;
-	$: selectedPeriod = maxPeriod;
-	$: relatedRegions = [];
-
-	$: getRelatedRegions = (regions, selectedRegion) => {
-		const view = views.find((v) => v.key === selectedView);
-		const valueKey = view.dataKey;
-
-		const regionsWithValue = regions
-			.map((region) => {
-				const match = region[valueKey]?.find((d) => d.period === selectedPeriod);
-				return {
-					...region,
-					value: match?.value ?? null
-				};
-			})
-			.filter((r) => r.value != null && isFinite(r.value));
-
-		if (regionsWithValue.length === 0) return [];
-
-		const sorted = [...regionsWithValue].sort((a, b) => a.value - b.value);
-		const minRegion = { ...sorted[0], type: 'min', typeLabel: 'Minimum' };
-		const maxRegion = { ...sorted[sorted.length - 1], type: 'max', typeLabel: 'Maximum' };
-
-		let closestRegions = [];
-
-		if (selectedRegion) {
-			const selected = regions.find((r) => r.code === selectedRegion);
-			if (selected?.center) {
-				const haversine = (coord1, coord2) => {
-					const toRad = (d) => (d * Math.PI) / 180;
-					const R = 6371;
-					const dLat = toRad(coord2[1] - coord1[1]);
-					const dLon = toRad(coord2[0] - coord1[0]);
-					const lat1 = toRad(coord1[1]);
-					const lat2 = toRad(coord2[1]);
-
-					const a =
-						Math.sin(dLat / 2) ** 2 + Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-					const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-					return R * c;
-				};
-
-				closestRegions = regionsWithValue
-					.filter((r) => r.code !== selectedRegion && r.center)
-					.map((r) => ({
-						...r,
-						distance: haversine(selected.center, r.center)
-					}))
-					.sort((a, b) => a.distance - b.distance)
-					.slice(0, 3)
-					.map((r) => ({ ...r, type: 'nearby', typeLabel: 'in der Nähe' }));
-			}
-		}
-
-		const all = [minRegion, maxRegion, ...closestRegions];
-		const seen = new Set();
-		const unique = all.filter((r) => {
-			if (seen.has(r.code)) return false;
-			if (r.code == selectedRegion) return false;
-			seen.add(r.code);
-			return true;
+	// fetch once on mount
+	onMount(() => {
+		promise = loadMobilityData(fetch).then((payload) => {
+			regions = payload.regions;
+			availablePeriods = payload.periods;
+			source = payload.source;
+			countryName = payload.countryName;
+			selectedRegion = payload.preselected ?? null;
+			selectedPeriodIndex = availablePeriods.length - 1;
+			return payload;
 		});
+	});
 
-		if (selectedRegion) {
-			unique.push({
-				...getRegionData(regions, null),
-				type: 'national'
-			});
-		}
-
-		return unique.sort((a, b) => b.value - a.value);
-	};
-
-	$: getRegionData = (regions, selectedRegion, countryName) => {
-		if (selectedRegion) return regions.find((r) => r.code === selectedRegion);
-
-		const average = (arr) => (arr.length ? arr.reduce((sum, v) => sum + v, 0) / arr.length : null);
-
-		const allPeriods = Array.from(
-			new Set(
-				regions.flatMap((r) => [
-					...(r.carsPer1000Inhabitants || []).map((d) => d.period),
-					...(r.carsPrivateShare || []).map((d) => d.period),
-					...(r.carsCompanyShare || []).map((d) => d.period)
-				])
-			)
-		).sort((a, b) => a - b);
-
-		const carsPer1000Inhabitants = allPeriods.map((period) => ({
-			period,
-			value: Math.round(
-				average(
-					regions
-						.map((r) => r.carsPer1000Inhabitants?.find((d) => d.period === period)?.value)
-						.filter((v) => v != null && isFinite(v))
-				)
-			)
-		}));
-
-		const carsPrivateShare = allPeriods.map((period) => ({
-			period,
-			value: average(
-				regions
-					.map((r) => r.carsPrivateShare?.find((d) => d.period === period)?.value)
-					.filter((v) => v != null && isFinite(v))
-			)
-		}));
-
-		const carsCompanyShare = allPeriods.map((period) => ({
-			period,
-			value: average(
-				regions
-					.map((r) => r.carsCompanyShare?.find((d) => d.period === period)?.value)
-					.filter((v) => v != null && isFinite(v))
-			)
-		}));
-
-		return {
-			code: 'ALL',
-			label: countryName,
-			name: countryName,
-			type: 'national',
-			typeLabel: 'Nationaler Durchschnitt',
-			center: [10.45, 51.1657],
-			carsPer1000Inhabitants,
-			carsPrivateShare,
-			carsCompanyShare
-		};
-	};
-
-	let filteredRegions = [];
+	$: selectedPeriod = availablePeriods[selectedPeriodIndex];
+	$: inspectorRegion = getRegionData(regions, selectedRegion, countryName);
+	$: related = getRelatedRegions(regions, selectedRegion, selectedView, selectedPeriod);
 </script>
 
 <div>
@@ -261,9 +80,11 @@
 			<input
 				type="range"
 				class="w-20"
-				min={minPeriod}
-				max={maxPeriod}
-				bind:value={selectedPeriod}
+				min={0}
+				max={availablePeriods.length - 1}
+				step={1}
+				bind:value={selectedPeriodIndex}
+				aria-label="Zeitpunkt"
 			/>
 			<span>{selectedPeriod}</span>
 		</div>
@@ -271,40 +92,32 @@
 			type="small"
 			{views}
 			bind:activeView={selectedView}
-			on:itemClick={(event) => {
-				selectedView = event.detail;
-			}}
+			on:itemClick={(e) => (selectedView = e.detail)}
 		/>
 	</div>
 	<div class="min-h-[80vh]">
 		{#if selectedView && selectedPeriod}
 			{#await promise then p}
-				{@const data = p.data}
 				{@const regions = p.regions}
-				{@const countryName = p.countryName}
 
-				<div class="">
+				<div>
 					<div class="h-[40vh]">
 						<Map
 							{selectedPeriod}
-							regions={regions.map((d) => {
-								return {
-									code: d.code,
-									outline: d.outline,
-									center: d.center,
-									name: d.name,
-									data:
-										selectedView == 'pop'
-											? d.carsPer1000Inhabitants
-											: selectedView == 'private'
-												? d.carsPrivateShare
-												: selectedView == 'company'
-													? d.carsCompanyShare
-													: d.carsPer1000Inhabitants
-								};
-							})}
-							max={selectedView == 'pop' ? 1000 : 100}
-							unit={selectedView == 'pop' ? '' : '%'}
+							regions={regions.map((d) => ({
+								code: d.code,
+								outline: d.outline,
+								center: d.center,
+								name: d.name,
+								data:
+									selectedView === 'pop'
+										? d.carsPer1000Inhabitants
+										: selectedView === 'private'
+											? d.carsPrivateShare
+											: d.carsCompanyShare
+							}))}
+							max={selectedView === 'pop' ? 1000 : 100}
+							unit={selectedView === 'pop' ? '' : '%'}
 							colors={colors[selectedView]}
 							bind:selectedRegion
 							on:selectRegion={(e) => (selectedRegion = e.detail)}
@@ -313,14 +126,10 @@
 					<div
 						class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
 					>
-						<Inspector
-							{views}
-							{selectedPeriod}
-							region={getRegionData(regions, selectedRegion, countryName)}
-						/>
+						<Inspector {views} {selectedPeriod} region={getRegionData(regions, selectedRegion)} />
 						<Search {regions} {selectedRegion} bind:filteredRegions />
-						<ul class="">
-							{#if filteredRegions.length > 0}
+						<ul>
+							{#if filteredRegions.length}
 								{#each filteredRegions as region}
 									<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
 								{/each}

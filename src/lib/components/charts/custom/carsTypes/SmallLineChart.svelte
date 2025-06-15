@@ -51,7 +51,7 @@
 				{/each}
 				<g class="text-xs opacity-70">
 					{#each data as d, i}
-						{#if d.period % 2 === 0}
+						{#if d.period % 2 === 0 || data.length < 4}
 							<g transform="translate({xScale(d.period)},{chartHeight})" class="dark:fill-white">
 								<text
 									text-anchor={i == 0 ? 'start' : i == data.length - 1 ? 'end' : 'middle'}

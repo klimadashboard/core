@@ -1,9 +1,7 @@
 <script>
 	import Map from './Map.svelte';
-	import RelatedRegionCard from './RelatedRegionCard.svelte';
 	import Inspector from './Inspector.svelte';
 	import Switch from '$lib/components/Switch.svelte';
-	import Search from './Search.svelte';
 	import { colors } from './scales';
 	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
 	import { page } from '$app/state';
@@ -16,6 +14,32 @@
 	let minPeriod;
 	let maxPeriod;
 	let source;
+	let countryName;
+	let regions = [];
+	let selectedPeriodIndex;
+	let periods = [];
+
+	const views = [
+		{
+			label: 'Elektro',
+			key: 'Elektro',
+			colorKey: 'electric',
+			chart: 'progressBar',
+			min: 0,
+			max: 20
+		},
+		{ label: 'Hybrid', key: 'Hybrid', colorKey: 'hybrid', chart: 'progressBar', min: 0, max: 20 },
+		{ label: 'Benzin', key: 'Benzin', colorKey: 'benzin', chart: 'progressBar', min: 0, max: 80 },
+		{ label: 'Diesel', key: 'Diesel', colorKey: 'diesel', chart: 'progressBar', min: 0, max: 80 },
+		{ label: 'Sonstige', key: 'Sonstige', colorKey: 'other', chart: 'progressBar', min: 0, max: 10 }
+	];
+
+	// reactive defaults (run once on init)
+	$: selectedView = views[0].key;
+	$: selectedRegion = null;
+
+	// load data reactively
+	$: promise = getData();
 
 	async function getData() {
 		const directus = getDirectusInstance(fetch);
@@ -35,212 +59,157 @@
 			})
 		);
 
-		source = data[0].source;
+		const sources = Array.from(new Set(data.map((d) => d.source).filter((s) => s)));
+		source = sources.join(', ');
 
-		const regions = await getRegions();
-
+		const allRegions = await getRegions();
 		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
-		const filteredRegions = regions
+
+		const filtered = allRegions
 			.filter(
 				(r) => r.country === countryCode && (r.layer === layerFilter || r.layer === 'country')
 			)
-			.filter((region, index, self) => self.findIndex((r) => r.code === region.code) === index);
+			.filter((r, i, arr) => arr.findIndex((rr) => rr.code === r.code) === i);
 
 		const country = await directus.request(readItem('countries', countryCode));
-		const countryName = country?.name_de ?? countryCode;
+		countryName = country?.name_de ?? countryCode;
 
-		const regionsWithData = filteredRegions.map((region) => {
+		const regionsWithData = filtered.map((region) => {
 			const regionData = data.filter((d) => d.region === region.code);
-			const periods = [
-				...new Set(regionData.map((d) => d.period).sort((a, b) => parseInt(a) - parseInt(b)))
-			];
+			periods = Array.from(new Set(regionData.map((d) => parseInt(d.period)))).sort(
+				(a, b) => a - b
+			);
+			selectedPeriodIndex = periods.length - 1;
 
 			const absoluteByCategory = {};
 			const sharesByCategory = {};
-			const categories = ['Elektro', 'Hybrid', 'Benzin', 'Diesel'];
+			const cats = ['Elektro', 'Hybrid', 'Benzin', 'Diesel'];
 
-			categories.forEach((catKey) => {
+			cats.forEach((catKey) => {
 				if (catKey === 'Hybrid') {
-					// sum all categories containing 'Hybrid'
 					absoluteByCategory.Hybrid = periods.map((p) => {
 						const sum = regionData
-							.filter((d) => /Hybrid/i.test(d.category) && d.period === p)
+							.filter((d) => /Hybrid/i.test(d.category) && parseInt(d.period) === p)
 							.reduce((acc, d) => acc + d.value, 0);
-						return { period: parseInt(p), value: sum };
+						return { period: p, value: sum };
 					});
-					sharesByCategory.Hybrid = periods.map((p, i) => {
+					sharesByCategory.Hybrid = absoluteByCategory.Hybrid.map(({ period, value }) => {
 						const total =
-							regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value || 0;
-						const val = absoluteByCategory.Hybrid[i].value;
-						return { period: parseInt(p), value: total > 0 ? (val / total) * 100 : 0 };
+							regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
+								?.value || 0;
+						return { period, value: total > 0 ? (value / total) * 100 : 0 };
 					});
 				} else {
-					// original per‐category logic
 					absoluteByCategory[catKey] = periods.map((p) => {
-						const val = regionData.find((d) => d.category === catKey && d.period === p)?.value || 0;
-						return { period: parseInt(p), value: val };
+						const v =
+							regionData.find((d) => d.category === catKey && parseInt(d.period) === p)?.value || 0;
+						return { period: p, value: v };
 					});
-					sharesByCategory[catKey] = periods.map((p, i) => {
+					sharesByCategory[catKey] = absoluteByCategory[catKey].map(({ period, value }) => {
 						const total =
-							regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value || 0;
-						const val = absoluteByCategory[catKey][i]?.value || 0;
-						return { period: parseInt(p), value: total > 0 ? (val / total) * 100 : 0 };
+							regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
+								?.value || 0;
+						return { period, value: total > 0 ? (value / total) * 100 : 0 };
 					});
 				}
 			});
 
-			absoluteByCategory['Sonstige'] = periods.map((p, i) => {
+			// Sonstige = Gesamt − known
+			absoluteByCategory.Sonstige = periods.map((p, i) => {
 				const total =
-					regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value || 0;
-				const knownSum = ['Elektro', 'Plug-in-Hybrid', 'Benzin', 'Diesel']
-					.map((cat) => absoluteByCategory[cat]?.[i]?.value || 0)
+					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === p)?.value ||
+					0;
+				const known = ['Elektro', 'Plug-in-Hybrid', 'Benzin', 'Diesel']
+					.map((k) => absoluteByCategory[k]?.[i]?.value || 0)
 					.reduce((a, b) => a + b, 0);
-				return { period: parseInt(p), value: total - knownSum };
+				return { period: p, value: total - known };
 			});
-
-			sharesByCategory['Sonstige'] = periods.map((p, i) => {
+			sharesByCategory.Sonstige = absoluteByCategory.Sonstige.map(({ period, value }) => {
 				const total =
-					regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value || 0;
-				const val = absoluteByCategory['Sonstige'][i]?.value || 0;
-				return { period: parseInt(p), value: total > 0 ? (val / total) * 100 : 0 };
+					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
+						?.value || 0;
+				return { period, value: total > 0 ? (value / total) * 100 : 0 };
 			});
 
 			return {
 				...region,
 				outline: region.outline_simple,
+				center: region.center,
+				layer: region.layer,
+				name: region.name,
 				absoluteByCategory,
 				sharesByCategory
 			};
 		});
 
-		const nationalRegion = regionsWithData.find((r) => r.layer === 'country');
-		selectedRegion = nationalRegion?.code;
+		regions = regionsWithData;
 
-		const foundRegionCode = findMatchingRegion(page.data.page, regionsWithData);
-		if (foundRegionCode) selectedRegion = foundRegionCode;
+		// pick initial region
+		const national = regions.find((r) => r.layer === 'country');
+		selectedRegion = national?.code;
+		const match = findMatchingRegion(page.data.page, regions);
+		if (match) selectedRegion = match;
 
 		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
 		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
 
-		return { data, regions: regionsWithData, minPeriod, maxPeriod, countryName };
+		return { data, regions, minPeriod, maxPeriod, countryName };
 	}
 
-	$: promise = getData();
+	function getSelectedRegionData(p, selCode) {
+		if (!p) return [];
 
-	let views = [
-		{
-			label: 'Elektro',
-			key: 'Elektro',
-			colorKey: 'electric',
-			chart: 'progressBar',
-			min: 0,
-			max: 20,
-			selected: selectedView === 'Elektro'
-		},
-		{
-			label: 'Hybrid',
-			key: 'Hybrid',
-			colorKey: 'hybrid',
-			chart: 'progressBar',
-			min: 0,
-			max: 20,
-			selected: selectedView === 'Hybrid'
-		},
-		{
-			label: 'Benzin',
-			key: 'Benzin',
-			colorKey: 'benzin',
-			chart: 'progressBar',
-			min: 0,
-			max: 80,
-			selected: selectedView === 'Benzin'
-		},
-		{
-			label: 'Diesel',
-			key: 'Diesel',
-			colorKey: 'diesel',
-			chart: 'progressBar',
-			min: 0,
-			max: 80,
-			selected: selectedView === 'Diesel'
-		},
-		{
-			label: 'Sonstige',
-			key: 'Sonstige',
-			colorKey: 'other',
-			chart: 'progressBar',
-			min: 0,
-			max: 10,
-			selected: selectedView === 'Sonstige'
-		}
-	];
+		const region = p.regions.find((r) => r.code === selCode);
+		const isCountry = !region || region.layer === 'country';
 
-	$: selectedView = views[0].key;
-	$: selectedRegion = selectedRegion;
-	$: selectedPeriod = maxPeriod;
-
-	function getSelectedRegionData(promise, selectedRegion) {
-		if (!promise) return [];
-
-		let region = promise.regions.find((r) => r.code === selectedRegion);
-		const isNationalRegion = region?.layer === 'country' || !region || !region.absoluteByCategory;
-
-		if (isNationalRegion) {
-			const subregions = promise.regions.filter((r) => r.layer !== 'country');
-
-			const allPeriods = [
-				...new Set(
-					subregions.flatMap((r) =>
-						Object.values(r.absoluteByCategory || {}).flatMap((arr) => arr.map((d) => d.period))
+		if (isCountry) {
+			const subs = p.regions.filter((r) => r.layer !== 'country');
+			const allP = Array.from(
+				new Set(
+					subs.flatMap((r) =>
+						Object.values(r.absoluteByCategory).flatMap((arr) => arr.map((d) => d.period))
 					)
 				)
-			].sort((a, b) => a - b);
+			).sort((a, b) => a - b);
 
 			return views.map((v) => {
-				const history = allPeriods.map((period) => {
-					const absolutes = subregions.map(
+				const history = allP.map((period) => {
+					const abs = subs.map(
 						(r) => r.absoluteByCategory[v.key]?.find((d) => d.period === period)?.value || 0
 					);
-
-					const percentages = subregions.map(
+					const pct = subs.map(
 						(r) => r.sharesByCategory[v.key]?.find((d) => d.period === period)?.value || 0
 					);
-
-					const absolute = absolutes.length
-						? absolutes.reduce((a, b) => a + b, 0) / absolutes.length
-						: null;
-					const percentage = percentages.length
-						? percentages.reduce((a, b) => a + b, 0) / percentages.length
-						: null;
-
-					return { period, absolute, percentage };
+					return {
+						period,
+						absolute: abs.reduce((a, b) => a + b, 0) / abs.length,
+						percentage: pct.reduce((a, b) => a + b, 0) / pct.length
+					};
 				});
-
 				return {
 					label: v.label,
 					key: v.key,
 					selected: v.key === selectedView,
-					color: colors?.[v.colorKey]?.[1],
+					color: colors[v.colorKey][1],
 					history
 				};
 			});
 		}
 
-		// Default: return data for selected region
-		return views.map((v) => {
-			return {
-				label: v.label,
-				key: v.key,
-				color: colors?.[v.colorKey]?.[1],
-				selected: v.key === selectedView,
-				history: region.absoluteByCategory[v.key].map((d, i) => ({
-					period: d.period,
-					absolute: d.value,
-					percentage: region.sharesByCategory[v.key][i].value
-				}))
-			};
-		});
+		return views.map((v) => ({
+			label: v.label,
+			key: v.key,
+			selected: v.key === selectedView,
+			color: colors[v.colorKey][1],
+			history: region.absoluteByCategory[v.key].map((d, i) => ({
+				period: d.period,
+				absolute: d.value,
+				percentage: region.sharesByCategory[v.key][i].value
+			}))
+		}));
 	}
+
+	$: selectedPeriod = periods[selectedPeriodIndex];
 </script>
 
 <div>
@@ -249,9 +218,11 @@
 			<input
 				type="range"
 				class="w-20"
-				min={minPeriod}
-				max={maxPeriod}
-				bind:value={selectedPeriod}
+				min={0}
+				max={periods.length - 1}
+				step={1}
+				bind:value={selectedPeriodIndex}
+				aria-label="Zeitraum"
 			/>
 			<span>{selectedPeriod}</span>
 		</div>
@@ -259,49 +230,49 @@
 			type="small"
 			{views}
 			bind:activeView={selectedView}
-			on:itemClick={(event) => {
-				selectedView = event.detail;
-			}}
+			on:itemClick={(e) => (selectedView = e.detail)}
 		/>
 	</div>
+
 	<div class="min-h-[60vh]">
-		{#if selectedView && selectedPeriod}
-			{#await promise then p}
-				{@const regions = p.regions}
-				{@const selectedViewT = views.find((v) => v.key === selectedView)}
-				<div class="">
-					<div class="h-[40vh]">
-						<Map
-							{selectedPeriod}
-							regions={regions.map((d) => ({
-								code: d.code,
-								outline: d.outline,
-								center: d.center,
-								layer: d.layer,
-								name: d.name,
-								data: d.sharesByCategory[selectedView]
-							}))}
-							colors={colors[selectedViewT.colorKey]}
-							min={selectedViewT.min}
-							max={selectedViewT.max}
-							bind:selectedRegion
-							on:selectRegion={(e) => (selectedRegion = e.detail)}
-						/>
-					</div>
-					<div
-						class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
-					>
-						<Inspector
-							selectedRegionData={getSelectedRegionData(p, selectedRegion)}
-							region={regions.find((d) => d.code === selectedRegion)}
-							{selectedPeriod}
-						/>
-						<p class="text-sm opacity-80 mt-4 leading-tight">
-							Datenquelle: {source}<br />Hybrid beinhaltet Plug-In-Hybrid und Hybrid.
-						</p>
-					</div>
+		{#await promise}
+			<p class="text-center py-10">Lädt…</p>
+		{:then p}
+			<div>
+				<div class="h-[40vh]">
+					<Map
+						{selectedPeriod}
+						regions={p.regions.map((r) => ({
+							code: r.code,
+							outline: r.outline,
+							center: r.center,
+							layer: r.layer,
+							name: r.name,
+							data: r.sharesByCategory[selectedView]
+						}))}
+						colors={colors[views.find((v) => v.key === selectedView).colorKey]}
+						min={views.find((v) => v.key === selectedView).min}
+						max={views.find((v) => v.key === selectedView).max}
+						bind:selectedRegion
+						on:selectRegion={(e) => (selectedRegion = e.detail)}
+					/>
 				</div>
-			{/await}
-		{/if}
+				<div
+					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
+				>
+					<Inspector
+						selectedRegionData={getSelectedRegionData(p, selectedRegion)}
+						region={p.regions.find((r) => r.code === selectedRegion)}
+						{selectedPeriod}
+					/>
+					<p class="text-sm opacity-80 mt-4 leading-tight">
+						Datenquelle: {source}<br />
+						Hybrid beinhaltet Plug-In-Hybrid und Hybrid.
+					</p>
+				</div>
+			</div>
+		{:catch err}
+			<p class="text-red-600 p-4">Fehler beim Laden der Daten: {err.message}</p>
+		{/await}
 	</div>
 </div>
