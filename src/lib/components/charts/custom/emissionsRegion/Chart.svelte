@@ -3,11 +3,13 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	import { scaleLinear } from 'd3-scale';
 
-	export let data;
-	export let region;
+	export let data: any[];
+	export let region: any;
+	export let showPerCapita = false;
+	export let populationByYear: { [year: number]: number } = {};
 
-	let chartWidth;
-	let chartHeight;
+	let chartWidth: number;
+	let chartHeight: number;
 	let activeCategory = 'all';
 
 	$: margin = { top: 0, right: 20, bottom: 20, left: 72 };
@@ -16,24 +18,44 @@
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
-	$: years = [...new Set(data.map((d) => d.year))].sort();
+	$: years = [...new Set(data.map((d: any) => d.year))].sort();
 	$: historicYears = [
-		...new Set(data.filter((d) => d.source !== 'climate-target').map((d) => d.year))
+		...new Set(data.filter((d: any) => d.source !== 'climate-target').map((d: any) => d.year))
 	].sort();
 	$: categoryOrder = region.categoryOrder ?? [];
 
 	// Only show categories that are present in data
 	$: displayedCategories = categoryOrder
-		.map((cat) => {
-			const d = data.find((d) => d.category === cat);
+		.map((cat: any) => {
+			const d = data.find((d: any) => d.category === cat);
 			return d ? { key: cat, label: d.category_label } : null;
 		})
-		.filter(Boolean);
+		.filter(Boolean)
+		.filter((cat: any) => !cat.label.toLowerCase().includes('kyoto'));
 
-	// Group and stack
-	$: grouped = historicYears.map((year) => {
-		const values = categoryOrder.map((cat) => {
-			const match = data.find((d) => d.year === year && d.category === cat);
+	// Transform data based on showPerCapita flag and year-specific population
+	$: transformedData = showPerCapita && Object.keys(populationByYear).length > 0
+		? data.map((d: any) => {
+			const yearPopulation = populationByYear[d.year];
+			if (yearPopulation) {
+				return {
+					...d,
+					value: (d.value / yearPopulation) * 1000000 // Convert to tons per million people for better readability
+				};
+			} else {
+				// Fallback to region.population if year-specific data not available
+				return region.population ? {
+					...d,
+					value: (d.value / region.population) * 1000000
+				} : d;
+			}
+		})
+		: data;
+
+	// Group and stack using transformed data
+	$: grouped = historicYears.map((year: any) => {
+		const values = categoryOrder.map((cat: any) => {
+			const match = transformedData.find((d: any) => d.year === year && d.category === cat);
 			return {
 				sector: cat,
 				label: match?.category_label ?? cat,
@@ -45,13 +67,13 @@
 		return {
 			year,
 			sectors: values,
-			total: values.reduce((sum, d) => sum + d.value, 0)
+			total: values.reduce((sum: number, d: any) => sum + d.value, 0)
 		};
 	});
 
-	$: stacked = grouped.map((yearData) => {
+	$: stacked = grouped.map((yearData: any) => {
 		let yOffset = 0;
-		const stackedSectors = yearData.sectors.map((s) => {
+		const stackedSectors = yearData.sectors.map((s: any) => {
 			const start = yOffset;
 			yOffset += s.value;
 			return { ...s, start, end: yOffset };
@@ -60,12 +82,13 @@
 	});
 
 	let unit = 'Mt CO2eq';
+	$: unit = showPerCapita ? 't CO2eq/Mio. Einwohner' : 'Mt CO2eq';
 
 	$: visibleMax =
 		activeCategory === 'all'
-			? Math.max(...grouped.map((g) => g.total))
+			? Math.max(...grouped.map((g: any) => g.total))
 			: Math.max(
-					...grouped.map((g) => g.sectors.find((s) => s.sector === activeCategory)?.value ?? 0)
+					...grouped.map((g: any) => g.sectors.find((s: any) => s.sector === activeCategory)?.value ?? 0)
 				);
 
 	$: minYear = years[0];
@@ -75,11 +98,23 @@
 	$: xScale = scaleLinear().domain([minYear, maxYear]).range([0, innerChartWidth]);
 	$: yScale = scaleLinear().domain([0, visibleMax]).range([innerChartHeight, 0]);
 
+	// Transform climate targets if per capita is enabled
 	$: climateTargets = data
-		.filter((d) => d.source === 'climate-target')
-		.sort((a, b) => a.year - b.year);
+		.filter((d: any) => d.source === 'climate-target')
+		.map((d: any) => {
+			if (showPerCapita && Object.keys(populationByYear).length > 0) {
+				const yearPopulation = populationByYear[d.year];
+				if (yearPopulation) {
+					return { ...d, value: (d.value / yearPopulation) * 1000000 };
+				} else if (region.population) {
+					return { ...d, value: (d.value / region.population) * 1000000 };
+				}
+			}
+			return d;
+		})
+		.sort((a: any, b: any) => a.year - b.year);
 	$: latestYear = Math.max(...historicYears);
-	$: latestTotal = grouped.find((g) => g.year === latestYear)?.total ?? 0;
+	$: latestTotal = grouped.find((g: any) => g.year === latestYear)?.total ?? 0;
 	$: lastTarget = climateTargets[climateTargets.length - 1];
 </script>
 
@@ -92,7 +127,7 @@
 			sind
 			{#each grouped[grouped.length - 1].sectors
 				.slice()
-				.sort((a, b) => b.value - a.value)
+				.sort((a: any, b: any) => b.value - a.value)
 				.slice(0, 3) as s, i}
 				<span
 					class="inline-block px-1 py-0.5 rounded text-white"
@@ -101,8 +136,13 @@
 					{s.label}
 				</span>{i < 2 ? ', ' : '.'}
 			{/each}
+			{#if showPerCapita && Object.keys(populationByYear).length > 0}
+				pro Million Einwohner.
+			{:else if showPerCapita && region.population}
+				pro Million Einwohner.
+			{:else}.{/if}
 			{#if lastTarget && activeCategory === 'all'}
-				Bis {lastTarget.year} möchte {region.name} {lastTarget.value}{unit} erreicht haben.
+				Bis {lastTarget.year} möchte {region.name} {formatNumber(lastTarget.value)}{unit} erreicht haben.
 			{/if}
 		</p>
 
@@ -152,11 +192,11 @@
 											height={yScale(s.start) - yScale(s.end)}
 											fill={s.color}
 										>
-											<title>{s.label}: {formatNumber(s.value)} t</title>
+											<title>{s.label}: {formatNumber(s.value)} {unit}</title>
 										</rect>
 									{/each}
 								{:else}
-									{#each yearData.stackedSectors.filter((s) => s.sector === activeCategory) as s}
+									{#each yearData.stackedSectors.filter((s: any) => s.sector === activeCategory) as s}
 										<rect
 											x={-barWidth / 2}
 											y={yScale(s.value)}
@@ -164,7 +204,7 @@
 											height={innerChartHeight - yScale(s.value)}
 											fill={s.color}
 										>
-											<title>{s.label}: {formatNumber(s.value)} t</title>
+											<title>{s.label}: {formatNumber(s.value)} {unit}</title>
 										</rect>
 									{/each}
 								{/if}
@@ -228,4 +268,9 @@
 
 <div class="max-w-2xl text-sm leading-tight mt-4 opacity-80">
 	<p>Datenquelle: {data[0].source}</p>
+	{#if showPerCapita && Object.keys(populationByYear).length > 0}
+		<p>Pro-Kopf-Werte basieren auf jahresspezifischen Bevölkerungsdaten für {region.name}.</p>
+	{:else if showPerCapita && region.population}
+		<p>Pro-Kopf-Werte basieren auf einer Bevölkerung von {region.population.toLocaleString()} Einwohnern (einheitlich für alle Jahre).</p>
+	{/if}
 </div>
