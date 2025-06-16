@@ -187,7 +187,6 @@
 	<Scroller bind:index bind:offset bind:progress>
 		<div slot="background" />
 		<div slot="foreground">
-			<ComingSoon />
 			<Intro {data} />
 			<Navigation {sections} />
 

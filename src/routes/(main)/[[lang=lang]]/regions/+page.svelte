@@ -61,9 +61,7 @@
 	}
 </script>
 
-<div class="">
-	<ComingSoon />
-
+<div class="-mt-1">
 	<div class="relative">
 		<div class="absolute z-20 inset-0 pointer-events-none">
 			<div class="container py-4">
