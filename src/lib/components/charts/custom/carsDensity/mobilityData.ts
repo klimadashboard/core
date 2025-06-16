@@ -61,7 +61,7 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 	);
 
 	// Load and filter region shapes
-	const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
+	const layerFilter = 'municipality';
 	const allShapes = await getRegions();
 	const shapes = allShapes.filter((r) => r.country === countryCode && r.layer === layerFilter);
 
@@ -71,7 +71,7 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 
 	// Enrich shapes with series data
 	const regions: RegionWithData[] = shapes.map((shape) => {
-		const regionData = data.filter((d) => d.region === shape.code);
+		const regionData = data.filter((d) => d.region === shape.code || d.region === shape.code_short);
 		const uniqPeriods = Array.from(new Set(regionData.map((d) => d.period))).sort(
 			(a, b) => Number(a) - Number(b)
 		);
@@ -118,7 +118,7 @@ export function getRegionData(
 	countryName: string
 ): RegionWithData {
 	if (selCode) {
-		return regions.find((r) => r.code === selCode)!;
+		return regions.find((r) => r.code === selCode || r.code_short === selCode)!;
 	}
 	// National average
 	const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);

@@ -6,6 +6,7 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import { colors } from './scales';
 	import type { RegionWithData } from './mobilityData';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import { loadMobilityData, getRegionData, getRelatedRegions } from './mobilityData';
 
 	let promise: Promise<{
@@ -101,12 +102,11 @@
 				{@const regions = p.regions}
 
 				<div>
-					<div class="h-[40vh]">
+					<div class={PUBLIC_VERSION === 'at' ? 'h-[40vh]' : 'h-[60vh]'}>
 						<Map
 							{selectedPeriod}
 							regions={regions.map((d) => ({
-								code: d.code,
-								outline: d.outline,
+								code: PUBLIC_VERSION == 'at' ? d.code : d.code_short,
 								center: d.center,
 								name: d.name,
 								data:
