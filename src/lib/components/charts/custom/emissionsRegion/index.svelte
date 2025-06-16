@@ -161,6 +161,16 @@
 		});
 	}
 
+	// Automatically enable Pro-Kopf view when Bavaria (Bundesland Bayern) is selected
+	$: {
+		if (results.length > 0 && activeLayer) {
+			const selectedRegion = results.find(r => r.key === activeLayer);
+			if (selectedRegion && selectedRegion.layer_label === 'Bundesland' && selectedRegion.name.includes('Bayern')) {
+				showPerCapita = true;
+			}
+		}
+	}
+
 	// Helper function to get population data for a specific region
 	$: getPopulationForRegion = (regionId: string) => {
 		return populationByYear[regionId] || {};
