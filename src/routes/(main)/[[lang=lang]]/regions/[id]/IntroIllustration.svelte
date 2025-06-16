@@ -9,10 +9,11 @@
 	let expanded = {};
 	function toggleText(id) {
 		expanded[id] = !expanded[id];
+		currentImage[id] = !currentImage[id];
 	}
 </script>
 
-<div class="reg-card flex flex-col relative bg-black">
+<div class="reg-card flex flex-col relative bg-black" on:click={() => toggleImage(data.id)}>
 	<div class="relative flex-1 w-full h-full">
 		<img
 			src="https://base.klimadashboard.org/assets/{data.files[0].directus_files_id}?key=medium"
@@ -35,7 +36,6 @@
 	<button
 		class="cursor-pointer absolute top-2 right-2 w-16 h-16 shadow-2xl rounded-full bg-amber-200 rotate-3 hover:-rotate-2 transition flex items-center justify-center"
 		aria-label="Wie wär’s besser?"
-		on:click={() => toggleImage(data.id)}
 	>
 		<svg viewBox="0 0 120 120" class="absolute w-8/10 h-8/10 overflow-visible -rotate-[130deg]">
 			<defs>

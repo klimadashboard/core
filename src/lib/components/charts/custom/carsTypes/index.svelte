@@ -29,9 +29,9 @@
 			max: 20
 		},
 		{ label: 'Hybrid', key: 'Hybrid', colorKey: 'hybrid', chart: 'progressBar', min: 0, max: 20 },
-		{ label: 'Benzin', key: 'Benzin', colorKey: 'benzin', chart: 'progressBar', min: 0, max: 80 },
-		{ label: 'Diesel', key: 'Diesel', colorKey: 'diesel', chart: 'progressBar', min: 0, max: 80 },
-		{ label: 'Sonstige', key: 'Sonstige', colorKey: 'other', chart: 'progressBar', min: 0, max: 10 }
+		{ label: 'Benzin', key: 'Benzin', colorKey: 'benzin', chart: 'progressBar', min: 0, max: 60 },
+		{ label: 'Diesel', key: 'Diesel', colorKey: 'diesel', chart: 'progressBar', min: 0, max: 60 },
+		{ label: 'Sonstige', key: 'Sonstige', colorKey: 'other', chart: 'progressBar', min: 0, max: 20 }
 	];
 
 	// reactive defaults (run once on init)
@@ -175,14 +175,18 @@
 			return views.map((v) => {
 				const history = allP.map((period) => {
 					const abs = subs.map(
-						(r) => r.absoluteByCategory[v.key]?.find((d) => d.period === period)?.value || 0
+						(r) =>
+							r.absoluteByCategory[v.key]?.find((d) => String(d.period) === String(period))
+								?.value || 0
 					);
 					const pct = subs.map(
-						(r) => r.sharesByCategory[v.key]?.find((d) => d.period === period)?.value || 0
+						(r) =>
+							r.sharesByCategory[v.key]?.find((d) => String(d.period) === String(period))?.value ||
+							0
 					);
 					return {
 						period,
-						absolute: abs.reduce((a, b) => a + b, 0) / abs.length,
+						absolute: abs.reduce((a, b) => a + b, 0),
 						percentage: pct.reduce((a, b) => a + b, 0) / pct.length
 					};
 				});
@@ -267,7 +271,8 @@
 					/>
 					<p class="text-sm opacity-80 mt-4 leading-tight">
 						Datenquelle: {source}<br />
-						Hybrid beinhaltet Plug-In-Hybrid und Hybrid.
+						Hybrid beinhaltet Plug-In-Hybrid und Hybrid. Die Summe beträgt aufgrund von Rundungen nicht
+						unbedingt 100%.
 					</p>
 				</div>
 			</div>

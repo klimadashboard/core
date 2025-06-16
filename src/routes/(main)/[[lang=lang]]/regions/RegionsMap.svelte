@@ -181,7 +181,6 @@
 					if (tooltip) {
 						tooltip.innerHTML = `
 							<div class="font-bold">${region.name}</div>
-							<div class="opacity-80">${region.layer_label}</div>
 							<div class="opacity-80">${formatNumber(region.population || 0)} Einwohner:innen</div>
 							<div class="opacity-80">${region.area ? formatNumber(region.area) + ' km²' : '–'}</div>
 						`;

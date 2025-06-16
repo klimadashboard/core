@@ -21,7 +21,9 @@
 	$: powerUnit = getPowerUnit(maxRawValue);
 	$: convertedMax = convertToPowerUnit(maxRawValue, maxRawValue);
 
-	$: xScale = scaleLinear().domain([2000, new Date().getFullYear()]).range([0, innerChartWidth]);
+	const domain = [2000, new Date().getFullYear()];
+
+	$: xScale = scaleLinear().domain(domain).range([0, innerChartWidth]);
 
 	$: yScale = scaleLinear()
 		.domain([0, convertedMax * 1.1])
@@ -39,7 +41,9 @@
 		const { left } = event.currentTarget.getBoundingClientRect();
 		const x = event.clientX - left - margin.left;
 		const year = Math.round(xScale.invert(x));
-		hoveredYear = year;
+		if (year >= domain[0] && year <= domain[1]) {
+			hoveredYear = year;
+		}
 	}
 
 	function onMouseLeave() {
@@ -77,7 +81,7 @@
 	on:mousemove={onMouseMove}
 	on:mouseleave={onMouseLeave}
 >
-	<svg width={'100%'} height={'100%'} class="overflow-visible">
+	<svg width={'100%'} height={'100%'} class="">
 		<!-- X-Axis -->
 		<g transform="translate({margin.left},0)">
 			{#each xScale.ticks(Math.max(2, Math.floor(innerChartWidth / 50))) as year}

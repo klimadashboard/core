@@ -39,6 +39,12 @@
 						r={d.period === selectedPeriod ? 4 : 3}
 						class="{d.period == selectedPeriod ? 'opacity-100' : 'opacity-80'} fill-current"
 					/>
+					<text
+						x={xScale(d.period)}
+						y={yScale(d.value) - 7}
+						text-anchor="middle"
+						class="text-xs fill-current">{Math.round(d.value)}</text
+					>
 				{/each}
 				<g class="text-xs opacity-70">
 					{#each data as d}

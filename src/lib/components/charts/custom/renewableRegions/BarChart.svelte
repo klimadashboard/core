@@ -61,7 +61,6 @@
 					{formatPower(item[selectedVariable])}
 				</span>
 			{/each}
-			<span class="opacity-60 ml-1">{powerUnit}</span>
 		</div>
 	{/if}
 {/if}
@@ -91,8 +90,11 @@
 			<!-- y-axis -->
 			<g>
 				{#each yScale.ticks() as tick}
-					<g transform="translate(0,{yScale(tick)})" class="text-xs opacity-70">
-						<line x1="40" x2={chartWidth} y1="0" y2="0" class="stroke-current opacity-20" />
+					<g
+						transform="translate(0,{yScale(tick)})"
+						class="text-xs {tick == 0 ? 'opacity-100' : 'opacity-50'}"
+					>
+						<line x1="40" x2={chartWidth} y1="0" y2="0" class="stroke-current opacity-40" />
 						<text x="0" text-anchor="left" dominant-baseline="middle" class="fill-current">
 							{formatNumber(tick)}
 							{#if tick === yScale.ticks().at(-1)}{powerUnit}{/if}

@@ -27,7 +27,7 @@
 		},
 		DE: {
 			center: [10.45, 51.1657],
-			zoom: 4
+			zoom: 5
 		}
 	};
 
@@ -83,13 +83,10 @@
 		map.on('load', () => {
 			map.addSource('regions', {
 				type: 'vector',
-				url:
-					PUBLIC_VERSION === 'at'
-						? 'https://tiles.klimadashboard.org/data/municipalities-at.json'
-						: 'https://tiles.klimadashboard.org/data/districts-de.json'
+				url: `https://tiles.klimadashboard.org/data/municipalities-${PUBLIC_VERSION}.json`
 			});
 
-			let sourceLayer = PUBLIC_VERSION === 'at' ? 'municipalities' : 'districts';
+			let sourceLayer = 'municipalities';
 
 			map.addLayer({
 				id: 'regions-layer',
@@ -109,7 +106,7 @@
 				'source-layer': sourceLayer,
 				paint: {
 					'line-color': '#000',
-					'line-width': 0.5
+					'line-width': 0.1
 				}
 			});
 

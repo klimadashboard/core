@@ -106,7 +106,7 @@
 				{#if data.page.center}
 					<StaticMap
 						center={data.page.center}
-						zoom={data.page.area < 10000 ? 13 : 10}
+						zoom={data.page.population > 100000 ? 11 : 14}
 						outline={data.page.outline}
 					/>
 				{/if}
