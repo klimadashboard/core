@@ -6,7 +6,7 @@
 <div class="sticky top-12 py-4 bg-white dark:bg-gray-950 z-50" id="top">
 	<div class="container overflow-auto">
 		<div class="flex md:justify-between gap-4">
-			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
+			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION) && d.navigation !== false) as section}
 				<a href="#{section.id}" class="button">
 					{@html section.icon}
 					<span class="whitespace-nowrap">{section.title}</span></a

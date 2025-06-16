@@ -1,7 +1,9 @@
 <script>
 </script>
 
-<div class="my-8 container flex flex-col md:flex-row items-center justify-between">
+<div
+	class="my-4 container flex flex-col md:flex-row items-center justify-between border-y py-4 border-y-current/10"
+>
 	<div>
 		<p class="opacity-80 max-w-sm text-center leading-tight">
 			Regionale Klimadashboards werden gefördert durch die
@@ -12,7 +14,7 @@
 			class="h-24 mt-4"
 		/>
 	</div>
-	<div class="max-w-2xl text-lg">
+	<div class="max-w-2xl text-lg space-y-1">
 		<h2 class="text-2xl font-bold">Werde regionaler Klimadashboard-Supporter!</h2>
 		<p class=" leading-snug">
 			Spende jetzt fürs Klimadashboard und hilf uns, weitere Visualisierungen für deine Region zu

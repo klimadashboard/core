@@ -3,6 +3,7 @@
 	import Scroller from '@sveltejs/svelte-scroller';
 	import { browser } from '$app/environment';
 	import Intro from './Intro.svelte';
+	import Contact from './Contact.svelte';
 	import LazyChart from './LazyChart.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -85,6 +86,13 @@
 			]
 		},
 		{
+			title: 'Support',
+			id: 'support',
+			blocks: [Support],
+			countries: ['at', 'de'],
+			navigation: false
+		},
+		{
 			title: 'Heizungen',
 			id: 'heating',
 			description: '',
@@ -125,6 +133,13 @@
 				}
 			],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-temperature'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5' /><path d='M10 9l4 0' /></svg>"
+		},
+		{
+			title: 'Contact',
+			id: 'contact',
+			blocks: [Contact],
+			countries: ['at', 'de'],
+			navigation: false
 		},
 		{
 			title: 'Schnee',
@@ -179,7 +194,9 @@
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
 				<section id={section.id} class="mt-16 relative overflow-hidden">
 					<div>
-						<h2 class="container text-3xl">{section.title}</h2>
+						{#if section.navigation !== false}
+							<h2 class="container text-3xl">{section.title}</h2>
+						{/if}
 						{#if section.description}
 							<div class="container text-lg mt-2 mb-4">
 								<p class="max-w-xl">{section.description}</p>
@@ -207,6 +224,8 @@
 		</div></Scroller
 	>
 
+	<!--
 	<Support />
+	-->
 	<RelatedRegions {data} />
 </main>
