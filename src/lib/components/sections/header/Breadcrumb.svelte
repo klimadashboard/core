@@ -42,7 +42,7 @@
 			<li class="flex items-center">
 				<span class="opacity-50 mx-2">›</span>
 				<a href={crumb.href} class="hover:underline">
-					{crumb.label}
+					{crumb.label.replace('regions', 'Regionen')}
 				</a>
 			</li>
 		{/each}
