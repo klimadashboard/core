@@ -7,7 +7,7 @@
 	export let views;
 	export let selectedPeriod;
 
-	console.log(region);
+	$: console.log(region);
 </script>
 
 {#if region}

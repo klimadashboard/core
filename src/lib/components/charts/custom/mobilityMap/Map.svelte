@@ -33,8 +33,19 @@
 		return inside;
 	}
 
-	const vectorTilesURL = 'https://tiles.klimadashboard.org/data/pt_mismatch_all';
+	const vectorTilesURL = 'https://tiles.klimadashboard.org/data/mobility-at';
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
+
+	const gueteklassColors = {
+		none: '#f0f0f0',
+		G: '#d73027',
+		F: '#fc8d59',
+		E: '#fee08b',
+		D: '#d9ef8b',
+		C: '#91cf60',
+		B: '#1a9850',
+		A: '#006837'
+	};
 
 	const clearSelectedStates = () => {
 		selectedTiles.forEach((tile) => {
@@ -227,335 +238,69 @@
 		map.scrollZoom.disable();
 
 		map.on('load', () => {
-			map.addSource('bivariate', {
+			// add vector source
+			map.addSource('mobility-source', {
 				type: 'vector',
 				tiles: [`${vectorTilesURL}/{z}/{x}/{y}.pbf`],
-				tileSize: 512,
-				minzoom: 5,
+				minzoom: 4,
 				maxzoom: 14
 			});
 
-			// 1. Compute your original pop‐class (0–2) and pt‐class, but bump pt to 5 buckets (0–4)
-			const popClass = ['min', 2, ['floor', ['/', ['get', 'pop'], 10]]];
-			const ptClass = ['min', 4, ['floor', ['/', ['get', 'pt'], 1]]];
-
+			// add fill layer for gueteklass
 			map.addLayer({
-				id: 'bivariate-layer',
+				id: 'gueteklass-layer',
 				type: 'fill',
-				source: 'bivariate',
+				source: 'mobility-source',
+				'source-layer': 'merged',
+				paint: {
+					'fill-color': [
+						'match',
+						['get', 'gueteklass'],
+						'none',
+						gueteklassColors.none,
+						'G',
+						gueteklassColors.G,
+						'F',
+						gueteklassColors.F,
+						'E',
+						gueteklassColors.E,
+						'D',
+						gueteklassColors.D,
+						'C',
+						gueteklassColors.C,
+						'B',
+						gueteklassColors.B,
+						'A',
+						gueteklassColors.A,
+						'#ffffff' // fallback
+					],
+					'fill-opacity': 0.6
+				}
+			});
+
+			// optional: add outline
+			map.addLayer({
+				id: 'gueteklass-outline',
+				type: 'line',
+				source: 'mobility-source',
 				'source-layer': 'ptmismatch',
 				paint: {
-					'fill-color': getFillColor(),
-					'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.8, 0.5]
+					'line-color': '#ffffff',
+					'line-width': 0.5
 				}
-			});
-
-			// Outline layer AFTER fill layer
-			map.addLayer({
-				id: 'bivariate-outline',
-				type: 'line',
-				source: 'bivariate',
-				'source-layer': 'ptmismatch',
-				filter: [
-					'any',
-					['boolean', ['feature-state', 'selected'], false],
-					['boolean', ['feature-state', 'hover'], false],
-					['boolean', ['feature-state', 'nearby'], false]
-				],
-				paint: {
-					'line-color': [
-						'case',
-						['boolean', ['feature-state', 'selected'], true],
-						'#000000', // strong black for selected
-						['boolean', ['feature-state', 'hover'], true],
-						'#666666', // dark gray for hover
-						['boolean', ['feature-state', 'nearby'], true],
-						'#999999', // light gray for nearby
-						'#000000'
-					],
-					'line-width': [
-						'case',
-						['boolean', ['feature-state', 'selected'], true],
-						3, // thicker outline for selected
-						['boolean', ['feature-state', 'hover'], true],
-						1.5,
-						['boolean', ['feature-state', 'nearby'], true],
-						1,
-						0
-					],
-					'line-opacity': [
-						'case',
-						['boolean', ['feature-state', 'selected'], true],
-						0.6,
-						['boolean', ['feature-state', 'hover'], true],
-						0.8,
-						['boolean', ['feature-state', 'nearby'], true],
-						0.4,
-						0
-					]
-				}
-			});
-
-			map.addSource('austria-mask', {
-				type: 'geojson',
-				data: 'https://data.klimadashboard.org/at/austria.json'
-			});
-
-			map.addLayer({
-				id: 'outside-austria-mask',
-				type: 'fill',
-				source: 'austria-mask',
-				paint: {
-					'fill-color': '#ffffff',
-					'fill-opacity': 1
-				},
-				filter: ['!=', '$type', 'Polygon']
-			});
-
-			map.addSource(stopsSourceId, {
-				type: 'geojson',
-				data: {
-					type: 'FeatureCollection',
-					features: []
-				}
-			});
-
-			map.addLayer({
-				id: 'stops-layer',
-				type: 'circle',
-				source: stopsSourceId,
-				paint: {
-					'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 4],
-					'circle-color': [
-						'interpolate',
-						['linear'],
-						['get', 'interval'],
-						0,
-						'#eff3ff',
-						15,
-						'#bdd7e7',
-						30,
-						'#6baed6',
-						60,
-						'#2171b5'
-					],
-					'circle-stroke-color': '#ffffff',
-					'circle-stroke-width': 1
-				}
-			});
-
-			map.addLayer({
-				id: 'city-labels',
-				source: 'labels',
-				'source-layer': 'city-labels', // from Tippecanoe: -l city-labels
-				type: 'symbol',
-				layout: {
-					'text-field': ['get', 'name'],
-					'text-font': ['Noto Sans Regular'],
-					'text-size': 12,
-					'symbol-sort-key': ['get', 'population']
-				},
-				paint: {
-					'text-color': '#000',
-					'text-halo-color': '#fff',
-					'text-halo-width': 1
-				},
-				minzoom: 4
-			});
-
-			const outline = page.data.page.outline || false;
-
-			const bounds = outline.coordinates[0].reduce(
-				(b, [lon, lat]) => b.extend([lon, lat]),
-				new maplibregl.LngLatBounds(outline.coordinates[0][0], outline.coordinates[0][0])
-			);
-			map.fitBounds(bounds, { padding: 10, duration: 0 });
-
-			if (outline && outline.type === 'Polygon') {
-				// Zoom to the outline first
-				const bounds = outline.coordinates[0].reduce(
-					(b, [lon, lat]) => b.extend([lon, lat]),
-					new maplibregl.LngLatBounds(outline.coordinates[0][0], outline.coordinates[0][0])
-				);
-				map.fitBounds(bounds, { padding: 10, duration: 0 });
-
-				// Wait until tiles are loaded and rendered
-				map.once('idle', () => {
-					const tiles = map.queryRenderedFeatures({ layers: ['bivariate-layer'] });
-
-					const selected = tiles.filter((tile) => {
-						const coords = tile.geometry?.coordinates?.[0];
-						if (!coords || coords.length < 3) return false;
-
-						// Use centroid of tile (simplified bounding box)
-						const x = (coords[0][0] + coords[2][0]) / 2;
-						const y = (coords[0][1] + coords[2][1]) / 2;
-
-						return pointInPolygon([x, y], outline.coordinates);
-					});
-
-					if (selected.length > 0) {
-						setSelectedTiles(selected);
-					}
-				});
-			}
-
-			// Hover handling
-			map.on('mousemove', 'bivariate-layer', (e) => {
-				if (e.features.length > 0) {
-					map.getCanvas().style.cursor = 'pointer';
-					if (hoveredId !== null) {
-						updateFeatureState(hoveredId, { hover: false });
-					}
-					hoveredId = e.features[0].id;
-					updateFeatureState(hoveredId, { hover: true });
-				}
-			});
-
-			map.on('mouseleave', 'bivariate-layer', () => {
-				map.getCanvas().style.cursor = '';
-				if (hoveredId !== null) {
-					updateFeatureState(hoveredId, { hover: false });
-				}
-				hoveredId = null;
-			});
-
-			// Click handler
-			map.on('click', async (e) => {
-				if (map.getZoom() < 10) return;
-
-				const features = map.queryRenderedFeatures(e.point, { layers: ['bivariate-layer'] });
-				if (features.length === 0) return;
-
-				const feature = features[0];
-				if (feature.id == null) return;
-
-				setSelectedTiles([feature]);
-			});
-
-			map.addSource('selected-outline', {
-				type: 'geojson',
-				data: {
-					type: 'FeatureCollection',
-					features: []
-				}
-			});
-
-			map.addLayer({
-				id: 'selected-outline-layer',
-				type: 'line',
-				source: 'selected-outline',
-				paint: {
-					'line-color': '#000',
-					'line-width': 2,
-					'line-opacity': 0.5
-				}
-			});
-
-			updateStops();
-
-			// Shift+Drag selection
-			let dragStart = null;
-			let dragBoxEl = null;
-
-			map.on('mousedown', (e) => {
-				if (!e.originalEvent.shiftKey) return;
-
-				dragStart = e.point;
-
-				dragBoxEl = document.createElement('div');
-				dragBoxEl.style.position = 'absolute';
-				dragBoxEl.style.border = '2px dashed black';
-				dragBoxEl.style.background = 'rgba(0, 0, 0, 0.1)';
-				dragBoxEl.style.zIndex = '999';
-				dragBoxEl.style.pointerEvents = 'none';
-				document.body.appendChild(dragBoxEl);
-
-				const canvas = map.getCanvasContainer();
-				const startX = dragStart.x;
-				const startY = dragStart.y;
-
-				function onMouseMove(eMove) {
-					const curr = eMove.point;
-					const minX = Math.min(startX, curr.x);
-					const maxX = Math.max(startX, curr.x);
-					const minY = Math.min(startY, curr.y);
-					const maxY = Math.max(startY, curr.y);
-
-					dragBoxEl.style.left = minX + 'px';
-					dragBoxEl.style.top = minY + 'px';
-					dragBoxEl.style.width = maxX - minX + 'px';
-					dragBoxEl.style.height = maxY - minY + 'px';
-				}
-
-				function onMouseUp(eUp) {
-					map.off('mousemove', onMouseMove);
-					map.off('mouseup', onMouseUp);
-
-					if (dragBoxEl) {
-						document.body.removeChild(dragBoxEl);
-						dragBoxEl = null;
-					}
-
-					const end = eUp.point;
-					const bounds = [
-						[Math.min(startX, end.x), Math.min(startY, end.y)],
-						[Math.max(startX, end.x), Math.max(startY, end.y)]
-					];
-
-					const features = map.queryRenderedFeatures(bounds, { layers: ['bivariate-layer'] });
-
-					const selected = features
-						.filter((f) => f.id != null)
-						.map((f) => ({
-							id: f.id,
-							properties: f.properties,
-							geometry: f.geometry
-						}));
-
-					if (selected.length > 0) {
-						setSelectedTiles(selected);
-					}
-				}
-
-				map.on('mousemove', onMouseMove);
-				map.on('mouseup', onMouseUp);
 			});
 		});
-
-		map.on('moveend', () => updateStops());
-		map.on('zoom', () => updateStops());
 	});
-
-	$: updateLayerStyle(viewMode);
-
-	function updateLayerStyle(mode) {
-		if (!map || !map.getLayer('bivariate-layer')) return;
-		map.setPaintProperty('bivariate-layer', 'fill-color', getFillColor(mode));
-	}
-
-	let viewMode = 'mismatch';
 </script>
 
 <div id="mobilityMap" class="relative">
 	<div class="absolute top-2 p-1 left-2 text-xs flex items-center gap-3 z-20 bg-white">
-		<div class="flex gap-1 items-center">
-			<span style="background:#c6dbef" class="w-4 h-4 block"></span> <span>Low mismatch</span>
-		</div>
-		<div class="flex gap-1 items-center">
-			<span style="background:#fb6a4a" class="w-4 h-4 block"></span> <span>High mismatch</span>
-		</div>
-		<div class="flex gap-1 items-center">
-			<span style="background:#41ab5d" class="w-4 h-4 block"></span> <span>Excellent match</span>
-		</div>
-		<div>(preview version)</div>
-		<div class="controls">
-			<select id="viewMode" bind:value={viewMode}>
-				<option value="mismatch">Mismatch</option>
-				<option value="pop">Population</option>
-				<option value="pt">PT Quality</option>
-			</select>
-		</div>
+		{#each Object.values(gueteklassColors) as color, i}
+			<div class="flex gap-1 items-center">
+				<span style="background:{color}" class="w-4 h-4 block"></span>
+				<span>{Object.keys(gueteklassColors)[i]}</span>
+			</div>
+		{/each}
 	</div>
 
 	<div class="absolute top-2 right-10 z-20 p-2 bg-white bg-opacity-90 text-xs rounded shadow">
