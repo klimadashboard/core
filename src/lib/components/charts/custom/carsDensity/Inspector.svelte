@@ -6,15 +6,15 @@
 	export let region;
 	export let views;
 	export let selectedPeriod;
-
-	$: console.log(region);
 </script>
 
 {#if region}
-	<h2 class="text-2xl">
-		Autos in <span class="underline underline-offset-4" style="text-decoration-color: "
+	<h2 class="text-2xl max-w-lg text-balance leading-tight">
+		In <span class="underline underline-offset-4" style="text-decoration-color: "
 			>{region.name}</span
 		>
+		gibt es {formatNumber(region.cars[0].value)} Autos bei {formatNumber(region.population)}
+		Einwohner:innen.
 	</h2>
 	<div class="grid grid-cols-3 gap-3 mt-2">
 		{#each views as view}
@@ -23,19 +23,12 @@
 
 				<div class="flex">
 					<p class="text-4xl sm:text-5xl font-light tabular-nums">
-						{formatNumber(
+						{Math.round(
 							region[view.dataKey].find((d) => d.period == selectedPeriod)?.value
 						)}{view.unit}
 					</p>
-					<SmallLine {selectedPeriod} data={region[view.dataKey]} />
-				</div>
-				<div class="mt-1 bg-current/10 rounded-full h-2 relative overflow-hidden">
-					{#if view.chart === 'progressBar'}
-						<div
-							class="h-full relative left-0"
-							style="width: {region[view.dataKey].find((d) => d.period == selectedPeriod)
-								?.value}%; background: {view.color}"
-						></div>
+					{#if region[view.dataKey].length > 1}
+						<SmallLine {selectedPeriod} data={region[view.dataKey]} />
 					{/if}
 				</div>
 			</div>

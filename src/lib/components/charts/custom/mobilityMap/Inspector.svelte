@@ -120,35 +120,35 @@
 </script>
 
 <div
-	class="bg-white text-lg dark:bg-gray-900 border border-current/10 shadow p-4 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
+	class="bg-white text-lg dark:bg-gray-900 border border-current/10 shadow p-4 rounded-2xl -mt-16 z-30 relative max-w-3xl mx-auto"
 >
+	<div class="flex rounded-full overflow-hidden">
+		{#each gueteklassen as g}
+			<div
+				class="grid p-2 flex-1 {g.active ? 'border-2 opacity-100' : 'opacity-70'}"
+				style="background-color: {g.color}"
+			>
+				<span class="m-auto {g.active ? 'font-bold' : ''}">{g.label}</span>
+			</div>
+		{/each}
+	</div>
+	<div class="flex justify-between text-sm opacity-80">
+		<div class="border-l border-l-current/50 pt-4 pl-1 leading-[0.8em] ml-8">
+			keine öffentliche Anbindung
+		</div>
+		<div class="border-r border-r-current/50 pt-4 pr-1 leading-[0.8em] mr-8">
+			sehr gute Anbindung
+		</div>
+	</div>
+
 	{#if selectedTiles.length > 0}
-		<h2 class="text-2xl font-bold mb-2">
+		<h2 class="text-2xl font-bold mb-2 mt-4">
 			<span class="font-normal"
 				><span class="underline underline-offset-4 decoration-current/20"
 					>{locationName || 'unbekannt'}</span
 				>: Anbindung an den öffentlichen Verkehr
 			</span>
 		</h2>
-
-		<div class="flex rounded-full overflow-hidden mt-4">
-			{#each gueteklassen as g}
-				<div
-					class="grid p-2 flex-1 {g.active ? 'border-2 opacity-100' : 'opacity-70'}"
-					style="background-color: {g.color}"
-				>
-					<span class="m-auto {g.active ? 'font-bold' : ''}">{g.label}</span>
-				</div>
-			{/each}
-		</div>
-		<div class="flex justify-between text-sm opacity-80">
-			<div class="border-l border-l-current/50 pt-4 pl-1 leading-[0.8em] ml-8">
-				keine öffentliche Anbindung
-			</div>
-			<div class="border-r border-r-current/50 pt-4 pr-1 leading-[0.8em] mr-8">
-				sehr gute Anbindung
-			</div>
-		</div>
 
 		{#if stops.length > 0}
 			<h3 class="mb-2 mt-6 font-bold">Haltestellen in deiner Nähe</h3>
@@ -184,7 +184,7 @@
 			<p class="text-sm mt-6 text-gray-500">Keine Haltestellen in der Nähe.</p>
 		{/if}
 	{:else}
-		<p>
+		<p class="mt-4">
 			Wähle eine Region aus, um mehr Informationen zu der Anbindung an den öffentlichen Nahverkehr
 			zu erhalten.
 		</p>

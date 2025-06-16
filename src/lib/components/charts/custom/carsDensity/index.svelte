@@ -13,7 +13,7 @@
 		regions: RegionWithData[];
 		periods: string[];
 		source: string;
-		countryName: string;
+		country: RegionShape;
 		preselected?: string;
 	}>;
 
@@ -24,12 +24,11 @@
 	let selectedView: 'pop' | 'private' | 'company' = 'pop';
 	let selectedRegion: string | null = null;
 	let source: string;
-	let countryName: string;
-	let filteredRegions: RegionWithData[] = [];
+	let country: RegionShape;
 
 	const views = [
 		{
-			label: 'Autodichte',
+			label: 'Gesamt',
 			key: 'pop',
 			description: 'Autos pro 1000 Einwohner:innen',
 			color: colors.pop[1],
@@ -63,7 +62,7 @@
 			regions = payload.regions;
 			availablePeriods = payload.periods;
 			source = payload.source;
-			countryName = payload.countryName;
+			country = payload.country;
 			selectedRegion = payload.preselected ?? null;
 			selectedPeriodIndex = availablePeriods.length - 1;
 			return payload;
@@ -71,8 +70,6 @@
 	});
 
 	$: selectedPeriod = availablePeriods[selectedPeriodIndex];
-	$: inspectorRegion = getRegionData(regions, selectedRegion, countryName);
-	$: related = getRelatedRegions(regions, selectedRegion, selectedView, selectedPeriod);
 </script>
 
 <div>
@@ -126,19 +123,11 @@
 					<div
 						class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
 					>
-						<Inspector {views} {selectedPeriod} region={getRegionData(regions, selectedRegion)} />
-						<Search {regions} {selectedRegion} bind:filteredRegions />
-						<ul>
-							{#if filteredRegions.length}
-								{#each filteredRegions as region}
-									<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
-								{/each}
-							{:else}
-								{#each getRelatedRegions(regions, selectedRegion) as region}
-									<RelatedRegionCard bind:selectedRegion {views} {selectedPeriod} {region} />
-								{/each}
-							{/if}
-						</ul>
+						<Inspector
+							{views}
+							{selectedPeriod}
+							region={getRegionData(regions, selectedRegion, country)}
+						/>
 						<p class="text-sm opacity-80 mt-4">Datenquelle: {source}</p>
 					</div>
 				</div>

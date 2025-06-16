@@ -269,7 +269,7 @@
 
 				const bounds = new maplibregl.LngLatBounds();
 				feature.geometry.coordinates[0].forEach((coord) => bounds.extend(coord));
-				map.fitBounds(bounds, { padding: 40 });
+				map.fitBounds(bounds, { padding: 100, maxZoom: 13 });
 			}
 		});
 
@@ -292,7 +292,7 @@
 
 						const bounds = new maplibregl.LngLatBounds();
 						f.geometry.coordinates[0].forEach((coord) => bounds.extend(coord));
-						map.fitBounds(bounds, { padding: 500 });
+						map.fitBounds(bounds, { padding: 500, maxZoom: 13 });
 					}
 				});
 		}

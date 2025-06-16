@@ -33,7 +33,7 @@
 		.curve(curveMonotoneX); // smooth line
 </script>
 
-<div class="w-full max-w-40 h-16 px-2">
+<div class="w-full max-w-40 h-16 p-2">
 	<div class="w-full h-full" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 		{#if chartWidth && chartHeight}
 			<svg width={chartWidth} height={chartHeight} class="overflow-visible">
@@ -48,17 +48,20 @@
 						r={d.period === selectedPeriod ? 4 : 3}
 						class="{d.period == selectedPeriod ? 'opacity-100' : 'opacity-80'} fill-current"
 					/>
+					<text
+						x={xScale(d.period)}
+						y={yScale(d.percentage) - 7}
+						text-anchor="middle"
+						class="text-xs fill-current">{Math.round(d.percentage)}%</text
+					>
 				{/each}
 				<g class="text-xs opacity-70">
-					{#each data as d, i}
-						{#if d.period % 2 === 0 || data.length < 4}
-							<g transform="translate({xScale(d.period)},{chartHeight})" class="dark:fill-white">
-								<text
-									text-anchor={i == 0 ? 'start' : i == data.length - 1 ? 'end' : 'middle'}
-									class={selectedPeriod == d.period ? 'font-bold' : ''}>{d.period}</text
-								>
-							</g>
-						{/if}
+					{#each data as d}
+						<g transform="translate({xScale(d.period)},{chartHeight})" class="dark:fill-white">
+							<text text-anchor="middle" class={selectedPeriod == d.period ? 'font-bold' : ''}
+								>{d.period}</text
+							>
+						</g>
 					{/each}
 				</g>
 			</svg>

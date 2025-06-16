@@ -17,23 +17,22 @@ export interface RegionShape {
 	name: string;
 	layer: string;
 	country: string;
-	outline_simple: any;
 	population: number;
 	center?: [number, number];
 }
 
 export interface RegionWithData extends RegionShape {
-	outline: any;
 	carsPer1000Inhabitants: { period: string; value: number | null }[];
 	carsPrivateShare: { period: string; value: number | null }[];
 	carsCompanyShare: { period: string; value: number | null }[];
+	cars: { period: string; value: number | null }[];
 }
 
 interface LoadedMobilityData {
 	regions: RegionWithData[];
 	periods: string[];
 	source: string;
-	countryName: string;
+	country: RegionShape;
 	preselected?: string;
 }
 
@@ -63,11 +62,11 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 	// Load and filter region shapes
 	const layerFilter = 'municipality';
 	const allShapes = await getRegions();
+	const country = allShapes.find((r) => r.country == countryCode && r.layer == 'country');
+	if (!country) {
+		throw new Error(`No country metadata found for code "${countryCode}"`);
+	}
 	const shapes = allShapes.filter((r) => r.country === countryCode && r.layer === layerFilter);
-
-	// Load country metadata
-	const countryItem = await directus.request(readItem('countries', countryCode));
-	const countryName = countryItem?.name_de ?? countryCode;
 
 	// Enrich shapes with series data
 	const regions: RegionWithData[] = shapes.map((shape) => {
@@ -97,58 +96,97 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 			return { period: p, value: firmen != null && total ? (firmen / total) * 100 : null };
 		});
 
+		const cars = uniqPeriods.map((p) => {
+			const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
+			return { period: p, value: total };
+		});
+
 		return {
 			...shape,
-			outline: shape.outline_simple,
 			carsPer1000Inhabitants,
 			carsPrivateShare,
-			carsCompanyShare
+			carsCompanyShare,
+			cars
 		};
 	});
 
 	// Preselect region if URL matches
 	const preselected = findMatchingRegion(undefined, regions);
 
-	return { regions, periods, source, countryName, preselected };
+	return { regions, periods, source, country, preselected };
 }
 
 export function getRegionData(
 	regions: RegionWithData[],
 	selCode: string | null,
-	countryName: string
+	country: RegionShape
 ): RegionWithData {
 	if (selCode) {
 		return regions.find((r) => r.code === selCode || r.code_short === selCode)!;
 	}
-	// National average
-	const avg = (arr: number[]) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0);
+
 	const allPeriods = Array.from(
 		new Set(regions.flatMap((r) => r.carsPer1000Inhabitants.map((d) => d.period)))
 	).sort((a, b) => Number(a) - Number(b));
 
 	return {
 		code: 'ALL',
-		name: countryName,
+		name: country?.name ?? '',
+		population: country.population,
 		layer: 'national',
 		country: '',
-		outline_simple: null,
-		population: 0,
 		center: [10.45, 51.1657],
-		outline: null,
-		carsPer1000Inhabitants: allPeriods.map((p) => ({
-			period: p,
-			value: Math.round(
-				avg(regions.map((r) => r.carsPer1000Inhabitants.find((d) => d.period === p)?.value || 0))
-			)
-		})),
-		carsPrivateShare: allPeriods.map((p) => ({
-			period: p,
-			value: avg(regions.map((r) => r.carsPrivateShare.find((d) => d.period === p)?.value || 0))
-		})),
-		carsCompanyShare: allPeriods.map((p) => ({
-			period: p,
-			value: avg(regions.map((r) => r.carsCompanyShare.find((d) => d.period === p)?.value || 0))
-		}))
+		carsPer1000Inhabitants: allPeriods.map((p) => {
+			const totalCars = regions.reduce((sum, r) => {
+				const val = r.cars.find((d) => d.period === p)?.value;
+				return sum + (val ?? 0);
+			}, 0);
+			return {
+				period: p,
+				value: country.population > 0 ? Math.round((totalCars / country.population) * 1000) : null
+			};
+		}),
+		carsPrivateShare: allPeriods.map((p) => {
+			let totalPrivat = 0;
+			let total = 0;
+			for (const r of regions) {
+				const share = r.carsPrivateShare.find((d) => d.period === p)?.value;
+				const abs = r.cars.find((d) => d.period === p)?.value;
+				if (share != null && abs != null) {
+					const privatCars = (share / 100) * abs;
+					totalPrivat += privatCars;
+					total += abs;
+				}
+			}
+			return {
+				period: p,
+				value: total > 0 ? (totalPrivat / total) * 100 : null
+			};
+		}),
+		carsCompanyShare: allPeriods.map((p) => {
+			let totalFirmen = 0;
+			let total = 0;
+			for (const r of regions) {
+				const share = r.carsCompanyShare.find((d) => d.period === p)?.value;
+				const abs = r.cars.find((d) => d.period === p)?.value;
+				if (share != null && abs != null) {
+					const firmenCars = (share / 100) * abs;
+					totalFirmen += firmenCars;
+					total += abs;
+				}
+			}
+			return {
+				period: p,
+				value: total > 0 ? (totalFirmen / total) * 100 : null
+			};
+		}),
+		cars: allPeriods.map((p) => {
+			const sum = regions.reduce((sum, r) => {
+				const val = r.cars.find((d) => d.period === p)?.value;
+				return sum + (val ?? 0);
+			}, 0);
+			return { period: p, value: sum };
+		})
 	};
 }
 
@@ -156,7 +194,8 @@ export function getRelatedRegions(
 	regions: RegionWithData[],
 	selectedRegion: string | null,
 	viewKey: 'pop' | 'private' | 'company',
-	selectedPeriod: string
+	selectedPeriod: string,
+	country: RegionShape // ← explicitly passed
 ) {
 	type Rel = RegionWithData & { value: number; distance?: number; type: string; typeLabel: string };
 	const dataKey =
@@ -204,7 +243,7 @@ export function getRelatedRegions(
 
 		// national average entry
 		related.push({
-			...getRegionData(regions, null, ''),
+			...getRegionData(regions, null, country), // pass the actual country object
 			type: 'national',
 			typeLabel: 'Nationaler Durchschnitt'
 		} as any);
