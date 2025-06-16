@@ -30,7 +30,8 @@
 			const d = data.find((d: any) => d.category === cat);
 			return d ? { key: cat, label: d.category_label } : null;
 		})
-		.filter(Boolean);
+		.filter(Boolean)
+		.filter((cat: any) => !cat.label.toLowerCase().includes('kyoto'));
 
 	// Transform data based on showPerCapita flag and year-specific population
 	$: transformedData = showPerCapita && Object.keys(populationByYear).length > 0
