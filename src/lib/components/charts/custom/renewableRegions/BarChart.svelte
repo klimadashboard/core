@@ -61,7 +61,6 @@
 					{formatPower(item[selectedVariable])}
 				</span>
 			{/each}
-			<span class="opacity-60 ml-1">{powerUnit}</span>
 		</div>
 	{/if}
 {/if}
