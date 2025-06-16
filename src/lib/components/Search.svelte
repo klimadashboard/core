@@ -188,7 +188,7 @@
 </script>
 
 <div class="relative">
-	<div class="flex flex-col">
+	<div class="flex flex-wrap items-center gap-2">
 		<div class="relative w-full">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -219,7 +219,7 @@
 		</div>
 		<button
 			aria-label="Find location"
-			class="button bg-green-500! mt-2 cursor-pointer transition hover:bg-green-600!"
+			class="button bg-green-500! cursor-pointer transition hover:bg-green-600!"
 			on:click={findClosestRegion}
 		>
 			<svg

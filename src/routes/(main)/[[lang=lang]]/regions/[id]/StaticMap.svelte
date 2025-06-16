@@ -3,7 +3,7 @@
 	import maplibregl from 'maplibre-gl';
 
 	export let center;
-	export let zoom = 7;
+	export let zoom;
 	export let outline;
 
 	let mapContainer;
@@ -74,4 +74,4 @@
 	}
 </script>
 
-<div bind:this={mapContainer} class="w-full h-full absolute -z-50 opacity-70"></div>
+<div bind:this={mapContainer} class="w-full h-full absolute -z-50 opacity-100"></div>
