@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, tick, onMount } from 'svelte';
+	import { createEventDispatcher, onMount, tick } from 'svelte';
 
 	export let views = [];
 	export let activeView;
@@ -16,7 +16,7 @@
 
 	async function updateIndicator() {
 		await tick();
-		if (!container) return;
+		if (!container || type === 'small') return; // Skip indicator for small type
 
 		const btn = container.querySelector(`[data-key="${activeView}"]`);
 		if (!btn) return;
@@ -39,13 +39,14 @@
 
 <div
 	bind:this={container}
-	class="switch relative inline-flex rounded-full overflow-x-auto max-w-full
-	       bg-gray-100 dark:bg-gray-900
-py-1 border-2 border-current/10"
-	class:bg-white={type === 'primary'}
+	class="switch relative inline-flex rounded-full overflow-x-auto max-w-full no-scrollbar
+	       {type === 'small' ? 'bg-transparent gap-2' : 'bg-gray-100 dark:bg-gray-900 py-1 border-2 border-current/10'}
+	       {type === 'primary' ? 'bg-white' : ''}"
 >
-	<!-- overlay the indicator behind buttons -->
-	<div class="switch-indicator inset-y-0.5 absolute" style={indicatorStyle}></div>
+	<!-- overlay the indicator behind buttons for non-small types -->
+	{#if type !== 'small'}
+		<div class="switch-indicator inset-y-0.5 absolute" style={indicatorStyle}></div>
+	{/if}
 
 	{#each views as view (view.key)}
 		<button
@@ -53,8 +54,11 @@ py-1 border-2 border-current/10"
 			on:click={() => handleClick(view)}
 			disabled={view.disabled}
 			class="relative z-10 flex items-center rounded-full transition duration-200
-			       px-4 {view.key === activeView ? 'font-bold' : ''}
-			       {type === 'small' ? 'text-sm' : ''}
+			       {type === 'small' 
+					? (view.key === activeView 
+						? 'bg-gray-800 text-white px-4 py-2 font-semibold text-sm' 
+						: 'bg-gray-200 text-gray-700 px-4 py-2 text-sm hover:bg-gray-300')
+					: 'px-4 ' + (view.key === activeView ? 'font-bold' : '')}
 			       disabled:opacity-40 disabled:line-through"
 		>
 			{#if view.icon}
