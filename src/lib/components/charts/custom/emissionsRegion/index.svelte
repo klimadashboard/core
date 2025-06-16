@@ -161,6 +161,25 @@
 		});
 	}
 
+	// Filter views based on current page context - for Hamburg, only show "Gruppe Stadtstaaten"
+	$: filteredViews = (() => {
+		if (results.length > 0) {
+			// Check if we're on a Hamburg page by looking at current region candidates
+			const currentRegion = results.find(r => r.name.includes('Hamburg'));
+			if (currentRegion) {
+				// Only show "Gruppe Stadtstaaten" for Hamburg
+				return views.filter(v => v.label.includes('Stadtstaaten'));
+			}
+		}
+		// For all other regions, show all available views
+		return views;
+	})();
+
+	// Auto-select the appropriate view when filtered views change
+	$: if (filteredViews.length > 0 && (!activeLayer || !filteredViews.find(v => v.key === activeLayer))) {
+		activeLayer = filteredViews[0]?.key ?? null;
+	}
+
 	// Automatically enable Pro-Kopf view when Bavaria (Bundesland Bayern) is selected
 	$: {
 		if (results.length > 0 && activeLayer) {
@@ -186,7 +205,7 @@
 {:else}
 	<Switch
 		type="small"
-		{views}
+		views={filteredViews}
 		bind:activeView={activeLayer}
 		on:itemClick={(event) => {
 			activeLayer = event.detail;
