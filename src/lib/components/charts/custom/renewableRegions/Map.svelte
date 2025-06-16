@@ -293,7 +293,7 @@
 					'text-halo-width': 1
 				},
 				minzoom: 4,
-				maxzoom: 10
+				maxzoom: 9
 			});
 
 			mapReady = true;

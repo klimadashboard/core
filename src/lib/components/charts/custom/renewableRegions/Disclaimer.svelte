@@ -5,7 +5,7 @@
 	export let colors;
 </script>
 
-<div class="p-3 rounded-2xl mt-4 text-white leading-snug" style="background: {colors[1]}">
+<div class=" leading-snug my-4" style="">
 	<p>
 		{formatNumber(100 - ratio)}% aller im Marktstammdatenregister registrierten Solaranlagen in {region.name}
 		(ausgenommen Balkonkraftwerke) wurden noch nicht abschließend durch den Netzbetreiber geprüft. Die
