@@ -242,7 +242,7 @@
 				<path d="M20 12l2 0" />
 				<path d="M2 12l2 0" />
 			</svg>
-			<span>Finde meine Region</span>
+			<span>Finde deine Region</span>
 		</button>
 		<p class="text-xs opacity-80 mt-1">Deine Koordinaten werden nicht gespeichert.</p>
 	</div>

@@ -8,6 +8,7 @@
 
 	export let selectedRegion;
 	export let selectedTiles = [];
+	export let gueteklassColors;
 
 	let map;
 	let stopsSourceId = 'stops-json';
@@ -35,17 +36,6 @@
 
 	const vectorTilesURL = 'https://tiles.klimadashboard.org/data/mobility-at';
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
-
-	const gueteklassColors = {
-		none: '#f0f0f0',
-		G: '#d73027',
-		F: '#fc8d59',
-		E: '#fee08b',
-		D: '#d9ef8b',
-		C: '#91cf60',
-		B: '#1a9850',
-		A: '#006837'
-	};
 
 	const clearSelectedStates = () => {
 		selectedTiles.forEach((tile) => {
@@ -82,10 +72,10 @@
 
 	const updateFeatureState = (id, newState) => {
 		if (!map || id == null) return;
-		const current = map.getFeatureState({ source: 'bivariate', sourceLayer: 'ptmismatch', id });
+		const current = map.getFeatureState({ source: 'mobility-source', sourceLayer: 'merged', id });
 		const changed = Object.entries(newState).some(([k, v]) => current[k] !== v);
 		if (changed) {
-			map.setFeatureState({ source: 'bivariate', sourceLayer: 'ptmismatch', id }, newState);
+			map.setFeatureState({ source: 'mobility-source', sourceLayer: 'merged', id }, newState);
 		}
 	};
 
@@ -126,80 +116,6 @@
 		});
 	}
 
-	function getFillColor(mode) {
-		if (mode === 'pop') {
-			return [
-				'interpolate',
-				['linear'],
-				['get', 'pop'],
-				0,
-				'#deebf7',
-				10,
-				'#9ecae1',
-				20,
-				'#2171b5'
-			];
-		} else if (mode === 'pt') {
-			return ['interpolate', ['linear'], ['get', 'pt'], 0, '#edf8e9', 2, '#a1d99b', 4, '#31a354'];
-		} else {
-			const popClass = ['min', 2, ['floor', ['/', ['get', 'pop'], 10]]];
-			const ptClass = ['min', 4, ['floor', ['/', ['get', 'pt'], 1]]];
-
-			return [
-				'case',
-				['==', popClass, 0],
-				[
-					'interpolate',
-					['linear'],
-					ptClass,
-					0,
-					'#deebf7',
-					1,
-					'#c6dbef',
-					2,
-					'#9ecae1',
-					3,
-					'#6baed6',
-					4,
-					'#2171b5'
-				],
-				['==', popClass, 1],
-				[
-					'interpolate',
-					['linear'],
-					ptClass,
-					0,
-					'#fcbba1',
-					1,
-					'#e79a8f',
-					2,
-					'#bdbdbd',
-					3,
-					'#a1d99b',
-					4,
-					'#74c476'
-				],
-				['==', popClass, 2],
-				[
-					'interpolate',
-					['linear'],
-					ptClass,
-					0,
-					'#fb6a4a',
-					1,
-					'#fa836c',
-					2,
-					'#fcae91',
-					3,
-					'#82a360',
-					4,
-					'#41ab5d'
-				],
-				'#ffffff'
-			];
-		}
-	}
-
 	onMount(() => {
 		map = new maplibregl.Map({
 			container: 'mobilityMap',
@@ -231,7 +147,7 @@
 			center: [13.3, 47.5],
 			zoom: 7,
 			minZoom: 5,
-			maxZoom: 14
+			maxZoom: 16
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -243,7 +159,7 @@
 				type: 'vector',
 				tiles: [`${vectorTilesURL}/{z}/{x}/{y}.pbf`],
 				minzoom: 4,
-				maxzoom: 14
+				maxzoom: 12
 			});
 
 			// add fill layer for gueteklass
@@ -274,22 +190,112 @@
 						gueteklassColors.A,
 						'#ffffff' // fallback
 					],
-					'fill-opacity': 0.6
+					'fill-opacity': 0.5
 				}
 			});
 
-			// optional: add outline
 			map.addLayer({
-				id: 'gueteklass-outline',
+				id: 'hover-outline',
 				type: 'line',
 				source: 'mobility-source',
-				'source-layer': 'ptmismatch',
+				'source-layer': 'merged',
 				paint: {
-					'line-color': '#ffffff',
-					'line-width': 0.5
+					'line-color': '#000',
+					'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2, 0]
 				}
 			});
+
+			map.addLayer({
+				id: 'city-labels',
+				source: 'labels',
+				'source-layer': 'city-labels',
+				type: 'symbol',
+				layout: {
+					'text-field': ['get', 'name'],
+					'text-font': ['Noto Sans Regular'],
+					'text-size': 12,
+					'symbol-sort-key': ['get', 'population']
+				},
+				paint: {
+					'text-color': '#000',
+					'text-halo-color': '#fff',
+					'text-halo-width': 1
+				},
+				minzoom: 4,
+				maxzoom: 9
+			});
 		});
+
+		map.on('mousemove', 'gueteklass-layer', (e) => {
+			if (e.features.length > 0) {
+				if (hoveredId !== null) {
+					map.setFeatureState(
+						{ source: 'mobility-source', sourceLayer: 'merged', id: hoveredId },
+						{ hover: false }
+					);
+				}
+				hoveredId = e.features[0].id;
+				map.setFeatureState(
+					{ source: 'mobility-source', sourceLayer: 'merged', id: hoveredId },
+					{ hover: true }
+				);
+			}
+		});
+
+		map.on('mouseenter', 'gueteklass-layer', () => {
+			map.getCanvas().style.cursor = 'pointer';
+		});
+
+		map.on('mouseleave', 'gueteklass-layer', () => {
+			map.getCanvas().style.cursor = '';
+			if (hoveredId !== null) {
+				map.setFeatureState(
+					{ source: 'mobility-source', sourceLayer: 'merged', id: hoveredId },
+					{ hover: false }
+				);
+				hoveredId = null;
+			}
+		});
+
+		map.on('click', 'gueteklass-layer', (e) => {
+			if (e.features.length > 0) {
+				const feature = e.features[0];
+
+				setSelectedTiles([feature]);
+				selectedRegion = {
+					id: feature.id,
+					properties: feature.properties
+				};
+
+				const bounds = new maplibregl.LngLatBounds();
+				feature.geometry.coordinates[0].forEach((coord) => bounds.extend(coord));
+				map.fitBounds(bounds, { padding: 40 });
+			}
+		});
+
+		const center = page?.data?.region?.center;
+		if (center) {
+			map
+				.querySourceFeatures('mobility-source', {
+					sourceLayer: 'ptmismatch'
+				})
+				.forEach((f) => {
+					if (
+						f.geometry.type === 'Polygon' &&
+						pointInPolygon(center.map(Number), f.geometry.coordinates)
+					) {
+						setSelectedTiles([f]);
+						selectedRegion = {
+							id: f.id,
+							properties: f.properties
+						};
+
+						const bounds = new maplibregl.LngLatBounds();
+						f.geometry.coordinates[0].forEach((coord) => bounds.extend(coord));
+						map.fitBounds(bounds, { padding: 500 });
+					}
+				});
+		}
 	});
 </script>
 

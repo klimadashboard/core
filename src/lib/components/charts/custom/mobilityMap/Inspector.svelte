@@ -1,7 +1,6 @@
 <script>
-	import Tachometer from './Tachometer.svelte';
-
 	export let selectedTiles = [];
+	export let gueteklassColors;
 
 	const MAX_POP = 100;
 	const MAX_PT = 7;
@@ -107,15 +106,17 @@
 		}
 	}
 
-	const scaleBar = (val, max = 100) => `width: ${Math.min(100, (val / max) * 100)}%`;
-
 	const getInterval = (interval) => {
 		if (!interval || isNaN(interval)) return '–';
 		if (interval < 120) return `alle ${Math.round(interval)} min.`;
 		return `alle ${Math.round(interval / 60)} Std.`;
 	};
 
-	$: mismatch = ptPercent - popPercent;
+	$: gueteklassen = Object.values(gueteklassColors).map((d, i) => ({
+		label: Object.keys(gueteklassColors)[i],
+		color: d,
+		active: selectedTiles?.[0]?.properties?.gueteklass == Object.keys(gueteklassColors)[i]
+	}));
 </script>
 
 <div
@@ -123,57 +124,31 @@
 >
 	{#if selectedTiles.length > 0}
 		<h2 class="text-2xl font-bold mb-2">
-			Qualität des öffentlichen Verkehrs <span class="font-normal"
-				>nahe <span class="underline underline-offset-4 decoration-current/20"
+			<span class="font-normal"
+				><span class="underline underline-offset-4 decoration-current/20"
 					>{locationName || 'unbekannt'}</span
-				>
-
-				im Vergleich zur Bevölkerungsdichte {#if selectedTiles.length > 1}(Durchschnittswerte über {selectedTiles.length}
-					Zellen){/if}</span
-			>
+				>: Anbindung an den öffentlichen Verkehr
+			</span>
 		</h2>
 
-		<div class="mb-2">
-			{#if mismatch < -10}
-				<p>
-					Dieses Gebiet ist <span class="underline underline-offset-4 decoration-[#e53e3e]"
-						>nicht ausreichend</span
-					> an den öffentlichen Verkehr angebunden.
-				</p>
-			{:else if mismatch > 30}
-				<p>
-					Dieses Gebiet ist <span class="underline underline-offset-4 decoration-[#3FB375]"
-						>besonders gut</span
-					> an den öffentlichen Verkehr angebunden.
-				</p>
-			{:else}
-				<p>Die Anbindung an den öffentlichen Verkehr in diesem Gebiet ist relativ ausgewogen.</p>
-			{/if}
+		<div class="flex rounded-full overflow-hidden mt-4">
+			{#each gueteklassen as g}
+				<div
+					class="grid p-2 flex-1 {g.active ? 'border-2 opacity-100' : 'opacity-70'}"
+					style="background-color: {g.color}"
+				>
+					<span class="m-auto {g.active ? 'font-bold' : ''}">{g.label}</span>
+				</div>
+			{/each}
 		</div>
-
-		{#if popPercent && ptPercent}
-			<Tachometer {popPercent} {ptPercent} />
-		{/if}
-
-		<h3 class="mb-2 mt-6 font-bold">Regionen mit Ausbaupotential</h3>
-		<table class="text-sm">
-			<thead>
-				<tr>
-					<th>Priorität</th>
-					<th>Region</th>
-					<th>Ausbaulücke</th>
-					<th>Link zur Karte</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>#1</td>
-					<td>Region ABC</td>
-					<td>(in Entwicklung)</td>
-					<td> </td>
-				</tr>
-			</tbody>
-		</table>
+		<div class="flex justify-between text-sm opacity-80">
+			<div class="border-l border-l-current/50 pt-4 pl-1 leading-[0.8em] ml-8">
+				keine öffentliche Anbindung
+			</div>
+			<div class="border-r border-r-current/50 pt-4 pr-1 leading-[0.8em] mr-8">
+				sehr gute Anbindung
+			</div>
+		</div>
 
 		{#if stops.length > 0}
 			<h3 class="mb-2 mt-6 font-bold">Haltestellen in deiner Nähe</h3>
@@ -206,7 +181,7 @@
 				</table>
 			</div>
 		{:else}
-			<p class="text-sm text-gray-500">Keine Haltestellen in der Nähe.</p>
+			<p class="text-sm mt-6 text-gray-500">Keine Haltestellen in der Nähe.</p>
 		{/if}
 	{:else}
 		<p>

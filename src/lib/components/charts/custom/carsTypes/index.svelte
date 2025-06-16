@@ -175,10 +175,14 @@
 			return views.map((v) => {
 				const history = allP.map((period) => {
 					const abs = subs.map(
-						(r) => r.absoluteByCategory[v.key]?.find((d) => d.period === period)?.value || 0
+						(r) =>
+							r.absoluteByCategory[v.key]?.find((d) => String(d.period) === String(period))
+								?.value || 0
 					);
 					const pct = subs.map(
-						(r) => r.sharesByCategory[v.key]?.find((d) => d.period === period)?.value || 0
+						(r) =>
+							r.sharesByCategory[v.key]?.find((d) => String(d.period) === String(period))?.value ||
+							0
 					);
 					return {
 						period,
