@@ -262,42 +262,36 @@
 		}}
 	/>
 
-	<div class="flex items-center justify-between mt-4">
-		<!-- Left: (optional) Chart title or other content -->
-		<div>
-			<!-- You can put a title or leave empty -->
-		</div>
-		<!-- Right: Pro-Kopf Toggle -->
-		<label
-			class="flex gap-1 text-sm items-center {showPerCapita ? 'text-gray-700' : 'text-gray-400'}"
-			transition:fade
+	<!-- Pro-Kopf Toggle moved to left side under title -->
+	<label
+		class="flex gap-1 text-sm items-center mt-3 {showPerCapita ? 'text-gray-700' : 'text-gray-400'}"
+		transition:fade
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-5 w-5 icon icon-tabler icon-tabler-users"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			stroke-width="2"
+			stroke="currentColor"
+			fill="none"
+			stroke-linecap="round"
+			stroke-linejoin="round"
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5 icon icon-tabler icon-tabler-users"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-				<circle cx="9" cy="7" r="4" />
-				<path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-				<path d="M16 3.13a4 4 0 0 1 0 7.75" />
-				<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
-			</svg>
-			<span>Pro-Kopf Emissionen?</span>
-			<input 
-				type="checkbox" 
-				bind:checked={showPerCapita} 
-				disabled={!results.some(r => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0)}
-			/>
-		</label>
-	</div>
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<circle cx="9" cy="7" r="4" />
+			<path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+			<path d="M16 3.13a4 4 0 0 1 0 7.75" />
+			<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+		</svg>
+		<span>Pro-Kopf Emissionen?</span>
+		<input 
+			type="checkbox" 
+			bind:checked={showPerCapita} 
+			disabled={!results.some(r => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0)}
+		/>
+	</label>
 
 	{#each results as r}
 		{#if r.key === activeLayer}
