@@ -98,7 +98,7 @@
 
 	<!-- Centered text -->
 	<div
-		class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-20"
+		class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-20 w-5/6"
 	>
 		<h3 class="text-4xl font-light text-black dark:text-white">Coming soon</h3>
 		<p class="text-black/80 dark:text-white/80 mt-2 leading-tight">{text}</p>

@@ -2,12 +2,14 @@
 	import { onMount } from 'svelte';
 	import Map from './Map.svelte';
 	import Inspector from './Inspector.svelte';
-	import Search from './Search.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import Loader from '$lib/components/Loader.svelte';
 	import { colors } from './scales';
 	import type { RegionWithData } from './mobilityData';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { loadMobilityData, getRegionData, getRelatedRegions } from './mobilityData';
+	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
+	import { page } from '$app/state';
 
 	let promise: Promise<{
 		regions: RegionWithData[];
@@ -63,7 +65,7 @@
 			availablePeriods = payload.periods;
 			source = payload.source;
 			country = payload.country;
-			selectedRegion = payload.preselected ?? null;
+			selectedRegion = payload.preselected ?? findMatchingRegion(page.data.page, regions);
 			selectedPeriodIndex = availablePeriods.length - 1;
 			return payload;
 		});
@@ -93,9 +95,11 @@
 			on:itemClick={(e) => (selectedView = e.detail)}
 		/>
 	</div>
-	<div class="">
-		{#if selectedView && selectedPeriod}
-			{#await promise then p}
+	<div class="min-h-[60vh]">
+		{#await promise}
+			<Loader />
+		{:then p}
+			{#if selectedView && selectedPeriod}
 				{@const regions = p.regions}
 
 				<div>
@@ -131,7 +135,7 @@
 						<p class="text-sm opacity-80 mt-4">Datenquelle: {source}</p>
 					</div>
 				</div>
-			{/await}
-		{/if}
+			{/if}
+		{/await}
 	</div>
 </div>

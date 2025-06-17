@@ -9,6 +9,7 @@
 	let chartHeight;
 
 	export let data;
+	export let selectedEnergy;
 
 	let margin = { top: 0, right: 20, bottom: 20, left: 40 };
 
@@ -18,7 +19,7 @@
 	// Determine max value across all series
 	$: maxRawValue = Math.max(...data.flatMap((d) => d.data.map((d) => d.value)));
 
-	$: powerUnit = getPowerUnit(maxRawValue);
+	$: powerUnit = getPowerUnit(maxRawValue, selectedEnergy);
 	$: convertedMax = convertToPowerUnit(maxRawValue, maxRawValue);
 
 	const domain = [2000, new Date().getFullYear()];

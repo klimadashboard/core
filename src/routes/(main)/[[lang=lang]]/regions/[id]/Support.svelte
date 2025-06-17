@@ -2,7 +2,7 @@
 </script>
 
 <div
-	class="my-4 container flex flex-col md:flex-row items-center justify-between border-y py-4 border-y-current/10"
+	class="my-4 container flex flex-col md:flex-row items-center gap-8 justify-between border-y py-4 border-y-current/10"
 >
 	<div class="max-w-2xl text-lg space-y-1">
 		<h2 class="text-2xl font-bold">Werde regionaler Klimadashboard-Supporter!</h2>
@@ -36,7 +36,7 @@
 		>
 	</div>
 	<div>
-		<p class="opacity-80 max-w-sm text-center leading-tight">
+		<p class="opacity-80 max-w-sm leading-tight">
 			Regionale Klimadashboards werden gefördert durch die
 		</p>
 		<img

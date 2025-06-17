@@ -39,6 +39,7 @@
 	};
 
 	let municipalities = regions
+		.filter((d) => d.visible)
 		.map((r) => ({
 			...r,
 			distance: r.center && region.center ? getDistance(r.center, region.center) : 0
@@ -167,6 +168,7 @@
 		{/if}
 		<div class:opacity-30={loading} class:pointer-events-none={loading}>
 			<LineChart
+				{selectedEnergy}
 				data={data.map((d, i) => ({
 					label: d.name,
 					data: d.data.by_year.map((entry) => ({

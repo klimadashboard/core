@@ -46,23 +46,25 @@
 	}
 
 	// Reactively re-run when `page.data.page` changes
-	$: loadRegions(data.page);
+	$: if (data.page) loadRegions(data.page);
 </script>
 
-<div class="container">
-	<h3 class="text-sm pb-1 border-b border-b-current/20 mb-2">Entdecke weitere Regionen</h3>
-</div>
-<div class="grid grid-cols-2 gap-1 md:grid-cols-4 my-1">
-	{#each relatedRegions as region, i}
-		<a
-			class="rounded-2xl bg-gray-50 dark:bg-gray-900 p-4 hover:bg-current/10"
-			href="/regions/{region.id}"
-		>
-			<p class="uppercase font-bold tracking-wide text-sm">
-				{i < 7 ? 'In der Nähe' : 'Ähnliche Bevölkerung'}
-			</p>
-			<h3 class="text-3xl">{region.name}</h3>
-			<p>{formatNumber(region.population)} Einwohner*innen</p>
-		</a>
-	{/each}
-</div>
+{#if relatedRegions.length > 0}
+	<div class="container">
+		<h3 class="text-sm pb-1 border-b border-b-current/20 mb-2">Entdecke weitere Regionen</h3>
+	</div>
+	<div class="grid grid-cols-2 gap-1 md:grid-cols-4 my-1">
+		{#each relatedRegions as region, i}
+			<a
+				class="rounded-2xl bg-gray-50 dark:bg-gray-900 p-4 hover:bg-current/10"
+				href="/regions/{region.id}"
+			>
+				<p class="uppercase font-bold tracking-wide text-sm">
+					{i < 7 ? 'In der Nähe' : 'Ähnliche Bevölkerung'}
+				</p>
+				<h3 class="text-2xl md:text-3xl hyphens-auto leading-none my-1">{region.name}</h3>
+				<p>{formatNumber(region.population)} Einwohner</p>
+			</a>
+		{/each}
+	</div>
+{/if}

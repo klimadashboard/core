@@ -118,7 +118,8 @@
 						<div class="">
 							<p class="text-xl font-bold max-w-md leading-tight">
 								Das Klimadashboard {data.page.name} zeigt die Auswirkungen der Klimakrise in deiner Region
-								und begleitet die Umsetzung der Energie-, Mobilitäts- und Klimawende bei dir vor Ort.
+								und begleitet die Umsetzung der Energie- und Mobilitätswende und weitere Klimaschutzmaßnahmen
+								bei dir vor Ort.
 							</p>
 							<div class="flex gap-2 mt-2 items-center flex-wrap leading-none">
 								<div class="flex items-center gap-1">

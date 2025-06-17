@@ -1,6 +1,7 @@
 <script>
 	export let selectedTiles = [];
 	export let gueteklassColors;
+	export let categories;
 
 	const MAX_POP = 100;
 	const MAX_PT = 7;
@@ -11,6 +12,10 @@
 	let stops = [];
 
 	let debounceTimeout;
+
+	function getGueteklass(category) {
+		return categories.find((c) => c.category == category)?.gueteklass;
+	}
 
 	function getCenterFromGeometry(tile) {
 		const coords = tile.geometry?.coordinates?.[0];
@@ -96,7 +101,7 @@
 
 		try {
 			const res = await fetch(
-				`https://base.klimadashboard.org/get-nearby-stops?lat=${lat}&lon=${lng}&radius_km=0.5`
+				`https://base.klimadashboard.org/get-nearby-stops?lat=${lat}&lon=${lng}&radius_km=1`
 			);
 			const data = await res.json();
 			stops = data || [];
@@ -113,7 +118,7 @@
 	};
 
 	$: gueteklassen = Object.values(gueteklassColors).map((d, i) => ({
-		label: Object.keys(gueteklassColors)[i],
+		label: Object.keys(gueteklassColors)[i].replace('none', 'X'),
 		color: d,
 		active: selectedTiles?.[0]?.properties?.gueteklass == Object.keys(gueteklassColors)[i]
 	}));
@@ -133,12 +138,10 @@
 		{/each}
 	</div>
 	<div class="flex justify-between text-sm opacity-80">
-		<div class="border-l border-l-current/50 pt-4 pl-1 leading-[0.8em] ml-8">
+		<div class="border-l border-l-current/50 pt-4 pl-1 leading-[1em] ml-8">
 			keine öffentliche Anbindung
 		</div>
-		<div class="border-r border-r-current/50 pt-4 pr-1 leading-[0.8em] mr-8">
-			sehr gute Anbindung
-		</div>
+		<div class="border-r border-r-current/50 pt-4 pr-1 leading-[1em] mr-8">sehr gute Anbindung</div>
 	</div>
 
 	{#if selectedTiles.length > 0}
@@ -151,13 +154,13 @@
 		</h2>
 
 		{#if stops.length > 0}
-			<h3 class="mb-2 mt-6 font-bold">Haltestellen in deiner Nähe</h3>
+			<h3 class="mb-2 mt-6 font-bold">Haltestellen im Umkreis von 1km</h3>
 			<div class="max-w-full overflow-scroll text-sm">
 				<table>
 					<thead>
 						<tr>
 							<th>Name</th>
-							<th>Kategorie</th>
+							<th>Güteklasse</th>
 							<th>Intervall</th>
 							<th>Linien</th>
 						</tr>
@@ -166,7 +169,13 @@
 						{#each stops as stop}
 							<tr>
 								<td>{stop.name}</td>
-								<td>{stop.category}</td>
+								<td
+									><span
+										style="background-color: {gueteklassColors[getGueteklass(stop.category)]}"
+										class="w-5 h-5 rounded-full block text-white font-bold px-1.5"
+										>{getGueteklass(stop.category)}</span
+									></td
+								>
 								<td>{getInterval(stop.interval)}</td>
 								<td>
 									{#each stop.lines.filter((d) => d !== 'nan') as line}
@@ -185,8 +194,7 @@
 		{/if}
 	{:else}
 		<p class="mt-4">
-			Wähle eine Region aus, um mehr Informationen zu der Anbindung an den öffentlichen Nahverkehr
-			zu erhalten.
+			Wähle eine Zelle aus, um mehr Details zur Anbindung an den öffentlichen Verkehr zu erhalten.
 		</p>
 	{/if}
 	<p class="text-sm opacity-70 mt-2">
