@@ -6,6 +6,7 @@
 	import Disclaimer from './Disclaimer.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { REGION_COLORS } from '../mobilityRenewableShare/constants';
 
 	export let region;
 	export let data;
@@ -68,6 +69,9 @@
 					? 'Solaranlagen'
 					: 'Windräder'} registriert.
 			</h2>
+			<p class="text-lg">
+					Das kann unterschiedliche Gründe haben – in dicht bebauten Gebieten wie zum Beispiel Großstädten fehlen häufig die Flächen, an anderen Orten fehlt es bislang an politischem oder gesellschaftlichem Willen. Häufig wird Strom aus Windenergie dann aus benachbarten Gemeinden mitgenutzt. Insgesamt zeigen sich in Deutschland regionale Unterschiede: Während im Norden bereits viele Windräder stehen, ist der Ausbau im Süden noch vergleichsweise gering – trotz vorhandener Flächen.
+			</p>
 		{:else}
 			<div class="flex justify-between">
 				<h2 class="text-lg mb-4">
@@ -151,6 +155,10 @@
 
 				<BarChart data={result.by_year} {colors} />
 				<p class="text-sm mt-2 opacity-80">{source}</p>
+
+				<p class="text-lg">
+					Schaut man nicht nur auf die jährlich installierte Leistung, sondern auf die kumulative Gesamtleistung, die in {region.name} installiert ist, ergibt sich die Kurve in der folgenden Grafik. Erkunde hierbei auch den flächenbezogenen Vergleich zu benachbarten Gemeinden, der durchschnittlichen Entwicklung verschiedener Bundesländer oder sogar für ganz Deutschland.
+				</p>	
 			{/if}
 
 			<h3 class="mt-6 font-bold">Kumulative Leistung</h3>
