@@ -11,6 +11,7 @@
 	let chartWidth: number;
 	let chartHeight: number;
 	let activeCategory = 'all';
+	let hoveredYear: { year: number; sectors: any[]; x: number; y: number } | null = null;
 
 	$: margin = { top: 20, right: 20, bottom: 20, left: 90 };
 	$: chartWidth = chartWidth || 800;
@@ -176,7 +177,7 @@
 			{/if}
 		</p>
 
-		<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-80 mt-4">
+		<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-80 mt-4 relative">
 			{#if chartWidth && chartHeight}
 				<svg width="100%" height="100%">
 					<!-- x-axis -->
@@ -221,6 +222,20 @@
 											width={barWidth}
 											height={yScale(s.start) - yScale(s.end)}
 											fill={s.color}
+											on:mouseenter={(e) => {
+												const target = e.target as SVGRectElement;
+												if (target) {
+													hoveredYear = {
+														year: yearData.year,
+														sectors: yearData.sectors,
+														x: xScale(yearData.year) + margin.left - 50,
+														y: yScale(s.end) + margin.top - 10
+													};
+												}
+											}}
+											on:mouseleave={() => {
+												hoveredYear = null;
+											}}
 										>
 											<title>{s.label}: {formatNumber(s.value)} {unit}</title>
 										</rect>
@@ -233,6 +248,20 @@
 											width={barWidth}
 											height={innerChartHeight - yScale(s.value)}
 											fill={s.color}
+											on:mouseenter={(e) => {
+												const target = e.target as SVGRectElement;
+												if (target) {
+													hoveredYear = {
+														year: yearData.year,
+														sectors: yearData.sectors,
+														x: xScale(yearData.year) + margin.left - 50,
+														y: yScale(s.value) + margin.top - 10
+													};
+												}
+											}}
+											on:mouseleave={() => {
+												hoveredYear = null;
+											}}
 										>
 											<title>{s.label}: {formatNumber(s.value)} {unit}</title>
 										</rect>
@@ -282,6 +311,44 @@
 						</g>
 					{/if}
 				</svg>
+
+				<!-- Hover tooltip directly over chart -->
+				{#if hoveredYear}
+					<div 
+						class="absolute z-50 pointer-events-none top-0 left-0"
+					>
+						<div class="flex flex-wrap gap-2 p-2">
+							{#if activeCategory === 'all'}
+								{#each hoveredYear.sectors
+									.slice()
+									.sort((a: any, b: any) => b.value - a.value) as s}
+									{#if s.value > 0}
+										<div
+											class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-medium shadow-lg"
+											style="background-color: {s.color}"
+										>
+											<span class="uppercase font-bold">{s.label}</span>
+											<span class="ml-2">{formatNumber(s.value)} {unit.includes('Mio') ? 'Mio' : ''} {unit.split(' ')[1] || 't THG'}</span>
+										</div>
+									{/if}
+								{/each}
+							{:else}
+								{#each hoveredYear.sectors.filter((s: any) => s.sector === activeCategory) as s}
+									{#if s.value > 0}
+										<div
+											class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-medium shadow-lg"
+											style="background-color: {s.color}"
+										>
+											<span class="uppercase font-bold">{s.label}</span>
+											<span class="ml-2">{formatNumber(s.value)} {unit.includes('Mio') ? 'Mio' : ''} {unit.split(' ')[1] || 't THG'}</span>
+											<span class="ml-1 opacity-75">({hoveredYear.year})</span>
+										</div>
+									{/if}
+								{/each}
+							{/if}
+						</div>
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>
