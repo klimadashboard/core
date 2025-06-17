@@ -15,9 +15,26 @@
 		B: '#1a9850',
 		A: '#006837'
 	};
+
+	const categories = [
+		{ category: 'I', gueteklass: 'A' },
+		{ category: 'II', gueteklass: 'B' },
+		{ category: 'III', gueteklass: 'C' },
+		{ category: 'IV', gueteklass: 'D' },
+		{ category: 'V', gueteklass: 'E' },
+		{ category: 'VI', gueteklass: 'F' },
+		{ category: 'VII', gueteklass: 'G' },
+		{ category: null, gueteklass: 'none' }
+	];
+
+	let selectedDate = '20241023';
 </script>
 
-<div>
-	<Map bind:selectedRegion bind:selectedTiles {gueteklassColors} />
-	<Inspector bind:selectedRegion bind:selectedTiles {gueteklassColors} />
+<div class="min-h-[50vh] relative">
+	<select bind:value={selectedDate} class="input absolute top-4 left-4 text-sm z-20 !bg-white">
+		<option value="20241023">Wochentag (23.10.2024)</option>
+		<option value="20241030">Wochenende (30.10.2024)</option>
+	</select>
+	<Map bind:selectedRegion bind:selectedTiles {gueteklassColors} {selectedDate} {categories} />
+	<Inspector bind:selectedRegion bind:selectedTiles {gueteklassColors} {categories} />
 </div>

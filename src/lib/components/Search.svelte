@@ -211,7 +211,7 @@
 			<input
 				type="text"
 				placeholder={$page.data.translations.searchPlaceholder}
-				class="input w-full !pl-10 text-black dark:text-white"
+				class="input w-full !pl-10 text-black dark:text-white placeholder-black/50 dark:placeholder-white/50"
 				bind:value={query}
 				on:input={onInput}
 				on:keydown={onKeyDown}

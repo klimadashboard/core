@@ -16,7 +16,7 @@
 	let dataFetched = false; // Add flag to prevent infinite loops
 	let populationDataFetched = false; // Add flag for population data
 	let populationByYear: { [regionId: string]: { [year: number]: number } } = {};
-	
+
 	// Declare currentId in the component scope
 	$: currentId = page.data?.page?.id;
 	$: parentIds = page.data?.page?.parents?.map((p: any) => p.id) || [];
@@ -119,10 +119,10 @@
 	// Fetch population data for all regions
 	const fetchPopulationData = async () => {
 		if (populationDataFetched || regionCandidates.length === 0) return;
-		
+
 		try {
 			const directus = getDirectusInstance();
-			
+
 			// Fetch population data for all region candidates at once
 			const allPopulationData = await directus.request(
 				readItems('population', {
@@ -137,13 +137,13 @@
 			allPopulationData.forEach((pop: any) => {
 				const regionId = pop.region;
 				const year = new Date(pop.period).getFullYear();
-				
+
 				if (!populationByYear[regionId]) {
 					populationByYear[regionId] = {};
 				}
 				populationByYear[regionId][year] = pop.value;
 			});
-			
+
 			populationDataFetched = true;
 		} catch (error) {
 			console.error('Error fetching population data:', error);
@@ -165,10 +165,10 @@
 	$: filteredViews = (() => {
 		if (results.length > 0) {
 			// Check if we're on a Hamburg page by looking at current region candidates
-			const currentRegion = results.find(r => r.name.includes('Hamburg'));
+			const currentRegion = results.find((r) => r.name.includes('Hamburg'));
 			if (currentRegion) {
 				// Only show "Gruppe Stadtstaaten" for Hamburg
-				return views.filter(v => v.label.includes('Stadtstaaten'));
+				return views.filter((v) => v.label.includes('Stadtstaaten'));
 			}
 		}
 		// For all other regions, show all available views
@@ -176,15 +176,22 @@
 	})();
 
 	// Auto-select the appropriate view when filtered views change
-	$: if (filteredViews.length > 0 && (!activeLayer || !filteredViews.find(v => v.key === activeLayer))) {
+	$: if (
+		filteredViews.length > 0 &&
+		(!activeLayer || !filteredViews.find((v) => v.key === activeLayer))
+	) {
 		activeLayer = filteredViews[0]?.key ?? null;
 	}
 
 	// Automatically enable Pro-Kopf view when Bavaria (Bundesland Bayern) is selected
 	$: {
 		if (results.length > 0 && activeLayer) {
-			const selectedRegion = results.find(r => r.key === activeLayer);
-			if (selectedRegion && selectedRegion.layer_label === 'Bundesland' && selectedRegion.name.includes('Bayern')) {
+			const selectedRegion = results.find((r) => r.key === activeLayer);
+			if (
+				selectedRegion &&
+				selectedRegion.layer_label === 'Bundesland' &&
+				selectedRegion.name.includes('Bayern')
+			) {
 				showPerCapita = true;
 			}
 		}
@@ -241,10 +248,12 @@
 				<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
 			</svg>
 			<span>Pro-Kopf Emissionen?</span>
-			<input 
-				type="checkbox" 
-				bind:checked={showPerCapita} 
-				disabled={!results.some(r => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0)}
+			<input
+				type="checkbox"
+				bind:checked={showPerCapita}
+				disabled={!results.some(
+					(r) => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0
+				)}
 			/>
 		</label>
 	</div>
@@ -252,17 +261,17 @@
 	{#each results as r}
 		{#if r.key === activeLayer}
 			{#if new Set(r.data.map((d: any) => d.year)).size === 1 && r.data.length > 1}
-				<ChartHorizontal 
-					data={r.data} 
-					region={r} 
-					{showPerCapita} 
+				<ChartHorizontal
+					data={r.data}
+					region={r}
+					{showPerCapita}
 					populationByYear={getPopulationForRegion(r.id)}
 				/>
 			{:else if r.data.length > 1}
-				<Chart 
-					data={r.data} 
-					region={r} 
-					{showPerCapita} 
+				<Chart
+					data={r.data}
+					region={r}
+					{showPerCapita}
 					populationByYear={getPopulationForRegion(r.id)}
 				/>
 			{:else}
@@ -273,9 +282,38 @@
 		{/if}
 	{/each}
 	<div class="mt-4 text-sm flex gap-2">
-		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">CSV</button
+		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="inline w-4 h-4"
+				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+					d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"
+				/><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg
+			>CSV</button
 		>
 		<button on:click={() => downloadJSON(results, 'emissions_data.json')} class="button"
+			><svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="inline w-4 h-4"
+				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+					d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"
+				/><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg
 			>JSON</button
 		>
 	</div>

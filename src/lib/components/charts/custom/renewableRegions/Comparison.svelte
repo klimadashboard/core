@@ -39,6 +39,7 @@
 	};
 
 	let municipalities = regions
+		.filter((d) => d.visible)
 		.map((r) => ({
 			...r,
 			distance: r.center && region.center ? getDistance(r.center, region.center) : 0

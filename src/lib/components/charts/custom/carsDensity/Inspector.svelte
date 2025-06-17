@@ -16,7 +16,7 @@
 		gibt es {formatNumber(region.cars[0].value)} Autos bei {formatNumber(region.population)}
 		Einwohner:innen.
 	</h2>
-	<div class="grid grid-cols-3 gap-3 mt-2">
+	<div class="grid md:grid-cols-3 gap-3 mt-2">
 		{#each views as view}
 			<div style="color: {view.color}" class="dark:brightness-175">
 				<div class="font-bold leading-tight">{view.description}</div>

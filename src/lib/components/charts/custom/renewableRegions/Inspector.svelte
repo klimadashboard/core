@@ -6,6 +6,7 @@
 	import Disclaimer from './Disclaimer.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import dayjs from 'dayjs';
 
 	export let region;
 	export let data;
@@ -13,7 +14,9 @@
 	export let colors;
 	export let selectedEnergy;
 
-	let source = 'Datenquelle: Bundesnetzagentur | Marktstammdatenregister';
+	let updateDate;
+	$: source =
+		'Datenquelle: Marktstammdatenregister der Bundesnetzagentur, Datenstand: ' + updateDate;
 
 	$: getDataForRegion = async (regionCode = false, selectedEnergy) => {
 		const url =
@@ -22,6 +25,7 @@
 				: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year`;
 		const response = await fetch(url);
 		const data = await response.json();
+		updateDate = dayjs(data.update_date).format('DD.MM.YYYY HH:mm');
 		return data;
 	};
 
@@ -152,6 +156,13 @@
 				<BarChart data={result.by_year} {colors} />
 				<p class="text-sm mt-2 opacity-80">{source}</p>
 			{/if}
+
+			<p>
+				Schaut man nicht nur auf die jährlich installierte Leistung, sondern auf die kumulative
+				Gesamtleistung, die in {region.name} installiert ist, ergibt sich die Kurve in der folgenden
+				Grafik. Erkunde hierbei auch den flächenbezogenen Vergleich zu benachbarten Gemeinden und übergeordneten
+				Regionen.
+			</p>
 
 			<h3 class="mt-6 font-bold">Kumulative Leistung</h3>
 

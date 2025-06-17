@@ -56,7 +56,7 @@
 			title: 'Erneuerbare Energie',
 			countries: ['de'],
 			id: 'energy',
-			description: `Die Energieverbrauch in ${data.page.name} zeigt, wo wir beim Klimaschutz ansetzen können.`,
+			description: `Erneuerbare Energien spielen eine zentrale Rolle für die Energiewende – doch wie weit ist der Ausbau vor Ort? Erkunde, wie viel Solar- und Windenergie in ${data.page.name} bereits installiert ist.`,
 			charts: [
 				{
 					id: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',

@@ -37,11 +37,13 @@
 			)
 		);
 
-		const regions = regionsRaw.map((r) => ({
-			...r,
-			code: r.code_short ? r.code_short : r.code,
-			outline: r.outline_simple
-		}));
+		const regions = regionsRaw
+			.filter((d) => d.visible)
+			.map((r) => ({
+				...r,
+				code: r.code_short ? r.code_short : r.code,
+				outline: r.outline_simple
+			}));
 
 		cachedRegions = regions;
 
@@ -77,12 +79,13 @@
 
 <div class="my-4">
 	{#await promise}
-		<div class="bg-current/10 rounded-2xl h-[38rem] animate-pulse">
-			<Loader />
-		</div>
+		<div class="bg-amber-400/10 rounded-2xl h-[38rem] animate-pulse"></div>
 		<div
-			class="rounded-2xl min-h-[100vh] animate-pulse -mt-10 max-w-3xl mx-auto relative z-30"
-		></div>
+			class="rounded-2xl h-[38rem] bg-white dark:bg-gray-900 shadow p-3 animate-pulse -mt-10 max-w-3xl mx-auto relative z-30"
+		>
+			<div class="h-8 w-64 bg-current/20 animate-pulse rounded"></div>
+			<div class="h-64 w-full bg-current/20 animate-pulse mt-4 rounded"></div>
+		</div>
 	{:then { data, regions }}
 		<div class="h-[38rem]">
 			<Map
