@@ -106,7 +106,14 @@
 			von PV-Anlagen. Diese sind den Kategorien "Bauliche Anlage (Sonstige)", "Gewässer" und
 			"Großparkplatz" zuzuordnen. In {region.name} gibt es {formatNumber(other.units)} Anlagen, die dieser
 			Kategorie zuzuordnen sind. Diese haben eine Leistung von {formatNumber(other.power_kw)} kW, was
-			einen Anteil an der Gesamtleistung von {formatNumber(other.power_pct)} Prozent ausmacht.
+			einen Anteil an der Gesamtleistung von 
+			{#if Math.round(other.power_pct) === 0}
+				&lt;1%
+			{:else if Math.round(other.power_pct) === 100}
+				&gt;99%
+			{:else}
+				{formatNumber(other.power_pct)} Prozent
+			{/if}  Prozent ausmacht.
 		</p>
 	</div>
 {/if}
