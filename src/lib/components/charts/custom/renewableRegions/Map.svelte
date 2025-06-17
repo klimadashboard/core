@@ -397,7 +397,7 @@
 <div
 	bind:this={mapContainer}
 	id="map"
-	class="w-full h-full relative my-4 rounded-2xl bg-white dark:bg-gray-950"
+	class="w-full h-full relative rounded-2xl bg-white dark:bg-gray-950"
 >
 	{#if zoomLevel > 4}
 		<button

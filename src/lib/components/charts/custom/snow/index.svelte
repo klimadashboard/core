@@ -126,9 +126,8 @@
 			<h2 class="text-2xl max-w-4xl text-center mx-auto text-balance">
 				Im Rekordwinter {getRecordWinter(data).label.replace('Winter', '')} verzeichnete die Wetterstation
 				{data.station.name}
-				{getRecordWinter(data).daysWithSnow} Schneedeckentage – im {data.winters[
-					data.winters.length - 2
-				].label}
+				{getRecordWinter(data).daysWithSnow} Tage mit einer Schneehöhe von mindestens 1cm – im {data
+					.winters[data.winters.length - 2].label}
 				waren es {data.winters[data.winters.length - 2].daysWithSnow}.
 			</h2>
 		{/if}
@@ -157,6 +156,6 @@
 			/>
 		</div>
 	{:catch error}
-		{error}
+		{JSON.stringify(error)}
 	{/await}
 </div>

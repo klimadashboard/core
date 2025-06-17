@@ -180,7 +180,9 @@
 				}
 			},
 			(error) => {
-				alert('Unable to retrieve your location.');
+				alert(
+					'Wir konnten leider keinen Ort ermitteln. Bitte probiere es in einem anderen Netzwerk erneut oder verwende die Suchfunktion.'
+				);
 				console.error(error);
 			}
 		);

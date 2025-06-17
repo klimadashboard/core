@@ -6,7 +6,7 @@
 
 	export let data;
 
-	let layerFilter = 'all';
+	let layerFilter = 'municipality';
 
 	$: filteredRegions = [...data.regions]
 		.filter((r) => r.name && (!r.layer || layerFilter === 'all' || r.layer === layerFilter))
@@ -83,7 +83,7 @@
 		<div class="mt-8 text-lg text">
 			<p class="">
 				<strong
-					>{formatNumber(data.regions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
+					>{formatNumber(filteredRegions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
 					stehen.</strong
 				>
 				Du kannst dir einfach eine Region auf der Karte oder der Liste unten aussuchen oder dich orten
@@ -109,7 +109,7 @@
 			</p>
 		</div>
 
-		<div class="mt-8 flex gap-1 items-center">
+		<div class="mt-8 flex gap-1 items-center hidden">
 			<select
 				id="layerFilter"
 				bind:value={layerFilter}
