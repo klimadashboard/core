@@ -84,7 +84,7 @@
 				'Energie',
 				'Industrie',
 				'Gebäude',
-				'Verkehr',
+				'Mobilität',
 				'Landwirtschaft',
 				'Abfallwirtschaft und Sonstiges'
 			];
