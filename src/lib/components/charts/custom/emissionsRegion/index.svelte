@@ -8,6 +8,8 @@
 	import Chart from './Chart.svelte';
 	import ChartHorizontal from './ChartHorizontal.svelte';
 
+	export let chart;
+	console.log(chart);
 	let views: { key: string; label: string }[] = [];
 	let activeLayer: string | null = null;
 	let results: any[] = [];
@@ -16,7 +18,7 @@
 	let dataFetched = false; // Add flag to prevent infinite loops
 	let populationDataFetched = false; // Add flag for population data
 	let populationByYear: { [regionId: string]: { [year: number]: number } } = {};
-	
+
 	// Declare currentId in the component scope
 	$: currentId = page.data?.page?.id;
 	$: parentIds = page.data?.page?.parents?.map((p: any) => p.id) || [];
@@ -80,7 +82,7 @@
 			// Custom sector order as requested by user
 			const customSectorOrder = [
 				'Energie',
-				'Industrie', 
+				'Industrie',
 				'Gebäude',
 				'Verkehr',
 				'Landwirtschaft',
@@ -92,7 +94,7 @@
 			categories?.forEach((cat) => {
 				if (cat.label) {
 					labelToCodeMap.set(cat.label.toLowerCase(), cat.code);
-					
+
 					// Handle special mappings for common variations
 					if (cat.label.toLowerCase().includes('abfall')) {
 						labelToCodeMap.set('abfallwirtschaft und sonstiges', cat.code);
@@ -117,15 +119,16 @@
 
 			// Create ordered category list based on custom order
 			const categoryOrder = customSectorOrder
-				.map(label => labelToCodeMap.get(label.toLowerCase()))
+				.map((label) => labelToCodeMap.get(label.toLowerCase()))
 				.filter(Boolean)
 				.concat(
 					// Add any remaining categories not in the custom order
 					(categories ?? [])
-						.map(c => c.code)
-						.filter(code => !customSectorOrder.some(label => 
-							labelToCodeMap.get(label.toLowerCase()) === code
-						))
+						.map((c) => c.code)
+						.filter(
+							(code) =>
+								!customSectorOrder.some((label) => labelToCodeMap.get(label.toLowerCase()) === code)
+						)
 				)
 				.filter(Boolean);
 
@@ -169,10 +172,10 @@
 	// Fetch population data for all regions
 	const fetchPopulationData = async () => {
 		if (populationDataFetched || regionCandidates.length === 0) return;
-		
+
 		try {
 			const directus = getDirectusInstance();
-			
+
 			// Fetch population data for all region candidates at once
 			const allPopulationData = await directus.request(
 				readItems('population', {
@@ -187,13 +190,13 @@
 			allPopulationData.forEach((pop: any) => {
 				const regionId = pop.region;
 				const year = new Date(pop.period).getFullYear();
-				
+
 				if (!populationByYear[regionId]) {
 					populationByYear[regionId] = {};
 				}
 				populationByYear[regionId][year] = pop.value;
 			});
-			
+
 			populationDataFetched = true;
 		} catch (error) {
 			console.error('Error fetching population data:', error);
@@ -215,10 +218,10 @@
 	$: filteredViews = (() => {
 		if (results.length > 0) {
 			// Check if we're on a Hamburg page by looking at current region candidates
-			const currentRegion = results.find(r => r.name.includes('Hamburg'));
+			const currentRegion = results.find((r) => r.name.includes('Hamburg'));
 			if (currentRegion) {
 				// Only show "Gruppe Stadtstaaten" for Hamburg
-				return views.filter(v => v.label.includes('Stadtstaaten'));
+				return views.filter((v) => v.label.includes('Stadtstaaten'));
 			}
 		}
 		// For all other regions, show all available views
@@ -226,15 +229,22 @@
 	})();
 
 	// Auto-select the appropriate view when filtered views change
-	$: if (filteredViews.length > 0 && (!activeLayer || !filteredViews.find(v => v.key === activeLayer))) {
+	$: if (
+		filteredViews.length > 0 &&
+		(!activeLayer || !filteredViews.find((v) => v.key === activeLayer))
+	) {
 		activeLayer = filteredViews[0]?.key ?? null;
 	}
 
 	// Automatically enable Pro-Kopf view when Bavaria (Bundesland Bayern) is selected
 	$: {
 		if (results.length > 0 && activeLayer) {
-			const selectedRegion = results.find(r => r.key === activeLayer);
-			if (selectedRegion && selectedRegion.layer_label === 'Bundesland' && selectedRegion.name.includes('Bayern')) {
+			const selectedRegion = results.find((r) => r.key === activeLayer);
+			if (
+				selectedRegion &&
+				selectedRegion.layer_label === 'Bundesland' &&
+				selectedRegion.name.includes('Bayern')
+			) {
 				showPerCapita = true;
 			}
 		}
@@ -286,27 +296,29 @@
 			<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
 		</svg>
 		<span>Pro-Kopf Emissionen?</span>
-		<input 
-			type="checkbox" 
-			bind:checked={showPerCapita} 
-			disabled={!results.some(r => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0)}
+		<input
+			type="checkbox"
+			bind:checked={showPerCapita}
+			disabled={!results.some(
+				(r) => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0
+			)}
 		/>
 	</label>
 
 	{#each results as r}
 		{#if r.key === activeLayer}
 			{#if new Set(r.data.map((d: any) => d.year)).size === 1 && r.data.length > 1}
-				<ChartHorizontal 
-					data={r.data} 
-					region={r} 
-					{showPerCapita} 
+				<ChartHorizontal
+					data={r.data}
+					region={r}
+					{showPerCapita}
 					populationByYear={getPopulationForRegion(r.id)}
 				/>
 			{:else if r.data.length > 1}
-				<Chart 
-					data={r.data} 
-					region={r} 
-					{showPerCapita} 
+				<Chart
+					data={r.data}
+					region={r}
+					{showPerCapita}
 					populationByYear={getPopulationForRegion(r.id)}
 				/>
 			{:else}
@@ -317,8 +329,7 @@
 		{/if}
 	{/each}
 	<div class="mt-4 text-sm flex gap-2">
-		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">CSV</button
-		>
+		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">CSV</button>
 		<button on:click={() => downloadJSON(results, 'emissions_data.json')} class="button"
 			>JSON</button
 		>

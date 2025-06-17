@@ -16,7 +16,7 @@
 		const directus = getDirectusInstance();
 		const response = await directus.request(
 			readItem('charts', id, {
-				fields: ['*', 'translations.*'],
+				fields: ['*', 'translations.*', 'translations.variables.*'],
 				filter: {
 					status: {
 						_eq: 'published'
