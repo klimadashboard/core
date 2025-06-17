@@ -12,7 +12,7 @@
 	let chartWidth;
 	let selectedVariable = 'net_power_kw';
 
-	let margin = { top: 0, right: 30, bottom: 20, left: 50 };
+	let margin = { top: 5, right: 30, bottom: 20, left: 50 };
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;

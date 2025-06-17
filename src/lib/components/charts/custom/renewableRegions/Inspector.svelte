@@ -210,29 +210,42 @@
 				</p>
 			{:else}
 				<p class="text-lg my-4">
-					Im Diagramm sieht man, wie sich die gesamte Windstrom-Leistung in {region.name} über die Jahre entwickelt hat. 
-					Für die Darstellung werden die Daten für jedes Jahr aufsummiert und ergeben somit die gesamte Windstromleistung 
-					(auch kumulative Leistung genannt).
-  					{#if (result.by_year.find(d => d.year === 2024)?.cumulative_power_kw ?? 0) > (result.by_year.find(d => d.year === 2015)?.cumulative_power_kw ?? 0)}
-   						Im Jahr 2015 lag die installierte Wind-Leistung noch bei 
-							{formatNumber((result.by_year.find(d => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000)} 
-						MW, während sie Ende 2024 bereits bei 
-							{formatNumber((result.by_year.find(d => d.year === 2024)?.cumulative_power_kw ?? 0) / 1000)} 
-						MW lag. 
-					{:else if (result.by_year.find(d => d.year === 2024)?.cumulative_power_kw ?? 0) === (result.by_year.find(d => d.year === 2015)?.cumulative_power_kw ?? 0)}
-    					Seit 2015 beträgt die installierte Wind-Leistung in {region.name} unverändert 
-							{formatNumber((result.by_year.find(d => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000)} MW. 
-						Seitdem wurde kein neues Windrad in Betrieb genommen.
+					Im Diagramm sieht man, wie sich die gesamte Windstrom-Leistung in {region.name} über die Jahre
+					entwickelt hat. Für die Darstellung werden die Daten für jedes Jahr aufsummiert und ergeben
+					somit die gesamte Windstromleistung (auch kumulative Leistung genannt).
+					{#if (result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) > (result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0)}
+						Im Jahr 2015 lag die installierte Wind-Leistung noch bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW, während sie Ende 2024 bereits bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW lag.
+					{:else if (result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) === (result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0)}
+						Seit {result.by_year.find(
+							(d) =>
+								d.cumulative_power_kw ===
+								result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw
+						)?.year} beträgt die installierte Wind-Leistung in {region.name} unverändert
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000
+						)} MW. Seitdem wurde kein neues Windrad in Betrieb genommen.
 					{:else}
-						Im Jahr 2015 lag die installierte Wind-Leistung bei 
-							{formatNumber((result.by_year.find(d => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000)} 
-						MW, während sie Ende 2024 bei 
-							{formatNumber((result.by_year.find(d => d.year === 2024)?.cumulative_power_kw ?? 0) / 1000)} 
-						MW lag. Die installierte Wind-Leistung hat sich in diesem Zeitraum somit aufgrund von mehr Abschaltungen 
-						als Neuinbetriebnahmen verringert. 
+						Im Jahr 2015 lag die installierte Wind-Leistung bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW, während sie Ende 2024 bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW lag. Die installierte Wind-Leistung hat sich in diesem Zeitraum somit aufgrund von mehr
+						Abschaltungen als Neuinbetriebnahmen verringert.
 					{/if}
-  					Ein Vergleich zwischen Städten und ländlichen Regionen kann verzerrend sein, da Städte aufgrund der 
-					Bebauung keinen Platz für Windräder haben.
+					Ein Vergleich zwischen Städten und ländlichen Regionen kann verzerrend sein, da Städte aufgrund
+					der Bebauung keinen Platz für Windräder haben.
 				</p>
 			{/if}
 

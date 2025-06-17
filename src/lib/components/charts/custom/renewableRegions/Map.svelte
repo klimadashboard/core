@@ -392,6 +392,26 @@
 			map.removeSource('wind-units');
 		}
 	}
+
+	$: selectedValue = (() => {
+		if (!selectedRegion || !Array.isArray(data)) return null;
+		const row = data.find((d) => d.region === selectedRegion.code);
+		return row?.power_per_area_kw_per_km2 ?? null;
+	})();
+
+	function isValueInStep(
+		value: number | null,
+		step: { label: string },
+		index: number,
+		steps: typeof legendSteps
+	): boolean {
+		if (value == null) return false;
+
+		const lower = index === 0 ? 0 : parseFloat(steps[index - 1].label.split(/[–>]/)[1] || '0');
+		const upper = step.label.includes('–') ? parseFloat(step.label.split('–')[1]) : Infinity;
+
+		return value >= lower && value < upper;
+	}
 </script>
 
 <div
@@ -417,7 +437,7 @@
 			{#each legendSteps as step, i}
 				<div class="flex items-center gap-1 mb-0.5">
 					<span class="inline-block w-4 h-4 rounded" style="background-color: {step.color}"></span>
-					<span>
+					<span class={isValueInStep(selectedValue, step, i, legendSteps) ? 'font-bold' : ''}>
 						{step.label}
 					</span>
 				</div>
