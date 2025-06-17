@@ -72,7 +72,14 @@
 					{formatNumber(type.units)}
 					<span class="text-lg font-normal -translate-x-1 inline-block">Anlagen</span>
 				</p>
-				<p>{type.unit_pct}% aller Einheiten</p>
+				<p> {#if Math.round(type.unit_pct) === 0}
+					 &gt;1%
+					{:else if Math.round(type.unit_pct) === 100}
+					 &gt;99%
+					{:else}
+					 {type.unit_pct}%
+					{/if} aller Einheiten
+				</p>
 			</div>
 			<div class="px-3 py-2">
 				<p class="text-4xl font-light">
