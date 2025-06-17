@@ -16,6 +16,41 @@
 	let hoveredId = null;
 	let selectedId = null;
 
+	const categories = [
+		{
+			category: 'I',
+			gueteklass: 'A'
+		},
+		{
+			category: 'II',
+			gueteklass: 'B'
+		},
+		{
+			category: 'III',
+			gueteklass: 'C'
+		},
+		{
+			category: 'IV',
+			gueteklass: 'D'
+		},
+		{
+			category: 'V',
+			gueteklass: 'E'
+		},
+		{
+			category: 'VI',
+			gueteklass: 'F'
+		},
+		{
+			category: 'VII',
+			gueteklass: 'G'
+		},
+		{
+			category: null,
+			gueteklass: 'none'
+		}
+	];
+
 	function pointInPolygon(point, polygon) {
 		const [x, y] = point;
 		let inside = false;
@@ -105,10 +140,13 @@
 				name: stop.name,
 				code: stop.code,
 				category: stop.category,
+				gueteklass: categories.find((d) => d.category == stop.category)?.gueteklass,
 				interval: stop.interval,
 				lines: stop.lines
 			}
 		}));
+
+		console.log(features);
 
 		map.getSource(stopsSourceId)?.setData({
 			type: 'FeatureCollection',
@@ -201,7 +239,16 @@
 				'source-layer': 'merged',
 				paint: {
 					'line-color': '#000',
-					'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2, 0]
+					'line-width': [
+						'case',
+						[
+							'any',
+							['boolean', ['feature-state', 'hover'], false],
+							['boolean', ['feature-state', 'selected'], false]
+						],
+						2,
+						0
+					]
 				}
 			});
 
@@ -223,6 +270,50 @@
 				},
 				minzoom: 4,
 				maxzoom: 9
+			});
+
+			// stops
+			map.addSource(stopsSourceId, {
+				type: 'geojson',
+				data: {
+					type: 'FeatureCollection',
+					features: []
+				}
+			});
+
+			map.addLayer({
+				id: 'stops-layer',
+				type: 'circle',
+				source: stopsSourceId,
+				paint: {
+					'circle-radius': 5,
+					'circle-color': [
+						'match',
+						['get', 'gueteklass'],
+						'none',
+						gueteklassColors.none,
+						'G',
+						gueteklassColors.G,
+						'F',
+						gueteklassColors.F,
+						'E',
+						gueteklassColors.E,
+						'D',
+						gueteklassColors.D,
+						'C',
+						gueteklassColors.C,
+						'B',
+						gueteklassColors.B,
+						'A',
+						gueteklassColors.A,
+						'#ccc' // fallback
+					],
+					'circle-stroke-color': '#fff',
+					'circle-stroke-width': 1,
+					'circle-blur': 0.5,
+					'circle-opacity': 0.9
+				},
+				minzoom: minStopsZoom
 			});
 		});
 
@@ -256,6 +347,9 @@
 				hoveredId = null;
 			}
 		});
+
+		map.on('moveend', updateStops);
+		map.on('zoomend', updateStops);
 
 		map.on('click', 'gueteklass-layer', (e) => {
 			if (e.features.length > 0) {
@@ -299,27 +393,7 @@
 	});
 </script>
 
-<div id="mobilityMap" class="relative">
-	<div class="absolute top-2 p-1 left-2 text-xs flex items-center gap-3 z-20 bg-white">
-		{#each Object.values(gueteklassColors) as color, i}
-			<div class="flex gap-1 items-center">
-				<span style="background:{color}" class="w-4 h-4 block"></span>
-				<span>{Object.keys(gueteklassColors)[i]}</span>
-			</div>
-		{/each}
-	</div>
-
-	<div class="absolute top-2 right-10 z-20 p-2 bg-white bg-opacity-90 text-xs rounded shadow">
-		<div class="mb-1 font-semibold">Interval (min)</div>
-		<div class="flex items-center gap-1">
-			<span class="w-3 h-3" style="background: #eff3ff"></span>
-			<span>0</span>
-			<span class="flex-1 h-1 bg-gradient-to-r from-[#eff3ff] via-[#bdd7e7] to-[#2171b5] mx-2"
-			></span>
-			<span>60+</span>
-		</div>
-	</div>
-</div>
+<div id="mobilityMap" class="relative rounded-2xl overflow-hidden"></div>
 
 <style>
 	#mobilityMap {

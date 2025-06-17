@@ -75,9 +75,14 @@
 	on:itemClick={(e) => (selectedEnergy = e.detail)}
 />
 
-<div class="min-h-[70vh]">
+<div class="my-4">
 	{#await promise}
-		<Loader />
+		<div class="bg-current/10 rounded-2xl h-[38rem] animate-pulse">
+			<Loader />
+		</div>
+		<div
+			class="rounded-2xl min-h-[100vh] animate-pulse -mt-10 max-w-3xl mx-auto relative z-30"
+		></div>
 	{:then { data, regions }}
 		<div class="h-[38rem]">
 			<Map

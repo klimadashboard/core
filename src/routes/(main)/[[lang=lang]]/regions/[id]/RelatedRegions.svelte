@@ -49,6 +49,9 @@
 	$: loadRegions(data.page);
 </script>
 
+<div class="container">
+	<h3 class="text-sm pb-1 border-b border-b-current/20 mb-2">Entdecke weitere Regionen</h3>
+</div>
 <div class="grid grid-cols-2 gap-1 md:grid-cols-4 my-1">
 	{#each relatedRegions as region, i}
 		<a

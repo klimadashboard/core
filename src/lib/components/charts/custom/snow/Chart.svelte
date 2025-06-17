@@ -45,7 +45,7 @@
 				categories: [
 					{
 						value: d.daysWithSnow,
-						label: 'Schneedeckentage im ' + d.label,
+						label: 'Tage im ' + d.label,
 						color: '#11998E'
 					}
 				]
@@ -53,6 +53,6 @@
 		})}
 		xAxixInterval={10}
 		visualisation={'stacked'}
-		unit={'Schneedeckentage'}
+		unit={'Tage'}
 	/>
 </div>

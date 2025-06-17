@@ -93,7 +93,7 @@
 			on:itemClick={(e) => (selectedView = e.detail)}
 		/>
 	</div>
-	<div class="min-h-[80vh]">
+	<div class="">
 		{#if selectedView && selectedPeriod}
 			{#await promise then p}
 				{@const regions = p.regions}

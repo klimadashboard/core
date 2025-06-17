@@ -5,6 +5,7 @@
 	import Intro from './Intro.svelte';
 	import Contact from './Contact.svelte';
 	import LazyChart from './LazyChart.svelte';
+	import Chart from '$lib/components/charts/index.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Support from './Support.svelte';
@@ -12,6 +13,7 @@
 	import Navigation from './Navigation.svelte';
 	import ComingSoonChart from './ComingSoonChart.svelte';
 	import RelatedRegions from './RelatedRegions.svelte';
+	import Credits from './Credits.svelte';
 
 	export let data;
 
@@ -79,16 +81,16 @@
 					countries: ['at', 'de']
 				},
 				{
-					// id: 'b3301d53-24e0-4171-be78-75882f602fe8',
+					id: 'b3301d53-24e0-4171-be78-75882f602fe8',
 					countries: ['at'],
 					text: 'Wie ist deine Region an den Öffentlichen Verkehr angebunden? Wo sollten mehr Haltestellen errichtet werden? Dazu erfährst du hier bald mehr.'
 				}
 			]
 		},
 		{
-			title: 'Support',
-			id: 'support',
-			blocks: [Support],
+			title: 'Contact',
+			id: 'contact',
+			blocks: [Contact],
 			countries: ['at', 'de'],
 			navigation: false
 		},
@@ -134,10 +136,11 @@
 			],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-temperature'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5' /><path d='M10 9l4 0' /></svg>"
 		},
+
 		{
-			title: 'Contact',
-			id: 'contact',
-			blocks: [Contact],
+			title: 'Support',
+			id: 'support',
+			blocks: [Support],
 			countries: ['at', 'de'],
 			navigation: false
 		},
@@ -188,8 +191,8 @@
 		<div slot="background" />
 		<div slot="foreground">
 			<Intro {data} />
-			<Navigation {sections} />
 
+			<Navigation {sections} />
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
 				<section id={section.id} class="mt-16 relative overflow-hidden">
 					<div>
@@ -205,7 +208,7 @@
 							{#if section.charts}
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
 									{#if chart.id}
-										<LazyChart id={chart.id} />
+										<Chart id={chart.id} />
 									{:else}
 										<ComingSoonChart text={chart.text} />
 									{/if}
@@ -223,8 +226,6 @@
 		</div></Scroller
 	>
 
-	<!--
-	<Support />
-	-->
+	<Credits />
 	<RelatedRegions {data} />
 </main>
