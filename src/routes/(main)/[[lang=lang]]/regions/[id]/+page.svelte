@@ -124,7 +124,7 @@
 		*/
 		{
 			title: 'Temperatur',
-			description: `Die Aufzeichnungen der Wetterstation [HIER WETTERSTATIONSNAME UND HÖHENANGABE] zeigen, wie sich die Temperaturen in der Region in den vergangenen Jahrzehnten entwickelt haben. Die Daten stammen von der geografisch nächstgelegenen Wetterstation für ${data.page.name} mit weitgehend vollständigen Aufzeichnungen seit 1960. Sie liegt nicht zwingend im Gemeindegebiet, erlaubt aber eine Einschätzung der regionalen Entwicklung.`,
+			description: `Die Aufzeichnungen von Wetterstationen in deiner Nähe zeigen, wie sich die Temperaturen in der Region in den vergangenen Jahrzehnten entwickelt haben. Die Daten stammen von der geografisch nächstgelegenen Wetterstation für ${data.page.name} mit weitgehend vollständigen Aufzeichnungen seit 1960. Sie liegt nicht zwingend im Gemeindegebiet, erlaubt aber eine Einschätzung der regionalen Entwicklung.`,
 			countries: ['at', 'de'],
 			id: 'temperature',
 			toggle: true,

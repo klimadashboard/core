@@ -14,7 +14,8 @@
 		>
 	</p>
 	<p>
-		<b>Danke an:</b> TU Wien, BOKU, Statistik Austria, Bundesnetzagentur, CCCA
+		<b>Danke an:</b> TU Wien, BOKU, Statistik Austria, Bundesnetzagentur, CCCA, Geosphere Austria, Deutscher
+		Wetterdienst, Umweltbundesamt Österreich, Umweltbundesamt Deutschland
 	</p>
 	<p>
 		<b>Gefördert von:</b> Wirtschaftsagentur Wien im Rahmen des »Wissenschaft verstehen« Förderprogramms
