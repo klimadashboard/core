@@ -12,7 +12,7 @@
 	let chartHeight: number;
 	let activeCategory = 'all';
 
-	$: margin = { top: 0, right: 20, bottom: 20, left: 72 };
+	$: margin = { top: 20, right: 20, bottom: 20, left: 90 };
 	$: chartWidth = chartWidth || 800;
 	$: chartHeight = chartHeight || 320;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
@@ -86,10 +86,10 @@
 
 	$: visibleMax =
 		activeCategory === 'all'
-			? Math.max(...grouped.map((g: any) => g.total))
+			? Math.max(...grouped.map((g: any) => g.total)) * 1.1
 			: Math.max(
 					...grouped.map((g: any) => g.sectors.find((s: any) => s.sector === activeCategory)?.value ?? 0)
-				);
+				) * 1.1;
 
 	$: minYear = years[0];
 	$: maxYear = years[years.length - 1];
