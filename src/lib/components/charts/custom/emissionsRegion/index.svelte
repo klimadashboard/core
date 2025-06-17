@@ -7,9 +7,10 @@
 	import { fade } from 'svelte/transition';
 	import Chart from './Chart.svelte';
 	import ChartHorizontal from './ChartHorizontal.svelte';
-
 	export let chart;
-	console.log(chart);
+	export let v; // Add this to access the variables from Directus
+	console.log(chart.content.variables);
+	console.log(v);
 	let views: { key: string; label: string }[] = [];
 	let activeLayer: string | null = null;
 	let results: any[] = [];
@@ -254,6 +255,62 @@
 	$: getPopulationForRegion = (regionId: string) => {
 		return populationByYear[regionId] || {};
 	};
+
+	// Helper function to get federal state text based on current region
+	$: getCurrentStateText = () => {
+		if (results.length > 0 && activeLayer) {
+			const selectedRegion = results.find((r) => r.key === activeLayer);
+			if (selectedRegion) {
+				// Try to match the region name with variable keys
+				const regionName = selectedRegion.name;
+				
+				// Check if we have a variable for this region (exact match)
+				if (v && v[regionName]) {
+					return v[regionName];
+				}
+				
+				// Comprehensive mapping for all 16 German federal states
+				const stateMappings: { [key: string]: any } = {
+					// Full state names (primary keys)
+					'Hessen': v?.['Hessen'],
+					'Baden-Württemberg': v?.['Baden-Württemberg'],
+					'Bayern': v?.['Bayern'],
+					'Niedersachsen': v?.['Niedersachsen'],
+					'Mecklenburg-Vorpommern': v?.['Mecklenburg-Vorpommern'],
+					'Sachsen': v?.['Sachsen'],
+					'Sachsen-Anhalt': v?.['Sachsen-Anhalt'],
+					'Schleswig-Holstein': v?.['Schleswig-Holstein'],
+					'Berlin': v?.['Berlin'],
+					'Brandenburg': v?.['Brandenburg'],
+					'Bremen': v?.['Bremen'],
+					'Hamburg': v?.['Hamburg'],
+					'Nordrhein-Westfalen': v?.['Nordrhein-Westfalen'],
+					'Rheinland-Pfalz': v?.['Rheinland-Pfalz'],
+					'Saarland': v?.['Saarland'],
+					'Thüringen': v?.['Thüringen'],
+					
+					// Alternative spellings and abbreviations
+					'North Rhine-Westphalia': v?.['Nordrhein-Westfalen'],
+					'NRW': v?.['Nordrhein-Westfalen'],
+					'Bavaria': v?.['Bayern'],
+					'Hesse': v?.['Hessen'],
+					'Lower Saxony': v?.['Niedersachsen'],
+					'Saxony': v?.['Sachsen'],
+					'Saxony-Anhalt': v?.['Sachsen-Anhalt'],
+					'Rhineland-Palatinate': v?.['Rheinland-Pfalz'],
+					'Thuringia': v?.['Thüringen'],
+					'BW': v?.['Baden-Württemberg'],
+					'MV': v?.['Mecklenburg-Vorpommern'],
+					'SH': v?.['Schleswig-Holstein']
+				};
+				
+				return stateMappings[regionName] || null;
+			}
+		}
+		return null;
+	};
+
+	$: currentStateText = getCurrentStateText();
 </script>
 
 {#if loading}
@@ -334,4 +391,14 @@
 			>JSON</button
 		>
 	</div>
+
+	<!-- Display federal state specific text -->
+	{#if currentStateText}
+		<div class="mt-6 p-4 bg-gray-50 rounded-lg" transition:fade>
+			<h3 class="text-lg font-semibold mb-2">Informationen zur Region</h3>
+			<div class="text-gray-700 leading-relaxed prose prose-sm max-w-none">
+				{@html currentStateText}
+			</div>
+		</div>
+	{/if}
 {/if}
