@@ -155,6 +155,9 @@
 				marginRight={30}
 			/>
 		</div>
+		<p class="text-lg">
+			Während es auch in den vergangenen Jahren einzelne Winter mit relativ hoher Schneedeckung gab, ist über die vergangenen Jahre insgesamt ein Rückgang in der Anzahl der Tage mit mindestens 1 cm Schnee zu beobachten. Die Schwankungen zwischen den Jahren bleiben dabei deutlich.
+		</p>
 	{:catch error}
 		{JSON.stringify(error)}
 	{/await}

@@ -124,7 +124,7 @@
 		*/
 		{
 			title: 'Temperatur',
-			description: `Die Aufzeichnungen von Wetterstationen zeigen, wie die Temperaturen in ${data.page.name} in den letzten Jahrzehnten gestiegen sind.`,
+			description: `Die Aufzeichnungen der Wetterstation [HIER WETTERSTATIONSNAME UND HÖHENANGABE] zeigen, wie sich die Temperaturen in der Region in den vergangenen Jahrzehnten entwickelt haben. Die Daten stammen von der geografisch nächstgelegenen Wetterstation für ${data.page.name} mit weitgehend vollständigen Aufzeichnungen seit 1960. Sie liegt nicht zwingend im Gemeindegebiet, erlaubt aber eine Einschätzung der regionalen Entwicklung.`,
 			countries: ['at', 'de'],
 			id: 'temperature',
 			toggle: true,
@@ -146,6 +146,7 @@
 		},
 		{
 			title: 'Schnee',
+			description: `Im Zusammenhang mit abnehmenden Frost- und Schneetagen lohnt auch ein Blick auf die Entwicklung der Tage, an denen mindestens 1 cm Schnee am Morgen gemessen wurde, den sogenannten Schneedeckentagen.`,
 			id: 'snow',
 			countries: ['at', 'de'],
 			charts: [
