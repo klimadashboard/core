@@ -7,7 +7,7 @@
 	dayjs.extend(relativeTime);
 
 	let interval;
-	const launchDate = dayjs('2025-06-18T08:00:00');
+	const launchDate = dayjs('2025-06-18T11:55:00');
 	let countdown = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
 	const updateCountdown = () => {
