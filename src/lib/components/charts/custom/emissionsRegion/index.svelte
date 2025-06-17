@@ -77,7 +77,57 @@
 			);
 			const categoryMap = new Map((categories ?? []).map((c) => [c.code, c]));
 
-			const categoryOrder = (categories ?? []).map((c) => c.code).filter(Boolean); // Ensures only valid codes
+			// Custom sector order as requested by user
+			const customSectorOrder = [
+				'Energie',
+				'Industrie', 
+				'Gebäude',
+				'Verkehr',
+				'Landwirtschaft',
+				'Abfallwirtschaft und Sonstiges'
+			];
+
+			// Create a mapping from labels to codes
+			const labelToCodeMap = new Map();
+			categories?.forEach((cat) => {
+				if (cat.label) {
+					labelToCodeMap.set(cat.label.toLowerCase(), cat.code);
+					
+					// Handle special mappings for common variations
+					if (cat.label.toLowerCase().includes('abfall')) {
+						labelToCodeMap.set('abfallwirtschaft und sonstiges', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('landnutzung')) {
+						labelToCodeMap.set('landwirtschaft', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('transport')) {
+						labelToCodeMap.set('verkehr', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('building')) {
+						labelToCodeMap.set('gebäude', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('industrial')) {
+						labelToCodeMap.set('industrie', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('energy')) {
+						labelToCodeMap.set('energie', cat.code);
+					}
+				}
+			});
+
+			// Create ordered category list based on custom order
+			const categoryOrder = customSectorOrder
+				.map(label => labelToCodeMap.get(label.toLowerCase()))
+				.filter(Boolean)
+				.concat(
+					// Add any remaining categories not in the custom order
+					(categories ?? [])
+						.map(c => c.code)
+						.filter(code => !customSectorOrder.some(label => 
+							labelToCodeMap.get(label.toLowerCase()) === code
+						))
+				)
+				.filter(Boolean);
 
 			// Enrich emissions with category info
 			const enriched = emissions.map((e) => {

@@ -33,6 +33,36 @@
 		.filter(Boolean)
 		.filter((cat: any) => !cat.label.toLowerCase().includes('kyoto'));
 
+	// Create custom display order for Switch component buttons (left to right)
+	$: displayOrderForSwitch = (() => {
+		const customDisplayOrder = [
+			'Energie',
+			'Mobilität',
+			'Gebäude',
+			'Industrieprozesse', 
+			'Landwirtschaft',
+			'Abfallwirtschaft und Sonstiges'
+		];
+
+		// Create a mapping to sort displayedCategories according to the custom order
+		const orderMap = new Map();
+		customDisplayOrder.forEach((label, index) => {
+			orderMap.set(label.toLowerCase(), index);
+		});
+
+		// Sort displayedCategories based on the custom order
+		const sortedCategories = displayedCategories
+			.slice() // Create a copy to avoid mutating the original
+			.sort((a: any, b: any) => {
+				const aOrder = orderMap.get(a.label.toLowerCase()) ?? 999;
+				const bOrder = orderMap.get(b.label.toLowerCase()) ?? 999;
+				return aOrder - bOrder;
+			});
+
+		// Return with "Alle Sektoren" at the beginning
+		return [{ key: 'all', label: 'Alle Sektoren' }, ...sortedCategories];
+	})();
+
 	// Transform data based on showPerCapita flag and year-specific population
 	$: transformedData = showPerCapita && Object.keys(populationByYear).length > 0
 		? data.map((d: any) => {
@@ -259,7 +289,7 @@
 
 <Switch
 	type="small"
-	views={[{ key: 'all', label: 'Alle Sektoren' }, ...displayedCategories]}
+	views={displayOrderForSwitch}
 	bind:activeView={activeCategory}
 	on:itemClick={(event) => {
 		activeCategory = event.detail;
