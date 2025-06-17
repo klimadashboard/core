@@ -168,6 +168,7 @@
 		{/if}
 		<div class:opacity-30={loading} class:pointer-events-none={loading}>
 			<LineChart
+				{selectedEnergy}
 				data={data.map((d, i) => ({
 					label: d.name,
 					data: d.data.by_year.map((entry) => ({

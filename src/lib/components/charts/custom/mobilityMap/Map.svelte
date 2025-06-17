@@ -88,7 +88,7 @@
 						gueteklassColors.A,
 						'#ffffff'
 					],
-					'fill-opacity': 0.4
+					'fill-opacity': 0.5
 				}
 			},
 			beforeLayerId
@@ -186,8 +186,8 @@
 				layers: [{ id: 'carto-basemap', type: 'raster', source: 'carto', minzoom: 0, maxzoom: 22 }]
 			},
 			center: [13.3, 47.5],
-			zoom: 12,
-			minZoom: 9,
+			zoom: 7,
+			minZoom: 6,
 			maxZoom: 14
 		});
 
@@ -313,20 +313,40 @@
 
 			// auto-select on load
 			const center = page?.data?.page?.center;
-			console.log(center);
 			if (center) {
-				map.querySourceFeatures('mobility-source', { sourceLayer: selectedDate }).forEach((f) => {
-					if (
-						f.geometry.type === 'Polygon' &&
-						pointInPolygon(center.map(Number), f.geometry.coordinates)
-					) {
-						setSelectedTiles([f]);
-						selectedRegion = { id: f.id, properties: f.properties };
-						const bounds = new maplibregl.LngLatBounds();
-						f.geometry.coordinates[0].forEach((coord) => bounds.extend(coord));
-						map.fitBounds(bounds, { padding: 500, maxZoom: 13 });
+				const centerLngLat = center.map(Number);
+				map.flyTo({ center: centerLngLat, zoom: 12 });
+
+				const features = map.querySourceFeatures('mobility-source', { sourceLayer: selectedDate });
+				let closestFeature = null;
+				let minDistance = Infinity;
+
+				for (const f of features) {
+					if (f.geometry.type === 'Polygon') {
+						const ring = f.geometry.coordinates[0];
+						const centroid = ring
+							.reduce((acc, [lng, lat]) => [acc[0] + lng, acc[1] + lat], [0, 0])
+							.map((sum) => sum / ring.length);
+
+						const dx = centroid[0] - centerLngLat[0];
+						const dy = centroid[1] - centerLngLat[1];
+						const dist = dx * dx + dy * dy;
+
+						if (dist < minDistance) {
+							minDistance = dist;
+							closestFeature = f;
+						}
 					}
-				});
+				}
+
+				if (closestFeature) {
+					setSelectedTiles([closestFeature]);
+					selectedRegion = { id: closestFeature.id, properties: closestFeature.properties };
+
+					const bounds = new maplibregl.LngLatBounds();
+					closestFeature.geometry.coordinates[0].forEach((coord) => bounds.extend(coord));
+					map.fitBounds(bounds, { padding: 500, maxZoom: 13 });
+				}
 			}
 
 			styleLoaded = true;

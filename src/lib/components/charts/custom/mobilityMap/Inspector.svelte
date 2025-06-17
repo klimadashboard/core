@@ -118,7 +118,7 @@
 	};
 
 	$: gueteklassen = Object.values(gueteklassColors).map((d, i) => ({
-		label: Object.keys(gueteklassColors)[i],
+		label: Object.keys(gueteklassColors)[i].replace('none', 'X'),
 		color: d,
 		active: selectedTiles?.[0]?.properties?.gueteklass == Object.keys(gueteklassColors)[i]
 	}));
@@ -194,8 +194,7 @@
 		{/if}
 	{:else}
 		<p class="mt-4">
-			Wähle eine Region aus, um mehr Informationen zu der Anbindung an den öffentlichen Nahverkehr
-			zu erhalten.
+			Wähle eine Zelle aus, um mehr Details zur Anbindung an den öffentlichen Verkehr zu erhalten.
 		</p>
 	{/if}
 	<p class="text-sm opacity-70 mt-2">
