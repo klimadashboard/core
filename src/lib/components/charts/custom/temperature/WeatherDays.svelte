@@ -221,9 +221,13 @@
 </p>
 
 <p class="text-lg max-w-3xl mx-auto mt-8">
-	Die Erderhitzung ist auch in {regionString} spürbar. Im Durchschnitt nimmt die Anzahl der Sommer-,
-	Hitze- und Wüstentage sowie der Tropennächte zu. Dieser Trend ist im Vergleich mit allen Referenzperioden
-	zu beobachten. Häufigere und länger anhaltende Hitzeperioden können zu gesundheitlichen Problemen wie
+	Die Erderhitzung ist auch in {regionString} spürbar. Im Durchschnitt nimmt die Zahl der heißen Tage, 
+	Tropennächte sowie der sogenannten Sommer- und Hitzetage zu. Gleichzeitig gibt es weniger Frost- und Eistage. 
+	Diese Veränderungen lassen sich über alle Referenzzeiträume hinweg beobachten.
+</p>
+
+<p class="text-lg max-w-3xl mx-auto mt-8">
+	Häufigere und länger anhaltende Hitzeperioden können zu gesundheitlichen Problemen wie
 	unter anderem Hitzschlägen, Erschöpfung und einer Zunahme von Herz-Kreislauf- und Nierenerkrankungen
 	führen. Insbesondere ältere Menschen, Schwangere und Kinder, aber auch Menschen mit Vorerkrankungen
 	gehören zu den am stärksten gefährdeten Gruppen. Allein in Europa starben im Jahr 2023 etwa 45.000
