@@ -44,7 +44,11 @@
 						class="text-xl font-bold">%</span
 					>
 				</p>
-				<p>{formatNumber(view.history.find((d) => d.period == selectedPeriod)?.absolute)} PKWs</p>
+				{#if view.history.find((d) => d.period == selectedPeriod)?.absolute < 6}
+					<p>weniger als 6 PKWs</p>
+				{:else}
+					<p>{formatNumber(view.history.find((d) => d.period == selectedPeriod)?.absolute)} PKWs</p>
+				{/if}
 
 				<SmallLine {selectedPeriod} data={view.history} />
 			</div>
@@ -59,8 +63,8 @@
 		Reduktion von Emissionen im Verkehrsbereich essentiell.
 	</p>
 {:else}
-	<p>
-		Für diese Region sind aufgrund von Gemeindezusammenlegungen in diesem Zeitraum keine Daten
-		verfügbar.
+	<p class="text-lg">
+		Für diese Region sind aufgrund von Gemeindezusammenlegungen oder aus Datenschutzgründen in
+		diesem Zeitraum keine Daten verfügbar.
 	</p>
 {/if}
