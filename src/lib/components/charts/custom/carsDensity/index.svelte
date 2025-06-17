@@ -65,7 +65,11 @@
 			availablePeriods = payload.periods;
 			source = payload.source;
 			country = payload.country;
-			selectedRegion = payload.preselected ?? findMatchingRegion(page.data.page, regions);
+			selectedRegion =
+				payload.preselected ??
+				(PUBLIC_VERSION == 'at'
+					? findMatchingRegion(page.data.page, regions, true).code
+					: findMatchingRegion(page.data.page, regions, true).code_short);
 			selectedPeriodIndex = availablePeriods.length - 1;
 			return payload;
 		});
@@ -76,18 +80,20 @@
 
 <div>
 	<div class="flex flex-col items-center space-y-2">
-		<div class="flex gap-2">
-			<input
-				type="range"
-				class="w-20"
-				min={0}
-				max={availablePeriods.length - 1}
-				step={1}
-				bind:value={selectedPeriodIndex}
-				aria-label="Zeitpunkt"
-			/>
-			<span>{selectedPeriod}</span>
-		</div>
+		{#if PUBLIC_VERSION == 'at'}
+			<div class="flex gap-2">
+				<input
+					type="range"
+					class="w-20"
+					min={0}
+					max={availablePeriods.length - 1}
+					step={1}
+					bind:value={selectedPeriodIndex}
+					aria-label="Zeitpunkt"
+				/>
+				<span>{selectedPeriod}</span>
+			</div>
+		{/if}
 		<Switch
 			type="small"
 			{views}
