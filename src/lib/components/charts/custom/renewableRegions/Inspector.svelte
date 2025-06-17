@@ -219,9 +219,9 @@
 						MW, während sie Ende 2024 bereits bei 
 							{formatNumber((result.by_year.find(d => d.year === 2024)?.cumulative_power_kw ?? 0) / 1000)} 
 						MW lag. 
-					{:else if (result.by_year.find(d => d.year === 2024)?.cumulative_power_kw ?? 0) === (result.by_year.find(d => d.year === 2014)?.cumulative_power_kw ?? 0)}
-    					Seit 2014 beträgt die installierte Wind-Leistung in {region.name} unverändert 
-							{formatNumber((result.by_year.find(d => d.year === unchangedSinceYear)?.cumulative_power_kw ?? 0) / 1000)} MW. 
+					{:else if (result.by_year.find(d => d.year === 2024)?.cumulative_power_kw ?? 0) === (result.by_year.find(d => d.year === 2015)?.cumulative_power_kw ?? 0)}
+    					Seit 2015 beträgt die installierte Wind-Leistung in {region.name} unverändert 
+							{formatNumber((result.by_year.find(d => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000)} MW. 
 						Seitdem wurde kein neues Windrad in Betrieb genommen.
 					{:else}
 						Im Jahr 2015 lag die installierte Wind-Leistung bei 
