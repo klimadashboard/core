@@ -10,27 +10,32 @@
 	let chartHeight: number;
 
 	// Transform data based on showPerCapita flag and year-specific population
-	$: transformedData = showPerCapita && Object.keys(populationByYear).length > 0
-		? data.map((d: any) => {
-			const yearPopulation = populationByYear[d.year];
-			if (yearPopulation) {
-				return {
-					...d,
-					value: (d.value / yearPopulation) * 1000000 // Convert to tons per million people for better readability
-				};
-			} else {
-				// Fallback to region.population if year-specific data not available
-				return region.population ? {
-					...d,
-					value: (d.value / region.population) * 1000000
-				} : d;
-			}
-		})
-		: data;
+	$: transformedData =
+		showPerCapita && Object.keys(populationByYear).length > 0
+			? data.map((d: any) => {
+					const yearPopulation = populationByYear[d.year];
+					if (yearPopulation) {
+						return {
+							...d,
+							value: (d.value / yearPopulation) * 1000000 // Convert to tons per million people for better readability
+						};
+					} else {
+						// Fallback to region.population if year-specific data not available
+						return region.population
+							? {
+									...d,
+									value: (d.value / region.population) * 1000000
+								}
+							: d;
+					}
+				})
+			: data;
 
 	// Compute total and scale using transformed data
 	$: total = transformedData.reduce((sum: number, d: any) => sum + d.value, 0);
-	$: xScale = scaleLinear().domain([0, total]).range([0, chartWidth || 0]);
+	$: xScale = scaleLinear()
+		.domain([0, total])
+		.range([0, chartWidth || 0]);
 
 	// Compute xOffsets for horizontal stacking using transformed data
 	let stackedData: any[] = [];
@@ -74,11 +79,7 @@
 	<svg width="100%" height="100%">
 		{#each stackedData as datapoint}
 			<g transform={`translate(${xScale(datapoint.xOffset)}, 0)`}>
-				<rect
-					width={xScale(datapoint.value)}
-					height={chartHeight}
-					fill={datapoint.category_color}
-				>
+				<rect width={xScale(datapoint.value)} height={chartHeight} fill={datapoint.category_color}>
 					<title>{datapoint.category_label}: {datapoint.value.toFixed(2)} {unit}</title>
 				</rect>
 			</g>
@@ -91,7 +92,10 @@
 	{#if showPerCapita && Object.keys(populationByYear).length > 0}
 		<p>Pro-Kopf-Werte basieren auf jahresspezifischen Bevölkerungsdaten für {region.name}.</p>
 	{:else if showPerCapita && region.population}
-		<p>Pro-Kopf-Werte basieren auf einer Bevölkerung von {region.population.toLocaleString()} Einwohnern (einheitlich für alle Jahre).</p>
+		<p>
+			Pro-Kopf-Werte basieren auf einer Bevölkerung von {region.population.toLocaleString()} Einwohnern
+			(einheitlich für alle Jahre).
+		</p>
 	{/if}
 	{#if data[0].source == 'energiemosaik.at'}
 		<p>

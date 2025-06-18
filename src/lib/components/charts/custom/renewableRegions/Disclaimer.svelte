@@ -41,14 +41,15 @@
 			korrekt ab, kann visuell aber ungewohnt wirken.
 		</li>
 		<li>
-			Für die Auswertung werden aufbereitete Daten von <a
+			Im Marktstammdatenregister werden Genehmigungsdaten teilweise überschrieben, wodurch zeitliche
+			Verzerrungen entstehen können. Zudem sind einige Windenergieanlagen durch falsche
+			Koordinatenangaben falschen Gemeinden oder sogar Bundesländern zugeordnet. Deshalb verwenden
+			wir für die Darstellung korrigierte Daten von <a
 				href="https://goal100.org"
 				target="_blank"
 				class="underline underline-offset-2">Goal100</a
-			> verwendet, die auf Daten aus dem Marktstammdatenregister und dem Helmholtz-Zentrum für Umweltforschung
-			beruhen. Im Marktstammdatenregister werden Genehmigungsdaten teilweise überschrieben, wodurch zeitliche
-			Verzerrungen entstehen können. Zudem sind einige Windenergieanlagen durch falsche Koordinatenangaben
-			falschen Gemeinden oder sogar Bundesländern zugeordnet.
+			>, die auf Einträgen aus dem Marktstammdatenregister und Daten des Helmholtz-Zentrums für
+			Umweltforschung beruhen.
 		</li>
 	{/if}
 </ul>

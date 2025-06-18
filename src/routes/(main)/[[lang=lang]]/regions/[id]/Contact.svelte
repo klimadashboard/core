@@ -29,11 +29,11 @@
 >
 	<div class="">
 		{#await promise then team}
-			<div class="flex flex-wrap gap-5 md:m-4">
+			<div class="flex flex-wrap gap-2 sm:gap-5 md:m-4">
 				{#each team as member}
 					{#if member.avatar}
 						<img
-							class="w-20 h-20 object-cover rounded-full"
+							class="w-12 h-12 sm:w-20 sm:h-20 object-cover rounded-full"
 							style="transform: translate({Math.random() * 5}px, {Math.random() * 5}px);"
 							src="https://base.klimadashboard.org/assets/{member.avatar}?key=small"
 							alt="{member.first_name} {member.last_name}"

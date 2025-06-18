@@ -83,23 +83,15 @@
 			}
 		});
 
-		// Debug logging
-		console.log('Available categories:', dataCategories);
-		console.log('Category labels:', [...new Set(data.map((d: any) => d.category_label))]);
-		console.log('Category map:', Array.from(categoryMap.entries()));
-
 		// Order categories based on custom sequence
 		const orderedCategories = customSectorOrder
 			.map((label) => categoryMap.get(label.toLowerCase()))
 			.filter((code) => code && dataCategories.includes(code));
 
-		console.log('Ordered categories:', orderedCategories);
-
 		// Add any remaining categories not in custom order
 		const remainingCategories = dataCategories.filter((code) => !orderedCategories.includes(code));
 
 		const finalOrder = [...orderedCategories, ...remainingCategories];
-		console.log('Final category order:', finalOrder);
 
 		return finalOrder;
 	})();
@@ -234,7 +226,7 @@
 					style="background-color: {s.color}"
 				>
 					{s.label}
-				</span>{i < 2 ? ', ' : '.'}
+				</span>{i < 2 ? ', ' : ''}
 			{/each}
 			{#if showPerCapita && Object.keys(populationByYear).length > 0}
 				pro Million Einwohner.
@@ -243,11 +235,12 @@
 			{:else}.{/if}
 			{#if lastTarget && activeCategory === 'all'}
 				Bis {lastTarget.year} möchte {region.name}
-				{formatNumber(lastTarget.value)}{unit} erreicht haben.
+				{lastTarget.value == 0 ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreicht
+				haben.
 			{/if}
 		</p>
 
-		<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-80 mt-4 relative">
+		<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-80 mt-8 relative">
 			{#if chartWidth && chartHeight}
 				<svg width="100%" height="100%">
 					<!-- x-axis -->
@@ -384,8 +377,8 @@
 
 				<!-- Hover tooltip directly over chart -->
 				{#if hoveredYear}
-					<div class="absolute z-50 pointer-events-none top-0 left-0">
-						<div class="flex flex-wrap gap-2 p-2">
+					<div class="absolute z-50 pointer-events-none -top-6 left-0 text-sm">
+						<div class="flex flex-wrap gap-1 p-2">
 							{#if activeCategory === 'all'}
 								{#each hoveredYear.sectors
 									.filter((s: any) => s.value > 0)
@@ -396,7 +389,7 @@
 										return aIndex - bIndex;
 									}) as s}
 									<div
-										class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-medium shadow-lg"
+										class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-xs font-medium shadow-lg"
 										style="background-color: {s.color}"
 									>
 										<span class="uppercase font-bold">{s.label}</span>

@@ -40,7 +40,9 @@
 <div
 	bind:this={container}
 	class="switch relative inline-flex rounded-full overflow-x-auto max-w-full no-scrollbar
-	       {type === 'small' ? 'bg-transparent gap-2' : 'bg-gray-100 dark:bg-gray-900 py-1 border-2 border-current/10'}
+	       {type === 'small'
+		? 'bg-transparent gap-2'
+		: 'bg-gray-100 dark:bg-gray-900 py-1 border-2 border-current/10'}
 	       {type === 'primary' ? 'bg-white' : ''}"
 >
 	<!-- overlay the indicator behind buttons for non-small types -->
@@ -53,12 +55,12 @@
 			data-key={view.key}
 			on:click={() => handleClick(view)}
 			disabled={view.disabled}
-			class="relative z-10 flex items-center rounded-full transition duration-200
-			       {type === 'small' 
-					? (view.key === activeView 
-						? 'bg-gray-800 text-white px-4 py-2 font-semibold text-sm' 
-						: 'bg-gray-200 text-gray-700 px-4 py-2 text-sm hover:bg-gray-300')
-					: 'px-4 ' + (view.key === activeView ? 'font-bold' : '')}
+			class="relative z-10 flex items-center rounded-full transition duration-200 flex-shrink-0
+			       {type === 'small'
+				? view.key === activeView
+					? 'bg-gray-800 text-white px-4 py-2 font-semibold text-sm'
+					: 'bg-gray-200 text-gray-700 px-4 py-2 text-sm hover:bg-gray-300'
+				: 'px-4 ' + (view.key === activeView ? 'font-bold' : '')}
 			       disabled:opacity-40 disabled:line-through"
 		>
 			{#if view.icon}
