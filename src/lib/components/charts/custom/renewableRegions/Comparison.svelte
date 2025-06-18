@@ -141,7 +141,9 @@
 <div class="flex items-center gap-2 flex-wrap">
 	<RegionSearch {regions} {region} {selectedRegions} on:toggle={(e) => toggleSelection(e.detail)} />
 
-	<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2">
+	<div
+		class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2 placeholder-black dark:placeholder-white"
+	>
 		{#each variables as variable}
 			<label class={selectedUnit == variable.key ? 'font-bold' : ''}
 				><input
@@ -161,7 +163,7 @@
 	{#if data.length > 0}
 		{#if loading}
 			<div
-				class="absolute inset-0 bg-white/70 flex items-center justify-center z-10 pointer-events-none"
+				class="absolute inset-0 bg-white/70 dark:bg-dark-900/70 flex items-center justify-center z-10 pointer-events-none"
 			>
 				<Loader />
 			</div>
