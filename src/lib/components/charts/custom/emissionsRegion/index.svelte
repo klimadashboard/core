@@ -9,8 +9,6 @@
 	import ChartHorizontal from './ChartHorizontal.svelte';
 	export let chart;
 	export let v; // Add this to access the variables from Directus
-	console.log(chart.content.variables);
-	console.log(v);
 	let views: { key: string; label: string }[] = [];
 	let activeLayer: string | null = null;
 	let results: any[] = [];
@@ -263,47 +261,47 @@
 			if (selectedRegion) {
 				// Try to match the region name with variable keys
 				const regionName = selectedRegion.name;
-				
+
 				// Check if we have a variable for this region (exact match)
 				if (v && v[regionName]) {
 					return v[regionName];
 				}
-				
+
 				// Comprehensive mapping for all 16 German federal states
 				const stateMappings: { [key: string]: any } = {
 					// Full state names (primary keys)
-					'Hessen': v?.['Hessen'],
+					Hessen: v?.['Hessen'],
 					'Baden-Württemberg': v?.['Baden-Württemberg'],
-					'Bayern': v?.['Bayern'],
-					'Niedersachsen': v?.['Niedersachsen'],
+					Bayern: v?.['Bayern'],
+					Niedersachsen: v?.['Niedersachsen'],
 					'Mecklenburg-Vorpommern': v?.['Mecklenburg-Vorpommern'],
-					'Sachsen': v?.['Sachsen'],
+					Sachsen: v?.['Sachsen'],
 					'Sachsen-Anhalt': v?.['Sachsen-Anhalt'],
 					'Schleswig-Holstein': v?.['Schleswig-Holstein'],
-					'Berlin': v?.['Berlin'],
-					'Brandenburg': v?.['Brandenburg'],
-					'Bremen': v?.['Bremen'],
-					'Hamburg': v?.['Hamburg'],
+					Berlin: v?.['Berlin'],
+					Brandenburg: v?.['Brandenburg'],
+					Bremen: v?.['Bremen'],
+					Hamburg: v?.['Hamburg'],
 					'Nordrhein-Westfalen': v?.['Nordrhein-Westfalen'],
 					'Rheinland-Pfalz': v?.['Rheinland-Pfalz'],
-					'Saarland': v?.['Saarland'],
-					'Thüringen': v?.['Thüringen'],
-					
+					Saarland: v?.['Saarland'],
+					Thüringen: v?.['Thüringen'],
+
 					// Alternative spellings and abbreviations
 					'North Rhine-Westphalia': v?.['Nordrhein-Westfalen'],
-					'NRW': v?.['Nordrhein-Westfalen'],
-					'Bavaria': v?.['Bayern'],
-					'Hesse': v?.['Hessen'],
+					NRW: v?.['Nordrhein-Westfalen'],
+					Bavaria: v?.['Bayern'],
+					Hesse: v?.['Hessen'],
 					'Lower Saxony': v?.['Niedersachsen'],
-					'Saxony': v?.['Sachsen'],
+					Saxony: v?.['Sachsen'],
 					'Saxony-Anhalt': v?.['Sachsen-Anhalt'],
 					'Rhineland-Palatinate': v?.['Rheinland-Pfalz'],
-					'Thuringia': v?.['Thüringen'],
-					'BW': v?.['Baden-Württemberg'],
-					'MV': v?.['Mecklenburg-Vorpommern'],
-					'SH': v?.['Schleswig-Holstein']
+					Thuringia: v?.['Thüringen'],
+					BW: v?.['Baden-Württemberg'],
+					MV: v?.['Mecklenburg-Vorpommern'],
+					SH: v?.['Schleswig-Holstein']
 				};
-				
+
 				return stateMappings[regionName] || null;
 			}
 		}
@@ -385,20 +383,48 @@
 			{/if}
 		{/if}
 	{/each}
-	<div class="mt-4 text-sm flex gap-2">
-		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">CSV</button>
-		<button on:click={() => downloadJSON(results, 'emissions_data.json')} class="button"
-			>JSON</button
-		>
-	</div>
-
 	<!-- Display federal state specific text -->
 	{#if currentStateText}
-		<div class="mt-6 p-4 bg-gray-50 rounded-lg" transition:fade>
-			<h3 class="text-lg font-semibold mb-2">Informationen zur Region</h3>
-			<div class="text-gray-700 leading-relaxed prose prose-sm max-w-none">
+		<div class="" transition:fade>
+			<div class="text-lg max-w-2xl my-4">
 				{@html currentStateText}
 			</div>
 		</div>
 	{/if}
+	<div class="mt-4 text-sm flex gap-2">
+		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button"
+			><svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="inline w-5 h-5"
+				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+					d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"
+				/><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg
+			>CSV</button
+		>
+		<button on:click={() => downloadJSON(results, 'emissions_data.json')} class="button"
+			><svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				class="inline w-5 h-5"
+				><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+					d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"
+				/><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg
+			>JSON</button
+		>
+	</div>
 {/if}
