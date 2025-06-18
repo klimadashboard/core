@@ -13,9 +13,9 @@
 			target="_blank">Laura Mayer</a
 		>
 	</p>
-	<p>
-		<b>Danke an:</b> TU Wien, BOKU, Statistik Austria, Bundesnetzagentur, CCCA, Geosphere Austria, Deutscher
-		Wetterdienst, Umweltbundesamt Österreich, Umweltbundesamt Deutschland
+	<p class="text-balance">
+		<b>Danke an:</b> BOKU, Bundesnetzagentur, CCCA, Deutscher Wetterdienst, Geosphere Austria, Goal100,
+		Kraftfahrtbundesamt, Statistik Austria, TU Wien, Umweltbundesamt Deutschland, Umweltbundesamt Österreich
 	</p>
 	<p>
 		<b>Gefördert von:</b> Wirtschaftsagentur Wien im Rahmen des »Wissenschaft verstehen« Förderprogramms
