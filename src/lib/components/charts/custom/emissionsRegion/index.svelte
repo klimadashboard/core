@@ -256,6 +256,8 @@
 		return populationByYear[regionId] || {};
 	};
 
+	let allowPerCapita = PUBLIC_VERSION == 'de';
+
 	// Helper function to get federal state text based on current region
 	$: getCurrentStateText = () => {
 		if (results.length > 0 && activeLayer) {
@@ -264,6 +266,10 @@
 				// Try to match the region name with variable keys
 				const regionName =
 					selectedRegion.name == 'Stadtstaaten' ? page.data.page.name : selectedRegion.name;
+
+				if (selectedRegion.name == 'Stadtstaaten') {
+					allowPerCapita = false;
+				}
 
 				// Check if we have a variable for this region (exact match)
 				if (v && v[regionName]) {
@@ -330,7 +336,7 @@
 		}}
 	/>
 
-	{#if PUBLIC_VERSION == 'de'}
+	{#if allowPerCapita}
 		<!-- Pro-Kopf Toggle moved to left side under title -->
 		<label
 			class="flex gap-1 text-sm items-center mt-3 {showPerCapita
