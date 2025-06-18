@@ -12,7 +12,7 @@
 	<p class="text-6xl font-light mt-auto">
 		{formatNumber(parseFloat(data.number))} <span class="text-2xl font-normal">{data.unit}</span>
 	</p>
-	<p class="text-lg">{data.subtitle}</p>
+	<p class="text-lg">{data.subtitle.replace('(undefined)', '')}</p>
 	<ul class="mt-2">
 		{#if data.list}
 			{#each data.list as item}
