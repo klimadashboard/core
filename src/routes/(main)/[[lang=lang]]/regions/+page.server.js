@@ -43,6 +43,9 @@ export async function load({ fetch, params }) {
 		);
 
 		return {
+			content: {
+				title: 'Regionen'
+			},
 			regions
 		};
 	} catch (err) {
