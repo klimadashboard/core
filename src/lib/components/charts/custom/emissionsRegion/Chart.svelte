@@ -366,9 +366,6 @@
 						<g
 							transform={`translate(${xScale(lastTarget.year) + margin.left + 5}, ${yScale(lastTarget.value) + margin.top - 5})`}
 						>
-							<text class="text-xs fill-current" x={-30} y={-10}>
-								{formatNumber(lastTarget.value)}{unit} Ziel in {lastTarget.year}
-							</text>
 						</g>
 					{/if}
 				</svg>

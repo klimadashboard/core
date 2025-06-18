@@ -260,7 +260,8 @@
 			const selectedRegion = results.find((r) => r.key === activeLayer);
 			if (selectedRegion) {
 				// Try to match the region name with variable keys
-				const regionName = selectedRegion.name;
+				const regionName =
+					selectedRegion.name == 'Stadtstaaten' ? page.data.page.name : selectedRegion.name;
 
 				// Check if we have a variable for this region (exact match)
 				if (v && v[regionName]) {
