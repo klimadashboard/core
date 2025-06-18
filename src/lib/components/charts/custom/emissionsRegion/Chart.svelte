@@ -128,14 +128,13 @@
 					if (yearPopulation) {
 						return {
 							...d,
-							value: (d.value / yearPopulation) * 1000000 // Convert to tons per million people for better readability
+							value: (d.value * 1_000_000) / yearPopulation
 						};
 					} else {
-						// Fallback to region.population if year-specific data not available
 						return region.population
 							? {
 									...d,
-									value: (d.value / region.population) * 1000000
+									value: (d.value * 1_000_000) / region.population
 								}
 							: d;
 					}
@@ -171,8 +170,7 @@
 		return { ...yearData, stackedSectors };
 	});
 
-	let unit = 'Mt CO2eq';
-	$: unit = showPerCapita ? 't CO2eq/Mio. Einwohner' : 'Mt CO2eq';
+	$: unit = showPerCapita ? 't CO2eq pro Kopf' : 'Mt CO2eq';
 
 	$: visibleMax =
 		activeCategory === 'all'
@@ -191,15 +189,16 @@
 	$: yScale = scaleLinear().domain([0, visibleMax]).range([innerChartHeight, 0]);
 
 	// Transform climate targets if per capita is enabled
+	// Transform climate targets if per capita is enabled
 	$: climateTargets = data
 		.filter((d: any) => d.source === 'climate-target')
 		.map((d: any) => {
 			if (showPerCapita && Object.keys(populationByYear).length > 0) {
 				const yearPopulation = populationByYear[d.year];
 				if (yearPopulation) {
-					return { ...d, value: (d.value / yearPopulation) * 1000000 };
+					return { ...d, value: (d.value * 1_000_000) / yearPopulation };
 				} else if (region.population) {
-					return { ...d, value: (d.value / region.population) * 1000000 };
+					return { ...d, value: (d.value * 1_000_000) / region.population };
 				}
 			}
 			return d;
@@ -213,10 +212,13 @@
 {#if grouped.length > 0}
 	<div class="mb-4">
 		<p class="text-xl max-w-xl mt-4">
-			Die Sektoren mit dem größten Anteil an Emissionen im Jahr {grouped[grouped.length - 1].year}
-			in
-			<span class="font-bold">{region.name} ({region.layer_label})</span>
-			sind
+			<strong>{region.name}</strong>: {grouped[grouped.length - 1].year} entfielen die meisten Emissionen
+			{#if showPerCapita && Object.keys(populationByYear).length > 0}
+				pro Kopf
+			{:else if showPerCapita && region.population}
+				pro Kopf
+			{:else}{/if}
+			auf die Sektoren
 			{#each grouped[grouped.length - 1].sectors
 				.slice()
 				.sort((a: any, b: any) => b.value - a.value)
@@ -228,11 +230,7 @@
 					{s.label}
 				</span>{i < 2 ? ', ' : ''}
 			{/each}
-			{#if showPerCapita && Object.keys(populationByYear).length > 0}
-				pro Million Einwohner.
-			{:else if showPerCapita && region.population}
-				pro Million Einwohner.
-			{:else}.{/if}
+
 			{#if lastTarget && activeCategory === 'all'}
 				Bis {lastTarget.year} möchte {region.name}
 				{lastTarget.value == 0 ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreicht
@@ -395,8 +393,7 @@
 										<span class="uppercase font-bold">{s.label}</span>
 										<span class="ml-2"
 											>{formatNumber(s.value)}
-											{unit.includes('Mio') ? 'Mio' : ''}
-											{unit.split(' ')[1] || 't THG'}</span
+											{unit}</span
 										>
 									</div>
 								{/each}
@@ -410,8 +407,7 @@
 											<span class="uppercase font-bold">{s.label}</span>
 											<span class="ml-2"
 												>{formatNumber(s.value)}
-												{unit.includes('Mio') ? 'Mio' : ''}
-												{unit.split(' ')[1] || 't THG'}</span
+												{unit}</span
 											>
 											<span class="ml-1 opacity-75">({hoveredYear.year})</span>
 										</div>
