@@ -56,7 +56,7 @@
 			title: 'Erneuerbare Energie',
 			countries: ['de'],
 			id: 'energy',
-			description: `Die Energieverbrauch in ${data.page.name} zeigt, wo wir beim Klimaschutz ansetzen können.`,
+			description: `Erneuerbare Energien spielen eine zentrale Rolle für die Energiewende – doch wie weit ist der Ausbau vor Ort? Erkunde, wie viel Solar- und Windenergie in ${data.page.name} bereits installiert ist.`,
 			charts: [
 				{
 					id: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
@@ -124,7 +124,7 @@
 		*/
 		{
 			title: 'Temperatur',
-			description: `Die Aufzeichnungen von Wetterstationen zeigen, wie die Temperaturen in ${data.page.name} in den letzten Jahrzehnten gestiegen sind.`,
+			description: `Die Aufzeichnungen von Wetterstationen in deiner Nähe zeigen, wie sich die Temperaturen in der Region in den vergangenen Jahrzehnten entwickelt haben. Die Daten stammen von der geografisch nächstgelegenen Wetterstation für ${data.page.name} mit weitgehend vollständigen Aufzeichnungen seit 1960. Sie liegt nicht zwingend im Gemeindegebiet, erlaubt aber eine Einschätzung der regionalen Entwicklung.`,
 			countries: ['at', 'de'],
 			id: 'temperature',
 			toggle: true,
@@ -146,6 +146,7 @@
 		},
 		{
 			title: 'Schnee',
+			description: `Im Zusammenhang mit abnehmenden Frost- und Schneetagen lohnt auch ein Blick auf die Entwicklung der Tage, an denen mindestens 1 cm Schnee am Morgen gemessen wurde, den sogenannten Schneedeckentagen.`,
 			id: 'snow',
 			countries: ['at', 'de'],
 			charts: [

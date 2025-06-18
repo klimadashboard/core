@@ -67,13 +67,13 @@
 		placeholder="Vergleiche deine Gemeinde mit..."
 		bind:value={searchTerm}
 		on:focus={() => (showDropdown = true)}
-		class="input text-sm w-full"
+		class="input text-sm w-full placeholder-black dark:placeholder-white"
 		aria-label="Region suchen"
 	/>
 
 	{#if showDropdown && filtered.length > 0}
 		<div
-			class="absolute z-10 bg-white border rounded shadow max-h-64 overflow-y-auto mt-1 w-full"
+			class="absolute z-10 bg-white dark:bg-gray-900 border rounded-2xl border-current/20 text-sm shadow max-h-64 overflow-y-auto mt-1 w-full"
 			role="listbox"
 			aria-multiselectable="true"
 			use:clickOutside

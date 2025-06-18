@@ -7,7 +7,10 @@
 	import { fade } from 'svelte/transition';
 	import Chart from './Chart.svelte';
 	import ChartHorizontal from './ChartHorizontal.svelte';
-
+	export let chart;
+	export let v; // Add this to access the variables from Directus
+	console.log(chart.content.variables);
+	console.log(v);
 	let views: { key: string; label: string }[] = [];
 	let activeLayer: string | null = null;
 	let results: any[] = [];
@@ -16,7 +19,7 @@
 	let dataFetched = false; // Add flag to prevent infinite loops
 	let populationDataFetched = false; // Add flag for population data
 	let populationByYear: { [regionId: string]: { [year: number]: number } } = {};
-	
+
 	// Declare currentId in the component scope
 	$: currentId = page.data?.page?.id;
 	$: parentIds = page.data?.page?.parents?.map((p: any) => p.id) || [];
@@ -77,7 +80,58 @@
 			);
 			const categoryMap = new Map((categories ?? []).map((c) => [c.code, c]));
 
-			const categoryOrder = (categories ?? []).map((c) => c.code).filter(Boolean); // Ensures only valid codes
+			// Custom sector order as requested by user
+			const customSectorOrder = [
+				'Energie',
+				'Industrie',
+				'Gebäude',
+				'Mobilität',
+				'Landwirtschaft',
+				'Abfallwirtschaft und Sonstiges'
+			];
+
+			// Create a mapping from labels to codes
+			const labelToCodeMap = new Map();
+			categories?.forEach((cat) => {
+				if (cat.label) {
+					labelToCodeMap.set(cat.label.toLowerCase(), cat.code);
+
+					// Handle special mappings for common variations
+					if (cat.label.toLowerCase().includes('abfall')) {
+						labelToCodeMap.set('abfallwirtschaft und sonstiges', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('landnutzung')) {
+						labelToCodeMap.set('landwirtschaft', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('transport')) {
+						labelToCodeMap.set('verkehr', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('building')) {
+						labelToCodeMap.set('gebäude', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('industrial')) {
+						labelToCodeMap.set('industrie', cat.code);
+					}
+					if (cat.label.toLowerCase().includes('energy')) {
+						labelToCodeMap.set('energie', cat.code);
+					}
+				}
+			});
+
+			// Create ordered category list based on custom order
+			const categoryOrder = customSectorOrder
+				.map((label) => labelToCodeMap.get(label.toLowerCase()))
+				.filter(Boolean)
+				.concat(
+					// Add any remaining categories not in the custom order
+					(categories ?? [])
+						.map((c) => c.code)
+						.filter(
+							(code) =>
+								!customSectorOrder.some((label) => labelToCodeMap.get(label.toLowerCase()) === code)
+						)
+				)
+				.filter(Boolean);
 
 			// Enrich emissions with category info
 			const enriched = emissions.map((e) => {
@@ -119,10 +173,10 @@
 	// Fetch population data for all regions
 	const fetchPopulationData = async () => {
 		if (populationDataFetched || regionCandidates.length === 0) return;
-		
+
 		try {
 			const directus = getDirectusInstance();
-			
+
 			// Fetch population data for all region candidates at once
 			const allPopulationData = await directus.request(
 				readItems('population', {
@@ -137,13 +191,13 @@
 			allPopulationData.forEach((pop: any) => {
 				const regionId = pop.region;
 				const year = new Date(pop.period).getFullYear();
-				
+
 				if (!populationByYear[regionId]) {
 					populationByYear[regionId] = {};
 				}
 				populationByYear[regionId][year] = pop.value;
 			});
-			
+
 			populationDataFetched = true;
 		} catch (error) {
 			console.error('Error fetching population data:', error);
@@ -165,10 +219,10 @@
 	$: filteredViews = (() => {
 		if (results.length > 0) {
 			// Check if we're on a Hamburg page by looking at current region candidates
-			const currentRegion = results.find(r => r.name.includes('Hamburg'));
+			const currentRegion = results.find((r) => r.name.includes('Hamburg'));
 			if (currentRegion) {
 				// Only show "Gruppe Stadtstaaten" for Hamburg
-				return views.filter(v => v.label.includes('Stadtstaaten'));
+				return views.filter((v) => v.label.includes('Stadtstaaten'));
 			}
 		}
 		// For all other regions, show all available views
@@ -176,15 +230,22 @@
 	})();
 
 	// Auto-select the appropriate view when filtered views change
-	$: if (filteredViews.length > 0 && (!activeLayer || !filteredViews.find(v => v.key === activeLayer))) {
+	$: if (
+		filteredViews.length > 0 &&
+		(!activeLayer || !filteredViews.find((v) => v.key === activeLayer))
+	) {
 		activeLayer = filteredViews[0]?.key ?? null;
 	}
 
 	// Automatically enable Pro-Kopf view when Bavaria (Bundesland Bayern) is selected
 	$: {
 		if (results.length > 0 && activeLayer) {
-			const selectedRegion = results.find(r => r.key === activeLayer);
-			if (selectedRegion && selectedRegion.layer_label === 'Bundesland' && selectedRegion.name.includes('Bayern')) {
+			const selectedRegion = results.find((r) => r.key === activeLayer);
+			if (
+				selectedRegion &&
+				selectedRegion.layer_label === 'Bundesland' &&
+				selectedRegion.name.includes('Bayern')
+			) {
 				showPerCapita = true;
 			}
 		}
@@ -194,6 +255,62 @@
 	$: getPopulationForRegion = (regionId: string) => {
 		return populationByYear[regionId] || {};
 	};
+
+	// Helper function to get federal state text based on current region
+	$: getCurrentStateText = () => {
+		if (results.length > 0 && activeLayer) {
+			const selectedRegion = results.find((r) => r.key === activeLayer);
+			if (selectedRegion) {
+				// Try to match the region name with variable keys
+				const regionName = selectedRegion.name;
+				
+				// Check if we have a variable for this region (exact match)
+				if (v && v[regionName]) {
+					return v[regionName];
+				}
+				
+				// Comprehensive mapping for all 16 German federal states
+				const stateMappings: { [key: string]: any } = {
+					// Full state names (primary keys)
+					'Hessen': v?.['Hessen'],
+					'Baden-Württemberg': v?.['Baden-Württemberg'],
+					'Bayern': v?.['Bayern'],
+					'Niedersachsen': v?.['Niedersachsen'],
+					'Mecklenburg-Vorpommern': v?.['Mecklenburg-Vorpommern'],
+					'Sachsen': v?.['Sachsen'],
+					'Sachsen-Anhalt': v?.['Sachsen-Anhalt'],
+					'Schleswig-Holstein': v?.['Schleswig-Holstein'],
+					'Berlin': v?.['Berlin'],
+					'Brandenburg': v?.['Brandenburg'],
+					'Bremen': v?.['Bremen'],
+					'Hamburg': v?.['Hamburg'],
+					'Nordrhein-Westfalen': v?.['Nordrhein-Westfalen'],
+					'Rheinland-Pfalz': v?.['Rheinland-Pfalz'],
+					'Saarland': v?.['Saarland'],
+					'Thüringen': v?.['Thüringen'],
+					
+					// Alternative spellings and abbreviations
+					'North Rhine-Westphalia': v?.['Nordrhein-Westfalen'],
+					'NRW': v?.['Nordrhein-Westfalen'],
+					'Bavaria': v?.['Bayern'],
+					'Hesse': v?.['Hessen'],
+					'Lower Saxony': v?.['Niedersachsen'],
+					'Saxony': v?.['Sachsen'],
+					'Saxony-Anhalt': v?.['Sachsen-Anhalt'],
+					'Rhineland-Palatinate': v?.['Rheinland-Pfalz'],
+					'Thuringia': v?.['Thüringen'],
+					'BW': v?.['Baden-Württemberg'],
+					'MV': v?.['Mecklenburg-Vorpommern'],
+					'SH': v?.['Schleswig-Holstein']
+				};
+				
+				return stateMappings[regionName] || null;
+			}
+		}
+		return null;
+	};
+
+	$: currentStateText = getCurrentStateText();
 </script>
 
 {#if loading}
@@ -212,57 +329,53 @@
 		}}
 	/>
 
-	<div class="flex items-center justify-between mt-4">
-		<!-- Left: (optional) Chart title or other content -->
-		<div>
-			<!-- You can put a title or leave empty -->
-		</div>
-		<!-- Right: Pro-Kopf Toggle -->
-		<label
-			class="flex gap-1 text-sm items-center {showPerCapita ? 'text-gray-700' : 'text-gray-400'}"
-			transition:fade
+	<!-- Pro-Kopf Toggle moved to left side under title -->
+	<label
+		class="flex gap-1 text-sm items-center mt-3 {showPerCapita ? 'text-gray-700' : 'text-gray-400'}"
+		transition:fade
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-5 w-5 icon icon-tabler icon-tabler-users"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			stroke-width="2"
+			stroke="currentColor"
+			fill="none"
+			stroke-linecap="round"
+			stroke-linejoin="round"
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5 icon icon-tabler icon-tabler-users"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-				<circle cx="9" cy="7" r="4" />
-				<path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-				<path d="M16 3.13a4 4 0 0 1 0 7.75" />
-				<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
-			</svg>
-			<span>Pro-Kopf Emissionen?</span>
-			<input 
-				type="checkbox" 
-				bind:checked={showPerCapita} 
-				disabled={!results.some(r => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0)}
-			/>
-		</label>
-	</div>
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<circle cx="9" cy="7" r="4" />
+			<path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+			<path d="M16 3.13a4 4 0 0 1 0 7.75" />
+			<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+		</svg>
+		<span>Pro-Kopf Emissionen?</span>
+		<input
+			type="checkbox"
+			bind:checked={showPerCapita}
+			disabled={!results.some(
+				(r) => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0
+			)}
+		/>
+	</label>
 
 	{#each results as r}
 		{#if r.key === activeLayer}
 			{#if new Set(r.data.map((d: any) => d.year)).size === 1 && r.data.length > 1}
-				<ChartHorizontal 
-					data={r.data} 
-					region={r} 
-					{showPerCapita} 
+				<ChartHorizontal
+					data={r.data}
+					region={r}
+					{showPerCapita}
 					populationByYear={getPopulationForRegion(r.id)}
 				/>
 			{:else if r.data.length > 1}
-				<Chart 
-					data={r.data} 
-					region={r} 
-					{showPerCapita} 
+				<Chart
+					data={r.data}
+					region={r}
+					{showPerCapita}
 					populationByYear={getPopulationForRegion(r.id)}
 				/>
 			{:else}
@@ -273,10 +386,19 @@
 		{/if}
 	{/each}
 	<div class="mt-4 text-sm flex gap-2">
-		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">CSV</button
-		>
+		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button">CSV</button>
 		<button on:click={() => downloadJSON(results, 'emissions_data.json')} class="button"
 			>JSON</button
 		>
 	</div>
+
+	<!-- Display federal state specific text -->
+	{#if currentStateText}
+		<div class="mt-6 p-4 bg-gray-50 rounded-lg" transition:fade>
+			<h3 class="text-lg font-semibold mb-2">Informationen zur Region</h3>
+			<div class="text-gray-700 leading-relaxed prose prose-sm max-w-none">
+				{@html currentStateText}
+			</div>
+		</div>
+	{/if}
 {/if}

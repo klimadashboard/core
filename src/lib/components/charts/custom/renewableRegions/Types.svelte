@@ -72,14 +72,28 @@
 					{formatNumber(type.units)}
 					<span class="text-lg font-normal -translate-x-1 inline-block">Anlagen</span>
 				</p>
-				<p>{type.unit_pct}% aller Einheiten</p>
+				<p> {#if Math.round(type.unit_pct) === 0}
+					 &lt;1%
+					{:else if Math.round(type.unit_pct) === 100}
+					 &gt;99%
+					{:else}
+					 {type.unit_pct}%
+					{/if} aller Einheiten
+				</p>
 			</div>
 			<div class="px-3 py-2">
 				<p class="text-4xl font-light">
 					{formatNumber(type.power_kw)}
 					<span class="text-lg font-normal -translate-x-1 inline-block">kW</span>
 				</p>
-				<p>{type.power_pct}% der Gesamtleistung</p>
+				<p> {#if Math.round(type.power_pct) === 0}
+					 &lt;1%
+					{:else if Math.round(type.power_pct) === 100}
+					 &gt;99%
+					{:else}
+					 {type.power_pct}%
+					{/if} der Gesamtleistung
+				</p>
 			</div>
 		</div>
 	{/each}
@@ -92,7 +106,14 @@
 			von PV-Anlagen. Diese sind den Kategorien "Bauliche Anlage (Sonstige)", "Gewässer" und
 			"Großparkplatz" zuzuordnen. In {region.name} gibt es {formatNumber(other.units)} Anlagen, die dieser
 			Kategorie zuzuordnen sind. Diese haben eine Leistung von {formatNumber(other.power_kw)} kW, was
-			einen Anteil an der Gesamtleistung von {formatNumber(other.power_pct)} Prozent ausmacht.
+			einen Anteil an der Gesamtleistung von 
+			{#if Math.round(other.power_pct) === 0}
+				&lt;1%
+			{:else if Math.round(other.power_pct) === 100}
+				&gt;99%
+			{:else}
+				{formatNumber(other.power_pct)} Prozent
+			{/if}  Prozent ausmacht.
 		</p>
 	</div>
 {/if}

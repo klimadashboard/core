@@ -11,8 +11,9 @@
 	let chartWidth: number;
 	let chartHeight: number;
 	let activeCategory = 'all';
+	let hoveredYear: { year: number; sectors: any[]; x: number; y: number } | null = null;
 
-	$: margin = { top: 0, right: 20, bottom: 20, left: 72 };
+	$: margin = { top: 20, right: 20, bottom: 20, left: 90 };
 	$: chartWidth = chartWidth || 800;
 	$: chartHeight = chartHeight || 320;
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
@@ -22,7 +23,86 @@
 	$: historicYears = [
 		...new Set(data.filter((d: any) => d.source !== 'climate-target').map((d: any) => d.year))
 	].sort();
-	$: categoryOrder = region.categoryOrder ?? [];
+
+	// Use the same custom order for both display and stacking
+	$: customSectorOrder = [
+		'Energie',
+		'Industrie',
+		'Gebäude',
+		'Mobilität',
+		'Landwirtschaft',
+		'Abfallwirtschaft und Sonstiges'
+	];
+
+	// Create categoryOrder based on actual data categories, ordered by custom sequence
+	$: categoryOrder = (() => {
+		// Get all unique categories from data
+		const dataCategories = [...new Set(data.map((d: any) => d.category))];
+
+		// Create mapping from labels to codes for ordering
+		const categoryMap = new Map();
+		data.forEach((d: any) => {
+			if (d.category_label) {
+				categoryMap.set(d.category_label.toLowerCase(), d.category);
+
+				// Handle special mappings for common variations
+				if (d.category_label.toLowerCase().includes('abfall')) {
+					categoryMap.set('abfallwirtschaft und sonstiges', d.category);
+				}
+				if (
+					d.category_label.toLowerCase().includes('landnutzung') ||
+					d.category_label.toLowerCase().includes('agriculture')
+				) {
+					categoryMap.set('landwirtschaft', d.category);
+				}
+				if (
+					d.category_label.toLowerCase().includes('transport') ||
+					d.category_label.toLowerCase().includes('mobility') ||
+					d.category_label.toLowerCase().includes('verkehr')
+				) {
+					categoryMap.set('mobilität', d.category);
+				}
+				if (
+					d.category_label.toLowerCase().includes('building') ||
+					d.category_label.toLowerCase().includes('gebäude')
+				) {
+					categoryMap.set('gebäude', d.category);
+				}
+				if (
+					d.category_label.toLowerCase().includes('industrial') ||
+					d.category_label.toLowerCase().includes('industrie')
+				) {
+					categoryMap.set('industrie', d.category);
+				}
+				if (
+					d.category_label.toLowerCase().includes('energy') ||
+					d.category_label.toLowerCase().includes('energie')
+				) {
+					categoryMap.set('energie', d.category);
+				}
+			}
+		});
+
+		// Debug logging
+		console.log('Available categories:', dataCategories);
+		console.log('Category labels:', [...new Set(data.map((d: any) => d.category_label))]);
+		console.log('Category map:', Array.from(categoryMap.entries()));
+
+		// Order categories based on custom sequence
+		const orderedCategories = customSectorOrder
+			.map((label) => categoryMap.get(label.toLowerCase()))
+			.filter((code) => code && dataCategories.includes(code));
+
+		console.log('Ordered categories:', orderedCategories);
+
+		// Add any remaining categories not in custom order
+		const remainingCategories = dataCategories.filter((code) => !orderedCategories.includes(code));
+
+		const finalOrder = [...orderedCategories, ...remainingCategories];
+		console.log('Final category order:', finalOrder);
+
+		return finalOrder;
+	})();
 
 	// Only show categories that are present in data
 	$: displayedCategories = categoryOrder
@@ -33,24 +113,42 @@
 		.filter(Boolean)
 		.filter((cat: any) => !cat.label.toLowerCase().includes('kyoto'));
 
+	// Create custom display order for Switch component buttons (left to right)
+	$: displayOrderForSwitch = (() => {
+		// Use the same order as categoryOrder for consistency
+		const sortedCategories = displayedCategories
+			.slice() // Create a copy to avoid mutating the original
+			.sort((a: any, b: any) => {
+				const aIndex = categoryOrder.indexOf(a.key);
+				const bIndex = categoryOrder.indexOf(b.key);
+				return aIndex - bIndex;
+			});
+
+		// Return with "Sektoren" at the beginning
+		return [{ key: 'all', label: 'Sektoren' }, ...sortedCategories];
+	})();
+
 	// Transform data based on showPerCapita flag and year-specific population
-	$: transformedData = showPerCapita && Object.keys(populationByYear).length > 0
-		? data.map((d: any) => {
-			const yearPopulation = populationByYear[d.year];
-			if (yearPopulation) {
-				return {
-					...d,
-					value: (d.value / yearPopulation) * 1000000 // Convert to tons per million people for better readability
-				};
-			} else {
-				// Fallback to region.population if year-specific data not available
-				return region.population ? {
-					...d,
-					value: (d.value / region.population) * 1000000
-				} : d;
-			}
-		})
-		: data;
+	$: transformedData =
+		showPerCapita && Object.keys(populationByYear).length > 0
+			? data.map((d: any) => {
+					const yearPopulation = populationByYear[d.year];
+					if (yearPopulation) {
+						return {
+							...d,
+							value: (d.value / yearPopulation) * 1000000 // Convert to tons per million people for better readability
+						};
+					} else {
+						// Fallback to region.population if year-specific data not available
+						return region.population
+							? {
+									...d,
+									value: (d.value / region.population) * 1000000
+								}
+							: d;
+					}
+				})
+			: data;
 
 	// Group and stack using transformed data
 	$: grouped = historicYears.map((year: any) => {
@@ -86,10 +184,12 @@
 
 	$: visibleMax =
 		activeCategory === 'all'
-			? Math.max(...grouped.map((g: any) => g.total))
+			? Math.max(...grouped.map((g: any) => g.total)) * 1.1
 			: Math.max(
-					...grouped.map((g: any) => g.sectors.find((s: any) => s.sector === activeCategory)?.value ?? 0)
-				);
+					...grouped.map(
+						(g: any) => g.sectors.find((s: any) => s.sector === activeCategory)?.value ?? 0
+					)
+				) * 1.1;
 
 	$: minYear = years[0];
 	$: maxYear = years[years.length - 1];
@@ -142,16 +242,17 @@
 				pro Million Einwohner.
 			{:else}.{/if}
 			{#if lastTarget && activeCategory === 'all'}
-				Bis {lastTarget.year} möchte {region.name} {formatNumber(lastTarget.value)}{unit} erreicht haben.
+				Bis {lastTarget.year} möchte {region.name}
+				{formatNumber(lastTarget.value)}{unit} erreicht haben.
 			{/if}
 		</p>
 
-		<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-80 mt-4">
+		<div bind:clientWidth={chartWidth} bind:clientHeight={chartHeight} class="h-80 mt-4 relative">
 			{#if chartWidth && chartHeight}
 				<svg width="100%" height="100%">
 					<!-- x-axis -->
 					<g transform={`translate(${margin.left},${margin.top + innerChartHeight})`}>
-						{#each xScale.ticks() as tick}
+						{#each xScale.ticks(chartWidth > 600 ? 10 : 5) as tick}
 							<g transform={`translate(${xScale(tick)}, 0)`} class="text-xs">
 								<line x1={0} y1={0} x2={0} y2={5} class="stroke-current/10" />
 								<text
@@ -191,6 +292,20 @@
 											width={barWidth}
 											height={yScale(s.start) - yScale(s.end)}
 											fill={s.color}
+											on:mouseenter={(e) => {
+												const target = e.target as SVGRectElement;
+												if (target) {
+													hoveredYear = {
+														year: yearData.year,
+														sectors: yearData.sectors,
+														x: xScale(yearData.year) + margin.left - 50,
+														y: yScale(s.end) + margin.top - 10
+													};
+												}
+											}}
+											on:mouseleave={() => {
+												hoveredYear = null;
+											}}
 										>
 											<title>{s.label}: {formatNumber(s.value)} {unit}</title>
 										</rect>
@@ -203,6 +318,20 @@
 											width={barWidth}
 											height={innerChartHeight - yScale(s.value)}
 											fill={s.color}
+											on:mouseenter={(e) => {
+												const target = e.target as SVGRectElement;
+												if (target) {
+													hoveredYear = {
+														year: yearData.year,
+														sectors: yearData.sectors,
+														x: xScale(yearData.year) + margin.left - 50,
+														y: yScale(s.value) + margin.top - 10
+													};
+												}
+											}}
+											on:mouseleave={() => {
+												hoveredYear = null;
+											}}
 										>
 											<title>{s.label}: {formatNumber(s.value)} {unit}</title>
 										</rect>
@@ -252,6 +381,53 @@
 						</g>
 					{/if}
 				</svg>
+
+				<!-- Hover tooltip directly over chart -->
+				{#if hoveredYear}
+					<div class="absolute z-50 pointer-events-none top-0 left-0">
+						<div class="flex flex-wrap gap-2 p-2">
+							{#if activeCategory === 'all'}
+								{#each hoveredYear.sectors
+									.filter((s: any) => s.value > 0)
+									.sort((a: any, b: any) => {
+										// Sort by the same order as categoryOrder (bottom to top in stack)
+										const aIndex = categoryOrder.indexOf(a.sector);
+										const bIndex = categoryOrder.indexOf(b.sector);
+										return aIndex - bIndex;
+									}) as s}
+									<div
+										class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-medium shadow-lg"
+										style="background-color: {s.color}"
+									>
+										<span class="uppercase font-bold">{s.label}</span>
+										<span class="ml-2"
+											>{formatNumber(s.value)}
+											{unit.includes('Mio') ? 'Mio' : ''}
+											{unit.split(' ')[1] || 't THG'}</span
+										>
+									</div>
+								{/each}
+							{:else}
+								{#each hoveredYear.sectors.filter((s: any) => s.sector === activeCategory) as s}
+									{#if s.value > 0}
+										<div
+											class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-medium shadow-lg"
+											style="background-color: {s.color}"
+										>
+											<span class="uppercase font-bold">{s.label}</span>
+											<span class="ml-2"
+												>{formatNumber(s.value)}
+												{unit.includes('Mio') ? 'Mio' : ''}
+												{unit.split(' ')[1] || 't THG'}</span
+											>
+											<span class="ml-1 opacity-75">({hoveredYear.year})</span>
+										</div>
+									{/if}
+								{/each}
+							{/if}
+						</div>
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>
@@ -259,7 +435,7 @@
 
 <Switch
 	type="small"
-	views={[{ key: 'all', label: 'Alle Sektoren' }, ...displayedCategories]}
+	views={displayOrderForSwitch}
 	bind:activeView={activeCategory}
 	on:itemClick={(event) => {
 		activeCategory = event.detail;
@@ -271,6 +447,9 @@
 	{#if showPerCapita && Object.keys(populationByYear).length > 0}
 		<p>Pro-Kopf-Werte basieren auf jahresspezifischen Bevölkerungsdaten für {region.name}.</p>
 	{:else if showPerCapita && region.population}
-		<p>Pro-Kopf-Werte basieren auf einer Bevölkerung von {region.population.toLocaleString()} Einwohnern (einheitlich für alle Jahre).</p>
+		<p>
+			Pro-Kopf-Werte basieren auf einer Bevölkerung von {region.population.toLocaleString()} Einwohnern
+			(einheitlich für alle Jahre).
+		</p>
 	{/if}
 </div>

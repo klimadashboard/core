@@ -6,12 +6,13 @@
 
 	export let data;
 	export let colors;
+	export let selectedEnergy;
 
 	let chartHeight;
 	let chartWidth;
 	let selectedVariable = 'net_power_kw';
 
-	let margin = { top: 0, right: 30, bottom: 20, left: 50 };
+	let margin = { top: 5, right: 30, bottom: 20, left: 50 };
 
 	$: innerChartWidth = chartWidth - margin.left - margin.right;
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
@@ -24,7 +25,7 @@
 
 	$: lastYear = data[data.length - 1]?.year;
 
-	$: powerUnit = getPowerUnit(Math.max(Math.abs(minValue), Math.abs(maxValue)));
+	$: powerUnit = getPowerUnit(Math.max(Math.abs(minValue), Math.abs(maxValue)), selectedEnergy);
 
 	$: yScale = scaleLinear()
 		.domain([convertToPowerUnit(minValue, maxValue), convertToPowerUnit(maxValue, maxValue)])
@@ -58,7 +59,7 @@
 			<b>{hoveredYear}:</b>
 			{#each data.filter((d) => d.year === hoveredYear) as item}
 				<span style="color: {item.color}">
-					{formatPower(item[selectedVariable])}
+					{formatPower(item[selectedVariable], selectedEnergy)}
 				</span>
 			{/each}
 		</div>

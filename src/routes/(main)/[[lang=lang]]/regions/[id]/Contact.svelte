@@ -25,11 +25,11 @@
 </script>
 
 <div
-	class="my-4 container flex flex-col md:flex-row items-center justify-between border-y py-4 border-y-current/10"
+	class="my-4 container grid md:grid-cols-2 gap-8 items-center justify-between border-y py-4 border-y-current/10"
 >
-	<div>
+	<div class="">
 		{#await promise then team}
-			<div class="flex flex-wrap gap-5 m-16">
+			<div class="flex flex-wrap gap-5 md:m-4">
 				{#each team as member}
 					{#if member.avatar}
 						<img
@@ -44,7 +44,7 @@
 		{/await}
 	</div>
 	<div class="max-w-2xl text-lg space-y-1 leading-snug">
-		<h2 class="text-2xl font-bold">Feedback? Daten? Ideen?</h2>
+		<h2 class="text-2xl font-bold">Wir machen Klimawissenschaft zugänglich.</h2>
 		<p class=" ">
 			Das Klimadashboard wird von einem unabhängigen Verein mit einem interdisziplinären Team
 			gebaut. Unsere Mission ist es, Klimawissenschaft für alle zugänglich zu machen.

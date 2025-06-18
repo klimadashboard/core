@@ -44,15 +44,27 @@
 						class="text-xl font-bold">%</span
 					>
 				</p>
-				<p>{formatNumber(view.history.find((d) => d.period == selectedPeriod)?.absolute)} PKWs</p>
+				{#if view.history.find((d) => d.period == selectedPeriod)?.absolute < 6}
+					<p>weniger als 6 PKWs</p>
+				{:else}
+					<p>{formatNumber(view.history.find((d) => d.period == selectedPeriod)?.absolute)} PKWs</p>
+				{/if}
 
 				<SmallLine {selectedPeriod} data={view.history} />
 			</div>
 		{/each}
 	</div>
+	<p class="mt-4 text-lg">
+		Autos mit Diesel- oder Benzinantrieb verursachen durch das Verbrennen im Motor direkte
+		Emissionen. Die Visualisierung zeigt den Bestand, also die aktuell zugelassenen PKWs in der
+		jeweiligen Region. Der Bestand beinhaltet Firmenwägen wie auch privat genutzte PKWs und wird zum
+		Wohnort bzw. Firmensitz zugeteilt. Auch wenn der Anteil der neuzugelassenen Elektroautos steigt,
+		ist die Gesamtflotte immer noch größtenteils fossil. Die Wende hin zu Elektroautos ist für die
+		Reduktion von Emissionen im Verkehrsbereich essentiell.
+	</p>
 {:else}
-	<p>
-		Für diese Region sind aufgrund von Gemeindezusammenlegungen in diesem Zeitraum keine Daten
-		verfügbar.
+	<p class="text-lg">
+		Für diese Region sind aufgrund von Gemeindezusammenlegungen oder aus Datenschutzgründen in
+		diesem Zeitraum keine Daten verfügbar.
 	</p>
 {/if}

@@ -6,6 +6,8 @@
 	import Disclaimer from './Disclaimer.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { REGION_COLORS } from '../mobilityRenewableShare/constants';
+	import dayjs from 'dayjs';
 
 	export let region;
 	export let data;
@@ -13,7 +15,11 @@
 	export let colors;
 	export let selectedEnergy;
 
-	let source = 'Datenquelle: Bundesnetzagentur | Marktstammdatenregister';
+	let source = 'Datenquelle: Marktstammdatenregister der Bundesnetzagentur';
+
+	$: if (selectedEnergy == 'wind') {
+		source += ' | Goal100';
+	}
 
 	$: getDataForRegion = async (regionCode = false, selectedEnergy) => {
 		const url =
@@ -29,9 +35,11 @@
 
 	$: getFormattedCapacity = (capacity) => {
 		if (capacity < 1000) {
-			return formatNumber(Math.round(capacity)) + ' KW';
+			return formatNumber(Math.round(capacity)) + ' KW' + (selectedEnergy == 'solar' ? 'p' : '');
 		} else {
-			return formatNumber(Math.round(capacity / 1000)) + ' MW';
+			return (
+				formatNumber(Math.round(capacity / 1000)) + ' MW' + (selectedEnergy == 'solar' ? 'p' : '')
+			);
 		}
 	};
 
@@ -68,6 +76,14 @@
 					? 'Solaranlagen'
 					: 'Windräder'} registriert.
 			</h2>
+			<p class="text-lg">
+				Das kann unterschiedliche Gründe haben – in dicht bebauten Gebieten wie zum Beispiel
+				Großstädten fehlen häufig die Flächen, an anderen Orten fehlt es bislang an politischem oder
+				gesellschaftlichem Willen. Häufig wird Strom aus Windenergie dann aus benachbarten Gemeinden
+				mitgenutzt. Insgesamt zeigen sich in Deutschland regionale Unterschiede: Während im Norden
+				bereits viele Windräder stehen, ist der Ausbau im Süden noch vergleichsweise gering – trotz
+				vorhandener Flächen.
+			</p>
 		{:else}
 			<div class="flex justify-between">
 				<h2 class="text-lg mb-4">
@@ -137,11 +153,12 @@
 						</h3>
 					{/if}
 				{:else if result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw === 0}
-					<h3 class="font-bold text-2xl">
-						Seit Jahresbeginn wurden in {region.name} keine Windräder angeschlossen
+					<h3 class="font-bold text-2xl leading-tight text-balance">
+						Zuletzt wurde im Jahr {result.by_year.filter((d) => d.added_power_kw > 0).pop()?.year} ein
+						Windrad in {region.name} in Betrieb genommen.
 					</h3>
 				{:else}
-					<h3 class="font-bold text-2xl">
+					<h3 class="font-bold text-2xl leading-tight text-balance">
 						Seit Jahresbeginn wurden in {region.name}
 						{getFormattedCapacity(
 							result.by_year.find((d) => d.year === new Date().getFullYear())?.added_power_kw ?? 0
@@ -149,8 +166,17 @@
 					</h3>
 				{/if}
 
-				<BarChart data={result.by_year} {colors} />
-				<p class="text-sm mt-2 opacity-80">{source}</p>
+				<BarChart data={result.by_year} {colors} {selectedEnergy} />
+				<p class="text-sm mt-2 opacity-80">
+					{source} | Datenstand: {dayjs(result.update_date).format('DD.MM.YYYY HH:mm')}
+				</p>
+
+				<p class="text-lg mt-4">
+					Schaut man nicht nur auf die jährlich installierte Leistung, sondern auf die kumulative
+					Gesamtleistung, die in {region.name} installiert ist, ergibt sich die Kurve in der folgenden
+					Grafik. Erkunde hierbei auch den flächenbezogenen Vergleich zu benachbarten Gemeinden, der
+					durchschnittlichen Entwicklung verschiedener Bundesländer oder sogar für ganz Deutschland.
+				</p>
 			{/if}
 
 			<h3 class="mt-6 font-bold">Kumulative Leistung</h3>
@@ -163,9 +189,74 @@
 			</h3>
 
 			<Comparison data={result.by_year} {regions} {region} {colors} {selectedEnergy} />
-			<p class="text-sm mt-2 opacity-80">{source}</p>
+			<p class="text-sm mt-2 opacity-80">
+				{source} | Datenstand: {dayjs(result.update_date).format('DD.MM.YYYY HH:mm')}
+			</p>
+
+			{#if selectedEnergy === 'solar'}
+				<p class="text-lg my-4">
+					Im Diagramm sieht man, wie sich die gesamte Solarstrom-Leistung in {region.name} über die Jahre
+					entwickelt hat. Für die Darstellung werden die Daten für jedes Jahr aufsummiert und ergeben
+					somit die gesamte Solarstromleistung (auch kumulative Leistung genannt). Im Jahr 2015, lag
+					die installierte PV-Leistung noch bei {formatNumber(
+						result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw
+					)}
+					kWp, während sie Ende 2024 bereits bei {formatNumber(
+						result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw
+					)}
+					kWp lag. Der Solarausbau sieht in Städten anders aus als in ländlichen Regionen. Städte können
+					vorwiegend auf Gebäudeflächen PV-Anlagen errichten, während ländliche Regionen auch Freiflächen
+					zur Verfügung haben. Deswegen kann ein Vergleich zwischen den beiden Typen verzerrend sein.
+				</p>
+			{:else}
+				<p class="text-lg my-4">
+					Im Diagramm sieht man, wie sich die gesamte Windstrom-Leistung in {region.name} über die Jahre
+					entwickelt hat. Für die Darstellung werden die Daten für jedes Jahr aufsummiert und ergeben
+					somit die gesamte Windstromleistung (auch kumulative Leistung genannt).
+					{#if (result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) > (result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0)}
+						Im Jahr 2015 lag die installierte Wind-Leistung noch bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW, während sie Ende 2024 bereits bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW lag.
+					{:else if (result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) === (result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0)}
+						Seit {result.by_year.find(
+							(d) =>
+								d.cumulative_power_kw ===
+								result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw
+						)?.year} beträgt die installierte Wind-Leistung in {region.name} unverändert
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000
+						)} MW. Seitdem wurde kein neues Windrad in Betrieb genommen.
+					{:else}
+						Im Jahr 2015 lag die installierte Wind-Leistung bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW, während sie Ende 2024 bei
+						{formatNumber(
+							(result.by_year.find((d) => d.year === 2024)?.cumulative_power_kw ?? 0) / 1000
+						)}
+						MW lag. Die installierte Wind-Leistung hat sich in diesem Zeitraum somit aufgrund von mehr
+						Abschaltungen als Neuinbetriebnahmen verringert.
+					{/if}
+					Ein Vergleich zwischen Städten und ländlichen Regionen kann verzerrend sein, da Städte aufgrund
+					der Bebauung keinen Platz für Windräder haben.
+				</p>
+			{/if}
+
+			<Disclaimer
+				{region}
+				ratio={result.grid_operator_checked_ratio}
+				{colors}
+				{selectedEnergy}
+				updateDate={dayjs(result.update_date).format('DD.MM.YYYY HH:mm')}
+			/>
 			{#if selectedEnergy == 'solar'}
-				<Disclaimer {region} ratio={result.grid_operator_checked_ratio} {colors} />
 				<Types data={result.current_by_type} {colors} {region} />
 			{/if}
 		{/if}

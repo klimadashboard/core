@@ -5,6 +5,7 @@
 	import { colors } from './scales';
 	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
 	import { page } from '$app/state';
+	import Loader from '$lib/components/Loader.svelte';
 
 	import { getRegions } from '$lib/utils/regions';
 	import getDirectusInstance from '$lib/utils/directus';
@@ -240,7 +241,7 @@
 
 	<div class="min-h-[60vh]">
 		{#await promise}
-			<p class="text-center py-10">Lädt…</p>
+			<Loader />
 		{:then p}
 			<div>
 				<div class="h-[40vh]">
