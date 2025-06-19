@@ -167,7 +167,10 @@
 
 								{#if page.data.page.slug}
 									<div>
-										<a href="{page.url.host}/{page.data.page.slug.split(',')[0]}" target="_blank">
+										<a
+											href="https://{page.url.host}/{page.data.page.slug.split(',')[0]}"
+											target="_blank"
+										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												width="24"
