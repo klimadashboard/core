@@ -33,7 +33,7 @@
 			r.filter(
 				(r) =>
 					r.country === PUBLIC_VERSION.toUpperCase() &&
-					(r.layer == 'country' || r.layer == 'municipality')
+					(r.layer == 'country' || r.layer == 'state' || r.layer == 'municipality')
 			)
 		);
 

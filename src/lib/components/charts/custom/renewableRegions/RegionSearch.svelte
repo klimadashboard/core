@@ -32,8 +32,12 @@
 			isParent: region.parents?.some((p) => p.id === r.id)
 		}))
 		.sort((a, b) => {
+			// Ensure the "country" layer comes first
+			if (a.layer === 'country' && b.layer !== 'country') return -2;
+			if (b.layer === 'country' && a.layer !== 'country') return 1;
+
 			// Parent region first
-			if (a.isParent && !b.isParent) return -1;
+			if (a.isParent && !b.isParent) return -2;
 			if (!a.isParent && b.isParent) return 1;
 
 			// Then by distance (nulls last)
