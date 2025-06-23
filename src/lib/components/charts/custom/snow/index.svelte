@@ -4,15 +4,15 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import BarChart from '$lib/components/charts/chartBar.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
-	$: selectedStation = $page.url.searchParams.get('weatherStation')
-		? parseInt($page.url.searchParams.get('weatherStation'))
-		: 555;
+	let selectedStation = [];
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';
 
 	$: getData = async function () {
+		selectedStation = page.url.searchParams.get('weatherStation');
+
 		const directus = getDirectusInstance(fetch);
 		if (selectedStation) {
 			const station = await directus.request(
@@ -156,7 +156,9 @@
 			/>
 		</div>
 		<p class="text-lg">
-			Während es auch in den vergangenen Jahren einzelne Winter mit relativ hoher Schneedeckung gab, ist über die vergangenen Jahre insgesamt ein Rückgang in der Anzahl der Tage mit mindestens 1 cm Schnee zu beobachten. Die Schwankungen zwischen den Jahren bleiben dabei deutlich.
+			Während es auch in den vergangenen Jahren einzelne Winter mit relativ hoher Schneedeckung gab,
+			ist über die vergangenen Jahre insgesamt ein Rückgang in der Anzahl der Tage mit mindestens 1
+			cm Schnee zu beobachten. Die Schwankungen zwischen den Jahren bleiben dabei deutlich.
 		</p>
 	{:catch error}
 		{JSON.stringify(error)}
