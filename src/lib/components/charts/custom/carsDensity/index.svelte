@@ -64,6 +64,10 @@
 			regions = payload.regions;
 			availablePeriods = payload.periods;
 			source = payload.source;
+			if (PUBLIC_VERSION === 'de') {
+				source =
+					"<a href='https://www.kba.de/DE/Statistik/Produktkatalog/produkte/Fahrzeuge/fz3_b_uebersicht.html?nn=835828'>Kraftfahrt-Bundesamt (2025)</a>, <a href='https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/_inhalt.html'>Statistisches Bundesamt (2025)</a>, eigene Berechnungen";
+			}
 			country = payload.country;
 			selectedRegion =
 				payload.preselected ??
@@ -138,7 +142,7 @@
 							{selectedPeriod}
 							region={getRegionData(regions, selectedRegion, country)}
 						/>
-						<p class="text-sm opacity-80 mt-4">Datenquelle: {source}</p>
+						<p class="text-sm opacity-80 mt-4">Datenquelle: {@html source}</p>
 					</div>
 				</div>
 			{/if}

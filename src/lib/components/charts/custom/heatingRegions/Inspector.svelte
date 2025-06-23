@@ -88,7 +88,7 @@
 					><span>{data?.[0]?.region_label}</span>
 				</p>
 				<h2 class="text-2xl leading-tight">
-					Die Wärmewende stockt – Fossile Heizungen oftmals noch Standard
+					Zensus 2022 – Fossile Heizungen oftmals noch Standard
 				</h2>
 				<h3 class="text-lg leading-tight mt-2">Heizungen nach Art des Energieträgers</h3>
 

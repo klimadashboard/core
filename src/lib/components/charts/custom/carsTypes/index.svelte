@@ -63,6 +63,11 @@
 		const sources = Array.from(new Set(data.map((d) => d.source).filter((s) => s)));
 		source = sources.join(', ');
 
+		if (PUBLIC_VERSION === 'de') {
+			source =
+				"<a href='https://www-genesis.destatis.de/datenbank/online/url/802b92c5'>Kraftfahrtbundesamt (2025)</a>";
+		}
+
 		const allRegions = await getRegions();
 		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
 
@@ -271,7 +276,7 @@
 						{selectedPeriod}
 					/>
 					<p class="text-sm opacity-80 mt-4 leading-tight">
-						Datenquelle: {source}<br />
+						Datenquelle: {@html source}<br />
 						Hybrid beinhaltet Plug-In-Hybrid und Hybrid. Die Summe beträgt aufgrund von Rundungen nicht
 						unbedingt 100%.
 					</p>
