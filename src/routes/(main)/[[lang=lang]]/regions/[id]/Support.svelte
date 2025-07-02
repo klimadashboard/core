@@ -8,8 +8,7 @@
 		<h2 class="text-2xl font-bold">Werde regionaler Klimadashboard-Supporter!</h2>
 		<p class=" leading-snug">
 			Spende jetzt fürs Klimadashboard und hilf uns, weitere Visualisierungen für deine Region zu
-			entwickeln. Als Dank zeigen wir dich ab Juli 2025 als Supporter auf deinem regionalen
-			Klimadashboard an.
+			entwickeln.
 		</p>
 		<a
 			href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
