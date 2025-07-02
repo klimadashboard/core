@@ -35,6 +35,16 @@
 		{ label: 'Sonstige', key: 'Sonstige', colorKey: 'other', chart: 'progressBar', min: 0, max: 20 }
 	];
 
+	function dedupeData(data) {
+		const seen = new Set();
+		return data.filter((d) => {
+			const key = `${d.period}-${d.region}-${d.category}`;
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	}
+
 	// reactive defaults (run once on init)
 	$: selectedView = views[0].key;
 	$: selectedRegion = null;
@@ -46,7 +56,7 @@
 		const directus = getDirectusInstance(fetch);
 		const countryCode = PUBLIC_VERSION.toUpperCase();
 
-		const data = await directus.request(
+		const rawData = await directus.request(
 			readItems('mobility_cars', {
 				filter: {
 					country: { _eq: countryCode },
@@ -59,6 +69,8 @@
 				fields: ['period', 'region', 'category', 'value', 'source']
 			})
 		);
+
+		const data = dedupeData(rawData);
 
 		const sources = Array.from(new Set(data.map((d) => d.source).filter((s) => s)));
 		source = sources.join(', ');
@@ -93,12 +105,15 @@
 
 			cats.forEach((catKey) => {
 				if (catKey === 'Hybrid') {
+					const hybridLabels = ['Hybrid', 'Plug-In-Hybrid', 'Hybrid (ohne Plug-In)'];
+
 					absoluteByCategory.Hybrid = periods.map((p) => {
 						const sum = regionData
-							.filter((d) => /Hybrid/i.test(d.category) && parseInt(d.period) === p)
+							.filter((d) => hybridLabels.includes(d.category?.trim()) && parseInt(d.period) === p)
 							.reduce((acc, d) => acc + d.value, 0);
 						return { period: p, value: sum };
 					});
+
 					sharesByCategory.Hybrid = absoluteByCategory.Hybrid.map(({ period, value }) => {
 						const total =
 							regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
@@ -125,11 +140,14 @@
 				const total =
 					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === p)?.value ||
 					0;
-				const known = ['Elektro', 'Plug-in-Hybrid', 'Benzin', 'Diesel']
-					.map((k) => absoluteByCategory[k]?.[i]?.value || 0)
-					.reduce((a, b) => a + b, 0);
-				return { period: p, value: total - known };
+				const known = ['Elektro', 'Benzin', 'Diesel'].reduce(
+					(sum, k) => sum + (absoluteByCategory[k]?.[i]?.value || 0),
+					0
+				);
+				const hybrid = absoluteByCategory.Hybrid?.[i]?.value || 0;
+				return { period: p, value: total - known - hybrid };
 			});
+
 			sharesByCategory.Sonstige = absoluteByCategory.Sonstige.map(({ period, value }) => {
 				const total =
 					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
@@ -158,6 +176,23 @@
 
 		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
 		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
+
+		const allCategories = Array.from(new Set(data.map((d) => d.category?.trim())));
+		const knownCategories = [
+			'Elektro',
+			'Benzin',
+			'Diesel',
+			'Insgesamt',
+			'Hybrid',
+			'Plug-In-Hybrid',
+			'Hybrid (ohne Plug-In)'
+		];
+
+		const unknownCategories = allCategories.filter((cat) => !knownCategories.includes(cat));
+
+		if (unknownCategories.length > 0) {
+			console.warn('🚨 Unknown vehicle categories found in data:', unknownCategories);
+		}
 
 		return { data, regions, minPeriod, maxPeriod, countryName };
 	}
