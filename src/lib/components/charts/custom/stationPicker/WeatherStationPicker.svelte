@@ -1,9 +1,10 @@
 <script>
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { replaceState } from '$app/navigation';
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch = createEventDispatcher();
 
 	export let data;
 	export let selectedStation;
@@ -12,7 +13,10 @@
 	let isUserSelection = false;
 
 	// Default fallback station (IDs differ for Germany/AT)
-	const presetID = PUBLIC_VERSION === 'at' ? 105 : 403;
+	const preset = {
+		at: [105, 30, 39, 213],
+		de: [403, 3379, 722, 3032]
+	};
 
 	/**
 	 * Euclidean distance for simplicity.
@@ -34,9 +38,7 @@
 			getDistance(currentCoords, a) < getDistance(currentCoords, b) ? a : b
 		);
 
-		if (!isUserSelection) {
-			selectedStation = closestStation;
-		}
+		dispatch('select', closestStation);
 		geoLocationStatus = '';
 	}
 
@@ -71,58 +73,34 @@
 		const found = data.stations.find((s) => s.id === stationId);
 
 		if (found) {
-			selectedStation = found;
+			dispatch('select', found);
 		}
 	}
+
+	$: suggestedStations = [];
 
 	/**
 	 * On mount: figure out what station we should show by default.
 	 */
 	onMount(() => {
 		// Check if there's a ?weatherStation= param
-		const weatherStationParam = $page.url.searchParams.get('weatherStation');
-		if (weatherStationParam) {
-			const foundStation = data.stations.find((d) => d.id == weatherStationParam);
-			if (foundStation) {
-				selectedStation = foundStation;
-			}
-			return;
-		}
 
-		// Check localStorage
-		const coordsStr = localStorage.getItem('kd_region_coordinates');
-		if (coordsStr && coordsStr.includes(',')) {
-			const [lng, lat] = coordsStr.split(',').map(Number);
-			if (!isNaN(lng) && !isNaN(lat)) {
-				getClosestStation({ latitude: lat, longitude: lng });
-				return;
-			}
+		if (localStorage.getItem('kd_region_coordinates') && $page.url.pathname.includes('regions')) {
+			const stored = localStorage.getItem('kd_region_coordinates');
+			const [lng, lat] = stored.split(',').map(Number); // convert to numbers
+			suggestedStations = data.stations
+				.sort(
+					(a, b) =>
+						getDistance({ latitude: lat, longitude: lng }, a) -
+						getDistance({ latitude: lat, longitude: lng }, b)
+				)
+				.slice(0, 4);
+		} else {
+			suggestedStations = data.stations.filter((s) =>
+				preset[PUBLIC_VERSION].includes(parseInt(s.id))
+			);
 		}
-
-		// Otherwise, fall back to a preset
-		selectedStation = data.stations.find((d) => d.id == presetID);
 	});
-
-	/**
-	 * Whenever `selectedStation` changes, update the URL (unless
-	 * it was a user override you *don’t* want to reflect).
-	 *
-	 * If you DO want user picks to reflect in URL, remove `!isUserSelection`.
-	 */
-	let lastSetStationId = null;
-
-	$: if (selectedStation) {
-		const selectedId = String(selectedStation.id);
-		const currentParam = $page.url.searchParams.get('weatherStation');
-
-		// Avoid infinite loop by comparing with last set value
-		if (selectedId !== currentParam && selectedId !== lastSetStationId) {
-			const url = new URL($page.url.href);
-			url.searchParams.set('weatherStation', selectedId);
-			replaceState(url.toString(), $page.state);
-			lastSetStationId = selectedId;
-		}
-	}
 
 	/**
 	 * Group stations by "state" for <optgroup>.
@@ -136,50 +114,62 @@
 	});
 </script>
 
-{#if selectedStation}
-	<div class="mx-auto w-max mb-4">
-		<p class="text-sm mb-1 font-medium">Wähle deine Wetterstation</p>
-		<div class="flex items-center gap-2">
-			<!-- A plain <select> that chooses station by ID -->
-			<select on:change={handleSelectionChange} class="input">
+<div
+	class="rounded-2xl absolute top-0 left-0 bottom-0 w-1/3 bg-gradient-to-r from-current/20 to-transparent z-20 pointer-events-none"
+></div>
+<div class="text-sm absolute top-3 left-3 z-20 pointer-events-none">
+	<h2 class="text-xl font-bold mb-2 text-black">Wähle eine Wetterstation</h2>
+	<div class="flex flex-col gap-2 max-w-2xl">
+		<div class="dropdown">
+			<select
+				on:change={handleSelectionChange}
+				class="pointer-events-auto !bg-white text-black rounded-full shadow-md border-2 !border-green-500"
+			>
 				{#each Object.keys(groupedOptions).sort() as state}
 					<optgroup label={state}>
 						{#each groupedOptions[state].sort((a, b) => a.name.localeCompare(b.name)) as station}
-							<option value={station.id} selected={station.id === selectedStation.id}>
+							<option value={station.id} selected={station.id === selectedStation?.id}>
 								{station.name} ({station.height}m)
 							</option>
 						{/each}
 					</optgroup>
 				{/each}
 			</select>
-
-			<!-- Button to attempt geolocation-based pick -->
-			<button
-				aria-label="Find nearest weather station"
-				class="button"
-				on:click={getCurrentPosition}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-current-location"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<circle cx="12" cy="12" r="3" />
-					<circle cx="12" cy="12" r="8" />
-					<line x1="12" y1="2" x2="12" y2="4" />
-					<line x1="12" y1="20" x2="12" y2="22" />
-					<line x1="20" y1="12" x2="22" y2="12" />
-					<line x1="2" y1="12" x2="4" y2="12" />
-				</svg>
-			</button>
-			<span>{geoLocationStatus}</span>
 		</div>
+
+		{#each suggestedStations.filter((d) => d.id !== selectedStation?.id) as station}
+			<button class="button block" on:mousedown={() => dispatch('select', station)}>
+				<b>{station.name}</b><br />
+				<p class="text-xs font-normal">({station.height}m)</p>
+			</button>
+		{/each}
+		<button aria-label="Find nearest weather station" class="button" on:click={getCurrentPosition}>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="w-4 h-4"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				stroke-width="2"
+				stroke="currentColor"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<circle cx="12" cy="12" r="3" />
+				<circle cx="12" cy="12" r="8" />
+				<line x1="12" y1="2" x2="12" y2="4" />
+				<line x1="12" y1="20" x2="12" y2="22" />
+				<line x1="20" y1="12" x2="22" y2="12" />
+				<line x1="2" y1="12" x2="4" y2="12" />
+			</svg>
+		</button>
 	</div>
-{/if}
+</div>
+
+<style>
+	@reference "tailwindcss/theme";
+	.button {
+		@apply shadow-md pointer-events-auto bg-white hover:bg-gray-100 w-max text-black;
+	}
+</style>

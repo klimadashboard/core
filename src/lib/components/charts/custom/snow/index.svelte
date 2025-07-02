@@ -3,20 +3,19 @@
 	import { readItems, readItem } from '@directus/sdk';
 	import Loader from '$lib/components/Loader.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import StationPicker from '$lib/components/charts/custom/stationPicker/index.svelte';
 	import BarChart from '$lib/components/charts/chartBar.svelte';
-	import { page } from '$app/state';
 
-	let selectedStation = [];
+	let selectedStation;
+	export let chart;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_data' : 'at_geosphere_data';
 
 	$: getData = async function () {
-		selectedStation = page.url.searchParams.get('weatherStation');
-
 		const directus = getDirectusInstance(fetch);
 		if (selectedStation) {
 			const station = await directus.request(
-				readItem(tableName.replace('_data', '_stations'), selectedStation)
+				readItem(tableName.replace('_data', '_stations'), selectedStation.id)
 			);
 			const data = await directus.request(
 				readItems(tableName, {
@@ -26,7 +25,7 @@
 							{
 								station: {
 									id: {
-										_eq: selectedStation
+										_eq: selectedStation.id
 									}
 								}
 							},
@@ -109,6 +108,10 @@
 
 	$: promise = getData();
 
+	$: if (selectedStation) {
+		promise = getData();
+	}
+
 	$: getRecordWinter = function (data) {
 		return data.winters.find(
 			(d) => d.daysWithSnow === Math.max(...data.winters.map((d) => d.daysWithSnow))
@@ -119,47 +122,58 @@
 </script>
 
 <div>
+	<StationPicker bind:selectedStation {chart} snowCoverageMinimum={90} />
+
+	{#if !selectedStation}
+		<p class="max-w-2xl mx-auto mb-2 text-center">
+			Wähle eine Wetterstation aus, um mehr zum Schneefall in deiner Region zu erfahren. Es werden
+			nur Wetterstationen mit Schneemessungen angezeigt.
+		</p>
+	{/if}
 	{#await promise}
 		<Loader showText={true} />
 	{:then data}
-		{#if getRecordWinter(data).daysWithSnow < 200}
-			<h2 class="text-2xl max-w-4xl text-center mx-auto text-balance">
-				Im Rekordwinter {getRecordWinter(data).label.replace('Winter', '')} verzeichnete die Wetterstation
-				{data.station.name}
-				{getRecordWinter(data).daysWithSnow} Tage mit einer Schneehöhe von mindestens 1cm – im {data
-					.winters[data.winters.length - 2].label}
-				waren es {data.winters[data.winters.length - 2].daysWithSnow}.
-			</h2>
-		{/if}
+		{#if data.winters}
+			{#if getRecordWinter(data).daysWithSnow < 200}
+				<h2 class="text-2xl max-w-4xl text-center mx-auto text-balance">
+					Im Rekordwinter {getRecordWinter(data).label.replace('Winter', '')} verzeichnete die Wetterstation
+					{data.station.name}
+					{getRecordWinter(data).daysWithSnow} Tage mit einer Schneehöhe von mindestens 1cm – im {data
+						.winters[data.winters.length - 2].label}
+					waren es {data.winters[data.winters.length - 2].daysWithSnow}.
+				</h2>
+			{/if}
 
-		<div class="h-72" bind:clientWidth={chartWidth}>
-			<BarChart
-				data={data.winters.map((d, i) => {
-					return {
-						label: d.label.replace('Winter ', ''),
-						categories: [
-							{
-								value: d.daysWithSnow,
-								label: 'Schneedeckentage im ' + d.label,
-								color: '#11998E',
-								estimate: d == data.winters[data.winters.length - 1] ? true : false
-							}
-						]
-					};
-				})}
-				xAxixInterval={chartWidth > 600 ? 10 : 20}
-				visualisation={'stacked'}
-				unit={'Schneedeckentage'}
-				reverseLegend={true}
-				marginLeft={40}
-				marginRight={30}
-			/>
-		</div>
-		<p class="text-lg">
-			Während es auch in den vergangenen Jahren einzelne Winter mit relativ hoher Schneedeckung gab,
-			ist über die vergangenen Jahre insgesamt ein Rückgang in der Anzahl der Tage mit mindestens 1
-			cm Schnee zu beobachten. Die Schwankungen zwischen den Jahren bleiben dabei deutlich.
-		</p>
+			<div class="h-72" bind:clientWidth={chartWidth}>
+				<BarChart
+					data={data.winters.map((d, i) => {
+						return {
+							label: d.label.replace('Winter ', ''),
+							categories: [
+								{
+									value: d.daysWithSnow,
+									label: 'Schneedeckentage im ' + d.label,
+									color: '#11998E',
+									estimate: d == data.winters[data.winters.length - 1] ? true : false
+								}
+							]
+						};
+					})}
+					xAxixInterval={chartWidth > 600 ? 10 : 20}
+					visualisation={'stacked'}
+					unit={'Schneedeckentage'}
+					reverseLegend={true}
+					marginLeft={40}
+					marginRight={30}
+				/>
+			</div>
+			<p class="text-lg">
+				Während es auch in den vergangenen Jahren einzelne Winter mit relativ hoher Schneedeckung
+				gab, ist über die vergangenen Jahre insgesamt ein Rückgang in der Anzahl der Tage mit
+				mindestens 1 cm Schnee zu beobachten. Die Schwankungen zwischen den Jahren bleiben dabei
+				deutlich.
+			</p>
+		{/if}
 	{:catch error}
 		{JSON.stringify(error)}
 	{/await}

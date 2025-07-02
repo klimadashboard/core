@@ -112,7 +112,7 @@
 </script>
 
 {#if heatWaveLength > 2}
-	<p class="text-[#DB5537] uppercase font-bold text-sm tracking-wide mb-1">
+	<p class="text-[#DB5537] uppercase font-bold text-sm tracking-wide mb-1 mx-auto w-max">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			width="24"
@@ -221,20 +221,20 @@
 </p>
 
 <p class="text-lg max-w-3xl mx-auto mt-8">
-	Die Erderhitzung ist auch in {regionString} spürbar. Im Durchschnitt nimmt die Zahl der heißen Tage, 
-	Tropennächte sowie der sogenannten Sommer- und Hitzetage zu. Gleichzeitig gibt es weniger Frost- und Eistage. 
-	Diese Veränderungen lassen sich über alle Referenzzeiträume hinweg beobachten.
+	Die Erderhitzung ist auch in {regionString} spürbar. Im Durchschnitt nimmt die Zahl der heißen Tage,
+	Tropennächte sowie der sogenannten Sommer- und Hitzetage zu. Gleichzeitig gibt es weniger Frost- und
+	Eistage. Diese Veränderungen lassen sich über alle Referenzzeiträume hinweg beobachten.
 </p>
 
 <p class="text-lg max-w-3xl mx-auto mt-8">
-	Häufigere und länger anhaltende Hitzeperioden können zu gesundheitlichen Problemen wie
-	unter anderem Hitzschlägen, Erschöpfung und einer Zunahme von Herz-Kreislauf- und Nierenerkrankungen
-	führen. Insbesondere ältere Menschen, Schwangere und Kinder, aber auch Menschen mit Vorerkrankungen
-	gehören zu den am stärksten gefährdeten Gruppen. Allein in Europa starben im Jahr 2023 etwa 45.000
-	Menschen an extremer Hitze (Nature Medicine, 2024). Luftige Bekleidung, ausreichende Flüssigkeitszufuhr
-	und das Vermeiden von Anstrengung bei Hitze reduzieren die individuelle Hitzebelastung. Begrünung,
-	mehr Schattenplätze und angepasste Gebäude mit besserer Dämmung und Lüftung mildern langfristig die
-	Auswirkungen von Hitzewellen.
+	Häufigere und länger anhaltende Hitzeperioden können zu gesundheitlichen Problemen wie unter
+	anderem Hitzschlägen, Erschöpfung und einer Zunahme von Herz-Kreislauf- und Nierenerkrankungen
+	führen. Insbesondere ältere Menschen, Schwangere und Kinder, aber auch Menschen mit
+	Vorerkrankungen gehören zu den am stärksten gefährdeten Gruppen. Allein in Europa starben im Jahr
+	2023 etwa 45.000 Menschen an extremer Hitze (Nature Medicine, 2024). Luftige Bekleidung,
+	ausreichende Flüssigkeitszufuhr und das Vermeiden von Anstrengung bei Hitze reduzieren die
+	individuelle Hitzebelastung. Begrünung, mehr Schattenplätze und angepasste Gebäude mit besserer
+	Dämmung und Lüftung mildern langfristig die Auswirkungen von Hitzewellen.
 </p>
 
 <p class="text-lg max-w-3xl mx-auto mt-4">
