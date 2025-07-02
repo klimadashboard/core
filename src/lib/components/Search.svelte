@@ -18,11 +18,11 @@
 		debounceTimeout = setTimeout(func, delay);
 	}
 
-	// Fetch suggestions from Directus
 	async function fetchSuggestions(value) {
 		if (value.length === 0) {
 			suggestions = [];
 			showSuggestions = false;
+			activeSuggestionIndex = -1;
 			return;
 		}
 
@@ -44,11 +44,13 @@
 			}));
 
 			showSuggestions = true;
+			activeSuggestionIndex = suggestions.length > 0 ? 0 : -1; // ✅ preselect first item
 		} catch (error) {
 			if (currentRequest === requestCounter) {
 				console.error('Search error:', error);
 				suggestions = [];
 				showSuggestions = false;
+				activeSuggestionIndex = -1;
 			}
 		}
 	}
