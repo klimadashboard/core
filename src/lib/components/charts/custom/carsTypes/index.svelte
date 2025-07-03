@@ -105,7 +105,7 @@
 
 			cats.forEach((catKey) => {
 				if (catKey === 'Hybrid') {
-					const hybridLabels = ['Hybrid', 'Plug-In-Hybrid', 'Hybrid (ohne Plug-In)'];
+					const hybridLabels = ['Hybrid', 'Plug-in-Hybrid', 'Hybrid (ohne Plug-in)'];
 
 					absoluteByCategory.Hybrid = periods.map((p) => {
 						const sum = regionData
