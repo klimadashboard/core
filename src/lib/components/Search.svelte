@@ -195,6 +195,12 @@
 			}
 		);
 	}
+
+	function onSearchIconClick() {
+		if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
+			selectSuggestion(suggestions[activeSuggestionIndex]);
+		}
+	}
 </script>
 
 <div class="relative">
@@ -210,7 +216,8 @@
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class="absolute left-3 top-1.5 pointer-events-none"
+				class="absolute left-3 top-1.5 cursor-pointer"
+				on:pointerdown={onSearchIconClick}
 			>
 				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 				<path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
@@ -267,8 +274,9 @@
 					activeSuggestionIndex
 						? 'bg-gray-600 text-white'
 						: ''}"
-					on:click={() => selectSuggestion(suggestion)}
+					on:pointerdown={() => selectSuggestion(suggestion)}
 					on:mouseover={() => (activeSuggestionIndex = index)}
+					on:focus={() => (activeSuggestionIndex = index)}
 				>
 					<strong>{suggestion.title}</strong>
 					{#if suggestion.subtitle}
