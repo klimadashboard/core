@@ -23,6 +23,8 @@ export interface RegionShape {
 
 export interface RegionWithData extends RegionShape {
 	carsPer1000Inhabitants: { period: string; value: number | null }[];
+	privateCarsPer1000Inhabitants: { period: string; value: number | null }[];
+	companyCarsPer1000Inhabitants: { period: string; value: number | null }[];
 	carsPrivateShare: { period: string; value: number | null }[];
 	carsCompanyShare: { period: string; value: number | null }[];
 	cars: { period: string; value: number | null }[];
@@ -84,6 +86,24 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 			};
 		});
 
+		const privateCarsPer1000Inhabitants = uniqPeriods.map((p) => {
+			const privat = regionData.find((d) => d.category === 'Privat' && d.period === p)?.value;
+			return {
+				period: p,
+				value:
+					privat != null && shape.population ? Math.round((privat / shape.population) * 1000) : null
+			};
+		});
+
+		const companyCarsPer1000Inhabitants = uniqPeriods.map((p) => {
+			const firmen = regionData.find((d) => d.category === 'Firmen' && d.period === p)?.value;
+			return {
+				period: p,
+				value:
+					firmen != null && shape.population ? Math.round((firmen / shape.population) * 1000) : null
+			};
+		});
+
 		const carsPrivateShare = uniqPeriods.map((p) => {
 			const privat = regionData.find((d) => d.category === 'Privat' && d.period === p)?.value;
 			const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
@@ -104,6 +124,8 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 		return {
 			...shape,
 			carsPer1000Inhabitants,
+			privateCarsPer1000Inhabitants,
+			companyCarsPer1000Inhabitants,
 			carsPrivateShare,
 			carsCompanyShare,
 			cars
@@ -139,6 +161,26 @@ export function getRegionData(
 		carsPer1000Inhabitants: allPeriods.map((p) => {
 			const totalCars = regions.reduce((sum, r) => {
 				const val = r.cars.find((d) => d.period === p)?.value;
+				return sum + (val ?? 0);
+			}, 0);
+			return {
+				period: p,
+				value: country.population > 0 ? Math.round((totalCars / country.population) * 1000) : null
+			};
+		}),
+		privateCarsPer1000Inhabitants: allPeriods.map((p) => {
+			const totalCars = regions.reduce((sum, r) => {
+				const val = r.privateCarsPer1000Inhabitants.find((d) => d.period === p)?.value;
+				return sum + (val ?? 0);
+			}, 0);
+			return {
+				period: p,
+				value: country.population > 0 ? Math.round((totalCars / country.population) * 1000) : null
+			};
+		}),
+		companyCarsPer1000Inhabitants: allPeriods.map((p) => {
+			const totalCars = regions.reduce((sum, r) => {
+				const val = r.companyCarsPer1000Inhabitants.find((d) => d.period === p)?.value;
 				return sum + (val ?? 0);
 			}, 0);
 			return {

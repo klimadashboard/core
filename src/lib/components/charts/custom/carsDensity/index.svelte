@@ -9,6 +9,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { loadMobilityData, getRegionData, getRelatedRegions } from './mobilityData';
 	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
+	import RelatedRegions from './RelatedRegions.svelte';
 	import { page } from '$app/state';
 
 	let promise: Promise<{
@@ -23,12 +24,30 @@
 	let availablePeriods: string[] = [];
 	let selectedPeriodIndex = 0;
 	let selectedPeriod: string;
-	let selectedView: 'pop' | 'private' | 'company' = 'pop';
+	let selectedView: 'pop' | 'private' | 'company' = 'private';
 	let selectedRegion: string | null = null;
 	let source: string;
 	let country: RegionShape;
 
 	const views = [
+		{
+			label: 'Privat',
+			key: 'private',
+			description: 'Privat-PKWs <br>pro 1000 Einwohner:innen',
+			color: colors.private[1],
+			dataKey: 'privateCarsPer1000Inhabitants',
+			unit: '',
+			chart: 'progressBar'
+		},
+		{
+			label: 'Firmen',
+			key: 'company',
+			description: 'Firmenwägen pro 1000 Einwohner:innen',
+			color: colors.company[1],
+			dataKey: 'companyCarsPer1000Inhabitants',
+			unit: '',
+			chart: 'progressBar'
+		},
 		{
 			label: 'Gesamt',
 			key: 'pop',
@@ -37,24 +56,6 @@
 			dataKey: 'carsPer1000Inhabitants',
 			unit: '',
 			chart: ''
-		},
-		{
-			label: 'Privat',
-			key: 'private',
-			description: 'Anteil privater PKW',
-			color: colors.private[1],
-			dataKey: 'carsPrivateShare',
-			unit: '%',
-			chart: 'progressBar'
-		},
-		{
-			label: 'Firmen',
-			key: 'company',
-			description: 'Anteil gewerblicher PKW',
-			color: colors.company[1],
-			dataKey: 'carsCompanyShare',
-			unit: '%',
-			chart: 'progressBar'
 		}
 	];
 
@@ -140,8 +141,26 @@
 						<Inspector
 							{views}
 							{selectedPeriod}
+							{selectedView}
+							{regions}
 							region={getRegionData(regions, selectedRegion, country)}
 						/>
+						<RelatedRegions
+							{regions}
+							{selectedPeriod}
+							region={getRegionData(regions, selectedRegion, country)}
+							selectedView={views.find((d) => d.key == selectedView)}
+							on:selectRegion={(e) => (selectedRegion = e.detail)}
+						/>
+
+						<p class="text-lg mt-4">
+							Autos sind vor allem im ländlichen Raum ein zentraler Bestandteil der Mobilität –
+							nicht zuletzt, weil alternative Verkehrsmittel oft fehlen. Gleichzeitig sind sie mit
+							Nachteilen verbunden: Sie verursachen Infrastrukturkosten, tragen zur
+							Luftverschmutzung bei und beanspruchen viel öffentlichen Raum. Das wirkt sich direkt
+							auf die Aufenthaltsqualität in Orten aus. Die Zahl der PKWs pro Kopf liefert daher
+							wichtige Hinweise auf Mobilitätsgewohnheiten und die Abhängigkeit vom Auto.
+						</p>
 						<p class="text-sm opacity-80 mt-4">Datenquelle: {@html source}</p>
 					</div>
 				</div>
