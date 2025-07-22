@@ -53,7 +53,7 @@
 		{
 			key: 'F-Gase_percapita',
 			label: 'Fluorierte Gase',
-			color: 'fluorinatedGases',
+			color: 'fgases',
 			icon: "<svg width='21' height='20' viewBox='0 0 21 20' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M3 6.00003H11.5C11.9644 6.00892 12.4222 5.88823 12.8218 5.65152C13.2215 5.4148 13.5473 5.07141 13.7627 4.65986C13.9782 4.24832 14.0747 3.78489 14.0414 3.32156C14.0082 2.85824 13.8465 2.41334 13.5745 2.03676C13.3026 1.66019 12.931 1.36683 12.5017 1.1896C12.0723 1.01237 11.602 0.958278 11.1436 1.03338C10.6852 1.10849 10.2568 1.30982 9.90643 1.6148C9.55606 1.91979 9.29758 2.31636 9.16 2.76003' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M1 9.99997H16.5C16.9644 9.99108 17.4222 10.1118 17.8218 10.3485C18.2215 10.5852 18.5473 10.9286 18.7627 11.3401C18.9782 11.7517 19.0747 12.2151 19.0414 12.6784C19.0082 13.1418 18.8465 13.5867 18.5745 13.9632C18.3026 14.3398 17.931 14.6332 17.5017 14.8104C17.0723 14.9876 16.602 15.0417 16.1436 14.9666C15.6852 14.8915 15.2568 14.6902 14.9064 14.3852C14.5561 14.0802 14.2976 13.6836 14.16 13.24' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M2 14H7.5C7.96443 13.9911 8.42216 14.1118 8.82183 14.3485C9.22151 14.5852 9.54733 14.9286 9.76274 15.3401C9.97816 15.7517 10.0747 16.2151 10.0414 16.6784C10.0082 17.1418 9.8465 17.5867 9.57453 17.9632C9.30256 18.3398 8.93105 18.6332 8.50167 18.8104C8.07229 18.9876 7.60203 19.0417 7.14362 18.9666C6.68522 18.8915 6.2568 18.6902 5.90643 18.3852C5.55605 18.0802 5.29758 17.6836 5.16 17.24' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
 		}
 	];
@@ -124,23 +124,22 @@
 		if (cumulative) {
 			var currentRow = data.filter((d) => d.region == state && d.year == selectedYear)[0];
 
-			if(selectedSectors.length <= 0){
+			if (selectedSectors.length <= 0) {
 				return 0;
 			}
-			
+
 			var subset_sectors;
-			if(sector == false){
-				subset_sectors = [...selectedSectors]
-			}else{
-				const subset_id = selectedSectors.findIndex(item => item === sector);
+			if (sector == false) {
+				subset_sectors = [...selectedSectors];
+			} else {
+				const subset_id = selectedSectors.findIndex((item) => item === sector);
 				subset_sectors = selectedSectors.slice(0, subset_id);
 			}
-			if(subset_sectors.length > 0){
+			if (subset_sectors.length > 0) {
 				result = subset_sectors.reduce((a, b) => {
 					return a + currentRow[b];
-				}, 0)
+				}, 0);
 			}
-			
 		} else {
 			result = data.filter((d) => d.region == state && d.year == selectedYear)[0][sector];
 		}
@@ -191,9 +190,9 @@
 			selectedSectors.push(sector.key);
 		}
 		// sort the selected sectors so that the order is always according to the order of the select buttons
-		selectedSectors = selectedSectors.sort((a,b) => {
-			const idxA = sectors.findIndex(row => row.key == a)
-			const idxB = sectors.findIndex(row => row.key == b)
+		selectedSectors = selectedSectors.sort((a, b) => {
+			const idxA = sectors.findIndex((row) => row.key == a);
+			const idxB = sectors.findIndex((row) => row.key == b);
 			return idxA - idxB;
 		});
 	};
@@ -452,8 +451,7 @@
 										>
 										<text dominant-baseline="hanging" y="20"
 											>und {formatNumber(
-												data.find((d) => d.region == state && d.year == selectedYear)
-													.KSG_percapita
+												data.find((d) => d.region == state && d.year == selectedYear).KSG_percapita
 											)} t pro Kopf</text
 										>
 									</g>
@@ -580,7 +578,7 @@
 		'bg-agriculture',
 		'bg-mobility',
 		'bg-waste',
-		'bg-fluorinatedGases',
+		'bg-fgases',
 		'bg-economy',
 		'text-energy',
 		'text-building',
@@ -588,7 +586,7 @@
 		'text-agriculture',
 		'text-mobility',
 		'text-waste',
-		'text-fluorinatedGases',
+		'text-fgases',
 		'text-economy',
 		'border-energy',
 		'border-building',
@@ -596,5 +594,5 @@
 		'border-agriculture',
 		'border-mobility',
 		'border-waste',
-		'border-fluorinatedGases',
+		'border-fgases',
 		'border-economy' -->
