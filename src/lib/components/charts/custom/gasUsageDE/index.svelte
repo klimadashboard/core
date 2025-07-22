@@ -1,47 +1,82 @@
 <script>
 	import ChartLine from '$lib/components/charts/chartLine.svelte';
-	import Papa from 'papaparse';
+	import getDirectusInstance from '$lib/utils/directus';
+	import { readItems } from '@directus/sdk';
+	import { PUBLIC_VERSION } from '$env/static/public';
+	import dayjs from 'dayjs';
+	import dayOfYear from 'dayjs/plugin/dayOfYear';
 
-	let rawData;
+	dayjs.extend(dayOfYear);
 
-	Papa.parse('https://data.klimadashboard.org/de/energy/fossil/gas_usage-bundesnetzagentur.csv', {
-		download: true,
-		dynamicTyping: true,
-		header: true,
-		skipEmptyLines: true,
-		complete: function (results) {
-			if (results) {
-				rawData = results.data;
+	const getGasUsageData = async () => {
+		const directus = getDirectusInstance(fetch);
+		const rawData = await directus.request(
+			readItems('energy', {
+				filter: {
+					_and: [{ region: { _eq: PUBLIC_VERSION } }, { category: { _eq: 'gas|usage' } }]
+				},
+				limit: -1,
+				sort: ['period']
+			})
+		);
+
+		// Determine all years present in data
+		const years = Array.from(new Set(rawData.map((d) => dayjs(d.period).year()))).sort();
+
+		const grouped = {};
+
+		for (const d of rawData) {
+			const date = dayjs(d.period);
+			const year = date.year();
+			const day = date.dayOfYear();
+			const label = date.format('D. MMM');
+
+			if (!grouped[day]) {
+				grouped[day] = { x: day, label };
+				for (const y of years) {
+					grouped[day][y] = null;
+				}
 			}
+			grouped[day][year] = d.value;
 		}
-	});
 
-	const keys = ['2022', '2023', '2024'];
-	const labels = ['2022', '2023', '2024'];
-	const colors = ['#BBE5CC', '#7CBAB3', '#347C86'];
+		const rawDataSorted = Object.values(grouped)
+			.filter((d) => years.some((y) => d[y] != null)) // keep rows with at least one value
+			.sort((a, b) => a.x - b.x);
 
-	$: data = rawData?.map((e) => {
-		return {
-			x: e['                     .'] - 1,
-			2022: e['2022'],
-			2023: e['2023'],
-			2024: e['2024'],
-			label: 'KW' + e['                     .']
-		};
-	});
+		// Remap x values to sequential 0-based index
+		const data = rawDataSorted.map((d, i) => ({
+			...d,
+			x: i
+		}));
+
+		const lastYear = years[years.length - 1];
+
+		const availableLastYearValues = data.filter((d) => d[lastYear] !== null);
+
+		const preselectedIndex = availableLastYearValues[availableLastYearValues.length - 1].x;
+
+		return { data, years, preselectedIndex, lastYear };
+	};
+
+	const promise = getGasUsageData();
 </script>
 
 <div class="h-80">
-	{#if data}
+	{#await promise}
+		<p>Lade Daten…</p>
+	{:then result}
 		<ChartLine
-			{data}
-			{labels}
-			{keys}
-			{colors}
-			preselectedIndex={data.filter((d) => d[2024] !== null).slice(-1)[0].x}
-			unit={'GWh/Tag'}
+			data={result.data}
+			labels={result.years.map(String)}
+			keys={result.years.map(String)}
+			colors={['#BBE5CC', '#7CBAB3', '#347C86'].slice(0, result.years.length)}
+			unit="GWh/Tag"
 			showTotal={false}
-			showPulse={'2024'}
+			showPulse={result.lastYear.toString()}
+			preselectedIndex={result.preselectedIndex}
 		/>
-	{/if}
+	{:catch error}
+		<p class="text-red-500">Fehler beim Laden der Daten: {error.message}</p>
+	{/await}
 </div>
