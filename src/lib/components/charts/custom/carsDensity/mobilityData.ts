@@ -55,9 +55,9 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 	// Consolidate source and periods
 	const sources = Array.from(new Set(data.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
-	const periods = Array.from(new Set(data.map((d) => d.period))).sort(
-		(a, b) => Number(a) - Number(b)
-	);
+	const periods = Array.from(
+		new Set(data.filter((d) => d.category === 'Privat').map((d) => d.period))
+	).sort((a, b) => Number(a) - Number(b));
 
 	// Load and filter region shapes
 	const layerFilter = 'municipality';
