@@ -8,7 +8,6 @@
 
 	let chartWidth;
 	let chartHeight;
-	let margin = 16;
 	let yScale;
 
 	$: xScale = scaleLinear()
@@ -19,12 +18,10 @@
 		const minVal = min(data, (d) => d.percentage);
 		const maxVal = max(data, (d) => d.percentage);
 		const mid = (minVal + maxVal) / 2;
-		const yMin = Math.max(0, mid - 10);
-		const yMax = Math.min(100, mid + 10);
+		const yMin = Math.max(0, mid - 5);
+		const yMax = Math.min(100, mid + 5);
 
-		yScale = scaleLinear()
-			.domain([yMin, yMax])
-			.range([chartHeight - margin, margin]);
+		yScale = scaleLinear().domain([yMin, yMax]).range([chartHeight, 0]);
 	}
 
 	$: generateLine = line()
@@ -33,7 +30,7 @@
 		.curve(curveMonotoneX); // smooth line
 </script>
 
-<div class="w-full max-w-40 h-16 p-2">
+<div class="w-full max-w-40 h-10 p-4 pb-0">
 	<div class="w-full h-full" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 		{#if chartWidth && chartHeight}
 			<svg width={chartWidth} height={chartHeight} class="overflow-visible">
@@ -41,7 +38,7 @@
 				<path d={generateLine(data)} class="fill-none stroke-current opacity-50 stroke-2" />
 
 				<!-- Circles for each data point -->
-				{#each data as d}
+				{#each data as d, i}
 					<circle
 						cx={xScale(d.period)}
 						cy={yScale(d.percentage)}
@@ -54,16 +51,33 @@
 						text-anchor="middle"
 						class="text-xs fill-current">{Math.round(d.percentage)}%</text
 					>
+
+					{#if data.length < 4 || i == 0 || i == data.length - 1}
+						<text
+							x={xScale(d.period)}
+							y={yScale(d.percentage) + 5}
+							text-anchor="middle"
+							dominant-baseline="hanging"
+							class="text-xs fill-current opacity-80">{d.period}</text
+						>
+					{/if}
 				{/each}
+				<!-- old -->
+				<!--
 				<g class="text-xs opacity-70">
-					{#each data as d}
-						<g transform="translate({xScale(d.period)},{chartHeight})" class="dark:fill-white">
-							<text text-anchor="middle" class={selectedPeriod == d.period ? 'font-bold' : ''}
-								>{d.period}</text
-							>
-						</g>
+					{#each data as d, i}
+						{#if data.length < 4 || i == 0 || i == data.length - 1}
+							<g transform="translate({xScale(d.period)},0)" class="dark:fill-white">
+								<text
+									text-anchor={i == 0 ? 'start' : i == data.length - 1 ? 'end' : 'middle'}
+									class="{selectedPeriod == d.period ? 'font-bold' : ''} fill-current"
+									>{d.period}</text
+								>
+							</g>
+						{/if}
 					{/each}
 				</g>
+				-->
 			</svg>
 		{/if}
 	</div>

@@ -238,11 +238,11 @@
 	<div
 		class="text-xs absolute top-2 left-2 z-40 flex bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded-full gap-1 items-center"
 	>
-		<p>{min}{unit}</p>
+		<p>{Math.round(min)}{unit}</p>
 		<div
 			class="w-6 h-2 r rounded-full"
 			style="background: linear-gradient(to right, {colors[0]}, {colors[1]});"
 		></div>
-		<p>{max}{unit}</p>
+		<p>{Math.round(max)}{unit}</p>
 	</div>
 </div>

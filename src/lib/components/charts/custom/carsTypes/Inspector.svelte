@@ -34,23 +34,28 @@
 				?.history.find((d) => d.period == selectedPeriod)?.percentage
 		)}% des PKW-Bestands aus.
 	</h2>
-	<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-2">
+	<div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
 		{#each selectedRegionData as view}
-			<div style="color: {view.color}" class="dark:brightness-175">
-				<div class={view.selected ? 'font-bold' : ''}>{view.label}</div>
-
-				<p class="text-4xl sm:text-5xl font-light">
-					{Math.round(view.history.find((d) => d.period == selectedPeriod)?.percentage)}<span
-						class="text-xl font-bold">%</span
+			<div style="color: {view.color}" class="dark:brightness-175 leading-tight">
+				<div class={view.selected ? 'font-bold' : ''}>
+					{view.label}
+					<span
+						>| {#if view.history.find((d) => d.period == selectedPeriod)?.absolute < 6}
+							weniger als 6 PKWs
+						{:else}
+							{formatNumber(view.history.find((d) => d.period == selectedPeriod)?.absolute)} PKWs
+						{/if}</span
 					>
-				</p>
-				{#if view.history.find((d) => d.period == selectedPeriod)?.absolute < 6}
-					<p>weniger als 6 PKWs</p>
-				{:else}
-					<p>{formatNumber(view.history.find((d) => d.period == selectedPeriod)?.absolute)} PKWs</p>
-				{/if}
+				</div>
 
-				<SmallLine {selectedPeriod} data={view.history} />
+				<div class="sm:flex">
+					<p class="text-5xl font-light tabular-nums">
+						{Math.round(view.history.find((d) => d.period == selectedPeriod)?.percentage)}<span
+							class="text-xl font-bold">%</span
+						>
+					</p>
+					<SmallLine {selectedPeriod} data={view.history} />
+				</div>
 			</div>
 		{/each}
 	</div>
