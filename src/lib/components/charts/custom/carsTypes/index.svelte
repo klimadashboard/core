@@ -71,6 +71,16 @@
 	$: selectedView = views[0].key;
 	$: selectedRegion = null;
 
+	function dedupeData(data) {
+		const seen = new Set();
+		return data.filter((d) => {
+			const key = `${d.period}-${d.region}-${d.category}`;
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	}
+
 	// load data reactively
 	$: promise = getData();
 
