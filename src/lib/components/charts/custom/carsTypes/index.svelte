@@ -338,7 +338,7 @@
 						{selectedPeriod}
 					/>
 					<p class="text-sm opacity-80 mt-4 leading-tight">
-						Datenquelle: {source}<br />
+						Datenquelle: {@html source}<br />
 						Die Summe beträgt aufgrund von Rundungen nicht unbedingt 100%.
 					</p>
 				</div>
