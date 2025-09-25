@@ -10,7 +10,6 @@
 	import dayjs from 'dayjs';
 
 	export let region;
-	export let data;
 	export let regions;
 	export let colors;
 	export let selectedEnergy;
@@ -79,7 +78,7 @@
 			<p class="text-lg">
 				Das kann unterschiedliche Gründe haben – in dicht bebauten Gebieten wie zum Beispiel
 				Großstädten fehlen häufig die Flächen, an anderen Orten fehlt es bislang an politischem oder
-				gesellschaftlichem Willen. Häufig wird Strom aus Windenergie dann aus benachbarten Gemeinden
+				gesellschaftlichem Willen. Häufig wird Strom aus Windenergie dann aus benachbarten Regionen
 				mitgenutzt. Insgesamt zeigen sich in Deutschland regionale Unterschiede: Während im Norden
 				bereits viele Windräder stehen, ist der Ausbau im Süden noch vergleichsweise gering – trotz
 				vorhandener Flächen.
@@ -174,8 +173,8 @@
 				<p class="text-lg mt-4">
 					Schaut man nicht nur auf die jährlich installierte Leistung, sondern auf die kumulative
 					Gesamtleistung, die in {region.name} installiert ist, ergibt sich die Kurve in der folgenden
-					Grafik. Erkunde hierbei auch den flächenbezogenen Vergleich zu benachbarten Gemeinden, der
-					durchschnittlichen Entwicklung verschiedener Bundesländer oder sogar für ganz Deutschland.
+					Grafik. Erkunde hierbei auch den flächenbezogenen Vergleich zu benachbarten Regionen, der durchschnittlichen
+					Entwicklung verschiedener Bundesländer oder sogar für ganz Deutschland.
 				</p>
 			{/if}
 

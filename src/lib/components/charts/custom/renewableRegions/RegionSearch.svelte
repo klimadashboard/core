@@ -64,7 +64,7 @@
 <div class="relative min-w-56">
 	<input
 		type="text"
-		placeholder="Vergleiche deine Gemeinde mit..."
+		placeholder="Vergleiche deine Region mit..."
 		bind:value={searchTerm}
 		on:focus={() => (showDropdown = true)}
 		class="input text-sm w-full placeholder-black dark:placeholder-white"

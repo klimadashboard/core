@@ -6,7 +6,9 @@
 
 	export let data;
 
-	let layerFilter = 'municipality';
+	const regionsCount = data.regions.length;
+
+	let layerFilter = 'all';
 
 	$: filteredRegions = [...data.regions]
 		.filter((r) => r.name && (!r.layer || layerFilter === 'all' || r.layer === layerFilter))
@@ -83,8 +85,7 @@
 		<div class="mt-8 text-lg text">
 			<p class="">
 				<strong
-					>{formatNumber(filteredRegions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
-					stehen.</strong
+					>{formatNumber(regionsCount)} Klimadashboards zeigen, wo die Regionen in der Klimawende stehen.</strong
 				>
 				Du kannst dir einfach eine Region auf der Karte oder der Liste unten aussuchen oder dich orten
 				lassen und wir wählen deine Region ganz automatisch aus!
@@ -109,7 +110,7 @@
 			</p>
 		</div>
 
-		<div class="mt-8 flex gap-1 items-center hidden">
+		<div class="mt-8 flex gap-1 items-center">
 			<select
 				id="layerFilter"
 				bind:value={layerFilter}
@@ -132,11 +133,15 @@
 						{#each groupedRegions[letter] as region}
 							<li>
 								<a
-									class="hover:underline underline-offset-2 leading-[0.1em]!"
+									class="hover:underline underline-offset-2 leading-[0em]!"
 									href={`/regions/${region.id}`}
-									>{region.name} ({region.layer_label})<br />
-									{#if getRegionParent(region)}
-										<span class="opacity-70">{getRegionParent(region)}</span>{/if}
+									><b> {region.name}</b>
+
+									<span class="opacity-70"
+										>{region.layer_label}
+										{#if getRegionParent(region)}
+											in {getRegionParent(region)}{/if}</span
+									>
 								</a>
 							</li>
 						{/each}

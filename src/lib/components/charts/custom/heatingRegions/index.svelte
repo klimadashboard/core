@@ -7,15 +7,16 @@
 	let selectedRegion;
 
 	async function getData() {
+		// load DE municipalities + districts
 		const regions = await getRegions().then((r) =>
-			r.filter((r) => r.country === 'DE' && r.layer === 'municipality')
+			r.filter((r) => r.country === 'DE' && (r.layer === 'municipality' || r.layer === 'district'))
 		);
 
 		const foundRegionCode = findMatchingRegion(page.data.page, regions);
-
 		if (foundRegionCode) {
 			selectedRegion = regions.find((d) => d.code == foundRegionCode);
 		}
+		console.log(regions);
 
 		return { regions };
 	}
