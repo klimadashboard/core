@@ -31,10 +31,6 @@
 </script>
 
 <div class="min-h-[50vh] relative">
-	<select bind:value={selectedDate} class="input absolute top-4 left-4 text-sm z-20 !bg-white">
-		<option value="20241023">Wochentag (23.10.2024)</option>
-		<option value="20241030">Wochenende (30.10.2024)</option>
-	</select>
 	<Map bind:selectedRegion bind:selectedTiles {gueteklassColors} {selectedDate} {categories} />
 	<Inspector bind:selectedRegion bind:selectedTiles {gueteklassColors} {categories} />
 </div>

@@ -221,7 +221,7 @@
 			class="underline underline-offset-2"
 			href="https://www.oerok.gv.at/raum/themen/raumordnung-und-mobilitaet">ÖROK ÖV-Güteklassen</a
 		>
-		|
+		am 23.10.2024 |
 		<a
 			class="underline underline-offset-2"
 			href="https://www.google.com/url?q=https://www.oerok.gv.at/fileadmin/user_upload/O__ROK-Broschuere_Heft_10_O__V-Gu__teklassen.pdf&sa=D&source=docs&ust=1750177327120933&usg=AOvVaw1-0hxhbUpXlJN3DHJYnr93"

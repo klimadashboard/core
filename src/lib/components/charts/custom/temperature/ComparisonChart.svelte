@@ -171,7 +171,3 @@
 		</g>
 	</svg>
 </div>
-
-<p class="text-lg max-w-3xl mx-auto mt-8">
-	Zur Übersicht aller Wetterstationen in {regionString} geht es hier – für alle, die weitere Regionen vergleichen oder erkunden möchten.
-</p>

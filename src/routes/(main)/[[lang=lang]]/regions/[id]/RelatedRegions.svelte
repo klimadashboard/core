@@ -26,7 +26,9 @@
 	async function loadRegions(region) {
 		regions = await getRegions();
 
-		const otherRegions = regions.filter((r) => r.id !== region.id && r.center && r.population);
+		const otherRegions = regions.filter(
+			(r) => r.id !== region.id && r.center && r.population && r.layer == region.layer
+		);
 
 		const closestByLocation = [...otherRegions]
 			.sort(

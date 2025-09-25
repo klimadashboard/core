@@ -2,6 +2,7 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import { scaleLinear } from 'd3-scale';
+	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let data: any[];
 	export let region: any;
@@ -170,7 +171,7 @@
 		return { ...yearData, stackedSectors };
 	});
 
-	$: unit = showPerCapita ? 't CO2eq pro Kopf' : 'Mt CO2eq';
+	$: unit = showPerCapita ? 't CO2eq pro Kopf' : PUBLIC_VERSION == 'de' ? 'Mt CO2eq' : 't CO2eq';
 
 	$: visibleMax =
 		activeCategory === 'all'
@@ -366,9 +367,6 @@
 						<g
 							transform={`translate(${xScale(lastTarget.year) + margin.left + 5}, ${yScale(lastTarget.value) + margin.top - 5})`}
 						>
-							<text class="text-xs fill-current" x={-30} y={-10}>
-								{formatNumber(lastTarget.value)}{unit} Ziel in {lastTarget.year}
-							</text>
 						</g>
 					{/if}
 				</svg>
@@ -431,8 +429,16 @@
 	}}
 />
 
-<div class="max-w-2xl text-sm leading-tight mt-4 opacity-80">
-	<p>Datenquelle: {data[0].source}</p>
+<div class="text-sm leading-tight mt-4 opacity-80">
+	{#if PUBLIC_VERSION == 'de'}
+		<p>
+			Datenquelle: Emissionen: Statistische Ämter des Bundes und der Länder (Tabelle 86431-Z-04) |
+			Datenstand 23.04.2025, Bevölkerung: Statistisches Bundesamt (Tabelle 12411-0010) | Datenstand
+			01.03.2025, eigene Berechnungen
+		</p>
+	{:else}
+		<p>Datenquelle: {data[0].source}</p>
+	{/if}
 	{#if showPerCapita && Object.keys(populationByYear).length > 0}
 		<p>Pro-Kopf-Werte basieren auf jahresspezifischen Bevölkerungsdaten für {region.name}.</p>
 	{:else if showPerCapita && region.population}

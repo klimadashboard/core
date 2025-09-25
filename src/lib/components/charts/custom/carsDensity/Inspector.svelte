@@ -8,12 +8,14 @@
 	export let selectedPeriod;
 </script>
 
-{#if region}
+{#if region && region.cars.find((d) => d.period == selectedPeriod)?.value}
 	<h2 class="text-2xl max-w-lg text-balance leading-tight">
-		Im Jahr {selectedPeriod} gab es {formatNumber(
-			region.cars.find((d) => d.period == selectedPeriod)?.value
-		)} Autos bei {formatNumber(region.population)} Einwohner:innen in
-		<span class="underline underline-offset-4" style="text-decoration-color: ">{region.name}</span>.
+		In <span class="underline underline-offset-4" style="text-decoration-color: "
+			>{region.name}</span
+		>
+		kommen {formatNumber(region.cars.find((d) => d.period == selectedPeriod)?.value)} Autos auf {formatNumber(
+			region.population
+		)} Einwohner:innen.
 	</h2>
 
 	<div class="grid md:grid-cols-3 gap-3 mt-2">
@@ -42,5 +44,10 @@
 		öffentlichen Raum. Das wirkt sich direkt auf die Aufenthaltsqualität in Orten aus. Die Zahl der
 		PKWs pro Kopf liefert daher wichtige Hinweise auf Mobilitätsgewohnheiten und die Abhängigkeit
 		vom Auto.
+	</p>
+{:else}
+	<p class="text-lg leading-snug">
+		Wähle eine Region auf der Karte, um mehr zur PKW-Dichte zu erfahren. Für manche Regionen sind
+		aufgrund von Gemeindezusammenlegungen keine Daten verfügbar.
 	</p>
 {/if}

@@ -48,7 +48,7 @@
 				</form>
 				<a
 					class="button"
-					href="https://instagram.com/klimadashboard{PUBLIC_VERSION == 'de' ? '_de' : ''}"
+					href="https://instagram.com/klimadashboard{PUBLIC_VERSION == 'de' ? '.de' : ''}"
 					aria-label="Instagram"
 				>
 					<svg

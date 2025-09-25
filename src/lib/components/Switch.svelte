@@ -58,8 +58,8 @@
 			class="relative z-10 flex items-center rounded-full transition duration-200 flex-shrink-0
 			       {type === 'small'
 				? view.key === activeView
-					? 'bg-gray-800 text-white px-4 py-2 font-semibold text-sm'
-					: 'bg-gray-200 text-gray-700 px-4 py-2 text-sm hover:bg-gray-300'
+					? 'bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 font-semibold text-sm'
+					: 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-white px-4 py-2 text-sm hover:bg-gray-300 hover:dark:bg-gray-700'
 				: 'px-4 ' + (view.key === activeView ? 'font-bold' : '')}
 			       disabled:opacity-40 disabled:line-through"
 		>

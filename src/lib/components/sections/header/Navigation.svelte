@@ -5,14 +5,14 @@
 	const dispatch = createEventDispatcher();
 </script>
 
-<div class="container text-base mb-4">
-	<ul class="flex gap-4 flex-col sm:flex-row justify-between">
+<div class="container text-base mb-4 max-h-[calc(100vh-6rem)] overflow-auto">
+	<ul class="grid gap-6 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
 		{#each page.data.site.translations[0].navigation_primary as c}
-			<li class="flex-1 md:border-r md:last:border-r-0 border-current/20">
+			<li class="flex-1 border-b pb-4 border-current/20">
 				<h3 class="font-bold">{c.title}</h3>
 				<ul>
 					{#each c.links as l}
-						<li>
+						<li class="leading-tight my-1">
 							<a
 								href={l.link}
 								on:click={() => dispatch('linkClicked')}

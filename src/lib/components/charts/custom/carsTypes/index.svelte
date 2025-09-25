@@ -20,24 +20,66 @@
 	let selectedPeriodIndex;
 	let periods = [];
 
-	const views = [
+	const viewPresets = [
 		{
 			label: 'Elektro',
 			key: 'Elektro',
 			colorKey: 'electric',
-			chart: 'progressBar',
-			min: 0,
-			max: 20
+			publicVersions: ['at', 'de']
 		},
-		{ label: 'Hybrid', key: 'Hybrid', colorKey: 'hybrid', chart: 'progressBar', min: 0, max: 20 },
-		{ label: 'Benzin', key: 'Benzin', colorKey: 'benzin', chart: 'progressBar', min: 0, max: 60 },
-		{ label: 'Diesel', key: 'Diesel', colorKey: 'diesel', chart: 'progressBar', min: 0, max: 60 },
-		{ label: 'Sonstige', key: 'Sonstige', colorKey: 'other', chart: 'progressBar', min: 0, max: 20 }
+		{
+			label: 'Hybrid',
+			key: 'Hybrid',
+			colorKey: 'hybrid',
+			publicVersions: ['at']
+		}, // for PUBLIC_VERSION == at
+		{
+			label: 'Plug-in-Hybrid',
+			key: 'Plug-in-Hybrid',
+			colorKey: 'plugInHybrid',
+			publicVersions: ['de']
+		}, // for PUBLIC_VERSION == de
+		{
+			label: 'Hybrid (ohne Plug-in)',
+			key: 'Hybrid (ohne Plug-in)',
+			colorKey: 'hybrid',
+			publicVersions: ['de']
+		}, // for PUBLIC_VERSION == de
+		{
+			label: 'Benzin',
+			key: 'Benzin',
+			colorKey: 'benzin',
+			publicVersions: ['at', 'de']
+		},
+		{
+			label: 'Diesel',
+			key: 'Diesel',
+			colorKey: 'diesel',
+			publicVersions: ['at', 'de']
+		},
+		{
+			label: 'Sonstige',
+			key: 'Sonstige',
+			colorKey: 'other',
+			publicVersions: ['at', 'de']
+		}
 	];
+
+	$: views = viewPresets.filter((v) => v.publicVersions.includes(PUBLIC_VERSION));
 
 	// reactive defaults (run once on init)
 	$: selectedView = views[0].key;
 	$: selectedRegion = null;
+
+	function dedupeData(data) {
+		const seen = new Set();
+		return data.filter((d) => {
+			const key = `${d.period}-${d.region}-${d.category}`;
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	}
 
 	// load data reactively
 	$: promise = getData();
@@ -46,7 +88,7 @@
 		const directus = getDirectusInstance(fetch);
 		const countryCode = PUBLIC_VERSION.toUpperCase();
 
-		const data = await directus.request(
+		const rawData = await directus.request(
 			readItems('mobility_cars', {
 				filter: {
 					country: { _eq: countryCode },
@@ -60,8 +102,15 @@
 			})
 		);
 
+		const data = dedupeData(rawData);
+
 		const sources = Array.from(new Set(data.map((d) => d.source).filter((s) => s)));
 		source = sources.join(', ');
+
+		if (PUBLIC_VERSION === 'de') {
+			source =
+				"<a href='https://www-genesis.destatis.de/datenbank/online/url/802b92c5'>Kraftfahrtbundesamt (2025)</a>";
+		}
 
 		const allRegions = await getRegions();
 		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
@@ -84,35 +133,20 @@
 
 			const absoluteByCategory = {};
 			const sharesByCategory = {};
-			const cats = ['Elektro', 'Hybrid', 'Benzin', 'Diesel'];
+			const cats = views.filter((d) => d.key !== 'Sonstige').map((d) => d.key);
 
 			cats.forEach((catKey) => {
-				if (catKey === 'Hybrid') {
-					absoluteByCategory.Hybrid = periods.map((p) => {
-						const sum = regionData
-							.filter((d) => /Hybrid/i.test(d.category) && parseInt(d.period) === p)
-							.reduce((acc, d) => acc + d.value, 0);
-						return { period: p, value: sum };
-					});
-					sharesByCategory.Hybrid = absoluteByCategory.Hybrid.map(({ period, value }) => {
-						const total =
-							regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
-								?.value || 0;
-						return { period, value: total > 0 ? (value / total) * 100 : 0 };
-					});
-				} else {
-					absoluteByCategory[catKey] = periods.map((p) => {
-						const v =
-							regionData.find((d) => d.category === catKey && parseInt(d.period) === p)?.value || 0;
-						return { period: p, value: v };
-					});
-					sharesByCategory[catKey] = absoluteByCategory[catKey].map(({ period, value }) => {
-						const total =
-							regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
-								?.value || 0;
-						return { period, value: total > 0 ? (value / total) * 100 : 0 };
-					});
-				}
+				absoluteByCategory[catKey] = periods.map((p) => {
+					const v =
+						regionData.find((d) => d.category === catKey && parseInt(d.period) === p)?.value || 0;
+					return { period: p, value: v };
+				});
+				sharesByCategory[catKey] = absoluteByCategory[catKey].map(({ period, value }) => {
+					const total =
+						regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
+							?.value || 0;
+					return { period, value: total > 0 ? (value / total) * 100 : 0 };
+				});
 			});
 
 			// Sonstige = Gesamt − known
@@ -120,11 +154,12 @@
 				const total =
 					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === p)?.value ||
 					0;
-				const known = ['Elektro', 'Plug-in-Hybrid', 'Benzin', 'Diesel']
+				const known = cats
 					.map((k) => absoluteByCategory[k]?.[i]?.value || 0)
 					.reduce((a, b) => a + b, 0);
 				return { period: p, value: total - known };
 			});
+
 			sharesByCategory.Sonstige = absoluteByCategory.Sonstige.map(({ period, value }) => {
 				const total =
 					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
@@ -149,10 +184,29 @@
 		const national = regions.find((r) => r.layer === 'country');
 		selectedRegion = national?.code;
 		const match = findMatchingRegion(page.data.page, regions);
+		console.log(page.data.page);
+		console.log(regions);
 		if (match) selectedRegion = match;
 
 		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
 		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
+
+		const allCategories = Array.from(new Set(data.map((d) => d.category?.trim())));
+		const knownCategories = [
+			'Elektro',
+			'Benzin',
+			'Diesel',
+			'Insgesamt',
+			'Hybrid',
+			'Plug-In-Hybrid',
+			'Hybrid (ohne Plug-In)'
+		];
+
+		const unknownCategories = allCategories.filter((cat) => !knownCategories.includes(cat));
+
+		if (unknownCategories.length > 0) {
+			console.warn('🚨 Unknown vehicle categories found in data:', unknownCategories);
+		}
 
 		return { data, regions, minPeriod, maxPeriod, countryName };
 	}
@@ -215,6 +269,17 @@
 	}
 
 	$: selectedPeriod = periods[selectedPeriodIndex];
+
+	function extentForViewAcrossYears(regs, viewKey) {
+		// ignore the country rollup so the scale reflects subregions only
+		const vals = regs
+			.filter((r) => r.layer !== 'country')
+			.flatMap((r) => r.sharesByCategory?.[viewKey]?.map((d) => d.value) ?? [])
+			.filter((v) => Number.isFinite(v));
+
+		if (!vals.length) return [0, 0];
+		return [Math.min(...vals), Math.max(...vals)];
+	}
 </script>
 
 <div>
@@ -253,11 +318,13 @@
 							center: r.center,
 							layer: r.layer,
 							name: r.name,
-							data: r.sharesByCategory[selectedView]
+							data: r.sharesByCategory[selectedView] // [{ period, value }]
 						}))}
 						colors={colors[views.find((v) => v.key === selectedView).colorKey]}
-						min={views.find((v) => v.key === selectedView).min}
-						max={views.find((v) => v.key === selectedView).max}
+						{...(() => {
+							const [minAll, maxAll] = extentForViewAcrossYears(p.regions, selectedView);
+							return { min: minAll, max: maxAll };
+						})()}
 						bind:selectedRegion
 						on:selectRegion={(e) => (selectedRegion = e.detail)}
 					/>
@@ -271,9 +338,8 @@
 						{selectedPeriod}
 					/>
 					<p class="text-sm opacity-80 mt-4 leading-tight">
-						Datenquelle: {source}<br />
-						Hybrid beinhaltet Plug-In-Hybrid und Hybrid. Die Summe beträgt aufgrund von Rundungen nicht
-						unbedingt 100%.
+						Datenquelle: {@html source}<br />
+						Die Summe beträgt aufgrund von Rundungen nicht unbedingt 100%.
 					</p>
 				</div>
 			</div>

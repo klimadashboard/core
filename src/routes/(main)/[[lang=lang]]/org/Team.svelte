@@ -19,7 +19,7 @@
 </script>
 
 {#await promise then team}
-	<div class="flex">
+	<div class="flex flex-wrap gap-2">
 		{#each team as member}
 			<div class="w-48 h-56 bg-gray-800 relative rounded-2xl overflow-hidden">
 				{#if member.avatar}
@@ -30,7 +30,14 @@
 					/>
 				{/if}
 
-				<p class="relative z-50 text-white">{member.first_name} {member.last_name}</p>
+				<div
+					class="bg-gradient-to-b from-transparent to-black/50 absolute bottom-0 left-0 right-0 h-1/2"
+				>
+					<p class="absolute bottom-0 text-white text-xl p-3 leading-tight">
+						{member.first_name}
+						{member.last_name}
+					</p>
+				</div>
 			</div>
 		{/each}
 	</div>

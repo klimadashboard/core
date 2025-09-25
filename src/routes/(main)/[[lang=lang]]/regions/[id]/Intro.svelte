@@ -122,6 +122,24 @@
 								bei dir vor Ort.
 							</p>
 							<div class="flex gap-2 mt-2 items-center flex-wrap leading-none">
+								<div class="flex items-center gap-0.5">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="24"
+										height="24"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="w-4 h-4"
+										><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+											d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z"
+										/><path d="M5 21v-7" /></svg
+									>
+									<p>{page.data.page.layer_label}</p>
+								</div>
 								<div class="flex items-center gap-1">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -167,7 +185,10 @@
 
 								{#if page.data.page.slug}
 									<div>
-										<a href="{page.url.host}/{page.data.page.slug.split(',')[0]}" target="_blank">
+										<a
+											href="https://{page.url.host}/{page.data.page.slug.split(',')[0]}"
+											target="_blank"
+										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												width="24"

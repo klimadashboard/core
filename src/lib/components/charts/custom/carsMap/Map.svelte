@@ -10,8 +10,6 @@
 	export let selectedPeriod;
 	export let regions;
 	export let colors;
-	export let min;
-	export let max;
 
 	let mapContainer;
 	let map;
@@ -36,11 +34,14 @@
 	const dispatch = createEventDispatcher();
 
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
+
+	const min = 0;
+	const max = 20;
 	const unit = '%';
 
-	const duplicateCodes = regions
-		.map((r) => r.code)
-		.filter((code, i, arr) => arr.indexOf(code) !== i);
+	function createColorScale(data) {
+		return scaleLinear().domain([min, max]).range(colors).interpolate(interpolateRgb).clamp(true);
+	}
 
 	onMount(() => {
 		map = new maplibregl.Map({
@@ -66,29 +67,35 @@
 			},
 			center,
 			zoom,
-			minZoom: zoom,
-			maxZoom: 11
+			minZoom: zoom - 1,
+			maxZoom: zoom + 4
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
-		map.scrollZoom.disable();
 
 		map.on('load', () => {
-			map.addSource('regions', {
-				type: 'vector',
-				url:
-					PUBLIC_VERSION === 'at'
-						? 'https://tiles.klimadashboard.org/data/municipalities-at.json'
-						: 'https://tiles.klimadashboard.org/data/districts-de.json'
+			const geojson = {
+				type: 'FeatureCollection',
+				features: regions
+					.filter((r) => r.outline)
+					.map((r) => ({
+						type: 'Feature',
+						properties: {
+							RS: r.code
+						},
+						geometry: r.outline
+					}))
+			};
+
+			map.addSource('landkreise', {
+				type: 'geojson',
+				data: geojson
 			});
 
-			let sourceLayer = PUBLIC_VERSION === 'at' ? 'municipalities' : 'districts';
-
 			map.addLayer({
-				id: 'regions-layer',
+				id: 'landkreise-layer',
 				type: 'fill',
-				source: 'regions',
-				'source-layer': sourceLayer,
+				source: 'landkreise',
 				paint: {
 					'fill-color': '#ccc',
 					'fill-opacity': 0.8
@@ -96,10 +103,9 @@
 			});
 
 			map.addLayer({
-				id: 'regions-outline',
+				id: 'landkreise-outline',
 				type: 'line',
-				source: 'regions',
-				'source-layer': sourceLayer,
+				source: 'landkreise',
 				paint: {
 					'line-color': '#000',
 					'line-width': 0.5
@@ -109,29 +115,30 @@
 			map.addLayer({
 				id: 'highlight-outline',
 				type: 'line',
-				source: 'regions',
-				'source-layer': sourceLayer,
+				source: 'landkreise',
 				paint: {
 					'line-color': '#000',
 					'line-width': 3
 				},
-				filter: ['==', 'AGS', '']
+				filter: ['==', 'RS', '']
 			});
 
-			map.on('click', 'regions-layer', (e) => {
+			map.on('click', 'landkreise-layer', (e) => {
 				const feature = e.features?.[0];
 				if (feature) {
-					const regionId = feature.properties?.AGS;
+					const regionId = feature.properties?.RS;
 					dispatch('selectRegion', regionId);
 				}
 			});
 
-			map.on('mouseenter', 'regions-layer', () => {
+			map.on('mouseenter', 'landkreise-layer', () => {
 				map.getCanvas().style.cursor = 'pointer';
 			});
-			map.on('mouseleave', 'regions-layer', () => {
+			map.on('mouseleave', 'landkreise-layer', () => {
 				map.getCanvas().style.cursor = '';
 			});
+
+			const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase(); // "DE", "AT", etc.
 
 			map.addLayer({
 				id: 'city-labels',
@@ -161,55 +168,50 @@
 	});
 
 	// Color updates
-	// Color updates
-	$: if (
-		mapReady &&
-		map &&
-		Array.isArray(colors) &&
-		colors.length >= 2 &&
-		regions &&
-		selectedPeriod
-	) {
-		const colorScale = scaleLinear()
-			.domain([min, max])
-			.range(colors)
-			.interpolate(interpolateRgb)
-			.clamp(true);
+	$: if (mapReady && map && regions && selectedPeriod) {
+		const dataForPeriod = regions.map((region) => {
+			const match = region.data?.find((d) => String(d.period) === String(selectedPeriod));
+			return {
+				region: String(region.code),
+				value: match ? match.value : null
+			};
+		});
 
-		const matchExpression = ['match', ['get', 'AGS']];
-		let hasAtLeastOneValid = false;
-
-		for (const region of regions) {
-			const value = region.data?.find((d) => String(d.period) === String(selectedPeriod))?.value;
-			if (value != null && isFinite(value)) {
-				matchExpression.push(region.code, colorScale(value));
-				hasAtLeastOneValid = true;
+		const uniqueData = new Map();
+		for (const row of dataForPeriod) {
+			if (!uniqueData.has(row.region)) {
+				uniqueData.set(row.region, row.value);
 			}
 		}
 
-		if (!hasAtLeastOneValid) {
-			matchExpression.push('__dummy__', '#ccc');
+		const colorScale = createColorScale(
+			Array.from(uniqueData.entries()).map(([region, value]) => ({ region, value }))
+		);
+
+		const matchExpression = ['match', ['get', 'RS']];
+		for (const [region, value] of uniqueData.entries()) {
+			const color = value != null ? colorScale(value) : '#ccc';
+			matchExpression.push(region, color);
 		}
+		matchExpression.push('#ccc');
 
-		matchExpression.push('#ccc'); // fallback color
-
-		map.setPaintProperty('regions-layer', 'fill-color', matchExpression);
+		map.setPaintProperty('landkreise-layer', 'fill-color', matchExpression);
 	}
 
 	// Selection outline + flyTo
 	$: if (mapReady && map) {
-		if (regions.find((d) => d.code === selectedRegion).layer !== 'country') {
-			map.setFilter('highlight-outline', ['==', 'AGS', selectedRegion]);
+		if (selectedRegion) {
+			map.setFilter('highlight-outline', ['==', 'RS', selectedRegion]);
 			const region = regions.find((r) => r.code === selectedRegion);
 			if (region?.center) {
 				map.flyTo({
 					center: region.center,
-					zoom: zoom + 3,
+					zoom: 10,
 					duration: 800
 				});
 			}
 		} else {
-			map.setFilter('highlight-outline', ['==', 'AGS', '']);
+			map.setFilter('highlight-outline', ['==', 'RS', '']);
 			map.flyTo({
 				center,
 				zoom,
@@ -226,23 +228,22 @@
 >
 	{#if zoomLevel > 4}
 		<button
-			on:mousedown={() => (selectedRegion = regions.find((d) => d.layer == 'country').code)}
+			on:mousedown={() => (selectedRegion = null)}
 			class="cursor-pointer absolute bottom-12 left-2 z-40 border border-current/10 bg-white dark:bg-gray-500 rounded-full w-8 h-8 grid shadow"
 			transition:fade
-			aria-label="Zurück zur nationalen Ansicht"
 		>
 			<img src="/icons/general/{PUBLIC_VERSION}.svg" class="w-6 h-6 m-auto" alt="" />
 		</button>
 	{/if}
 
 	<div
-		class="text-xs absolute top-2 left-2 z-40 flex bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded-full gap-1 items-center"
+		class="text-xs absolute top-2 left-2 z-40 flex bg-white px-1.5 py-0.5 rounded-full gap-1 items-center"
 	>
-		<p>{Math.round(min)}{unit}</p>
+		<p>{min}{unit}</p>
 		<div
 			class="w-6 h-2 r rounded-full"
 			style="background: linear-gradient(to right, {colors[0]}, {colors[1]});"
 		></div>
-		<p>{Math.round(max)}{unit}</p>
+		<p>{max}{unit}</p>
 	</div>
 </div>

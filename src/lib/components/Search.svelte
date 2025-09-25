@@ -18,11 +18,11 @@
 		debounceTimeout = setTimeout(func, delay);
 	}
 
-	// Fetch suggestions from Directus
 	async function fetchSuggestions(value) {
 		if (value.length === 0) {
 			suggestions = [];
 			showSuggestions = false;
+			activeSuggestionIndex = -1;
 			return;
 		}
 
@@ -44,11 +44,13 @@
 			}));
 
 			showSuggestions = true;
+			activeSuggestionIndex = suggestions.length > 0 ? 0 : -1; // ✅ preselect first item
 		} catch (error) {
 			if (currentRequest === requestCounter) {
 				console.error('Search error:', error);
 				suggestions = [];
 				showSuggestions = false;
+				activeSuggestionIndex = -1;
 			}
 		}
 	}
@@ -106,11 +108,17 @@
 		}
 	}
 
+	let blurTimeout;
+
 	function onBlur() {
-		setTimeout(() => {
+		blurTimeout = setTimeout(() => {
 			showSuggestions = false;
 			activeSuggestionIndex = -1;
-		}, 100);
+		}, 150);
+	}
+
+	function cancelBlur() {
+		clearTimeout(blurTimeout);
 	}
 
 	// Function to calculate the distance between two lat/lng points
@@ -187,6 +195,12 @@
 			}
 		);
 	}
+
+	function onSearchIconClick() {
+		if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
+			selectSuggestion(suggestions[activeSuggestionIndex]);
+		}
+	}
 </script>
 
 <div class="relative">
@@ -202,7 +216,8 @@
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class="absolute left-3 top-1.5 pointer-events-none"
+				class="absolute left-3 top-1.5 cursor-pointer"
+				on:pointerdown={onSearchIconClick}
 			>
 				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 				<path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
@@ -250,6 +265,7 @@
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
+			on:mousedown={cancelBlur}
 			class="absolute top-full left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm border overflow-scroll z-10 max-h-64 rounded-2xl"
 		>
 			{#each suggestions as suggestion, index}
@@ -258,8 +274,9 @@
 					activeSuggestionIndex
 						? 'bg-gray-600 text-white'
 						: ''}"
-					on:click={() => selectSuggestion(suggestion)}
+					on:pointerdown={() => selectSuggestion(suggestion)}
 					on:mouseover={() => (activeSuggestionIndex = index)}
+					on:focus={() => (activeSuggestionIndex = index)}
 				>
 					<strong>{suggestion.title}</strong>
 					{#if suggestion.subtitle}

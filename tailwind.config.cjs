@@ -17,7 +17,7 @@ module.exports = {
 			mobility: '#F5AF4A',
 			transport: '#F5AF4A',
 			waste: '#B7693D',
-			fluorinatedGases: '#7CAFBA',
+			fgases: '#7CAFBA',
 			economy: '#64AE9C',
 			green: {
 				100: '#F7FCF5',

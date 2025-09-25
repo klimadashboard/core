@@ -23,7 +23,7 @@
 
 	$: data = rawData?.map((e, i) => {
 		return {
-			wilhelmshaven: e['Wilhelmshaven, LNG-Terminal 1 (DE)'],
+			wilhelmshaven: e['Wilhelmshaven, LNG-Zone'],
 			balticEnergyGate: e['Baltic Energy Gate (Port) (DE)'],
 			brunsbuettel: e['BRUNSBUETTEL HAFEN (FSRU) (DE)'],
 			x: i,
@@ -41,7 +41,7 @@
 			{colors}
 			showAreas={true}
 			visualisation={'stacked'}
-			xTicksInterval={52}
+			xTicksInterval={100}
 			unit={'GWh/Tag'}
 		/>
 	{/if}
