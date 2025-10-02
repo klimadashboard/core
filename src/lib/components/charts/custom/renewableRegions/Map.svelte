@@ -53,7 +53,7 @@
 	const COUNTRY_CODE = PUBLIC_VERSION.toUpperCase();
 	const defaultView = {
 		AT: { center: [13.333, 47.5], zoom: 6 },
-		DE: { center: [10.45, 51.1657], zoom: 5 }
+		DE: { center: [10.45, 51.1657], zoom: 4.7 }
 	} as const;
 	const { center, zoom } = defaultView[COUNTRY_CODE] || defaultView.DE;
 

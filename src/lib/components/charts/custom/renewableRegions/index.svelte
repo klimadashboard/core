@@ -43,12 +43,13 @@
 	$: promise = fetchRegions();
 </script>
 
-<Switch
-	{views}
-	bind:activeView={selectedEnergy}
-	on:itemClick={(e) => (selectedEnergy = e.detail)}
-/>
-
+<div class="w-max mx-auto">
+	<Switch
+		{views}
+		bind:activeView={selectedEnergy}
+		on:itemClick={(e) => (selectedEnergy = e.detail)}
+	/>
+</div>
 <div class="my-4">
 	{#await promise}
 		<div class="bg-amber-400/10 rounded-2xl h-[38rem] animate-pulse"></div>
@@ -59,7 +60,7 @@
 			<div class="h-64 w-full bg-current/20 animate-pulse mt-4 rounded"></div>
 		</div>
 	{:then regions}
-		<div class="h-[38rem]">
+		<div class="h-[32rem]">
 			<Map
 				colors={colors.find((c) => c.key === selectedEnergy).colors}
 				{regions}
