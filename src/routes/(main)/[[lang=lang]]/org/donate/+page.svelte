@@ -121,12 +121,12 @@
 	{:else}
 		<h1 class="text-4xl font-bold mb-4">Spenden</h1>
 
-		<p class="bg-yellow-100 p-2 rounded-2xl">
-			Info: Spenden an das Klimadashboard sind voraussichtlich ab Herbst 2025 steuerlich absetzbar.
-			<a href="donate/notify" class="underline underline-offset-2"
-				>Gib mir Bescheid, sobald es soweit ist!</a
-			>
+		<p class="text-lg">
+			Wir sind ein gemeinnütziger Verein in Österreich. Deine Spende wird an das Finanzamt gemeldet
+			und ist in Österreich steuerlich absetzbar. In Deutschland sind Spenden an das Klimadashboard
+			bisher nicht steuerlich absetzbar.
 		</p>
+
 		<form on:submit|preventDefault={handleSubmit} class="grid grid-cols-2 gap-4 mt-4">
 			<div class="flex flex-col gap-1">
 				<label for="name">Name</label>

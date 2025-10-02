@@ -19,9 +19,9 @@
 </script>
 
 {#await promise then team}
-	<div class="flex flex-wrap gap-2">
+	<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-1">
 		{#each team as member}
-			<div class="w-48 h-56 bg-gray-800 relative rounded-2xl overflow-hidden">
+			<div class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden">
 				{#if member.avatar}
 					<img
 						class="absolute inset-0 w-full h-full object-cover"
