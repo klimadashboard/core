@@ -279,10 +279,9 @@
 				{keys}
 				{labels}
 				{colors}
-				visualisation="normal"
+				visualisation={keys.includes('fossil') ? 'stacked' : 'normal'}
 				unit="%"
 				showAreas={keys.includes('fossil') ? true : false}
-				showDots={true}
 				showLegend={true}
 				lineWidth={2}
 				circleRadius={3}
