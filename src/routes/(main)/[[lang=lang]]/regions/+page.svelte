@@ -3,6 +3,7 @@
 	import ComingSoon from './ComingSoon.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import RegionsMap from './RegionsMap.svelte';
+	import Switch from '$lib/components/Switch.svelte';
 
 	export let data;
 
@@ -61,6 +62,24 @@
 		parentCache.set(region.id, false);
 		return false;
 	}
+
+	const views = [
+		{
+			key: 'all',
+			label: 'Alle Ebenen',
+			icon: null
+		},
+		{
+			key: 'district',
+			label: 'Kreise',
+			icon: null
+		},
+		{
+			key: 'municipality',
+			label: 'Gemeinden',
+			icon: null
+		}
+	];
 </script>
 
 <div class="-mt-1">
@@ -110,18 +129,12 @@
 			</p>
 		</div>
 
-		<div class="mt-8 flex gap-1 items-center">
-			<select
-				id="layerFilter"
-				bind:value={layerFilter}
-				aria-label="Filter"
-				class="border rounded p-1 input"
-			>
-				<option value="all">Alle Ebenen anzeigen</option>
-				<option value="state">Bundesland</option>
-				<option value="district">Landkreis</option>
-				<option value="municipality">Gemeinde</option>
-			</select>
+		<div class="mt-8 flex gap-1 items-center mx-auto w-max">
+			<Switch
+				{views}
+				activeView={layerFilter}
+				on:itemClick={(event) => (layerFilter = event.detail)}
+			/>
 		</div>
 
 		<div class="mt-6">
