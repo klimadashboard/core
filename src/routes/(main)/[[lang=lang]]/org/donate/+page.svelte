@@ -60,7 +60,7 @@
 			].join('\n');
 			console.log(epcData);
 			qrCodeUrl = epcData
-				? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(epcData)}`
+				? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(epcData)}&format=svg`
 				: '';
 		}
 	}
@@ -113,21 +113,56 @@
 
 		return false;
 	}
+
+	async function payWithStripeRedirect() {
+		if (!name || !email || !amount || (amount as number) <= 0) {
+			error = 'Please fill out all required fields with valid data.';
+			return;
+		}
+		isSubmitting = true;
+		error = '';
+		try {
+			const cents = Math.round((amount as number) * 100);
+			const res = await fetch('/api/stripe/checkout', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ amount: cents, name, email, dob, message })
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data?.error || 'Stripe checkout failed.');
+			window.location.href = data.url; // redirect to Stripe
+		} catch (e: any) {
+			error = e?.message || 'Something went wrong. Please try again.';
+		} finally {
+			isSubmitting = false;
+		}
+	}
 </script>
 
-<div class="container py-20">
+<div class="max-w-3xl mx-auto m-1 pt-8">
 	{#if success}
 		<p>🎉 Thank you for your donation!</p>
 	{:else}
-		<h1 class="text-4xl font-bold mb-4">Spenden</h1>
+		<h1 class="text-4xl font-bold mb-4">Gemeinsam für mehr Fakten in der Klimapolitik</h1>
 
 		<p class="text-lg">
-			Wir sind ein gemeinnütziger Verein in Österreich. Deine Spende wird an das Finanzamt gemeldet
-			und ist in Österreich steuerlich absetzbar. In Deutschland sind Spenden an das Klimadashboard
-			bisher nicht steuerlich absetzbar.
+			Wir machen Klimawissenschaft mit deiner Hilfe zugänglich – für alle, kostenlos und immer
+			aktuell.<br />
+			Deine Spende wird in Österreich ans Finanzamt gemeldet und ist hier steuerlich absetzbar.
 		</p>
 
-		<form on:submit|preventDefault={handleSubmit} class="grid grid-cols-2 gap-4 mt-4">
+		<p class="font-bold text-lg mt-4">
+			Mit 7.000€ in diesem Jahr ist unsere Arbeit 2026 abgesichert.
+		</p>
+
+		<div class="rounded-full overflow-hidden mt-4 bg-green-200 h-10 w-full relative">
+			<div class="absolute top-0 left-0 bottom-0 bg-green-700 rounded-full" style="width: 90%">
+				<div class="w-full h-full animate-pulse bg-gray-900 opacity-50 rounded-full absolute"></div>
+				<p class="text-white absolute right-2 text-lg p-1.5"><b>5.000€</b> von 7.000€ gesammelt</p>
+			</div>
+		</div>
+
+		<div class="grid gap-4 mt-4">
 			<div class="flex flex-col gap-1">
 				<label for="name">Name</label>
 				<input id="name" type="text" class="input" bind:value={name} required />
@@ -145,32 +180,10 @@
 			</div>
 
 			<div class="flex flex-col gap-1">
-				<label for="region">Region <span class="opacity-70">optional</span></label>
-				{#await getRegions()}
-					<p>Regionen laden...</p>
-				{:then regions}
-					{@const regionIndex = new Map(regions.map((r) => [r.id, r]))}
-					<select id="region" bind:value={region} class="input" required>
-						<option value="">Regionen auswählen...</option>
-						{#each regions
-							.sort((a, b) => a.name.localeCompare(b.name))
-							.filter((d) => d.visible) as region}
-							<option value={region.id}>
-								{region.name} [{region.country}, {getRegionParent(region, regionIndex)}]
-							</option>
-						{/each}
-					</select>
-				{/await}
-				<p class="text-xs opacity-50">
-					Für 365 Tage nach deiner Spende danken wir dir auf deinem regionalen Klimadashboard.
-				</p>
-			</div>
-
-			<div class="flex flex-col gap-1 col-span-2">
 				<label>Deine Spende</label>
 				<div class="grid gap-4 grid-cols-4">
 					{#each suggestedAmounts as amt}
-						<label>
+						<label class="button">
 							<button type="button" on:click={() => selectSuggestedAmount(amt)}>
 								€{amt}
 							</button>
@@ -188,89 +201,53 @@
 				</div>
 			</div>
 
-			<label
-				class={`block p-4 rounded-2xl cursor-pointer transition ${
-					selectedPaymentMethod === 'bank' ? 'bg-gradient-green' : 'bg-gray-100'
-				}`}
+			<div
+				class="flex items-center gap-4 justify-between bg-white shadow-xl border-1 border-gray-200 p-4 rounded-2xl"
 			>
-				<input
-					type="radio"
-					name="paymentMethod"
-					value="bank"
-					bind:group={selectedPaymentMethod}
-					class="mr-2"
-				/>
-				<span class="font-bold">Banküberweisung &hearts;</span>
-				<p class="mt-1 text-sm">
-					<b>100% deiner Spende geht ans Klimadashboard.</b> Du erhältst einen QR-Code bzw. IBAN,
-					mit dem die Überweisung super schnell geht. Du erhältst eine Spendenbestätigung über €{amount.toFixed(
-						2
-					)} an deine E-Mail Adresse innerhalb von 7 Tagen nach Zahlungseingang.
-				</p>
-			</label>
-
-			<label
-				class={`block p-4 rounded-2xl cursor-pointer transition ${
-					selectedPaymentMethod === 'stripe' ? 'bg-gradient-green' : 'bg-gray-100'
-				}`}
-			>
-				<input
-					type="radio"
-					name="paymentMethod"
-					value="stripe"
-					bind:group={selectedPaymentMethod}
-					class="mr-2"
-				/>
-				<span class="font-bold">Apple Pay / Google Pay / Kreditkarte</span>
-				{#if amount}
-					{@const { fee, net } = calculateStripeFee(amount)}
-					<p class="mt-1 text-sm">
-						Von €{amount.toFixed(2)} zahlen wir €{fee.toFixed(2)} Gebühren und €{net.toFixed(2)} werden
-						als Spende dem Klimadashboard gutgeschrieben. Du erhältst eine Spendenbestätigung über €
-						{net.toFixed(2)} an deine E-Mail Adresse innerhalb von 7 Tagen nach Zahlungseingang.
+				<div>
+					<p class="text-lg text-balance">
+						<b>Unser Favorit: Banküberweisung</b> 100% deiner Spende gehen an uns – Spendenbestätigung
+						gibt’s per E-Mail.
 					</p>
+					<div class="font-mono text-sm mt-2">
+						<p>{receiverName}</p>
+						<p>{iban}</p>
+						<p>{bic}</p>
+						<p>{bank}</p>
+						<p>€{amount.toFixed(2)}</p>
+						<p>{name} | {dob}</p>
+					</div>
+				</div>
+				{#if qrCodeUrl}
+					<div class="relative">
+						<img src={qrCodeUrl} alt="Bank transfer QR code" class="w-24 h-24" />
+						<p class="leading-none text-sm text-center w-24 mt-1">Scan mit deiner Banking-App</p>
+					</div>
 				{/if}
-			</label>
-
-			<div class="col-span-2">
-				<label for="message" class="mb-1">Kommentar <span class="opacity-70">optional</span></label>
-				<textarea id="message" class="input block w-full" bind:value={message}></textarea>
 			</div>
 
-			<div class="col-span-2">
-				<button
-					type="submit"
-					disabled={isSubmitting}
-					class="w-full button bg-gradient-green! text-center appearance-none text-xl"
-				>
-					{isSubmitting ? 'Sending...' : 'Weiter zur Zahlung'}
-				</button>
-				<p class="text-center opacity-70 mt-2">
-					Im nächsten Schritt erhältst du alle Daten für die Überweisung. <br />Deine Daten werden
-					gemäß unserer Datenschutzrichtlinie verarbeitet und gespeichert.
-				</p>
+			<div class="border-t pt-4">
+				{#if amount}
+					{@const { fee, net } = calculateStripeFee(amount)}
+					<p class="mt-1 text-lg">
+						<b>Andere Zahlungsarten</b> Von €{amount.toFixed(2)} zahlen wir €{fee.toFixed(2)} Gebühren
+						und €{net.toFixed(2)} werden als Spende dem Klimadashboard gutgeschrieben. Du erhältst eine
+						Spendenbestätigung über €
+						{net.toFixed(2)}.
+					</p>
+					<button
+						type="button"
+						class="button mt-2"
+						on:click={payWithStripeRedirect}
+						disabled={isSubmitting}
+					>
+						{isSubmitting ? 'Weiter zu Stripe …' : 'Jetzt mit Stripe zahlen'}
+					</button>
+				{/if}
 			</div>
 
 			{#if error}
 				<p>{error}</p>
-			{/if}
-		</form>
-
-		<div class="bg-gray-50 max-w-xs p-4 rounded-2xl mt-4 flex flex-col items-center shadow-2xl">
-			<h2 class="text-xl font-bold">Überweisung</h2>
-			<div class="text-center">
-				<p>{receiverName}</p>
-				<p>{iban}</p>
-				<p>{bic}</p>
-				<p>{bank}</p>
-			</div>
-			{#if qrCodeUrl}
-				<div class="flex flex-col items-center mt-2">
-					<img src={qrCodeUrl} alt="Bank transfer QR code" class="w-36 h-36" />
-					<p class="text-xs font-bold mt-1 opacity-70 max-w-28 text-center leading-none">
-						mit deiner Banking-App scannen
-					</p>
-				</div>
 			{/if}
 		</div>
 	{/if}
