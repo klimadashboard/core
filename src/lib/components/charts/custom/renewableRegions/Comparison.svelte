@@ -103,7 +103,7 @@
 				selectedRegions = [...selectedRegions, r];
 				const code = r.layer == 'country' ? null : r.code;
 				const result = await getDataForRegion(code, selectedEnergy);
-				data = [...data, { code: r.code, name: r.name, data: result }];
+				data = [...data, { code: r.code, name: r.name + ' (' + r.layer_label + ')', data: result }];
 			} finally {
 				loading = false;
 			}
