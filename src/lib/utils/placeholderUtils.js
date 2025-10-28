@@ -182,11 +182,16 @@ const getBalkonStats = async () => {
 		const lastYearStats = data.find((d) => Number(d.year) === lastYear);
 		const totalStats = data[data.length - 1];
 
+		const addedThisYear = thisYearStats?.added_units || 0;
+		const daysPassedThisYear = dayjs().diff(dayjs(`${currentYear}-01-01`), 'day');
+		const unitsPerDay = addedThisYear > 0 ? addedThisYear / daysPassedThisYear : 0;
+
 		return {
-			balkonkraftUnitsThisYear: thisYearStats?.added_units || 0,
+			balkonkraftUnitsThisYear: formatNumber(thisYearStats?.added_units || 0),
 			balkonkraftUnitsLastYear: formatNumber(lastYearStats?.added_units || 0),
 			balkonkraftUnitsTotal: formatNumber(totalStats?.cumulative_units || 0),
 			balkonkraftPowerTotal: formatNumber(Math.round((totalStats?.cumulative_kw || 0) * 10) / 10),
+			balkonkraftUnitsPerDayThisYear: Math.round(unitsPerDay),
 			balkonkraftDate: cacheCreated
 				? dayjs(cacheCreated).format('D.M.YYYY')
 				: dayjs().format('D.M.YYYY')
@@ -198,7 +203,8 @@ const getBalkonStats = async () => {
 			balkonkraftUnitsLastYear: 'N/A',
 			balkonkraftUnitsTotal: 'N/A',
 			balkonkraftPowerTotal: 'N/A',
-			balkonkraftDate: 'N/A'
+			balkonkraftDate: 'N/A',
+			balkonkraftUnitsPerDayThisYear: 'N/A'
 		};
 	}
 };
@@ -222,7 +228,9 @@ const placeholderHandlers = {
 	balkonkraftUnitsLastYear: async () => (await getBalkonStats()).balkonkraftUnitsLastYear,
 	balkonkraftUnitsTotal: async () => (await getBalkonStats()).balkonkraftUnitsTotal,
 	balkonkraftPowerTotal: async () => (await getBalkonStats()).balkonkraftPowerTotal,
-	balkonkraftDate: async () => (await getBalkonStats()).balkonkraftDate
+	balkonkraftDate: async () => (await getBalkonStats()).balkonkraftDate,
+	balkonkraftUnitsPerDayThisYear: async () =>
+		(await getBalkonStats()).balkonkraftUnitsPerDayThisYear
 };
 
 const parseTemplate = async (template) => {

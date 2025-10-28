@@ -10,7 +10,6 @@
 	import dayjs from 'dayjs';
 
 	export let region;
-	export let data;
 	export let regions;
 	export let colors;
 	export let selectedEnergy;
@@ -79,7 +78,7 @@
 			<p class="text-lg">
 				Das kann unterschiedliche Gründe haben – in dicht bebauten Gebieten wie zum Beispiel
 				Großstädten fehlen häufig die Flächen, an anderen Orten fehlt es bislang an politischem oder
-				gesellschaftlichem Willen. Häufig wird Strom aus Windenergie dann aus benachbarten Gemeinden
+				gesellschaftlichem Willen. Häufig wird Strom aus Windenergie dann aus benachbarten Regionen
 				mitgenutzt. Insgesamt zeigen sich in Deutschland regionale Unterschiede: Während im Norden
 				bereits viele Windräder stehen, ist der Ausbau im Süden noch vergleichsweise gering – trotz
 				vorhandener Flächen.
@@ -174,8 +173,8 @@
 				<p class="text-lg mt-4">
 					Schaut man nicht nur auf die jährlich installierte Leistung, sondern auf die kumulative
 					Gesamtleistung, die in {region.name} installiert ist, ergibt sich die Kurve in der folgenden
-					Grafik. Erkunde hierbei auch den flächenbezogenen Vergleich zu benachbarten Gemeinden, der
-					durchschnittlichen Entwicklung verschiedener Bundesländer oder sogar für ganz Deutschland.
+					Grafik. Erkunde hierbei auch den flächenbezogenen Vergleich zu benachbarten Regionen, der durchschnittlichen
+					Entwicklung verschiedener Bundesländer oder sogar für ganz Deutschland.
 				</p>
 			{/if}
 
@@ -195,10 +194,10 @@
 
 			{#if selectedEnergy === 'solar'}
 				<p class="text-lg my-4">
-					Im Diagramm sieht man, wie sich die gesamte Solarstrom-Leistung in {region.name} über die Jahre
-					entwickelt hat. Für die Darstellung werden die Daten für jedes Jahr aufsummiert und ergeben
-					somit die gesamte Solarstromleistung (auch kumulative Leistung genannt). Im Jahr 2015, lag
-					die installierte PV-Leistung noch bei {formatNumber(
+					Im Diagramm sieht man, wie sich die gesamte Solarstrom-Leistung in {region.name} ({region.layer_label})
+					über die Jahre entwickelt hat. Für die Darstellung werden die Daten für jedes Jahr
+					aufsummiert und ergeben somit die gesamte Solarstromleistung (auch kumulative Leistung
+					genannt). Im Jahr 2015, lag die installierte PV-Leistung noch bei {formatNumber(
 						result.by_year.find((d) => d.year === 2015)?.cumulative_power_kw
 					)}
 					kWp, während sie Ende 2024 bereits bei {formatNumber(

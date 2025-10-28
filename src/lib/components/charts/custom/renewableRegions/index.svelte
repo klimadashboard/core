@@ -11,6 +11,7 @@
 	import { getRegions } from '$lib/utils/regions';
 
 	let selectedRegion;
+	let selectedLayer = page.data.page?.layer == 'district' ? 'districts' : 'municipalities';
 
 	const colors = [
 		{ key: 'solar', colors: ['#F0E1C2', '#E0A906'] },
@@ -23,60 +24,32 @@
 		{ key: 'wind', label: 'Wind', color: colors.find((c) => c.key === 'wind').colors }
 	];
 
-	// --- In-memory cache (lost on full reload) ---
-	let cachedRegions = null;
-
 	const fetchRegions = async () => {
-		// if (cachedRegions) return { regions: cachedRegions, countryName: cachedCountryName };
-
-		const regionsRaw = await getRegions().then((r) =>
-			r.filter(
-				(r) =>
-					r.country === PUBLIC_VERSION.toUpperCase() &&
-					(r.layer == 'country' || r.layer == 'state' || r.layer == 'municipality')
-			)
+		const regions = await getRegions().then((r) =>
+			r.map((r) => ({
+				...r,
+				code: r.code_short ? r.code_short : r.code
+			}))
 		);
 
-		const regions = regionsRaw
-			.filter((d) => d.visible)
-			.map((r) => ({
-				...r,
-				code: r.code_short ? r.code_short : r.code,
-				outline: r.outline_simple
-			}));
+		console.log(regions);
 
-		cachedRegions = regions;
+		const foundRegion = findMatchingRegion(page.data.page, regions, true);
+		selectedRegion = foundRegion || regions.find((d) => d.layer == 'country');
 
 		return regions;
 	};
 
-	async function getData(selectedEnergy) {
-		try {
-			const [regions, data] = await Promise.all([
-				fetchRegions(),
-				fetch(
-					`https://base.klimadashboard.org/get-region-stats-for-renewables?table=energy_${selectedEnergy}_units`
-				).then((r) => r.json())
-			]);
-
-			const foundRegion = findMatchingRegion(page.data.page, regions, true);
-			selectedRegion = foundRegion || regions.find((d) => d.layer == 'country');
-			return { data, regions };
-		} catch (err) {
-			console.error('Error in getData:', err);
-			throw err;
-		}
-	}
-
-	$: promise = getData(selectedEnergy);
+	$: promise = fetchRegions();
 </script>
 
-<Switch
-	{views}
-	bind:activeView={selectedEnergy}
-	on:itemClick={(e) => (selectedEnergy = e.detail)}
-/>
-
+<div class="w-max mx-auto">
+	<Switch
+		{views}
+		bind:activeView={selectedEnergy}
+		on:itemClick={(e) => (selectedEnergy = e.detail)}
+	/>
+</div>
 <div class="my-4">
 	{#await promise}
 		<div class="bg-amber-400/10 rounded-2xl h-[38rem] animate-pulse"></div>
@@ -86,14 +59,14 @@
 			<div class="h-8 w-64 bg-current/20 animate-pulse rounded"></div>
 			<div class="h-64 w-full bg-current/20 animate-pulse mt-4 rounded"></div>
 		</div>
-	{:then { data, regions }}
-		<div class="h-[38rem]">
+	{:then regions}
+		<div class="h-[32rem]">
 			<Map
 				colors={colors.find((c) => c.key === selectedEnergy).colors}
-				{data}
 				{regions}
 				{selectedEnergy}
 				bind:selectedRegion
+				bind:selectedLayer
 				on:selectRegion={(e) => (selectedRegion = regions.find((d) => d.code == e.detail))}
 			/>
 		</div>
@@ -103,7 +76,6 @@
 			<Inspector
 				colors={colors.find((c) => c.key === selectedEnergy).colors}
 				{regions}
-				{data}
 				{selectedEnergy}
 				region={selectedRegion}
 				bind:selectedRegion

@@ -36,11 +36,12 @@ interface LoadedMobilityData {
 	preselected?: string;
 }
 
+// mobilityData.ts (only the changed/added parts shown)
+
 export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMobilityData> {
 	const directus = getDirectusInstance(fetchFn);
 	const countryCode = PUBLIC_VERSION.toUpperCase();
 
-	// Fetch mobility records
 	const data = await directus.request(
 		readItems<RawMobilityRecord>('mobility_cars', {
 			filter: {
@@ -52,31 +53,44 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 		})
 	);
 
-	// Consolidate source and periods
 	const sources = Array.from(new Set(data.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
 	const periods = Array.from(
 		new Set(data.filter((d) => d.category === 'Privat').map((d) => d.period))
 	).sort((a, b) => Number(a) - Number(b));
 
-	// Load and filter region shapes
-	const layerFilter = 'municipality';
+	// ⬇️ load shapes
 	const allShapes = await getRegions();
 	const country = allShapes.find((r) => r.country == countryCode && r.layer == 'country');
-	if (!country) {
-		throw new Error(`No country metadata found for code "${countryCode}"`);
-	}
-	const shapes = allShapes.filter((r) => r.country === countryCode && r.layer === layerFilter);
+	if (!country) throw new Error(`No country metadata found for code "${countryCode}"`);
 
-	// Enrich shapes with series data
-	const regions: RegionWithData[] = shapes.map((shape) => {
-		const regionData = data.filter((d) => d.region === shape.code || d.region === shape.code_short);
+	const muniShapes = allShapes.filter(
+		(r) => r.country === countryCode && r.layer === 'municipality'
+	);
+	const districtShapes = allShapes.filter(
+		(r) => r.country === countryCode && r.layer === 'district'
+	);
+
+	// helper: get all mobility records for a shape by code/code_short
+	const byShape = (shape: any) =>
+		data.filter(
+			(d) => d.region === shape.code || (shape.code_short && d.region === shape.code_short)
+		);
+
+	// ⬇️ enrich municipalities (unchanged logic)
+	const municipalities: RegionWithData[] = muniShapes.map((shape) => {
+		const regionData = byShape(shape);
 		const uniqPeriods = Array.from(new Set(regionData.map((d) => d.period))).sort(
 			(a, b) => Number(a) - Number(b)
 		);
 
-		const carsPer1000Inhabitants = uniqPeriods.map((p) => {
+		const cars = uniqPeriods.map((p) => {
 			const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
+			return { period: p, value: total ?? null };
+		});
+
+		const carsPer1000Inhabitants = uniqPeriods.map((p) => {
+			const total = cars.find((c) => c.period === p)?.value ?? null;
 			return {
 				period: p,
 				value:
@@ -96,23 +110,86 @@ export async function loadMobilityData(fetchFn: typeof fetch): Promise<LoadedMob
 			return { period: p, value: firmen != null && total ? (firmen / total) * 100 : null };
 		});
 
-		const cars = uniqPeriods.map((p) => {
-			const total = regionData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
-			return { period: p, value: total };
+		return { ...shape, carsPer1000Inhabitants, carsPrivateShare, carsCompanyShare, cars };
+	});
+
+	// ⬇️ helper to find child municipalities of a district
+	const getChildren = (districtId: string) =>
+		muniShapes.filter(
+			(m) =>
+				Array.isArray(m.parents) &&
+				m.parents.some((p: any) => p.layer === 'district' && p.id === districtId)
+		);
+
+	// ⬇️ aggregate districts from their municipalities
+	const districts: RegionWithData[] = districtShapes.map((shape) => {
+		const children = getChildren(shape.id);
+		// map child municipality -> enriched data lookup
+		const childRows = children
+			.map((c) => municipalities.find((m) => m.code === c.code))
+			.filter((x): x is RegionWithData => !!x);
+
+		const allPeriods = periods; // ensure same timeline
+		const popSum = children.reduce((s, c) => s + (c.population ?? 0), 0);
+
+		const cars = allPeriods.map((p) => {
+			const sum = childRows.reduce((acc, r) => {
+				const v = r.cars.find((d) => d.period === p)?.value ?? 0;
+				return acc + v;
+			}, 0);
+			return { period: p, value: sum };
+		});
+
+		const carsPer1000Inhabitants = allPeriods.map((p) => {
+			const total = cars.find((d) => d.period === p)?.value ?? 0;
+			return {
+				period: p,
+				value: popSum > 0 ? Math.round((total / popSum) * 1000) : null
+			};
+		});
+
+		const carsPrivateShare = allPeriods.map((p) => {
+			let privatAbs = 0;
+			let totalAbs = 0;
+			for (const r of childRows) {
+				const share = r.carsPrivateShare.find((d) => d.period === p)?.value;
+				const abs = r.cars.find((d) => d.period === p)?.value;
+				if (share != null && abs != null) {
+					privatAbs += (share / 100) * abs;
+					totalAbs += abs;
+				}
+			}
+			return { period: p, value: totalAbs > 0 ? (privatAbs / totalAbs) * 100 : null };
+		});
+
+		const carsCompanyShare = allPeriods.map((p) => {
+			let firmenAbs = 0;
+			let totalAbs = 0;
+			for (const r of childRows) {
+				const share = r.carsCompanyShare.find((d) => d.period === p)?.value;
+				const abs = r.cars.find((d) => d.period === p)?.value;
+				if (share != null && abs != null) {
+					firmenAbs += (share / 100) * abs;
+					totalAbs += abs;
+				}
+			}
+			return { period: p, value: totalAbs > 0 ? (firmenAbs / totalAbs) * 100 : null };
 		});
 
 		return {
 			...shape,
+			population: popSum,
+			cars,
 			carsPer1000Inhabitants,
 			carsPrivateShare,
-			carsCompanyShare,
-			cars
+			carsCompanyShare
 		};
 	});
 
-	// Preselect region if URL matches
-	const preselected = findMatchingRegion(undefined, regions);
+	// ⬇️ combine: municipalities + districts
+	const regions: RegionWithData[] = [...municipalities, ...districts];
 
+	const preselected = findMatchingRegion(undefined, regions); // now supports district URLs too
 	return { regions, periods, source, country, preselected };
 }
 
@@ -121,13 +198,23 @@ export function getRegionData(
 	selCode: string | null,
 	country: RegionShape
 ): RegionWithData {
+	// When a specific region is requested, return it as-is
 	if (selCode) {
-		return regions.find((r) => r.code === selCode || r.code_short === selCode)!;
+		return regions.find((r) => r.code === selCode || (r as any).code_short === selCode)!;
 	}
 
-	const allPeriods = Array.from(
-		new Set(regions.flatMap((r) => r.carsPer1000Inhabitants.map((d) => d.period)))
-	).sort((a, b) => Number(a) - Number(b));
+	// ---- NATIONAL AGGREGATION (avoid double counting) ----
+	// Prefer municipalities; if none exist (edge case), fall back to districts; otherwise use whatever we have.
+	const base = regions.filter((r) => r.layer === 'municipality').length
+		? regions.filter((r) => r.layer === 'municipality')
+		: regions.filter((r) => r.layer === 'district').length
+			? regions.filter((r) => r.layer === 'district')
+			: regions;
+
+	// Use periods from the base layer only
+	const allPeriods = Array.from(new Set(base.flatMap((r) => r.cars.map((d) => d.period)))).sort(
+		(a, b) => Number(a) - Number(b)
+	);
 
 	return {
 		code: 'ALL',
@@ -136,8 +223,9 @@ export function getRegionData(
 		layer: 'national',
 		country: '',
 		center: [10.45, 51.1657],
+
 		carsPer1000Inhabitants: allPeriods.map((p) => {
-			const totalCars = regions.reduce((sum, r) => {
+			const totalCars = base.reduce((sum, r) => {
 				const val = r.cars.find((d) => d.period === p)?.value;
 				return sum + (val ?? 0);
 			}, 0);
@@ -146,44 +234,39 @@ export function getRegionData(
 				value: country.population > 0 ? Math.round((totalCars / country.population) * 1000) : null
 			};
 		}),
+
 		carsPrivateShare: allPeriods.map((p) => {
 			let totalPrivat = 0;
 			let total = 0;
-			for (const r of regions) {
-				const share = r.carsPrivateShare.find((d) => d.period === p)?.value;
-				const abs = r.cars.find((d) => d.period === p)?.value;
+			for (const r of base) {
+				const share = r.carsPrivateShare.find((d) => d.period === p)?.value; // %
+				const abs = r.cars.find((d) => d.period === p)?.value; // #
 				if (share != null && abs != null) {
-					const privatCars = (share / 100) * abs;
-					totalPrivat += privatCars;
+					totalPrivat += (share / 100) * abs;
 					total += abs;
 				}
 			}
-			return {
-				period: p,
-				value: total > 0 ? (totalPrivat / total) * 100 : null
-			};
+			return { period: p, value: total > 0 ? (totalPrivat / total) * 100 : null };
 		}),
+
 		carsCompanyShare: allPeriods.map((p) => {
 			let totalFirmen = 0;
 			let total = 0;
-			for (const r of regions) {
-				const share = r.carsCompanyShare.find((d) => d.period === p)?.value;
-				const abs = r.cars.find((d) => d.period === p)?.value;
+			for (const r of base) {
+				const share = r.carsCompanyShare.find((d) => d.period === p)?.value; // %
+				const abs = r.cars.find((d) => d.period === p)?.value; // #
 				if (share != null && abs != null) {
-					const firmenCars = (share / 100) * abs;
-					totalFirmen += firmenCars;
+					totalFirmen += (share / 100) * abs;
 					total += abs;
 				}
 			}
-			return {
-				period: p,
-				value: total > 0 ? (totalFirmen / total) * 100 : null
-			};
+			return { period: p, value: total > 0 ? (totalFirmen / total) * 100 : null };
 		}),
+
 		cars: allPeriods.map((p) => {
-			const sum = regions.reduce((sum, r) => {
+			const sum = base.reduce((acc, r) => {
 				const val = r.cars.find((d) => d.period === p)?.value;
-				return sum + (val ?? 0);
+				return acc + (val ?? 0);
 			}, 0);
 			return { period: p, value: sum };
 		})

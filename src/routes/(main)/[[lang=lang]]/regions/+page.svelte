@@ -3,10 +3,13 @@
 	import ComingSoon from './ComingSoon.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import RegionsMap from './RegionsMap.svelte';
+	import Switch from '$lib/components/Switch.svelte';
 
 	export let data;
 
-	let layerFilter = 'municipality';
+	const regionsCount = data.regions.length;
+
+	let layerFilter = 'all';
 
 	$: filteredRegions = [...data.regions]
 		.filter((r) => r.name && (!r.layer || layerFilter === 'all' || r.layer === layerFilter))
@@ -59,6 +62,24 @@
 		parentCache.set(region.id, false);
 		return false;
 	}
+
+	const views = [
+		{
+			key: 'all',
+			label: 'Alle Ebenen',
+			icon: null
+		},
+		{
+			key: 'district',
+			label: 'Kreise',
+			icon: null
+		},
+		{
+			key: 'municipality',
+			label: 'Gemeinden',
+			icon: null
+		}
+	];
 </script>
 
 <div class="-mt-1">
@@ -83,8 +104,7 @@
 		<div class="mt-8 text-lg text">
 			<p class="">
 				<strong
-					>{formatNumber(filteredRegions.length)} Klimadashboards zeigen, wo die Regionen in der Klimawende
-					stehen.</strong
+					>{formatNumber(regionsCount)} Klimadashboards zeigen, wo die Regionen in der Klimawende stehen.</strong
 				>
 				Du kannst dir einfach eine Region auf der Karte oder der Liste unten aussuchen oder dich orten
 				lassen und wir wählen deine Region ganz automatisch aus!
@@ -109,18 +129,12 @@
 			</p>
 		</div>
 
-		<div class="mt-8 flex gap-1 items-center hidden">
-			<select
-				id="layerFilter"
-				bind:value={layerFilter}
-				aria-label="Filter"
-				class="border rounded p-1 input"
-			>
-				<option value="all">Alle Ebenen anzeigen</option>
-				<option value="state">Bundesland</option>
-				<option value="district">Landkreis</option>
-				<option value="municipality">Gemeinde</option>
-			</select>
+		<div class="mt-8 flex gap-1 items-center mx-auto w-max">
+			<Switch
+				{views}
+				activeView={layerFilter}
+				on:itemClick={(event) => (layerFilter = event.detail)}
+			/>
 		</div>
 
 		<div class="mt-6">
@@ -132,11 +146,15 @@
 						{#each groupedRegions[letter] as region}
 							<li>
 								<a
-									class="hover:underline underline-offset-2 leading-[0.1em]!"
+									class="hover:underline underline-offset-2 leading-[0em]!"
 									href={`/regions/${region.id}`}
-									>{region.name} ({region.layer_label})<br />
-									{#if getRegionParent(region)}
-										<span class="opacity-70">{getRegionParent(region)}</span>{/if}
+									><b> {region.name}</b>
+
+									<span class="opacity-70"
+										>{region.layer_label}
+										{#if getRegionParent(region)}
+											in {getRegionParent(region)}{/if}</span
+									>
 								</a>
 							</li>
 						{/each}
