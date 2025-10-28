@@ -9,7 +9,7 @@
 
 	import { getRegions } from '$lib/utils/regions';
 	import getDirectusInstance from '$lib/utils/directus';
-	import { readItem, readItems } from '@directus/sdk';
+	import { readItem } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	let minPeriod;
@@ -20,49 +20,49 @@
 	let selectedPeriodIndex;
 	let periods = [];
 
-	const viewPresets = [
+	$: console.log(page.data);
+
+	const availableLayers = [
 		{
-			label: 'Elektro',
-			key: 'Elektro',
-			colorKey: 'electric',
-			publicVersions: ['at', 'de']
+			layer: 'municipality',
+			layers: 'municipalities'
 		},
 		{
-			label: 'Hybrid',
-			key: 'Hybrid',
-			colorKey: 'hybrid',
-			publicVersions: ['at']
-		}, // for PUBLIC_VERSION == at
+			layer: 'district',
+			layers: 'districts'
+		}
+	];
+
+	// NEW: layer switching (matches Map.svelte)
+	let selectedLayer =
+		PUBLIC_VERSION.toUpperCase() === 'AT'
+			? availableLayers.find((d) => d.layer == page.data.page?.layer)?.layers
+			: 'districts';
+	let previousLayer = selectedLayer;
+
+	const LAYER_TO_ENDPOINT = {
+		municipalities: 'municipality',
+		districts: 'district'
+	};
+
+	const viewPresets = [
+		{ label: 'Elektro', key: 'Elektro', colorKey: 'electric', publicVersions: ['at', 'de'] },
+		{ label: 'Hybrid', key: 'Hybrid', colorKey: 'hybrid', publicVersions: ['at'] },
 		{
 			label: 'Plug-in-Hybrid',
 			key: 'Plug-in-Hybrid',
 			colorKey: 'plugInHybrid',
 			publicVersions: ['de']
-		}, // for PUBLIC_VERSION == de
+		},
 		{
 			label: 'Hybrid (ohne Plug-in)',
 			key: 'Hybrid (ohne Plug-in)',
 			colorKey: 'hybrid',
 			publicVersions: ['de']
-		}, // for PUBLIC_VERSION == de
-		{
-			label: 'Benzin',
-			key: 'Benzin',
-			colorKey: 'benzin',
-			publicVersions: ['at', 'de']
 		},
-		{
-			label: 'Diesel',
-			key: 'Diesel',
-			colorKey: 'diesel',
-			publicVersions: ['at', 'de']
-		},
-		{
-			label: 'Sonstige',
-			key: 'Sonstige',
-			colorKey: 'other',
-			publicVersions: ['at', 'de']
-		}
+		{ label: 'Benzin', key: 'Benzin', colorKey: 'benzin', publicVersions: ['at', 'de'] },
+		{ label: 'Diesel', key: 'Diesel', colorKey: 'diesel', publicVersions: ['at', 'de'] },
+		{ label: 'Sonstige', key: 'Sonstige', colorKey: 'other', publicVersions: ['at', 'de'] }
 	];
 
 	$: views = viewPresets.filter((v) => v.publicVersions.includes(PUBLIC_VERSION));
@@ -71,108 +71,115 @@
 	$: selectedView = views[0].key;
 	$: selectedRegion = null;
 
-	function dedupeData(data) {
-		const seen = new Set();
-		return data.filter((d) => {
-			const key = `${d.period}-${d.region}-${d.category}`;
-			if (seen.has(key)) return false;
-			seen.add(key);
-			return true;
-		});
+	function normalizeNumber(v) {
+		const n = Number(v);
+		return Number.isFinite(n) ? n : 0;
 	}
 
-	// load data reactively
-	$: promise = getData();
+	function yearsFromEndpointData(obj) {
+		// obj shape: { "2019": { "Benzin": 2, "Diesel": 1, ... }, "2025": {...}, ... }
+		return Object.keys(obj || {})
+			.map((y) => parseInt(y))
+			.filter((y) => Number.isFinite(y))
+			.sort((a, b) => a - b);
+	}
 
-	async function getData() {
+	// load data reactively (also depends on selectedLayer)
+	$: promise = getData(selectedLayer);
+
+	async function getData(layerKey /* 'municipalities' | 'districts' */) {
 		const directus = getDirectusInstance(fetch);
 		const countryCode = PUBLIC_VERSION.toUpperCase();
 
-		const rawData = await directus.request(
-			readItems('mobility_cars', {
-				filter: {
-					country: { _eq: countryCode },
-					_or: [
-						{ category: { _in: ['Elektro', 'Benzin', 'Diesel', 'Insgesamt'] } },
-						{ category: { _contains: 'Hybrid' } }
-					]
-				},
-				limit: -1,
-				fields: ['period', 'region', 'category', 'value', 'source']
-			})
-		);
+		const targetLayer = LAYER_TO_ENDPOINT[layerKey];
 
-		const data = dedupeData(rawData);
+		// 1) fetch aggregated data from the new endpoint (with meta)
+		const url = `https://base.klimadashboard.org/get-mobility-cars?layer=${encodeURIComponent(targetLayer)}&country=${encodeURIComponent(countryCode)}&includeMeta=true`;
 
-		const sources = Array.from(new Set(data.map((d) => d.source).filter((s) => s)));
-		source = sources.join(', ');
+		const resp = await fetch(url);
+		if (!resp.ok) {
+			throw new Error(`Endpoint error ${resp.status}`);
+		}
+		/** @type {Array<{ region: {id:string, name?:string, layer?:string, country?:string, code?:string, code_short?:string}, aggregated_from?: string, data: Record<string, Record<string, number>> }>} */
+		const agg = await resp.json();
 
+		// 2) get region metadata (outlines, centers, etc.)
+		const allRegions = await getRegions();
+		// include the country polygon too (you rely on it later)
+		const filtered = allRegions
+			.filter(
+				(r) => r.country === countryCode && (r.layer === targetLayer || r.layer === 'country')
+			)
+			// unique by code (as before)
+			.filter((r, i, arr) => arr.findIndex((rr) => rr.code === r.code) === i);
+
+		// country name (as before)
+		countryName = 'TODO';
+
+		// 3) compute periods across all regions from endpoint
+		const allPeriods = Array.from(
+			new Set(agg.flatMap((item) => yearsFromEndpointData(item.data)))
+		).sort((a, b) => a - b);
+
+		periods = allPeriods;
+		selectedPeriodIndex = periods.length - 1;
+
+		// 4) source label
 		if (PUBLIC_VERSION === 'de') {
 			source =
 				"<a href='https://www-genesis.destatis.de/datenbank/online/url/802b92c5'>Kraftfahrtbundesamt (2025)</a>";
+		} else {
+			source = 'STATISTIK AUSTRIA (Bestand, diverse Jahre)';
 		}
 
-		const allRegions = await getRegions();
-		const layerFilter = countryCode === 'AT' ? 'municipality' : 'district';
+		// 5) transform endpoint payload into the same per-region shape you pass to sub-components
+		const catsForCalc = views.filter((d) => d.key !== 'Sonstige').map((d) => d.key);
 
-		const filtered = allRegions
-			.filter(
-				(r) => r.country === countryCode && (r.layer === layerFilter || r.layer === 'country')
-			)
-			.filter((r, i, arr) => arr.findIndex((rr) => rr.code === r.code) === i);
+		const totalForYear = (regionDataObj, year) =>
+			normalizeNumber(regionDataObj?.[String(year)]?.['Insgesamt']);
 
-		const country = await directus.request(readItem('countries', countryCode));
-		countryName = country?.name_de ?? countryCode;
+		const regionsWithData = filtered.map((regionMeta) => {
+			const match =
+				agg.find((a) => a.region?.code && a.region.code === regionMeta.code) ||
+				agg.find((a) => a.region?.code_short && a.region.code_short === regionMeta.code);
 
-		const regionsWithData = filtered.map((region) => {
-			const regionData = data.filter((d) => d.region === region.code);
-			periods = Array.from(new Set(regionData.map((d) => parseInt(d.period)))).sort(
-				(a, b) => a - b
-			);
-			selectedPeriodIndex = periods.length - 1;
+			const regionDataObj = match?.data || {};
 
 			const absoluteByCategory = {};
 			const sharesByCategory = {};
-			const cats = views.filter((d) => d.key !== 'Sonstige').map((d) => d.key);
 
-			cats.forEach((catKey) => {
+			catsForCalc.forEach((catKey) => {
 				absoluteByCategory[catKey] = periods.map((p) => {
-					const v =
-						regionData.find((d) => d.category === catKey && parseInt(d.period) === p)?.value || 0;
+					const v = normalizeNumber(regionDataObj?.[String(p)]?.[catKey]);
 					return { period: p, value: v };
 				});
 				sharesByCategory[catKey] = absoluteByCategory[catKey].map(({ period, value }) => {
-					const total =
-						regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
-							?.value || 0;
+					const total = totalForYear(regionDataObj, period);
 					return { period, value: total > 0 ? (value / total) * 100 : 0 };
 				});
 			});
 
 			// Sonstige = Gesamt − known
 			absoluteByCategory.Sonstige = periods.map((p, i) => {
-				const total =
-					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === p)?.value ||
-					0;
-				const known = cats
+				const total = totalForYear(regionDataObj, p);
+				const known = catsForCalc
 					.map((k) => absoluteByCategory[k]?.[i]?.value || 0)
 					.reduce((a, b) => a + b, 0);
-				return { period: p, value: total - known };
+				return { period: p, value: Math.max(0, total - known) };
 			});
 
 			sharesByCategory.Sonstige = absoluteByCategory.Sonstige.map(({ period, value }) => {
-				const total =
-					regionData.find((d) => d.category === 'Insgesamt' && parseInt(d.period) === period)
-						?.value || 0;
+				const total = totalForYear(regionDataObj, period);
 				return { period, value: total > 0 ? (value / total) * 100 : 0 };
 			});
 
 			return {
-				...region,
-				outline: region.outline_simple,
-				center: region.center,
-				layer: region.layer,
-				name: region.name,
+				...regionMeta,
+				outline: regionMeta.outline_simple,
+				center: regionMeta.center,
+				layer: regionMeta.layer, // municipality or district or country
+				name: regionMeta.name,
+				parents: regionMeta.parents, // keep parents for selection logic
 				absoluteByCategory,
 				sharesByCategory
 			};
@@ -180,35 +187,105 @@
 
 		regions = regionsWithData;
 
-		// pick initial region
-		const national = regions.find((r) => r.layer === 'country');
-		selectedRegion = national?.code;
-		const match = findMatchingRegion(page.data.page, regions);
-		console.log(page.data.page);
-		console.log(regions);
-		if (match) selectedRegion = match;
+		// initial region selection logic (first load or when layer changes)
+		updateSelectedRegionAfterLayerChange();
 
-		minPeriod = Math.min(...data.map((d) => parseInt(d.period)));
-		maxPeriod = Math.max(...data.map((d) => parseInt(d.period)));
+		// global min/max years
+		minPeriod = Math.min(...periods);
+		maxPeriod = Math.max(...periods);
 
-		const allCategories = Array.from(new Set(data.map((d) => d.category?.trim())));
+		// sanity: warn on unknown categories
+		const allCategories = Array.from(
+			new Set(
+				agg.flatMap((a) => Object.values(a.data || {}).flatMap((byCat) => Object.keys(byCat || {})))
+			)
+		);
 		const knownCategories = [
 			'Elektro',
 			'Benzin',
 			'Diesel',
 			'Insgesamt',
 			'Hybrid',
-			'Plug-In-Hybrid',
+			'Plug-in-Hybrid',
+			'Hybrid (ohne Plug-in)',
+			'Hybrid (ohne Plug-in)',
 			'Hybrid (ohne Plug-In)'
 		];
-
 		const unknownCategories = allCategories.filter((cat) => !knownCategories.includes(cat));
-
 		if (unknownCategories.length > 0) {
-			console.warn('🚨 Unknown vehicle categories found in data:', unknownCategories);
+			console.warn('🚨 Unknown vehicle categories found in endpoint data:', unknownCategories);
 		}
 
-		return { data, regions, minPeriod, maxPeriod, countryName };
+		return { regions, minPeriod, maxPeriod, countryName };
+	}
+
+	// --- Layer-aware region selection (implements your rule set #71) ---
+	function updateSelectedRegionAfterLayerChange() {
+		// If nothing selected yet → country or page match
+		const national = regions.find((r) => r.layer === 'country');
+
+		// Try page context first (if it exists and matches current layer)
+		const pageCode = page?.data?.page?.code;
+		if (pageCode) {
+			const inLayer = regions.find((r) => r.code === pageCode);
+			if (inLayer) {
+				selectedRegion = inLayer.code;
+				return;
+			}
+		}
+
+		// If we already have a selection, try to preserve intent across layers
+		const prevLayer = previousLayer;
+		const nextLayer = selectedLayer;
+		const currentObj = regions.find((r) => r.code === selectedRegion);
+
+		// If we had no valid selection object, fall back to page match or country
+		if (!currentObj) {
+			const match = findMatchingRegion(page.data.page, regions);
+			selectedRegion = match ?? national?.code ?? selectedRegion;
+			previousLayer = selectedLayer;
+			return;
+		}
+
+		// Determine direction (municipalities < districts)
+		const order = { municipalities: 0, districts: 1 };
+		const movingUp = order[prevLayer] < order[nextLayer];
+		const movingDown = order[prevLayer] > order[nextLayer];
+
+		// Moving up: pick parent in target layer
+		if (movingUp && Array.isArray(currentObj.parents)) {
+			const targetSingular = LAYER_TO_ENDPOINT[selectedLayer]; // 'district' | 'municipality'
+			const parent = currentObj.parents.find((p) => p.layer === targetSingular);
+			if (parent) {
+				const match = regions.find((r) => r.id === parent.id);
+				if (match) {
+					selectedRegion = match.code;
+					previousLayer = selectedLayer;
+					return;
+				}
+			}
+		}
+
+		// Moving down: pick any child under the previously selected region
+		if (movingDown) {
+			const targetSingular = LAYER_TO_ENDPOINT[selectedLayer];
+			const child = regions
+				.slice()
+				.sort((a, b) => a.code.localeCompare(b.code))
+				.find((r) => r.layer === targetSingular && r.parents?.some((p) => p.id === currentObj.id));
+			if (child) {
+				selectedRegion = child.code;
+				previousLayer = selectedLayer;
+				return;
+			}
+		}
+
+		// Same layer or no mapping → keep if exists in this layer, else country
+		const stillExists = regions.find((r) => r.code === selectedRegion);
+		if (!stillExists) {
+			selectedRegion = national?.code ?? selectedRegion;
+		}
+		previousLayer = selectedLayer;
 	}
 
 	function getSelectedRegionData(p, selCode) {
@@ -242,7 +319,7 @@
 					return {
 						period,
 						absolute: abs.reduce((a, b) => a + b, 0),
-						percentage: pct.reduce((a, b) => a + b, 0) / pct.length
+						percentage: pct.reduce((a, b) => a + b, 0) / (pct.length || 1)
 					};
 				});
 				return {
@@ -318,14 +395,14 @@
 							center: r.center,
 							layer: r.layer,
 							name: r.name,
-							data: r.sharesByCategory[selectedView] // [{ period, value }]
+							data: r.sharesByCategory[selectedView]
 						}))}
 						colors={colors[views.find((v) => v.key === selectedView).colorKey]}
-						{...(() => {
-							const [minAll, maxAll] = extentForViewAcrossYears(p.regions, selectedView);
-							return { min: minAll, max: maxAll };
-						})()}
+						min={extentForViewAcrossYears(p.regions, selectedView)[0]}
+						max={extentForViewAcrossYears(p.regions, selectedView)[1]}
 						bind:selectedRegion
+						bind:selectedLayer
+						on:changeLayer={() => {}}
 						on:selectRegion={(e) => (selectedRegion = e.detail)}
 					/>
 				</div>
