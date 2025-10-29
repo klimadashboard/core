@@ -46,16 +46,10 @@
 			Geld ausgeben.
 		</p>
 
-		<div class="grid md:grid-cols-3">
-			<a class="" href="#years">Jahre</a>
-			<a class="" href="#income">Geldgeber:innen</a>
-			<a class="" href="#staff">Personalkosten</a>
-		</div>
-
 		{#each data as item}
 			<div class="mt-8" id="years">
 				<div class="flex items-end gap-2">
-					<h2 class="text-2xl font-bold">{item.year}</h2>
+					<h2 class="text-2xl font-bold">E/A {item.year}</h2>
 					<p class="text-lg">
 						{item.inProgress ? 'vorläufige Daten' : 'abschließende Daten'} bis {item.update}
 					</p>
