@@ -3,6 +3,7 @@
 	import { browser } from '$app/environment';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readUsers, readItems } from '@directus/sdk';
+	import dayjs from 'dayjs';
 
 	/** Column-level parallax to keep intra-column spacing uniform (SSR-safe) */
 	export function parallaxColumn(node: HTMLElement, { speed = 0.04 } = {}) {
@@ -47,7 +48,6 @@
 		team = r ?? [];
 	});
 
-	// Fetch latest 10 media reports (actual data) and map to cards, then shuffle for random placement
 	let mediaReports: any[] = [];
 
 	async function getMediaReports() {
@@ -55,7 +55,7 @@
 		const data = await directus.request(
 			readItems('org_press_reports', {
 				fields: ['id', 'title', 'summary', 'date', 'link', { medium: ['name', 'logo'] }],
-				limit: 10,
+				limit: 12,
 				sort: ['-date']
 			})
 		);
@@ -63,6 +63,26 @@
 	}
 	let mediaPromise: Promise<void> = getMediaReports().then((r) => {
 		mediaReports = r;
+	});
+
+	let orgEvents: any[] = [];
+
+	async function getEvents() {
+		const directus = getDirectusInstance(fetch);
+		const data = await directus.request(
+			readItems('org_events', {
+				sort: ['-date'],
+				filter: {
+					date_end: {
+						_lte: '$NOW'
+					}
+				}
+			})
+		);
+		return Array.isArray(data) ? data : [];
+	}
+	let eventsPromise: Promise<void> = getEvents().then((r) => {
+		orgEvents = r;
 	});
 
 	function shuffle<T>(arr: T[]) {
@@ -85,6 +105,15 @@
 		};
 	}
 
+	function eventToCard(item: any) {
+		return {
+			type: 'event',
+			title: item.title,
+			date: item.date,
+			date_end: item.date_end
+		};
+	}
+
 	// Project cards (now included IN masonry and seeded toward the center columns)
 	const projectCards = [
 		{
@@ -97,15 +126,15 @@
 		{
 			type: 'project',
 			title: 'EU Emission Tracker',
-			subtitle: 'Daten & Fakten zur Klimakrise in der EU',
+			subtitle: 'Emissions past & future of all EU countries',
 			href: 'https://emission-tracker.eu',
 			tag: 'Project'
 		},
 		{
 			type: 'project',
-			title: 'Klimapolitik-Tracker',
-			subtitle: 'Maßnahmen & Umsetzungsstand',
-			href: 'https://klimadashboard.at/policies',
+			title: 'Klimadashboard.de',
+			subtitle: 'Dashboard zur Klimakrise in Deutschland',
+			href: 'https://klimadashboard.de',
 			tag: 'Project'
 		}
 	] as const;
@@ -200,9 +229,12 @@
 	// Build cards once team is loaded; weave to get a dynamic mix (excluding projectCards for now)
 	$: teamCards = team.map(memberToCard);
 	$: mediaCards = shuffle(mediaReports.map(mediaToCard));
-	$: console.log(mediaCards);
-	// keep your ratio of values/events to team; then add real media and shuffle lightly
-	$: restCards = shuffle(weave(baseCards as any[], teamCards, 1, 2).concat(mediaCards));
+	$: eventsCards = orgEvents.map(eventToCard); // keep your ratio of values/events to team; then add real media and shuffle lightly
+	$: restCards = shuffle(
+		weave(baseCards as any[], teamCards, 1, 2)
+			.concat(mediaCards)
+			.concat(eventsCards)
+	);
 
 	// Create columns and seed projectCards toward center columns
 	function centerIndices(n: number, k: number) {
@@ -345,7 +377,12 @@
 								{:else if card.type === 'event'}
 									<a href={card.href} class="block rounded-2xl border-current/10 border">
 										<div class="p-3">
-											<span class="text-sm tracking-wide font-bold">XX.XX.XXXX</span>
+											<span class="text-sm tracking-wide font-bold"
+												>{dayjs(card.date).format('DD.MM.YYYY') +
+													(card.date_end == card.date
+														? ''
+														: ' - ' + dayjs(card.date_end).format('DD.MM.YYYY'))}</span
+											>
 											<h3 class="text-2xl leading-snug">{card.title}</h3>
 											{#if card.subtitle}<p class="opacity-80 mt-1">{card.subtitle}</p>{/if}
 										</div>
