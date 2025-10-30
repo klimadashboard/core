@@ -215,7 +215,7 @@
 	function recomputeCols() {
 		if (!browser) return;
 		const w = window.innerWidth;
-		numCols = w >= 1600 ? 7 : w >= 1024 ? 5 : w >= 900 ? 3 : w >= 640 ? 2 : 1;
+		numCols = w >= 1600 ? 7 : w >= 1024 ? 5 : w >= 900 ? 3 : 2;
 	}
 	onMount(() => {
 		if (!browser) return;
