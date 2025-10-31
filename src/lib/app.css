@@ -49,6 +49,13 @@
 	@font-face {
 		font-family: 'Barlow Codensed';
 		font-style: normal;
+		font-weight: 500;
+		src: url('/fonts/barlow-condensed-v13-latin-regular.woff2') format('woff2');
+	}
+
+	@font-face {
+		font-family: 'Barlow Codensed';
+		font-style: normal;
 		font-weight: 800;
 		src: url('/fonts/barlow-condensed-v13-latin-800.woff2') format('woff2');
 	}

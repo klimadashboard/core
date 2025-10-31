@@ -5,7 +5,11 @@
 	import { readUsers, readItems } from '@directus/sdk';
 	import dayjs from 'dayjs';
 	import { fade } from 'svelte/transition';
+	import { page } from '$app/state';
+
 	export let data;
+
+	let url = page.url;
 
 	/** Column-level parallax to keep intra-column spacing uniform (SSR-safe) */
 	export function parallaxColumn(node: HTMLElement, { speed = 0.04 } = {}) {
@@ -38,83 +42,90 @@
 		};
 	}
 
-	/* ---------------- Data: Directus ---------------- */
-	let team: any[] = [];
-	async function getTeam() {
-		const directus = getDirectusInstance(fetch);
-		const response = await directus.request(readUsers({ filter: {} }));
-		return response as any[];
-	}
-	let teamPromise: Promise<void> = getTeam().then((r) => {
-		team = r ?? [];
-	});
+	/* ---------------- Data from server (SSR) ---------------- */
+	let team: any[] = data.team ?? [];
+	let mediaReports: any[] = data.media ?? [];
+	let orgEvents: any[] = data.events ?? [];
+	let moments: any[] = data.moments ?? [];
 
-	/* Presse (media) with pagination */
-	let mediaReports: any[] = [];
+	/* ---------------- Client-side pagination ---------------- */
 	const MEDIA_LIMIT = 12;
-	let mediaPage = 0;
-	let mediaHasMore = true;
-
-	async function fetchMedia(page: number) {
-		const directus = getDirectusInstance(fetch);
-		const data = await directus.request(
-			readItems('org_press_reports', {
-				fields: ['id', 'title', 'summary', 'date', 'link', { medium: ['name', 'logo'] }],
-				limit: MEDIA_LIMIT,
-				offset: page * MEDIA_LIMIT,
-				sort: ['-date']
-			})
-		);
-		return Array.isArray(data) ? data : [];
-	}
-	async function loadMediaPage(page = mediaPage) {
-		const items = await fetchMedia(page);
-		if (items.length < MEDIA_LIMIT) mediaHasMore = false;
-
-		const existingIds = new Set(mediaReports.map((m) => m.id));
-		const newItems = items.filter((it) => !existingIds.has(it.id));
-
-		// immutable update to trigger reactivity
-		mediaReports = [...mediaReports, ...newItems];
-	}
-
-	let mediaPromise: Promise<void> = loadMediaPage(0).then(() => {
-		mediaPage = 1;
-	});
-
-	/* Events with pagination */
-	let orgEvents: any[] = [];
 	const EVENTS_LIMIT = 10;
-	let eventsPage = 0;
-	let eventsHasMore = true;
+	const MOMENTS_LIMIT = 12;
 
-	async function fetchEvents(page: number) {
+	// page 0 already loaded by +page.ts; next client loads use offset = page * limit
+	let mediaPage = 1;
+	let eventsPage = 1;
+	let momentsPage = 1;
+
+	// Track whether there's likely more (true if last batch filled the limit)
+	let mediaHasMore = mediaReports.length === MEDIA_LIMIT;
+	let eventsHasMore = orgEvents.length === EVENTS_LIMIT;
+	let momentsHasMore = moments.length === MOMENTS_LIMIT;
+
+	async function loadMediaPage(page = mediaPage) {
 		const directus = getDirectusInstance(fetch);
-		const data = await directus.request(
-			readItems('org_events', {
-				fields: ['id', 'title', 'date', 'date_end'],
-				limit: EVENTS_LIMIT,
-				page: page,
-				sort: ['-date'],
-				filter: { date_end: { _lte: '$NOW' } }
-			})
-		);
-		return Array.isArray(data) ? data : [];
+		try {
+			const arr = (await directus.request(
+				readItems('org_press_reports', {
+					fields: ['id', 'title', 'summary', 'date', 'link', { medium: ['name', 'logo'] }],
+					limit: MEDIA_LIMIT,
+					offset: page * MEDIA_LIMIT,
+					sort: ['-date']
+				})
+			)) as any[];
+			const set = new Set(mediaReports.map((m) => m.id));
+			const add = arr.filter((x) => !set.has(x.id));
+			mediaReports = [...mediaReports, ...add];
+			mediaHasMore = arr.length === MEDIA_LIMIT;
+		} catch (e) {
+			console.error('[media loadMore]', e);
+			mediaHasMore = false;
+		}
 	}
+
 	async function loadEventsPage(page = eventsPage) {
-		const items = await fetchEvents(page);
-		if (items.length < EVENTS_LIMIT) eventsHasMore = false;
-
-		const existingIds = new Set(orgEvents.map((e) => e.id));
-		const newItems = items.filter((it) => !existingIds.has(it.id));
-
-		// immutable update to trigger reactivity
-		orgEvents = [...orgEvents, ...newItems];
+		const directus = getDirectusInstance(fetch);
+		try {
+			const arr = (await directus.request(
+				readItems('org_events', {
+					fields: ['id', 'title', 'subtitle', 'link', 'date', 'date_end', 'location'],
+					limit: EVENTS_LIMIT,
+					offset: page * EVENTS_LIMIT,
+					sort: ['-date'],
+					filter: { date_end: { _lte: '$NOW' } }
+				})
+			)) as any[];
+			const set = new Set(orgEvents.map((e) => e.id));
+			const add = arr.filter((x) => !set.has(x.id));
+			orgEvents = [...orgEvents, ...add];
+			eventsHasMore = arr.length === EVENTS_LIMIT;
+		} catch (e) {
+			console.error('[events loadMore]', e);
+			eventsHasMore = false;
+		}
 	}
 
-	let eventsPromise: Promise<void> = loadEventsPage(0).then(() => {
-		eventsPage = 1;
-	});
+	async function loadMomentsPage(page = momentsPage) {
+		const directus = getDirectusInstance(fetch);
+		try {
+			const arr = (await directus.request(
+				readItems('org_moments', {
+					fields: ['id', 'title', 'copyright', { image: ['id'] }],
+					limit: MOMENTS_LIMIT,
+					offset: page * MOMENTS_LIMIT,
+					sort: ['-id']
+				})
+			)) as any[];
+			const set = new Set(moments.map((m) => m.id));
+			const add = arr.filter((x) => !set.has(x.id));
+			moments = [...moments, ...add];
+			momentsHasMore = arr.length === MOMENTS_LIMIT;
+		} catch (e) {
+			console.error('[moments loadMore]', e);
+			momentsHasMore = false;
+		}
+	}
 
 	/* ---------------- Helpers & card mappers ---------------- */
 	function shuffle<T>(arr: T[]) {
@@ -145,7 +156,17 @@
 			subtitle: item.subtitle,
 			date: item.date,
 			date_end: item.date_end,
-			href: item.link ?? '#'
+			href: item.link ?? '#',
+			location: item.location
+		};
+	}
+	function momentToCard(item: any) {
+		return {
+			key: `moment:${item.id}`,
+			type: 'moment',
+			title: item.title,
+			copyright: item.copyright,
+			image: item.image?.id
 		};
 	}
 
@@ -184,7 +205,7 @@
 			type: 'value',
 			title: 'Open Data',
 			body: 'Wir machen Datensätze zugänglich – nachvollziehbar, prüfbar, wiederverwendbar.',
-			icon: '📂',
+			icon: 'cae5be62-3e2c-4bc4-9867-8013150a69d1',
 			tag: 'Value',
 			links: [
 				{ url: 'https://api.klimadashboard.org', label: 'API' },
@@ -196,7 +217,7 @@
 			type: 'value',
 			title: 'Open Finance',
 			body: 'Budgets, Ausgaben und Einnahmen legen wir offen.',
-			icon: '💶',
+			icon: '36861d61-5344-4857-8930-635798b88656',
 			tag: 'Value'
 		},
 		{
@@ -204,12 +225,13 @@
 			type: 'value',
 			title: 'Open Source',
 			body: 'Unsere Software steht allen offen – zum Prüfen, Kopieren, Verbessern.',
-			icon: '🛠️',
+			icon: 'c21c6aed-9a90-425c-927a-dd9775da7a63',
 			tag: 'Value',
 			links: [{ url: 'https://github.com/klimadashboard', label: 'GitHub' }]
 		}
 	] as const;
 
+	/* Convert team members to cards */
 	type MemberCard = {
 		key: string;
 		type: 'member';
@@ -261,15 +283,19 @@
 	$: teamCards = team.map(memberToCard);
 	$: mediaCards = shuffle(mediaReports.map(mediaToCard));
 	$: eventsCards = orgEvents.map(eventToCard);
+	$: momentCards = moments.map(momentToCard);
+
+	// weave + mix (keeps your existing composition)
 	$: restCards = shuffle(
 		weave(baseCards as any[], teamCards, 1, 2)
 			.concat(mediaCards)
 			.concat(eventsCards)
+			.concat(momentCards)
 	);
 	$: allCards = (projectCards as any[]).concat(restCards);
 
 	/* Filtering */
-	const TABS = ['Alles', 'Team', 'Projekte', 'Events', 'Presse'] as const;
+	const TABS = ['Alles', 'Team', 'Projekte', 'Events', 'Presse', 'Momente'] as const;
 	type Tab = (typeof TABS)[number];
 	let activeTab: Tab = 'Alles';
 
@@ -279,6 +305,7 @@
 		if (tab === 'Projekte') return card.type === 'project';
 		if (tab === 'Events') return card.type === 'event';
 		if (tab === 'Presse') return card.type === 'media';
+		if (tab === 'Momente') return card.type === 'moment';
 		return true;
 	}
 
@@ -312,17 +339,36 @@
 		activeTab === 'Alles' ? restCards : allCards.filter((c) => matchesActiveTab(c, activeTab));
 	$: columns = buildColumns(numCols, filteredHeads, filteredTail);
 
-	/* Load more (Presse + Events) */
+	/* Load more (Presse + Events + Momente) */
 	let isLoadingMore = false;
 	async function loadMore() {
 		if (isLoadingMore) return;
 		isLoadingMore = true;
-		await Promise.all([
-			mediaHasMore ? loadMediaPage(mediaPage) : Promise.resolve(),
-			eventsHasMore ? loadEventsPage(eventsPage) : Promise.resolve()
-		]);
-		if (mediaHasMore) mediaPage += 1;
-		if (eventsHasMore) eventsPage += 1;
+
+		if (activeTab === 'Presse') {
+			if (mediaHasMore) {
+				await loadMediaPage(mediaPage++);
+			}
+		} else if (activeTab === 'Events') {
+			if (eventsHasMore) {
+				await loadEventsPage(eventsPage++);
+			}
+		} else if (activeTab === 'Momente') {
+			if (momentsHasMore) {
+				await loadMomentsPage(momentsPage++);
+			}
+		} else if (activeTab === 'Alles') {
+			if (mediaHasMore) {
+				await loadMediaPage(mediaPage++);
+			}
+			if (eventsHasMore) {
+				await loadEventsPage(eventsPage++);
+			}
+			if (momentsHasMore) {
+				await loadMomentsPage(momentsPage++);
+			}
+		}
+
 		isLoadingMore = false;
 	}
 
@@ -338,13 +384,15 @@
 	}
 </script>
 
-<!-- Fixed rounded nav -->
+<!-- Fixed rounded nav (kept as in your last version) -->
 <nav
-	class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-1 py-1 rounded-full border border-current/10 bg-white/80 dark:bg-black/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm flex gap-3 items-center"
+	class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3"
 	role="tablist"
 	aria-label="Filter"
 >
-	<ul class="flex gap-1">
+	<ul
+		class="px-1 py-1 rounded-full border border-current/10 bg-white/80 dark:bg-black/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm flex items-center gap-1"
+	>
 		{#each TABS as tab}
 			<li>
 				<button
@@ -362,11 +410,16 @@
 			</li>
 		{/each}
 	</ul>
+	<a
+		href="/donate?returnTo={url}"
+		class="text-sm font-bold rounded-full px-3 py-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur bg-amber-300"
+		>Spenden</a
+	>
 </nav>
 
 <div class="m-1">
 	<!-- Header / Intro -->
-	<div class="max-w-3xl mx-auto mt-8 px-4">
+	<div class="max-w-3xl mx-auto mt-16 px-4">
 		<h1 class="text-5xl text-center leading-none">
 			Wir machen Klimawissenschaft zugänglich. Für alle.
 		</h1>
@@ -377,144 +430,160 @@
 		</p>
 	</div>
 
-	<section class="mt-8 px-2 md:px-4">
+	<section class="mt-8">
 		<div
 			class="grid"
 			style="grid-template-columns: repeat({numCols}, minmax(0, 1fr)); gap: 0.25rem; align-items: start;"
 		>
-			{#await Promise.all([teamPromise, mediaPromise, eventsPromise])}
-				{#each Array(numCols) as _, i}
-					<div
-						class="relative will-change-transform"
-						use:parallaxColumn={{ speed: speedFor(i) }}
-						style="margin-top: {staggerFor(i)}px"
-					>
-						<div class="flex flex-col gap-1">
-							{#each Array(3) as __}
-								<div class="rounded-2xl bg-gray-50 h-40"></div>
-							{/each}
-						</div>
-					</div>
-				{/each}
-			{:then}
-				{#each columns as col, i}
-					<div
-						class="relative will-change-transform"
-						use:parallaxColumn={{ speed: speedFor(i) }}
-						style="margin-top: {staggerFor(i)}px"
-					>
-						<div class="flex flex-col gap-1">
-							{#each col as card (card.key)}
-								<div transition:fade={{ duration: 150 }}>
-									<!-- Card (no shadow; just rounded + backgrounds) -->
-									{#if card.type === 'member'}
+			{#each columns as col, i}
+				<div
+					class="relative will-change-transform"
+					use:parallaxColumn={{ speed: speedFor(i) }}
+					style="margin-top: {staggerFor(i)}px"
+				>
+					<div class="flex flex-col gap-1">
+						{#each col as card (card.key)}
+							<div transition:fade={{ duration: 150 }}>
+								<!-- Card (no shadow; just rounded + backgrounds) -->
+								{#if card.type === 'member'}
+									<div class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden">
+										{#if card.avatar}
+											<img
+												class="absolute inset-0 w-full h-full object-cover"
+												src={`https://base.klimadashboard.org/assets/${card.avatar}?key=small`}
+												alt=""
+											/>
+										{/if}
 										<div
-											class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden"
+											class="bg-gradient-to-b from-transparent to-black/50 absolute bottom-0 left-0 right-0 h-1/2 flex flex-col text-white p-3"
 										>
-											{#if card.avatar}
+											<p class="mt-auto text-xl">
+												{card.first_name}
+												{card.last_name}
+											</p>
+											<p class="text-sm opacity-80">{card.role}</p>
+										</div>
+									</div>
+								{:else if card.type === 'value'}
+									<div class="p-3 bg-current/5 border border-current/20 rounded-2xl">
+										<h3 class="font-bold uppercase tracking-wide text-sm">{card.title}</h3>
+										<img
+											src="https://base.klimadashboard.org/assets/{card.icon}?key=small"
+											class="max-h-24 my-4"
+											alt=""
+										/>
+										<p class="text-lg leading-snug mt-auto">{card.body}</p>
+										{#if card.links}
+											<ul class="flex gap-2 mt-2 items-center flex-wrap">
+												{#each card.links as link}
+													<li>
+														<a
+															href={link.url}
+															class="border font-bold hover:bg-black hover:text-white dark:hover:text-black px-2 rounded-full inline-block"
+															>{link.label}</a
+														>
+													</li>
+												{/each}
+											</ul>
+										{/if}
+									</div>
+								{:else if card.type === 'media'}
+									<a
+										href={card.href}
+										target="_blank"
+										class="flex flex-col min-h-[20em] rounded-2xl bg-gray-800 text-white p-3 border border-current/5"
+									>
+										<p class="text-sm tracking-wider uppercase font-bold">Medienbericht</p>
+										<div class="mt-auto mb-2">
+											{#if card.medium?.logo}
 												<img
-													class="absolute inset-0 w-full h-full object-cover"
-													src={`https://base.klimadashboard.org/assets/${card.avatar}?key=small`}
+													class="max-h-10 max-w-28"
+													src={`https://base.klimadashboard.org/assets/${card.medium.logo}`}
 													alt=""
 												/>
+											{:else}
+												<p class="text-sm">{card.medium?.name}</p>
 											{/if}
-											<div
-												class="bg-gradient-to-b from-transparent to-black/50 absolute bottom-0 left-0 right-0 h-1/2 flex flex-col text-white p-3"
+										</div>
+										<h3 class="text-3xl leading-[1.05em] font-condensed font-bold text-balance">
+											{card.title}
+										</h3>
+									</a>
+								{:else if card.type === 'event'}
+									<a
+										href={card.href}
+										class=" rounded-2xl bg-[#386261] text-white p-3 flex flex-col"
+									>
+										<span class="uppercase text-sm tracking-wide font-bold">Event</span>
+										<h3 class=" mt-16 text-3xl leading-[1.1em]">{card.title}</h3>
+										<span class="text-sm mt-2">
+											{dayjs(card.date).format('DD.MM.YYYY') +
+												(card.date_end == card.date
+													? ''
+													: ' - ' + dayjs(card.date_end).format('DD.MM.YYYY'))}
+										</span>
+										<span class="text-sm">{card.location}</span>
+									</a>
+								{:else if card.type === 'project'}
+									<a href={card.href} class="block rounded-2xl bg-gradient-green p-3">
+										<h3 class="mt-24 text-2xl leading-snug">{card.title}</h3>
+										{#if card.subtitle}<p class="text-lg leading-tight">{card.subtitle}</p>{/if}
+									</a>
+								{:else if card.type === 'moment'}
+									<div class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden">
+										{#if card.image}
+											<img
+												class="absolute inset-0 w-full h-full object-cover"
+												src={`https://base.klimadashboard.org/assets/${card.image}?key=small`}
+												alt=""
+											/>
+										{/if}
+										<div
+											class="bg-gradient-to-b from-transparent to-black/70 absolute bottom-0 left-0 right-0 flex flex-col text-white p-3 pt-20 pr-6"
+										>
+											<p class="text-lg leading-tight">{card.title}</p>
+										</div>
+										{#if card.copyright}
+											<span
+												class="absolute bottom-2 right-2 text-xs text-white opacity-70 select-none"
+												style="writing-mode: vertical-rl; transform: rotate(180deg);"
 											>
-												<p class="mt-auto text-xl">
-													{card.first_name}
-													{card.last_name}
-												</p>
-												<p class="text-sm opacity-80">{card.role}</p>
-											</div>
-										</div>
-									{:else if card.type === 'value'}
-										<div class="p-3 bg-current/5 rounded-2xl">
-											<h3 class="font-bold uppercase tracking-wide text-sm">{card.title}</h3>
-											<div class="bg-gray-100 h-24"></div>
-											<p class="text-lg leading-snug mt-auto">{card.body}</p>
-											{#if card.links}
-												<ul class="flex gap-2 mt-2 items-center flex-wrap">
-													{#each card.links as link}
-														<li>
-															<a
-																href={link.url}
-																class="border font-bold hover:bg-black hover:text-white dark:hover:text-black px-2 rounded-full inline-block"
-																>{link.label}</a
-															>
-														</li>
-													{/each}
-												</ul>
-											{/if}
-										</div>
-									{:else if card.type === 'media'}
-										<a
-											href={card.href}
-											target="_blank"
-											class="flex flex-col min-h-[20em] rounded-2xl bg-gray-800 text-white p-3 border border-current/5"
-										>
-											<p class="text-sm tracking-wider uppercase font-bold">Medienbericht</p>
-											<div class="mt-auto mb-2">
-												{#if card.medium?.logo}
-													<img
-														class="max-h-10 max-w-28"
-														src={`https://base.klimadashboard.org/assets/${card.medium.logo}`}
-														alt=""
-													/>
-												{:else}
-													<p class="text-sm">{card.medium?.name}</p>
-												{/if}
-											</div>
-											<h3 class="text-3xl leading-[1.05em] font-condensed text-balance">
-												{card.title}
-											</h3>
-										</a>
-									{:else if card.type === 'event'}
-										<a
-											href={card.href}
-											class=" rounded-2xl bg-[#386261] text-white p-3 flex flex-col"
-										>
-											<span class="uppercase text-sm tracking-wide font-bold">Event</span>
-
-											<h3 class=" mt-16 text-3xl leading-[1.1em]">{card.title}</h3>
-											<span class="text-sm tracking-wide font-bold mt-2">
-												{dayjs(card.date).format('DD.MM.YYYY') +
-													(card.date_end == card.date
-														? ''
-														: ' - ' + dayjs(card.date_end).format('DD.MM.YYYY'))}
+												© {card.copyright}
 											</span>
-											<span class="mt-2">{card.location}</span>
-											{#if card.subtitle}<p class="opacity-80 mt-1">{card.subtitle}</p>{/if}
-										</a>
-									{:else if card.type === 'project'}
-										<a href={card.href} class="block rounded-2xl bg-gradient-green p-3">
-											<h3 class="mt-24 text-2xl leading-snug">{card.title}</h3>
-											{#if card.subtitle}<p class="text-lg leading-tight">{card.subtitle}</p>{/if}
-										</a>
-									{:else}
-										<div class="p-4 rounded-2xl bg-gray-50 text-sm">Karte</div>
-									{/if}
-								</div>
-							{/each}
-						</div>
+										{/if}
+									</div>
+								{:else}
+									<div class="p-4 rounded-2xl bg-gray-50 text-sm">Karte</div>
+								{/if}
+							</div>
+						{/each}
 					</div>
-				{/each}
-			{/await}
+				</div>
+			{/each}
 		</div>
 
 		<!-- Load more -->
 		<div class="flex justify-center my-6">
 			<button
 				type="button"
-				on:click={loadMore}
-				disabled={isLoadingMore || (!mediaHasMore && !eventsHasMore)}
+				on:click={async () => {
+					if (activeTab === 'Presse') {
+						if (mediaHasMore) await loadMediaPage(mediaPage++);
+					} else if (activeTab === 'Events') {
+						if (eventsHasMore) await loadEventsPage(eventsPage++);
+					} else if (activeTab === 'Momente') {
+						if (momentsHasMore) await loadMomentsPage(momentsPage++);
+					} else if (activeTab === 'Alles') {
+						if (mediaHasMore) await loadMediaPage(mediaPage++);
+						if (eventsHasMore) await loadEventsPage(eventsPage++);
+						if (momentsHasMore) await loadMomentsPage(momentsPage++);
+					}
+				}}
+				disabled={!mediaHasMore && !eventsHasMore && !momentsHasMore}
 				class="px-4 py-2 rounded-full border border-current/20 hover:border-current/40 disabled:opacity-50"
 			>
-				{#if isLoadingMore}Lade …{/if}
-				{#if !isLoadingMore}
-					{#if mediaHasMore || eventsHasMore}Mehr laden{/if}
-					{#if !mediaHasMore && !eventsHasMore}Alles geladen{/if}
-				{/if}
+				{#if mediaHasMore || eventsHasMore || momentsHasMore}Mehr laden{/if}
+				{#if !mediaHasMore && !eventsHasMore && !momentsHasMore}Alles geladen{/if}
 			</button>
 		</div>
 	</section>
