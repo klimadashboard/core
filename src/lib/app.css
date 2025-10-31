@@ -46,10 +46,20 @@
 			/* Modern Browsers */ url('/fonts/barlow-v12-latin-600.ttf') format('truetype'),
 			/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-600.svg#Barlow') format('svg'); /* Legacy iOS */
 	}
+	@font-face {
+		font-family: 'Barlow Codensed';
+		font-style: normal;
+		font-weight: 800;
+		src: url('/fonts/barlow-condensed-v13-latin-800.woff2') format('woff2');
+	}
 }
 
 body {
 	font-family: 'Barlow', sans-serif;
+}
+
+.font-condensed {
+	font-family: 'Barlow Codensed', 'Barlow', sans-serif;
 }
 
 html,
