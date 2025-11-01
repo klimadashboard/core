@@ -391,7 +391,7 @@
 	aria-label="Filter"
 >
 	<ul
-		class="px-1 py-1 rounded-full border border-current/10 bg-white/80 dark:bg-black/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm flex items-center gap-1"
+		class="max-w-[60vw] overflow-scroll px-1 py-1 rounded-full border border-current/10 bg-white/80 dark:bg-black/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm flex items-center gap-1"
 	>
 		{#each TABS as tab}
 			<li>
@@ -420,10 +420,10 @@
 <div class="m-1">
 	<!-- Header / Intro -->
 	<div class="max-w-3xl mx-auto mt-16 px-4">
-		<h1 class="text-5xl text-center leading-none">
+		<h1 class="text-4xl md:text-5xl text-center leading-none hyphens-auto text-balance">
 			Wir machen Klimawissenschaft zugänglich. Für alle.
 		</h1>
-		<p class="mt-4 text-xl text-center opacity-80">
+		<p class="mt-4 text-lg md:text-xl text-center opacity-80 leading-snug">
 			Unsere interaktiven Dashboards schaffen Einordnung und Beschleunigung für die Reise zur
 			Klimaneutralität in Österreich, Deutschland und der EU. TV-Nachrichten, Zeitungen,
 			Schulbücher, TED-Talks und wissenschaftliche Berichte verwenden unsere Visualisierungen.
@@ -457,7 +457,7 @@
 										<div
 											class="bg-gradient-to-b from-transparent to-black/50 absolute bottom-0 left-0 right-0 h-1/2 flex flex-col text-white p-3"
 										>
-											<p class="mt-auto text-xl">
+											<p class="mt-auto text-xl leading-[1.1em]">
 												{card.first_name}
 												{card.last_name}
 											</p>
@@ -505,7 +505,9 @@
 												<p class="text-sm">{card.medium?.name}</p>
 											{/if}
 										</div>
-										<h3 class="text-3xl leading-[1.05em] font-condensed font-bold text-balance">
+										<h3
+											class="text-3xl leading-[1.05em] font-condensed font-bold text-balance hyphens-auto"
+										>
 											{card.title}
 										</h3>
 									</a>
@@ -515,7 +517,9 @@
 										class=" rounded-2xl bg-[#386261] text-white p-3 flex flex-col"
 									>
 										<span class="uppercase text-sm tracking-wide font-bold">Event</span>
-										<h3 class=" mt-16 text-3xl leading-[1.1em]">{card.title}</h3>
+										<h3 class=" mt-16 text-2xl md:text-3xl leading-[1.1em] hyphens-auto">
+											{card.title}
+										</h3>
 										<span class="text-sm mt-2">
 											{dayjs(card.date).format('DD.MM.YYYY') +
 												(card.date_end == card.date
@@ -526,7 +530,7 @@
 									</a>
 								{:else if card.type === 'project'}
 									<a href={card.href} class="block rounded-2xl bg-gradient-green p-3">
-										<h3 class="mt-24 text-2xl leading-snug">{card.title}</h3>
+										<h3 class="mt-24 text-2xl leading-[1.1em] hyphens-auto">{card.title}</h3>
 										{#if card.subtitle}<p class="text-lg leading-tight">{card.subtitle}</p>{/if}
 									</a>
 								{:else if card.type === 'moment'}
@@ -541,7 +545,7 @@
 										<div
 											class="bg-gradient-to-b from-transparent to-black/70 absolute bottom-0 left-0 right-0 flex flex-col text-white p-3 pt-20 pr-6"
 										>
-											<p class="text-lg leading-tight">{card.title}</p>
+											<p class="text-lg leading-[1.1em] hyphens-auto">{card.title}</p>
 										</div>
 										{#if card.copyright}
 											<span

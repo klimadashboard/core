@@ -113,7 +113,7 @@
 </script>
 
 <nav
-	class="fixed bottom-4 left-1/2 -translate-x-1/2 text-sm font-bold rounded-full px-3 py-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur bg-white shadow-2xl border border-current/20"
+	class="w-max fixed bottom-4 left-1/2 -translate-x-1/2 text-sm font-bold rounded-full px-3 py-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur bg-white shadow-2xl border border-current/20"
 >
 	{#if page.url.searchParams.get('returnTo')}
 		<a href={page.url.searchParams.get('returnTo')} class="">
@@ -124,7 +124,7 @@
 	{/if}
 </nav>
 
-<div class="max-w-3xl mx-auto m-1 pt-16">
+<div class="max-w-3xl mx-auto p-4 pt-16">
 	<h1 class="text-4xl mb-4 text-balance">
 		Deine Spende für
 		<em class="not-italic underline underline-offset-4 decoration-green-600">mehr Fakten</em>
