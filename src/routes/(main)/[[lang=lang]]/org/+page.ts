@@ -50,5 +50,15 @@ export const load: PageLoad = async ({ fetch }) => {
 		[]
 	);
 
-	return { team, media, events, moments };
+	const quotes = await tryFetch(
+		directus.request(
+			readItems('quotes', {
+				fields: ['id', 'text', 'author_name', 'author_role', { author_image: ['id'] }],
+				limit: 12
+			})
+		) as Promise<any[]>,
+		[]
+	);
+
+	return { team, media, events, moments, quotes };
 };
