@@ -47,6 +47,7 @@
 	let mediaReports: any[] = data.media ?? [];
 	let orgEvents: any[] = data.events ?? [];
 	let moments: any[] = data.moments ?? [];
+	let quotes: any[] = data.quotes ?? [];
 
 	/* ---------------- Client-side pagination ---------------- */
 	const MEDIA_LIMIT = 12;
@@ -169,6 +170,16 @@
 			image: item.image?.id
 		};
 	}
+	function quoteToCard(item: any) {
+		return {
+			key: `quote:${item.id}`,
+			type: 'quote',
+			text: item.text,
+			author_name: item.author_name,
+			author_role: item.author_role,
+			image: item.author_image?.id
+		};
+	}
 
 	/* Projects (seeded to center when "Alles") */
 	const projectCards = [
@@ -284,6 +295,7 @@
 	$: mediaCards = shuffle(mediaReports.map(mediaToCard));
 	$: eventsCards = orgEvents.map(eventToCard);
 	$: momentCards = moments.map(momentToCard);
+	$: quoteCards = quotes.map(quoteToCard);
 
 	// weave + mix (keeps your existing composition)
 	$: restCards = shuffle(
@@ -291,6 +303,7 @@
 			.concat(mediaCards)
 			.concat(eventsCards)
 			.concat(momentCards)
+			.concat(quoteCards)
 	);
 	$: allCards = (projectCards as any[]).concat(restCards);
 
@@ -555,6 +568,16 @@
 												© {card.copyright}
 											</span>
 										{/if}
+									</div>
+								{:else if card.type == 'quote'}
+									<div
+										class="w-full py-8 border border-current/20 text-black relative rounded-2xl overflow-hidden p-3"
+									>
+										<p class="text-6xl font-light opacity-50 -translate-x-2">»</p>
+										<p class="text-lg leading-snug hyphens-auto">{card.text}</p>
+										<p class="text-sm leading-[1.1em] mt-2">
+											{card.author_name}, {card.author_role}
+										</p>
 									</div>
 								{:else}
 									<div class="p-4 rounded-2xl bg-gray-50 text-sm">Karte</div>
