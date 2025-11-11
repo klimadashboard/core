@@ -1,8 +1,13 @@
 // src/routes/your/page/+page.server.ts
 import type { Actions, PageServerLoad } from './$types';
 import { CAMP_API_KEY, CAMP_ORG_ID, CAMP_MANDATE_ID } from '$env/static/private';
+import { readItems } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus.server';
 
 export const load: PageServerLoad = async ({ fetch }) => {
+	const directus = getDirectusInstance();
+	const projects = await directus.request(readItems('org_projects', {}));
+
 	const headers = {
 		'X-API-Key': CAMP_API_KEY,
 		'Content-Type': 'application/json'
@@ -20,7 +25,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 
 	const balances = await balancesRes.json();
 	const donationAccount = balances.accountBalances.find((b: any) => b.account === 8440);
-	return { donationAccount };
+	return { projects, donationAccount };
 };
 
 export const actions: Actions = {

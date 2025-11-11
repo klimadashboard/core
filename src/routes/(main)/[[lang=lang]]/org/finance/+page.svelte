@@ -1,90 +1,90 @@
-<script>
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readSingleton } from '@directus/sdk';
-
-	const getData = async () => {
-		const directus = getDirectusInstance();
-
-		try {
-			const response = await directus.request(readSingleton('org_finance'));
-			const data = response.data;
-			const donors = response.donors;
-
-			console.log(data);
-			console.log(donors);
-
-			return { data, donors };
-		} catch (error) {
-			console.error(error);
-		}
-	};
-
-	$: promise = getData();
-
-	$: formatValue = (value) => {
-		return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-	};
+<script lang="ts">
+	import dayjs from 'dayjs';
+	import formatNumber from '$lib/stores/formatNumber';
+	export let data: { years: number[]; byYear: Record<number, GroupedResult> };
 </script>
 
-{#snippet table(items, title)}
-	<div>
-		<h3 class="text-xl font-bold">{title}</h3>
-		<ul>
-			{#each items as item}
-				<li>{item.label}: <span class="ml-auto">{formatValue(item.value)}</span></li>
-			{/each}
-			<li class="font-bold">Gesamt: {formatValue(items.reduce((a, b) => a + b.value, 0))}</li>
-		</ul>
-	</div>
-{/snippet}
+<div class="max-w-3xl mx-auto p-4 py-16">
+	<h1 class="text-4xl mb-4 text-balance">
+		<img src="/logo.svg" class="inline w-8 rounded -translate-y-1" alt="Klimadashboard" />
+		Open Finance
+	</h1>
+	<p class="text-lg">
+		Als gemeinnütziger Verein legen wir unsere Einnahmen und Ausgaben transparent offen. Die
+		folgenden Daten kommen direkt aus unserer Buchhaltung. Solange Jahre noch nicht abgeschlossen
+		sind, kann es zu Verschiebungen und vorläufigen Einträgen kommen, die später korrigiert werden.
+	</p>
 
-{#await promise then { data, donors }}
-	<div class="container my-8">
-		<h1 class="text-4xl font-bold">Finanzen</h1>
-		<p class="text-lg">
-			Der Verein Klimadashboard berichtet transparent, wie wir unser Geld verdienen und wofür wir
-			Geld ausgeben.
-		</p>
+	{#each data.years as y}
+		<div class="mt-8" id={y.toString()}>
+			<h2 class="text-4xl font-light">{y}</h2>
+			{#if data.byYear[y].totalsByAccount.length > 0}
+				<ul class="text-lg mt-4">
+					{#each data.byYear[y].totalsByAccount as acc}
+						<li class="mb-4">
+							<details class="block w-full">
+								<summary class="w-full border-b border-current/10 py-2">
+									<div class="flex">
+										<p>{acc.accountName}</p>
+										<p
+											class="ml-auto text-right {acc.total > 0 ? 'text-green-600' : 'text-red-600'}"
+										>
+											{formatNumber(acc.total)}€
+										</p>
+									</div>
+								</summary>
 
-		{#each data as item}
-			<div class="mt-8" id="years">
-				<div class="flex items-end gap-2">
-					<h2 class="text-2xl font-bold">E/A {item.year}</h2>
-					<p class="text-lg">
-						{item.inProgress ? 'vorläufige Daten' : 'abschließende Daten'} bis {item.update}
-					</p>
-				</div>
-				<div class="grid grid-cols-2 mt-2">
-					<div class="text-green-900">
-						{@render table(item.income, 'Einnahmen')}
-					</div>
-					<div class="text-red-900">
-						{@render table(item.expenses, 'Ausgaben')}
-					</div>
-				</div>
-			</div>
-		{/each}
-
-		<div id="income" class="pt-16">
-			<h2 class="text-2xl font-bold">Geldgeber:innen</h2>
-			<p class="text-lg">
-				Von folgenden Personen, Organisationen und Fördergeber:innen haben wir 1.000€ oder mehr
-				erhalten. Das Klimadashboard ist stets inhaltlich unabhängig und es gibt keine redaktionelle
-				Mitsprache durch Geldgeber:innen.
-			</p>
-			<ul class="mt-4">
-				{#each donors as donor}
-					<li>{donor.name}: <span class="ml-auto">{formatValue(donor.value)}</span></li>
-				{/each}
-			</ul>
+								<ul class="tabular-nums mt-2 opacity-80">
+									{#each acc.items as it}
+										<li class="flex even:bg-black/5">
+											<p class="w-[12ch]">{dayjs(it.date).format('DD.MM.YYYY')}</p>
+											<p>{it.label}</p>
+											<p
+												class="ml-auto text-right {it.amount > 0
+													? 'text-green-600'
+													: 'text-red-600'}"
+											>
+												{formatNumber(it.amount)}€
+											</p>
+										</li>
+									{/each}
+								</ul>
+							</details>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="opacity-80 text-lg mt-4">Keine Daten für dieses Jahr verfügbar.</p>
+			{/if}
 		</div>
-		<div id="staff"></div>
-	</div>
-{/await}
+	{/each}
+
+	<h2 class="text-4xl font-light mt-8">2024</h2>
+	<p class="text-lg mt-2">
+		Im Jahr 2024 betrugen die Einnahmen des Klimadashboards 21.051,19€ (davon 18.836,32€ Spenden und
+		2.214,87€ Umsätze). Die Ausgaben betrugen 3.069,05€, wovon 1.878,19€ auf Sachkosten, 1.087,10€
+		auf Reisekosten und 103,76€ auf Bankspesen entfallen.
+	</p>
+
+	<h2 class="text-4xl font-light mt-8">2023</h2>
+	<p class="text-lg mt-2">
+		Im Jahr 2023 betrugen die Einnahmen des Klimadashboards 14.513,86€, die Ausgaben beliefen sich
+		auf 1.214,64€.
+	</p>
+
+	<h2 class="text-4xl font-light mt-8">2022</h2>
+	<p class="text-lg mt-2">
+		Im Jahr 2022 betrugen die Einnahmen des Vereins 1.614,68€ und die Ausgaben 33,84€. Unser Verein
+		wurde am 24.03.2022 ins Vereinsregister eingetragen.
+	</p>
+</div>
 
 <style>
-	@import 'tailwindcss';
-	li {
-		@apply py-2 border-t border-current/20;
+	summary:before {
+		content: '';
+	}
+
+	details[open] summary:before {
+		content: '';
 	}
 </style>

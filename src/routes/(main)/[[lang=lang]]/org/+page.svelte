@@ -229,7 +229,8 @@
 			title: 'Open Finance',
 			body: 'Budgets, Ausgaben und Einnahmen legen wir offen.',
 			icon: '36861d61-5344-4857-8930-635798b88656',
-			tag: 'Value'
+			tag: 'Value',
+			links: [{ url: '/finance', label: 'Einnahmen & Ausgaben' }]
 		},
 		{
 			key: 'value-source',
