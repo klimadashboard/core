@@ -106,20 +106,16 @@
 
 	const projections = [
 		{
-			index: 6,
-			key: '1.5_50'
-		},
-		{
 			index: 8,
-			key: '3860_nochange'
+			key: '2500_nochange'
 		},
 		{
 			index: 9,
-			key: '3860_linear'
+			key: '2500_linear'
 		},
 		{
 			index: 10,
-			key: '3860_percentage'
+			key: '2500_percentage'
 		}
 	];
 

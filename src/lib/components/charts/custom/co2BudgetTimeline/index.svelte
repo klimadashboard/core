@@ -404,7 +404,7 @@
 					<h2 class="text-lg">
 						Reduzieren wir jedes Jahr dieselbe Menge an CO<sub>2</sub>, nämlich 61 Millionen Tonnen,
 						ist das Budget
-						<strong class="bg-economy/50 p-1">im Jahr 2034</strong> aufgebraucht.
+						<strong class="bg-economy/50 p-1">im Jahr 2033</strong> aufgebraucht.
 					</h2>
 				</div>
 			</section>
