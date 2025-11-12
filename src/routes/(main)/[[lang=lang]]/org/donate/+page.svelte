@@ -3,6 +3,7 @@
 	import Projects from './Projects.svelte';
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
+	import getDirectusInstance from '$lib/utils/directus';
 
 	export let data;
 
@@ -29,6 +30,10 @@
 	let addressLine = '';
 	let addressDetails2 = '';
 
+	// Countries from Directus
+	type CountryOption = { id: string; name_de: string };
+	let countries: CountryOption[] = data.countries ?? [];
+
 	// Amount (DONATION amount)
 	let amount: number | '' = 50;
 	let customAmount: string = '';
@@ -49,6 +54,34 @@
 	$: raisedAmount = data?.donationAccount?.balanceAmount / 100 ?? 0;
 	$: goalAmount = 15000;
 
+	// Load countries from Directus on client if not provided by SSR
+	import { onMount } from 'svelte';
+	onMount(async () => {
+		try {
+			if (!countries?.length) {
+				const directus = getDirectusInstance(fetch);
+				// Adjust collection name/fields if your table differs
+				const res = await directus.request<any[]>(
+					// @ts-ignore
+					(await import('@directus/sdk')).readItems('countries', {
+						fields: ['id', 'name_de'],
+						limit: 500,
+						sort: ['name_de']
+					})
+				);
+				if (Array.isArray(res)) countries = res as CountryOption[];
+			}
+			// Ensure current country exists; if not, pick AT or first
+			if (!countries.find((c) => c.id === country)) {
+				const at = countries.find((c) => c.id === 'AT');
+				country = at?.id ?? countries[0]?.id ?? 'AT';
+			}
+		} catch (e) {
+			// Fallback silently; user can still type
+			console.error('Failed to load countries from Directus', e);
+		}
+	});
+
 	// Helpers
 	function selectSuggestedAmount(val: number) {
 		amount = val;
@@ -65,11 +98,10 @@
 	}
 
 	// Stripe fees: ~1.4% + €0.25 (EU cards)
-	// We keep the previous logic but also compute TOTAL = donation + fee
 	function calculateCardTotals(donation: number) {
 		const fee = Math.round((donation * 0.014 + 0.25) * 100) / 100;
 		const net = Math.round((donation - fee) * 100) / 100; // what arrives if fees were NOT extra
-		const total = Math.round((donation + fee) * 100) / 100; // what the donor pays when fees are added extra
+		const total = Math.round((donation + fee) * 100) / 100; // donor pays donation+fee when fees are added extra
 		return { fee, net, total };
 	}
 
@@ -119,10 +151,8 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					// Charge the TOTAL (donation + fee)
-					amount: totalCents,
-					// Also pass explicit breakdown for your session/metadata/receipt
-					donationAmount: donationCents,
+					amount: totalCents, // TOTAL (donation + fee)
+					donationAmount: donationCents, // breakdown for metadata/receipts
 					feeAmount: feeCents,
 					feesAddedExtra: true,
 					name,
@@ -178,13 +208,13 @@
 
 	<!-- Progress -->
 	{#if raisedAmount > 0}
-		<div class="rounded-2xl overflow-hidden mt-4 bg-gray-100 h-10 w-full relative">
+		<div class="rounded-full overflow-hidden mt-4 bg-gray-100 h-10 w-full relative">
 			<div
-				class="absolute top-0 left-0 bottom-0 bg-green-600 rounded-2xl"
+				class="absolute top-0 left-0 bottom-0 bg-green-600 rounded-full"
 				style="width: {(raisedAmount / goalAmount) * 100}%"
 			>
 				<p class="text-white absolute right-2 text-lg p-1.5">
-					<b>{formatNumber(raisedAmount)}€</b> von {formatNumber(goalAmount)}€ gesammelt
+					<b>{formatNumber(Math.round(raisedAmount))}€</b> von {formatNumber(goalAmount)}€ gesammelt
 				</p>
 			</div>
 		</div>
@@ -216,7 +246,10 @@
 				bind:value={amount}
 				on:input={handleCustomAmountInput}
 			/>
-			<span class="absolute left-4 bottom-3 text-3xl font-light opacity-50">€</span>
+			<span
+				class="absolute left-4 bottom-3 text-3xl font-light opacity-50 select-none"
+				aria-hidden="true">€</span
+			>
 		</div>
 
 		<p class="text-base mt-2 text-center">
@@ -360,9 +393,6 @@
 					<div class="flex flex-col gap-1">
 						<label for="dob">Geburtsdatum</label>
 						<input id="dob" name="dob" type="date" bind:value={dob} class="input" required />
-						<p class="text-xs opacity-60">
-							Damit melden wir deine Spende in Österreich ans Finanzamt.
-						</p>
 					</div>
 				</div>
 
@@ -386,6 +416,7 @@
 							required
 						/>
 					</div>
+
 					<div class="flex flex-col gap-1">
 						<label for="zip">PLZ</label>
 						<input id="zip" name="zip" type="text" bind:value={zip} class="input" required />
@@ -395,6 +426,7 @@
 						<label for="city">Ort</label>
 						<input id="city" name="city" type="text" bind:value={city} class="input" required />
 					</div>
+
 					<div class="flex flex-col gap-1">
 						<label for="details2">Adresszusatz (optional)</label>
 						<input
@@ -405,9 +437,19 @@
 							class="input"
 						/>
 					</div>
+
+					<!-- Country: Select from Directus -->
 					<div class="flex flex-col gap-1">
 						<label for="country">Land</label>
-						<input id="country" name="country" type="text" bind:value={country} class="input" />
+						<select id="country" name="country" class="input" bind:value={country} required>
+							{#if !countries.length}
+								<option value="AT">Österreich</option>
+							{:else}
+								{#each countries as c}
+									<option value={c.id}>{c.name_de}</option>
+								{/each}
+							{/if}
+						</select>
 					</div>
 				</div>
 
@@ -417,7 +459,6 @@
 			</section>
 
 			<!-- Sticky bottom CTA -->
-			<!-- spacer so CTA doesn’t overlap content -->
 			<div
 				class="fixed left-1/2 -translate-x-1/2 bottom-4 bg-white/90 border border-current/20 backdrop-blur shadow-2xl z-50 rounded-full"
 			>
@@ -453,6 +494,16 @@
 									error = 'Bitte fülle alle Pflichtfelder korrekt aus.';
 									return;
 								}
+								// ensure ISO alpha-2 is submitted in standard form submit as well
+								const hidden = document.querySelector<HTMLInputElement>('input[name="countryIso"]');
+								if (!hidden) {
+									const el = document.createElement('input');
+									el.type = 'hidden';
+									el.name = 'countryIso';
+									el.value = computeCampaiCountry(country);
+									document.querySelector('form')?.appendChild(el);
+								} else hidden.value = computeCampaiCountry(country);
+
 								isSubmitting = true;
 								const form = document.querySelector('form');
 								form?.requestSubmit();
@@ -516,7 +567,6 @@
 	.input {
 		@apply rounded-xl bg-gray-100 border-current/5 px-3 py-2;
 	}
-
 	.button {
 		@apply rounded-full;
 	}
