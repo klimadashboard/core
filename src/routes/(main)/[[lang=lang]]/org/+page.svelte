@@ -2,9 +2,9 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import getDirectusInstance from '$lib/utils/directus';
-	import { readUsers, readItems } from '@directus/sdk';
+	import { readItems } from '@directus/sdk';
 	import dayjs from 'dayjs';
-	import { fade } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	import { page } from '$app/state';
 
 	export let data;
@@ -64,70 +64,6 @@
 	let eventsHasMore = orgEvents.length === EVENTS_LIMIT;
 	let momentsHasMore = moments.length === MOMENTS_LIMIT;
 
-	async function loadMediaPage(page = mediaPage) {
-		const directus = getDirectusInstance(fetch);
-		try {
-			const arr = (await directus.request(
-				readItems('org_press_reports', {
-					fields: ['id', 'title', 'summary', 'date', 'link', { medium: ['name', 'logo'] }],
-					limit: MEDIA_LIMIT,
-					offset: page * MEDIA_LIMIT,
-					sort: ['-date']
-				})
-			)) as any[];
-			const set = new Set(mediaReports.map((m) => m.id));
-			const add = arr.filter((x) => !set.has(x.id));
-			mediaReports = [...mediaReports, ...add];
-			mediaHasMore = arr.length === MEDIA_LIMIT;
-		} catch (e) {
-			console.error('[media loadMore]', e);
-			mediaHasMore = false;
-		}
-	}
-
-	async function loadEventsPage(page = eventsPage) {
-		const directus = getDirectusInstance(fetch);
-		try {
-			const arr = (await directus.request(
-				readItems('org_events', {
-					fields: ['id', 'title', 'subtitle', 'link', 'date', 'date_end', 'location'],
-					limit: EVENTS_LIMIT,
-					offset: page * EVENTS_LIMIT,
-					sort: ['-date'],
-					filter: { date_end: { _lte: '$NOW' } }
-				})
-			)) as any[];
-			const set = new Set(orgEvents.map((e) => e.id));
-			const add = arr.filter((x) => !set.has(x.id));
-			orgEvents = [...orgEvents, ...add];
-			eventsHasMore = arr.length === EVENTS_LIMIT;
-		} catch (e) {
-			console.error('[events loadMore]', e);
-			eventsHasMore = false;
-		}
-	}
-
-	async function loadMomentsPage(page = momentsPage) {
-		const directus = getDirectusInstance(fetch);
-		try {
-			const arr = (await directus.request(
-				readItems('org_moments', {
-					fields: ['id', 'title', 'copyright', { image: ['id'] }],
-					limit: MOMENTS_LIMIT,
-					offset: page * MOMENTS_LIMIT,
-					sort: ['-id']
-				})
-			)) as any[];
-			const set = new Set(moments.map((m) => m.id));
-			const add = arr.filter((x) => !set.has(x.id));
-			moments = [...moments, ...add];
-			momentsHasMore = arr.length === MOMENTS_LIMIT;
-		} catch (e) {
-			console.error('[moments loadMore]', e);
-			momentsHasMore = false;
-		}
-	}
-
 	/* ---------------- Helpers & card mappers ---------------- */
 	function shuffle<T>(arr: T[]) {
 		const a = arr.slice();
@@ -137,8 +73,64 @@
 		}
 		return a;
 	}
+	const compact = <T,>(xs: (T | null | undefined)[]) => xs.filter(Boolean) as T[];
 
-	function mediaToCard(item: any) {
+	type Card =
+		| {
+				key: string;
+				type: 'member';
+				first_name: string;
+				last_name: string;
+				avatar?: string;
+				role?: string;
+		  }
+		| {
+				key: string;
+				type: 'value';
+				title: string;
+				body: string;
+				icon: string;
+				tag: 'Value';
+				links?: { url: string; label: string }[];
+		  }
+		| {
+				key: string;
+				type: 'media';
+				title: string;
+				subtitle?: string;
+				href?: string;
+				date?: string;
+				medium?: any;
+		  }
+		| {
+				key: string;
+				type: 'event';
+				title: string;
+				subtitle?: string;
+				date: string;
+				date_end?: string;
+				href: string;
+				location?: string;
+		  }
+		| {
+				key: string;
+				type: 'project';
+				title: string;
+				subtitle?: string;
+				href: string;
+				tag: 'Project';
+		  }
+		| { key: string; type: 'moment'; title?: string; copyright?: string; image?: string }
+		| {
+				key: string;
+				type: 'quote';
+				text: string;
+				author_name?: string;
+				author_role?: string;
+				image?: string;
+		  };
+
+	function mediaToCard(item: any): Card {
 		return {
 			key: `media:${item.id}`,
 			type: 'media',
@@ -149,7 +141,7 @@
 			medium: item.medium
 		};
 	}
-	function eventToCard(item: any) {
+	function eventToCard(item: any): Card {
 		return {
 			key: `event:${item.id}`,
 			type: 'event',
@@ -161,7 +153,7 @@
 			location: item.location
 		};
 	}
-	function momentToCard(item: any) {
+	function momentToCard(item: any): Card {
 		return {
 			key: `moment:${item.id}`,
 			type: 'moment',
@@ -170,7 +162,7 @@
 			image: item.image?.id
 		};
 	}
-	function quoteToCard(item: any) {
+	function quoteToCard(item: any): Card {
 		return {
 			key: `quote:${item.id}`,
 			type: 'quote',
@@ -180,9 +172,19 @@
 			image: item.author_image?.id
 		};
 	}
+	function memberToCard(m: any): Card {
+		return {
+			key: `member:${m.id ?? `${m.first_name}-${m.last_name}`}`,
+			type: 'member',
+			first_name: m.first_name,
+			last_name: m.last_name,
+			avatar: m.avatar,
+			role: m.title || ''
+		};
+	}
 
 	/* Projects (seeded to center when "Alles") */
-	const projectCards = [
+	const projectCards: Card[] = [
 		{
 			key: 'project:at',
 			type: 'project',
@@ -192,7 +194,7 @@
 			tag: 'Project'
 		},
 		{
-			key: 'project-eu',
+			key: 'project:eu',
 			type: 'project',
 			title: 'EU Emission Tracker',
 			subtitle: 'Emissions past & future of all EU countries',
@@ -200,19 +202,19 @@
 			tag: 'Project'
 		},
 		{
-			key: 'project-de',
+			key: 'project:de',
 			type: 'project',
 			title: 'Klimadashboard.de',
 			subtitle: 'Dashboard zur Klimakrise in Deutschland',
 			href: 'https://klimadashboard.de',
 			tag: 'Project'
 		}
-	] as const;
+	];
 
 	/* Base value cards (unchanged) */
-	const baseCards = [
+	const baseCards: Card[] = [
 		{
-			key: 'value-data',
+			key: 'value:data',
 			type: 'value',
 			title: 'Open Data',
 			body: 'Wir machen Datensätze zugänglich – nachvollziehbar, prüfbar, wiederverwendbar.',
@@ -224,7 +226,7 @@
 			]
 		},
 		{
-			key: 'value-finance',
+			key: 'value:finance',
 			type: 'value',
 			title: 'Open Finance',
 			body: 'Budgets, Ausgaben und Einnahmen legen wir offen.',
@@ -233,7 +235,7 @@
 			links: [{ url: '/finance', label: 'Einnahmen & Ausgaben' }]
 		},
 		{
-			key: 'value-source',
+			key: 'value:source',
 			type: 'value',
 			title: 'Open Source',
 			body: 'Unsere Software steht allen offen – zum Prüfen, Kopieren, Verbessern.',
@@ -241,27 +243,7 @@
 			tag: 'Value',
 			links: [{ url: 'https://github.com/klimadashboard', label: 'GitHub' }]
 		}
-	] as const;
-
-	/* Convert team members to cards */
-	type MemberCard = {
-		key: string;
-		type: 'member';
-		first_name: string;
-		last_name: string;
-		avatar?: string;
-		role?: string;
-	};
-	function memberToCard(m: any): MemberCard {
-		return {
-			key: `member:${m.id ?? `${m.first_name}-${m.last_name}`}`,
-			type: 'member',
-			first_name: m.first_name,
-			last_name: m.last_name,
-			avatar: m.avatar,
-			role: m.title || ''
-		};
-	}
+	];
 
 	/* Weave helper */
 	function weave<T>(a: T[], b: T[], ratioA = 1, ratioB = 2) {
@@ -291,29 +273,46 @@
 		if (browser) window.removeEventListener('resize', recomputeCols);
 	});
 
-	/* Reactive card pools */
-	$: teamCards = team.map(memberToCard);
-	$: mediaCards = shuffle(mediaReports.map(mediaToCard));
-	$: eventsCards = orgEvents.map(eventToCard);
-	$: momentCards = moments.map(momentToCard);
-	$: quoteCards = quotes.map(quoteToCard);
+	/* -------- Per-type batches & stable flattening -------- */
+	let mediaBatches: Card[][] = [];
+	let momentsBatches: Card[][] = [];
+	let mediaInited = false;
+	let momentsInited = false;
 
-	// weave + mix (keeps your existing composition)
-	$: restCards = shuffle(
-		weave(baseCards as any[], teamCards, 1, 2)
-			.concat(mediaCards)
-			.concat(eventsCards)
-			.concat(momentCards)
-			.concat(quoteCards)
-	);
-	$: allCards = (projectCards as any[]).concat(restCards);
+	// init SSR batch 0 with per-batch shuffle
+	$: if (!mediaInited && mediaReports.length) {
+		mediaBatches = [shuffle(compact(mediaReports.map(mediaToCard)))];
+		mediaInited = true;
+	}
+	$: if (!momentsInited && moments.length) {
+		momentsBatches = [shuffle(compact(moments.map(momentToCard)))];
+		momentsInited = true;
+	}
+
+	// derived flat arrays (old batches first, new batches appended)
+	$: mediaCards = mediaBatches.flat();
+	$: momentsCards = momentsBatches.flat();
+
+	/* -------- Other pools (deterministic, no global reshuffle) -------- */
+	$: teamCards = compact(team.map(memberToCard));
+	$: eventsCards = compact(orgEvents.map(eventToCard)); // keep API sort (date)
+	$: quoteCards = compact(quotes.map(quoteToCard));
+
+	// composition order: values+team → media → events → moments → quotes
+	$: restCards = weave(baseCards as Card[], teamCards as Card[], 1, 2)
+		.concat(mediaCards)
+		.concat(eventsCards)
+		.concat(momentsCards)
+		.concat(quoteCards);
+
+	$: allCards = (projectCards as Card[]).concat(restCards);
 
 	/* Filtering */
 	const TABS = ['Alles', 'Team', 'Projekte', 'Events', 'Presse', 'Momente'] as const;
 	type Tab = (typeof TABS)[number];
 	let activeTab: Tab = 'Alles';
 
-	function matchesActiveTab(card: any, tab: Tab) {
+	function matchesActiveTab(card: Card, tab: Tab) {
 		if (tab === 'Alles') return true;
 		if (tab === 'Team') return card.type === 'member';
 		if (tab === 'Projekte') return card.type === 'project';
@@ -323,64 +322,163 @@
 		return true;
 	}
 
-	/* Build columns; seed projects only for "Alles" */
+	/* ===== Stable, incremental columnizer (key-aware) ===== */
 	function centerIndices(n: number, k: number) {
 		const idx: number[] = [];
 		const mid = Math.floor((n - 1) / 2);
-		if (n <= 2) return [0, Math.min(1, n - 1), Math.min(1, n - 1)];
+		if (n <= 2) return [0, Math.min(1, n - 1), Math.min(1, n - 1)].slice(0, k);
 		const order = [mid - 1, mid, mid + 1, mid - 2, mid + 2, mid - 3, mid + 3];
 		for (const o of order) if (o >= 0 && o < n && idx.length < k) idx.push(o);
 		while (idx.length < k) idx.push(idx[idx.length - 1] ?? 0);
 		return idx;
 	}
-	function buildColumns(n: number, heads: any[], tail: any[]) {
-		const cols: any[][] = Array.from({ length: n }, () => []);
-		const headTargets = centerIndices(n, heads.length);
-		headTargets.forEach((cIdx, i) => {
-			cols[cIdx].push(heads[i]);
+
+	// Internal layout state
+	let columns: Card[][] = [];
+	let layoutCursor = 0; // base column for distribution
+	let placedCount = 0; // how many tail items have been placed (for round-robin)
+	let placedKeys = new Set<string>(); // keys already in columns
+	let layoutKey = ''; // activeTab|numCols key
+
+	function rebuildLayout(tail: Card[], heads: Card[]) {
+		columns = Array.from({ length: numCols }, () => []);
+
+		// place heads centered
+		const targets = centerIndices(numCols, heads.length);
+		targets.forEach((colIdx, i) => {
+			if (heads[i]) columns[colIdx].push(heads[i]);
 		});
-		let start = headTargets[0] ?? 0;
-		tail.forEach((item, i) => {
-			const colIndex = (start + i) % n;
-			cols[colIndex].push(item);
-		});
-		return cols;
+
+		// seed cursor and distribute full tail
+		layoutCursor = targets[0] ?? 0;
+		for (let i = 0; i < tail.length; i++) {
+			const col = (layoutCursor + i) % numCols;
+			columns[col].push(tail[i]);
+		}
+
+		// reset placement bookkeeping
+		placedCount = tail.length;
+		placedKeys = new Set(tail.map((c) => c.key));
+
+		// trigger Svelte update
+		columns = columns;
 	}
 
-	/* Columns change with filter */
-	$: filteredHeads = activeTab === 'Alles' ? (projectCards as any[]) : ([] as any[]);
-	$: filteredTail =
-		activeTab === 'Alles' ? restCards : allCards.filter((c) => matchesActiveTab(c, activeTab));
-	$: columns = buildColumns(numCols, filteredHeads, filteredTail);
+	function appendToLayout(newItems: Card[]) {
+		if (!newItems.length) return;
+		for (let i = 0; i < newItems.length; i++) {
+			const col = (layoutCursor + placedCount + i) % numCols;
+			columns[col].push(newItems[i]);
+			placedKeys.add(newItems[i].key);
+		}
+		placedCount += newItems.length;
 
-	/* Load more (Presse + Events + Momente) */
+		// trigger Svelte update
+		columns = columns;
+	}
+
+	// Reactive driver: rebuild on tab/column changes; otherwise append only unseen keys
+	$: {
+		const newKey = `${activeTab}|${numCols}`;
+		const heads = activeTab === 'Alles' ? (projectCards as Card[]) : ([] as Card[]);
+		const tailNow = (
+			activeTab === 'Alles' ? restCards : allCards.filter((c) => matchesActiveTab(c, activeTab))
+		).slice(); // snapshot
+
+		if (newKey !== layoutKey) {
+			layoutKey = newKey;
+			rebuildLayout(tailNow, heads);
+		} else {
+			const delta = tailNow.filter((c) => !placedKeys.has(c.key));
+			appendToLayout(delta);
+		}
+	}
+
+	/* -------- Load more (append batches; shuffle inside batch only) -------- */
 	let isLoadingMore = false;
+
+	async function loadMediaPage(pageNum = mediaPage) {
+		const directus = getDirectusInstance(fetch);
+		try {
+			const arr = (await directus.request(
+				readItems('org_press_reports', {
+					fields: ['id', 'title', 'summary', 'date', 'link', { medium: ['name', 'logo'] }],
+					limit: MEDIA_LIMIT,
+					offset: pageNum * MEDIA_LIMIT,
+					sort: ['-date']
+				})
+			)) as any[];
+
+			const have = new Set(mediaCards.map((c) => c.key));
+			const batch = compact(arr.map(mediaToCard)).filter((c) => !have.has(c.key));
+			if (batch.length) mediaBatches = [...mediaBatches, shuffle(batch)];
+
+			mediaHasMore = arr.length === MEDIA_LIMIT;
+		} catch (e) {
+			console.error('[media loadMore]', e);
+			mediaHasMore = false;
+		}
+	}
+
+	async function loadEventsPage(pageNum = eventsPage) {
+		const directus = getDirectusInstance(fetch);
+		try {
+			const arr = (await directus.request(
+				readItems('org_events', {
+					fields: ['id', 'title', 'subtitle', 'link', 'date', 'date_end', 'location'],
+					limit: EVENTS_LIMIT,
+					offset: pageNum * EVENTS_LIMIT,
+					sort: ['-date'],
+					filter: { date_end: { _lte: '$NOW' } }
+				})
+			)) as any[];
+			const have = new Set(orgEvents.map((e) => e.id));
+			const add = arr.filter((x) => !have.has(x.id));
+			if (add.length) orgEvents = [...orgEvents, ...add]; // deterministic
+			eventsHasMore = arr.length === EVENTS_LIMIT;
+		} catch (e) {
+			console.error('[events loadMore]', e);
+			eventsHasMore = false;
+		}
+	}
+
+	async function loadMomentsPage(pageNum = momentsPage) {
+		const directus = getDirectusInstance(fetch);
+		try {
+			const arr = (await directus.request(
+				readItems('org_moments', {
+					fields: ['id', 'title', 'copyright', { image: ['id'] }],
+					limit: MOMENTS_LIMIT,
+					offset: pageNum * MOMENTS_LIMIT,
+					sort: ['-id']
+				})
+			)) as any[];
+
+			const have = new Set(momentsCards.map((c) => c.key));
+			const batch = compact(arr.map(momentToCard)).filter((c) => !have.has(c.key));
+			if (batch.length) momentsBatches = [...momentsBatches, shuffle(batch)];
+
+			momentsHasMore = arr.length === MOMENTS_LIMIT;
+		} catch (e) {
+			console.error('[moments loadMore]', e);
+			momentsHasMore = false;
+		}
+	}
+
 	async function loadMore() {
 		if (isLoadingMore) return;
 		isLoadingMore = true;
 
 		if (activeTab === 'Presse') {
-			if (mediaHasMore) {
-				await loadMediaPage(mediaPage++);
-			}
+			if (mediaHasMore) await loadMediaPage(mediaPage++);
 		} else if (activeTab === 'Events') {
-			if (eventsHasMore) {
-				await loadEventsPage(eventsPage++);
-			}
+			if (eventsHasMore) await loadEventsPage(eventsPage++);
 		} else if (activeTab === 'Momente') {
-			if (momentsHasMore) {
-				await loadMomentsPage(momentsPage++);
-			}
+			if (momentsHasMore) await loadMomentsPage(momentsPage++);
 		} else if (activeTab === 'Alles') {
-			if (mediaHasMore) {
-				await loadMediaPage(mediaPage++);
-			}
-			if (eventsHasMore) {
-				await loadEventsPage(eventsPage++);
-			}
-			if (momentsHasMore) {
-				await loadMomentsPage(momentsPage++);
-			}
+			if (mediaHasMore) await loadMediaPage(mediaPage++);
+			if (eventsHasMore) await loadEventsPage(eventsPage++);
+			if (momentsHasMore) await loadMomentsPage(momentsPage++);
 		}
 
 		isLoadingMore = false;
@@ -457,133 +555,141 @@
 				>
 					<div class="flex flex-col gap-1">
 						{#each col as card (card.key)}
-							<div transition:fade={{ duration: 150 }}>
-								<!-- Card (no shadow; just rounded + backgrounds) -->
-								{#if card.type === 'member'}
-									<div class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden">
-										{#if card.avatar}
-											<img
-												class="absolute inset-0 w-full h-full object-cover"
-												src={`https://base.klimadashboard.org/assets/${card.avatar}?key=small`}
-												alt=""
-											/>
-										{/if}
+							{#if card}
+								<div in:fly={{ y: 12, opacity: 0, duration: 180 }} out:fade={{ duration: 120 }}>
+									<!-- Card (no shadow; just rounded + backgrounds) -->
+									{#if card.type === 'member'}
 										<div
-											class="bg-gradient-to-b from-transparent to-black/50 absolute bottom-0 left-0 right-0 h-1/2 flex flex-col text-white p-3"
+											class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden"
 										>
-											<p class="mt-auto text-xl leading-[1.1em]">
-												{card.first_name}
-												{card.last_name}
-											</p>
-											<p class="text-sm opacity-80">{card.role}</p>
-										</div>
-									</div>
-								{:else if card.type === 'value'}
-									<div class="p-3 bg-current/5 border border-current/20 rounded-2xl">
-										<h3 class="font-bold uppercase tracking-wide text-sm">{card.title}</h3>
-										<img
-											src="https://base.klimadashboard.org/assets/{card.icon}?key=small"
-											class="max-h-24 my-4"
-											alt=""
-										/>
-										<p class="text-lg leading-snug mt-auto">{card.body}</p>
-										{#if card.links}
-											<ul class="flex gap-2 mt-2 items-center flex-wrap">
-												{#each card.links as link}
-													<li>
-														<a
-															href={link.url}
-															class="border font-bold hover:bg-black hover:text-white dark:hover:text-black px-2 rounded-full inline-block"
-															>{link.label}</a
-														>
-													</li>
-												{/each}
-											</ul>
-										{/if}
-									</div>
-								{:else if card.type === 'media'}
-									<a
-										href={card.href}
-										target="_blank"
-										class="flex flex-col min-h-[20em] rounded-2xl bg-gray-800 text-white p-3 border border-current/5"
-									>
-										<p class="text-sm tracking-wider uppercase font-bold">Medienbericht</p>
-										<div class="mt-auto mb-2">
-											{#if card.medium?.logo}
+											{#if card.avatar}
 												<img
-													class="max-h-10 max-w-28"
-													src={`https://base.klimadashboard.org/assets/${card.medium.logo}`}
+													class="absolute inset-0 w-full h-full object-cover"
+													src={`https://base.klimadashboard.org/assets/${card.avatar}?key=small`}
 													alt=""
 												/>
-											{:else}
-												<p class="text-sm">{card.medium?.name}</p>
 											{/if}
+											<div
+												class="bg-gradient-to-b from-transparent to-black/50 absolute bottom-0 left-0 right-0 h-1/2 flex flex-col text-white p-3"
+											>
+												<p class="mt-auto text-xl leading-[1.1em]">
+													{card.first_name}
+													{card.last_name}
+												</p>
+												<p class="text-sm opacity-80">{card.role}</p>
+											</div>
 										</div>
-										<h3
-											class="text-3xl leading-[1.05em] font-condensed font-bold text-balance hyphens-auto"
-										>
-											{card.title}
-										</h3>
-									</a>
-								{:else if card.type === 'event'}
-									<a
-										href={card.href}
-										class=" rounded-2xl bg-[#386261] text-white p-3 flex flex-col"
-									>
-										<span class="uppercase text-sm tracking-wide font-bold">Event</span>
-										<h3 class=" mt-16 text-2xl md:text-3xl leading-[1.1em] hyphens-auto">
-											{card.title}
-										</h3>
-										<span class="text-sm mt-2">
-											{dayjs(card.date).format('DD.MM.YYYY') +
-												(card.date_end == card.date
-													? ''
-													: ' - ' + dayjs(card.date_end).format('DD.MM.YYYY'))}
-										</span>
-										<span class="text-sm">{card.location}</span>
-									</a>
-								{:else if card.type === 'project'}
-									<a href={card.href} class="block rounded-2xl bg-gradient-green p-3">
-										<h3 class="mt-24 text-2xl leading-[1.1em] hyphens-auto">{card.title}</h3>
-										{#if card.subtitle}<p class="text-lg leading-tight">{card.subtitle}</p>{/if}
-									</a>
-								{:else if card.type === 'moment'}
-									<div class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden">
-										{#if card.image}
+									{:else if card.type === 'value'}
+										<div class="p-3 bg-current/5 border border-current/20 rounded-2xl">
+											<h3 class="font-bold uppercase tracking-wide text-sm">{card.title}</h3>
 											<img
-												class="absolute inset-0 w-full h-full object-cover"
-												src={`https://base.klimadashboard.org/assets/${card.image}?key=small`}
+												src="https://base.klimadashboard.org/assets/{card.icon}?key=small"
+												class="max-h-24 my-4"
 												alt=""
 											/>
-										{/if}
-										<div
-											class="bg-gradient-to-b from-transparent to-black/70 absolute bottom-0 left-0 right-0 flex flex-col text-white p-3 pt-20 pr-6"
-										>
-											<p class="text-lg leading-[1.1em] hyphens-auto">{card.title}</p>
+											<p class="text-lg leading-snug mt-auto">{card.body}</p>
+											{#if card.links}
+												<ul class="flex gap-2 mt-2 items-center flex-wrap">
+													{#each card.links as link}
+														<li>
+															<a
+																href={link.url}
+																class="border font-bold hover:bg-black hover:text-white dark:hover:text-black px-2 rounded-full inline-block"
+																>{link.label}</a
+															>
+														</li>
+													{/each}
+												</ul>
+											{/if}
 										</div>
-										{#if card.copyright}
-											<span
-												class="absolute bottom-2 right-2 text-xs text-white opacity-70 select-none"
-												style="writing-mode: vertical-rl; transform: rotate(180deg);"
+									{:else if card.type === 'media'}
+										<a
+											href={card.href}
+											target="_blank"
+											class="flex flex-col min-h-[20em] rounded-2xl bg-gray-800 text-white p-3 border border-current/5"
+										>
+											<p class="text-sm tracking-wider uppercase font-bold">Medienbericht</p>
+											<div class="mt-auto mb-2">
+												{#if card.medium?.logo}
+													<img
+														class="max-h-10 max-w-28"
+														src={`https://base.klimadashboard.org/assets/${card.medium.logo}`}
+														alt=""
+													/>
+												{:else}
+													<p class="text-sm">{card.medium?.name}</p>
+												{/if}
+											</div>
+											<h3
+												class="text-3xl leading-[1.05em] font-condensed font-bold text-balance hyphens-auto"
 											>
-												© {card.copyright}
+												{card.title}
+											</h3>
+										</a>
+									{:else if card.type === 'event'}
+										<a
+											href={card.href}
+											class=" rounded-2xl bg-[#386261] text-white p-3 flex flex-col"
+										>
+											<span class="uppercase text-sm tracking-wide font-bold">Event</span>
+											<h3 class=" mt-16 text-2xl md:text-3xl leading-[1.1em] hyphens-auto">
+												{card.title}
+											</h3>
+											<span class="text-sm mt-2">
+												{dayjs(card.date).format('DD.MM.YYYY') +
+													(card.date_end == card.date
+														? ''
+														: ' - ' + dayjs(card.date_end).format('DD.MM.YYYY'))}
 											</span>
-										{/if}
-									</div>
-								{:else if card.type == 'quote'}
-									<div
-										class="w-full py-8 border border-current/20 text-black relative rounded-2xl overflow-hidden p-3"
-									>
-										<p class="text-6xl font-light opacity-50 -translate-x-2">»</p>
-										<p class="text-lg leading-snug hyphens-auto">{card.text}</p>
-										<p class="text-sm leading-[1.1em] mt-2">
-											{card.author_name}, {card.author_role}
-										</p>
-									</div>
-								{:else}
-									<div class="p-4 rounded-2xl bg-gray-50 text-sm">Karte</div>
-								{/if}
-							</div>
+											<span class="text-sm">{card.location}</span>
+										</a>
+									{:else if card.type === 'project'}
+										<a href={card.href} class="block rounded-2xl bg-gradient-green p-3">
+											<h3 class="mt-24 text-2xl leading-[1.1em] hyphens-auto">{card.title}</h3>
+											{#if card.subtitle}<p class="text-lg leading-tight">{card.subtitle}</p>{/if}
+										</a>
+									{:else if card.type === 'moment'}
+										<div
+											class="w-full min-h-[20em] bg-gray-800 relative rounded-2xl overflow-hidden"
+										>
+											{#if card.image}
+												<img
+													class="absolute inset-0 w-full h-full object-cover"
+													src={`https://base.klimadashboard.org/assets/${card.image}?key=small`}
+													alt=""
+												/>
+											{/if}
+											<div
+												class="bg-gradient-to-b from-transparent to-black/70 absolute bottom-0 left-0 right-0 flex flex-col text-white p-3 pt-20 pr-6"
+											>
+												{#if card.title}<p class="text-lg leading-[1.1em] hyphens-auto">
+														{card.title}
+													</p>{/if}
+											</div>
+											{#if card.copyright}
+												<span
+													class="absolute bottom-2 right-2 text-xs text-white opacity-70 select-none"
+													style="writing-mode: vertical-rl; transform: rotate(180deg);"
+												>
+													© {card.copyright}
+												</span>
+											{/if}
+										</div>
+									{:else if card.type == 'quote'}
+										<div
+											class="w-full py-8 border border-current/20 text-black relative rounded-2xl overflow-hidden p-3"
+										>
+											<p class="text-6xl font-light opacity-50 -translate-x-2">»</p>
+											<p class="text-lg leading-snug hyphens-auto">{card.text}</p>
+											<p class="text-sm leading-[1.1em] mt-2">
+												{card.author_name}, {card.author_role}
+											</p>
+										</div>
+									{:else}
+										<div class="p-4 rounded-2xl bg-gray-50 text-sm">Karte</div>
+									{/if}
+								</div>
+							{/if}
 						{/each}
 					</div>
 				</div>
@@ -591,10 +697,13 @@
 		</div>
 
 		<!-- Load more -->
-		<div class="flex justify-center my-6">
+		<div class="flex justify-center mt-2 mb-6">
 			<button
 				type="button"
 				on:click={async () => {
+					if (isLoadingMore) return;
+					isLoadingMore = true;
+
 					if (activeTab === 'Presse') {
 						if (mediaHasMore) await loadMediaPage(mediaPage++);
 					} else if (activeTab === 'Events') {
@@ -606,12 +715,32 @@
 						if (eventsHasMore) await loadEventsPage(eventsPage++);
 						if (momentsHasMore) await loadMomentsPage(momentsPage++);
 					}
+
+					isLoadingMore = false;
 				}}
-				disabled={!mediaHasMore && !eventsHasMore && !momentsHasMore}
-				class="px-4 py-2 rounded-full border border-current/20 hover:border-current/40 disabled:opacity-50"
+				disabled={(!mediaHasMore && !eventsHasMore && !momentsHasMore) || isLoadingMore}
+				aria-busy={isLoadingMore}
+				class="px-4 py-2 rounded-full border border-current/20 hover:border-current/40 disabled:opacity-50 inline-flex items-center gap-2"
 			>
-				{#if mediaHasMore || eventsHasMore || momentsHasMore}Mehr laden{/if}
-				{#if !mediaHasMore && !eventsHasMore && !momentsHasMore}Alles geladen{/if}
+				{#if isLoadingMore}
+					<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+						<circle
+							cx="12"
+							cy="12"
+							r="10"
+							stroke="currentColor"
+							stroke-opacity="0.2"
+							stroke-width="4"
+						/>
+						<path
+							d="M22 12a10 10 0 0 1-10 10"
+							stroke="currentColor"
+							stroke-width="4"
+							stroke-linecap="round"
+						/>
+					</svg>
+					Lädt …
+				{:else if mediaHasMore || eventsHasMore || momentsHasMore}Mehr laden{:else}Alles geladen{/if}
 			</button>
 		</div>
 	</section>

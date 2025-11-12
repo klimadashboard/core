@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import FAQ from './FAQ.svelte';
-	import Finance from './Finance.svelte';
 	import Projects from './Projects.svelte';
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
@@ -11,8 +9,11 @@
 	// ───────────────────────────────── UI state
 	let isSubmitting = false;
 	let success = false;
+	let isValid = false;
 	let error = '';
 	let qrCodeUrl = '';
+
+	$: isValid = name && email && dob && zip && city && amount > 19;
 
 	// Form fields
 	let name = '';
@@ -31,7 +32,7 @@
 	// Amount (DONATION amount)
 	let amount: number | '' = 50;
 	let customAmount: string = '';
-	const suggestedAmounts = [25, 50, 100];
+	const suggestedAmounts = [30, 50, 100, 200];
 
 	// Payment method
 	type PaymentMethod = 'bank' | 'card';
@@ -148,26 +149,25 @@
 	function cleanURL(url: string) {
 		return url.replace(/^https?:\/\//, '');
 	}
-
-	// Amount feedback tiers
-	const impact = [
-		{ min: 5, label: 'Deckt einen Tag Serverkosten' },
-		{ min: 20, label: 'Finanziert Datenrecherchen & Aktualisierungen' },
-		{ min: 50, label: 'Ermöglicht einen Workshop mit jungen Menschen' },
-		{ min: 100, label: 'Finanziert eine neue Visualisierung' },
-		{ min: 250, label: 'Finanziert ein kleines Feature/Datensatz' },
-		{ min: 500, label: 'Beschleunigt ein größeres Projekt' }
-	];
-	$: currentImpact = (() => {
-		const a = amountEUR(amount);
-		let last = impact[0].label;
-		for (const i of impact) if (a >= i.min) last = i.label;
-		return last;
-	})();
 </script>
 
-<div class="max-w-3xl mx-auto p-4 pt-16">
-	<h1 class="text-4xl mb-4 text-balance">
+<div class="max-w-3xl mx-auto p-4">
+	<p class="text-sm">
+		<a
+			href={page.url.searchParams.get('returnTo')
+				? page.url.searchParams.get('returnTo')
+				: 'https://klimadashboard.org'}
+			class="opacity-80 underline hover:opacity-100 underline-offset-2"
+		>
+			&larr; zurück zu
+			{#if page.url.searchParams.get('returnTo')}
+				{cleanURL(page.url.searchParams.get('returnTo'))}
+			{:else}
+				klimadashboard.org
+			{/if}
+		</a>
+	</p>
+	<h1 class="text-4xl mb-4 mt-8 text-balance">
 		<img src="/logo.svg" class="inline w-8 rounded -translate-y-1" alt="Klimadashboard" />
 		Deine Spende für
 		<em class="not-italic underline underline-offset-4 decoration-green-600">mehr Fakten</em>
@@ -176,16 +176,13 @@
 		in der Klimawende
 	</h1>
 
-	<p class="text-lg">[PLATZHALTER]</p>
-
 	<!-- Progress -->
 	{#if raisedAmount > 0}
-		<div class="rounded-2xl overflow-hidden mt-4 bg-green-200 h-10 w-full relative">
+		<div class="rounded-2xl overflow-hidden mt-4 bg-gray-100 h-10 w-full relative">
 			<div
-				class="absolute top-0 left-0 bottom-0 bg-green-700 rounded-2xl"
+				class="absolute top-0 left-0 bottom-0 bg-green-600 rounded-2xl"
 				style="width: {(raisedAmount / goalAmount) * 100}%"
 			>
-				<div class="w-full h-full animate-pulse bg-gray-900 opacity-50 rounded-2xl absolute"></div>
 				<p class="text-white absolute right-2 text-lg p-1.5">
 					<b>{formatNumber(raisedAmount)}€</b> von {formatNumber(goalAmount)}€ gesammelt
 				</p>
@@ -193,59 +190,54 @@
 		</div>
 	{/if}
 
+	<p class="text-lg mt-4">
+		Im Jahr 2026 [PLATZHALTER]. Mit deiner Spende hilfst du uns, den Verein Klimadashboard
+		langfristig auf ein stabiles Fundament zu stellen, Arbeitsplätze zu schaffen und mehr
+		Transparenz in Klimadaten zu bringen.
+	</p>
+
+	<p class="text-lg mt-4">
+		In Österreich melden wir deine Spende automatisch ans Finanzamt und sie ist von deiner Steuer
+		absetzbar. Unsere Einnahmen & Ausgaben <a href="/finance" class="underline underline-offset-2"
+			>legen wir transparent offen</a
+		>.
+	</p>
+
 	<!-- ───────────────── Amount selector -->
-	<section class="mt-6 p-4 rounded-2xl border bg-white shadow-sm">
-		<h2 class="text-xl font-bold mb-2">Wähle deinen Betrag</h2>
+	<section class="mt-8">
+		<div class="relative w-max mx-auto">
+			<p class="text-center uppercase font-bold tracking-wide mb-1">Deine Spende</p>
+			<input
+				class="block bg-gray-100 rounded-full w-[6ch] pl-10 pr-4 py-1.5 text-left text-5xl font-light"
+				type="number"
+				min="1"
+				max="9999"
+				step="1"
+				bind:value={amount}
+				on:input={handleCustomAmountInput}
+			/>
+			<span class="absolute left-4 bottom-3 text-3xl font-light opacity-50">€</span>
+		</div>
 
-		<div class="grid gap-3">
-			<div class="flex items-center gap-3">
-				<input
-					type="range"
-					min="5"
-					max="500"
-					step="5"
-					class="w-full accent-green-700"
-					bind:value={amount}
-					on:input={() => (customAmount = String(amount))}
-				/>
-				<div class="w-28">
-					<input
-						class="input w-full text-right"
-						type="number"
-						min="1"
-						step="1"
-						bind:value={customAmount}
-						on:input={handleCustomAmountInput}
-						placeholder="€"
-					/>
-				</div>
-			</div>
+		<p class="text-base mt-2 text-center">
+			{#if amount < 20}
+				Damit die Verwaltungskosten im Rahmen bleiben, bitten wir um eine Mindestspende von 20€.
+			{:else}
+				Danke! Mit {amountEUR(amount)}€ können wir Server & Projekte finanzieren.
+			{/if}
+		</p>
 
-			<div class="flex gap-2">
-				{#each suggestedAmounts as amt}
-					<button
-						type="button"
-						class="px-3 py-1.5 rounded-full border hover:bg-gray-50"
-						class:selected={amount === amt}
-						on:click={() => selectSuggestedAmount(amt)}
-					>
-						€{amt}
-					</button>
-				{/each}
+		<div class="grid gap-1 grid-cols-4 mt-2">
+			{#each suggestedAmounts as amt}
 				<button
 					type="button"
-					class="px-3 py-1.5 rounded-full border hover:bg-gray-50"
-					on:click={() => selectSuggestedAmount(150)}
+					class="cursor-pointer px-3 py-1.5 rounded-full border hover:bg-gray-50"
+					class:selected={amount === amt}
+					on:click={() => selectSuggestedAmount(amt)}
 				>
-					€150
+					€{amt}
 				</button>
-			</div>
-
-			<!-- Impact feedback -->
-			<div class="text-sm text-gray-700 flex items-center gap-2">
-				<span class="inline-flex w-2.5 h-2.5 rounded-full bg-green-600"></span>
-				<span>{currentImpact}</span>
-			</div>
+			{/each}
 		</div>
 	</section>
 
@@ -307,9 +299,9 @@
 			<input type="hidden" name="amount" value={amountEUR(amount)} />
 
 			<!-- Payment method switcher -->
-			<section class="grid md:grid-cols-2 gap-3">
+			<section class="grid md:grid-cols-2 gap-1">
 				<label
-					class={`rounded-2xl border p-4 cursor-pointer ${paymentMethod === 'bank' ? 'ring-2 ring-green-600' : ''}`}
+					class={`rounded-2xl border p-4 cursor-pointer ${paymentMethod === 'bank' ? 'bg-green-600 !text-white border-none' : ''}`}
 				>
 					<input
 						type="radio"
@@ -320,19 +312,17 @@
 					/>
 					<div class="flex items-center justify-between">
 						<div>
-							<p class="font-bold">Banküberweisung (empfohlen)</p>
-							<p class="text-sm text-gray-600">Keine Gebühren • SEPA / Online-Banking</p>
-						</div>
-						<div class="text-right text-sm">
-							<p>Spende: <b>€{amountEUR(amount).toFixed(2)}</b></p>
-							<p>Gebühren: <b>€0.00</b></p>
-							<p class="text-xs text-gray-600">Gesamt: <b>€{amountEUR(amount).toFixed(2)}</b></p>
+							<p class="font-bold text-xl">Banküberweisung &hearts;</p>
+							<ul class="text-sm space-y-1 leading-tight list-disc pl-5 mt-2">
+								<li>Du bekommst im Anschluss einen QR-Code bzw. IBAN für die Überweisung.</li>
+								<li>100% deiner Spende kommen dem Klimadashboard zu Gute.</li>
+							</ul>
 						</div>
 					</div>
 				</label>
 
 				<label
-					class={`rounded-2xl border p-4 cursor-pointer ${paymentMethod === 'card' ? 'ring-2 ring-green-600' : ''}`}
+					class={`rounded-2xl border p-4 cursor-pointer ${paymentMethod === 'card' ? 'bg-green-600 !text-white border-none' : ''}`}
 				>
 					<input
 						type="radio"
@@ -343,24 +333,19 @@
 					/>
 					<div class="flex items-center justify-between">
 						<div>
-							<p class="font-bold">Kreditkarte / Apple Pay</p>
-							<p class="text-sm text-gray-600">Sicher via Stripe</p>
+							<p class="font-bold text-xl">Kreditkarte | Apple Pay | Google Pay</p>
+							<ul class="space-y-1 text-sm leading-tight list-disc pl-5 mt-2">
+								<li>Sicher und schnell via Stripe.</li>
+								{#if amount}
+									{@const donation = amountEUR(amount)}
+									{@const { fee, total } = calculateCardTotals(donation)}
+									<li>
+										Zusätzlich zu deiner €{donation.toFixed(2)} Spende werden Gebühren in der Höhe von
+										{fee.toFixed(2)}€ fällig.
+									</li>
+								{/if}
+							</ul>
 						</div>
-						{#if amount}
-							{@const donation = amountEUR(amount)}
-							{@const { fee, total } = calculateCardTotals(donation)}
-							<div class="text-right text-sm">
-								<p>Spende: <b>€{donation.toFixed(2)}</b></p>
-								<p>Gebühren: <b>€{fee.toFixed(2)}</b></p>
-								<p class="text-xs text-gray-600">Gesamt: <b>€{total.toFixed(2)}</b></p>
-							</div>
-						{:else}
-							<div class="text-right text-sm">
-								<p>Spende: –</p>
-								<p>Gebühren: –</p>
-								<p class="text-xs text-gray-600">Gesamt: –</p>
-							</div>
-						{/if}
 					</div>
 				</label>
 			</section>
@@ -373,20 +358,18 @@
 						<input id="name" name="name" type="text" class="input" bind:value={name} required />
 					</div>
 					<div class="flex flex-col gap-1">
-						<label for="email">Email</label>
-						<input id="email" name="email" type="email" bind:value={email} class="input" required />
+						<label for="dob">Geburtsdatum</label>
+						<input id="dob" name="dob" type="date" bind:value={dob} class="input" required />
+						<p class="text-xs opacity-60">
+							Damit melden wir deine Spende in Österreich ans Finanzamt.
+						</p>
 					</div>
 				</div>
 
-				<div class="grid md:grid-cols-2 gap-3">
+				<div class="grid">
 					<div class="flex flex-col gap-1">
-						<label for="dob">Geburtsdatum</label>
-						<input id="dob" name="dob" type="date" bind:value={dob} class="input" required />
-						<p class="text-xs opacity-60">Für die automatische Meldung ans Finanzamt (AT).</p>
-					</div>
-					<div class="flex flex-col gap-1">
-						<label for="message">Nachricht (optional)</label>
-						<input id="message" name="message" type="text" bind:value={message} class="input" />
+						<label for="email">Email</label>
+						<input id="email" name="email" type="email" bind:value={email} class="input" required />
 					</div>
 				</div>
 
@@ -407,19 +390,12 @@
 						<label for="zip">PLZ</label>
 						<input id="zip" name="zip" type="text" bind:value={zip} class="input" required />
 					</div>
+
 					<div class="flex flex-col gap-1">
 						<label for="city">Ort</label>
 						<input id="city" name="city" type="text" bind:value={city} class="input" required />
 					</div>
 					<div class="flex flex-col gap-1">
-						<label for="state">Bundesland (optional)</label>
-						<input id="state" name="state" type="text" bind:value={state} class="input" />
-					</div>
-					<div class="flex flex-col gap-1">
-						<label for="country">Land</label>
-						<input id="country" name="country" type="text" bind:value={country} class="input" />
-					</div>
-					<div class="flex flex-col gap-1 md:grid-cols-2 md:col-span-2">
 						<label for="details2">Adresszusatz (optional)</label>
 						<input
 							id="details2"
@@ -428,6 +404,10 @@
 							bind:value={addressDetails2}
 							class="input"
 						/>
+					</div>
+					<div class="flex flex-col gap-1">
+						<label for="country">Land</label>
+						<input id="country" name="country" type="text" bind:value={country} class="input" />
 					</div>
 				</div>
 
@@ -441,30 +421,18 @@
 			<div
 				class="fixed left-1/2 -translate-x-1/2 bottom-4 bg-white/90 border border-current/20 backdrop-blur shadow-2xl z-50 rounded-full"
 			>
-				<div class="flex items-center gap-3">
-					{#if page.url.searchParams.get('returnTo')}
-						<a href={page.url.searchParams.get('returnTo')}
-							>zurück zu {cleanURL(page.url.searchParams.get('returnTo'))}</a
-						>
-					{:else}
-						<a href="https://klimadashboard.org" target="_blank">klimadashboard.org</a>
-					{/if}
-					<div class="flex-1 text-sm">
+				<div class="flex items-center h-full">
+					<div class="px-3 py-1 text-sm">
 						{#if amount}
 							{@const donation = amountEUR(amount)}
-							{#if paymentMethod === 'card'}
-								{@const { fee, total } = calculateCardTotals(donation)}
-								<span>
-									<b>Spende: €{donation.toFixed(2)}</b>
-									• Gebühren: €{fee.toFixed(2)}
-									• Gesamt: <b>€{total.toFixed(2)}</b>
-								</span>
-							{:else}
-								<span>
-									<b>Spende: €{donation.toFixed(2)}</b>
-									• Gebühren: €0.00 • Gesamt: <b>€{donation.toFixed(2)}</b>
-								</span>
-							{/if}
+							{@const fee = paymentMethod === 'card' ? calculateCardTotals(donation).fee : 0}
+							{@const total =
+								paymentMethod === 'card' ? calculateCardTotals(donation).total : donation}
+							<p class="tabular-nums leading-tight flex items-center">
+								€{donation.toFixed(2)} Spende + €{fee.toFixed(2)} Gebühren
+								<span class="inline-block h-4 w-[1px] bg-black mx-1"></span>
+								<b> €{total.toFixed(2)} Gesamt</b>
+							</p>
 						{:else}
 							<span>Bitte Betrag wählen</span>
 						{/if}
@@ -472,8 +440,8 @@
 
 					<button
 						type="button"
-						class="px-5 py-3 rounded-r-full bg-green-700 text-white font-bold disabled:opacity-50"
-						disabled={isSubmitting || !amount}
+						class="px-5 py-3 rounded-r-full bg-green-700 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+						disabled={isSubmitting || !isValid}
 						on:click={async () => {
 							error = '';
 							const donation = amountEUR(amount);
@@ -548,9 +516,7 @@
 	.input {
 		@apply rounded-xl bg-gray-100 border-current/5 px-3 py-2;
 	}
-	label {
-		@apply text-sm font-semibold uppercase tracking-wide text-current/80;
-	}
+
 	.button {
 		@apply rounded-full;
 	}

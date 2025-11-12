@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 	}
 
 	const balances = await balancesRes.json();
-	const donationAccount = balances.accountBalances.find((b: any) => b.account === 8440);
+	const donationAccount = balances.accountBalances.find((b: any) => b.account === 40400);
 	return { projects, donationAccount };
 };
 

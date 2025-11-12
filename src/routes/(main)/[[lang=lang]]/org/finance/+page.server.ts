@@ -7,8 +7,9 @@ const ACCOUNT_NAME_MAP: Record<number, string> = {
 	40400: 'Spenden',
 	40900: 'Erlöse (Workshops, Leistungen,..)',
 	60200: 'Gehälter',
-	68250: 'Rechtsanwalt & Steuerberatung',
 	61000: 'Sozialversicherung',
+	59000: 'Externe Leistungen | Honorare',
+	68250: 'Rechtsanwalt & Steuerberatung',
 	68110: 'Server & Infrastruktur',
 	68550: 'Bankspesen & Kontoführung'
 };
