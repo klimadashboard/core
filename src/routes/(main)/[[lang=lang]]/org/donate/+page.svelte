@@ -392,7 +392,16 @@
 					</div>
 					<div class="flex flex-col gap-1">
 						<label for="dob">Geburtsdatum</label>
-						<input id="dob" name="dob" type="date" bind:value={dob} class="input" required />
+						<input
+							id="dob"
+							name="dob"
+							type="date"
+							bind:value={dob}
+							class="input"
+							min="1900-01-01"
+							max="2009-12-31"
+							required
+						/>
 					</div>
 				</div>
 
