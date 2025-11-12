@@ -330,7 +330,7 @@
 				</div>
 				<div class="co2b-section-background mt-8">
 					<p class="text-lg">
-						Auch das risikoreichere CO<sub>2</sub>-Budget (50%) haben wir bereits im Frühling 2023
+						Auch das risikoreichere CO<sub>2</sub>-Budget (50%) haben wir bereits Ende 2022
 						aufgebraucht.
 						<span class="text-[#A61E7E]"
 							>Damit hat Deutschland seine 1,5-Grad-Budgets überschritten.</span
