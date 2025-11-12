@@ -91,10 +91,15 @@
 						: true,
 				overflow:
 					index == 5
-						? e.year == 2023 && selectedBudgetYear.year > 2023 && e.index > 0
+						? (e.year == 2022 && e.index > 7 && selectedBudgetYear.year > 2022) ||
+							(e.year > 2022 && selectedBudgetYear.year > 2022)
 							? true
 							: false
-						: false
+						: index == 6
+							? (e.year == 2022 && e.index > 27) || e.year > 2022
+								? true
+								: false
+							: false
 			};
 		})
 		.filter((d) => d.year <= currentYear);
@@ -177,7 +182,7 @@
 					<g
 						transform="translate({xScale(highlightedYear.year) - 1},{yScale(
 							historicalArray.findLast((d) => d.year == highlightedYear.year).index
-						) - (i == 1 ? 50 : 40)})"
+						) - (i == 1 ? 60 : 40)})"
 						class="text-industry"
 						transition:fade
 					>
@@ -207,7 +212,9 @@
 					cx={circle.x}
 					cy={circle.y}
 					class="{circle.highlighted ? 'opacity-100' : 'opacity-50'} {circle.overflow
-						? 'fill-energy'
+						? index == 5
+							? 'fill-energy'
+							: 'fill-[#A61E7E]'
 						: 'fill-industry'}"
 					in:fade
 					out:fly
