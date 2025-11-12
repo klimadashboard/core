@@ -153,7 +153,7 @@
 	$: illustrationPosition = progress > 0 ? progress * -3500 : 0;
 </script>
 
-<div class="-mt-40 text-black">
+<div class="-mt-52 text-black">
 	<Scroller bind:index bind:offset bind:progress>
 		<div
 			slot="background"

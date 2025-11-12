@@ -208,7 +208,7 @@ details a {
 	@apply text-xl mt-4 mb-1;
 }
 .co2b-background {
-	@apply h-screen;
+	@apply h-[calc(100dvh)];
 }
 
 .co2b-section-background {
