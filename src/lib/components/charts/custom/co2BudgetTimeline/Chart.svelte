@@ -96,7 +96,7 @@
 							? true
 							: false
 						: index == 6
-							? (e.year == 2022 && e.index > 27) || e.year > 2022
+							? e.year > 2022
 								? true
 								: false
 							: false
@@ -107,15 +107,15 @@
 	const projections = [
 		{
 			index: 8,
-			key: '2500_nochange'
+			key: '2520_nochange'
 		},
 		{
 			index: 9,
-			key: '2500_linear'
+			key: '2520_linear'
 		},
 		{
 			index: 10,
-			key: '2500_percentage'
+			key: '2520_percentage'
 		}
 	];
 

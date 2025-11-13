@@ -63,46 +63,46 @@
 	const budgets = [
 		{
 			year: 2016,
-			budget: 4840,
+			budget: 4830,
 			offset: 0.25
 		},
 		{
 			year: 2017,
-			budget: 4041,
+			budget: 4031,
 			offset: 0.27
 		},
 		{
 			year: 2018,
-			budget: 3261,
+			budget: 3251,
 			offset: 0.29
 		},
 		{
 			year: 2019,
-			budget: 2427,
+			budget: 2417,
 			offset: 0.3
 		},
 		{
 			year: 2020,
-			budget: 1654,
+			budget: 1644,
 			offset: 0.32
 		},
 		{
 			year: 2021,
-			budget: 937,
+			budget: 928,
 			offset: 0.34
 		},
 		{
 			year: 2022,
-			budget: 205,
+			budget: 195,
 			offset: 0.36
 		},
 		{
 			year: 2023,
-			budget: -530,
+			budget: -541,
 			offset: 0.38
 		},
-		{ year: 2024, budget: -1184, offset: 0.4 },
-		{ year: 2025, budget: -1800, offset: 0.43 }
+		{ year: 2024, budget: -1195, offset: 0.4 },
+		{ year: 2025, budget: -1810, offset: 0.43 }
 	];
 
 	let selectedBudgetYear = budgets[0];
@@ -273,7 +273,7 @@
 					</p>
 					<p class="text-lg my-2">
 						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy/50 p-1"
-							>4.840 Millionen Tonnen CO<sub>2</sub></strong
+							>4.830 Millionen Tonnen CO<sub>2</sub></strong
 						> ausstoßen.
 					</p>
 				</div>
@@ -312,7 +312,7 @@
 								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
-							<p class="text-6xl font-light tabular-nums">{formatNumber(-1800)}</p>
+							<p class="text-6xl font-light tabular-nums">{formatNumber(-1810)}</p>
 							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2025</p>
 						</div>
 						<div class="text-[#A61E7E]">
@@ -323,7 +323,7 @@
 								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
-							<p class="text-6xl font-light tabular-nums">{formatNumber(-1300)}</p>
+							<p class="text-6xl font-light tabular-nums">{formatNumber(-1280)}</p>
 							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2025</p>
 						</div>
 					</div>
@@ -388,7 +388,7 @@
 							1,75-Grad-Budget bei <br /><span class="bg-industry text-white p-0.5">67%</span> Wahrscheinlichkeit
 						</h3>
 
-						<p class="text-6xl font-light tabular-nums">{formatNumber(2806)}</p>
+						<p class="text-6xl font-light tabular-nums">{formatNumber(2520)}</p>
 						<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2025</p>
 					</div>
 					<h2 class="text-lg">
@@ -413,13 +413,13 @@
 					<p class="text-lg">
 						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Somit müssten
 						die CO<sub>2</sub>-Emissionen
-						<strong class="bg-economy/50 p-1">jedes Jahr bis 2045 um 17,7%</strong>
+						<strong class="bg-economy/50 p-1">jedes Jahr bis 2045 um 19,4%</strong>
 						im Vergleich zum Vorjahr sinken.
 					</p>
 					<p class="text-lg mt-4">
 						Seit 1945 gab es keinen so starken Emissionsrückgang. 2024 sanken die Emissionen um
-						5,9%. Es sind also mehr politische Maßnahmen notwendig, um auf einen Pfad zu kommen, der
-						mit dem 1,75-Grad-Budget kompatibel ist.
+						5,9%. Es sind also deutlich mehr politische Maßnahmen notwendig, um auf einen Pfad zu
+						kommen, der mit dem 1,75-Grad-Budget kompatibel ist.
 					</p>
 				</div>
 			</section>
