@@ -4,6 +4,9 @@
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
 	import getDirectusInstance from '$lib/utils/directus';
+	import { tick } from 'svelte';
+	import { onMount } from 'svelte';
+	import dayjs from 'dayjs';
 
 	export let data;
 
@@ -15,6 +18,11 @@
 	let qrCodeUrl = '';
 
 	$: isValid = name && email && dob && zip && city && amount > 19;
+
+	// Result after returning from Stripe Checkout
+	type CheckoutStatus = 'idle' | 'success' | 'cancel' | 'error';
+	let checkoutStatus: CheckoutStatus = 'idle';
+	let stripeSessionId: string | null = null;
 
 	// Form fields
 	let name = '';
@@ -52,11 +60,59 @@
 
 	// Progress
 	$: raisedAmount = data?.donationAccount?.balanceAmount / 100 ?? 0;
-	$: goalAmount = 15000;
+	$: goalAmount = 20000;
+
+	// put these next to your other state
+	let copied: Record<string, boolean> = {};
+	let copyingAll = false;
+
+	async function copy(key: string, text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = { ...copied, [key]: true };
+			setTimeout(() => (copied = { ...copied, [key]: false }), 1400);
+		} catch {
+			// noop; optionally show error
+		}
+	}
+
+	async function copyAll() {
+		const remittance = `${name} ${dob}`;
+		const block = [
+			`Betrag: €${(amount as number).toFixed(2)}`,
+			`Empfänger: ${receiverName}`,
+			`IBAN: ${cleanIban}`,
+			`BIC: ${bic}`,
+			`Bank: ${bank}`,
+			`Verwendungszweck: ${remittance}`
+		].join('\n');
+		try {
+			await navigator.clipboard.writeText(block);
+			copyingAll = true;
+			setTimeout(() => (copyingAll = false), 1400);
+		} catch {}
+	}
 
 	// Load countries from Directus on client if not provided by SSR
-	import { onMount } from 'svelte';
 	onMount(async () => {
+		const status = page.url.searchParams.get('status');
+		const sessionId = page.url.searchParams.get('session_id');
+
+		if (status === 'success' && sessionId) {
+			checkoutStatus = 'success';
+			stripeSessionId = sessionId;
+		} else if (status === 'cancel') {
+			checkoutStatus = 'cancel';
+		}
+
+		// Optional: clean URL
+		if (status || sessionId) {
+			const url = new URL(window.location.href);
+			url.searchParams.delete('status');
+			url.searchParams.delete('session_id');
+			window.history.replaceState({}, '', url.toString());
+		}
+
 		try {
 			if (!countries?.length) {
 				const directus = getDirectusInstance(fetch);
@@ -105,75 +161,33 @@
 		return { fee, net, total };
 	}
 
-	function buildEpcQr(amountNum: number, donorName: string) {
-		// IMPORTANT: QR uses the DONATION amount only (no fees)
-		const remittance = `Donation from ${donorName || 'Anonymous'}`;
+	function buildEpcQr(amountNum: number, donorName: string, donorDob: string) {
+		const version = '002'; // 002 oder 003, 002 ist sehr kompatibel
+		const charset = '1'; // 1 = UTF-8
+		const identification = 'SCT'; // SEPA Credit Transfer
+		const purpose = ''; // optional (z. B. "CHAR")
+		const reference = ''; // strukturiert (RF...), hier leer
+		const remittance = `Spende ${donorName || 'Anonymous'} (${dayjs(donorDob).format('DD.MM.YYYY')})`; // unstrukturiert
+		const info = ''; // frei, optional
+
+		const amount = `EUR${amountNum.toFixed(2)}`; // genau zwei Dezimalstellen, Punkt als Dezimaltrenner
+
 		const epcData = [
 			'BCD',
-			'001',
-			'1',
-			'SCT',
-			receiverName,
-			cleanIban,
-			bic,
-			`EUR${amountNum.toFixed(2)}`,
-			remittance,
-			''
+			version,
+			charset,
+			identification,
+			bic, // BIC an Position 5 (leer möglich, aber viele Apps in AT/DE mögen ihn)
+			receiverName, // 6
+			cleanIban, // 7 (ohne Leerzeichen)
+			amount, // 8
+			purpose, // 9
+			reference, // 10 (strukturiert)
+			remittance, // 11 (unstrukturiert)
+			info // 12
 		].join('\n');
-		return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(epcData)}&format=svg`;
-	}
 
-	// Card/Apple Pay redirect — charges DONATION + FEES (fees are extra)
-	async function payWithStripeRedirect() {
-		if (
-			!name ||
-			!email ||
-			!amount ||
-			(amount as number) <= 0 ||
-			!zip ||
-			!city ||
-			!addressLine ||
-			!dob
-		) {
-			error = 'Bitte fülle alle Pflichtfelder korrekt aus.';
-			return;
-		}
-		isSubmitting = true;
-		error = '';
-		try {
-			const donation = amountEUR(amount);
-			const { fee, total } = calculateCardTotals(donation);
-			const donationCents = Math.round(donation * 100);
-			const feeCents = Math.round(fee * 100);
-			const totalCents = Math.round(total * 100);
-
-			const res = await fetch('/api/stripe/checkout', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					amount: totalCents, // TOTAL (donation + fee)
-					donationAmount: donationCents, // breakdown for metadata/receipts
-					feeAmount: feeCents,
-					feesAddedExtra: true,
-					name,
-					email,
-					dob,
-					message,
-					addressLine,
-					zip,
-					city,
-					state,
-					country
-				})
-			});
-			const data = await res.json();
-			if (!res.ok) throw new Error(data?.error || 'Stripe checkout failed.');
-			window.location.href = data.url;
-		} catch (e: any) {
-			error = e?.message || 'Etwas ist schiefgelaufen. Bitte versuche es erneut.';
-		} finally {
-			isSubmitting = false;
-		}
+		return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=svg&data=${encodeURIComponent(epcData)}`;
 	}
 
 	function cleanURL(url: string) {
@@ -233,71 +247,226 @@
 		>.
 	</p>
 
-	<!-- ───────────────── Amount selector -->
-	<section class="mt-8">
-		<div class="relative w-max mx-auto">
-			<p class="text-center uppercase font-bold tracking-wide mb-1">Deine Spende</p>
-			<input
-				class="block bg-gray-100 rounded-full w-[6ch] pl-10 pr-4 py-1.5 text-left text-5xl font-light"
-				type="number"
-				min="1"
-				max="9999"
-				step="1"
-				bind:value={amount}
-				on:input={handleCustomAmountInput}
-			/>
-			<span
-				class="absolute left-4 bottom-3 text-3xl font-light opacity-50 select-none"
-				aria-hidden="true">€</span
-			>
+	{#if checkoutStatus === 'success'}
+		<div class="mt-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-green-900">
+			<p class="font-semibold">Danke für deine Spende! 💚</p>
+			<p class="text-sm mt-1">
+				Deine Zahlung über Stripe wurde erfolgreich abgeschlossen.
+				{#if stripeSessionId}
+					<span class="opacity-70">
+						(Referenz: <code class="font-mono text-xs">
+							{stripeSessionId.slice(-8)}
+						</code>)
+					</span>
+				{/if}
+				Du erhältst in Kürze eine Bestätigung per E-Mail. Bei Fragen:
+				<a href="mailto:team@klimadashboard.org" class="underline">team@klimadashboard.org</a>.
+			</p>
 		</div>
+	{:else if checkoutStatus === 'cancel'}
+		<div class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+			<p class="font-semibold">Zahlung abgebrochen</p>
+			<p class="text-sm mt-1">
+				Die Zahlung bei Stripe wurde abgebrochen. Deine Karte wurde dabei nicht belastet. Du kannst
+				unten jederzeit einen neuen Spendenversuch starten.
+			</p>
+		</div>
+	{/if}
 
-		<p class="text-base mt-2 text-center">
-			{#if amount < 20}
-				Damit die Verwaltungskosten im Rahmen bleiben, bitten wir um eine Mindestspende von 20€.
-			{:else}
-				Danke! Mit {amountEUR(amount)}€ können wir Server & Projekte finanzieren.
-			{/if}
-		</p>
-
-		<div class="grid gap-1 grid-cols-4 mt-2">
-			{#each suggestedAmounts as amt}
-				<button
-					type="button"
-					class="cursor-pointer px-3 py-1.5 rounded-full border hover:bg-gray-50"
-					class:selected={amount === amt}
-					on:click={() => selectSuggestedAmount(amt)}
+	{#snippet CopyBtn({ key, text, title = 'Kopieren' })}
+		<button
+			type="button"
+			class="opacity-80 hover:opacity-100 cursor-pointer"
+			on:click={() => copy(key, text)}
+			aria-label={title}
+			{title}
+		>
+			{#if !copied[key]}
+				<!-- copy icon -->
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="w-5 h-5"
 				>
-					€{amt}
-				</button>
-			{/each}
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path
+						d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"
+					/>
+					<path
+						d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"
+					/>
+				</svg>
+			{:else}
+				<!-- copied check icon -->
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="w-5 h-5"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path
+						d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"
+					/>
+					<path
+						d="M4.012 16.737a2 2 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"
+					/>
+					<path d="M11 14l2 2l4 -4" />
+				</svg>
+			{/if}
+		</button>
+	{/snippet}
+
+	{#snippet DetailRow({ label, value, key, text, ddClass = 'font-mono text-sm break-words' })}
+		<dt class="text-sm text-black/60 border-b border-current/10 mt-4 first:mt-0">{label}</dt>
+		<div class="flex items-center gap-2 mt-2">
+			<dd class={ddClass}>{value}</dd>
+			{@render CopyBtn({ key, text, title: `${label} kopieren` })}
 		</div>
-	</section>
+	{/snippet}
 
 	{#if success}
-		<!-- Success: bank details + QR (DONATION only) -->
-		<h2 class="text-3xl mb-2 mt-6">Danke für deine Spende! 💚</h2>
-		<p class="mb-4">Hier sind die Überweisungsdetails und dein QR-Code:</p>
+		<h2 class="text-3xl mb-2 pt-10" id="success">Nur noch ein Schritt für deine Spende.</h2>
+		<p class="mb-4 text-lg">
+			Hier sind alle notwendigen Informationen für deine Banküberweisung. Kopiere sie in deine
+			Banking App oder scanne den QR-Code mit deiner Banking-App, um deine Spende zu überweisen.
+			Vielen Dank!
+		</p>
 
-		<div class="flex items-center gap-4 justify-between bg-white shadow-xl border p-4 rounded-2xl">
+		<div class="bg-white shadow-2xl border border-current/10 p-4 rounded-2xl max-w-sm mx-auto">
+			<!-- Left: details -->
 			<div>
-				<div class="font-mono text-sm mt-2">
-					<p>{receiverName}</p>
-					<p>{iban}</p>
-					<p>{bic}</p>
-					<p>{bank}</p>
-					<p>€{(amount as number).toFixed(2)}</p>
-					<p>{name} | {dob}</p>
+				<p class="font-light text-4xl tabular-nums -translate-x-1">
+					€{formatNumber((amount as number).toFixed(2))}
+				</p>
+				<dl class="mt-3">
+					{@render DetailRow({
+						label: 'Empfänger',
+						value: receiverName,
+						key: 'empf',
+						text: receiverName
+					})}
+
+					{@render DetailRow({
+						label: 'IBAN',
+						value: iban, // display pretty
+						key: 'iban',
+						text: cleanIban, // copy clean (no spaces)
+						ddClass: 'font-mono text-sm break-all'
+					})}
+
+					{@render DetailRow({
+						label: 'BIC',
+						value: bic,
+						key: 'bic',
+						text: bic,
+						ddClass: 'font-mono text-sm break-all'
+					})}
+
+					{@render DetailRow({
+						label: 'Bank',
+						value: bank,
+						key: 'bank',
+						text: bank
+					})}
+
+					{@render DetailRow({
+						label: 'Verwendungszweck',
+						value: `${name} ${dob}`,
+						key: 'vz',
+						text: `${name} ${dob}`
+					})}
+				</dl>
+
+				<div class="flex items-center gap-2 mt-4">
+					<button type="button" class="text-sm" on:click={copyAll}>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="w-5 h-5 inline"
+							><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+								d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"
+							/><path
+								d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"
+							/></svg
+						>
+						{copyingAll ? 'Alles kopiert ✓' : 'Alles kopieren'}
+					</button>
 				</div>
 			</div>
+
+			<!-- Right: QR -->
 			{#if qrCodeUrl}
-				<div class="relative">
-					<img src={qrCodeUrl} alt="Bank transfer QR code" class="w-24 h-24" />
-					<p class="leading-none text-sm text-center w-24 mt-1">Scan mit deiner Banking-App</p>
+				<div class="flex flex-col items-center">
+					<img src={qrCodeUrl} alt="Bank transfer QR code" class="w-32 h-32" />
+					<p class="leading-none text-sm text-center mt-2 opacity-70">
+						Scan mit deiner Banking-App
+					</p>
 				</div>
 			{/if}
 		</div>
 	{:else}
+		<!-- ───────────────── Amount selector -->
+		<section class="mt-8">
+			<div class="relative w-max mx-auto">
+				<p class="text-center uppercase font-bold tracking-wide mb-1">Deine Spende</p>
+				<input
+					class="block bg-gray-100 rounded-full w-[6ch] pl-10 pr-4 py-1.5 text-left text-5xl font-light"
+					type="number"
+					min="1"
+					max="9999"
+					step="1"
+					bind:value={amount}
+					on:input={handleCustomAmountInput}
+				/>
+				<span
+					class="absolute left-4 bottom-3 text-3xl font-light opacity-50 select-none"
+					aria-hidden="true">€</span
+				>
+			</div>
+
+			<p class="text-base mt-2 text-center">
+				{#if amount < 20}
+					Damit die Verwaltungskosten im Rahmen bleiben, bitten wir um eine Mindestspende von 20€.
+				{:else}
+					Danke! Mit {amountEUR(amount)}€ können wir Server & Projekte finanzieren.
+				{/if}
+			</p>
+
+			<div class="grid gap-1 grid-cols-4 mt-2">
+				{#each suggestedAmounts as amt}
+					<button
+						type="button"
+						class="cursor-pointer px-3 py-1.5 rounded-full border hover:bg-gray-50"
+						class:selected={amount === amt}
+						on:click={() => selectSuggestedAmount(amt)}
+					>
+						€{amt}
+					</button>
+				{/each}
+			</div>
+		</section>
+
 		<!-- Form -->
 		<form
 			method="POST"
@@ -307,16 +476,28 @@
 				error = '';
 				return async ({ result, update }) => {
 					isSubmitting = false;
+
+					if (result.type === 'redirect') {
+						// Card path: server told us to go to Stripe Checkout
+						window.location.href = result.location;
+						return;
+					}
+
 					if (result.type === 'success') {
+						// Bank path: show bank details + QR
 						const data: any = result.data || {};
 						success = true;
 						error = '';
-						// QR uses DONATION only
-						qrCodeUrl = buildEpcQr(Number(data.amount), data.name);
+						qrCodeUrl = buildEpcQr(Number(data.amount), data.name, data.dob);
 						await update({ reset: false });
 						name = data.name ?? name;
 						dob = data.dob ?? dob;
 						amount = data.amount ?? amount;
+
+						await tick();
+						document
+							.getElementById('success')
+							?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 					} else if (result.type === 'failure') {
 						const data: any = result.data || {};
 						error = data?.error || 'Bitte Eingaben prüfen.';
@@ -399,7 +580,6 @@
 							bind:value={dob}
 							class="input"
 							min="1900-01-01"
-							max="2009-12-31"
 							required
 						/>
 					</div>
@@ -489,35 +669,9 @@
 					</div>
 
 					<button
-						type="button"
+						type="submit"
 						class="px-5 py-3 rounded-r-full bg-green-700 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
 						disabled={isSubmitting || !isValid}
-						on:click={async () => {
-							error = '';
-							const donation = amountEUR(amount);
-							if (paymentMethod === 'card') {
-								await payWithStripeRedirect(); // charges donation + fee
-							} else {
-								// Banküberweisung: submit to server action (DONATION only)
-								if (!name || !email || !dob || donation <= 0 || !zip || !city || !addressLine) {
-									error = 'Bitte fülle alle Pflichtfelder korrekt aus.';
-									return;
-								}
-								// ensure ISO alpha-2 is submitted in standard form submit as well
-								const hidden = document.querySelector<HTMLInputElement>('input[name="countryIso"]');
-								if (!hidden) {
-									const el = document.createElement('input');
-									el.type = 'hidden';
-									el.name = 'countryIso';
-									el.value = computeCampaiCountry(country);
-									document.querySelector('form')?.appendChild(el);
-								} else hidden.value = computeCampaiCountry(country);
-
-								isSubmitting = true;
-								const form = document.querySelector('form');
-								form?.requestSubmit();
-							}
-						}}
 					>
 						{isSubmitting
 							? 'Wird gesendet …'
