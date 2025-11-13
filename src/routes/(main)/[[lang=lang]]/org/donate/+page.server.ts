@@ -19,8 +19,7 @@ if (!STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION });
 
-// Stripe fee rule (server source of truth): 1.4% + €0.25
-const calcFeeCents = (donCents: number) => Math.round(donCents * 0.014 + 25);
+const calcFeeCents = (donCents: number) => Math.round(donCents * 0.015 + 25);
 
 // Generate a tiny debug id for correlating logs ↔ UI
 const debugId = () => Math.random().toString(36).slice(2, 8).toUpperCase();

@@ -153,9 +153,9 @@
 		return typeof a === 'number' ? Math.max(0, a) : 0;
 	}
 
-	// Stripe fees: ~1.4% + €0.25 (EU cards)
+	// Stripe fees: ~1.5% + €0.25 (EU cards)
 	function calculateCardTotals(donation: number) {
-		const fee = Math.round((donation * 0.014 + 0.25) * 100) / 100;
+		const fee = Math.round((donation * 0.015 + 0.25) * 100) / 100;
 		const net = Math.round((donation - fee) * 100) / 100; // what arrives if fees were NOT extra
 		const total = Math.round((donation + fee) * 100) / 100; // donor pays donation+fee when fees are added extra
 		return { fee, net, total };
