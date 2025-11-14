@@ -121,7 +121,7 @@
 			<h2 class="font-bold">{page.data.translations.footer2Title}</h2>
 			<p>{page.data.translations.footer2Text}</p>
 			<div class="mt-2 flex">
-				<a class="button block" href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg">
+				<a class="button block" href="https://klimadashboard.org/donate">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="icon icon-tabler icon-tabler-credit-card"
