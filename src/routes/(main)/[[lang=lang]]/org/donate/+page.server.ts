@@ -177,6 +177,7 @@ async function createCampaiDebtorAndReceipt(args: {
 		throw new Error('Campai debtor create failed');
 	}
 	const debtor = await debtorRes.json();
+	console.log(debtor);
 
 	// 2) Create donation receipt
 	const today = new Date();
@@ -197,12 +198,12 @@ async function createCampaiDebtorAndReceipt(args: {
 		title: 'Deine Spende | Klimadashboard',
 		intro,
 		account: debtor.account,
-		accoundName: debtor.name, // (if Campai expects "accountName", adjust here)
+		accountName: name,
 		receiptDate: toISO(today),
 		dueDate: toISO(due),
 		donationType: 'cash',
 		email,
-		sendMethod: sendEmail ? 'email' : 'none',
+		sendMethod: 'none',
 		positions: [
 			{
 				description: 'Spende an den Verein Klimadashboard',

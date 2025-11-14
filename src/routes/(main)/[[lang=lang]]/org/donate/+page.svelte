@@ -251,15 +251,9 @@
 		<div class="mt-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-green-900">
 			<p class="font-semibold">Danke für deine Spende! 💚</p>
 			<p class="text-sm mt-1">
-				Deine Zahlung über Stripe wurde erfolgreich abgeschlossen.
-				{#if stripeSessionId}
-					<span class="opacity-70">
-						(Referenz: <code class="font-mono text-xs">
-							{stripeSessionId.slice(-8)}
-						</code>)
-					</span>
-				{/if}
-				Du erhältst in Kürze eine Bestätigung per E-Mail. Bei Fragen:
+				Deine Zahlung über Stripe wurde erfolgreich abgeschlossen. Vielen Dank für deine
+				Unterstützung! Wenn du in Österreich ansässig bist, melden wir deine Spende automatisch ans
+				Finanzamt. Bei Fragen:
 				<a href="mailto:team@klimadashboard.org" class="underline">team@klimadashboard.org</a>.
 			</p>
 		</div>

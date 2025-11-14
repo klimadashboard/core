@@ -2,7 +2,6 @@
 	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import '@splidejs/svelte-splide/css/core';
 	import { page } from '$app/state';
-	console.log(page.data);
 </script>
 
 <section id="projects" class="my-4">
