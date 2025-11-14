@@ -224,10 +224,9 @@
 	<DonationStatusBar />
 
 	<p class="text-lg mt-4">
-		Fundierte Einordnung in der Klimapolitik ist wichtiger denn je. Mit deiner Spende hilfst du uns,
-		den Verein Klimadashboard langfristig auf ein stabiles Fundament zu stellen, zu noch mehr Themen
-		zugängliche Datenvisualisierungen zu erstellen, Arbeitsplätze zu schaffen und mehr Transparenz
-		in Klimadaten zu bringen.
+		Fundierte Klimapolitik braucht klare Fakten. Mit deiner Spende stärkst du den Verein
+		Klimadashboard, sicherst unsere Arbeit langfristig, ermöglichst neue Datenvisualisierungen,
+		schaffst Jobs und bringst mehr Transparenz in Klimadaten.
 	</p>
 
 	<p class="text-lg mt-4">
