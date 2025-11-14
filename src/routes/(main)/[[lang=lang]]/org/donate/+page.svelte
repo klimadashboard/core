@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Projects from './Projects.svelte';
+	import DonationStatusBar from '../DonationStatusBar.svelte';
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
 	import getDirectusInstance from '$lib/utils/directus';
@@ -220,28 +221,17 @@
 		in der Klimawende
 	</h1>
 
-	<!-- Progress -->
-	{#if raisedAmount > 0}
-		<div class="rounded-full overflow-hidden mt-4 bg-gray-100 h-10 w-full relative">
-			<div
-				class="absolute top-0 left-0 bottom-0 bg-green-600 rounded-full"
-				style="width: {(raisedAmount / goalAmount) * 100}%"
-			>
-				<p class="text-white absolute right-2 text-lg p-1.5">
-					<b>{formatNumber(Math.round(raisedAmount))}€</b> von {formatNumber(goalAmount)}€ gesammelt
-				</p>
-			</div>
-		</div>
-	{/if}
+	<DonationStatusBar />
 
 	<p class="text-lg mt-4">
-		Im Jahr 2026 [PLATZHALTER]. Mit deiner Spende hilfst du uns, den Verein Klimadashboard
-		langfristig auf ein stabiles Fundament zu stellen, Arbeitsplätze zu schaffen und mehr
-		Transparenz in Klimadaten zu bringen.
+		Fundierte Einordnung in der Klimapolitik ist wichtiger denn je. Mit deiner Spende hilfst du uns,
+		den Verein Klimadashboard langfristig auf ein stabiles Fundament zu stellen, zu noch mehr Themen
+		zugängliche Datenvisualisierungen zu erstellen, Arbeitsplätze zu schaffen und mehr Transparenz
+		in Klimadaten zu bringen.
 	</p>
 
 	<p class="text-lg mt-4">
-		In Österreich melden wir deine Spende automatisch ans Finanzamt und sie ist von deiner Steuer
+		In Österreich melden wir deine Spende automatisch ans Finanzamt, denn sie ist von deiner Steuer
 		absetzbar. Unsere Einnahmen & Ausgaben <a href="/finance" class="underline underline-offset-2"
 			>legen wir transparent offen</a
 		>.

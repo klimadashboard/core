@@ -1,18 +1,8 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { CAMP_API_KEY, CAMP_ORG_ID, CAMP_MANDATE_ID } from '$env/static/private';
-
-// ----- Config -----
-const ACCOUNT_NAME_MAP: Record<number, string> = {
-	40400: 'Spenden',
-	40900: 'Erlöse (Workshops, Leistungen,..)',
-	60200: 'Gehälter',
-	61000: 'Sozialversicherung',
-	59000: 'Externe Leistungen | Honorare',
-	68250: 'Rechtsanwalt & Steuerberatung',
-	68110: 'Server & Infrastruktur',
-	68550: 'Bankspesen & Kontoführung'
-};
+import getDirectusInstance from '$lib/utils/directus';
+import { readSingleton } from '@directus/sdk';
 
 // Pseudo accounts for grouping uncategorised postings
 const OTHER_INCOME_ID = 99998; // 5 digits to pass the filter
@@ -77,10 +67,10 @@ function isIncomeAccount(id: number | null | undefined): boolean {
 function isExpenseAccount(id: number | null | undefined): boolean {
 	return isFiveDigit(id) && id! >= 60000 && id! < 80000;
 }
-function isPnLAccount(id: number | null | undefined): boolean {
+function isPnLAccount(id: number | null | undefined, accounts: Record<number, string>): boolean {
 	// Count only P&L accounts (class 4 = income, class 6/7 = expenses) or anything explicitly mapped.
 	// This excludes bank (e.g., 18000), clearing/vendor (e.g., 14930, 700001), etc.
-	return isIncomeAccount(id) || isExpenseAccount(id) || (!!id && id in ACCOUNT_NAME_MAP);
+	return isIncomeAccount(id) || isExpenseAccount(id) || (!!id && id in accounts);
 }
 
 type Side = {
@@ -153,7 +143,11 @@ async function fetchPostingsForYear(fetchFn: typeof fetch, year: number): Promis
 }
 
 // ---------- Grouping ----------
-function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResult {
+function groupByAccount(
+	postings: CampaiPosting[],
+	years: number[],
+	accounts: Record<number, string>
+): GroupedResult {
 	const map = new Map<number, AccountGroup>();
 	const othersIncome: AccountGroup = {
 		accountId: OTHER_INCOME_ID,
@@ -190,12 +184,12 @@ function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResu
 			{
 				type: 'debit',
 				accId: p.debitAccount,
-				name: ACCOUNT_NAME_MAP[p.debitAccount ?? -1] ?? p.debitAccountName ?? null,
+				name: accounts[p.debitAccount ?? -1] ?? p.debitAccountName ?? null,
 				kind: isIncomeAccount(p.debitAccount)
 					? 'income'
 					: isExpenseAccount(p.debitAccount)
 						? 'expense'
-						: p.debitAccount && p.debitAccount in ACCOUNT_NAME_MAP
+						: p.debitAccount && p.debitAccount in accounts
 							? p.debitAccount! >= 40000 && p.debitAccount! < 50000
 								? 'income'
 								: 'expense'
@@ -204,12 +198,12 @@ function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResu
 			{
 				type: 'credit',
 				accId: p.creditAccount,
-				name: ACCOUNT_NAME_MAP[p.creditAccount ?? -1] ?? p.creditAccountName ?? null,
+				name: accounts[p.creditAccount ?? -1] ?? p.creditAccountName ?? null,
 				kind: isIncomeAccount(p.creditAccount)
 					? 'income'
 					: isExpenseAccount(p.creditAccount)
 						? 'expense'
-						: p.creditAccount && p.creditAccount in ACCOUNT_NAME_MAP
+						: p.creditAccount && p.creditAccount in accounts
 							? p.creditAccount! >= 40000 && p.creditAccount! < 50000
 								? 'income'
 								: 'expense'
@@ -218,7 +212,7 @@ function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResu
 		];
 
 		// Keep only P&L sides — this drops bank/clearing/vendor legs (e.g., 18000, 14930, 700001)
-		const pnlSides = sides.filter((s) => isPnLAccount(s.accId) && s.kind !== null);
+		const pnlSides = sides.filter((s) => isPnLAccount(s.accId, accounts) && s.kind !== null);
 
 		if (pnlSides.length === 0) {
 			// nothing P&L to record for this posting (e.g., bank <-> clearing only)
@@ -230,7 +224,7 @@ function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResu
 		// 1) A side whose account is explicitly mapped in ACCOUNT_NAME_MAP
 		// 2) If exactly one P&L side exists, take it
 		// 3) Otherwise prefer debit for expenses, credit for income
-		let chosen = pnlSides.find((s) => s.accId != null && s.accId in ACCOUNT_NAME_MAP);
+		let chosen = pnlSides.find((s) => s.accId != null && s.accId in accounts);
 		if (!chosen) {
 			if (pnlSides.length === 1) {
 				chosen = pnlSides[0];
@@ -244,7 +238,7 @@ function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResu
 		}
 
 		const accId = chosen.accId!;
-		const accName = ACCOUNT_NAME_MAP[accId] ?? chosen.name ?? null;
+		const accName = accounts[accId] ?? chosen.name ?? null;
 		const amt = signedBySide(chosen.kind!, chosen.type, base);
 
 		// Label: for income >= 1000 EUR use original text; else generic
@@ -271,7 +265,7 @@ function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResu
 			group.total += amount;
 		};
 
-		if (accId in ACCOUNT_NAME_MAP) {
+		if (accId in accounts) {
 			push(ensureGroup(accId, accName));
 		} else {
 			// Unmapped but still P&L → Others buckets
@@ -310,20 +304,37 @@ function groupByAccount(postings: CampaiPosting[], years: number[]): GroupedResu
 }
 
 export const load: PageServerLoad = async ({ fetch }) => {
+	let accounts: Record<number, string>;
+	let years: Record<number, string>;
+	let intro: string;
+
+	try {
+		const directus = getDirectusInstance(fetch);
+		const data = await directus.request(readSingleton('org_finance'));
+		accounts = Object.fromEntries(
+			data.accounts.map((a) => [parseInt(a.accountId), a.accountLabel])
+		);
+		years = data.years;
+		intro = data.intro;
+		console.log(data);
+		console.log(accounts);
+	} catch (e) {
+		const message = e instanceof Error ? e.message : 'Unknown error';
+		throw error(500, message);
+	}
+
 	try {
 		const currentYear = new Date().getUTCFullYear();
-		const years: number[] = [];
-		for (let y = 2025; y <= currentYear; y++) years.push(y);
 
 		// Fetch and group PER YEAR
 		const byYear: Record<number, GroupedResult> = {};
 		for (const y of years) {
-			const postings = await fetchPostingsForYear(fetch, y);
-			byYear[y] = groupByAccount(postings, [y]);
+			const postings = await fetchPostingsForYear(fetch, y.year);
+			byYear[y.year] = groupByAccount(postings, [y.year], accounts);
 		}
 
 		// Return per-year structure so frontend can iterate years then accounts
-		return { years, byYear };
+		return { years, byYear, accounts, intro };
 	} catch (e) {
 		const message = e instanceof Error ? e.message : 'Unknown error';
 		throw error(500, message);

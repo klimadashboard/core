@@ -59,7 +59,7 @@
 
 			<span class="ml-auto"></span>
 			<a
-				href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
+				href="https://klimadashboard.org/donate"
 				class=" button !bg-green-400 dark:!bg-green-600 hover:!bg-green-500 dark:hover:!bg-green-500 !hidden md:!block text-base"
 				target="_blank"
 			>

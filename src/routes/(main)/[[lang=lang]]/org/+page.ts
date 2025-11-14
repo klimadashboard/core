@@ -60,5 +60,10 @@ export const load: PageLoad = async ({ fetch }) => {
 		[]
 	);
 
-	return { team, media, events, moments, quotes };
+	const projects = await tryFetch(
+		directus.request(readItems('org_projects', {})) as Promise<any[]>,
+		[]
+	);
+
+	return { team, media, events, moments, quotes, projects };
 };

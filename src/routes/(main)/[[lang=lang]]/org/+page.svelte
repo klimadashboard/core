@@ -6,6 +6,7 @@
 	import dayjs from 'dayjs';
 	import { fade, fly } from 'svelte/transition';
 	import { page } from '$app/state';
+	import DonationStatusBar from './DonationStatusBar.svelte';
 
 	export let data;
 
@@ -48,18 +49,17 @@
 	let orgEvents: any[] = data.events ?? [];
 	let moments: any[] = data.moments ?? [];
 	let quotes: any[] = data.quotes ?? [];
+	let projects: any[] = data.projects ?? [];
 
 	/* ---------------- Client-side pagination ---------------- */
 	const MEDIA_LIMIT = 12;
 	const EVENTS_LIMIT = 10;
 	const MOMENTS_LIMIT = 12;
 
-	// page 0 already loaded by +page.ts; next client loads use offset = page * limit
 	let mediaPage = 1;
 	let eventsPage = 1;
 	let momentsPage = 1;
 
-	// Track whether there's likely more (true if last batch filled the limit)
 	let mediaHasMore = mediaReports.length === MEDIA_LIMIT;
 	let eventsHasMore = orgEvents.length === EVENTS_LIMIT;
 	let momentsHasMore = moments.length === MOMENTS_LIMIT;
@@ -118,6 +118,7 @@
 				title: string;
 				subtitle?: string;
 				href: string;
+				status: string;
 				tag: 'Project';
 		  }
 		| { key: string; type: 'moment'; title?: string; copyright?: string; image?: string }
@@ -183,35 +184,19 @@
 		};
 	}
 
-	/* Projects (seeded to center when "Alles") */
-	const projectCards: Card[] = [
-		{
-			key: 'project:at',
+	function projectToCard(item: any): Card {
+		return {
+			key: `project:${item.id}`,
 			type: 'project',
-			title: 'Klimadashboard.at',
-			subtitle: 'Daten & Fakten zur Klimakrise in Österreich',
-			href: 'https://klimadashboard.at',
+			title: item.title,
+			href: item.link,
+			subtitle: item.summary,
+			status: item.status,
 			tag: 'Project'
-		},
-		{
-			key: 'project:eu',
-			type: 'project',
-			title: 'EU Emission Tracker',
-			subtitle: 'Emissions past & future of all EU countries',
-			href: 'https://emission-tracker.eu',
-			tag: 'Project'
-		},
-		{
-			key: 'project:de',
-			type: 'project',
-			title: 'Klimadashboard.de',
-			subtitle: 'Dashboard zur Klimakrise in Deutschland',
-			href: 'https://klimadashboard.de',
-			tag: 'Project'
-		}
-	];
+		};
+	}
 
-	/* Base value cards (unchanged) */
+	/* Base value cards */
 	const baseCards: Card[] = [
 		{
 			key: 'value:data',
@@ -219,11 +204,7 @@
 			title: 'Open Data',
 			body: 'Wir machen Datensätze zugänglich – nachvollziehbar, prüfbar, wiederverwendbar.',
 			icon: 'cae5be62-3e2c-4bc4-9867-8013150a69d1',
-			tag: 'Value',
-			links: [
-				{ url: 'https://api.klimadashboard.org', label: 'API' },
-				{ url: 'https://klimadashboard.org/data', label: 'Data' }
-			]
+			tag: 'Value'
 		},
 		{
 			key: 'value:finance',
@@ -245,7 +226,7 @@
 		}
 	];
 
-	/* Weave helper */
+	/* Optional: mix base + team a bit at the top */
 	function weave<T>(a: T[], b: T[], ratioA = 1, ratioB = 2) {
 		const out: T[] = [];
 		let i = 0,
@@ -273,13 +254,12 @@
 		if (browser) window.removeEventListener('resize', recomputeCols);
 	});
 
-	/* -------- Per-type batches & stable flattening -------- */
+	/* -------- Per-type batches & flattening (media, moments) -------- */
 	let mediaBatches: Card[][] = [];
 	let momentsBatches: Card[][] = [];
 	let mediaInited = false;
 	let momentsInited = false;
 
-	// init SSR batch 0 with per-batch shuffle
 	$: if (!mediaInited && mediaReports.length) {
 		mediaBatches = [shuffle(compact(mediaReports.map(mediaToCard)))];
 		mediaInited = true;
@@ -289,23 +269,60 @@
 		momentsInited = true;
 	}
 
-	// derived flat arrays (old batches first, new batches appended)
 	$: mediaCards = mediaBatches.flat();
 	$: momentsCards = momentsBatches.flat();
 
-	/* -------- Other pools (deterministic, no global reshuffle) -------- */
+	/* -------- Other pools -------- */
 	$: teamCards = compact(team.map(memberToCard));
 	$: eventsCards = compact(orgEvents.map(eventToCard)); // keep API sort (date)
 	$: quoteCards = compact(quotes.map(quoteToCard));
+	$: projectCards = compact(projects.filter((d) => !d.featured).map(projectToCard));
 
-	// composition order: values+team → media → events → moments → quotes
-	$: restCards = weave(baseCards as Card[], teamCards as Card[], 1, 2)
-		.concat(mediaCards)
-		.concat(eventsCards)
-		.concat(momentsCards)
-		.concat(quoteCards);
+	/* -------- Compose and interleave by type -------- */
+	let allCardsBase: Card[] = [];
+	let allCardsMixed: Card[] = [];
 
-	$: allCards = (projectCards as Card[]).concat(restCards);
+	$: {
+		allCardsBase = []
+			.concat(weave(baseCards, teamCards, 1, 2))
+			.concat(mediaCards)
+			.concat(eventsCards)
+			.concat(momentsCards)
+			.concat(quoteCards)
+			.concat(projectCards);
+
+		// Fully recompute mixed order whenever content changes
+		allCardsMixed = interleaveByType(allCardsBase);
+	}
+
+	function interleaveByType(cards: Card[]): Card[] {
+		const groups: Record<string, Card[]> = {};
+		const types: string[] = [];
+
+		for (const c of cards) {
+			if (!groups[c.type]) {
+				groups[c.type] = [];
+				types.push(c.type);
+			}
+			groups[c.type].push(c);
+		}
+
+		const indices: Record<string, number> = {};
+		for (const t of types) indices[t] = 0;
+
+		const result: Card[] = [];
+		const total = cards.length;
+
+		while (result.length < total) {
+			const candidates = types.filter((t) => indices[t] < groups[t].length);
+			if (!candidates.length) break;
+
+			const t = candidates[Math.floor(Math.random() * candidates.length)];
+			result.push(groups[t][indices[t]++]); // preserve order within each type
+		}
+
+		return result;
+	}
 
 	/* Filtering */
 	const TABS = ['Alles', 'Team', 'Projekte', 'Events', 'Presse', 'Momente'] as const;
@@ -322,79 +339,23 @@
 		return true;
 	}
 
-	/* ===== Stable, incremental columnizer (key-aware) ===== */
-	function centerIndices(n: number, k: number) {
-		const idx: number[] = [];
-		const mid = Math.floor((n - 1) / 2);
-		if (n <= 2) return [0, Math.min(1, n - 1), Math.min(1, n - 1)].slice(0, k);
-		const order = [mid - 1, mid, mid + 1, mid - 2, mid + 2, mid - 3, mid + 3];
-		for (const o of order) if (o >= 0 && o < n && idx.length < k) idx.push(o);
-		while (idx.length < k) idx.push(idx[idx.length - 1] ?? 0);
-		return idx;
-	}
-
-	// Internal layout state
+	/* ===== Column layout (simple) ===== */
 	let columns: Card[][] = [];
-	let layoutCursor = 0; // base column for distribution
-	let placedCount = 0; // how many tail items have been placed (for round-robin)
-	let placedKeys = new Set<string>(); // keys already in columns
-	let layoutKey = ''; // activeTab|numCols key
 
-	function rebuildLayout(tail: Card[], heads: Card[]) {
-		columns = Array.from({ length: numCols }, () => []);
-
-		// place heads centered
-		const targets = centerIndices(numCols, heads.length);
-		targets.forEach((colIdx, i) => {
-			if (heads[i]) columns[colIdx].push(heads[i]);
-		});
-
-		// seed cursor and distribute full tail
-		layoutCursor = targets[0] ?? 0;
-		for (let i = 0; i < tail.length; i++) {
-			const col = (layoutCursor + i) % numCols;
-			columns[col].push(tail[i]);
-		}
-
-		// reset placement bookkeeping
-		placedCount = tail.length;
-		placedKeys = new Set(tail.map((c) => c.key));
-
-		// trigger Svelte update
-		columns = columns;
-	}
-
-	function appendToLayout(newItems: Card[]) {
-		if (!newItems.length) return;
-		for (let i = 0; i < newItems.length; i++) {
-			const col = (layoutCursor + placedCount + i) % numCols;
-			columns[col].push(newItems[i]);
-			placedKeys.add(newItems[i].key);
-		}
-		placedCount += newItems.length;
-
-		// trigger Svelte update
-		columns = columns;
-	}
-
-	// Reactive driver: rebuild on tab/column changes; otherwise append only unseen keys
 	$: {
-		const newKey = `${activeTab}|${numCols}`;
-		const heads = activeTab === 'Alles' ? (projectCards as Card[]) : ([] as Card[]);
-		const tailNow = (
-			activeTab === 'Alles' ? restCards : allCards.filter((c) => matchesActiveTab(c, activeTab))
-		).slice(); // snapshot
+		const source = allCardsMixed.length ? allCardsMixed : allCardsBase;
 
-		if (newKey !== layoutKey) {
-			layoutKey = newKey;
-			rebuildLayout(tailNow, heads);
-		} else {
-			const delta = tailNow.filter((c) => !placedKeys.has(c.key));
-			appendToLayout(delta);
-		}
+		const filtered =
+			activeTab === 'Alles' ? source : source.filter((c) => matchesActiveTab(c, activeTab));
+
+		const cols: Card[][] = Array.from({ length: numCols }, () => []);
+		filtered.forEach((card, i) => {
+			cols[i % numCols].push(card);
+		});
+		columns = cols;
 	}
 
-	/* -------- Load more (append batches; shuffle inside batch only) -------- */
+	/* -------- Load more (append batches; batches shuffled internally) -------- */
 	let isLoadingMore = false;
 
 	async function loadMediaPage(pageNum = mediaPage) {
@@ -434,7 +395,7 @@
 			)) as any[];
 			const have = new Set(orgEvents.map((e) => e.id));
 			const add = arr.filter((x) => !have.has(x.id));
-			if (add.length) orgEvents = [...orgEvents, ...add]; // deterministic
+			if (add.length) orgEvents = [...orgEvents, ...add];
 			eventsHasMore = arr.length === EVENTS_LIMIT;
 		} catch (e) {
 			console.error('[events loadMore]', e);
@@ -453,11 +414,9 @@
 					sort: ['-id']
 				})
 			)) as any[];
-
 			const have = new Set(momentsCards.map((c) => c.key));
 			const batch = compact(arr.map(momentToCard)).filter((c) => !have.has(c.key));
 			if (batch.length) momentsBatches = [...momentsBatches, shuffle(batch)];
-
 			momentsHasMore = arr.length === MOMENTS_LIMIT;
 		} catch (e) {
 			console.error('[moments loadMore]', e);
@@ -533,13 +492,22 @@
 	<!-- Header / Intro -->
 	<div class="max-w-3xl mx-auto mt-16 px-4">
 		<h1 class="text-4xl md:text-5xl text-center leading-none hyphens-auto text-balance">
-			Wir machen Klimawissenschaft zugänglich. Für alle.
+			Wir machen mit Daten & Fakten die Klimawende greifbar.
 		</h1>
 		<p class="mt-4 text-lg md:text-xl text-center opacity-80 leading-snug">
-			Unsere interaktiven Dashboards schaffen Einordnung und Beschleunigung für die Reise zur
-			Klimaneutralität in Österreich, Deutschland und der EU. TV-Nachrichten, Zeitungen,
-			Schulbücher, TED-Talks und wissenschaftliche Berichte verwenden unsere Visualisierungen.
+			Unsere interaktiven Dashboards zeigen Herausforderungen, Auswirkungen und Lösungen. Aktuell,
+			regional und zugänglich für alle. Nachrichtensendungen, Hochschulvorträge, TED-Talks,
+			Zeitungen und Schulbücher verwenden unsere Visualisierungen.
 		</p>
+
+		<div class="grid md:grid-cols-3 gap-1 mt-4">
+			{#each data.projects.filter((d) => d.featured) as project}
+				<a href={project.link} class="bg-gradient-green rounded-2xl p-3">
+					<h3 class="text-2xl">{project.title}</h3>
+					<p class="leading-tight text-lg">{project.summary}</p>
+				</a>
+			{/each}
+		</div>
 	</div>
 
 	<section class="mt-8">
@@ -644,9 +612,38 @@
 											<span class="text-sm">{card.location}</span>
 										</a>
 									{:else if card.type === 'project'}
-										<a href={card.href} class="block rounded-2xl bg-gradient-green p-3">
+										<a
+											href={card.href}
+											class="block rounded-2xl {card.status == 'done'
+												? 'bg-[#723145]'
+												: 'bg-[#313B72]'} p-3 text-white relative"
+										>
+											{#if card.href}
+												<div class="absolute top-3 right-3 text-white">
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="24"
+														height="24"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														class="w-5 h-5"
+														><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
+															d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"
+														/><path d="M11 13l9 -9" /><path d="M15 4h5v5" /></svg
+													>
+												</div>
+											{/if}
+											<p class="uppercase text-sm tracking-wide font-bold text-white">
+												{data.translations[card.type]} | {data.translations[card.status]}
+											</p>
 											<h3 class="mt-24 text-2xl leading-[1.1em] hyphens-auto">{card.title}</h3>
-											{#if card.subtitle}<p class="text-lg leading-tight">{card.subtitle}</p>{/if}
+											{#if card.subtitle}<p class="mt-1 text-base leading-tight hyphens-auto">
+													{card.subtitle}
+												</p>{/if}
 										</a>
 									{:else if card.type === 'moment'}
 										<div
