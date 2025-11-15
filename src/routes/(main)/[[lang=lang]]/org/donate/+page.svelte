@@ -431,8 +431,6 @@
 			<p class="text-base mt-2 text-center">
 				{#if amount < 20}
 					Damit die Verwaltungskosten im Rahmen bleiben, bitten wir um eine Mindestspende von 20€.
-				{:else}
-					Danke! Mit {amountEUR(amount)}€ können wir Server & Projekte finanzieren.
 				{/if}
 			</p>
 
@@ -632,18 +630,20 @@
 
 			<!-- Sticky bottom CTA -->
 			<div
-				class="fixed left-1/2 -translate-x-1/2 bottom-4 bg-white/90 border border-current/20 backdrop-blur shadow-2xl z-50 rounded-full"
+				class="fixed left-1/2 -translate-x-1/2 bottom-4 bg-white/90 border border-current/20 backdrop-blur shadow-2xl z-50 rounded-full w-max max-w-[90vw]"
 			>
 				<div class="flex items-center h-full">
-					<div class="px-3 py-1 text-sm">
+					<div class="px-3 py-1 text-xs sm:text-sm">
 						{#if amount}
 							{@const donation = amountEUR(amount)}
 							{@const fee = paymentMethod === 'card' ? calculateCardTotals(donation).fee : 0}
 							{@const total =
 								paymentMethod === 'card' ? calculateCardTotals(donation).total : donation}
-							<p class="tabular-nums leading-tight flex items-center">
+							<p
+								class="tabular-nums leading-tight flex items-center flex-col sm:flex-row text-center"
+							>
 								€{donation.toFixed(2)} Spende + €{fee.toFixed(2)} Gebühren
-								<span class="inline-block h-4 w-[1px] bg-black mx-1"></span>
+								<span class="sm:inline-block h-4 w-[1px] bg-black mx-1 hidden"></span>
 								<b> €{total.toFixed(2)} Gesamt</b>
 							</p>
 						{:else}
@@ -653,7 +653,7 @@
 
 					<button
 						type="submit"
-						class="px-5 py-3 rounded-r-full bg-green-700 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+						class="px-5 py-3 rounded-r-full bg-green-700 text-white font-bold disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed leading-tight"
 						disabled={isSubmitting || !isValid}
 					>
 						{isSubmitting

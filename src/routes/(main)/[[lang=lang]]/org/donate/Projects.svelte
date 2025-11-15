@@ -10,6 +10,11 @@
 		options={{
 			type: 'slide',
 			perPage: 2,
+			breakpoints: {
+				640: {
+					perPage: 1
+				}
+			},
 			gap: '0.25rem',
 			autoplay: true,
 			perMove: 1,

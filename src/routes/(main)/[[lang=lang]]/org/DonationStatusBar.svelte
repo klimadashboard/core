@@ -31,7 +31,9 @@
 				class="absolute top-0 left-0 bottom-0 bg-green-600 rounded-full"
 				style="width: {(raisedAmount / goalAmount) * 100}%"
 			>
-				<p class="text-white absolute right-2 text-lg p-1.5">
+				<p
+					class="text-white absolute left-3 md:left-auto right-2 md:text-lg text-sm leading-none top-1/2 -translate-y-1/2"
+				>
 					<b>{formatNumber(Math.round(raisedAmount))}€</b> von {formatNumber(goalAmount)}€ gesammelt
 				</p>
 			</div>
