@@ -334,7 +334,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		}
 
 		// Return per-year structure so frontend can iterate years then accounts
-		return { years, byYear, accounts, intro };
+		return { years, byYear, accounts, intro, content: { title: 'Open Finance' } };
 	} catch (e) {
 		const message = e instanceof Error ? e.message : 'Unknown error';
 		throw error(500, message);

@@ -1,7 +1,18 @@
 <script>
 	import dayjs from 'dayjs';
-	import formatNumber from '$lib/stores/formatNumber';
 	export let data;
+
+	const formatAmount = (value) => {
+		const sign = value < 0 ? '-' : '';
+		const abs = Math.abs(value);
+
+		const formatted = abs
+			.toFixed(2) // always 2 decimals
+			.replace('.', ',') // decimal comma
+			.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // thousands dot
+
+		return `${sign}${formatted}€`;
+	};
 </script>
 
 <div class="max-w-3xl mx-auto p-4 py-16">
@@ -30,24 +41,25 @@
 									<div class="flex">
 										<p>{acc.accountName}</p>
 										<p
-											class="ml-auto text-right {acc.total > 0 ? 'text-green-600' : 'text-red-600'}"
+											class="tabular-nums ml-auto text-right {acc.total > 0
+												? 'text-green-600'
+												: 'text-red-600'}"
 										>
-											{formatNumber(acc.total)}€
+											{formatAmount(acc.total)}
 										</p>
 									</div>
 								</summary>
 
 								<ul class="tabular-nums mt-2 opacity-80">
 									{#each acc.items as it}
-										<li class="flex even:bg-black/5">
-											<p class="w-[12ch]">{dayjs(it.date).format('DD.MM.YYYY')}</p>
-											<p>{it.label}</p>
+										<li class="flex even:bg-black/5 leading-snug py-1 text-balance">
+											<p class="">{dayjs(it.date).format('DD.MM.YYYY')} | {it.label}</p>
 											<p
-												class="ml-auto text-right {it.amount > 0
+												class="tabular-nums ml-auto text-right {it.amount > 0
 													? 'text-green-600'
 													: 'text-red-600'}"
 											>
-												{formatNumber(it.amount)}€
+												{formatAmount(it.amount)}
 											</p>
 										</li>
 									{/each}

@@ -104,7 +104,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 
 		const balances = await res.json();
 		const donationAccount = balances.accountBalances?.find((b: any) => b.account === 40400) ?? null;
-		return { projects, donationAccount, dbg };
+		return { projects, donationAccount, dbg, content: { title: 'Spenden' } };
 	} catch (err: any) {
 		console.error(`[${dbg}] load(): unexpected error`, err);
 		return { projects: [], donationAccount: null, error: 'Unexpected load error', dbg };

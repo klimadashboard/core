@@ -65,5 +65,13 @@ export const load: PageLoad = async ({ fetch }) => {
 		[]
 	);
 
-	return { team, media, events, moments, quotes, projects };
+	return {
+		team,
+		media,
+		events,
+		moments,
+		quotes,
+		projects,
+		content: { title: 'Startseite' }
+	};
 };
