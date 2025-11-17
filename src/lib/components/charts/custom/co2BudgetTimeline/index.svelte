@@ -6,6 +6,8 @@
 	import { fade, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 
+	export let v;
+
 	let index, offset, progress;
 
 	let historicalData = [];
@@ -56,52 +58,53 @@
 		}, 10);
 	});
 
-	$: if (currentYear > 2022) {
+	$: if (currentYear > 2023) {
 		clearInterval(timer);
 	}
 
 	const budgets = [
 		{
 			year: 2016,
-			budget: 5012,
-			offset: 0.25
+			budget: 4830,
+			offset: 0.1
 		},
 		{
 			year: 2017,
-			budget: 4231,
-			offset: 0.28
+			budget: 4031,
+			offset: 0.15
 		},
 		{
 			year: 2018,
-			budget: 3460,
-			offset: 0.3
+			budget: 3251,
+			offset: 0.18
 		},
 		{
 			year: 2019,
-			budget: 2707,
-			offset: 0.32
+			budget: 2417,
+			offset: 0.22
 		},
 		{
 			year: 2020,
-			budget: 2007,
-			offset: 0.34
+			budget: 1644,
+			offset: 0.27
 		},
 		{
 			year: 2021,
-			budget: 1361,
-			offset: 0.36
+			budget: 927,
+			offset: 0.31
 		},
 		{
 			year: 2022,
-			budget: 687,
-			offset: 0.38
+			budget: 195,
+			offset: 0.35
 		},
 		{
 			year: 2023,
-			budget: 19,
-			offset: 0.4
+			budget: -541,
+			offset: 0.38
 		},
-		{ year: 2024, budget: -575, offset: 0.47 }
+		{ year: 2024, budget: -1195, offset: 0.41 },
+		{ year: 2025, budget: -1810, offset: 0.45 }
 	];
 
 	let selectedBudgetYear = budgets[0];
@@ -115,44 +118,42 @@
 	const sources = [
 		{
 			index: 2,
-			label:
-				"Daten: Gütschow et al. PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
+			label: 'Gütschow et al. (2025): PRIMAP / UBA (2025)'
 		},
 		{
 			index: 3,
-			label:
-				"Daten: Gütschow et al. PRIMAP / <a href='https://www.umweltbundesamt.de/presse/pressemitteilungen/klimaemissionen-sinken-2023-um-101-prozent'>UBA</a>"
+			label: 'Gütschow et al. (2025): PRIMAP / UBA (2025)'
 		},
 		{
 			index: 4,
-			label: 'Daten: SRU (1,5 Grad, 67%)'
+			label: 'SRU (2025): 1,5 Grad, 67%'
 		},
 		{
 			index: 5,
-			label: 'Daten: SRU (1,5 Grad, 67%)'
+			label: 'SRU (2025): 1,5 Grad, 67%'
 		},
 		{
 			index: 6,
-			label: 'Daten: SRU (1,5 Grad, 50%)'
-		},
-		{
-			index: 8,
-			label: 'Daten: SRU (1,75 Grad, 67%)'
+			label: 'SRU (2025): 1,5 Grad, 50%'
 		},
 		{
 			index: 9,
-			label: 'Daten: SRU (1,75 Grad, 67%)'
+			label: 'SRU (2025): 1,75 Grad, 67%'
 		},
 		{
 			index: 10,
-			label: 'Daten: SRU (1,75 Grad, 67%)'
+			label: 'SRU (2025): 1,75 Grad, 67%'
+		},
+		{
+			index: 11,
+			label: 'SRU (2025): 1,75 Grad, 67%'
 		}
 	];
 
 	$: illustrationPosition = progress > 0 ? progress * -3500 : 0;
 </script>
 
-<div class="-mt-40 text-black">
+<div class="-mt-52 text-black">
 	<Scroller bind:index bind:offset bind:progress>
 		<div
 			slot="background"
@@ -213,8 +214,8 @@
 						ausgestoßen.
 					</h1>
 					<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 5000 }}>
-						Deutschlands faires CO<sub>2</sub>-Budget für die Einhaltung der
-						<nobr>1,5 °C-Grenze</nobr> wurde jetzt überschritten.
+						Deutschlands hat sein CO<sub>2</sub>-Budget für die Einhaltung der
+						<nobr>1,5-Grad-Grenze</nobr> überschritten.
 					</h2>
 					<div in:fade={{ delay: 5200 }} class="flex mt-4">
 						<p class="font-bold leading-tight">Scrolle, um mehr zu erfahren</p>
@@ -247,7 +248,7 @@
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
 						Deutschland stößt seit dem 18. Jahrhundert CO<sub>2</sub> aus. Der Höhepunkt wurde 1979
-						erreicht. Seitdem sind die CO<sub>2</sub>-Emissionen gesunken, zuletzt 2023 um -11%
+						erreicht. Seitdem sind die CO<sub>2</sub>-Emissionen gesunken, zuletzt 2024 um -6%
 						gegenüber dem Vorjahr.
 					</h2>
 				</div>
@@ -257,7 +258,11 @@
 					<h2 class="text-lg">
 						2015 wurde das Pariser Klimaabkommen verabschiedet. Darin haben sich 197 Staaten – auch
 						Deutschland – völkerrechtlich bindend geeinigt, die Erderhitzung auf 1,5 Grad bzw. weit
-						unter 2 Grad zu begrenzen.
+						unter 2 Grad zu begrenzen.<br />
+						2025 stellte der Internationale Gerichtshof in Den Haag in seinem Gutachten fest, dass die
+						Begrenzung der Erderhitzung auf <b>höchstens 1,5 Grad</b> im Vergleich zur
+						vorindustriellen Zeit als <b>primäres Temperaturziel</b> aus dem Pariser Klimaabkommen zu
+						verstehen ist.
 					</h2>
 				</div>
 			</section>
@@ -265,12 +270,14 @@
 				<div class="co2b-section-background">
 					<p class="text-lg">
 						Auf Grundlage des weltweit verbleibenden CO<sub>2</sub>-Budgets für die 1,5-Grad-Grenze
-						hat der Sachverständigenrat für Umweltfragen (SRU) den fairen Anteil Deutschlands
-						berechnet.
+						hat der Sachverständigenrat für Umweltfragen (SRU) ein maximales CO<sub>2</sub>-Budget
+						für Deutschland berechnet. Hierfür verwendete der SRU den Anteil Deutschlands an der
+						Weltbevölkerung im Jahr 2016. Wieso der SRU den Pro-Kopf-Ansatz gewählt hat, erfährst du
+						in der Methodik am Ende der Seite.
 					</p>
 					<p class="text-lg my-2">
 						Ab 2016 durfte Deutschland demnach maximal <strong class="bg-economy/50 p-1"
-							>5.012 Millionen Tonnen CO<sub>2</sub></strong
+							>4.830 Millionen Tonnen CO<sub>2</sub></strong
 						> ausstoßen.
 					</p>
 				</div>
@@ -289,7 +296,7 @@
 					{#if selectedBudgetYear == budgets[budgets.length - 1]}
 						<div class="text-energy transition">
 							<p class="text-lg mt-4">
-								Anfang 2023 hat Deutschland sein faires CO<sub>2</sub>-Budget überschritten.
+								Mitte 2022 hat Deutschland sein CO<sub>2</sub>-Budget überschritten.
 							</p>
 							<p>bei 67% Wahrscheinlichkeit, dass das 1,5-Grad-Limit eingehalten wird</p>
 						</div>
@@ -299,8 +306,9 @@
 			<section>
 				<div class="co2b-section-background">
 					<p class="text-lg">
-						Wenn man das Risiko erhöht und einen Münzwurf über die Einhaltung des 1,5-Grad-Limits
-						entscheiden lässt, vergrößert sich Deutschlands CO<sub>2</sub>-Budget etwas.
+						Wenn man die Eintrittswahrscheinlichkeit für 1,5 Grad von 67% auf 50% senkt, vergrößert
+						sich Deutschlands CO<sub>2</sub>-Budget etwas.
+						<b>Aber auch dieses Budget hat Deutschland bereits aufgebraucht.</b>
 					</p>
 					<div class="grid grid-cols-2 my-4 gap-4 leading-snug">
 						<div class="text-energy">
@@ -309,114 +317,109 @@
 								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
-							<p class="text-6xl font-light tabular-nums">{formatNumber(-575)}</p>
-							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2024</p>
+							<p class="text-6xl font-light tabular-nums">{formatNumber(-1810)}</p>
+							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2025</p>
 						</div>
-						<div>
+						<div class="text-[#A61E7E]">
 							<h3 class="font-bold">
-								CO<sub>2</sub>-Budget bei <br /><span class="bg-industry text-white px-0.5"
+								CO<sub>2</sub>-Budget bei <br /><span class="bg-[#A61E7E] text-white px-0.5"
 									>50%</span
 								>
 								Wahrscheinlichkeit,<br />das 1,5-Grad-Limit einzuhalten
 							</h3>
 
-							<p class="text-6xl font-light tabular-nums">{formatNumber(125)}</p>
-							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2024</p>
+							<p class="text-6xl font-light tabular-nums">{formatNumber(-1280)}</p>
+							<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2025</p>
 						</div>
 					</div>
 				</div>
 				<div class="co2b-section-background mt-8">
 					<p class="text-lg">
-						Auch das risikoreichere CO<sub>2</sub>-Budget (50%) haben wir im Frühling 2024 bereits
+						Auch das risikoreichere CO<sub>2</sub>-Budget (50%) haben wir bereits Ende 2022
 						aufgebraucht.
-						<span class="text-energy"
-							>Damit hat Deutschland seine fairen 1,5-Grad-Budgets überschritten.</span
+						<span class="text-[#A61E7E]"
+							>Damit hat Deutschland seine 1,5-Grad-Budgets überschritten.</span
 						>
 					</p>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background text-lg space-y-2 mb-80 mt-80 md:mt-0">
-					<h2 class="text-2xl">Was bedeutet das für Deutschland?</h2>
-					<p>
-						Mit der Überschreitung des nationalen CO<sub>2</sub>-Budgets ist es wichtig,
-						<strong>Deutschlands Rolle in der Welt</strong>
-						kritisch zu beleuchten. Als Land mit besonderer
-						<strong>historischer Verantwortung</strong> sollte sich Deutschland und die gesamte
-						Europäische Union klar zu ihrer Verantwortung für Schäden und Verluste bekennen. Im
-						Sinne der Klimagerechtigkeit sollte eine
-						<strong>Erhöhung internationaler Klimafinanzierung</strong> angedacht werden. Zukünftig
-						könnte sich auch das Völkerrecht weiterentwickeln, wodurch eine Überschreitung des CO<sub
-							>2</sub
-						>-Budgets zum Haftungsrisiko wird.
-					</p>
-					<p>
-						Kontrovers diskutiert werden <strong>alternative Mechanismen</strong>, um das nationale
-						CO<sub>2</sub>-Budget noch einzuhalten. Durch technologische Lösungen wie Carbon Capture
-						and Storage (CCS) sollen Negativemissionen ermöglicht werden, also mehr CO<sub>2</sub>
-						gespeichert als ausgestoßen werden. Diese Technologien haben allerdings noch keinen Reifegrad
-						erreicht, der großflächige Anwendung sinnvoll machen würde. Ein anderer Vorschlag ist, Emissionsminderungen
-						im Ausland quasi als Ausgleich für Deutschlands Überschreitungen zu finanzieren. Oft dienen
-						diese Argumente als
-						<strong>Ablenkung von wirksamen und bereits umsetzbaren Klimaschutzmaßnahmen</strong> und
-						widersprechen den Grundsätzen der Klimagerechtigkeit.
-					</p>
-					<p>
-						Die Überschreitung des deutschen 1,5 °C-Budgets bedeutet nicht, dass alles verloren
-						wäre. Global ist das 1,5 °C-Budget noch nicht überschritten. Es ist deswegen umso
-						wichtiger, dass der Klimaschutz auf nationaler und internationaler Ebene weiter
-						vorangetrieben wird. Denn: <strong>mit jedem Zehntel Grad</strong> wird die Anpassung an
-						die Erhitzung zunehmend schwieriger, die Anzahl der überschrittenen Kipppunkte steigt und
-						die unbewohnbaren Bereiche des Planeten (durch Meeresspiegelanstieg, Dürre oder andere Faktoren)
-						werden größer.
-					</p>
+					<h2 class="text-2xl">{@html v['5_title'].replace('<p>', '').replace('</p>', '')}</h2>
+					{@html v['5_text']}
+				</div>
+			</section>
+			<section>
+				<div class="co2b-section-background text-lg mb-80 mt-80 md:mt-0">
+					{@html v['6_text']}
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Wenn 1,75 Grad statt 1,5 Grad bis 2100 nicht überschritten werden sollen, ist das
-						deutsche CO<sub>2</sub>-Budget größer, die Auswirkungen der globalen Erhitzung aber auch
-						schwerwiegender.
+						Deshalb hat der SRU auch ein maximales CO<sub>2</sub>-Budget für 1,75 Grad Erderhitzung
+						berechnet. Das Budget ist demnach zwar größer, die Auswirkungen der globalen Erhitzung
+						aber auch verheerender.
 					</h2>
 					<div class="my-4 leading-tight">
 						<h3 class="font-bold">
 							1,75-Grad-Budget bei <br /><span class="bg-industry text-white p-0.5">67%</span> Wahrscheinlichkeit
 						</h3>
 
-						<p class="text-6xl font-light tabular-nums">{formatNumber(3859)}</p>
-						<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2024</p>
+						<p class="text-6xl font-light tabular-nums">{formatNumber(2520)}</p>
+						<p>Millionen Tonnen CO<sub>2</sub> <br />verbleibend ab 2025</p>
 					</div>
 					<h2 class="text-lg">
-						Wenn Deutschland weiterhin so viel emittiert wie im Jahr 2023 (594 Millionen Tonnen CO<sub
+						Wenn Deutschland weiterhin so viel emittiert wie im Jahr 2024 (615 Millionen Tonnen CO<sub
 							>2</sub
 						>) hätten wir dieses Budget
-						<strong class="bg-economy/50 p-1">im Jahr 2030 aufgebraucht</strong>.
+						<strong class="bg-economy/50 p-1">im Jahr 2029 aufgebraucht</strong>.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<h2 class="text-lg">
-						Reduzieren wir jedes Jahr dieselbe Menge an CO<sub>2</sub>, nämlich 46 Millionen Tonnen,
-						ist das Budget
-						<strong class="bg-economy/50 p-1">im Jahr 2036</strong> aufgebraucht.
+						Das Klimaschutzgesetz sieht vor, 2045 Klimaneutralität zu erreichen. Das Budget für 1,75
+						Grad ist bei linearer Emissionsreduktion jedoch nicht 2045, sondern schon
+						<strong class="bg-economy/50 p-1">im Jahr 2033</strong> aufgebraucht.
 					</h2>
 				</div>
 			</section>
 			<section>
 				<div class="co2b-section-background">
 					<p class="text-lg">
-						Die Bundesregierung plant jedoch, erst 2045 Klimaneutralität zu erreichen. Somit müssten
-						die CO<sub>2</sub>-Emissionen
-						<strong class="bg-economy/50 p-1">jedes Jahr bis 2045 um 12,7%</strong>
+						Um das 2045-Ziel der Bundesregierung einzuhalten und das Budget bis dahin zu strecken,
+						müssten die CO<sub>2</sub>-Emissionen
+						<strong class="bg-economy/50 p-1">jedes Jahr bis 2045 um 19,4%</strong>
 						im Vergleich zum Vorjahr sinken.
 					</p>
 					<p class="text-lg mt-4">
-						Seit 1990 gab es keinen so starken Emissionsrückgang. 2023 gab es einen Rückgang von
-						11,1%, ein Rekordwert in den vergangenen Jahrzehnten. Es sind also mehr politische
-						Maßnahmen notwendig, um auf einen Pfad zu kommen, der mit dem 1,75-Grad-Budget
-						kompatibel ist.
+						Seit 1945 gab es keinen so starken Emissionsrückgang. 2024 sanken die Emissionen um
+						5,9%. Es sind also deutlich mehr politische Maßnahmen notwendig, um auf einen Pfad zu
+						kommen, der mit dem 1,75-Grad-Budget kompatibel ist.
+					</p>
+				</div>
+			</section>
+			<section>
+				<div class="co2b-section-background text-lg">
+					<h2 class="text-2xl">{v['7_title'].replace('<p>', '').replace('</p>', '')}</h2>
+					{@html v['7_text']}
+					<p class="font-bold leading-tight mt-4 text-sm flex">
+						{@html v['7_text_small']}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="24"
+							height="24"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="inline -translate-y-1"
+							><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M6 9l6 6l6 -6" /></svg
+						>
 					</p>
 				</div>
 			</section>
