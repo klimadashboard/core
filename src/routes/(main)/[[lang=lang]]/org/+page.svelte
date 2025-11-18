@@ -273,7 +273,7 @@
 	$: momentsCards = momentsBatches.flat();
 
 	/* -------- Other pools -------- */
-	$: teamCards = compact(team.map(memberToCard));
+	$: teamCards = shuffle(compact(team.map(memberToCard)));
 	$: eventsCards = compact(orgEvents.map(eventToCard)); // keep API sort (date)
 	$: quoteCards = compact(quotes.map(quoteToCard));
 	$: projectCards = compact(projects.filter((d) => !d.featured).map(projectToCard));
@@ -574,9 +574,9 @@
 										<a
 											href={card.href}
 											target="_blank"
-											class="flex flex-col min-h-[20em] rounded-2xl bg-gray-800 text-white p-3 border border-current/5"
+											class="flex flex-col min-h-[16em] rounded-2xl bg-gray-800 text-white p-3 border border-current/5"
 										>
-											<p class="text-sm tracking-wider uppercase font-bold">Medienbericht</p>
+											<p class="text-sm tracking-wider uppercase font-bold mb-8">Medienbericht</p>
 											<div class="mt-auto mb-2">
 												{#if card.medium?.logo}
 													<img
@@ -614,7 +614,7 @@
 									{:else if card.type === 'project'}
 										<a
 											href={card.href}
-											class="block rounded-2xl {card.status == 'done'
+											class="group block rounded-2xl {card.status == 'done'
 												? 'bg-[#723145]'
 												: 'bg-[#313B72]'} p-3 text-white relative"
 										>
@@ -641,7 +641,9 @@
 												{data.translations[card.type]} | {data.translations[card.status]}
 											</p>
 											<h3 class="mt-24 text-2xl leading-[1.1em] hyphens-auto">{card.title}</h3>
-											{#if card.subtitle}<p class="mt-1 text-base leading-tight hyphens-auto">
+											{#if card.subtitle}<p
+													class="mt-1 text-base leading-tight hyphens-auto hidden group-hover:block"
+												>
 													{card.subtitle}
 												</p>{/if}
 										</a>
