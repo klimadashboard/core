@@ -19,8 +19,14 @@ if (!STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION });
 
-const calcFeeCents = (donCents: number) => Math.round(donCents * 0.015 + 25);
-
+const calcFeeCents = (donCents: number) => {
+	const rate = 0.015; // 1.5%
+	const fixed = 25; // 0.25 €
+	// raw fee so that net ≈ donCents
+	const raw = (donCents + fixed) / (1 - rate) - donCents;
+	// Round up so you never end up with *less* than the donation
+	return Math.ceil(raw);
+};
 // Generate a tiny debug id for correlating logs ↔ UI
 const debugId = () => Math.random().toString(36).slice(2, 8).toUpperCase();
 
