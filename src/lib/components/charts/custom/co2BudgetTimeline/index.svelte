@@ -213,8 +213,8 @@
 						>
 						ausgestoßen.
 					</h1>
-					<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 5000 }}>
-						Deutschlands hat sein CO<sub>2</sub>-Budget für die Einhaltung der
+					<h2 class="text-2xl md:text-3xl text-energy" in:fade={{ delay: 4000 }}>
+						Deutschland hat sein CO<sub>2</sub>-Budget für die Einhaltung der
 						<nobr>1,5-Grad-Grenze</nobr> überschritten.
 					</h2>
 					<div in:fade={{ delay: 5200 }} class="flex mt-4">
