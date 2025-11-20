@@ -55,7 +55,7 @@
 	// Bank/QR constants
 	const iban = 'AT04 3412 9000 0893 6452';
 	const cleanIban = iban.replace(/\s/g, '');
-	const receiverName = 'Verein Klimadashboard';
+	const receiverName = 'Klimadashboard-Ver';
 	const bic = 'GENOAT21XXX';
 	const bank = 'Raiffeisenbank Gunskirchen';
 
