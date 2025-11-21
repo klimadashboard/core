@@ -55,13 +55,9 @@
 	// Bank/QR constants
 	const iban = 'AT04 3412 9000 0893 6452';
 	const cleanIban = iban.replace(/\s/g, '');
-	const receiverName = 'Klimadashboard-Ver';
+	const receiverName = 'Klimadashboard';
 	const bic = 'GENOAT21XXX';
 	const bank = 'Raiffeisenbank Gunskirchen';
-
-	// Progress
-	$: raisedAmount = data?.donationAccount?.balanceAmount / 100 ?? 0;
-	$: goalAmount = 20000;
 
 	// put these next to your other state
 	let copied: Record<string, boolean> = {};
