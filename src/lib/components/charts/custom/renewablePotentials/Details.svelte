@@ -195,8 +195,7 @@
 											y={yScale(goalAmount) + 5}
 											dx={anchor == 'end' ? -12 : 12}
 											dy={text_potential_x_offset}
-											>{formatNumber(Math.round(goalAmount * 100) / 100)}
-											{' ' + unit + ' '}
+											>{formatNumber(goalAmount, unit, 2)}
 											Ziel bis {goalYear}
 											<!-- im Zeitraum
 											<tspan x="16" y="16"
@@ -228,8 +227,8 @@
 									x={12}
 									dominant-baseline="middle"
 									class="text-sm font-semibold fill-current bg-white chart-text"
-									>{formatNumber(Math.round(potential_2030 * 100) / 100)}
-									{' ' + unit + ' '}Potential 2030
+									>{formatNumber(potential_2030, unit, 2)}
+									Potential 2030
 								</text>
 								<!--
 							<text
@@ -281,8 +280,7 @@
 								x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
 								y={yScale(potential_techn)}
 								dy={-3}
-								>{formatNumber(Math.round(potential_techn * 100) / 100)}
-								{' ' + unit + ' '}
+								>{formatNumber(potential_techn, unit, 2)}
 								Technisch möglich
 							</text>
 						{/if}
@@ -333,9 +331,8 @@
 								transition:fade
 								dy={text_production_x_offset}
 								>{last_datapoint.value > 0.01
-									? formatNumber(Math.round(last_datapoint.value * 100) / 100)
+									? formatNumber(last_datapoint.value, unit, 2)
 									: last_datapoint.value.toString().replace('.', ',')}
-								{' ' + unit + ' '}
 								Produktion
 								<!-- im Zeitraum
                                 <tspan x="16" y="16"
