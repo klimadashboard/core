@@ -1,5 +1,5 @@
 <script>
-	import { Plot, BarY, RuleY } from 'svelteplot';
+	import { Plot, BarY, RuleY, Text, stackY } from 'svelteplot';
 
 	export let data = [];
 
@@ -29,8 +29,8 @@
 	};
 
 	const ghostColors = {
-		renewable: '#bbf7d0', // pale green
-		nonRenewable: '#fecaca' // pale red
+		renewable: '#4ade80', // pale green
+		nonRenewable: '#ef4444' // pale red
 	};
 
 	// -----------------------------------------------------------
@@ -130,12 +130,47 @@
 
 	// x-axis domain: all years that should appear, left -> right
 	$: allYears = Array.from(new Set([...years, ...futureYears])).sort((a, b) => a - b);
+
+	// -----------------------------------------------------------
+	// Label rows: compute vertical midpoints inside each stacked segment
+	// -----------------------------------------------------------
+	$: labelRows = (() => {
+		if (!historicRows.length) return [];
+
+		const rows = [];
+		let currentYear = null;
+		let acc = 0; // running total per year (0..100)
+
+		for (const row of historicRows) {
+			// Reset accumulator when year changes
+			if (row.year !== currentYear) {
+				currentYear = row.year;
+				acc = 0;
+			}
+
+			const start = acc;
+			const end = acc + row.value;
+			const mid = (start + end) / 2;
+
+			// Optionally: skip very tiny slices so labels don't overlap
+			// if (row.value < 3) { acc = end; continue; }
+
+			rows.push({
+				...row,
+				yMid: mid
+			});
+
+			acc = end;
+		}
+
+		return rows;
+	})();
 </script>
 
 <Plot
-	x={{ type: 'band', domain: allYears, label: 'Jahr', axis: 'top' }}
-	y={{ domain: [0, 100], label: 'Modal Split (%) nach km' }}
-	margin={{ top: 24, right: 10, bottom: 40, left: 40 }}
+	x={{ type: 'band', domain: allYears, label: '', axis: 'top' }}
+	y={{ domain: [0, 100], label: 'Modal Split (%)' }}
+	margin={{ top: 24, right: 10, bottom: 40, left: 80 }}
 	grid
 	height={400}
 >
@@ -144,10 +179,9 @@
 		data={ghostRows}
 		x="year"
 		y="value"
-		z="category"
 		fill={(d) =>
 			d.category === 'renewable_target' ? ghostColors.renewable : ghostColors.nonRenewable}
-		fillOpacity={0.4}
+		fillOpacity={0.3}
 	/>
 
 	<!-- Actual modal split, stacked with renewables at the bottom -->
@@ -155,17 +189,39 @@
 		data={historicRows}
 		x="year"
 		y="value"
-		z="category"
 		fill={(d) => categoryColor[d.category] || '#6b7280'}
 		stroke="#ffffff"
 		strokeWidth={1}
+	/>
+
+	<!-- Icons inside bars -->
+	<Text
+		data={labelRows}
+		x="year"
+		y="yMid"
+		text={(d) => categoryMeta[d.category]?.icon ?? ''}
+		textAnchor="middle"
+		dy={-4}
+		fontSize={16}
+	/>
+
+	<!-- Labels inside bars -->
+	<Text
+		data={labelRows}
+		x="year"
+		y="yMid"
+		text={(d) => categoryMeta[d.category]?.label ?? d.category}
+		textAnchor="middle"
+		dy={10}
+		fill="white"
+		fontSize={10}
 	/>
 
 	<!-- 50% reference line -->
 	<RuleY data={[50]} stroke="currentColor" strokeDasharray="4 2" strokeWidth={1} />
 </Plot>
 
-<!-- Legend -->
+<!--
 <div class="flex items-center flex-wrap gap-5">
 	{#each renewableCategories as cat}
 		<div class="flex items-center gap-1">
@@ -183,6 +239,7 @@
 		</div>
 	{/each}
 </div>
+-->
 
 <style>
 	.legend {
