@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Projects from './Projects.svelte';
-	import DonationStatusBar from '../DonationStatusBar.svelte';
+	import DonationStatusBar from '$lib/components/DonationStatusBar.svelte';
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
 	import getDirectusInstance from '$lib/utils/directus';

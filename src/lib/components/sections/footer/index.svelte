@@ -1,6 +1,7 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
+	import DonationBanner from './DonationBanner.svelte';
 </script>
 
 <footer class="">
@@ -212,3 +213,5 @@
 		{/if}
 	</div>
 </footer>
+
+<DonationBanner />

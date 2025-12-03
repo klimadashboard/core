@@ -6,7 +6,6 @@
 	import dayjs from 'dayjs';
 	import { fade, fly } from 'svelte/transition';
 	import { page } from '$app/state';
-	import DonationStatusBar from './DonationStatusBar.svelte';
 
 	export let data;
 

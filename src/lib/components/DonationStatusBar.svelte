@@ -8,7 +8,6 @@
 		try {
 			const directus = getDirectusInstance();
 			const donationData = await directus.request(readSingleton('org_donation'));
-			console.log(donationData);
 			const goalAmount = donationData.donationGoal;
 			const raisedAmount = donationData.donationStatus;
 			return { goalAmount, raisedAmount };
@@ -26,7 +25,7 @@
 {:then { goalAmount, raisedAmount }}
 	<!-- Progress -->
 	{#if raisedAmount > 0}
-		<div class="rounded-full overflow-hidden mt-4 bg-gray-100 h-10 w-full relative">
+		<div class="rounded-full overflow-hidden bg-gray-100 dark:bg-gray-900 h-10 w-full relative">
 			<div
 				class="absolute top-0 left-0 bottom-0 bg-green-600 rounded-full"
 				style="width: {(raisedAmount / goalAmount) * 100}%"
