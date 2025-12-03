@@ -31,23 +31,33 @@
 
 	// Choose your default classification here:
 	$: selectedClassification = classifications[0].key;
-	
+
 	const getEmissionsData = async function () {
-		// sources: "BLI 2024 (1990-2022)", "NowCast (1990-2023)"
-		try{
+		try {
 			const directus = getDirectusInstance(fetch);
 			let data = await directus.request(
 				readItems('emissions_data', {
 					filter: {
 						_and: [
-							{ 
+							{
 								country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source: { _in: ["BLI 2024 (1990-2022)", "NowCast (1990-2023)"] }
+								source: { _in: ['BLI 2025 (1990-2023)', 'NowCast (1990-2024)'] }
 							}
 						]
 					},
-					sort: "year,region.name",
-					fields: ["category.label","gas.name","gas.unit","id","region.id","region.name","source","type","value","year"],
+					sort: 'year,region.name',
+					fields: [
+						'category.label',
+						'gas.name',
+						'gas.unit',
+						'id',
+						'region.id',
+						'region.name',
+						'source',
+						'type',
+						'value',
+						'year'
+					],
 					limit: -1
 				})
 			);
@@ -62,16 +72,18 @@
 				sektor: row.category?.label,
 				pollutant: row.gas?.name,
 				unit: row.gas?.unit,
-				classification: row.type,
+				classification: row.type
 			}));
 
-			const pivot_table = pivot_multikey(data, ["year", "classification", "pollutant", "region", "region_id", "source", "unit"], "sektor")
+			const pivot_table = pivot_multikey(
+				data,
+				['year', 'classification', 'pollutant', 'region', 'region_id', 'source', 'unit'],
+				'sektor'
+			);
 
 			rawData = pivot_table;
-			defaultRegion = rawData[rawData.length-1].region;
+			defaultRegion = rawData[rawData.length - 1].region;
 			rawKeys = Array.from(new Set(data.map((row, i) => row.sektor)));
-
-			
 		} catch (error) {
 			console.error('Error fetching emission data:', error);
 		}
@@ -79,38 +91,36 @@
 
 	$: getEmissionsData();
 
-
 	let populations;
-	const getPopulationData = async function (regions){
-		if(regions === null)
-			return;
+	const getPopulationData = async function (regions) {
+		if (regions === null) return;
 
 		const temp_populations = {};
 		for (const i in regions) {
 			temp_populations[regions[i]] = await getYearlyPopulationByRegionID(regions[i]);
 		}
 		populations = temp_populations;
-	}
+	};
 
 	$: getPopulationData(region_ids);
 
 	let intl_flights;
-	const getInternationalFlightsData = async function (){
-		try{
+	const getInternationalFlightsData = async function () {
+		try {
 			const directus = getDirectusInstance(fetch);
 			let data = await directus.request(
 				readItems('emissions_data', {
 					filter: {
 						_and: [
-							{ 
+							{
 								country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								category: { _eq: "Memo 1 D 1 a" },
-								gas: {_eq: "THG" },
+								category: { _eq: 'Memo 1 D 1 a' },
+								gas: { _eq: 'THG' }
 							}
 						]
 					},
-					sort: "year,region.name",
-					fields: ["value","year"],
+					sort: 'year,region.name',
+					fields: ['value', 'year', 'region', 'region.name'],
 					limit: -1
 				})
 			);
@@ -118,9 +128,8 @@
 		} catch (error) {
 			console.error('Error fetching population:', error);
 		}
-	}
+	};
 	$: getInternationalFlightsData();
-
 
 	// Aggregated views
 	const aggregatedViews = [
@@ -190,7 +199,6 @@
 			? sectors.filter((d) => ['Energie', 'Industrie'].includes(d.key))
 			: sectors.filter((d) => rawKeys?.indexOf(d.key) > -1);
 
-
 	// Combine aggregated + filtered sector views
 	$: views = aggregatedViews.concat(availableSectors);
 
@@ -222,8 +230,10 @@
 					value = entry[item.key];
 				}
 
-				if(showPerCapita){
-					const population = populations[entry.region_id].find(pop_row => entry.year === new Date(pop_row.period).getFullYear());
+				if (showPerCapita) {
+					const population = populations[entry.region_id].find(
+						(pop_row) => entry.year === new Date(pop_row.period).getFullYear()
+					);
 					value /= population?.value;
 				}
 
@@ -263,6 +273,7 @@
 	$: allowFlightEmissions =
 		(activeView == 'sector_overview' || activeView == 'KSG') &&
 		!showPerCapita &&
+		selectedRegion == 'Österreich' &&
 		selectedClassification == 'Gesamt';
 
 	// Build dataset with or without flight emissions
@@ -272,10 +283,7 @@
 			.reduce(reducer, [])
 			.map((d) => {
 				var categories = [...d.categories];
-				var flight = intl_flights.find(
-					(e) =>
-						e.year == d.label
-				);
+				var flight = intl_flights.find((e) => e.year == d.label);
 				categories.push({
 					label: 'Flug',
 					value: Math.round(flight?.value),
@@ -333,7 +341,6 @@
 	$: if (selectedClassification == 'EH') {
 		activeView = 'KSG';
 	}
-
 </script>
 
 <div class="flex flex-wrap gap-4 items-center sm:justify-between">
@@ -416,7 +423,7 @@
 				<path d="M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3z" />
 			</svg>
 			<span>Int. Flugverkehr</span>
-			<input type="checkbox" bind:checked={showFlightEmissions} disabled={intl_flights===null} />
+			<input type="checkbox" bind:checked={showFlightEmissions} disabled={intl_flights === null} />
 		</label>
 	{/if}
 	<label
@@ -479,7 +486,7 @@
 			<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
 		</svg>
 		<span>Pro-Kopf Emissionen?</span>
-		<input type="checkbox" bind:checked={showPerCapita} disabled={populations===null} />
+		<input type="checkbox" bind:checked={showPerCapita} disabled={populations === null} />
 	</label>
 </div>
 <div class="h-80">
