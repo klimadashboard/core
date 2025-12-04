@@ -98,11 +98,11 @@
 
 	$: xScale = scaleLinear()
 		.range([0, chartWidth - 100])
-		.domain([0, max(data, (d) => d.KSG_percapita)]);
+		.domain([0, max(data, (d) => d.KSG_percapita) * 1.1]);
 
 	$: yScale = scaleLinear()
 		.rangeRound([0, chartHeight - 20])
-		.domain([0, 8900000]);
+		.domain([0, 9000000]);
 
 	function arrayRemove(arr, value) {
 		return arr.filter(function (ele) {

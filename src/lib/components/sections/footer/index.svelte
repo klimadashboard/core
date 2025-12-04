@@ -1,12 +1,13 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
+	import DonationBanner from './DonationBanner.svelte';
 </script>
 
-<footer class="bg-gray-50 dark:bg-gray-900">
+<footer class="">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
 		{#if page.data.site?.content?.faq}
-			<div class="md:col-span-3 border-b border-current/10 pb-4">
+			<div class="md:col-span-3 border-y border-current/10 py-4">
 				<h2 class="font-bold mb-1">{page.data.translations.questionsAndAnswers}</h2>
 				<ul>
 					{#each page.data.site.content.faq as item}
@@ -121,7 +122,7 @@
 			<h2 class="font-bold">{page.data.translations.footer2Title}</h2>
 			<p>{page.data.translations.footer2Text}</p>
 			<div class="mt-2 flex">
-				<a class="button block" href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg">
+				<a class="button block" href="https://klimadashboard.org/donate">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="icon icon-tabler icon-tabler-credit-card"
@@ -197,7 +198,20 @@
 						target="_blank">{item.label}</a
 					>
 				{/each}
+				<a
+					href="https://creativecommons.org/licenses/by/4.0/"
+					target="_blank"
+					class="w-full sm:w-max mt-4 sm:mt-0 sm:ml-auto opacity-80 hover:opacity-100 transition"
+				>
+					<img
+						src="https://base.klimadashboard.org/assets/aed31198-01cd-4e62-8e31-8d0a1def7b55"
+						class="h-6"
+						alt="Creative Commons BY Lizenz"
+					/>
+				</a>
 			</div>
 		{/if}
 	</div>
 </footer>
+
+<DonationBanner />

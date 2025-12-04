@@ -49,7 +49,7 @@
 	}
 
 	// Update unit label
-	$: unit = showPerCapita ? 't CO2eq/Mio. Einwohner' : 'Mt CO2eq';
+	$: unit = showPerCapita ? 't CO2eq/Mio. Einwohner' : 't CO2eq';
 </script>
 
 <p class="text-xl mt-4">

@@ -64,7 +64,7 @@
 	}
 
 	function selectSuggestion(item) {
-		if (item.source === 'region') {
+		if (item.source === 'municipality' || item.source === 'district' || item.source === 'region') {
 			goto(`/regions/${item.id}`);
 		} else if (item.source === 'chart') {
 			goto(`/charts/${item.id}`);

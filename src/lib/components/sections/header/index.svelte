@@ -26,34 +26,40 @@
 				<img src="/logo.svg" alt="Klimadashboard" class="h-13 w-13" />
 				<div class="font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
 			</a>
-			<button
-				class="button"
-				aria-label={page.data.translations.navigation}
-				on:mousedown={() => (showNavigation = !showNavigation)}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"
-					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6l16 0" /><path
-						d="M4 12l16 0"
-					/><path d="M4 18l16 0" /></svg
+			{#if page.data.site.translations[0].navigation_primary.length == 1}
+				{#each page.data.site.translations[0].navigation_primary[0].links as l}
+					<a href={l.link} class="button">{l.label}</a>
+				{/each}
+			{:else}
+				<button
+					class="button"
+					aria-label={page.data.translations.navigation}
+					on:mousedown={() => (showNavigation = !showNavigation)}
 				>
-				<span class="hidden sm:block">{page.data.translations.navigation}</span>
-			</button>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"
+						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6l16 0" /><path
+							d="M4 12l16 0"
+						/><path d="M4 18l16 0" /></svg
+					>
+					<span class="hidden sm:block">{page.data.translations.navigation}</span>
+				</button>
+			{/if}
 
 			<Breadcrumb />
 
 			<span class="ml-auto"></span>
 			<a
-				href="https://donate.stripe.com/8wM03o9ZS0OX28U4gg"
+				href="https://klimadashboard.org/donate"
 				class=" button !bg-green-400 dark:!bg-green-600 hover:!bg-green-500 dark:hover:!bg-green-500 !hidden md:!block text-base"
 				target="_blank"
 			>
