@@ -79,9 +79,12 @@
 	// Ghost goal bars (2025–2030) towards 50% renewable
 	// -----------------------------------------------------------
 	const goalStartYear = 2024;
-	const goalEndYear = 2030;
-	const goalTargetRenewable = 50; // percent of trips
-	const futureYears = [2025, 2026, 2027, 2028, 2029, 2030];
+	const goalEndYear = 2035;
+	const goalTargetRenewable = 62; // percent of trips
+	const futureYears = Array.from(
+		{ length: goalEndYear - goalStartYear + 1 },
+		(_, i) => goalStartYear + i
+	);
 
 	// latest year with data <= goalStartYear
 	$: baselineYear = (() => {

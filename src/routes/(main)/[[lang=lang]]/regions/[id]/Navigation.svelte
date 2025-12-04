@@ -3,18 +3,22 @@
 	export let sections;
 </script>
 
-<div class="sticky top-12 py-4 bg-white dark:bg-gray-950 z-50" id="top">
-	<div class="container overflow-auto">
-		<div class="flex md:justify-between gap-4">
-			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION) && d.navigation !== false) as section}
-				<a href="#{section.id}" class="button">
+<nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50" id="top">
+	<ul
+		class="max-w-[60vw] overflow-scroll px-2 py-1 rounded-full border border-current/10 bg-white/80 dark:bg-black/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm flex items-center"
+	>
+		{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION) && d.navigation !== false) as section}
+			<li>
+				<a
+					href="#{section.id}"
+					class="flex gap-1 items-center px-3 py-1 rounded-full text-sm font-medium transition hover:bg-black hover:text-white dark:hover:text-black dark:hover:bg-white {section.active
+						? 'bg-black text-white dark:bg-white dark:text-black'
+						: ''}"
+				>
 					{@html section.icon}
 					<span class="whitespace-nowrap">{section.title}</span></a
 				>
-			{/each}
-		</div>
-	</div>
-	<div
-		class="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-r from-transparent to-white dark:to-gray-950 pointer-events-none"
-	></div>
-</div>
+			</li>
+		{/each}
+	</ul>
+</nav>

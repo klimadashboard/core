@@ -128,38 +128,16 @@
 		{#await promise}
 			<Loader />
 		{:then _}
-			<div>
-				<div class="h-[30rem]">
-					{#key selectedLayer}
-						<!-- force remount when layer changes -->
-						<Map
-							bind:selectedLayer
-							{selectedPeriod}
-							regions={mapRegions}
-							max={selectedView === 'pop' ? 1000 : 100}
-							unit={selectedView === 'pop' ? '' : '%'}
-							colors={colors[selectedView]}
-							bind:selectedRegion
-							on:selectRegion={(e) => (selectedRegion = e.detail)}
-						/>
-					{/key}
-				</div>
-
-				<div
-					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
-				>
-					{#if country}
-						<Inspector
-							{views}
-							{selectedPeriod}
-							region={getRegionData(regions, selectedRegion, country)}
-						/>
-					{:else}
-						<p class="text-sm opacity-80">Lade Metadaten…</p>
-					{/if}
-					<p class="text-sm opacity-80 mt-4">Datenquelle: {@html source}</p>
-				</div>
-			</div>
+			{#if country}
+				<Inspector
+					{views}
+					{selectedPeriod}
+					region={getRegionData(regions, selectedRegion, country)}
+				/>
+			{:else}
+				<p class="text-sm opacity-80">Lade Metadaten…</p>
+			{/if}
+			<p class="text-sm opacity-80 mt-4">Datenquelle: {@html source}</p>
 		{/await}
 	</div>
 </div>

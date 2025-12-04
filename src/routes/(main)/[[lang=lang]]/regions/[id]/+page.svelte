@@ -2,18 +2,18 @@
 	import { onMount } from 'svelte';
 	import Scroller from '@sveltejs/svelte-scroller';
 	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import Intro from './Intro.svelte';
 	import Contact from './Contact.svelte';
-	import LazyChart from './LazyChart.svelte';
-	import Chart from '$lib/components/charts/index.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Support from './Support.svelte';
-	import ComingSoon from '../ComingSoon.svelte';
 	import Navigation from './Navigation.svelte';
 	import ComingSoonChart from './ComingSoonChart.svelte';
 	import RelatedRegions from './RelatedRegions.svelte';
 	import Credits from './Credits.svelte';
+	import ChartCard from './ChartCard.svelte';
+	import MapOverlay from './MapOverlay.svelte';
 
 	export let data;
 
@@ -26,6 +26,7 @@
 	});
 
 	let index, offset, progress;
+	let mapOverlayOpen = false;
 
 	$: currentSection = sections[index];
 
@@ -35,149 +36,173 @@
 			const url = new URL(window.location);
 			url.hash = currentSection.id;
 			history.replaceState(null, '', url.toString());
+			sections.forEach((section) => (section.active = false));
+			sections[index].active = true;
 		}
 	}
 
-	const sections = [
+	$: sections = [
 		{
 			title: 'Emissionen',
 			countries: ['at', 'de'],
-			description: `Die Reduktion von Treibhausgasemissionen ist von entscheidender Bedeutung. Doch wie sieht es in deinem Bundesland aus? Erkunde, wie sich die Emissionen auf verschiedene Sektoren verteilen und wie sich diese über die letzten Jahre verändert haben. `,
+			description: `Die Reduktion von Treibhausgasemissionen ist von entscheidender Bedeutung. Doch wie sieht es in deinem Bundesland aus? Erkunde, wie sich die Emissionen auf verschiedene Sektoren verteilen und wie sich diese über die letzten Jahre verändert haben.`,
 			id: 'emissions',
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-cloud'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878' /></svg>",
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M6.657 18c-2.572 0 -4.657 -2.007 -4.657 -4.483c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.913 0 3.464 1.56 3.464 3.486c0 1.927 -1.551 3.487 -3.465 3.487h-11.878' /></svg>",
+			active: false,
 			charts: [
 				{
 					id: 'cae6032b-86a9-45d0-bc11-17343845b25a',
-					countries: ['at', 'de']
+					countries: ['at', 'de'],
+					span: 12
 				}
 			]
 		},
 		{
-			title: 'Erneuerbare Energie',
+			title: 'Energie',
 			countries: ['de'],
 			id: 'energy',
 			description: `Erneuerbare Energien spielen eine zentrale Rolle für die Energiewende – doch wie weit ist der Ausbau vor Ort? Erkunde, wie viel Solar- und Windenergie in ${data.page.name} bereits installiert ist.`,
+			active: false,
 			charts: [
 				{
-					id: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
-					countries: ['at', 'de']
+					id: 'fd902ce9-47b0-4da5-8745-2f56b8785c6e',
+					countries: ['at', 'de'],
+					span: 6,
+					mapLayerId: 'solar-installations'
+				},
+				{
+					id: 'd5b937b6-d921-47c8-a453-a7e60c47ec2e',
+					countries: ['at', 'de'],
+					span: 6
+				},
+				{
+					id: 'e301bb08-70c4-4572-bce6-4ff1cc06e7f3',
+					countries: ['at', 'de'],
+					span: 6
+				},
+				{
+					id: '1e135ce2-06d2-4eae-b8f8-fdb4cbae910c',
+					countries: ['at', 'de'],
+					span: 6,
+					mapLayerId: 'wind-power'
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-bolt'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11' /></svg>"
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-bolt'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11' /></svg>"
 		},
 		{
 			title: 'Mobilität',
 			id: 'mobility',
 			description: `Der Verkehrsbereich verursacht einen großen Teil der Treibhausgasemissionen. Wie klimafreundlich Mobilität in ${data.page.name} ist, hängt unter anderem von Infrastruktur, Verkehrsangebot und Alltagsgewohnheiten ab – und hat direkten Einfluss auf das Klima.`,
 			countries: ['at', 'de'],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-steering-wheel'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' /><path d='M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' /><path d='M12 14l0 7' /><path d='M10 12l-6.75 -2' /><path d='M14 12l6.75 -2' /></svg>",
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-steering-wheel'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0' /><path d='M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' /><path d='M12 14l0 7' /><path d='M10 12l-6.75 -2' /><path d='M14 12l6.75 -2' /></svg>",
+			active: false,
 			charts: [
 				{
+					id: '4895ac82-30f2-4afa-9fc5-76ef2c6eec55',
+					countries: ['at', 'de'],
+					span: 6,
+					mapLayerId: 'ev-charging-stations'
+				},
+				{
 					id: '68b0f853-b1b1-4120-aedd-87de58ea3209',
-					countries: ['at', 'de']
+					countries: ['at', 'de'],
+					span: 6
+				},
+				{
+					id: '2ab9836f-1228-4deb-a698-524b008c31dc',
+					countries: ['at', 'de'],
+					span: 4
 				},
 				{
 					id: '01b74323-efc0-4ecc-bf3f-7e6d6a27a474',
-					countries: ['at', 'de']
+					countries: ['at', 'de'],
+					span: 8
 				},
 				{
 					id: 'b3301d53-24e0-4171-be78-75882f602fe8',
 					countries: ['at'],
-					text: 'Wie ist deine Region an den Öffentlichen Verkehr angebunden? Wo sollten mehr Haltestellen errichtet werden? Dazu erfährst du hier bald mehr.'
+					text: 'Wie ist deine Region an den Öffentlichen Verkehr angebunden? Wo sollten mehr Haltestellen errichtet werden? Dazu erfährst du hier bald mehr.',
+					span: 12
 				}
 			]
-		},
-		{
-			title: 'Contact',
-			id: 'contact',
-			blocks: [Contact],
-			countries: ['at', 'de'],
-			navigation: false
 		},
 		{
 			title: 'Heizungen',
 			id: 'heating',
 			description: '',
 			countries: ['de'],
+			active: false,
 			charts: [
 				{
 					id: '8267b6b9-605d-4603-a8b4-4ad9e6a3c553',
-					countries: ['de']
+					countries: ['de'],
+					span: 12
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-brand-walmart'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 8.04v-5.04' /><path d='M15.5 10l4.5 -2.5' /><path d='M15.5 14l4.5 2.5' /><path d='M12 15.96v5.04' /><path d='M8.5 14l-4.5 2.5' /><path d='M8.5 10l-4.5 -2.505' /></svg>"
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-brand-walmart'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 8.04v-5.04' /><path d='M15.5 10l4.5 -2.5' /><path d='M15.5 14l4.5 2.5' /><path d='M12 15.96v5.04' /><path d='M8.5 14l-4.5 2.5' /><path d='M8.5 10l-4.5 -2.505' /></svg>"
 		},
-		/*
-		{
-			title: 'Zersiedelung',
-			description:
-				'Zersiedelung bedeutet zunehmende Ausbreitung von Siedlungen und Infrastruktur auf unbebauten Flächen. Das führt zu mehr Flächenverbrauch, höheren Emissionen und erschwerten Bedingungen für klimafreundliche Mobilität und Klimaanpassung.',
-			countries: ['at'],
-			id: 'sprawl',
-			charts: [
-				{
-					// id: '4b721d01-0598-48e4-ab3b-10d96ed46a53',
-					countries: ['at']
-				}
-			]
-		},
-		*/
 		{
 			title: 'Temperatur',
 			description: `Die Aufzeichnungen von Wetterstationen in deiner Nähe zeigen, wie sich die Temperaturen in der Region in den vergangenen Jahrzehnten entwickelt haben. Die Daten stammen von der geografisch nächstgelegenen Wetterstation für ${data.page.name} mit weitgehend vollständigen Aufzeichnungen seit 1960. Sie liegt nicht zwingend in der ausgewählten Region, erlaubt aber eine Einschätzung der regionalen Entwicklung.`,
 			countries: ['at', 'de'],
 			id: 'temperature',
 			toggle: true,
+			active: false,
 			charts: [
 				{
 					id: '8378b7bc-10db-4373-9941-1ca014e70353',
-					countries: ['at', 'de']
+					countries: ['at', 'de'],
+					span: 12
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-temperature'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5' /><path d='M10 9l4 0' /></svg>"
-		},
-
-		{
-			title: 'Support',
-			id: 'support',
-			blocks: [Support],
-			countries: ['at', 'de'],
-			navigation: false
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-temperature'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5' /><path d='M10 9l4 0' /></svg>"
 		},
 		{
 			title: 'Schnee',
 			description: `Im Zusammenhang mit abnehmenden Frost- und Schneetagen lohnt auch ein Blick auf die Entwicklung der Tage, an denen mindestens 1 cm Schnee am Morgen gemessen wurde, den sogenannten Schneedeckentagen.`,
 			id: 'snow',
 			countries: ['at', 'de'],
+			active: true,
 			charts: [
 				{
 					id: 'd88601f8-40de-4753-beb1-a0e824aa048c',
-					countries: ['at', 'de']
+					countries: ['at', 'de'],
+					span: 12
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-snowman'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a4 4 0 0 1 2.906 6.75a6 6 0 1 1 -5.81 0a4 4 0 0 1 2.904 -6.75z' /><path d='M17.5 11.5l2.5 -1.5' /><path d='M6.5 11.5l-2.5 -1.5' /><path d='M12 13h.01' /><path d='M12 16h.01' /></svg>"
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-snowman'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a4 4 0 0 1 2.906 6.75a6 6 0 1 1 -5.81 0a4 4 0 0 1 2.904 -6.75z' /><path d='M17.5 11.5l2.5 -1.5' /><path d='M6.5 11.5l-2.5 -1.5' /><path d='M12 13h.01' /><path d='M12 16h.01' /></svg>"
 		},
 		{
 			title: 'Klimazukunft',
 			description: `Auf welche Veränderungen müssen wir uns in ${data.page.name} für die Zukunft einstellen? Klimaszenarien zeigen, welche Auswirkungen die globale Erwärmung in unserer Region hat.`,
 			id: 'scenarios',
 			countries: ['at'],
+			active: false,
 			charts: [
 				{
-					// id: '801a3cdf-1197-4b99-9ece-99113940c5fb',
 					text: 'Wie viel heißer wird es bei mir vor Ort, wenn sich die Erde weiter erhitzt? Wo muss ich mit extremem Niederschlag rechnen? Die aktuellsten Klimaszenarien stehen in Kürze hier in einem interaktiven Explorer zu Verfügung.',
-					countries: ['at']
+					countries: ['at'],
+					span: 12
 				}
 			],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-circle-arrow-right'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18' /><path d='M16 12l-4 -4' /><path d='M16 12h-8' /><path d='M12 16l4 -4' /></svg>"
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-circle-arrow-right'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18' /><path d='M16 12l-4 -4' /><path d='M16 12h-8' /><path d='M12 16l4 -4' /></svg>"
 		},
 		{
 			title: 'Handlungen',
 			id: 'actions',
 			blocks: [Policies],
-			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='2'  stroke-linecap='round'  stroke-linejoin='round'  class='icon icon-tabler icons-tabler-outline icon-tabler-tool'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5' /></svg>"
+			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-tool'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5' /></svg>"
 		}
 	];
+
+	function handleChartClick(chartId) {
+		goto(`/charts/${chartId}?region=${data.page.id}`);
+	}
+
+	function openMap(layerId = null) {
+		mapOverlayOpen = true;
+		// TODO: set active layer if layerId provided
+	}
 </script>
 
 <svelte:head>
@@ -194,39 +219,111 @@
 			<Intro {data} />
 
 			<Navigation {sections} />
+
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
 				<section id={section.id} class="mt-16 relative overflow-hidden">
 					<div>
-						{#if section.navigation !== false}
-							<h2 class="container text-3xl">{section.title}</h2>
-						{/if}
-						{#if section.description}
-							<div class="container text-lg mt-2 mb-4">
-								<p class="max-w-xl">{section.description}</p>
-							</div>
-						{/if}
-						<div class="container space-y-4">
-							{#if section.charts}
+						<div class="p-1">
+							{#if section.navigation !== false}
+								<h2 class=" text-3xl">{section.title}</h2>
+							{/if}
+						</div>
+
+						{#if section.charts}
+							<div class="chart-grid m-1">
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
 									{#if chart.id}
-										<Chart id={chart.id} />
+										<ChartCard
+											chartId={chart.id}
+											span={chart.span || 12}
+											mapLayerId={chart.mapLayerId}
+											regionId={data.page.id}
+											on:click={() => handleChartClick(chart.id)}
+											on:openMap={() => openMap(chart.mapLayerId)}
+										/>
 									{:else}
-										<ComingSoonChart text={chart.text} />
+										<div class="chart-card" style="grid-column: span {chart.span || 12};">
+											<ComingSoonChart text={chart.text} />
+										</div>
 									{/if}
 								{/each}
-							{/if}
-							{#if section.blocks}
+							</div>
+						{/if}
+
+						{#if section.blocks}
+							<div class="container space-y-4">
 								{#each section.blocks as block}
 									<svelte:component this={block} />
 								{/each}
-							{/if}
-						</div>
+							</div>
+						{/if}
 					</div>
 				</section>
 			{/each}
-		</div></Scroller
-	>
+		</div>
+	</Scroller>
 
 	<Credits />
 	<RelatedRegions {data} />
+
+	<!-- Floating Map Button -->
+	<button
+		class="fixed bottom-4 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 flex items-center gap-2 group"
+		on:click={() => openMap()}
+		aria-label="Karte öffnen"
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class="w-6 h-6"
+		>
+			<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" />
+			<path d="M9 3v15" />
+			<path d="M15 6v15" />
+		</svg>
+		<span class="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300"
+			>Karte</span
+		>
+	</button>
+
+	<!-- Map Overlay -->
+	{#if mapOverlayOpen}
+		<MapOverlay
+			regionId={data.page.id}
+			regionName={data.page.name}
+			on:close={() => (mapOverlayOpen = false)}
+		/>
+	{/if}
 </main>
+
+<style>
+	.chart-grid {
+		display: grid;
+		grid-template-columns: repeat(12, 1fr);
+		gap: 1rem;
+		margin-bottom: 2rem;
+	}
+
+	@media (max-width: 768px) {
+		.chart-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.chart-card {
+			grid-column: span 1 !important;
+		}
+	}
+
+	@media (min-width: 769px) and (max-width: 1024px) {
+		.chart-card {
+			grid-column: span min(calc(var(--span) * 2), 12) !important;
+		}
+	}
+</style>
