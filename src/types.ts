@@ -238,6 +238,10 @@ export type Query = {
   gases_aggregated: Array<Gases_Aggregated>;
   gases_by_id?: Maybe<Gases>;
   gases_by_version?: Maybe<Version_Gases>;
+  geocoding_cache: Array<Geocoding_Cache>;
+  geocoding_cache_aggregated: Array<Geocoding_Cache_Aggregated>;
+  geocoding_cache_by_id?: Maybe<Geocoding_Cache>;
+  geocoding_cache_by_version?: Maybe<Version_Geocoding_Cache>;
   global_co2_concentration: Array<Global_Co2_Concentration>;
   global_co2_concentration_aggregated: Array<Global_Co2_Concentration_Aggregated>;
   global_co2_concentration_by_id?: Maybe<Global_Co2_Concentration>;
@@ -250,6 +254,18 @@ export type Query = {
   glossary_translations_aggregated: Array<Glossary_Translations_Aggregated>;
   glossary_translations_by_id?: Maybe<Glossary_Translations>;
   glossary_translations_by_version?: Maybe<Version_Glossary_Translations>;
+  illustrations: Array<Illustrations>;
+  illustrations_aggregated: Array<Illustrations_Aggregated>;
+  illustrations_by_id?: Maybe<Illustrations>;
+  illustrations_by_version?: Maybe<Version_Illustrations>;
+  illustrations_files: Array<Illustrations_Files>;
+  illustrations_files_aggregated: Array<Illustrations_Files_Aggregated>;
+  illustrations_files_by_id?: Maybe<Illustrations_Files>;
+  illustrations_files_by_version?: Maybe<Version_Illustrations_Files>;
+  illustrations_translations: Array<Illustrations_Translations>;
+  illustrations_translations_aggregated: Array<Illustrations_Translations_Aggregated>;
+  illustrations_translations_by_id?: Maybe<Illustrations_Translations>;
+  illustrations_translations_by_version?: Maybe<Version_Illustrations_Translations>;
   languages: Array<Languages>;
   languages_aggregated: Array<Languages_Aggregated>;
   languages_by_id?: Maybe<Languages>;
@@ -262,6 +278,10 @@ export type Query = {
   mobility_cars_aggregated: Array<Mobility_Cars_Aggregated>;
   mobility_cars_by_id?: Maybe<Mobility_Cars>;
   mobility_cars_by_version?: Maybe<Version_Mobility_Cars>;
+  mobility_modal_split: Array<Mobility_Modal_Split>;
+  mobility_modal_split_aggregated: Array<Mobility_Modal_Split_Aggregated>;
+  mobility_modal_split_by_id?: Maybe<Mobility_Modal_Split>;
+  mobility_modal_split_by_version?: Maybe<Version_Mobility_Modal_Split>;
   news: Array<News>;
   news_aggregated: Array<News_Aggregated>;
   news_by_id?: Maybe<News>;
@@ -270,6 +290,30 @@ export type Query = {
   news_translations_aggregated: Array<News_Translations_Aggregated>;
   news_translations_by_id?: Maybe<News_Translations>;
   news_translations_by_version?: Maybe<Version_News_Translations>;
+  org_donation?: Maybe<Org_Donation>;
+  org_donation_by_version?: Maybe<Version_Org_Donation>;
+  org_events: Array<Org_Events>;
+  org_events_aggregated: Array<Org_Events_Aggregated>;
+  org_events_by_id?: Maybe<Org_Events>;
+  org_events_by_version?: Maybe<Version_Org_Events>;
+  org_finance?: Maybe<Org_Finance>;
+  org_finance_by_version?: Maybe<Version_Org_Finance>;
+  org_moments: Array<Org_Moments>;
+  org_moments_aggregated: Array<Org_Moments_Aggregated>;
+  org_moments_by_id?: Maybe<Org_Moments>;
+  org_moments_by_version?: Maybe<Version_Org_Moments>;
+  org_press_media: Array<Org_Press_Media>;
+  org_press_media_aggregated: Array<Org_Press_Media_Aggregated>;
+  org_press_media_by_id?: Maybe<Org_Press_Media>;
+  org_press_media_by_version?: Maybe<Version_Org_Press_Media>;
+  org_press_reports: Array<Org_Press_Reports>;
+  org_press_reports_aggregated: Array<Org_Press_Reports_Aggregated>;
+  org_press_reports_by_id?: Maybe<Org_Press_Reports>;
+  org_press_reports_by_version?: Maybe<Version_Org_Press_Reports>;
+  org_projects: Array<Org_Projects>;
+  org_projects_aggregated: Array<Org_Projects_Aggregated>;
+  org_projects_by_id?: Maybe<Org_Projects>;
+  org_projects_by_version?: Maybe<Version_Org_Projects>;
   pages: Array<Pages>;
   pages_aggregated: Array<Pages_Aggregated>;
   pages_blocks: Array<Pages_Blocks>;
@@ -374,10 +418,18 @@ export type Query = {
   sites_translations_aggregated: Array<Sites_Translations_Aggregated>;
   sites_translations_by_id?: Maybe<Sites_Translations>;
   sites_translations_by_version?: Maybe<Version_Sites_Translations>;
+  solar_potential_de: Array<Solar_Potential_De>;
+  solar_potential_de_aggregated: Array<Solar_Potential_De_Aggregated>;
+  solar_potential_de_by_id?: Maybe<Solar_Potential_De>;
+  solar_potential_de_by_version?: Maybe<Version_Solar_Potential_De>;
   stakeholders: Array<Stakeholders>;
   stakeholders_aggregated: Array<Stakeholders_Aggregated>;
   stakeholders_by_id?: Maybe<Stakeholders>;
   stakeholders_by_version?: Maybe<Version_Stakeholders>;
+  surveys_answers: Array<Surveys_Answers>;
+  surveys_answers_aggregated: Array<Surveys_Answers_Aggregated>;
+  surveys_answers_by_id?: Maybe<Surveys_Answers>;
+  surveys_answers_by_version?: Maybe<Version_Surveys_Answers>;
   urban_sprawl: Array<Urban_Sprawl>;
   urban_sprawl_aggregated: Array<Urban_Sprawl_Aggregated>;
   urban_sprawl_by_id?: Maybe<Urban_Sprawl>;
@@ -2150,6 +2202,39 @@ export type QueryGases_By_VersionArgs = {
 };
 
 
+export type QueryGeocoding_CacheArgs = {
+  filter?: InputMaybe<Geocoding_Cache_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryGeocoding_Cache_AggregatedArgs = {
+  filter?: InputMaybe<Geocoding_Cache_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryGeocoding_Cache_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryGeocoding_Cache_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
 export type QueryGlobal_Co2_ConcentrationArgs = {
   filter?: InputMaybe<Global_Co2_Concentration_Filter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2244,6 +2329,105 @@ export type QueryGlossary_Translations_By_IdArgs = {
 
 
 export type QueryGlossary_Translations_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryIllustrationsArgs = {
+  filter?: InputMaybe<Illustrations_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryIllustrations_AggregatedArgs = {
+  filter?: InputMaybe<Illustrations_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryIllustrations_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryIllustrations_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryIllustrations_FilesArgs = {
+  filter?: InputMaybe<Illustrations_Files_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryIllustrations_Files_AggregatedArgs = {
+  filter?: InputMaybe<Illustrations_Files_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryIllustrations_Files_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryIllustrations_Files_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryIllustrations_TranslationsArgs = {
+  filter?: InputMaybe<Illustrations_Translations_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryIllustrations_Translations_AggregatedArgs = {
+  filter?: InputMaybe<Illustrations_Translations_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryIllustrations_Translations_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryIllustrations_Translations_By_VersionArgs = {
   id: Scalars['ID']['input'];
   version: Scalars['String']['input'];
 };
@@ -2348,6 +2532,39 @@ export type QueryMobility_Cars_By_VersionArgs = {
 };
 
 
+export type QueryMobility_Modal_SplitArgs = {
+  filter?: InputMaybe<Mobility_Modal_Split_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryMobility_Modal_Split_AggregatedArgs = {
+  filter?: InputMaybe<Mobility_Modal_Split_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryMobility_Modal_Split_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryMobility_Modal_Split_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
 export type QueryNewsArgs = {
   filter?: InputMaybe<News_Filter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2409,6 +2626,191 @@ export type QueryNews_Translations_By_IdArgs = {
 
 
 export type QueryNews_Translations_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryOrg_DonationArgs = {
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOrg_Donation_By_VersionArgs = {
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryOrg_EventsArgs = {
+  filter?: InputMaybe<Org_Events_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Events_AggregatedArgs = {
+  filter?: InputMaybe<Org_Events_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Events_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOrg_Events_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryOrg_FinanceArgs = {
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOrg_Finance_By_VersionArgs = {
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryOrg_MomentsArgs = {
+  filter?: InputMaybe<Org_Moments_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Moments_AggregatedArgs = {
+  filter?: InputMaybe<Org_Moments_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Moments_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOrg_Moments_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryOrg_Press_MediaArgs = {
+  filter?: InputMaybe<Org_Press_Media_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Press_Media_AggregatedArgs = {
+  filter?: InputMaybe<Org_Press_Media_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Press_Media_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOrg_Press_Media_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryOrg_Press_ReportsArgs = {
+  filter?: InputMaybe<Org_Press_Reports_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Press_Reports_AggregatedArgs = {
+  filter?: InputMaybe<Org_Press_Reports_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Press_Reports_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOrg_Press_Reports_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryOrg_ProjectsArgs = {
+  filter?: InputMaybe<Org_Projects_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Projects_AggregatedArgs = {
+  filter?: InputMaybe<Org_Projects_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryOrg_Projects_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryOrg_Projects_By_VersionArgs = {
   id: Scalars['ID']['input'];
   version: Scalars['String']['input'];
 };
@@ -3272,6 +3674,39 @@ export type QuerySites_Translations_By_VersionArgs = {
 };
 
 
+export type QuerySolar_Potential_DeArgs = {
+  filter?: InputMaybe<Solar_Potential_De_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QuerySolar_Potential_De_AggregatedArgs = {
+  filter?: InputMaybe<Solar_Potential_De_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QuerySolar_Potential_De_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QuerySolar_Potential_De_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
 export type QueryStakeholdersArgs = {
   filter?: InputMaybe<Stakeholders_Filter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -3300,6 +3735,39 @@ export type QueryStakeholders_By_IdArgs = {
 
 
 export type QueryStakeholders_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QuerySurveys_AnswersArgs = {
+  filter?: InputMaybe<Surveys_Answers_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QuerySurveys_Answers_AggregatedArgs = {
+  filter?: InputMaybe<Surveys_Answers_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QuerySurveys_Answers_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QuerySurveys_Answers_By_VersionArgs = {
   id: Scalars['ID']['input'];
   version: Scalars['String']['input'];
 };
@@ -3528,14 +3996,26 @@ export type Subscription = {
   erneuerbare_2030_scenarios_mutated?: Maybe<Erneuerbare_2030_Scenarios_Mutated>;
   gas_imports_mutated?: Maybe<Gas_Imports_Mutated>;
   gases_mutated?: Maybe<Gases_Mutated>;
+  geocoding_cache_mutated?: Maybe<Geocoding_Cache_Mutated>;
   global_co2_concentration_mutated?: Maybe<Global_Co2_Concentration_Mutated>;
   glossary_mutated?: Maybe<Glossary_Mutated>;
   glossary_translations_mutated?: Maybe<Glossary_Translations_Mutated>;
+  illustrations_files_mutated?: Maybe<Illustrations_Files_Mutated>;
+  illustrations_mutated?: Maybe<Illustrations_Mutated>;
+  illustrations_translations_mutated?: Maybe<Illustrations_Translations_Mutated>;
   languages_mutated?: Maybe<Languages_Mutated>;
   mobility_cars_mutated?: Maybe<Mobility_Cars_Mutated>;
+  mobility_modal_split_mutated?: Maybe<Mobility_Modal_Split_Mutated>;
   mobility_mutated?: Maybe<Mobility_Mutated>;
   news_mutated?: Maybe<News_Mutated>;
   news_translations_mutated?: Maybe<News_Translations_Mutated>;
+  org_donation_mutated?: Maybe<Org_Donation_Mutated>;
+  org_events_mutated?: Maybe<Org_Events_Mutated>;
+  org_finance_mutated?: Maybe<Org_Finance_Mutated>;
+  org_moments_mutated?: Maybe<Org_Moments_Mutated>;
+  org_press_media_mutated?: Maybe<Org_Press_Media_Mutated>;
+  org_press_reports_mutated?: Maybe<Org_Press_Reports_Mutated>;
+  org_projects_mutated?: Maybe<Org_Projects_Mutated>;
   pages_blocks_mutated?: Maybe<Pages_Blocks_Mutated>;
   pages_mutated?: Maybe<Pages_Mutated>;
   pages_translations_blocks_mutated?: Maybe<Pages_Translations_Blocks_Mutated>;
@@ -3562,7 +4042,9 @@ export type Subscription = {
   seo_mutated?: Maybe<Seo_Mutated>;
   sites_mutated?: Maybe<Sites_Mutated>;
   sites_translations_mutated?: Maybe<Sites_Translations_Mutated>;
+  solar_potential_de_mutated?: Maybe<Solar_Potential_De_Mutated>;
   stakeholders_mutated?: Maybe<Stakeholders_Mutated>;
+  surveys_answers_mutated?: Maybe<Surveys_Answers_Mutated>;
   urban_sprawl_mutated?: Maybe<Urban_Sprawl_Mutated>;
   wasserkraft_produktion_mutated?: Maybe<Wasserkraft_Produktion_Mutated>;
   wasserkraft_zielpfad_mutated?: Maybe<Wasserkraft_Zielpfad_Mutated>;
@@ -3856,6 +4338,11 @@ export type SubscriptionGases_MutatedArgs = {
 };
 
 
+export type SubscriptionGeocoding_Cache_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
 export type SubscriptionGlobal_Co2_Concentration_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
@@ -3871,12 +4358,32 @@ export type SubscriptionGlossary_Translations_MutatedArgs = {
 };
 
 
+export type SubscriptionIllustrations_Files_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionIllustrations_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionIllustrations_Translations_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
 export type SubscriptionLanguages_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
 
 export type SubscriptionMobility_Cars_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionMobility_Modal_Split_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
@@ -3892,6 +4399,41 @@ export type SubscriptionNews_MutatedArgs = {
 
 
 export type SubscriptionNews_Translations_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionOrg_Donation_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionOrg_Events_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionOrg_Finance_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionOrg_Moments_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionOrg_Press_Media_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionOrg_Press_Reports_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionOrg_Projects_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
@@ -4026,7 +4568,17 @@ export type SubscriptionSites_Translations_MutatedArgs = {
 };
 
 
+export type SubscriptionSolar_Potential_De_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
 export type SubscriptionStakeholders_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionSurveys_Answers_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
@@ -4745,7 +5297,7 @@ export type Block_Grid_Blocks = {
   collection?: Maybe<Scalars['String']['output']>;
   height?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  item?: Maybe<Block_Grid_Blocks_Item_Union>;
+  item?: Maybe<Scalars['String']['output']>;
   sort?: Maybe<Scalars['Int']['output']>;
   width?: Maybe<Scalars['String']['output']>;
 };
@@ -4798,18 +5350,10 @@ export type Block_Grid_Blocks_Filter = {
   collection?: InputMaybe<String_Filter_Operators>;
   height?: InputMaybe<String_Filter_Operators>;
   id?: InputMaybe<Number_Filter_Operators>;
-  item__block_chart?: InputMaybe<Block_Chart_Filter>;
-  item__block_donation?: InputMaybe<Block_Donation_Filter>;
-  item__block_news?: InputMaybe<Block_News_Filter>;
-  item__block_panel?: InputMaybe<Block_Panel_Filter>;
-  item__block_quiz?: InputMaybe<Block_Quiz_Filter>;
-  item__block_richtext?: InputMaybe<Block_Richtext_Filter>;
-  item__block_teaser?: InputMaybe<Block_Teaser_Filter>;
+  item?: InputMaybe<String_Filter_Operators>;
   sort?: InputMaybe<Number_Filter_Operators>;
   width?: InputMaybe<String_Filter_Operators>;
 };
-
-export type Block_Grid_Blocks_Item_Union = Block_Chart | Block_Donation | Block_News | Block_Panel | Block_Quiz | Block_Richtext | Block_Teaser;
 
 export type Block_Grid_Blocks_Mutated = {
   __typename?: 'block_grid_blocks_mutated';
@@ -6656,6 +7200,7 @@ export type Directus_Users = {
   description?: Maybe<Scalars['String']['output']>;
   first_name?: Maybe<Scalars['String']['output']>;
   last_name?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -6675,6 +7220,7 @@ export type Directus_Users_Filter = {
   description?: InputMaybe<String_Filter_Operators>;
   first_name?: InputMaybe<String_Filter_Operators>;
   last_name?: InputMaybe<String_Filter_Operators>;
+  title?: InputMaybe<String_Filter_Operators>;
 };
 
 export type Directus_Users_Mutated = {
@@ -7106,6 +7652,7 @@ export type Emissions = {
   note?: Maybe<Scalars['String']['output']>;
   period?: Maybe<Scalars['String']['output']>;
   region?: Maybe<Scalars['String']['output']>;
+  scenario?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
   update?: Maybe<Scalars['Date']['output']>;
@@ -7134,6 +7681,7 @@ export type Emissions_Aggregated_Count = {
   note?: Maybe<Scalars['Int']['output']>;
   period?: Maybe<Scalars['Int']['output']>;
   region?: Maybe<Scalars['Int']['output']>;
+  scenario?: Maybe<Scalars['Int']['output']>;
   source?: Maybe<Scalars['Int']['output']>;
   unit?: Maybe<Scalars['Int']['output']>;
   update?: Maybe<Scalars['Int']['output']>;
@@ -7151,6 +7699,7 @@ export type Emissions_Category = {
   children?: Maybe<Array<Maybe<Emissions_Category_Emissions_Category>>>;
   children_func?: Maybe<Count_Functions>;
   code: Scalars['ID']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   explanation?: Maybe<Scalars['String']['output']>;
   label?: Maybe<Scalars['String']['output']>;
   note?: Maybe<Scalars['String']['output']>;
@@ -7180,6 +7729,7 @@ export type Emissions_Category_Aggregated_Count = {
   __typename?: 'emissions_category_aggregated_count';
   children?: Maybe<Scalars['Int']['output']>;
   code?: Maybe<Scalars['Int']['output']>;
+  color?: Maybe<Scalars['Int']['output']>;
   explanation?: Maybe<Scalars['Int']['output']>;
   label?: Maybe<Scalars['Int']['output']>;
   note?: Maybe<Scalars['Int']['output']>;
@@ -7261,6 +7811,7 @@ export type Emissions_Category_Filter = {
   children?: InputMaybe<Emissions_Category_Emissions_Category_Filter>;
   children_func?: InputMaybe<Count_Function_Filter_Operators>;
   code?: InputMaybe<String_Filter_Operators>;
+  color?: InputMaybe<String_Filter_Operators>;
   explanation?: InputMaybe<String_Filter_Operators>;
   label?: InputMaybe<String_Filter_Operators>;
   note?: InputMaybe<String_Filter_Operators>;
@@ -7284,6 +7835,7 @@ export type Emissions_Data = {
   id: Scalars['ID']['output'];
   month?: Maybe<Scalars['Int']['output']>;
   region?: Maybe<Regions>;
+  scenario?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
   update?: Maybe<Scalars['Date']['output']>;
@@ -7357,6 +7909,7 @@ export type Emissions_Data_Aggregated_Count = {
   id?: Maybe<Scalars['Int']['output']>;
   month?: Maybe<Scalars['Int']['output']>;
   region?: Maybe<Scalars['Int']['output']>;
+  scenario?: Maybe<Scalars['Int']['output']>;
   source?: Maybe<Scalars['Int']['output']>;
   type?: Maybe<Scalars['Int']['output']>;
   update?: Maybe<Scalars['Int']['output']>;
@@ -7387,6 +7940,7 @@ export type Emissions_Data_Filter = {
   id?: InputMaybe<Number_Filter_Operators>;
   month?: InputMaybe<Number_Filter_Operators>;
   region?: InputMaybe<Regions_Filter>;
+  scenario?: InputMaybe<String_Filter_Operators>;
   source?: InputMaybe<String_Filter_Operators>;
   type?: InputMaybe<String_Filter_Operators>;
   update?: InputMaybe<Date_Filter_Operators>;
@@ -7411,6 +7965,7 @@ export type Emissions_Filter = {
   note?: InputMaybe<String_Filter_Operators>;
   period?: InputMaybe<String_Filter_Operators>;
   region?: InputMaybe<String_Filter_Operators>;
+  scenario?: InputMaybe<String_Filter_Operators>;
   source?: InputMaybe<String_Filter_Operators>;
   unit?: InputMaybe<String_Filter_Operators>;
   update?: InputMaybe<Date_Filter_Operators>;
@@ -8036,6 +8591,69 @@ export type Gases_Mutated = {
   key: Scalars['ID']['output'];
 };
 
+export type Geocoding_Cache = {
+  __typename?: 'geocoding_cache';
+  date_created?: Maybe<Scalars['Date']['output']>;
+  date_created_func?: Maybe<Datetime_Functions>;
+  date_updated?: Maybe<Scalars['Date']['output']>;
+  date_updated_func?: Maybe<Datetime_Functions>;
+  id: Scalars['ID']['output'];
+  lat?: Maybe<Scalars['Float']['output']>;
+  location_name?: Maybe<Scalars['String']['output']>;
+  lon?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Geocoding_Cache_Aggregated = {
+  __typename?: 'geocoding_cache_aggregated';
+  avg?: Maybe<Geocoding_Cache_Aggregated_Fields>;
+  avgDistinct?: Maybe<Geocoding_Cache_Aggregated_Fields>;
+  count?: Maybe<Geocoding_Cache_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Geocoding_Cache_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Geocoding_Cache_Aggregated_Fields>;
+  min?: Maybe<Geocoding_Cache_Aggregated_Fields>;
+  sum?: Maybe<Geocoding_Cache_Aggregated_Fields>;
+  sumDistinct?: Maybe<Geocoding_Cache_Aggregated_Fields>;
+};
+
+export type Geocoding_Cache_Aggregated_Count = {
+  __typename?: 'geocoding_cache_aggregated_count';
+  date_created?: Maybe<Scalars['Int']['output']>;
+  date_updated?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  lat?: Maybe<Scalars['Int']['output']>;
+  location_name?: Maybe<Scalars['Int']['output']>;
+  lon?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Geocoding_Cache_Aggregated_Fields = {
+  __typename?: 'geocoding_cache_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  lat?: Maybe<Scalars['Float']['output']>;
+  lon?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Geocoding_Cache_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Geocoding_Cache_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Geocoding_Cache_Filter>>>;
+  date_created?: InputMaybe<Date_Filter_Operators>;
+  date_created_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  date_updated?: InputMaybe<Date_Filter_Operators>;
+  date_updated_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  lat?: InputMaybe<Number_Filter_Operators>;
+  location_name?: InputMaybe<String_Filter_Operators>;
+  lon?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Geocoding_Cache_Mutated = {
+  __typename?: 'geocoding_cache_mutated';
+  data?: Maybe<Geocoding_Cache>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Global_Co2_Concentration = {
   __typename?: 'global_co2_concentration';
   id: Scalars['ID']['output'];
@@ -8248,6 +8866,271 @@ export type Glossary_Translations_Mutated = {
   key: Scalars['ID']['output'];
 };
 
+export type Illustrations = {
+  __typename?: 'illustrations';
+  attributes?: Maybe<Scalars['JSON']['output']>;
+  attributes_func?: Maybe<Count_Functions>;
+  date_created?: Maybe<Scalars['Date']['output']>;
+  date_created_func?: Maybe<Datetime_Functions>;
+  date_updated?: Maybe<Scalars['Date']['output']>;
+  date_updated_func?: Maybe<Datetime_Functions>;
+  files?: Maybe<Array<Maybe<Illustrations_Files>>>;
+  files_func?: Maybe<Count_Functions>;
+  id: Scalars['ID']['output'];
+  sort?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  translations?: Maybe<Array<Maybe<Illustrations_Translations>>>;
+  translations_func?: Maybe<Count_Functions>;
+  user_created?: Maybe<Directus_Users>;
+  user_updated?: Maybe<Directus_Users>;
+};
+
+
+export type IllustrationsFilesArgs = {
+  filter?: InputMaybe<Illustrations_Files_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type IllustrationsTranslationsArgs = {
+  filter?: InputMaybe<Illustrations_Translations_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type IllustrationsUser_CreatedArgs = {
+  filter?: InputMaybe<Directus_Users_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type IllustrationsUser_UpdatedArgs = {
+  filter?: InputMaybe<Directus_Users_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Illustrations_Aggregated = {
+  __typename?: 'illustrations_aggregated';
+  avg?: Maybe<Illustrations_Aggregated_Fields>;
+  avgDistinct?: Maybe<Illustrations_Aggregated_Fields>;
+  count?: Maybe<Illustrations_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Illustrations_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Illustrations_Aggregated_Fields>;
+  min?: Maybe<Illustrations_Aggregated_Fields>;
+  sum?: Maybe<Illustrations_Aggregated_Fields>;
+  sumDistinct?: Maybe<Illustrations_Aggregated_Fields>;
+};
+
+export type Illustrations_Aggregated_Count = {
+  __typename?: 'illustrations_aggregated_count';
+  attributes?: Maybe<Scalars['Int']['output']>;
+  date_created?: Maybe<Scalars['Int']['output']>;
+  date_updated?: Maybe<Scalars['Int']['output']>;
+  files?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  sort?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['Int']['output']>;
+  translations?: Maybe<Scalars['Int']['output']>;
+  user_created?: Maybe<Scalars['Int']['output']>;
+  user_updated?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Illustrations_Aggregated_Fields = {
+  __typename?: 'illustrations_aggregated_fields';
+  sort?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Illustrations_Files = {
+  __typename?: 'illustrations_files';
+  directus_files_id?: Maybe<Directus_Files>;
+  id: Scalars['ID']['output'];
+  illustrations_id?: Maybe<Illustrations>;
+  sort?: Maybe<Scalars['Int']['output']>;
+};
+
+
+export type Illustrations_FilesDirectus_Files_IdArgs = {
+  filter?: InputMaybe<Directus_Files_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type Illustrations_FilesIllustrations_IdArgs = {
+  filter?: InputMaybe<Illustrations_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Illustrations_Files_Aggregated = {
+  __typename?: 'illustrations_files_aggregated';
+  avg?: Maybe<Illustrations_Files_Aggregated_Fields>;
+  avgDistinct?: Maybe<Illustrations_Files_Aggregated_Fields>;
+  count?: Maybe<Illustrations_Files_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Illustrations_Files_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Illustrations_Files_Aggregated_Fields>;
+  min?: Maybe<Illustrations_Files_Aggregated_Fields>;
+  sum?: Maybe<Illustrations_Files_Aggregated_Fields>;
+  sumDistinct?: Maybe<Illustrations_Files_Aggregated_Fields>;
+};
+
+export type Illustrations_Files_Aggregated_Count = {
+  __typename?: 'illustrations_files_aggregated_count';
+  directus_files_id?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  illustrations_id?: Maybe<Scalars['Int']['output']>;
+  sort?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Illustrations_Files_Aggregated_Fields = {
+  __typename?: 'illustrations_files_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  sort?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Illustrations_Files_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Illustrations_Files_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Illustrations_Files_Filter>>>;
+  directus_files_id?: InputMaybe<Directus_Files_Filter>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  illustrations_id?: InputMaybe<Illustrations_Filter>;
+  sort?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Illustrations_Files_Mutated = {
+  __typename?: 'illustrations_files_mutated';
+  data?: Maybe<Illustrations_Files>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Illustrations_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Illustrations_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Illustrations_Filter>>>;
+  attributes?: InputMaybe<String_Filter_Operators>;
+  attributes_func?: InputMaybe<Count_Function_Filter_Operators>;
+  date_created?: InputMaybe<Date_Filter_Operators>;
+  date_created_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  date_updated?: InputMaybe<Date_Filter_Operators>;
+  date_updated_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  files?: InputMaybe<Illustrations_Files_Filter>;
+  files_func?: InputMaybe<Count_Function_Filter_Operators>;
+  id?: InputMaybe<String_Filter_Operators>;
+  sort?: InputMaybe<Number_Filter_Operators>;
+  status?: InputMaybe<String_Filter_Operators>;
+  translations?: InputMaybe<Illustrations_Translations_Filter>;
+  translations_func?: InputMaybe<Count_Function_Filter_Operators>;
+  user_created?: InputMaybe<Directus_Users_Filter>;
+  user_updated?: InputMaybe<Directus_Users_Filter>;
+};
+
+export type Illustrations_Mutated = {
+  __typename?: 'illustrations_mutated';
+  data?: Maybe<Illustrations>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Illustrations_Translations = {
+  __typename?: 'illustrations_translations';
+  id: Scalars['ID']['output'];
+  illustrations_id?: Maybe<Illustrations>;
+  languages_code?: Maybe<Languages>;
+  text?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type Illustrations_TranslationsIllustrations_IdArgs = {
+  filter?: InputMaybe<Illustrations_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type Illustrations_TranslationsLanguages_CodeArgs = {
+  filter?: InputMaybe<Languages_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Illustrations_Translations_Aggregated = {
+  __typename?: 'illustrations_translations_aggregated';
+  avg?: Maybe<Illustrations_Translations_Aggregated_Fields>;
+  avgDistinct?: Maybe<Illustrations_Translations_Aggregated_Fields>;
+  count?: Maybe<Illustrations_Translations_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Illustrations_Translations_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Illustrations_Translations_Aggregated_Fields>;
+  min?: Maybe<Illustrations_Translations_Aggregated_Fields>;
+  sum?: Maybe<Illustrations_Translations_Aggregated_Fields>;
+  sumDistinct?: Maybe<Illustrations_Translations_Aggregated_Fields>;
+};
+
+export type Illustrations_Translations_Aggregated_Count = {
+  __typename?: 'illustrations_translations_aggregated_count';
+  id?: Maybe<Scalars['Int']['output']>;
+  illustrations_id?: Maybe<Scalars['Int']['output']>;
+  languages_code?: Maybe<Scalars['Int']['output']>;
+  text?: Maybe<Scalars['Int']['output']>;
+  title?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Illustrations_Translations_Aggregated_Fields = {
+  __typename?: 'illustrations_translations_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Illustrations_Translations_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Illustrations_Translations_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Illustrations_Translations_Filter>>>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  illustrations_id?: InputMaybe<Illustrations_Filter>;
+  languages_code?: InputMaybe<Languages_Filter>;
+  text?: InputMaybe<String_Filter_Operators>;
+  title?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Illustrations_Translations_Mutated = {
+  __typename?: 'illustrations_translations_mutated';
+  data?: Maybe<Illustrations_Translations>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Languages = {
   __typename?: 'languages';
   code: Scalars['ID']['output'];
@@ -8411,6 +9294,72 @@ export type Mobility_Filter = {
   source?: InputMaybe<String_Filter_Operators>;
   unit?: InputMaybe<String_Filter_Operators>;
   value?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Mobility_Modal_Split = {
+  __typename?: 'mobility_modal_split';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  region?: Maybe<Regions>;
+  value?: Maybe<Scalars['Float']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+
+export type Mobility_Modal_SplitRegionArgs = {
+  filter?: InputMaybe<Regions_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Mobility_Modal_Split_Aggregated = {
+  __typename?: 'mobility_modal_split_aggregated';
+  avg?: Maybe<Mobility_Modal_Split_Aggregated_Fields>;
+  avgDistinct?: Maybe<Mobility_Modal_Split_Aggregated_Fields>;
+  count?: Maybe<Mobility_Modal_Split_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Mobility_Modal_Split_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Mobility_Modal_Split_Aggregated_Fields>;
+  min?: Maybe<Mobility_Modal_Split_Aggregated_Fields>;
+  sum?: Maybe<Mobility_Modal_Split_Aggregated_Fields>;
+  sumDistinct?: Maybe<Mobility_Modal_Split_Aggregated_Fields>;
+};
+
+export type Mobility_Modal_Split_Aggregated_Count = {
+  __typename?: 'mobility_modal_split_aggregated_count';
+  category?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Mobility_Modal_Split_Aggregated_Fields = {
+  __typename?: 'mobility_modal_split_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+  year?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Mobility_Modal_Split_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Mobility_Modal_Split_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Mobility_Modal_Split_Filter>>>;
+  category?: InputMaybe<String_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  region?: InputMaybe<Regions_Filter>;
+  value?: InputMaybe<Number_Filter_Operators>;
+  year?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Mobility_Modal_Split_Mutated = {
+  __typename?: 'mobility_modal_split_mutated';
+  data?: Maybe<Mobility_Modal_Split>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
 };
 
 export type Mobility_Mutated = {
@@ -8594,6 +9543,365 @@ export type Number_Filter_Operators = {
   _nin?: InputMaybe<Array<InputMaybe<Scalars['GraphQLStringOrFloat']['input']>>>;
   _nnull?: InputMaybe<Scalars['Boolean']['input']>;
   _null?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type Org_Donation = {
+  __typename?: 'org_donation';
+  donationGoal?: Maybe<Scalars['Float']['output']>;
+  donationStatus?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+};
+
+export type Org_Donation_Mutated = {
+  __typename?: 'org_donation_mutated';
+  data?: Maybe<Org_Donation>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Org_Events = {
+  __typename?: 'org_events';
+  date?: Maybe<Scalars['Date']['output']>;
+  date_end?: Maybe<Scalars['Date']['output']>;
+  date_end_func?: Maybe<Date_Functions>;
+  date_func?: Maybe<Date_Functions>;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  location?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type Org_Events_Aggregated = {
+  __typename?: 'org_events_aggregated';
+  avg?: Maybe<Org_Events_Aggregated_Fields>;
+  avgDistinct?: Maybe<Org_Events_Aggregated_Fields>;
+  count?: Maybe<Org_Events_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Org_Events_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Org_Events_Aggregated_Fields>;
+  min?: Maybe<Org_Events_Aggregated_Fields>;
+  sum?: Maybe<Org_Events_Aggregated_Fields>;
+  sumDistinct?: Maybe<Org_Events_Aggregated_Fields>;
+};
+
+export type Org_Events_Aggregated_Count = {
+  __typename?: 'org_events_aggregated_count';
+  date?: Maybe<Scalars['Int']['output']>;
+  date_end?: Maybe<Scalars['Int']['output']>;
+  description?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  location?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['Int']['output']>;
+  title?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Org_Events_Aggregated_Fields = {
+  __typename?: 'org_events_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Org_Events_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Org_Events_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Org_Events_Filter>>>;
+  date?: InputMaybe<Date_Filter_Operators>;
+  date_end?: InputMaybe<Date_Filter_Operators>;
+  date_end_func?: InputMaybe<Date_Function_Filter_Operators>;
+  date_func?: InputMaybe<Date_Function_Filter_Operators>;
+  description?: InputMaybe<String_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  location?: InputMaybe<String_Filter_Operators>;
+  status?: InputMaybe<String_Filter_Operators>;
+  title?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Org_Events_Mutated = {
+  __typename?: 'org_events_mutated';
+  data?: Maybe<Org_Events>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Org_Finance = {
+  __typename?: 'org_finance';
+  accounts?: Maybe<Scalars['JSON']['output']>;
+  accounts_func?: Maybe<Count_Functions>;
+  id: Scalars['ID']['output'];
+  intro?: Maybe<Scalars['String']['output']>;
+  years?: Maybe<Scalars['JSON']['output']>;
+  years_func?: Maybe<Count_Functions>;
+};
+
+export type Org_Finance_Mutated = {
+  __typename?: 'org_finance_mutated';
+  data?: Maybe<Org_Finance>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Org_Moments = {
+  __typename?: 'org_moments';
+  copyright?: Maybe<Scalars['String']['output']>;
+  date?: Maybe<Scalars['Date']['output']>;
+  date_func?: Maybe<Date_Functions>;
+  id: Scalars['ID']['output'];
+  image?: Maybe<Directus_Files>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type Org_MomentsImageArgs = {
+  filter?: InputMaybe<Directus_Files_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Org_Moments_Aggregated = {
+  __typename?: 'org_moments_aggregated';
+  avg?: Maybe<Org_Moments_Aggregated_Fields>;
+  avgDistinct?: Maybe<Org_Moments_Aggregated_Fields>;
+  count?: Maybe<Org_Moments_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Org_Moments_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Org_Moments_Aggregated_Fields>;
+  min?: Maybe<Org_Moments_Aggregated_Fields>;
+  sum?: Maybe<Org_Moments_Aggregated_Fields>;
+  sumDistinct?: Maybe<Org_Moments_Aggregated_Fields>;
+};
+
+export type Org_Moments_Aggregated_Count = {
+  __typename?: 'org_moments_aggregated_count';
+  copyright?: Maybe<Scalars['Int']['output']>;
+  date?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  image?: Maybe<Scalars['Int']['output']>;
+  title?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Org_Moments_Aggregated_Fields = {
+  __typename?: 'org_moments_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Org_Moments_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Org_Moments_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Org_Moments_Filter>>>;
+  copyright?: InputMaybe<String_Filter_Operators>;
+  date?: InputMaybe<Date_Filter_Operators>;
+  date_func?: InputMaybe<Date_Function_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  image?: InputMaybe<Directus_Files_Filter>;
+  title?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Org_Moments_Mutated = {
+  __typename?: 'org_moments_mutated';
+  data?: Maybe<Org_Moments>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Org_Press_Media = {
+  __typename?: 'org_press_media';
+  featured?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  logo?: Maybe<Directus_Files>;
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type Org_Press_MediaLogoArgs = {
+  filter?: InputMaybe<Directus_Files_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Org_Press_Media_Aggregated = {
+  __typename?: 'org_press_media_aggregated';
+  count?: Maybe<Org_Press_Media_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Org_Press_Media_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+};
+
+export type Org_Press_Media_Aggregated_Count = {
+  __typename?: 'org_press_media_aggregated_count';
+  featured?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  logo?: Maybe<Scalars['Int']['output']>;
+  name?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Org_Press_Media_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Org_Press_Media_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Org_Press_Media_Filter>>>;
+  featured?: InputMaybe<Boolean_Filter_Operators>;
+  id?: InputMaybe<String_Filter_Operators>;
+  logo?: InputMaybe<Directus_Files_Filter>;
+  name?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Org_Press_Media_Mutated = {
+  __typename?: 'org_press_media_mutated';
+  data?: Maybe<Org_Press_Media>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Org_Press_Reports = {
+  __typename?: 'org_press_reports';
+  date?: Maybe<Scalars['Date']['output']>;
+  date_func?: Maybe<Date_Functions>;
+  id: Scalars['ID']['output'];
+  link?: Maybe<Scalars['String']['output']>;
+  medium?: Maybe<Org_Press_Media>;
+  summary?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type Org_Press_ReportsMediumArgs = {
+  filter?: InputMaybe<Org_Press_Media_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Org_Press_Reports_Aggregated = {
+  __typename?: 'org_press_reports_aggregated';
+  count?: Maybe<Org_Press_Reports_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Org_Press_Reports_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+};
+
+export type Org_Press_Reports_Aggregated_Count = {
+  __typename?: 'org_press_reports_aggregated_count';
+  date?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  link?: Maybe<Scalars['Int']['output']>;
+  medium?: Maybe<Scalars['Int']['output']>;
+  summary?: Maybe<Scalars['Int']['output']>;
+  title?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Org_Press_Reports_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Org_Press_Reports_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Org_Press_Reports_Filter>>>;
+  date?: InputMaybe<Date_Filter_Operators>;
+  date_func?: InputMaybe<Date_Function_Filter_Operators>;
+  id?: InputMaybe<String_Filter_Operators>;
+  link?: InputMaybe<String_Filter_Operators>;
+  medium?: InputMaybe<Org_Press_Media_Filter>;
+  summary?: InputMaybe<String_Filter_Operators>;
+  title?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Org_Press_Reports_Mutated = {
+  __typename?: 'org_press_reports_mutated';
+  data?: Maybe<Org_Press_Reports>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
+export type Org_Projects = {
+  __typename?: 'org_projects';
+  budget?: Maybe<Scalars['Int']['output']>;
+  date_created?: Maybe<Scalars['Date']['output']>;
+  date_created_func?: Maybe<Datetime_Functions>;
+  date_updated?: Maybe<Scalars['Date']['output']>;
+  date_updated_func?: Maybe<Datetime_Functions>;
+  featured?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  image?: Maybe<Directus_Files>;
+  link?: Maybe<Scalars['String']['output']>;
+  sort?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  status_text?: Maybe<Scalars['String']['output']>;
+  summary?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type Org_ProjectsImageArgs = {
+  filter?: InputMaybe<Directus_Files_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type Org_Projects_Aggregated = {
+  __typename?: 'org_projects_aggregated';
+  avg?: Maybe<Org_Projects_Aggregated_Fields>;
+  avgDistinct?: Maybe<Org_Projects_Aggregated_Fields>;
+  count?: Maybe<Org_Projects_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Org_Projects_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Org_Projects_Aggregated_Fields>;
+  min?: Maybe<Org_Projects_Aggregated_Fields>;
+  sum?: Maybe<Org_Projects_Aggregated_Fields>;
+  sumDistinct?: Maybe<Org_Projects_Aggregated_Fields>;
+};
+
+export type Org_Projects_Aggregated_Count = {
+  __typename?: 'org_projects_aggregated_count';
+  budget?: Maybe<Scalars['Int']['output']>;
+  date_created?: Maybe<Scalars['Int']['output']>;
+  date_updated?: Maybe<Scalars['Int']['output']>;
+  featured?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  image?: Maybe<Scalars['Int']['output']>;
+  link?: Maybe<Scalars['Int']['output']>;
+  sort?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['Int']['output']>;
+  status_text?: Maybe<Scalars['Int']['output']>;
+  summary?: Maybe<Scalars['Int']['output']>;
+  title?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Org_Projects_Aggregated_Fields = {
+  __typename?: 'org_projects_aggregated_fields';
+  budget?: Maybe<Scalars['Float']['output']>;
+  sort?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Org_Projects_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Org_Projects_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Org_Projects_Filter>>>;
+  budget?: InputMaybe<Number_Filter_Operators>;
+  date_created?: InputMaybe<Date_Filter_Operators>;
+  date_created_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  date_updated?: InputMaybe<Date_Filter_Operators>;
+  date_updated_func?: InputMaybe<Datetime_Function_Filter_Operators>;
+  featured?: InputMaybe<Boolean_Filter_Operators>;
+  id?: InputMaybe<String_Filter_Operators>;
+  image?: InputMaybe<Directus_Files_Filter>;
+  link?: InputMaybe<String_Filter_Operators>;
+  sort?: InputMaybe<Number_Filter_Operators>;
+  status?: InputMaybe<String_Filter_Operators>;
+  status_text?: InputMaybe<String_Filter_Operators>;
+  summary?: InputMaybe<String_Filter_Operators>;
+  title?: InputMaybe<String_Filter_Operators>;
+};
+
+export type Org_Projects_Mutated = {
+  __typename?: 'org_projects_mutated';
+  data?: Maybe<Org_Projects>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
 };
 
 export type Pages = {
@@ -10264,13 +11572,14 @@ export type Quotes_Mutated = {
 
 export type Regions = {
   __typename?: 'regions';
-  area?: Maybe<Scalars['Int']['output']>;
+  area?: Maybe<Scalars['Float']['output']>;
   attributes?: Maybe<Scalars['JSON']['output']>;
   attributes_func?: Maybe<Count_Functions>;
   center?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   code?: Maybe<Scalars['String']['output']>;
   code_short?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Countries>;
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   layer?: Maybe<Scalars['String']['output']>;
   layer_label?: Maybe<Scalars['String']['output']>;
@@ -10285,6 +11594,8 @@ export type Regions = {
   parents_func?: Maybe<Count_Functions>;
   population?: Maybe<Scalars['Int']['output']>;
   postcodes?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  slug?: Maybe<Scalars['String']['output']>;
+  visible?: Maybe<Scalars['Boolean']['output']>;
 };
 
 
@@ -10319,6 +11630,7 @@ export type Regions_Aggregated_Count = {
   code?: Maybe<Scalars['Int']['output']>;
   code_short?: Maybe<Scalars['Int']['output']>;
   country?: Maybe<Scalars['Int']['output']>;
+  email?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
   layer?: Maybe<Scalars['Int']['output']>;
   layer_label?: Maybe<Scalars['Int']['output']>;
@@ -10330,6 +11642,8 @@ export type Regions_Aggregated_Count = {
   parents?: Maybe<Scalars['Int']['output']>;
   population?: Maybe<Scalars['Int']['output']>;
   postcodes?: Maybe<Scalars['Int']['output']>;
+  slug?: Maybe<Scalars['Int']['output']>;
+  visible?: Maybe<Scalars['Int']['output']>;
 };
 
 export type Regions_Aggregated_Fields = {
@@ -10348,6 +11662,7 @@ export type Regions_Filter = {
   code?: InputMaybe<String_Filter_Operators>;
   code_short?: InputMaybe<String_Filter_Operators>;
   country?: InputMaybe<Countries_Filter>;
+  email?: InputMaybe<String_Filter_Operators>;
   id?: InputMaybe<String_Filter_Operators>;
   layer?: InputMaybe<String_Filter_Operators>;
   layer_label?: InputMaybe<String_Filter_Operators>;
@@ -10362,6 +11677,8 @@ export type Regions_Filter = {
   parents_func?: InputMaybe<Count_Function_Filter_Operators>;
   population?: InputMaybe<Number_Filter_Operators>;
   postcodes?: InputMaybe<String_Filter_Operators>;
+  slug?: InputMaybe<String_Filter_Operators>;
+  visible?: InputMaybe<Boolean_Filter_Operators>;
 };
 
 export type Regions_Mutated = {
@@ -10705,6 +12022,82 @@ export type Sites_Translations_Mutated = {
   key: Scalars['ID']['output'];
 };
 
+export type Solar_Potential_De = {
+  __typename?: 'solar_potential_de';
+  AGS?: Maybe<Scalars['Int']['output']>;
+  ARS?: Maybe<Scalars['GraphQLBigInt']['output']>;
+  BEZ?: Maybe<Scalars['String']['output']>;
+  GEN?: Maybe<Scalars['String']['output']>;
+  MStRInstalledNetPower?: Maybe<Scalars['Float']['output']>;
+  NumberOfBuildings?: Maybe<Scalars['Int']['output']>;
+  NumberOfBuildingsWithPV?: Maybe<Scalars['Int']['output']>;
+  SolarPotentialInMWhPerYear?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  netPotentialShare?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Solar_Potential_De_Aggregated = {
+  __typename?: 'solar_potential_de_aggregated';
+  avg?: Maybe<Solar_Potential_De_Aggregated_Fields>;
+  avgDistinct?: Maybe<Solar_Potential_De_Aggregated_Fields>;
+  count?: Maybe<Solar_Potential_De_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Solar_Potential_De_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Solar_Potential_De_Aggregated_Fields>;
+  min?: Maybe<Solar_Potential_De_Aggregated_Fields>;
+  sum?: Maybe<Solar_Potential_De_Aggregated_Fields>;
+  sumDistinct?: Maybe<Solar_Potential_De_Aggregated_Fields>;
+};
+
+export type Solar_Potential_De_Aggregated_Count = {
+  __typename?: 'solar_potential_de_aggregated_count';
+  AGS?: Maybe<Scalars['Int']['output']>;
+  ARS?: Maybe<Scalars['Int']['output']>;
+  BEZ?: Maybe<Scalars['Int']['output']>;
+  GEN?: Maybe<Scalars['Int']['output']>;
+  MStRInstalledNetPower?: Maybe<Scalars['Int']['output']>;
+  NumberOfBuildings?: Maybe<Scalars['Int']['output']>;
+  NumberOfBuildingsWithPV?: Maybe<Scalars['Int']['output']>;
+  SolarPotentialInMWhPerYear?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  netPotentialShare?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Solar_Potential_De_Aggregated_Fields = {
+  __typename?: 'solar_potential_de_aggregated_fields';
+  AGS?: Maybe<Scalars['Float']['output']>;
+  ARS?: Maybe<Scalars['Float']['output']>;
+  MStRInstalledNetPower?: Maybe<Scalars['Float']['output']>;
+  NumberOfBuildings?: Maybe<Scalars['Float']['output']>;
+  NumberOfBuildingsWithPV?: Maybe<Scalars['Float']['output']>;
+  SolarPotentialInMWhPerYear?: Maybe<Scalars['Float']['output']>;
+  id?: Maybe<Scalars['Float']['output']>;
+  netPotentialShare?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Solar_Potential_De_Filter = {
+  AGS?: InputMaybe<Number_Filter_Operators>;
+  ARS?: InputMaybe<Big_Int_Filter_Operators>;
+  BEZ?: InputMaybe<String_Filter_Operators>;
+  GEN?: InputMaybe<String_Filter_Operators>;
+  MStRInstalledNetPower?: InputMaybe<Number_Filter_Operators>;
+  NumberOfBuildings?: InputMaybe<Number_Filter_Operators>;
+  NumberOfBuildingsWithPV?: InputMaybe<Number_Filter_Operators>;
+  SolarPotentialInMWhPerYear?: InputMaybe<Number_Filter_Operators>;
+  _and?: InputMaybe<Array<InputMaybe<Solar_Potential_De_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Solar_Potential_De_Filter>>>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  netPotentialShare?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Solar_Potential_De_Mutated = {
+  __typename?: 'solar_potential_de_mutated';
+  data?: Maybe<Solar_Potential_De>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Stakeholders = {
   __typename?: 'stakeholders';
   date_created?: Maybe<Scalars['Date']['output']>;
@@ -10811,6 +12204,64 @@ export type String_Filter_Operators = {
   _nstarts_with?: InputMaybe<Scalars['String']['input']>;
   _null?: InputMaybe<Scalars['Boolean']['input']>;
   _starts_with?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type Surveys_Answers = {
+  __typename?: 'surveys_answers';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  question?: Maybe<Scalars['String']['output']>;
+  response?: Maybe<Scalars['String']['output']>;
+  survey?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Surveys_Answers_Aggregated = {
+  __typename?: 'surveys_answers_aggregated';
+  avg?: Maybe<Surveys_Answers_Aggregated_Fields>;
+  avgDistinct?: Maybe<Surveys_Answers_Aggregated_Fields>;
+  count?: Maybe<Surveys_Answers_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Surveys_Answers_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Surveys_Answers_Aggregated_Fields>;
+  min?: Maybe<Surveys_Answers_Aggregated_Fields>;
+  sum?: Maybe<Surveys_Answers_Aggregated_Fields>;
+  sumDistinct?: Maybe<Surveys_Answers_Aggregated_Fields>;
+};
+
+export type Surveys_Answers_Aggregated_Count = {
+  __typename?: 'surveys_answers_aggregated_count';
+  category?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  question?: Maybe<Scalars['Int']['output']>;
+  response?: Maybe<Scalars['Int']['output']>;
+  survey?: Maybe<Scalars['Int']['output']>;
+  value?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Surveys_Answers_Aggregated_Fields = {
+  __typename?: 'surveys_answers_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Surveys_Answers_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Surveys_Answers_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Surveys_Answers_Filter>>>;
+  category?: InputMaybe<String_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  question?: InputMaybe<String_Filter_Operators>;
+  response?: InputMaybe<String_Filter_Operators>;
+  survey?: InputMaybe<String_Filter_Operators>;
+  value?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Surveys_Answers_Mutated = {
+  __typename?: 'surveys_answers_mutated';
+  data?: Maybe<Surveys_Answers>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
 };
 
 export type Urban_Sprawl = {
@@ -11306,6 +12757,7 @@ export type Version_Emissions = {
   note?: Maybe<Scalars['String']['output']>;
   period?: Maybe<Scalars['String']['output']>;
   region?: Maybe<Scalars['String']['output']>;
+  scenario?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
   unit?: Maybe<Scalars['String']['output']>;
   update?: Maybe<Scalars['Date']['output']>;
@@ -11318,6 +12770,7 @@ export type Version_Emissions_Category = {
   children?: Maybe<Scalars['JSON']['output']>;
   children_func?: Maybe<Count_Functions>;
   code: Scalars['ID']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   explanation?: Maybe<Scalars['String']['output']>;
   label?: Maybe<Scalars['String']['output']>;
   note?: Maybe<Scalars['String']['output']>;
@@ -11341,6 +12794,7 @@ export type Version_Emissions_Data = {
   id: Scalars['ID']['output'];
   month?: Maybe<Scalars['Int']['output']>;
   region?: Maybe<Scalars['JSON']['output']>;
+  scenario?: Maybe<Scalars['String']['output']>;
   source?: Maybe<Scalars['String']['output']>;
   type?: Maybe<Scalars['String']['output']>;
   update?: Maybe<Scalars['Date']['output']>;
@@ -11469,6 +12923,18 @@ export type Version_Gases = {
   unit?: Maybe<Scalars['String']['output']>;
 };
 
+export type Version_Geocoding_Cache = {
+  __typename?: 'version_geocoding_cache';
+  date_created?: Maybe<Scalars['Date']['output']>;
+  date_created_func?: Maybe<Datetime_Functions>;
+  date_updated?: Maybe<Scalars['Date']['output']>;
+  date_updated_func?: Maybe<Datetime_Functions>;
+  id: Scalars['ID']['output'];
+  lat?: Maybe<Scalars['Float']['output']>;
+  location_name?: Maybe<Scalars['String']['output']>;
+  lon?: Maybe<Scalars['Float']['output']>;
+};
+
 export type Version_Global_Co2_Concentration = {
   __typename?: 'version_global_co2_concentration';
   id: Scalars['ID']['output'];
@@ -11495,6 +12961,42 @@ export type Version_Glossary_Translations = {
   __typename?: 'version_glossary_translations';
   glossary_id?: Maybe<Scalars['JSON']['output']>;
   id: Scalars['ID']['output'];
+  languages_code?: Maybe<Scalars['JSON']['output']>;
+  text?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Illustrations = {
+  __typename?: 'version_illustrations';
+  attributes?: Maybe<Scalars['JSON']['output']>;
+  attributes_func?: Maybe<Count_Functions>;
+  date_created?: Maybe<Scalars['Date']['output']>;
+  date_created_func?: Maybe<Datetime_Functions>;
+  date_updated?: Maybe<Scalars['Date']['output']>;
+  date_updated_func?: Maybe<Datetime_Functions>;
+  files?: Maybe<Scalars['JSON']['output']>;
+  files_func?: Maybe<Count_Functions>;
+  id: Scalars['ID']['output'];
+  sort?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  translations?: Maybe<Scalars['JSON']['output']>;
+  translations_func?: Maybe<Count_Functions>;
+  user_created?: Maybe<Scalars['JSON']['output']>;
+  user_updated?: Maybe<Scalars['JSON']['output']>;
+};
+
+export type Version_Illustrations_Files = {
+  __typename?: 'version_illustrations_files';
+  directus_files_id?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  illustrations_id?: Maybe<Scalars['JSON']['output']>;
+  sort?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Version_Illustrations_Translations = {
+  __typename?: 'version_illustrations_translations';
+  id: Scalars['ID']['output'];
+  illustrations_id?: Maybe<Scalars['JSON']['output']>;
   languages_code?: Maybe<Scalars['JSON']['output']>;
   text?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
@@ -11530,6 +13032,15 @@ export type Version_Mobility_Cars = {
   value?: Maybe<Scalars['Int']['output']>;
 };
 
+export type Version_Mobility_Modal_Split = {
+  __typename?: 'version_mobility_modal_split';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  region?: Maybe<Scalars['JSON']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
+  year?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Version_News = {
   __typename?: 'version_news';
   author?: Maybe<Scalars['JSON']['output']>;
@@ -11551,6 +13062,83 @@ export type Version_News_Translations = {
   languages_code?: Maybe<Scalars['JSON']['output']>;
   news_id?: Maybe<Scalars['JSON']['output']>;
   text?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Org_Donation = {
+  __typename?: 'version_org_donation';
+  donationGoal?: Maybe<Scalars['Float']['output']>;
+  donationStatus?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+};
+
+export type Version_Org_Events = {
+  __typename?: 'version_org_events';
+  date?: Maybe<Scalars['Date']['output']>;
+  date_end?: Maybe<Scalars['Date']['output']>;
+  date_end_func?: Maybe<Date_Functions>;
+  date_func?: Maybe<Date_Functions>;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  location?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Org_Finance = {
+  __typename?: 'version_org_finance';
+  accounts?: Maybe<Scalars['JSON']['output']>;
+  accounts_func?: Maybe<Count_Functions>;
+  id: Scalars['ID']['output'];
+  intro?: Maybe<Scalars['String']['output']>;
+  years?: Maybe<Scalars['JSON']['output']>;
+  years_func?: Maybe<Count_Functions>;
+};
+
+export type Version_Org_Moments = {
+  __typename?: 'version_org_moments';
+  copyright?: Maybe<Scalars['String']['output']>;
+  date?: Maybe<Scalars['Date']['output']>;
+  date_func?: Maybe<Date_Functions>;
+  id: Scalars['ID']['output'];
+  image?: Maybe<Scalars['JSON']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Org_Press_Media = {
+  __typename?: 'version_org_press_media';
+  featured?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  logo?: Maybe<Scalars['JSON']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Org_Press_Reports = {
+  __typename?: 'version_org_press_reports';
+  date?: Maybe<Scalars['Date']['output']>;
+  date_func?: Maybe<Date_Functions>;
+  id: Scalars['ID']['output'];
+  link?: Maybe<Scalars['String']['output']>;
+  medium?: Maybe<Scalars['JSON']['output']>;
+  summary?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type Version_Org_Projects = {
+  __typename?: 'version_org_projects';
+  budget?: Maybe<Scalars['Int']['output']>;
+  date_created?: Maybe<Scalars['Date']['output']>;
+  date_created_func?: Maybe<Datetime_Functions>;
+  date_updated?: Maybe<Scalars['Date']['output']>;
+  date_updated_func?: Maybe<Datetime_Functions>;
+  featured?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  image?: Maybe<Scalars['JSON']['output']>;
+  link?: Maybe<Scalars['String']['output']>;
+  sort?: Maybe<Scalars['Int']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  status_text?: Maybe<Scalars['String']['output']>;
+  summary?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
 };
 
 export type Version_Pages = {
@@ -11792,13 +13380,14 @@ export type Version_Quotes = {
 
 export type Version_Regions = {
   __typename?: 'version_regions';
-  area?: Maybe<Scalars['Int']['output']>;
+  area?: Maybe<Scalars['Float']['output']>;
   attributes?: Maybe<Scalars['JSON']['output']>;
   attributes_func?: Maybe<Count_Functions>;
   center?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   code?: Maybe<Scalars['String']['output']>;
   code_short?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['JSON']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   layer?: Maybe<Scalars['String']['output']>;
   layer_label?: Maybe<Scalars['String']['output']>;
@@ -11813,6 +13402,8 @@ export type Version_Regions = {
   parents_func?: Maybe<Count_Functions>;
   population?: Maybe<Scalars['Int']['output']>;
   postcodes?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  slug?: Maybe<Scalars['String']['output']>;
+  visible?: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type Version_Renewable_Share_15min = {
@@ -11867,6 +13458,20 @@ export type Version_Sites_Translations = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
+export type Version_Solar_Potential_De = {
+  __typename?: 'version_solar_potential_de';
+  AGS?: Maybe<Scalars['Int']['output']>;
+  ARS?: Maybe<Scalars['GraphQLBigInt']['output']>;
+  BEZ?: Maybe<Scalars['String']['output']>;
+  GEN?: Maybe<Scalars['String']['output']>;
+  MStRInstalledNetPower?: Maybe<Scalars['Float']['output']>;
+  NumberOfBuildings?: Maybe<Scalars['Int']['output']>;
+  NumberOfBuildingsWithPV?: Maybe<Scalars['Int']['output']>;
+  SolarPotentialInMWhPerYear?: Maybe<Scalars['Float']['output']>;
+  id: Scalars['ID']['output'];
+  netPotentialShare?: Maybe<Scalars['Float']['output']>;
+};
+
 export type Version_Stakeholders = {
   __typename?: 'version_stakeholders';
   date_created?: Maybe<Scalars['Date']['output']>;
@@ -11879,6 +13484,16 @@ export type Version_Stakeholders = {
   type?: Maybe<Scalars['String']['output']>;
   user_created?: Maybe<Scalars['JSON']['output']>;
   user_updated?: Maybe<Scalars['JSON']['output']>;
+};
+
+export type Version_Surveys_Answers = {
+  __typename?: 'version_surveys_answers';
+  category?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  question?: Maybe<Scalars['String']['output']>;
+  response?: Maybe<Scalars['String']['output']>;
+  survey?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Scalars['Float']['output']>;
 };
 
 export type Version_Urban_Sprawl = {

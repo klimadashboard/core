@@ -1,0 +1,10 @@
+name: Continue Klimadashboard
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: Svelte
+    command: npx
+    args:
+      - -y
+      - '@sveltejs/mcp'
+    env: {}
