@@ -12,7 +12,7 @@
 	import ComingSoonChart from './ComingSoonChart.svelte';
 	import RelatedRegions from './RelatedRegions.svelte';
 	import Credits from './Credits.svelte';
-	import ChartCard from './ChartCard.svelte';
+	import Chart from '$lib/components/charts/index.svelte';
 	import MapOverlay from './MapOverlay.svelte';
 
 	export let data;
@@ -100,8 +100,7 @@
 				{
 					id: '4895ac82-30f2-4afa-9fc5-76ef2c6eec55',
 					countries: ['at', 'de'],
-					span: 6,
-					mapLayerId: 'ev-charging-stations'
+					span: 12
 				},
 				{
 					id: '68b0f853-b1b1-4120-aedd-87de58ea3209',
@@ -111,7 +110,7 @@
 				{
 					id: '2ab9836f-1228-4deb-a698-524b008c31dc',
 					countries: ['at', 'de'],
-					span: 4
+					span: 6
 				},
 				{
 					id: '01b74323-efc0-4ecc-bf3f-7e6d6a27a474',
@@ -198,11 +197,6 @@
 	function handleChartClick(chartId) {
 		goto(`/charts/${chartId}?region=${data.page.id}`);
 	}
-
-	function openMap(layerId = null) {
-		mapOverlayOpen = true;
-		// TODO: set active layer if layerId provided
-	}
 </script>
 
 <svelte:head>
@@ -223,26 +217,22 @@
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
 				<section id={section.id} class="mt-16 relative overflow-hidden">
 					<div>
-						<div class="p-1">
+						<div class="p-4">
 							{#if section.navigation !== false}
-								<h2 class=" text-3xl">{section.title}</h2>
+								<h2 class=" text-3xl text-center">{section.title}</h2>
+								<p class="text-lg text-center max-w-2xl mx-auto mt-2 leading-snug text-balance">
+									{section.description}
+								</p>
 							{/if}
 						</div>
 
 						{#if section.charts}
-							<div class="chart-grid m-1">
+							<div class="grid grid-cols-12 gap-1 m-1">
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
 									{#if chart.id}
-										<ChartCard
-											chartId={chart.id}
-											span={chart.span || 12}
-											mapLayerId={chart.mapLayerId}
-											regionId={data.page.id}
-											on:click={() => handleChartClick(chart.id)}
-											on:openMap={() => openMap(chart.mapLayerId)}
-										/>
+										<Chart id={chart.id} span={chart.span || 12} type="card" />
 									{:else}
-										<div class="chart-card" style="grid-column: span {chart.span || 12};">
+										<div class="" style="grid-column: span {chart.span || 12};">
 											<ComingSoonChart text={chart.text} />
 										</div>
 									{/if}
@@ -265,65 +255,7 @@
 
 	<Credits />
 	<RelatedRegions {data} />
-
-	<!-- Floating Map Button -->
-	<button
-		class="fixed bottom-4 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 flex items-center gap-2 group"
-		on:click={() => openMap()}
-		aria-label="Karte öffnen"
-	>
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			class="w-6 h-6"
-		>
-			<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" />
-			<path d="M9 3v15" />
-			<path d="M15 6v15" />
-		</svg>
-		<span class="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300"
-			>Karte</span
-		>
-	</button>
-
-	<!-- Map Overlay -->
-	{#if mapOverlayOpen}
-		<MapOverlay
-			regionId={data.page.id}
-			regionName={data.page.name}
-			on:close={() => (mapOverlayOpen = false)}
-		/>
-	{/if}
 </main>
 
 <style>
-	.chart-grid {
-		display: grid;
-		grid-template-columns: repeat(12, 1fr);
-		gap: 1rem;
-		margin-bottom: 2rem;
-	}
-
-	@media (max-width: 768px) {
-		.chart-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.chart-card {
-			grid-column: span 1 !important;
-		}
-	}
-
-	@media (min-width: 769px) and (max-width: 1024px) {
-		.chart-card {
-			grid-column: span min(calc(var(--span) * 2), 12) !important;
-		}
-	}
 </style>

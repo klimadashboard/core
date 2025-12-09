@@ -1,189 +1,101 @@
-<script>
-	import { onMount } from 'svelte';
-	import { scaleLinear } from 'd3-scale';
-	import { line } from 'd3-shape';
-	import { extent } from 'd3-array';
-	import dayjs from 'dayjs';
+<!-- $lib/components/charts/custom/renewablesCumulativeLine/index.svelte -->
+<script lang="ts">
+	import type { ChartData } from '$lib/components/charts/types';
+	import type { Region } from '$lib/utils/getRegion';
+	import Chart from '$lib/components/charts/primitives/Chart.svelte';
+	import AxisX from '$lib/components/charts/primitives/axes/AxisX.svelte';
+	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
+	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
+	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import { formatPower, formatNumber } from '$lib/utils/formatters';
+	import {
+		fetchData,
+		fetchComparisonData,
+		buildChartData,
+		getColors,
+		getDistance,
+		comparisonPalette,
+		type CumulativeRawData,
+		type ComparisonSeries
+	} from './config';
 
-	// Props
-	export let regionCode = null;
-	export let regionName = 'Deutschland';
-	export let regionArea = null;
-	export let selectedEnergy = 'solar';
-	export let regions = [];
+	// Props from Card slot
+	export let selectedEnergy: 'solar' | 'wind' = 'solar';
+	export let region: Region | null = null;
+	export let regionLoading: boolean = false;
+	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
+	export let regions: Array<{
+		code: string;
+		codeShort?: string;
+		name: string;
+		center?: [number, number];
+		area_km2?: number;
+		layer?: string;
+		visible?: boolean;
+	}> = [];
 
 	// State
-	let loading = false;
-	let mainData = [];
-	let comparisonData = [];
-	let updateDate = '';
-	let selectedUnit = 'absolute';
+	let mainData: CumulativeRawData[] = [];
+	let comparisonSeries: ComparisonSeries[] = [];
+	let loading = true;
+	let error: string | null = null;
+	let containerEl: HTMLElement;
+	let selectedUnit: 'absolute' | 'perArea' = 'absolute';
 	let searchTerm = '';
-	let hoveredSeries = null;
-	let chartHeight;
-	let chartWidth;
+	let hoveredSeries: string | null = null;
 
-	// Colors
-	const colors = {
-		solar: ['#F0E1C2', '#E0A906'],
-		wind: ['#E5F3FA', '#003B80']
-	};
+	// Derived
+	$: params = { energy: selectedEnergy };
+	$: colors = getColors(params);
+	$: regionArea = region?.area_km2 || null;
 
-	const palette = [
-		'#e41a1c',
-		'#377eb8',
-		'#4daf4a',
-		'#984ea3',
-		'#ff7f00',
-		'#a65628',
-		'#f781bf',
-		'#999999'
-	];
+	// Prepare chart data with unit conversion
+	$: chartData = prepareChartData(comparisonSeries, mainData, selectedUnit, regionArea);
 
-	let margin = { top: 10, right: 20, bottom: 40, left: 70 };
+	function prepareChartData(
+		series: ComparisonSeries[],
+		main: CumulativeRawData[],
+		unit: string,
+		area: number | null
+	) {
+		const result: Array<{
+			name: string;
+			code?: string;
+			color: string;
+			isDashed?: boolean;
+			data: Array<{ year: number; value: number }>;
+		}> = [];
 
-	// Formatting
-	function formatPower(value, energy = 'wind') {
-		const sign = value < 0 ? '-' : '';
-		const absValue = Math.abs(value);
-		const unitPost = energy === 'solar' ? 'p' : '';
-
-		if (absValue >= 1_000_000) {
-			const gw = absValue / 1_000_000;
-			const formatted = gw >= 10 ? gw.toFixed(1) : gw.toFixed(2);
-			return `${sign}${formatted}\u202FGW${unitPost}`;
-		} else if (absValue >= 1_000) {
-			const mw = absValue / 1_000;
-			const formatted = mw >= 10 ? mw.toFixed(1) : mw.toFixed(2);
-			return `${sign}${formatted}\u202FMW${unitPost}`;
-		} else if (absValue > 0) {
-			const formatted = absValue >= 10 ? absValue.toFixed(0) : absValue.toFixed(1);
-			return `${sign}${formatted}\u202FkW${unitPost}`;
-		} else {
-			return `0\u202FkW${unitPost}`;
-		}
-	}
-
-	function formatNumber(value) {
-		return new Intl.NumberFormat('de-DE').format(Math.round(value));
-	}
-
-	// Distance calculation
-	function getDistance(center1, center2) {
-		if (!center1 || !center2) return Infinity;
-		const toRad = (d) => (d * Math.PI) / 180;
-		const R = 6371;
-		const dLat = toRad(parseFloat(center2[1]) - parseFloat(center1[1]));
-		const dLon = toRad(parseFloat(center2[0]) - parseFloat(center1[0]));
-		const lat1 = toRad(parseFloat(center1[1]));
-		const lat2 = toRad(parseFloat(center2[1]));
-		const a = Math.sin(dLat / 2) ** 2 + Math.sin(dLon / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-		return R * c;
-	}
-
-	// Data fetching
-	async function loadMainData() {
-		loading = true;
-		try {
-			const url = regionCode
-				? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year&region=${regionCode}`
-				: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year`;
-
-			const response = await fetch(url);
-			const result = await response.json();
-
-			mainData = result.by_year || [];
-			updateDate = result.update_date;
-
-			comparisonData = [
-				{
-					code: regionCode || 'DE',
-					name: regionName,
-					data: mainData,
-					color: colors[selectedEnergy][1]
-				}
-			];
-
-			loading = false;
-		} catch (error) {
-			console.error('Failed to load renewables data:', error);
-			loading = false;
-		}
-	}
-
-	async function loadRegionData(code, name) {
-		try {
-			const url = code
-				? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year&region=${code}`
-				: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${selectedEnergy}_units&group=year`;
-
-			const response = await fetch(url);
-			const result = await response.json();
-			return result.by_year || [];
-		} catch (error) {
-			console.error(`Failed to load data for ${name}:`, error);
-			return [];
-		}
-	}
-
-	async function toggleRegion(region) {
-		const isSelected = comparisonData.some((d) => d.code === region.code);
-
-		if (isSelected && comparisonData.length > 1) {
-			comparisonData = comparisonData.filter((d) => d.code !== region.code);
-		} else if (!isSelected) {
-			loading = true;
-			const data = await loadRegionData(region.code, region.name);
-			const colorIndex = comparisonData.length - 1;
-			comparisonData = [
-				...comparisonData,
-				{
-					code: region.code,
-					name: region.name,
-					data,
-					color: palette[colorIndex % palette.length]
-				}
-			];
-			loading = false;
-		}
-
-		searchTerm = '';
-	}
-
-	// Prepare chart data
-	$: chartSeries = (() => {
-		const series = comparisonData.map((s) => {
-			const regionInfo = regions.find((r) => r.code === s.code);
-			return {
+		// Add comparison series
+		for (const s of series) {
+			const regionInfo = regions.find((r) => r.code === s.code || r.codeShort === s.code);
+			result.push({
 				name: s.name,
-				color: s.color,
 				code: s.code,
+				color: s.color,
 				data: s.data.map((point) => ({
 					year: point.year,
 					value:
-						selectedUnit === 'perArea' && regionInfo?.area
-							? point.cumulative_power_kw / regionInfo.area
+						unit === 'perArea' && regionInfo?.area_km2
+							? point.cumulative_power_kw / regionInfo.area_km2
 							: point.cumulative_power_kw
 				}))
-			};
-		});
+			});
+		}
 
 		// Add goal line (+50% by 2035)
-		if (mainData.length > 0) {
-			const baseValue = mainData.find((d) => d.year === 2024)?.cumulative_power_kw || 0;
+		if (main.length > 0) {
+			const baseValue = main.find((d) => d.year === 2024)?.cumulative_power_kw || 0;
 			const goalValue = baseValue * 1.5;
 			const currentYear = new Date().getFullYear();
-			const regionInfo = regions.find((r) => r.code === (regionCode || 'DE'));
 
-			const goalData = [];
+			const goalData: Array<{ year: number; value: number }> = [];
 			for (let year = currentYear; year <= 2035; year++) {
-				const value =
-					selectedUnit === 'perArea' && regionInfo?.area ? goalValue / regionInfo.area : goalValue;
+				const value = unit === 'perArea' && area ? goalValue / area : goalValue;
 				goalData.push({ year, value });
 			}
 
-			series.push({
+			result.push({
 				name: 'Ziel (+50% bis 2035)',
 				color: '#999',
 				isDashed: true,
@@ -191,24 +103,24 @@
 			});
 		}
 
-		return series;
+		return result;
+	}
+
+	// Flatten data for Chart component
+	$: allLineData = chartData.flatMap((s) => s.data);
+	$: allValues = chartData.flatMap((s) => s.data.map((d) => d.value));
+	$: maxValue = Math.max(...allValues, 1);
+
+	// Unit label
+	$: unitLabel = (() => {
+		const suffix = selectedEnergy === 'solar' ? 'p' : '';
+		if (selectedUnit === 'perArea') return `kW${suffix}/km²`;
+		if (maxValue >= 1_000_000) return `GW${suffix}`;
+		if (maxValue >= 1_000) return `MW${suffix}`;
+		return `kW${suffix}`;
 	})();
 
-	$: innerChartWidth = chartWidth - margin.left - margin.right;
-	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
-
-	$: allValues = chartSeries.flatMap((s) => s.data.map((d) => d.value));
-	$: maxValue = Math.max(...allValues);
-
-	$: unit =
-		selectedUnit === 'perArea'
-			? `kW${selectedEnergy === 'solar' ? 'p' : ''}/km²`
-			: maxValue >= 1_000_000
-				? `GW${selectedEnergy === 'solar' ? 'p' : ''}`
-				: maxValue >= 1_000
-					? `MW${selectedEnergy === 'solar' ? 'p' : ''}`
-					: `kW${selectedEnergy === 'solar' ? 'p' : ''}`;
-
+	// Divisor for display
 	$: divisor =
 		selectedUnit === 'perArea'
 			? 1
@@ -218,30 +130,16 @@
 					? 1_000
 					: 1;
 
-	$: allYears = chartSeries.flatMap((s) => s.data.map((d) => d.year));
-	$: yearExtent = extent(allYears);
+	// Y-axis formatter
+	$: yFormat = (v: number) => formatNumber(v, 0);
 
-	$: xScale = scaleLinear()
-		.domain(yearExtent)
-		.range([margin.left, chartWidth - margin.right]);
-
-	$: yScale = scaleLinear()
-		.domain([0, maxValue / divisor])
-		.range([chartHeight - margin.bottom, margin.top]);
-
-	$: lineGenerator = line()
-		.x((d) => xScale(d.year))
-		.y((d) => yScale(d.value / divisor));
-
-	// Searchable regions
+	// Searchable regions sorted by distance
 	$: searchableRegions = regions
-		.filter((r) => r.layer !== 'country' && r.visible)
+		.filter((r) => r.layer !== 'country' && r.visible !== false)
 		.sort((a, b) => {
-			if (!a.center || !b.center) return 0;
-			const currentRegion = regions.find((r) => r.code === regionCode);
-			if (!currentRegion?.center) return 0;
+			if (!region?.center) return 0;
 			return (
-				getDistance(currentRegion.center, a.center) - getDistance(currentRegion.center, b.center)
+				getDistance(region.center, a.center || null) - getDistance(region.center, b.center || null)
 			);
 		});
 
@@ -249,34 +147,75 @@
 		.filter((r) => r.name.toLowerCase().includes(searchTerm.toLowerCase()))
 		.slice(0, 10);
 
-	$: currentYearData = mainData.find((d) => d.year === new Date().getFullYear());
-
-	// Reactive statements
-	$: if (regionCode !== undefined || selectedEnergy) {
-		loadMainData();
+	// Load data
+	$: if (!regionLoading) {
+		loadData();
 	}
 
-	onMount(() => {
-		loadMainData();
-	});
+	async function loadData() {
+		loading = true;
+		error = null;
+
+		try {
+			const result = await fetchData(region, params);
+			mainData = result.data;
+
+			// Initialize comparison series with main region
+			comparisonSeries = [
+				{
+					code: region?.codeShort || 'DE',
+					name: region?.name || 'Deutschland',
+					data: mainData,
+					color: colors.dark
+				}
+			];
+
+			const builtChartData = buildChartData(mainData, result.updateDate, region, params);
+			onChartData?.(builtChartData);
+		} catch (e) {
+			console.error('[CumulativeLine] Error:', e);
+			error = e instanceof Error ? e.message : 'Fehler beim Laden';
+			mainData = [];
+			onChartData?.(null);
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function toggleRegion(toggledRegion: { code: string; codeShort?: string; name?: string }) {
+		const codeToUse = toggledRegion.codeShort || toggledRegion.code;
+		const isSelected = comparisonSeries.some((d) => d.code === codeToUse);
+
+		if (isSelected && comparisonSeries.length > 1) {
+			comparisonSeries = comparisonSeries.filter((d) => d.code !== codeToUse);
+		} else if (!isSelected) {
+			loading = true;
+			const data = await fetchComparisonData(codeToUse, params);
+			const colorIndex = comparisonSeries.length - 1;
+			comparisonSeries = [
+				...comparisonSeries,
+				{
+					code: codeToUse,
+					name: toggledRegion.name || codeToUse,
+					data,
+					color: comparisonPalette[colorIndex % comparisonPalette.length]
+				}
+			];
+			loading = false;
+		}
+
+		searchTerm = '';
+	}
 </script>
 
-<div class="renewables-cumulative-line-chart">
-	{#if loading && comparisonData.length === 0}
-		<div class="h-96 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
+<div bind:this={containerEl} class="renewables-cumulative-line">
+	{#if loading || regionLoading}
+		<div class="h-96 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+	{:else if error}
+		<div class="h-96 flex items-center justify-center text-red-500">{error}</div>
 	{:else if mainData.length === 0}
-		<p class="text-center text-gray-500 py-8">Keine Daten verfügbar</p>
+		<div class="h-96 flex items-center justify-center text-gray-500">Keine Daten</div>
 	{:else}
-		<!-- Header -->
-		<div class="mb-4">
-			<h3 class="font-bold text-lg">Kumulative Leistung</h3>
-			<h3 class="font-bold text-2xl mt-2">
-				Insgesamt wurden bisher in {regionName}
-				{formatPower(currentYearData?.cumulative_power_kw || 0, selectedEnergy)}
-				installiert
-			</h3>
-		</div>
-
 		<!-- Controls -->
 		<div class="flex items-center gap-2 flex-wrap mb-4">
 			<!-- Region Search -->
@@ -291,12 +230,12 @@
 					<div
 						class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto"
 					>
-						{#each filteredSearchRegions as region}
+						{#each filteredSearchRegions as searchRegion}
 							<button
 								class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-								on:click={() => toggleRegion(region)}
+								on:click={() => toggleRegion(searchRegion)}
 							>
-								{region.name}
+								{searchRegion.name}
 							</button>
 						{/each}
 					</div>
@@ -305,12 +244,12 @@
 
 			<!-- Unit Toggle -->
 			<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2">
-				<label class={selectedUnit === 'absolute' ? 'font-bold' : ''}>
-					<input type="radio" name="unit" value="absolute" class="mr-1" bind:group={selectedUnit} />
+				<label class:font-bold={selectedUnit === 'absolute'}>
+					<input type="radio" value="absolute" class="mr-1" bind:group={selectedUnit} />
 					absolut
 				</label>
-				<label class={selectedUnit === 'perArea' ? 'font-bold' : ''}>
-					<input type="radio" name="unit" value="perArea" class="mr-1" bind:group={selectedUnit} />
+				<label class:font-bold={selectedUnit === 'perArea'}>
+					<input type="radio" value="perArea" class="mr-1" bind:group={selectedUnit} />
 					pro km²
 				</label>
 			</div>
@@ -328,89 +267,91 @@
 				</div>
 			{/if}
 
-			<div
-				class="h-96"
-				class:opacity-30={loading}
-				bind:clientHeight={chartHeight}
-				bind:clientWidth={chartWidth}
+			<Chart
+				data={allLineData}
+				x="year"
+				y="value"
+				xType="linear"
+				height={280}
+				yMax={maxValue / divisor}
+				margin={{ top: 10, right: 20, bottom: 40, left: 70 }}
 			>
-				{#if chartWidth > 0 && chartHeight > 0}
-					<svg width="100%" height="100%">
-						<!-- y-axis grid -->
-						<g>
-							{#each yScale.ticks() as tick}
-								<line
-									x1={margin.left}
-									x2={chartWidth - margin.right}
-									y1={yScale(tick)}
-									y2={yScale(tick)}
-									stroke="currentColor"
-									class="opacity-10"
-								/>
-							{/each}
-						</g>
+				<svelte:fragment
+					slot="default"
+					let:xScale
+					let:yScale
+					let:innerWidth
+					let:innerHeight
+					let:hover
+				>
+					<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} unit={unitLabel} />
+					<AxisX
+						{xScale}
+						xDomain={[]}
+						{innerWidth}
+						{innerHeight}
+						format={(v) => String(Math.round(v))}
+					/>
 
-						<!-- x-axis -->
-						<g>
-							{#each xScale.ticks(chartWidth > 600 ? 10 : 5) as year}
-								<g
-									transform="translate({xScale(year)},{chartHeight - margin.bottom})"
-									class="text-xs opacity-70"
-								>
-									<text text-anchor="middle" dy="1.5em" class="fill-current">{year}</text>
-									<line y2="6" stroke="currentColor" />
-								</g>
-							{/each}
-						</g>
-
-						<!-- y-axis -->
-						<g>
-							{#each yScale.ticks() as tick}
-								<g transform="translate({margin.left},{yScale(tick)})" class="text-xs opacity-70">
-									<text
-										text-anchor="end"
-										dx="-0.5em"
-										dominant-baseline="middle"
-										class="fill-current"
-									>
-										{formatNumber(tick)}
-									</text>
-									<line x2="-6" stroke="currentColor" />
-								</g>
-							{/each}
-							<text
-								transform="rotate(-90)"
-								x={-(chartHeight / 2)}
-								y={15}
-								text-anchor="middle"
-								class="text-xs fill-current font-medium"
-							>
-								↑ {unit}
-							</text>
-						</g>
-
-						<!-- Lines -->
-						{#each chartSeries as series}
-							<path
-								d={lineGenerator(series.data)}
-								fill="none"
+					{#each chartData as series}
+						{@const seriesData = series.data.map((d) => ({
+							year: d.year,
+							value: d.value / divisor
+						}))}
+						<g
+							class="cursor-pointer"
+							on:mouseenter={() => (hoveredSeries = series.name)}
+							on:mouseleave={() => (hoveredSeries = null)}
+						>
+							<Line
+								data={seriesData}
+								x="year"
+								y="value"
+								{xScale}
+								{yScale}
 								stroke={series.color}
-								stroke-width={hoveredSeries === series.name || !hoveredSeries ? 2 : 1}
-								stroke-dasharray={series.isDashed ? '5,5' : null}
-								opacity={hoveredSeries === series.name || !hoveredSeries ? 1 : 0.3}
-								on:mouseenter={() => (hoveredSeries = series.name)}
-								on:mouseleave={() => (hoveredSeries = null)}
-								class="transition-all cursor-pointer"
+								strokeWidth={hoveredSeries === series.name || !hoveredSeries ? 2 : 1}
+								strokeDasharray={series.isDashed ? '5,5' : null}
+								{hover}
 							/>
-						{/each}
-					</svg>
-				{/if}
-			</div>
+						</g>
+					{/each}
+				</svelte:fragment>
+
+				<svelte:fragment slot="tooltip" let:hover>
+					{#if hover.x !== null}
+						{@const year = Math.round(hover.x)}
+						{@const items = chartData
+							.map((s) => {
+								const point = s.data.find((d) => d.year === year);
+								return point
+									? {
+											label: s.name,
+											value:
+												selectedUnit === 'perArea'
+													? `${formatNumber(point.value, 1)} kW/km²`
+													: formatPower(point.value, selectedEnergy),
+											color: s.color
+										}
+									: null;
+							})
+							.filter(Boolean)}
+						<Tooltip
+							visible={true}
+							x={hover.clientX}
+							y={hover.clientY}
+							title={String(year)}
+							{items}
+							container={containerEl}
+						/>
+					{/if}
+				</svelte:fragment>
+			</Chart>
 		</div>
 
 		<!-- Legend -->
 		<div class="flex flex-wrap gap-3 mt-4 text-sm">
-			{#each chartSeries as series}
+			{#each chartData as series}
 				<div
 					class="flex items-center gap-2 cursor-pointer"
 					on:mouseenter={() => (hoveredSeries = series.name)}
@@ -419,16 +360,13 @@
 					tabindex="0"
 				>
 					<div
-						style="width: 20px; height: 3px; background: {series.color}; {series.isDashed
-							? 'background-image: repeating-linear-gradient(to right, ' +
-								series.color +
-								' 0, ' +
-								series.color +
-								' 5px, transparent 5px, transparent 10px);'
+						class="w-5 h-0.5"
+						style="background: {series.color}; {series.isDashed
+							? `background-image: repeating-linear-gradient(to right, ${series.color} 0, ${series.color} 5px, transparent 5px, transparent 10px);`
 							: ''}"
 					></div>
-					<span class={hoveredSeries === series.name ? 'font-bold' : ''}>{series.name}</span>
-					{#if !series.isDashed && comparisonData.find((d) => d.code === series.code) && comparisonData.length > 1}
+					<span class:font-bold={hoveredSeries === series.name}>{series.name}</span>
+					{#if !series.isDashed && series.code && comparisonSeries.length > 1}
 						<button
 							on:click|stopPropagation={() => toggleRegion({ code: series.code })}
 							class="text-red-600 hover:text-red-700 ml-1"
@@ -440,12 +378,5 @@
 				</div>
 			{/each}
 		</div>
-
-		<!-- Footer -->
-		<p class="text-sm mt-4 opacity-80">
-			Datenquelle: Marktstammdatenregister der Bundesnetzagentur
-			{#if selectedEnergy === 'wind'}| Goal100{/if}
-			| Datenstand: {dayjs(updateDate).format('DD.MM.YYYY HH:mm')}
-		</p>
 	{/if}
 </div>

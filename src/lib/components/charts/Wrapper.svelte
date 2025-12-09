@@ -1,5 +1,6 @@
 <script>
 	import { page } from '$app/state';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import domtoimage from 'dom-to-image';
 
 	let item = null;
@@ -77,7 +78,11 @@
 	}
 </script>
 
-<div class="relative {chart.methods ? 'pb-16' : ''}" id={chart.identifier_string} bind:this={item}>
+<div
+	class="border rounded-2xl border-current/10 relative {chart.methods ? 'pb-16' : ''}"
+	id={chart.identifier_string}
+	bind:this={item}
+>
 	<div class="flex justify-between items-center mb-1 transition">
 		<h2 class="font-bold">
 			{chart.content?.title}
@@ -152,12 +157,15 @@
 					<line x1="14" y1="4" x2="10" y2="20" />
 				</svg>
 			</button>
+			<!-- Logo -->
 			<a
 				href="https://klimadashboard.org"
-				class="ml-2"
 				target="_blank"
 				aria-label="Klimadashboard.org"
+				class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
+				on:click={(e) => e.stopPropagation()}
 			>
+				<span class="text-sm font-bold text-[#28A889]">Klimadashboard.{PUBLIC_VERSION}</span>
 				<svg
 					width="256"
 					height="256"
@@ -165,29 +173,36 @@
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-8 w-8 rounded-sm"
-					><rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" /><path
+				>
+					<rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" />
+					<path
 						d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
 						fill="#DBF0E0"
-					/><path
+					/>
+					<path
 						opacity="0.6"
 						d="M162.95 88H134.808C133.732 88 132.701 88.4337 131.948 89.203L96.7358 125.203C95.2152 126.758 95.2152 129.242 96.7358 130.797L131.948 166.797C132.701 167.566 133.732 168 134.808 168H162.95C166.498 168 168.29 163.723 165.8 161.194L135.887 130.806C134.355 129.249 134.355 126.751 135.887 125.194L165.8 94.8061C168.29 92.2773 166.498 88 162.95 88Z"
 						fill="#DBF0E0"
-					/><path
+					/>
+					<path
 						opacity="0.2"
 						d="M197.95 88H178.808C177.732 88 176.701 88.4337 175.948 89.203L140.736 125.203C139.215 126.758 139.215 129.242 140.736 130.797L175.948 166.797C176.701 167.566 177.732 168 178.808 168H197.95C201.498 168 203.29 163.723 200.8 161.194L170.887 130.806C169.355 129.249 169.355 126.751 170.887 125.194L200.8 94.8061C203.29 92.2773 201.498 88 197.95 88Z"
 						fill="#DBF0E0"
-					/><defs
-						><linearGradient
+					/>
+					<defs>
+						<linearGradient
 							id="kd-gradient-{chart.id}"
 							x1="425"
 							y1="8.00003"
 							x2="16"
 							y2="248"
 							gradientUnits="userSpaceOnUse"
-							><stop stop-color="#A3D58A" /><stop offset="1" stop-color="#28A889" /></linearGradient
-						></defs
-					></svg
-				>
+						>
+							<stop stop-color="#A3D58A" />
+							<stop offset="1" stop-color="#28A889" />
+						</linearGradient>
+					</defs>
+				</svg>
 			</a>
 		</div>
 	</div>

@@ -328,7 +328,6 @@
 	</p>
 {:else}
 	<Switch
-		type="small"
 		views={filteredViews}
 		bind:activeView={activeLayer}
 		on:itemClick={(event) => {
@@ -396,14 +395,7 @@
 			{/if}
 		{/if}
 	{/each}
-	<!-- Display federal state specific text -->
-	{#if currentStateText}
-		<div class="" transition:fade>
-			<div class="text-lg max-w-2xl my-4">
-				{@html currentStateText}
-			</div>
-		</div>
-	{/if}
+
 	<div class="mt-4 text-sm flex gap-2">
 		<button on:click={() => downloadCSV(results, 'emissions_data.csv')} class="button"
 			><svg

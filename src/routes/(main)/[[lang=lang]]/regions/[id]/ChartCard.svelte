@@ -71,10 +71,29 @@
 >
 	{#if isVisible}
 		<div class="p-4 min-h-[300px] relative" in:fade={{ duration: 300 }}>
-			<!-- Map Button Badge (if applicable) -->
+			<!-- Skeleton Loader -->
+			{#if isLoading}
+				<div class="skeleton-loader absolute inset-0 p-4" transition:fade={{ duration: 200 }}>
+					<div class="skeleton-title h-6 bg-gray-200 dark:bg-gray-800 rounded w-2/3 mb-4"></div>
+					<div class="skeleton-content h-48 bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
+					<div class="skeleton-footer h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+				</div>
+			{/if}
+
+			<!-- Chart Component -->
+			<div class:opacity-0={isLoading} class="transition-opacity duration-300">
+				<Chart id={chartId} hideWrapper />
+			</div>
+
+			<!-- Hover Overlay -->
+			<div
+				class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+			></div>
+
+			<!-- Map -->
 			{#if mapLayerId}
 				<button
-					class="map-button absolute top-2 right-2 z-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100"
+					class="map-button absolute bottom-2 right-2 z-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100"
 					on:click={handleMapClick}
 					aria-label="Auf Karte anzeigen"
 					title="Auf Karte anzeigen"
@@ -96,25 +115,6 @@
 					</svg>
 				</button>
 			{/if}
-
-			<!-- Skeleton Loader -->
-			{#if isLoading}
-				<div class="skeleton-loader absolute inset-0 p-4" transition:fade={{ duration: 200 }}>
-					<div class="skeleton-title h-6 bg-gray-200 dark:bg-gray-800 rounded w-2/3 mb-4"></div>
-					<div class="skeleton-content h-48 bg-gray-200 dark:bg-gray-800 rounded mb-2"></div>
-					<div class="skeleton-footer h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
-				</div>
-			{/if}
-
-			<!-- Chart Component -->
-			<div class:opacity-0={isLoading} class="transition-opacity duration-300">
-				<Chart id={chartId} />
-			</div>
-
-			<!-- Hover Overlay -->
-			<div
-				class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-			></div>
 
 			<!-- View Details Indicator -->
 			<div

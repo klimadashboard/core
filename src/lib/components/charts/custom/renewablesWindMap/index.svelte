@@ -1,23 +1,36 @@
-<script>
+<script lang="ts">
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { page } from '$app/state';
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
+	import { fetchRegion } from '$lib/utils/getRegion';
+	import type { Region } from '$lib/utils/getRegion';
 
 	// Props
-	export let regionCode = null;
-	export let regionName = 'Deutschland';
-	export let regionCenter = [10.45, 51.16];
+	export let regionId: string | null = null;
+	export let selectedEnergy: 'wind' | 'solar' | 'hydro' | 'bio' = 'wind';
 
 	const dispatch = createEventDispatcher();
 
 	// State
 	let loading = true;
+	let regionLoading = true;
 	let mapContainer;
 	let map;
 	let turbines = [];
 	let hoveredTurbine = null;
 	let tooltipX = 0;
 	let tooltipY = 0;
+
+	// Region data
+	let region: Region | null = null;
+	$: regionName = region?.name || 'Deutschland';
+	$: regionCenter = region?.center || ['10.45', '51.16'];
+
+	// Get effective region ID from props, URL, or page data
+	$: urlRegionId = page?.url?.searchParams?.get('region');
+	$: pageRegionId = page?.data?.page?.id;
+	$: effectiveRegionId = regionId || urlRegionId || pageRegionId || null;
 
 	// Formatting
 	function formatPower(value) {
@@ -31,33 +44,154 @@
 		return new Intl.NumberFormat('de-DE').format(value);
 	}
 
+	// Load region data
+	async function loadRegion() {
+		regionLoading = true;
+
+		// If no region ID, we're at country level
+		if (!effectiveRegionId) {
+			region = null;
+			regionLoading = false;
+			// Initialize map with default center, then load turbines
+			initializeMap(['10.45', '51.16']);
+			return;
+		}
+
+		try {
+			// First check if region is already in page data
+			const pageRegion = page?.data?.page;
+			if (pageRegion && pageRegion.id === effectiveRegionId) {
+				region = {
+					id: pageRegion.id,
+					code: pageRegion.code,
+					codeShort: pageRegion.codeShort,
+					name: pageRegion.name,
+					layer: pageRegion.layer,
+					center: pageRegion.center,
+					area_km2: pageRegion.area_km2,
+					population: pageRegion.population,
+					parents: pageRegion.parents
+				};
+				console.log('Using region from page data:', region);
+				regionLoading = false;
+				initializeMap(region.center);
+			} else {
+				// Fetch from API
+				region = await fetchRegion(effectiveRegionId);
+				console.log('Fetched region from API:', region);
+				regionLoading = false;
+				initializeMap(region?.center || ['10.45', '51.16']);
+			}
+		} catch (error) {
+			console.error('Failed to load region:', error);
+			region = null;
+			regionLoading = false;
+			initializeMap(['10.45', '51.16']);
+		}
+	}
+
 	// Data fetching
-	async function loadTurbines() {
+	async function loadTurbines(center: [string, string]) {
 		loading = true;
 		try {
-			const url = regionCode
-				? `https://base.klimadashboard.org/get-renewable-units?table=energy_wind_units&region=${regionCode}`
-				: `https://base.klimadashboard.org/get-renewable-units?table=energy_wind_units`;
+			// Parse center coordinates
+			const lon = parseFloat(center[0]);
+			const lat = parseFloat(center[1]);
 
+			// Validate coordinates
+			if (isNaN(lat) || isNaN(lon)) {
+				console.error('Invalid coordinates:', { lat, lon });
+				loading = false;
+				return;
+			}
+
+			// Determine radius based on region type
+			const radius = 50; // default 50km radius
+
+			// Build URL with lat/lon and radius
+			const url = `https://base.klimadashboard.org/get-nearby-${selectedEnergy}-units?lat=${lat}&lon=${lon}&radius_km=${radius}&status=31,35`;
+
+			console.log('Fetching turbines from:', url);
 			const response = await fetch(url);
 			const data = await response.json();
 
+			console.log('Received data:', data);
+
 			turbines = data
-				.filter((d) => d.latitude && d.longitude && d.net_power_kw)
+				.filter((d) => d.lat && d.lon && d.net_power_kw)
 				.map((d) => ({
 					...d,
-					coordinates: [parseFloat(d.longitude), parseFloat(d.latitude)]
+					coordinates: [parseFloat(d.lon), parseFloat(d.lat)]
 				}));
 
-			loading = false;
+			console.log('Filtered turbines:', turbines.length);
 
 			if (map) {
 				addTurbinesToMap();
 			}
 		} catch (error) {
-			console.error('Failed to load wind turbines:', error);
+			console.error('Failed to load renewable units:', error);
+		} finally {
 			loading = false;
 		}
+	}
+
+	function initializeMap(center: [string, string]) {
+		if (!mapContainer) {
+			console.error('Map container not found');
+			return;
+		}
+
+		// If map already exists, just update center and load turbines
+		if (map) {
+			const lon = parseFloat(center[0]);
+			const lat = parseFloat(center[1]);
+			map.setCenter([isNaN(lon) ? 10.45 : lon, isNaN(lat) ? 51.16 : lat]);
+			loadTurbines(center);
+			return;
+		}
+
+		// Parse center coordinates
+		const lon = parseFloat(center[0]);
+		const lat = parseFloat(center[1]);
+		const centerCoords: [number, number] = [isNaN(lon) ? 10.45 : lon, isNaN(lat) ? 51.16 : lat];
+
+		console.log('Initializing map with center:', centerCoords);
+
+		// Initialize map
+		map = new maplibregl.Map({
+			container: mapContainer,
+			style: {
+				version: 8,
+				sources: {
+					'carto-light': {
+						type: 'raster',
+						tiles: [
+							'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+							'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+							'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
+						],
+						tileSize: 256
+					}
+				},
+				layers: [
+					{
+						id: 'carto-light',
+						type: 'raster',
+						source: 'carto-light'
+					}
+				]
+			},
+			center: centerCoords,
+			zoom: 9
+		});
+
+		map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+		map.on('load', () => {
+			console.log('Map loaded, loading turbines...');
+			loadTurbines(center);
+		});
 	}
 
 	function addTurbinesToMap() {
@@ -66,11 +200,9 @@
 		// Remove existing layers/sources
 		if (map.getLayer('turbines')) map.removeLayer('turbines');
 		if (map.getLayer('turbines-halo')) map.removeLayer('turbines-halo');
-		if (map.getLayer('clusters')) map.removeLayer('clusters');
-		if (map.getLayer('cluster-count')) map.removeLayer('cluster-count');
 		if (map.getSource('turbines')) map.removeSource('turbines');
 
-		// Add source
+		// Add source (no clustering)
 		map.addSource('turbines', {
 			type: 'geojson',
 			data: {
@@ -86,43 +218,12 @@
 						power_kw: t.net_power_kw,
 						commissioning_date: t.commissioning_date,
 						manufacturer: t.manufacturer || 'Unbekannt',
-						hub_height_m: t.hub_height_m,
-						rotor_diameter_m: t.rotor_diameter_m
+						hub_height_m: t.height,
+						rotor_diameter_m: t.rotor_diameter,
+						municipality: t.municipality,
+						district: t.district
 					}
 				}))
-			},
-			cluster: true,
-			clusterMaxZoom: 12,
-			clusterRadius: 50
-		});
-
-		// Cluster circles
-		map.addLayer({
-			id: 'clusters',
-			type: 'circle',
-			source: 'turbines',
-			filter: ['has', 'point_count'],
-			paint: {
-				'circle-color': ['step', ['get', 'point_count'], '#51bbd6', 10, '#f1f075', 30, '#f28cb1'],
-				'circle-radius': ['step', ['get', 'point_count'], 15, 10, 20, 30, 25],
-				'circle-stroke-width': 2,
-				'circle-stroke-color': '#fff'
-			}
-		});
-
-		// Cluster count labels
-		map.addLayer({
-			id: 'cluster-count',
-			type: 'symbol',
-			source: 'turbines',
-			filter: ['has', 'point_count'],
-			layout: {
-				'text-field': '{point_count_abbreviated}',
-				'text-font': ['Noto Sans Regular'],
-				'text-size': 12
-			},
-			paint: {
-				'text-color': '#fff'
 			}
 		});
 
@@ -131,7 +232,6 @@
 			id: 'turbines-halo',
 			type: 'circle',
 			source: 'turbines',
-			filter: ['!', ['has', 'point_count']],
 			paint: {
 				'circle-radius': 8,
 				'circle-color': '#fff',
@@ -144,28 +244,12 @@
 			id: 'turbines',
 			type: 'circle',
 			source: 'turbines',
-			filter: ['!', ['has', 'point_count']],
 			paint: {
 				'circle-radius': 6,
-				'circle-color': '#003B80',
+				'circle-color': selectedEnergy === 'wind' ? '#003B80' : '#FFA500',
 				'circle-stroke-width': 1,
 				'circle-stroke-color': '#fff'
 			}
-		});
-
-		// Click handler for clusters - zoom in
-		map.on('click', 'clusters', (e) => {
-			const features = map.queryRenderedFeatures(e.point, {
-				layers: ['clusters']
-			});
-			const clusterId = features[0].properties.cluster_id;
-			map.getSource('turbines').getClusterExpansionZoom(clusterId, (err, zoom) => {
-				if (err) return;
-				map.easeTo({
-					center: features[0].geometry.coordinates,
-					zoom: zoom
-				});
-			});
 		});
 
 		// Hover handlers for individual turbines
@@ -192,93 +276,62 @@
 
 			map.fitBounds(bounds, {
 				padding: 50,
-				maxZoom: 10
+				maxZoom: 12
 			});
 		}
 	}
 
 	function openMapOverlay() {
 		dispatch('openMapOverlay', {
-			layerId: 'wind-power',
-			regionCode,
-			regionName
+			layerId: `${selectedEnergy}-power`,
+			regionCode: region?.codeShort,
+			regionName: regionName
 		});
 	}
 
-	// Reactive statements
-	$: if (regionCode !== undefined) {
-		loadTurbines();
+	// Reactive: Load region when effectiveRegionId changes (only if mounted)
+	let mounted = false;
+	$: if (mounted && effectiveRegionId !== undefined) {
+		loadRegion();
 	}
 
 	onMount(() => {
-		// Initialize map
-		map = new maplibregl.Map({
-			container: mapContainer,
-			style: {
-				version: 8,
-				sources: {
-					'carto-light': {
-						type: 'raster',
-						tiles: [
-							'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-							'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-							'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-						],
-						tileSize: 256
-					}
-				},
-				layers: [
-					{
-						id: 'carto-light',
-						type: 'raster',
-						source: 'carto-light'
-					}
-				]
-			},
-			center: regionCenter,
-			zoom: 7
-		});
-
-		map.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-		map.on('load', () => {
-			loadTurbines();
-		});
-
-		return () => {
-			if (map) {
-				map.remove();
-			}
-		};
+		mounted = true;
+		loadRegion();
 	});
 
 	onDestroy(() => {
+		mounted = false;
 		if (map) {
 			map.remove();
 		}
 	});
 
 	$: totalPower = turbines.reduce((sum, t) => sum + (t.net_power_kw || 0), 0);
-	$: avgPower = turbines.length > 0 ? totalPower / turbines.length : 0;
+
+	// Get the appropriate label for the energy type
+	$: energyLabel =
+		{
+			wind: 'Windkraftanlagen',
+			solar: 'Solaranlagen',
+			hydro: 'Wasserkraftanlagen',
+			bio: 'Biomasseanlagen'
+		}[selectedEnergy] || 'Anlagen';
+
+	$: unitLabel =
+		{
+			wind: 'Windräder',
+			solar: 'Solaranlagen',
+			hydro: 'Wasserkraftwerke',
+			bio: 'Biomasseanlagen'
+		}[selectedEnergy] || 'Anlagen';
 </script>
 
-<div class="renewables-wind-map">
-	{#if loading && turbines.length === 0}
-		<div class="h-96 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse"></div>
-	{:else if turbines.length === 0}
-		<div class="text-center py-8">
-			<p class="text-gray-500">Keine Windkraftanlagen in dieser Region gefunden</p>
-		</div>
-	{:else}
-		<!-- Header -->
-		<div class="mb-4">
-			<div class="flex justify-between items-start">
-				<div>
-					<h3 class="font-bold text-lg">Windkraftanlagen-Standorte</h3>
-					<p class="text-sm opacity-80 mt-1">
-						{formatNumber(turbines.length)} Windräder mit insgesamt {formatPower(totalPower)} Leistung
-					</p>
-				</div>
+<div class="renewables-map">
+	<!-- Header -->
+	<div class="mb-4">
+		<div class="flex justify-between items-start">
+			{#if turbines.length > 0}
 				<button
 					on:click={openMapOverlay}
 					class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-2 text-sm flex items-center gap-2 transition"
@@ -300,93 +353,116 @@
 					</svg>
 					Detailkarte öffnen
 				</button>
-			</div>
+			{/if}
 		</div>
+	</div>
 
-		<!-- Map -->
-		<div class="relative">
+	<!-- Map Container - Always rendered -->
+	<div class="relative">
+		<div
+			bind:this={mapContainer}
+			class="w-full h-96 rounded-lg border border-gray-200 dark:border-gray-700"
+		></div>
+
+		<!-- Loading State Overlay -->
+		{#if (loading || regionLoading) && turbines.length === 0}
 			<div
-				bind:this={mapContainer}
-				class="w-full h-96 rounded-lg border border-gray-200 dark:border-gray-700"
-			></div>
-
-			<!-- Tooltip -->
-			{#if hoveredTurbine}
-				<div
-					class="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
-					style="left: {tooltipX + 10}px; top: {tooltipY + 10}px;"
-				>
-					<div class="font-bold mb-1">{hoveredTurbine.name}</div>
-					<div class="space-y-1 text-xs">
-						<div><strong>Leistung:</strong> {formatPower(hoveredTurbine.power_kw)}</div>
-						{#if hoveredTurbine.commissioning_date}
-							<div>
-								<strong>Inbetriebnahme:</strong>
-								{new Date(hoveredTurbine.commissioning_date).toLocaleDateString('de-DE')}
-							</div>
-						{/if}
-						{#if hoveredTurbine.manufacturer}
-							<div><strong>Hersteller:</strong> {hoveredTurbine.manufacturer}</div>
-						{/if}
-						{#if hoveredTurbine.hub_height_m}
-							<div><strong>Nabenhöhe:</strong> {hoveredTurbine.hub_height_m} m</div>
-						{/if}
-						{#if hoveredTurbine.rotor_diameter_m}
-							<div><strong>Rotordurchmesser:</strong> {hoveredTurbine.rotor_diameter_m} m</div>
-						{/if}
-					</div>
-				</div>
-			{/if}
-
-			<!-- Loading overlay -->
-			{#if loading}
-				<div
-					class="absolute inset-0 bg-white/70 dark:bg-gray-900/70 flex items-center justify-center rounded-lg"
-				>
+				class="absolute inset-0 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center"
+			>
+				<div class="text-center">
 					<div
-						class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"
+						class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white mx-auto mb-2"
 					></div>
+					<div class="text-gray-500">Lade Daten...</div>
 				</div>
-			{/if}
-		</div>
+			</div>
+		{/if}
 
-		<!-- Legend -->
+		<!-- Empty State Overlay -->
+		{#if !loading && !regionLoading && turbines.length === 0}
+			<div
+				class="absolute inset-0 bg-white dark:bg-gray-900 rounded-lg flex items-center justify-center"
+			>
+				<div class="text-center py-8">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-12 w-12 mx-auto mb-3 text-gray-400"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+						/>
+					</svg>
+					<p class="text-gray-600 dark:text-gray-400 font-medium">
+						Keine {energyLabel} in dieser Region gefunden
+					</p>
+					{#if regionName}
+						<p class="text-sm text-gray-500 mt-1">Region: {regionName}</p>
+					{/if}
+				</div>
+			</div>
+		{/if}
+
+		<!-- Tooltip -->
+		{#if hoveredTurbine}
+			<div
+				class="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
+				style="left: {tooltipX + 10}px; top: {tooltipY + 10}px;"
+			>
+				<div class="font-bold mb-1">{hoveredTurbine.name || 'Anlage'}</div>
+				<div class="space-y-1 text-xs">
+					<div><strong>Leistung:</strong> {formatPower(hoveredTurbine.power_kw)}</div>
+					{#if hoveredTurbine.municipality}
+						<div><strong>Gemeinde:</strong> {hoveredTurbine.municipality}</div>
+					{/if}
+					{#if hoveredTurbine.district}
+						<div><strong>Landkreis:</strong> {hoveredTurbine.district}</div>
+					{/if}
+					{#if hoveredTurbine.commissioning_date}
+						<div>
+							<strong>Inbetriebnahme:</strong>
+							{new Date(hoveredTurbine.commissioning_date).toLocaleDateString('de-DE')}
+						</div>
+					{/if}
+					{#if hoveredTurbine.manufacturer && hoveredTurbine.manufacturer !== 'Unbekannt'}
+						<div><strong>Hersteller:</strong> {hoveredTurbine.manufacturer}</div>
+					{/if}
+					{#if hoveredTurbine.hub_height_m}
+						<div><strong>Nabenhöhe:</strong> {hoveredTurbine.hub_height_m} m</div>
+					{/if}
+					{#if hoveredTurbine.rotor_diameter_m}
+						<div><strong>Rotordurchmesser:</strong> {hoveredTurbine.rotor_diameter_m} m</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
+
+		<!-- Loading overlay for updates -->
+		{#if loading && turbines.length > 0}
+			<div
+				class="absolute inset-0 bg-white/70 dark:bg-gray-900/70 flex items-center justify-center rounded-lg"
+			>
+				<div
+					class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"
+				></div>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Legend - Only show when we have data -->
+	{#if turbines.length > 0}
 		<div class="mt-4 flex flex-wrap gap-4 text-sm">
 			<div class="flex items-center gap-2">
-				<div class="w-4 h-4 rounded-full bg-[#003B80] border-2 border-white"></div>
-				<span>Einzelne Anlage</span>
-			</div>
-			<div class="flex items-center gap-2">
 				<div
-					class="w-6 h-6 rounded-full bg-[#51bbd6] border-2 border-white flex items-center justify-center text-white text-xs font-bold"
-				>
-					5
-				</div>
-				<span>Gruppe (Klicken zum Zoomen)</span>
-			</div>
-		</div>
-
-		<!-- Stats -->
-		<div class="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-			<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-				<div>
-					<div class="text-2xl font-bold">{formatNumber(turbines.length)}</div>
-					<div class="text-xs opacity-80">Anlagen</div>
-				</div>
-				<div>
-					<div class="text-2xl font-bold">{formatPower(totalPower)}</div>
-					<div class="text-xs opacity-80">Gesamtleistung</div>
-				</div>
-				<div>
-					<div class="text-2xl font-bold">{formatPower(avgPower)}</div>
-					<div class="text-xs opacity-80">Ø Leistung</div>
-				</div>
-				<div>
-					<div class="text-2xl font-bold">
-						{turbines.filter((t) => new Date(t.commissioning_date).getFullYear() >= 2020).length}
-					</div>
-					<div class="text-xs opacity-80">Seit 2020</div>
-				</div>
+					class="w-4 h-4 rounded-full border-2 border-white shadow"
+					style="background-color: {selectedEnergy === 'wind' ? '#003B80' : '#FFA500'}"
+				></div>
+				<span>Einzelne Anlage</span>
 			</div>
 		</div>
 

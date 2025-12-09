@@ -146,7 +146,7 @@
 	aria-label="Overlay schließen"
 >
 	<div
-		class="absolute inset-4 md:inset-8 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex"
+		class="absolute inset-4 md:inset-8 top-32 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex"
 		transition:fly={{ y: 50, duration: 300 }}
 		on:click={(e) => e.stopPropagation()}
 		role="dialog"

@@ -2,6 +2,7 @@
 	import Builder from './builder/index.svelte';
 	import Custom from './custom/index.svelte';
 	import Wrapper from './Wrapper.svelte';
+	import Card from './Card.svelte';
 	import { page } from '$app/stores';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItem } from '@directus/sdk';
@@ -10,6 +11,7 @@
 	export let type;
 	export let id;
 	export let options;
+	export let span;
 	export let hideWrapper = false;
 
 	$: getChart = async (locale) => {
@@ -51,6 +53,18 @@
 {#await promise then c}
 	{#if hideWrapper || type == 'small'}
 		<svelte:component this={c.chartComponent} chart={c.chart} {type} {options} />
+	{:else if type == 'card'}
+		<Card chart={c.chart} {span} let:region let:regionLoading let:onChartData>
+			<svelte:component
+				this={c.chartComponent}
+				chart={c.chart}
+				{type}
+				{options}
+				{region}
+				{regionLoading}
+				{onChartData}
+			/>
+		</Card>
 	{:else}
 		<Wrapper chart={c.chart}>
 			<svelte:component this={c.chartComponent} chart={c.chart} {type} {options} />

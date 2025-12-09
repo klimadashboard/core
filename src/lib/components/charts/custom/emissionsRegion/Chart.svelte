@@ -421,7 +421,6 @@
 {/if}
 
 <Switch
-	type="small"
 	views={displayOrderForSwitch}
 	bind:activeView={activeCategory}
 	on:itemClick={(event) => {

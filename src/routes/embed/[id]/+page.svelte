@@ -7,5 +7,5 @@
 </script>
 
 <main style="background: #{bgColor}" class="w-screen h-screen">
-	<Chart id={$page.data.id} showText={showText == 'false' ? false : true} />
+	<Chart id={$page.data.id} showText={showText == 'false' ? false : true} type="card" />
 </main>

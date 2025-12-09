@@ -1,0 +1,604 @@
+<!-- $lib/components/charts/Card.svelte -->
+<script lang="ts">
+	import { onMount, createEventDispatcher } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import { page } from '$app/state';
+	import { PUBLIC_VERSION } from '$env/static/public';
+	import dayjs from 'dayjs';
+	import domtoimage from 'dom-to-image';
+	import { Table } from '$lib/components/charts/primitives';
+	import {
+		exportCSV,
+		exportJSON,
+		copyToClipboard,
+		generateEmbedCode
+	} from '$lib/components/charts/utils/export';
+	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
+	import type { ChartData } from '$lib/components/charts/types';
+
+	export let chart: any;
+	export let span = 12;
+	export let mapLayerId: string | null = null;
+	export let regionId: string | null = null;
+
+	const dispatch = createEventDispatcher();
+
+	let cardEl: HTMLElement;
+	let contentEl: HTMLElement;
+	let isVisible = false;
+	let isLoading = true;
+	let activeTab: 'chart' | 'table' | 'text' = 'chart';
+	let chartData: ChartData | null = null;
+	let showDownloadMenu = false;
+
+	// Close download menu when clicking outside
+	function handleClickOutside(e: MouseEvent) {
+		if (showDownloadMenu && !(e.target as HTMLElement).closest('.download-menu')) {
+			showDownloadMenu = false;
+		}
+	}
+
+	// Replace {{placeholders}} in text
+	$: heading = (() => {
+		const text = chart.content?.heading;
+		if (!text || !chartData?.placeholders) return text || '';
+		return text.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+			const v = chartData!.placeholders[k];
+			return v !== undefined ? String(v) : `{{${k}}}`;
+		});
+	})();
+
+	$: text = (() => {
+		const t = chart.content?.text;
+		if (!t || !chartData?.placeholders) return t || '';
+		return t.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+			const v = chartData!.placeholders[k];
+			return v !== undefined ? String(v) : `{{${k}}}`;
+		});
+	})();
+
+	$: methods = (() => {
+		const m = chart.content?.methods;
+		if (!m || !chartData?.placeholders) return m || '';
+		return m.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+			const v = chartData!.placeholders[k];
+			return v !== undefined ? String(v) : `{{${k}}}`;
+		});
+	})();
+
+	$: title = (() => {
+		const t = chart.content?.title;
+		if (!t || !chartData?.placeholders) return t || '';
+		return t.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+			const v = chartData!.placeholders[k];
+			return v !== undefined ? String(v) : `{{${k}}}`;
+		});
+	})();
+
+	$: showTable = chartData?.table && chartData.table.rows.length > 0;
+	$: showText = !!text || !!methods;
+	$: hasData = chartData?.raw && chartData.raw.length > 0;
+	$: source = chartData?.meta?.source || chart.content?.source;
+	$: updateDate = chartData?.meta?.updateDate;
+
+	// Tab configuration
+	type TabId = 'chart' | 'table' | 'text';
+	$: tabs = [
+		{ id: 'chart' as TabId, label: 'Grafik', show: true },
+		{ id: 'table' as TabId, label: 'Tabelle', show: showTable },
+		{ id: 'text' as TabId, label: 'Info', show: showText }
+	].filter((t) => t.show);
+
+	// Intersection observer
+	onMount(() => {
+		const obs = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting && !isVisible) {
+					isVisible = true;
+					obs.unobserve(cardEl);
+					setTimeout(() => (isLoading = false), 600);
+				}
+			},
+			{ rootMargin: '100px', threshold: 0.01 }
+		);
+		if (cardEl) obs.observe(cardEl);
+
+		document.addEventListener('click', handleClickOutside);
+
+		return () => {
+			obs.disconnect();
+			document.removeEventListener('click', handleClickOutside);
+		};
+	});
+
+	function handleClick(e: MouseEvent) {
+		if ((e.target as HTMLElement).closest('.no-card-click')) return;
+		dispatch('click');
+	}
+
+	function setTab(tab: TabId) {
+		activeTab = tab;
+	}
+
+	function handleTabKeydown(e: KeyboardEvent, tab: TabId) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			setTab(tab);
+		} else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+			e.preventDefault();
+			const currentIndex = tabs.findIndex((t) => t.id === activeTab);
+			const direction = e.key === 'ArrowRight' ? 1 : -1;
+			const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+			setTab(tabs[nextIndex].id);
+			const tabEl = cardEl.querySelector(`[data-tab="${tabs[nextIndex].id}"]`) as HTMLElement;
+			tabEl?.focus();
+		}
+	}
+
+	function handleExportCSV(e: MouseEvent) {
+		e.stopPropagation();
+		if (chartData?.table) exportCSV(chartData.table, chartData.meta?.region?.codeShort);
+		showDownloadMenu = false;
+	}
+
+	function handleExportJSON(e: MouseEvent) {
+		e.stopPropagation();
+		if (chartData?.raw)
+			exportJSON(
+				chartData.raw,
+				chartData.table?.filename || 'data',
+				chartData.meta?.region?.codeShort
+			);
+		showDownloadMenu = false;
+	}
+
+	function toggleDownloadMenu(e: MouseEvent) {
+		e.stopPropagation();
+		showDownloadMenu = !showDownloadMenu;
+	}
+
+	async function handleEmbed(e: MouseEvent) {
+		e.stopPropagation();
+		const code = generateEmbedCode(chart.id, page.data.page?.id);
+		await copyToClipboard(code);
+		alert('iFrame-Code kopiert!');
+	}
+
+	async function handleImage(e: MouseEvent) {
+		e.stopPropagation();
+		if (!contentEl) return;
+		try {
+			const blob = await domtoimage.toBlob(contentEl, {
+				filter: (el: HTMLElement) => !el.dataset?.shareIgnore,
+				width: contentEl.clientWidth * 3,
+				height: contentEl.clientHeight * 3,
+				style: { transform: 'scale(3)', transformOrigin: 'top left' }
+			});
+			const file = new File([blob], 'chart.png', { type: 'image/png' });
+			try {
+				await navigator.share({ files: [file] });
+			} catch {
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = `${chart.content?.title || 'chart'}.png`;
+				a.click();
+				URL.revokeObjectURL(url);
+			}
+		} catch (err) {
+			console.error('Export failed:', err);
+		}
+	}
+
+	function handleMap(e: MouseEvent) {
+		e.stopPropagation();
+		dispatch('openMap');
+	}
+</script>
+
+<div
+	bind:this={cardEl}
+	class="chart-card group relative bg-white h-full dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 flex flex-col"
+	style="grid-column: span {span};"
+	on:click={handleClick}
+	on:keydown={(e) => e.key === 'Enter' && handleClick(e)}
+	role="button"
+	tabindex="0"
+>
+	{#if isVisible}
+		<div bind:this={contentEl} class="p-5 pb-3 min-h-[280px] relative" in:fade={{ duration: 200 }}>
+			<!-- Skeleton -->
+			{#if isLoading}
+				<div
+					class="absolute inset-0 p-5 bg-white dark:bg-gray-900 z-10"
+					transition:fade={{ duration: 150 }}
+				>
+					<div class="h-5 w-2/3 bg-gray-200 dark:bg-gray-800 rounded mb-4 animate-pulse"></div>
+					<div class="h-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
+				</div>
+			{/if}
+
+			<!-- Header (always visible) -->
+			<div class="flex justify-between items-start mb-3" class:opacity-0={isLoading}>
+				<h2 class="text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4">
+					{title || chart.content?.title}
+				</h2>
+				<a
+					href="https://klimadashboard.org"
+					target="_blank"
+					aria-label="Klimadashboard.org"
+					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
+					on:click={(e) => e.stopPropagation()}
+				>
+					<span class="text-sm font-bold text-[#28A889]">Klimadashboard.{PUBLIC_VERSION}</span>
+					<svg
+						width="256"
+						height="256"
+						viewBox="0 0 256 256"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-8 w-8 rounded-sm"
+					>
+						<rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" />
+						<path
+							d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
+							fill="#DBF0E0"
+						/>
+						<path
+							opacity="0.6"
+							d="M162.95 88H134.808C133.732 88 132.701 88.4337 131.948 89.203L96.7358 125.203C95.2152 126.758 95.2152 129.242 96.7358 130.797L131.948 166.797C132.701 167.566 133.732 168 134.808 168H162.95C166.498 168 168.29 163.723 165.8 161.194L135.887 130.806C134.355 129.249 134.355 126.751 135.887 125.194L165.8 94.8061C168.29 92.2773 166.498 88 162.95 88Z"
+							fill="#DBF0E0"
+						/>
+						<path
+							opacity="0.2"
+							d="M197.95 88H178.808C177.732 88 176.701 88.4337 175.948 89.203L140.736 125.203C139.215 126.758 139.215 129.242 140.736 130.797L175.948 166.797C176.701 167.566 177.732 168 178.808 168H197.95C201.498 168 203.29 163.723 200.8 161.194L170.887 130.806C169.355 129.249 169.355 126.751 170.887 125.194L200.8 94.8061C203.29 92.2773 201.498 88 197.95 88Z"
+							fill="#DBF0E0"
+						/>
+						<defs>
+							<linearGradient
+								id="kd-gradient-{chart.id}"
+								x1="425"
+								y1="8.00003"
+								x2="16"
+								y2="248"
+								gradientUnits="userSpaceOnUse"
+							>
+								<stop stop-color="#A3D58A" />
+								<stop offset="1" stop-color="#28A889" />
+							</linearGradient>
+						</defs>
+					</svg>
+				</a>
+			</div>
+
+			<!-- Content -->
+			<div class:opacity-0={isLoading} class="transition-opacity">
+				<!-- Chart Tab -->
+				<div
+					id="tabpanel-chart"
+					role="tabpanel"
+					aria-labelledby="tab-chart"
+					hidden={activeTab !== 'chart'}
+				>
+					{#if heading}
+						<p class="text-2xl mb-3">{@html heading}</p>
+					{/if}
+
+					<div class="my-3 relative">
+						<RegionProvider {regionId} let:region let:loading>
+							{@const onChartData = (data: ChartData | null) => {
+								chartData = data;
+							}}
+							<slot {region} regionLoading={loading} {onChartData} />
+						</RegionProvider>
+					</div>
+
+					{#if source}
+						<div class="text-xs text-gray-500 mt-4">
+							<p>
+								{page.data.translations?.source || 'Quelle'}:
+								{@html source}
+								{#if updateDate}
+									<span class="ml-1">
+										| {page.data.translations?.lastUpdated || 'Stand'}: {dayjs(updateDate).format(
+											'DD.MM.YYYY'
+										)}
+									</span>
+								{/if}
+							</p>
+						</div>
+					{/if}
+				</div>
+
+				<!-- Table Tab -->
+				<div
+					id="tabpanel-table"
+					role="tabpanel"
+					aria-labelledby="tab-table"
+					hidden={activeTab !== 'table'}
+				>
+					{#if chartData?.table}
+						<Table
+							columns={chartData.table.columns}
+							rows={chartData.table.rows}
+							maxHeight="400px"
+						/>
+					{/if}
+				</div>
+
+				<!-- Text/Info Tab -->
+				<div
+					id="tabpanel-text"
+					role="tabpanel"
+					aria-labelledby="tab-text"
+					hidden={activeTab !== 'text'}
+				>
+					{#if text}
+						<div class="text-lg">
+							{@html text}
+						</div>
+					{/if}
+					{#if methods}
+						<details class="mt-4" open={!text}>
+							<summary
+								class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+							>
+								Methodik
+							</summary>
+							<div class="mt-2 prose prose-sm dark:prose-invert max-w-none">
+								{@html methods}
+							</div>
+						</details>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Map button -->
+			{#if mapLayerId}
+				<button
+					class="no-card-click absolute top-5 right-14 p-1.5 bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+					on:click={handleMap}
+					title="Karte"
+					aria-label="Auf Karte anzeigen"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /></svg
+					>
+				</button>
+			{/if}
+		</div>
+
+		<!-- Bottom bar -->
+		<div
+			class="no-card-click bg-gray-100 dark:bg-gray-800 flex items-stretch justify-between mt-auto"
+		>
+			<!-- Tabs on the left - connected to content above -->
+			<div class="flex items-stretch" role="tablist" aria-label="Chart views">
+				{#each tabs as tab}
+					<button
+						data-tab={tab.id}
+						role="tab"
+						aria-selected={activeTab === tab.id}
+						aria-controls="tabpanel-{tab.id}"
+						tabindex={activeTab === tab.id ? 0 : -1}
+						class="relative px-4 py-2.5 transition-colors flex items-center gap-1.5
+							{activeTab === tab.id
+							? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white -mb-px border-t-2 border-t-[#28A889]'
+							: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}"
+						on:click={() => setTab(tab.id)}
+						on:keydown={(e) => handleTabKeydown(e, tab.id)}
+					>
+						{#if tab.id === 'chart'}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="flex-shrink-0"
+							>
+								<line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line
+									x1="6"
+									y1="20"
+									x2="6"
+									y2="14"
+								/>
+							</svg>
+						{:else if tab.id === 'table'}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="flex-shrink-0"
+							>
+								<rect x="3" y="3" width="18" height="18" rx="2" /><line
+									x1="3"
+									y1="9"
+									x2="21"
+									y2="9"
+								/><line x1="3" y1="15" x2="21" y2="15" /><line x1="9" y1="3" x2="9" y2="21" />
+							</svg>
+						{:else if tab.id === 'text'}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="flex-shrink-0"
+							>
+								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline
+									points="14 2 14 8 20 8"
+								/><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+							</svg>
+						{/if}
+						<span class="text-sm font-medium">{tab.label}</span>
+					</button>
+				{/each}
+			</div>
+
+			<!-- Action buttons on the right -->
+			<div class="flex items-center gap-1 px-2">
+				<!-- Download button with menu -->
+				{#if hasData}
+					<div class="relative download-menu">
+						<button
+							on:click={toggleDownloadMenu}
+							class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-0.5"
+							aria-label="Daten herunterladen"
+							aria-expanded={showDownloadMenu}
+							aria-haspopup="true"
+							title="Daten herunterladen"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+								<polyline points="7 10 12 15 17 10" />
+								<line x1="12" y1="15" x2="12" y2="3" />
+							</svg>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="10"
+								height="10"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="transition-transform {showDownloadMenu ? 'rotate-180' : ''}"
+							>
+								<polyline points="6 9 12 15 18 9" />
+							</svg>
+						</button>
+
+						{#if showDownloadMenu}
+							<div
+								class="absolute bottom-full right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-20 min-w-[140px]"
+								transition:fade={{ duration: 100 }}
+							>
+								<button
+									on:click={handleExportCSV}
+									class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+								>
+									<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+										>CSV</span
+									>
+									<span>Tabelle</span>
+								</button>
+								<button
+									on:click={handleExportJSON}
+									class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+								>
+									<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+										>JSON</span
+									>
+									<span>Rohdaten</span>
+								</button>
+							</div>
+						{/if}
+					</div>
+				{/if}
+
+				<!-- Permalink -->
+				<a
+					href="/charts/{chart.id}"
+					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+					on:click={(e) => e.stopPropagation()}
+					aria-label="Permalink zur Grafik"
+					title="Permalink"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path
+							d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+						/>
+					</svg>
+				</a>
+
+				<!-- Share as image -->
+				<button
+					on:click={handleImage}
+					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+					aria-label="Als Bild teilen"
+					title="Als Bild teilen"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<rect x="3" y="3" width="18" height="18" rx="2" /><circle
+							cx="8.5"
+							cy="8.5"
+							r="1.5"
+						/><polyline points="21 15 16 10 5 21" />
+					</svg>
+				</button>
+
+				<!-- Embed code -->
+				<button
+					on:click={handleEmbed}
+					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+					aria-label="Einbettungscode kopieren"
+					title="Einbetten"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<polyline points="7 8 3 12 7 16" /><polyline points="17 8 21 12 17 16" /><line
+							x1="14"
+							y1="4"
+							x2="10"
+							y2="20"
+						/>
+					</svg>
+				</button>
+			</div>
+		</div>
+	{:else}
+		<div class="min-h-[280px] bg-gray-50 dark:bg-gray-900"></div>
+	{/if}
+</div>
+
+<style>
+	.chart-card:hover {
+		transform: translateY(-1px);
+	}
+</style>
