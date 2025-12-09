@@ -1,6 +1,7 @@
 <script>
 	import { min, max, extent, bisector } from 'd3-array';
 	import { scaleLinear, scaleTime } from 'd3-scale';
+	import formatNumber from '$lib/stores/formatNumber';
 
 	export let data;
 	export let selectedCountries;
@@ -59,7 +60,7 @@
 						/><path d="M12.5 3a17 17 0 0 1 0 18" /></svg
 					>
 					<text class="text-xs text-gray-800 font-bold" dominant-baseline="hanging" x={12}
-						>{worldAverage}t THG</text
+						>{formatNumber(worldAverage)}t THG</text
 					>
 					<line x1={0} x2={0} y1={14} y2={chartHeight} class="opacity-80 stroke-current stroke-1" />
 				</g>
@@ -92,7 +93,7 @@
 								y={yHeight / 2 - 4}
 								dominant-baseline="middle"
 								text-anchor="end"
-								class="fill-white text-sm font-bold">{country.value}</text
+								class="fill-white text-sm font-bold">{formatNumber(country.value)}t</text
 							>
 						{:else}
 							<text x={margin.left + 10} y={8} dominant-baseline="hanging">No data available</text>
