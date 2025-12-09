@@ -5,7 +5,7 @@
 
 <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50" id="top">
 	<ul
-		class="max-w-[60vw] overflow-scroll px-2 py-1 rounded-full border border-current/10 bg-white/80 dark:bg-black/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm flex items-center"
+		class="max-w-[60vw] overflow-scroll no-scrollbar px-2 py-1 rounded-full border border-current/10 bg-white/80 dark:bg-black/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm flex items-center"
 	>
 		{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION) && d.navigation !== false) as section}
 			<li>
