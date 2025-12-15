@@ -116,7 +116,7 @@
 			x="timestamp"
 			y={categories}
 			xType="linear"
-			height={500}
+			height={300}
 			yMin={0}
 			{yMax}
 			margin={{ top: 20, right: 120, bottom: 40, left: 50 }}

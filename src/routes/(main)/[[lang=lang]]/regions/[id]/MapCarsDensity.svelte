@@ -7,26 +7,28 @@
 	import { page } from '$app/state';
 	import Loader from '$lib/components/Loader.svelte';
 	import {
-		loadMobilityData,
-		getRegionData
-	} from '$lib/components/charts/custom/carsDensity/mobilityData';
-	import { colors } from '$lib/components/charts/custom/carsDensity/scales';
-	import type { RegionWithData } from '$lib/components/charts/custom/carsDensity/mobilityData';
+		fetchAllRegions,
+		colors,
+		type RegionWithData
+	} from '$lib/components/charts/custom/carsDensity/config';
 
-	export let map; // MapLibre GL map instance from parent
-	export let regionId;
-	export let regionName;
+	export let map: any; // MapLibre GL map instance from parent
+	export let regionId: string | undefined = undefined;
+	export let regionName: string | undefined = undefined;
 
 	type LayerPlural = 'municipalities' | 'districts';
 	type LayerSingular = 'municipality' | 'district';
+	type ViewKey = 'pop' | 'private' | 'company';
 
-	const layers = [
-		{
-			key: 'municipalities' as LayerPlural,
-			keySingular: 'municipality' as LayerSingular,
-			zoom: 9.5
-		},
-		{ key: 'districts' as LayerPlural, keySingular: 'district' as LayerSingular, zoom: 7 }
+	const layers: Array<{ key: LayerPlural; keySingular: LayerSingular; zoom: number }> = [
+		{ key: 'municipalities', keySingular: 'municipality', zoom: 9.5 },
+		{ key: 'districts', keySingular: 'district', zoom: 7 }
+	];
+
+	const views: Array<{ label: string; key: ViewKey; unit: string }> = [
+		{ label: 'Gesamt', key: 'pop', unit: '' },
+		{ label: 'Privat', key: 'private', unit: '%' },
+		{ label: 'Firmen', key: 'company', unit: '%' }
 	];
 
 	// State
@@ -35,27 +37,19 @@
 	let selectedPeriodIndex = 0;
 	let selectedPeriod = '';
 	let selectedLayer: LayerPlural = 'municipalities';
-	let selectedView: 'pop' | 'private' | 'company' = 'pop';
+	let selectedView: ViewKey = 'pop';
 	let selectedRegion: string | null = null;
-	let country = null;
 	let loading = true;
 	let switchingLayer = false;
 	let legendSteps: Array<{ color: string; label: string }> = [];
 	let idProp = 'AGS';
 
-	const views = [
-		{ label: 'Gesamt', key: 'pop', unit: '' },
-		{ label: 'Privat', key: 'private', unit: '%' },
-		{ label: 'Firmen', key: 'company', unit: '%' }
-	];
-
 	// Load data
 	onMount(async () => {
 		try {
-			const payload = await loadMobilityData(fetch);
+			const payload = await fetchAllRegions(fetch);
 			regions = payload.regions;
 			availablePeriods = payload.periods;
-			country = payload.country;
 			selectedPeriodIndex = availablePeriods.length - 1;
 			selectedPeriod = availablePeriods[selectedPeriodIndex];
 			loading = false;
@@ -78,18 +72,31 @@
 
 	$: selectedPeriod = availablePeriods[selectedPeriodIndex];
 
-	// Helpers
+	// Color scale helpers
 	function getInterpolatedColors(start: string, end: string, steps: number): string[] {
 		const interp = interpolateRgb(start, end);
 		return Array.from({ length: steps }, (_, i) => interp(i / (steps - 1)));
 	}
 
+	function getColorRangeForView(view: ViewKey): [string, string] {
+		switch (view) {
+			case 'pop':
+				return [colors.carsLight, colors.cars];
+			case 'private':
+				return [colors.privateLight, colors.private];
+			case 'company':
+				return [colors.companyLight, colors.company];
+		}
+	}
+
 	function createColorScale(data: Array<{ region: string; value: number }>) {
 		if (!Array.isArray(data) || data.length === 0) {
-			return { scale: () => '#F2F2F2', range: [], thresholds: [] as number[] };
+			return { scale: () => '#F2F2F2', range: [] as string[], thresholds: [] as number[] };
 		}
 		const values = data.map((d) => d.value).filter((v) => v != null) as number[];
-		if (!values.length) return { scale: () => '#F2F2F2', range: [], thresholds: [] as number[] };
+		if (!values.length) {
+			return { scale: () => '#F2F2F2', range: [] as string[], thresholds: [] as number[] };
+		}
 
 		const sorted = [...values].sort((a, b) => a - b);
 		const steps = 7;
@@ -97,29 +104,29 @@
 			const p = (i + 1) / steps;
 			return sorted[Math.floor(p * sorted.length)];
 		});
-		const colorRange = getInterpolatedColors(
-			colors[selectedView][0],
-			colors[selectedView][1],
-			steps
-		);
-		const scale = scaleThreshold(thresholds, colorRange);
+
+		const [startColor, endColor] = getColorRangeForView(selectedView);
+		const colorRange = getInterpolatedColors(startColor, endColor, steps);
+		const scale = scaleThreshold<number, string>().domain(thresholds).range(colorRange);
+
 		return { scale, range: colorRange, thresholds };
 	}
 
-	function tilesURLForLayer(layer: LayerPlural) {
+	// Map layer helpers
+	function tilesURLForLayer(layer: LayerPlural): string {
 		const cc = PUBLIC_VERSION.toLowerCase();
 		return `https://tiles.klimadashboard.org/data/${layer}-${cc}/{z}/{x}/{y}.pbf`;
 	}
 
-	function fillLayerId(layer: LayerPlural) {
+	function fillLayerId(layer: LayerPlural): string {
 		return `cars-${layer}-fill`;
 	}
 
-	function outlineLayerId(layer: LayerPlural) {
+	function outlineLayerId(layer: LayerPlural): string {
 		return `cars-${layer}-outline`;
 	}
 
-	function detectIdProp() {
+	function detectIdProp(): void {
 		try {
 			const feats = map?.querySourceFeatures('cars-regions') || [];
 			const f = feats.find(Boolean);
@@ -140,8 +147,7 @@
 
 		return regionsForMap
 			.map((d) => {
-				const code =
-					PUBLIC_VERSION === 'at' ? String(d.code) : String((d as any).code_short ?? d.code);
+				const code = PUBLIC_VERSION === 'at' ? String(d.code) : String(d.code_short ?? d.code);
 				const dataArr =
 					selectedView === 'pop'
 						? d.carsPer1000Inhabitants
@@ -154,7 +160,7 @@
 			.filter((d) => d.value != null);
 	}
 
-	function applyColorsToActiveLayer() {
+	function applyColorsToActiveLayer(): void {
 		if (!map || loading) return;
 		const entries = buildDataForPeriod();
 		if (!entries.length) return;
@@ -183,7 +189,7 @@
 		});
 	}
 
-	function removeRegionSourceAndLayers() {
+	function removeRegionSourceAndLayers(): void {
 		(['municipalities', 'districts'] as const).forEach((lyr) => {
 			const f = fillLayerId(lyr);
 			const o = outlineLayerId(lyr);
@@ -194,7 +200,7 @@
 		if (map.getSource('cars-regions')) map.removeSource('cars-regions');
 	}
 
-	function installRegionSourceAndLayers() {
+	function installRegionSourceAndLayers(): void {
 		if (!map) return;
 		switchingLayer = true;
 
@@ -245,7 +251,7 @@
 			map.getLayer('city-labels') ? 'city-labels' : undefined
 		);
 
-		map.on('click', fillLayerId(selectedLayer), (e) => {
+		map.on('click', fillLayerId(selectedLayer), (e: any) => {
 			const feature = e.features?.[0];
 			if (feature) {
 				const regionCode = String(feature.properties?.[idProp]);

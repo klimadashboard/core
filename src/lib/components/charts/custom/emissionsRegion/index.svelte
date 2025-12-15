@@ -549,18 +549,20 @@
 									opacity={0.1}
 								/>
 							{/each}
-							{#if latestYear && latestTotal > 0}
-								<path
-									d={[
-										`M ${xScale(latestYear)},${yScale(latestTotal)}`,
-										...climateTargets.map((t) => `L ${xScale(t.year)},${yScale(t.value)}`)
-									].join(' ')}
-									fill="none"
-									stroke="currentColor"
-									stroke-width={2}
-									stroke-dasharray="4 4"
-									opacity={0.5}
-								/>
+							{#if historicYears.length > 0 && climateTargets.length > 0}
+								{@const firstYear = Math.min(...historicYears)}
+								{@const firstYearData = grouped.find((g) => g.year === firstYear)}
+								{@const goalTarget = climateTargets[climateTargets.length - 1]}
+								{#if firstYearData && goalTarget}
+									<path
+										d={`M ${xScale(firstYear)},${yScale(firstYearData.total)} L ${xScale(goalTarget.year)},${yScale(goalTarget.value)}`}
+										fill="none"
+										stroke="currentColor"
+										stroke-width={2}
+										stroke-dasharray="4 4"
+										opacity={0.5}
+									/>
+								{/if}
 							{/if}
 						</g>
 					{/if}
