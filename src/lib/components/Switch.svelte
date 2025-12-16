@@ -3,7 +3,6 @@
 
 	export let views = [];
 	export let activeView;
-	export let type; // undefined | "small" | "primary"
 
 	const dispatch = createEventDispatcher();
 
@@ -16,14 +15,13 @@
 
 	async function updateIndicator() {
 		await tick();
-		if (!container || type === 'small') return; // Skip indicator for small type
+		if (!container) return;
 
 		const btn = container.querySelector(`[data-key="${activeView}"]`);
 		if (!btn) return;
 
 		const btnRect = btn.getBoundingClientRect();
 		const parentRect = container.getBoundingClientRect();
-
 		const x = btnRect.left - parentRect.left;
 		const w = btnRect.width;
 
@@ -34,37 +32,36 @@
 	}
 
 	$: activeView, updateIndicator();
+
 	onMount(updateIndicator);
 </script>
 
 <div
 	bind:this={container}
 	class="switch relative inline-flex rounded-full overflow-x-auto max-w-full no-scrollbar
-	       {type === 'small'
-		? 'bg-transparent gap-2'
-		: 'bg-gray-100 dark:bg-gray-900 py-1 border-2 border-current/10'}
-	       {type === 'primary' ? 'bg-white' : ''}"
+		bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700"
 >
-	<!-- overlay the indicator behind buttons for non-small types -->
-	{#if type !== 'small'}
-		<div class="switch-indicator inset-y-0.5 absolute" style={indicatorStyle}></div>
-	{/if}
+	<!-- Sliding indicator -->
+	<div
+		class="switch-indicator bg-white dark:bg-gray-900 absolute inset-y-1"
+		style={indicatorStyle}
+	></div>
 
 	{#each views as view (view.key)}
 		<button
 			data-key={view.key}
 			on:click={() => handleClick(view)}
 			disabled={view.disabled}
-			class="relative z-10 flex items-center rounded-full transition duration-200 flex-shrink-0
-			       {type === 'small'
-				? view.key === activeView
-					? 'bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 font-semibold text-sm'
-					: 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-white px-4 py-2 text-sm hover:bg-gray-300 hover:dark:bg-gray-700'
-				: 'px-4 ' + (view.key === activeView ? 'font-bold' : '')}
-			       disabled:opacity-40 disabled:line-through"
+			class="relative z-10 flex items-center gap-2 rounded-full px-2 py-1 text-sm font-medium
+				transition-colors duration-200 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed
+				{view.key === activeView
+				? 'text-black dark:text-white'
+				: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}"
 		>
 			{#if view.icon}
-				<span class="mr-2" style="color: {view.color}">{@html view.icon}</span>
+				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''}>
+					{@html view.icon}
+				</span>
 			{/if}
 			<span>{view.label}</span>
 		</button>
@@ -75,12 +72,18 @@
 	.switch-indicator {
 		left: 0;
 		border-radius: 9999px;
-		background-color: white;
-		transition: all 300ms ease;
+		transition:
+			transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+			width 300ms cubic-bezier(0.4, 0, 0.2, 1);
 		z-index: 0;
 	}
 
-	:global(.dark) .switch-indicator {
-		background-color: #374151;
+	.no-scrollbar {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+
+	.no-scrollbar::-webkit-scrollbar {
+		display: none;
 	}
 </style>

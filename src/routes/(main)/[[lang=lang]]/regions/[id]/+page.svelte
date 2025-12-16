@@ -70,26 +70,24 @@
 			active: false,
 			charts: [
 				{
-					id: 'fd902ce9-47b0-4da5-8745-2f56b8785c6e',
-					countries: ['at', 'de'],
-					span: 6,
-					mapLayerId: 'solar-installations'
-				},
-				{
-					id: 'd5b937b6-d921-47c8-a453-a7e60c47ec2e',
+					id: '4c15342e-c329-4ab2-9748-205f35613a7e',
 					countries: ['at', 'de'],
 					span: 6
 				},
 				{
-					id: 'e301bb08-70c4-4572-bce6-4ff1cc06e7f3',
+					id: '5987865b-488b-44ed-87fe-b9fe54d965b8',
+					countries: ['at', 'de'],
+					span: 6
+				},
+				{
+					id: 'ecb058fc-06c6-4092-b1a7-dccdf6736d46',
 					countries: ['at', 'de'],
 					span: 6
 				},
 				{
 					id: '1e135ce2-06d2-4eae-b8f8-fdb4cbae910c',
 					countries: ['at', 'de'],
-					span: 6,
-					mapLayerId: 'wind-power'
+					span: 6
 				}
 			],
 			icon: "<svg  xmlns='http://www.w3.org/2000/svg'  width='24'  height='24'  viewBox='0 0 24 24'  fill='none'  stroke='currentColor'  stroke-width='1'  stroke-linecap='round'  stroke-linejoin='round'  class='w-5 h-5 icons-tabler-outline icon-tabler-bolt'><path stroke='none' d='M0 0h24v24H0z' fill='none'/><path d='M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11' /></svg>"
