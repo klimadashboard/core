@@ -53,7 +53,12 @@
 				{
 					id: 'cae6032b-86a9-45d0-bc11-17343845b25a',
 					countries: ['at', 'de'],
-					span: 12
+					span: 6
+				},
+				{
+					id: '19ad92e0-430d-4ba9-8009-f7add39c85bb',
+					countries: ['at', 'de'],
+					span: 6
 				}
 			]
 		},
@@ -108,14 +113,14 @@
 					span: 6
 				},
 				{
-					id: '2ab9836f-1228-4deb-a698-524b008c31dc',
+					id: 'e8c13d08-089f-4782-844a-06b8f19e4d54',
 					countries: ['at', 'de'],
 					span: 6
 				},
 				{
-					id: '01b74323-efc0-4ecc-bf3f-7e6d6a27a474',
+					id: '1b519edc-a120-4519-a008-0e0cec99fe91',
 					countries: ['at', 'de'],
-					span: 8
+					span: 6
 				},
 				{
 					id: 'b3301d53-24e0-4171-be78-75882f602fe8',

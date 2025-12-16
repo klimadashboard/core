@@ -6,14 +6,12 @@
 	import { min, max } from 'd3-array';
 	import formatNumber from '$lib/stores/formatNumber';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
-	import Loader from '$lib/components/Loader.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import {
 		fetchData,
 		getPlaceholders,
 		generateTitle,
-		generateSubtitle,
 		getLatestData,
 		buildChartData,
 		colors,
@@ -36,6 +34,7 @@
 	let data: CarDensityData | null = null;
 	let lineChartWidth = 0;
 	let lineChartEl: HTMLElement;
+	let resizeObserver: ResizeObserver | null = null;
 
 	// Hover state
 	let hoveredPeriod: string | null = null;
@@ -133,21 +132,24 @@
 		hoveredPeriod = null;
 	}
 
-	// Resize observer for line chart
-	onMount(() => {
-		const ro = new ResizeObserver((entries) => {
+	// Setup resize observer when element is bound
+	$: if (lineChartEl && !resizeObserver) {
+		resizeObserver = new ResizeObserver((entries) => {
 			for (const entry of entries) {
 				if (entry.contentRect.width > 0) {
 					lineChartWidth = entry.contentRect.width;
 				}
 			}
 		});
+		resizeObserver.observe(lineChartEl);
+		// Get initial width
+		lineChartWidth = lineChartEl.clientWidth;
+	}
 
-		if (lineChartEl) {
-			ro.observe(lineChartEl);
-		}
-
-		return () => ro.disconnect();
+	onMount(() => {
+		return () => {
+			resizeObserver?.disconnect();
+		};
 	});
 </script>
 
@@ -178,15 +180,15 @@
 				role="img"
 				aria-label="Anzahl PKW über Zeit"
 			>
-				{#if lineChartWidth > 0}
+				{#if lineChartWidth > 0 && lineData.length > 0}
 					<svg width={lineChartWidth} height={lineChartHeight}>
 						<!-- X axis -->
 						<g transform="translate({margin.left},{margin.top + innerHeight})">
-							{#each xScale.ticks(5) as tick}
-								<g transform="translate({xScale(tick)}, 0)" class="text-xs">
+							{#each lineData as d}
+								<g transform="translate({xScale(Number(d.period))}, 0)" class="text-xs">
 									<line y2={5} class="stroke-current opacity-10" />
 									<text y={18} text-anchor="middle" fill="currentColor" class="opacity-70">
-										{tick}
+										{d.period}
 									</text>
 								</g>
 							{/each}
@@ -194,7 +196,7 @@
 
 						<!-- Y axis -->
 						<g transform="translate(0,{margin.top})">
-							{#each yScale.ticks(4) as tick}
+							{#each yScale.ticks(3) as tick}
 								<g transform="translate(0, {yScale(tick)})" class="text-xs">
 									<line
 										x1={margin.left}
@@ -260,8 +262,10 @@
 							items={tooltipData.items}
 						/>
 					{/if}
-				{:else}
-					<div class="h-full bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+				{:else if lineData.length === 0}
+					<div class="h-full flex items-center justify-center text-sm text-gray-500">
+						Keine historischen Daten verfügbar.
+					</div>
 				{/if}
 			</div>
 		</div>

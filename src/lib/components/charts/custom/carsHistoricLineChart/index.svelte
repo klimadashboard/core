@@ -7,12 +7,14 @@
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
 	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import Switch from '$lib/components/Switch.svelte';
 	import {
 		fetchData,
 		buildChartData,
 		buildSeriesConfigs,
 		type VehicleRawData,
-		type SeriesConfig
+		type SeriesConfig,
+		type DataMode
 	} from './config';
 
 	// Props from Card slot
@@ -30,8 +32,15 @@
 	let containerEl: HTMLElement;
 	let hoveredSeries: string | null = null;
 
+	// Mode switch
+	let activeMode: DataMode = 'neuzulassungen';
+	const modeViews = [
+		{ key: 'neuzulassungen', label: 'Neuzulassungen' },
+		{ key: 'bestand', label: 'Bestand' }
+	];
+
 	// Derived
-	$: params = { dataUrl };
+	$: params = { dataUrl, mode: activeMode };
 
 	// Transform data for Chart component (needs numeric x values)
 	$: chartData = data.map((d) => ({
@@ -49,34 +58,74 @@
 	$: xMin = data.length > 0 ? Math.min(...data.map((d) => d.date.getTime())) : Date.now();
 	$: xMax = data.length > 0 ? Math.max(...data.map((d) => d.date.getTime())) : Date.now();
 
-	// End labels data
+	// End labels data with values
 	$: labelData =
 		data.length > 0
 			? seriesConfigs.map((series) => {
 					const validRows = data.filter((d) => d[series.key] != null);
 					const lastRow = validRows[validRows.length - 1];
+					const value = (lastRow?.[series.key] as number) || 0;
 					return {
 						key: series.key,
 						label: series.label,
 						color: series.color,
 						x: lastRow?.date.getTime() || 0,
-						y: (lastRow?.[series.key] as number) || 0
+						y: value,
+						displayValue: `${(value * 100).toFixed(1)}%`
 					};
 				})
 			: [];
 
+	// Resolve label positions to avoid overlaps
+	function resolveOverlaps(
+		labels: typeof labelData,
+		yScale: (v: number) => number,
+		minSpacing: number = 14
+	): Array<(typeof labelData)[0] & { adjustedY: number }> {
+		if (labels.length === 0) return [];
+
+		// Sort by y position (descending value = ascending screen position)
+		const sorted = [...labels]
+			.map((l) => ({ ...l, adjustedY: yScale(l.y) }))
+			.sort((a, b) => a.adjustedY - b.adjustedY);
+
+		// Push overlapping labels apart
+		for (let i = 1; i < sorted.length; i++) {
+			const prev = sorted[i - 1];
+			const curr = sorted[i];
+			const overlap = prev.adjustedY + minSpacing - curr.adjustedY;
+			if (overlap > 0) {
+				curr.adjustedY = prev.adjustedY + minSpacing;
+			}
+		}
+
+		// If labels went off the bottom, push everything up
+		const maxY = Math.max(...sorted.map((l) => l.adjustedY));
+		const chartBottom = yScale(0);
+		if (maxY > chartBottom - 10) {
+			const shift = maxY - (chartBottom - 10);
+			sorted.forEach((l) => (l.adjustedY -= shift));
+		}
+
+		return sorted;
+	}
+
 	// Format functions
 	function formatDate(timestamp: number): string {
 		const date = new Date(timestamp);
+		// For Bestand (yearly), show just year; for Neuzulassungen (monthly), show month + year
+		if (activeMode === 'bestand') {
+			return date.getFullYear().toString();
+		}
 		return date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
 	}
 
 	function formatPercent(value: number): string {
-		return `${(value * 100).toFixed(1)}%`;
+		return `${(value * 100).toFixed(0)}%`;
 	}
 
-	// Load data
-	$: if (!regionLoading) {
+	// Load data when region or mode changes
+	$: if (!regionLoading && activeMode) {
 		loadData();
 	}
 
@@ -90,7 +139,13 @@
 			categories = result.categories;
 			seriesConfigs = buildSeriesConfigs(categories);
 
-			const builtChartData = buildChartData(data, categories, result.updateDate, region);
+			const builtChartData = buildChartData(
+				data,
+				categories,
+				result.updateDate,
+				region,
+				activeMode
+			);
 			onChartData?.(builtChartData);
 		} catch (e) {
 			console.error('[VehicleRegistrations] Error:', e);
@@ -104,12 +159,27 @@
 </script>
 
 <div bind:this={containerEl} class="vehicle-registrations">
+	<!-- Mode Switch -->
+	<div class="mb-4">
+		<Switch
+			type="small"
+			views={modeViews}
+			activeView={activeMode}
+			on:itemClick={(event) => {
+				activeMode = event.detail;
+				loadData();
+			}}
+		/>
+	</div>
+
 	{#if loading || regionLoading}
-		<div class="h-[500px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
-		<div class="h-[500px] flex items-center justify-center text-red-500">{error}</div>
+		<div class="h-[300px] flex items-center justify-center text-red-500">{error}</div>
 	{:else if data.length === 0}
-		<div class="h-[500px] flex items-center justify-center text-gray-500">Keine Daten</div>
+		<div class="h-[300px] flex items-center justify-center text-gray-500">
+			Keine Daten verfügbar
+		</div>
 	{:else}
 		<Chart
 			data={chartData}
@@ -119,7 +189,7 @@
 			height={300}
 			yMin={0}
 			{yMax}
-			margin={{ top: 20, right: 120, bottom: 40, left: 50 }}
+			margin={{ top: 20, right: 140, bottom: 40, left: 50 }}
 		>
 			<svelte:fragment
 				slot="default"
@@ -144,7 +214,7 @@
 					{innerWidth}
 					{innerHeight}
 					format={formatDate}
-					tickCount={6}
+					tickCount={activeMode === 'bestand' ? Math.min(data.length, 6) : 6}
 				/>
 
 				<!-- Lines for each category -->
@@ -175,22 +245,46 @@
 					</g>
 				{/each}
 
-				<!-- End labels -->
-				{#each labelData as label}
+				<!-- End labels with values (resolved to avoid overlap) -->
+				{@const resolvedLabels = resolveOverlaps(labelData, yScale)}
+				{#each resolvedLabels as label}
 					{@const labelX = xScale(label.x)}
-					{@const labelY = yScale(label.y)}
-					{#if labelX != null && labelY != null}
+					{@const originalY = yScale(label.y)}
+					{#if labelX != null}
+						<!-- Connector line if label was moved -->
+						{#if Math.abs(label.adjustedY - originalY) > 2}
+							<line
+								x1={labelX}
+								y1={originalY}
+								x2={labelX + 6}
+								y2={label.adjustedY}
+								stroke={label.color}
+								stroke-width="1"
+								opacity={hoveredSeries === label.key || !hoveredSeries ? 0.5 : 0.15}
+								class="transition-opacity"
+							/>
+						{/if}
+						<!-- Dot at data point -->
+						<circle
+							cx={labelX}
+							cy={originalY}
+							r={hoveredSeries === label.key ? 4 : 3}
+							fill={label.color}
+							opacity={hoveredSeries === label.key || !hoveredSeries ? 1 : 0.3}
+							class="transition-all"
+						/>
+						<!-- Label text -->
 						<text
 							x={labelX + 8}
-							y={labelY}
+							y={label.adjustedY}
 							fill={label.color}
-							font-size="12"
-							font-weight="500"
+							font-size="11"
+							font-weight={hoveredSeries === label.key ? '600' : '500'}
 							dominant-baseline="middle"
 							opacity={hoveredSeries === label.key || !hoveredSeries ? 1 : 0.3}
 							class="transition-opacity pointer-events-none"
 						>
-							{label.label}
+							{label.label} ({label.displayValue})
 						</text>
 					{/if}
 				{/each}
@@ -208,7 +302,7 @@
 									return typeof value === 'number'
 										? {
 												label: s.label,
-												value: formatPercent(value),
+												value: `${(value * 100).toFixed(1)}%`,
 												color: s.color
 											}
 										: null;
@@ -220,31 +314,14 @@
 						visible={true}
 						x={hover.clientX}
 						y={hover.clientY}
-						title={date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+						title={activeMode === 'bestand'
+							? date.getFullYear().toString()
+							: date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
 						{items}
 						container={containerEl}
 					/>
 				{/if}
 			</svelte:fragment>
 		</Chart>
-
-		<!-- Legend (optional, can be removed since we have end labels) -->
-		<!--
-		<div class="flex flex-wrap gap-4 mt-4 text-sm">
-			{#each seriesConfigs as series}
-				<div 
-					class="flex items-center gap-2 cursor-pointer"
-					on:mouseenter={() => hoveredSeries = series.key}
-					on:mouseleave={() => hoveredSeries = null}
-				>
-					<span 
-						class="w-4 h-0.5" 
-						style="background-color: {series.color};"
-					></span>
-					<span class:font-bold={hoveredSeries === series.key}>{series.label}</span>
-				</div>
-			{/each}
-		</div>
-		-->
 	{/if}
 </div>

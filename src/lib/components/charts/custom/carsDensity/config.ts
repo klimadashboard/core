@@ -108,6 +108,8 @@ export async function fetchData(
 		})
 	);
 
+	console.log(rawData);
+
 	// Extract metadata
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
