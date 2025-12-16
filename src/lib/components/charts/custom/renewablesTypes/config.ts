@@ -30,18 +30,18 @@ export interface Region {
 export const solarTypeConfigs: SolarTypeConfig[] = [
 	{
 		key: '852',
-		label: 'PV-Freiflächenanlagen',
-		image: '7c1e1b42-2734-442d-bcab-b904e3ebc974'
+		label: 'Freiflächenanlagen',
+		image: '7c80d095-65cb-47f8-9d6f-3377fc63a925'
 	},
 	{
 		key: '853',
-		label: 'PV-Dachanlagen',
-		image: '1dd45bda-e254-41e9-9bbb-5018ba925be0'
+		label: 'Dachanlagen',
+		image: '7360877b-f701-4829-b7af-b83b9b5f0090'
 	},
 	{
 		key: '2961',
 		label: 'Balkonkraftwerke',
-		image: '1e6120a1-538c-4d68-8506-8d711558adbf'
+		image: '7d2ceaf9-6b24-414c-9572-2b2c408edcd3'
 	}
 ];
 
@@ -177,5 +177,73 @@ export function getPlaceholders(
 		otherAddedUnitsThisYear: otherStats.added_units_this_year,
 		otherAddedPowerThisYear: otherStats.added_power_kw_this_year,
 		otherPowerPercent: totalPower > 0 ? Math.round((otherStats.power_kw / totalPower) * 100) : 0
+	};
+}
+
+/** Get table columns */
+export function getTableColumns(): Array<{
+	key: string;
+	label: string;
+	align: 'left' | 'right';
+	format?: (v: any) => string;
+}> {
+	return [
+		{ key: 'type', label: 'Typ', align: 'left' },
+		{ key: 'units', label: 'Anzahl', align: 'right', format: (v) => formatNumber(v) },
+		{ key: 'power_kw', label: 'Leistung (kWp)', align: 'right', format: (v) => formatNumber(v) },
+		{
+			key: 'added_units_this_year',
+			label: 'Neu (Anzahl)',
+			align: 'right',
+			format: (v) => formatNumber(v)
+		},
+		{
+			key: 'added_power_kw_this_year',
+			label: 'Neu (kWp)',
+			align: 'right',
+			format: (v) => formatNumber(v)
+		}
+	];
+}
+
+/** Build table rows from current_by_type data */
+export function buildTableRows(data: SolarTypesResponse | null): Array<Record<string, any>> {
+	if (!data?.current_by_type) return [];
+
+	return solarTypeConfigs.map((config) => {
+		const entry = data.current_by_type?.[config.key];
+		return {
+			type: config.label,
+			units: entry?.units || 0,
+			power_kw: entry?.power_kw || 0,
+			added_units_this_year: entry?.added_units_this_year || 0,
+			added_power_kw_this_year: entry?.added_power_kw_this_year || 0
+		};
+	});
+}
+
+/** Build ChartData object for Card.svelte integration */
+export function buildChartData(
+	data: SolarTypesResponse | null,
+	region: Region | null
+): {
+	raw: any[];
+	table: { columns: any[]; rows: any[]; filename: string };
+	placeholders: Record<string, string | number>;
+	meta: { updateDate: string; source: string; region: Region | null };
+} {
+	return {
+		raw: buildTableRows(data),
+		table: {
+			columns: getTableColumns(),
+			rows: buildTableRows(data),
+			filename: 'solar_types'
+		},
+		placeholders: getPlaceholders(data, region),
+		meta: {
+			updateDate: data?.update_date || '',
+			source: 'Marktstammdatenregister der Bundesnetzagentur',
+			region
+		}
 	};
 }

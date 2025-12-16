@@ -1,23 +1,23 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import {
 		solarTypeConfigs,
 		formatNumber,
 		formatPercentage,
 		getImageUrl,
 		fetchSolarTypesData,
+		buildChartData,
 		type SolarTypesResponse,
-		type SolarTypeData,
 		type Region
 	} from './config';
 
 	export let region: Region;
+	export let onChartData: (data: ReturnType<typeof buildChartData> | null) => void = () => {};
 
 	let data: SolarTypesResponse | null = null;
 	let loading = true;
 	let error: string | null = null;
 
-	// Fetch data on mount and when region changes
+	// Fetch data when region changes
 	$: if (region) {
 		loadData();
 	}
@@ -27,8 +27,11 @@
 		error = null;
 		try {
 			data = await fetchSolarTypesData(region);
+			// Pass chart data back to Card.svelte
+			onChartData(buildChartData(data, region));
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load data';
+			onChartData(null);
 		} finally {
 			loading = false;
 		}
@@ -109,80 +112,83 @@
 		<p>Fehler beim Laden der Daten: {error}</p>
 	</div>
 {:else if data}
-	<div class="flex flex-col gap-4">
+	<div class="flex flex-col gap-1">
 		{#each enrichedTypes as type}
-			<div class="flex bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+			<div class="flex bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
 				<!-- Image section -->
-				<div class="w-24 min-h-[130px] flex-shrink-0">
+				<div class="w-36 min-h-[100px] flex-shrink-0">
 					<img src={getImageUrl(type.image)} alt={type.label} class="w-full h-full object-cover" />
 				</div>
 
 				<!-- Content section -->
 				<div class="flex-1 p-4">
-					<h3 class="text-base font-semibold text-gray-800 mb-3">{type.label}</h3>
+					<h3 class="text-xl mb-2">{type.label}</h3>
 
 					<div class="flex gap-8">
 						<!-- Units stat -->
-						<div class="flex flex-col gap-1">
-							<span class="text-[0.65rem] font-medium text-gray-500 tracking-wide">ANZAHL</span>
-							<span class="text-2xl font-bold text-gray-900 leading-tight">
-								{formatNumber(type.units)}
-							</span>
-							{#if type.added_units_this_year > 0}
-								<span
-									class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 w-fit"
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="12"
-										height="12"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="flex-shrink-0"
-									>
-										<polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-										<polyline points="17 6 23 6 23 12" />
-									</svg>
-									+{formatNumber(type.added_units_this_year)} in {currentYear}
+						<div class="flex flex-col">
+							<div class="flex items-center gap-2">
+								<span class="text-2xl font-bold leading-tight">
+									{formatNumber(type.units)}
 								</span>
-							{/if}
+								{#if type.added_units_this_year > 0}
+									<span
+										class="bg-green-400/40 p-1 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 w-fit"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="12"
+											height="12"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="flex-shrink-0"
+										>
+											<polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+											<polyline points="17 6 23 6 23 12" />
+										</svg>
+										+{formatNumber(type.added_units_this_year)} in {currentYear}
+									</span>
+								{/if}
+							</div>
+							<span class="leading-none text-sm opacity-80">Anlagen</span>
 						</div>
 
 						<!-- Power stat -->
 						<div class="flex flex-col gap-1">
-							<span class="text-[0.65rem] font-medium text-gray-500 tracking-wide"
-								>LEISTUNG (KWP)</span
-							>
-							<span class="text-2xl font-bold text-gray-900 leading-tight">
-								{formatNumber(type.power_kw)}
-								<span class="text-sm font-medium text-gray-400 ml-1">{type.power_pct}%</span>
-							</span>
-							{#if type.added_power_kw_this_year > 0}
-								<span
-									class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 w-fit"
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="12"
-										height="12"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="flex-shrink-0"
-									>
-										<polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-										<polyline points="17 6 23 6 23 12" />
-									</svg>
-									+{formatNumber(type.added_power_kw_this_year)} in {currentYear}
+							<div class="flex items-center gap-2">
+								<span class="text-2xl font-bold leading-none">
+									{formatNumber(type.power_kw)}
+									<span>kWp</span>
+									<span class="text-sm font-medium opacity-80 ml-1">{type.power_pct}%</span>
 								</span>
-							{/if}
+								{#if type.added_power_kw_this_year > 0}
+									<span
+										class="bg-green-400/40 p-1 inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 w-fit"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="12"
+											height="12"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="flex-shrink-0"
+										>
+											<polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+											<polyline points="17 6 23 6 23 12" />
+										</svg>
+										+{formatNumber(type.added_power_kw_this_year)} in {currentYear}
+									</span>
+								{/if}
+							</div>
+							<span class="leading-none text-sm opacity-80">Leistung</span>
 						</div>
 					</div>
 				</div>
@@ -191,7 +197,7 @@
 	</div>
 
 	{#if other.units > 0}
-		<p class="mt-6 text-gray-500 text-sm leading-relaxed">
+		<p class="mt-6 opacity-80 text-sm leading-snug">
 			Neben den Freiflächenanlagen, Dachanlagen und Balkonkraftwerken gibt es noch weitere Arten von
 			PV-Anlagen. Diese sind den Kategorien „Bauliche Anlage (Sonstige)", „Gewässer" und
 			„Großparkplatz" zuzuordnen. In {region.name} gibt es {formatNumber(other.units)} Anlagen, die dieser
