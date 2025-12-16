@@ -21,7 +21,7 @@
 
 	// Chart configuration
 	const height = 400;
-	const margin = { top: 30, right: 120, bottom: 40, left: 70 };
+	const margin = { top: 30, right: 10, bottom: 40, left: 70 };
 
 	// Colors
 	const colors = {

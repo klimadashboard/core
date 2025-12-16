@@ -220,7 +220,7 @@
 
 			<!-- Header (always visible) -->
 			<div class="flex justify-between items-start mb-3" class:opacity-0={isLoading}>
-				<h2 class="text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4">
+				<h2 class="text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight">
 					{title || chart.content?.title}
 				</h2>
 				<a

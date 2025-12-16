@@ -283,7 +283,7 @@ export function buildChartData(
 		placeholders: getPlaceholders(data, region),
 		meta: {
 			updateDate,
-			source: 'Erneuerbare Energien Statistik',
+			source: 'Stadtwerke',
 			region
 		}
 	};

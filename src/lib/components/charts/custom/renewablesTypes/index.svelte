@@ -116,7 +116,7 @@
 		{#each enrichedTypes as type}
 			<div class="flex bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden">
 				<!-- Image section -->
-				<div class="w-36 min-h-[100px] flex-shrink-0">
+				<div class="w-1/4 md:w-36 flex-shrink-0">
 					<img src={getImageUrl(type.image)} alt={type.label} class="w-full h-full object-cover" />
 				</div>
 
@@ -124,10 +124,10 @@
 				<div class="flex-1 p-4">
 					<h3 class="text-xl mb-2">{type.label}</h3>
 
-					<div class="flex gap-8">
+					<div class="flex flex-col md:flex-row gap-4">
 						<!-- Units stat -->
 						<div class="flex flex-col">
-							<div class="flex items-center gap-2">
+							<div class="flex items-center gap-2 flex-wrap">
 								<span class="text-2xl font-bold leading-tight">
 									{formatNumber(type.units)}
 								</span>
@@ -159,7 +159,7 @@
 
 						<!-- Power stat -->
 						<div class="flex flex-col gap-1">
-							<div class="flex items-center gap-2">
+							<div class="flex items-center gap-2 flex-wrap">
 								<span class="text-2xl font-bold leading-none">
 									{formatNumber(type.power_kw)}
 									<span>kWp</span>

@@ -230,7 +230,7 @@
 						</div>
 
 						{#if section.charts}
-							<div class="grid grid-cols-12 gap-1 m-1">
+							<div class="grid md:grid-cols-12 gap-1 m-1">
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
 									{#if chart.id}
 										<Chart id={chart.id} span={chart.span || 12} type="card" />
