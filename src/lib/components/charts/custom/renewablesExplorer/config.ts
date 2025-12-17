@@ -30,6 +30,8 @@ export interface ComparisonSeries {
 }
 
 export interface TurbineData {
+	id: string;
+	operator_id: string; // currently missing in Goal100 data
 	name?: string;
 	lat: number;
 	lon: number;
@@ -145,7 +147,7 @@ export async function fetchComparisonData(
 export async function fetchTurbines(
 	center: [string, string],
 	energy: EnergyType,
-	radius: number = 50
+	radius: number = 100
 ): Promise<TurbineData[]> {
 	const lon = parseFloat(center[0]);
 	const lat = parseFloat(center[1]);

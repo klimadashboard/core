@@ -2,6 +2,7 @@
 <script lang="ts">
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
+	import { getRegions } from '$lib/utils/regions';
 	import Chart from '$lib/components/charts/primitives/Chart.svelte';
 	import AxisX from '$lib/components/charts/primitives/axes/AxisX.svelte';
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
@@ -26,14 +27,18 @@
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
+
+	// Optional: pre-provided regions list (if empty, will fetch from API)
 	export let regions: Array<{
 		code: string;
-		codeShort?: string;
+		code_short?: string;
 		name: string;
-		center?: [number, number];
-		area_km2?: number;
+		center?: [number, number] | [string, string];
+		area?: number;
 		layer?: string;
+		layer_label?: string;
 		visible?: boolean;
+		parents?: Array<{ id: string; layer: string }>;
 	}> = [];
 
 	// State
@@ -46,10 +51,33 @@
 	let searchTerm = '';
 	let hoveredSeries: string | null = null;
 
+	// Region search state
+	let allRegions: Array<{
+		id?: string;
+		code: string;
+		code_short?: string;
+		name: string;
+		center?: [number, number] | [string, string];
+		area?: number;
+		layer?: string;
+		layer_label?: string;
+		visible?: boolean;
+		parents?: Array<{ id: string; layer: string }>;
+	}> = [];
+	let regionsLoading = false;
+	let regionsLoaded = false;
+	let searchDropdownOpen = false;
+
 	// Derived
 	$: params = { energy: selectedEnergy };
 	$: colors = getColors(selectedEnergy);
-	$: regionArea = region?.area_km2 || null;
+	$: regionArea = region?.area_km2 || region?.area || null;
+
+	// Use provided regions or fetched regions
+	$: effectiveRegions = regions.length > 0 ? regions : allRegions;
+
+	// Get parent region IDs from current region
+	$: parentRegionIds = new Set(region?.parents?.map((p) => p.id) || []);
 
 	// Prepare chart data with unit conversion
 	$: chartData = prepareChartData(comparisonSeries, mainData, selectedUnit, regionArea);
@@ -70,7 +98,8 @@
 
 		// Add comparison series
 		for (const s of series) {
-			const regionInfo = regions.find((r) => r.code === s.code || r.codeShort === s.code);
+			const regionInfo = effectiveRegions.find((r) => r.code === s.code || r.code_short === s.code);
+			const regionArea = regionInfo?.area || null;
 			result.push({
 				name: s.name,
 				code: s.code,
@@ -78,8 +107,8 @@
 				data: s.data.map((point) => ({
 					year: point.year,
 					value:
-						unit === 'perArea' && regionInfo?.area_km2
-							? point.cumulative_power_kw / regionInfo.area_km2
+						unit === 'perArea' && regionArea
+							? point.cumulative_power_kw / regionArea
 							: point.cumulative_power_kw
 				}))
 			});
@@ -135,25 +164,111 @@
 	// Y-axis formatter
 	$: yFormat = (v: number) => formatNumber(v, 0);
 
-	// Searchable regions sorted by distance
-	$: searchableRegions = regions
-		.filter((r) => r.layer !== 'country' && r.visible !== false)
-		.sort((a, b) => {
-			if (!region?.center) return 0;
-			const centerA = a.center ? ([a.center[0], a.center[1]] as [number, number]) : null;
-			const centerB = b.center ? ([b.center[0], b.center[1]] as [number, number]) : null;
-			const regionCenter = region.center
-				? ([parseFloat(String(region.center[0])), parseFloat(String(region.center[1]))] as [
-						number,
-						number
-					])
-				: null;
-			return getDistance(regionCenter, centerA) - getDistance(regionCenter, centerB);
-		});
+	// Searchable regions: show parent regions first when no search term, otherwise search all
+	$: selectedCodes = new Set(comparisonSeries.map((s) => s.code));
 
-	$: filteredSearchRegions = searchableRegions
-		.filter((r) => r.name.toLowerCase().includes(searchTerm.toLowerCase()))
-		.slice(0, 10);
+	// Parent regions (from current region's parents array)
+	$: parentRegions = effectiveRegions.filter((r) => {
+		if (!r.id) return false;
+		return parentRegionIds.has(r.id);
+	});
+
+	$: searchableRegions = (() => {
+		// If no search term, show parent regions first
+		if (!searchTerm || searchTerm.length < 2) {
+			return parentRegions.filter((r) => {
+				const code = r.code_short || r.code;
+				return !selectedCodes.has(code);
+			});
+		}
+
+		// Otherwise search all regions
+		return effectiveRegions
+			.filter((r) => {
+				// Exclude countries
+				if (r.layer === 'country') return false;
+				// Exclude hidden regions
+				if (r.visible === false) return false;
+				// Exclude already selected regions
+				const code = r.code_short || r.code;
+				if (selectedCodes.has(code)) return false;
+				// Filter by search term
+				if (!r.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+				return true;
+			})
+			.sort((a, b) => {
+				// Sort parents first, then by distance
+				const aIsParent = a.id && parentRegionIds.has(a.id);
+				const bIsParent = b.id && parentRegionIds.has(b.id);
+				if (aIsParent && !bIsParent) return -1;
+				if (!aIsParent && bIsParent) return 1;
+
+				if (!region?.center) return 0;
+				const parseCenter = (
+					c: [number, number] | [string, string] | undefined
+				): [number, number] | null => {
+					if (!c) return null;
+					return [parseFloat(String(c[0])), parseFloat(String(c[1]))];
+				};
+				const centerA = parseCenter(a.center);
+				const centerB = parseCenter(b.center);
+				const regionCenter = parseCenter(region.center as [string, string]);
+				return getDistance(regionCenter, centerA) - getDistance(regionCenter, centerB);
+			})
+			.slice(0, 15);
+	})();
+
+	$: filteredSearchRegions = searchableRegions;
+
+	// Fetch available regions using getRegions helper
+	async function fetchAvailableRegions() {
+		if (regions.length > 0) {
+			console.log('[CumulativeLineView] Using provided regions:', regions.length);
+			return;
+		}
+		if (regionsLoaded) {
+			console.log('[CumulativeLineView] Regions already loaded:', allRegions.length);
+			return;
+		}
+
+		regionsLoading = true;
+		console.log('[CumulativeLineView] Fetching regions via getRegions()...');
+
+		try {
+			const result = await getRegions();
+			console.log('[CumulativeLineView] getRegions() returned:', result);
+
+			if (Array.isArray(result)) {
+				allRegions = result;
+				console.log('[CumulativeLineView] Loaded regions:', allRegions.length);
+				console.log('[CumulativeLineView] Sample region:', allRegions[0]);
+			} else if (result && typeof result === 'object' && 'data' in result) {
+				allRegions = (result as any).data || [];
+				console.log('[CumulativeLineView] Loaded regions from .data:', allRegions.length);
+			} else {
+				console.warn('[CumulativeLineView] Unexpected result format:', typeof result);
+				allRegions = [];
+			}
+
+			regionsLoaded = true;
+		} catch (e) {
+			console.error('[CumulativeLineView] Failed to fetch regions:', e);
+			allRegions = [];
+		} finally {
+			regionsLoading = false;
+		}
+	}
+
+	// Debounced search (regions are pre-loaded, so just filter)
+	let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function handleSearchInput() {
+		// Regions are already loaded, filtering happens reactively
+		// Just ensure regions are loaded
+		if (!regionsLoaded && !regionsLoading) {
+			fetchAvailableRegions();
+		}
+	}
 
 	// Load data when region or energy changes
 	$: if (!regionLoading) {
@@ -164,19 +279,32 @@
 		loading = true;
 		error = null;
 
+		console.log('[CumulativeLineView] loadData() called');
+		console.log('[CumulativeLineView] Current region:', region);
+		console.log('[CumulativeLineView] Parent region IDs:', [...parentRegionIds]);
+
 		try {
+			// Fetch regions list if not provided
+			if (regions.length === 0 && !regionsLoaded) {
+				console.log('[CumulativeLineView] No regions yet, fetching...');
+				await fetchAvailableRegions();
+			}
+
+			console.log('[CumulativeLineView] Fetching main data...');
 			const result = await fetchData(region, params);
 			mainData = result.data;
+			console.log('[CumulativeLineView] Main data loaded:', mainData.length, 'records');
 
 			// Initialize comparison series with main region
 			comparisonSeries = [
 				{
-					code: region?.codeShort || 'DE',
+					code: region?.codeShort || region?.code_short || 'DE',
 					name: region?.name || 'Deutschland',
 					data: mainData,
 					color: colors.dark
 				}
 			];
+			console.log('[CumulativeLineView] Initial comparison series:', comparisonSeries);
 
 			const builtChartData = buildChartData(
 				mainData,
@@ -196,29 +324,63 @@
 		}
 	}
 
-	async function toggleRegion(toggledRegion: { code: string; codeShort?: string; name?: string }) {
-		const codeToUse = toggledRegion.codeShort || toggledRegion.code;
+	async function toggleRegion(toggledRegion: { code: string; code_short?: string; name?: string }) {
+		const codeToUse = toggledRegion.code_short || toggledRegion.code;
+		console.log('[CumulativeLineView] toggleRegion called:', toggledRegion);
+		console.log('[CumulativeLineView] Using code:', codeToUse);
+
 		const isSelected = comparisonSeries.some((d) => d.code === codeToUse);
 
 		if (isSelected && comparisonSeries.length > 1) {
+			console.log('[CumulativeLineView] Removing region:', codeToUse);
 			comparisonSeries = comparisonSeries.filter((d) => d.code !== codeToUse);
 		} else if (!isSelected) {
 			loading = true;
-			const data = await fetchComparisonData(codeToUse, params);
-			const colorIndex = comparisonSeries.length - 1;
-			comparisonSeries = [
-				...comparisonSeries,
-				{
-					code: codeToUse,
-					name: toggledRegion.name || codeToUse,
-					data,
-					color: comparisonPalette[colorIndex % comparisonPalette.length]
+			try {
+				console.log('[CumulativeLineView] Fetching comparison data for:', codeToUse);
+				const data = await fetchComparisonData(codeToUse, params);
+				console.log('[CumulativeLineView] Comparison data received:', data.length, 'records');
+
+				if (data.length === 0) {
+					console.warn(`[CumulativeLineView] No data found for region ${codeToUse}`);
+					loading = false;
+					return;
 				}
-			];
-			loading = false;
+
+				const colorIndex = comparisonSeries.length - 1;
+				comparisonSeries = [
+					...comparisonSeries,
+					{
+						code: codeToUse,
+						name: toggledRegion.name || codeToUse,
+						data,
+						color: comparisonPalette[colorIndex % comparisonPalette.length]
+					}
+				];
+				console.log(
+					'[CumulativeLineView] Updated comparison series:',
+					comparisonSeries.map((s) => s.name)
+				);
+			} catch (e) {
+				console.error('[CumulativeLineView] Failed to fetch comparison data:', e);
+			} finally {
+				loading = false;
+			}
 		}
 
 		searchTerm = '';
+		searchDropdownOpen = false;
+	}
+
+	function handleInputFocus() {
+		searchDropdownOpen = true;
+	}
+
+	function handleInputBlur() {
+		// Delay closing to allow click on dropdown items
+		setTimeout(() => {
+			searchDropdownOpen = false;
+		}, 200);
 	}
 </script>
 
@@ -237,21 +399,48 @@
 				<input
 					type="text"
 					bind:value={searchTerm}
+					on:input={handleSearchInput}
+					on:focus={handleInputFocus}
+					on:blur={handleInputBlur}
 					placeholder="Region hinzufügen..."
-					class="bg-gray-100 dark:bg-gray-800 rounded-full py-2 px-4 text-sm"
+					class="bg-gray-100 dark:bg-gray-800 rounded-full py-2 px-4 text-sm w-48"
 				/>
-				{#if searchTerm && filteredSearchRegions.length > 0}
+				{#if regionsLoading}
+					<div class="absolute right-3 top-1/2 -translate-y-1/2">
+						<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+					</div>
+				{/if}
+
+				{#if searchDropdownOpen && (filteredSearchRegions.length > 0 || searchTerm.length >= 2)}
 					<div
-						class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto"
+						class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto w-64"
 					>
-						{#each filteredSearchRegions as searchRegion}
-							<button
-								class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-								on:click={() => toggleRegion(searchRegion)}
-							>
-								{searchRegion.name}
-							</button>
-						{/each}
+						{#if filteredSearchRegions.length > 0}
+							{#if !searchTerm || searchTerm.length < 2}
+								<div
+									class="px-4 py-1 text-xs text-gray-400 border-b border-gray-100 dark:border-gray-700"
+								>
+									Übergeordnete Regionen
+								</div>
+							{/if}
+							{#each filteredSearchRegions as searchRegion}
+								<button
+									class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex justify-between items-center"
+									on:mousedown|preventDefault={() => toggleRegion(searchRegion)}
+								>
+									<span>{searchRegion.name}</span>
+									{#if searchRegion.layer_label}
+										<span class="text-xs text-gray-400">{searchRegion.layer_label}</span>
+									{:else if searchRegion.layer}
+										<span class="text-xs text-gray-400">{searchRegion.layer}</span>
+									{/if}
+								</button>
+							{/each}
+						{:else if searchTerm.length >= 2 && !regionsLoading}
+							<div class="px-4 py-2 text-sm text-gray-500">Keine Regionen gefunden</div>
+						{:else if searchTerm.length < 2}
+							<div class="px-4 py-2 text-sm text-gray-500">Mind. 2 Zeichen eingeben...</div>
+						{/if}
 					</div>
 				{/if}
 			</div>

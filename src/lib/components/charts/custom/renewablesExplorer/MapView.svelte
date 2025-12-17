@@ -23,6 +23,31 @@
 
 	const dispatch = createEventDispatcher();
 
+	// Stadtwerke Stuttgart wind turbine IDs (hardcoded for now, will fetch from DB later)
+	const STADTWERKE_STUTTGART_IDS = new Set([
+		'SEE920284488199',
+		'SEE996908093841',
+		'SEE938927894269',
+		'SEE965762012312',
+		'SEE983057620462',
+		'SEE995842886410',
+		'SEE946197232964',
+		'SEE967983876582',
+		'SEE998885409684',
+		'SEE961906592917',
+		'SEE900831369416',
+		'SEE942807556642',
+		'SEE909415974497',
+		'SEE932544425592'
+	]);
+
+	// Colors
+	const STADTWERKE_COLOR = '#0ea5e9'; // Sky blue for Stadtwerke Stuttgart
+
+	// Debounce timer for map move
+	let moveDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	let skipNextMoveEnd = false; // Flag to prevent reload after fitBounds
+
 	// State
 	let loading = true;
 	let internalRegionLoading = true;
@@ -62,6 +87,15 @@
 		}[selectedEnergy] || 'Anlagen';
 
 	$: color = getColor(selectedEnergy);
+
+	// Check if a turbine belongs to Stadtwerke Stuttgart
+	function isStadtwerkeStuttgart(turbineId: string): boolean {
+		return STADTWERKE_STUTTGART_IDS.has(turbineId);
+	}
+
+	// Count turbines by category
+	$: stadtwerkeTurbines = turbines.filter((t) => t.id && isStadtwerkeStuttgart(t.id));
+	$: regularTurbines = turbines.filter((t) => !t.id || !isStadtwerkeStuttgart(t.id));
 
 	// Load region data (only if not provided via prop)
 	async function loadRegion() {
@@ -184,7 +218,31 @@
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
+			// Trigger turbine reload when map loads
 			loadTurbines(centerArray);
+		});
+
+		// Reload turbines when map is moved or zoomed (debounced)
+		map.on('moveend', () => {
+			if (!map) return;
+
+			// Skip if this moveend was triggered by fitBounds
+			if (skipNextMoveEnd) {
+				skipNextMoveEnd = false;
+				return;
+			}
+
+			// Clear existing timer
+			if (moveDebounceTimer) {
+				clearTimeout(moveDebounceTimer);
+			}
+
+			// Debounce to avoid too many API calls
+			moveDebounceTimer = setTimeout(() => {
+				const center = map!.getCenter();
+				const newCenter: [string, string] = [center.lng.toString(), center.lat.toString()];
+				loadTurbines(newCenter);
+			}, 300);
 		});
 	}
 
@@ -194,86 +252,164 @@
 		// Remove existing layers/sources
 		if (map.getLayer('turbines')) map.removeLayer('turbines');
 		if (map.getLayer('turbines-halo')) map.removeLayer('turbines-halo');
+		if (map.getLayer('stadtwerke-turbines')) map.removeLayer('stadtwerke-turbines');
+		if (map.getLayer('stadtwerke-turbines-halo')) map.removeLayer('stadtwerke-turbines-halo');
 		if (map.getSource('turbines')) map.removeSource('turbines');
+		if (map.getSource('stadtwerke-turbines')) map.removeSource('stadtwerke-turbines');
 
-		// Add source
-		map.addSource('turbines', {
-			type: 'geojson',
-			data: {
-				type: 'FeatureCollection',
-				features: turbines.map((t) => ({
-					type: 'Feature',
-					geometry: {
-						type: 'Point',
-						coordinates: t.coordinates
-					},
-					properties: {
-						name: t.name || 'Unbekannt',
-						power_kw: t.net_power_kw,
-						commissioning_date: t.commissioning_date,
-						manufacturer: t.manufacturer || 'Unbekannt',
-						hub_height_m: t.height,
-						rotor_diameter_m: t.rotor_diameter,
-						municipality: t.municipality,
-						district: t.district
-					}
-				}))
-			}
-		});
-
-		// Individual turbine points (halo)
-		map.addLayer({
-			id: 'turbines-halo',
-			type: 'circle',
-			source: 'turbines',
-			paint: {
-				'circle-radius': 8,
-				'circle-color': '#fff',
-				'circle-opacity': 0.8
-			}
-		});
-
-		// Individual turbine points
-		map.addLayer({
-			id: 'turbines',
-			type: 'circle',
-			source: 'turbines',
-			paint: {
-				'circle-radius': 6,
-				'circle-color': color,
-				'circle-stroke-width': 1,
-				'circle-stroke-color': '#fff'
-			}
-		});
-
-		// Hover handlers for individual turbines
-		map.on('mousemove', 'turbines', (e) => {
-			if (e.features && e.features.length > 0) {
-				map!.getCanvas().style.cursor = 'pointer';
-				const feature = e.features[0];
-				hoveredTurbine = feature.properties;
-				tooltipX = e.point.x;
-				tooltipY = e.point.y;
-			}
-		});
-
-		map.on('mouseleave', 'turbines', () => {
-			map!.getCanvas().style.cursor = '';
-			hoveredTurbine = null;
-		});
-
-		// Fit bounds to turbines
-		if (turbines.length > 0) {
-			const bounds = turbines.reduce((bounds, t) => {
-				if (t.coordinates) {
-					return bounds.extend(t.coordinates);
+		// Separate turbines into two categories
+		const regularFeatures = turbines
+			.filter((t) => !t.id || !isStadtwerkeStuttgart(t.id))
+			.map((t) => ({
+				type: 'Feature' as const,
+				geometry: {
+					type: 'Point' as const,
+					coordinates: t.coordinates
+				},
+				properties: {
+					id: t.id,
+					name: t.name || 'Unbekannt',
+					power_kw: t.net_power_kw,
+					commissioning_date: t.commissioning_date,
+					manufacturer: t.manufacturer || 'Unbekannt',
+					hub_height_m: t.height,
+					rotor_diameter_m: t.rotor_diameter,
+					municipality: t.municipality,
+					district: t.district,
+					is_stadtwerke: false
 				}
-				return bounds;
-			}, new maplibregl.LngLatBounds());
+			}));
 
-			map.fitBounds(bounds, {
-				padding: 50,
-				maxZoom: 12
+		const stadtwerkeFeatures = turbines
+			.filter((t) => t.id && isStadtwerkeStuttgart(t.id))
+			.map((t) => ({
+				type: 'Feature' as const,
+				geometry: {
+					type: 'Point' as const,
+					coordinates: t.coordinates
+				},
+				properties: {
+					id: t.id,
+					name: t.name || 'Windrad der Stadtwerke Stuttgart',
+					power_kw: t.net_power_kw,
+					commissioning_date: t.commissioning_date,
+					manufacturer: t.manufacturer || 'Unbekannt',
+					hub_height_m: t.height,
+					rotor_diameter_m: t.rotor_diameter,
+					municipality: t.municipality,
+					district: t.district,
+					is_stadtwerke: true
+				}
+			}));
+
+		// Add regular turbines source
+		if (regularFeatures.length > 0) {
+			map.addSource('turbines', {
+				type: 'geojson',
+				data: {
+					type: 'FeatureCollection',
+					features: regularFeatures
+				}
+			});
+
+			// Regular turbine points (halo)
+			map.addLayer({
+				id: 'turbines-halo',
+				type: 'circle',
+				source: 'turbines',
+				paint: {
+					'circle-radius': 8,
+					'circle-color': '#fff',
+					'circle-opacity': 0.8
+				}
+			});
+
+			// Regular turbine points
+			map.addLayer({
+				id: 'turbines',
+				type: 'circle',
+				source: 'turbines',
+				paint: {
+					'circle-radius': 6,
+					'circle-color': color,
+					'circle-stroke-width': 1,
+					'circle-stroke-color': '#fff'
+				}
+			});
+		}
+
+		// Add Stadtwerke Stuttgart turbines source
+		if (stadtwerkeFeatures.length > 0) {
+			map.addSource('stadtwerke-turbines', {
+				type: 'geojson',
+				data: {
+					type: 'FeatureCollection',
+					features: stadtwerkeFeatures
+				}
+			});
+
+			// Stadtwerke turbine points (halo) - larger for emphasis
+			map.addLayer({
+				id: 'stadtwerke-turbines-halo',
+				type: 'circle',
+				source: 'stadtwerke-turbines',
+				paint: {
+					'circle-radius': 12,
+					'circle-color': '#fff',
+					'circle-opacity': 0.9
+				}
+			});
+
+			// Stadtwerke turbine points
+			map.addLayer({
+				id: 'stadtwerke-turbines',
+				type: 'circle',
+				source: 'stadtwerke-turbines',
+				paint: {
+					'circle-radius': 9,
+					'circle-color': STADTWERKE_COLOR,
+					'circle-stroke-width': 2,
+					'circle-stroke-color': '#fff'
+				}
+			});
+		}
+
+		// Hover handlers for regular turbines
+		if (regularFeatures.length > 0) {
+			map.on('mousemove', 'turbines', (e) => {
+				if (e.features && e.features.length > 0) {
+					map!.getCanvas().style.cursor = 'pointer';
+					const feature = e.features[0];
+					hoveredTurbine = feature.properties;
+					tooltipX = e.point.x;
+					tooltipY = e.point.y;
+				}
+			});
+
+			map.on('mouseleave', 'turbines', () => {
+				map!.getCanvas().style.cursor = '';
+				hoveredTurbine = null;
+			});
+		}
+
+		// Hover handlers for Stadtwerke turbines
+		if (stadtwerkeFeatures.length > 0) {
+			map.on('mousemove', 'stadtwerke-turbines', (e) => {
+				if (e.features && e.features.length > 0) {
+					map!.getCanvas().style.cursor = 'pointer';
+					const feature = e.features[0];
+					hoveredTurbine = {
+						...feature.properties,
+						name: 'Windrad der Stadtwerke Stuttgart'
+					};
+					tooltipX = e.point.x;
+					tooltipY = e.point.y;
+				}
+			});
+
+			map.on('mouseleave', 'stadtwerke-turbines', () => {
+				map!.getCanvas().style.cursor = '';
+				hoveredTurbine = null;
 			});
 		}
 	}
@@ -304,6 +440,9 @@
 
 	onDestroy(() => {
 		mounted = false;
+		if (moveDebounceTimer) {
+			clearTimeout(moveDebounceTimer);
+		}
 		if (map) {
 			map.remove();
 		}
@@ -370,7 +509,14 @@
 				class="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm pointer-events-none"
 				style="left: {tooltipX + 10}px; top: {tooltipY + 10}px;"
 			>
-				<div class="font-bold mb-1">{hoveredTurbine.name || 'Anlage'}</div>
+				<div class="font-bold mb-1" class:text-sky-600={hoveredTurbine.is_stadtwerke}>
+					{hoveredTurbine.is_stadtwerke
+						? 'Windrad der Stadtwerke Stuttgart'
+						: hoveredTurbine.name || 'Anlage'}
+				</div>
+				{#if hoveredTurbine.is_stadtwerke}
+					<div class="text-xs text-sky-600 mb-1">Stadtwerke Stuttgart</div>
+				{/if}
 				<div class="space-y-1 text-xs">
 					<div><strong>Leistung:</strong> {formatPowerValue(hoveredTurbine.power_kw)}</div>
 					{#if hoveredTurbine.municipality}
@@ -413,13 +559,24 @@
 	<!-- Legend -->
 	{#if turbines.length > 0}
 		<div class="mt-4 flex flex-wrap gap-4 text-sm">
-			<div class="flex items-center gap-2">
-				<div
-					class="w-4 h-4 rounded-full border-2 border-white shadow"
-					style="background-color: {color}"
-				></div>
-				<span>Einzelne Anlage</span>
-			</div>
+			{#if regularTurbines.length > 0}
+				<div class="flex items-center gap-2">
+					<div
+						class="w-4 h-4 rounded-full border-2 border-white shadow"
+						style="background-color: {color}"
+					></div>
+					<span>{energyLabel} ({regularTurbines.length})</span>
+				</div>
+			{/if}
+			{#if stadtwerkeTurbines.length > 0}
+				<div class="flex items-center gap-2">
+					<div
+						class="w-5 h-5 rounded-full border-2 border-white shadow"
+						style="background-color: {STADTWERKE_COLOR}"
+					></div>
+					<span>Windrad der Stadtwerke Stuttgart ({stadtwerkeTurbines.length})</span>
+				</div>
+			{/if}
 		</div>
 
 		<p class="text-xs opacity-80 mt-3">
