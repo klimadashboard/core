@@ -11,6 +11,7 @@
 	import {
 		fetchData,
 		fetchComparisonData,
+		fetchGoal,
 		buildChartData,
 		getColors,
 		getDistance,
@@ -19,6 +20,7 @@
 		formatNumber,
 		type EnergyType,
 		type RenewablesRawData,
+		type RenewableGoal,
 		type ComparisonSeries
 	} from './config';
 
@@ -44,6 +46,7 @@
 	// State
 	let mainData: RenewablesRawData[] = [];
 	let comparisonSeries: ComparisonSeries[] = [];
+	let goal: RenewableGoal | null = null;
 	let loading = true;
 	let error: string | null = null;
 	let containerEl: HTMLElement;
@@ -80,13 +83,14 @@
 	$: parentRegionIds = new Set(region?.parents?.map((p) => p.id) || []);
 
 	// Prepare chart data with unit conversion
-	$: chartData = prepareChartData(comparisonSeries, mainData, selectedUnit, regionArea);
+	$: chartData = prepareChartData(comparisonSeries, mainData, selectedUnit, regionArea, goal);
 
 	function prepareChartData(
 		series: ComparisonSeries[],
 		main: RenewablesRawData[],
 		unit: string,
-		area: number | null
+		area: number | null,
+		goalData: RenewableGoal | null
 	) {
 		const result: Array<{
 			name: string;
@@ -114,23 +118,29 @@
 			});
 		}
 
-		// Add goal line (+50% by 2035)
-		if (main.length > 0) {
-			const baseValue = main.find((d) => d.year === 2024)?.cumulative_power_kw || 0;
-			const goalValue = baseValue * 1.5;
+		// Add goal line from Directus data
+		if (goalData && main.length > 0) {
 			const currentYear = new Date().getFullYear();
+			const lastDataYear = main[main.length - 1]?.year || currentYear;
+			const lastCumulative = main[main.length - 1]?.cumulative_power_kw || 0;
 
-			const goalData: Array<{ year: number; value: number }> = [];
-			for (let year = currentYear; year <= 2035; year++) {
-				const value = unit === 'perArea' && area ? goalValue / area : goalValue;
-				goalData.push({ year, value });
-			}
+			// Create goal line from last data point to target year
+			const goalLineData: Array<{ year: number; value: number }> = [];
+
+			// Start from last data point
+			const startValue = unit === 'perArea' && area ? lastCumulative / area : lastCumulative;
+			goalLineData.push({ year: lastDataYear, value: startValue });
+
+			// End at target
+			const targetValue =
+				unit === 'perArea' && area ? goalData.target_power_kw / area : goalData.target_power_kw;
+			goalLineData.push({ year: goalData.target_year, value: targetValue });
 
 			result.push({
-				name: 'Ziel (+50% bis 2035)',
+				name: `Ziel ${goalData.target_year} (${formatPower(goalData.target_power_kw, selectedEnergy)})`,
 				color: '#999',
 				isDashed: true,
-				data: goalData
+				data: goalLineData
 			});
 		}
 
@@ -290,10 +300,18 @@
 				await fetchAvailableRegions();
 			}
 
-			console.log('[CumulativeLineView] Fetching main data...');
-			const result = await fetchData(region, params);
+			// Fetch main data and goal in parallel
+			console.log('[CumulativeLineView] Fetching main data and goal...');
+			const [result, goalResult] = await Promise.all([
+				fetchData(region, params),
+				fetchGoal(region, params)
+			]);
+
 			mainData = result.data;
+			goal = goalResult;
+
 			console.log('[CumulativeLineView] Main data loaded:', mainData.length, 'records');
+			console.log('[CumulativeLineView] Goal loaded:', goal);
 
 			// Initialize comparison series with main region
 			comparisonSeries = [
@@ -311,13 +329,15 @@
 				result.updateDate,
 				region,
 				params,
-				'cumulative'
+				'cumulative',
+				goal
 			);
 			onChartData?.(builtChartData);
 		} catch (e) {
 			console.error('[CumulativeLineView] Error:', e);
 			error = e instanceof Error ? e.message : 'Fehler beim Laden';
 			mainData = [];
+			goal = null;
 			onChartData?.(null);
 		} finally {
 			loading = false;

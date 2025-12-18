@@ -31,7 +31,7 @@ export interface ComparisonSeries {
 
 export interface TurbineData {
 	id: string;
-	operator_id: string; // currently missing in Goal100 data
+	operator_id: string;
 	name?: string;
 	lat: number;
 	lon: number;
@@ -43,6 +43,16 @@ export interface TurbineData {
 	municipality?: string;
 	district?: string;
 	coordinates?: [number, number];
+}
+
+export interface RenewableGoal {
+	id: string;
+	region_code: string;
+	energy_type: EnergyType;
+	target_power_kw: number;
+	target_year: number;
+	source?: string;
+	notes?: string;
 }
 
 // ============================================================================
@@ -102,6 +112,65 @@ export function getViewIcons(): Record<ViewMode, string> {
 // ============================================================================
 // DATA FETCHING
 // ============================================================================
+
+/** Fetch renewable goal from Directus */
+export async function fetchGoal(
+	region: Region | null,
+	params: RenewablesParams
+): Promise<RenewableGoal | null> {
+	const regionCode = region?.codeShort || region?.code_short;
+	if (!regionCode) return null;
+
+	const { energy } = params;
+
+	try {
+		// Fetch from Directus - adjust the collection name as needed
+		const url = `https://base.klimadashboard.org/items/energy_goals?filter[region][_eq]=${regionCode}&filter[energy][_eq]=${energy}&limit=1`;
+
+		const response = await fetch(url);
+		if (!response.ok) return null;
+
+		const result = await response.json();
+		const goals = result.data || [];
+
+		if (goals.length === 0) return null;
+
+		return {
+			id: goals[0].id,
+			region_code: goals[0].region,
+			energy_type: goals[0].energy,
+			target_power_kw: goals[0].target_power_kw,
+			target_year: goals[0].target_year,
+			source: goals[0].source,
+			notes: goals[0].notes
+		};
+	} catch (e) {
+		console.error('[config] Failed to fetch renewable goal:', e);
+		return null;
+	}
+}
+
+/** Calculate required yearly additions to reach goal */
+export function calculateRequiredYearlyAdditions(
+	currentCumulativeKw: number,
+	goal: RenewableGoal,
+	startYear: number
+): Array<{ year: number; required_kw: number }> {
+	const remainingKw = goal.target_power_kw - currentCumulativeKw;
+	if (remainingKw <= 0) return [];
+
+	const yearsRemaining = goal.target_year - startYear + 1;
+	if (yearsRemaining <= 0) return [];
+
+	const yearlyRequired = remainingKw / yearsRemaining;
+
+	const result: Array<{ year: number; required_kw: number }> = [];
+	for (let year = startYear; year <= goal.target_year; year++) {
+		result.push({ year, required_kw: yearlyRequired });
+	}
+
+	return result;
+}
 
 /** Fetch yearly/cumulative data from API */
 export async function fetchData(
@@ -203,7 +272,8 @@ export function getTableColumns(params: RenewablesParams): TableColumn[] {
 export function getPlaceholders(
 	data: RenewablesRawData[],
 	region: Region | null,
-	params: RenewablesParams
+	params: RenewablesParams,
+	goal?: RenewableGoal | null
 ): Record<string, string | number> {
 	const { energy } = params;
 	const currentYear = new Date().getFullYear();
@@ -222,6 +292,24 @@ export function getPlaceholders(
 				).toFixed(1)
 			: '0';
 
+	// Goal-related placeholders
+	const goalPlaceholders: Record<string, string | number> = {};
+	if (goal) {
+		const currentCumulative = lastEntry?.cumulative_power_kw || 0;
+		const remaining = goal.target_power_kw - currentCumulative;
+		const yearsRemaining = goal.target_year - currentYear;
+		const yearlyRequired = yearsRemaining > 0 ? remaining / yearsRemaining : 0;
+
+		goalPlaceholders.goalTargetPower = formatPower(goal.target_power_kw, energy);
+		goalPlaceholders.goalTargetPowerRaw = goal.target_power_kw;
+		goalPlaceholders.goalTargetYear = goal.target_year;
+		goalPlaceholders.goalRemainingPower = formatPower(Math.max(0, remaining), energy);
+		goalPlaceholders.goalRemainingPowerRaw = Math.max(0, remaining);
+		goalPlaceholders.goalYearlyRequired = formatPower(Math.max(0, yearlyRequired), energy);
+		goalPlaceholders.goalYearlyRequiredRaw = Math.max(0, yearlyRequired);
+		goalPlaceholders.goalProgress = ((currentCumulative / goal.target_power_kw) * 100).toFixed(1);
+	}
+
 	return {
 		regionName: region?.name || 'Deutschland',
 		currentYear,
@@ -235,7 +323,8 @@ export function getPlaceholders(
 		energyType: energy,
 		energyLabel: energy === 'solar' ? 'Solar' : 'Wind',
 		dataYearStart: data[0]?.year || currentYear,
-		dataYearEnd: lastEntry?.year || currentYear
+		dataYearEnd: lastEntry?.year || currentYear,
+		...goalPlaceholders
 	};
 }
 
@@ -245,7 +334,8 @@ export function buildChartData(
 	updateDate: string,
 	region: Region | null,
 	params: RenewablesParams,
-	viewMode: ViewMode = 'yearly'
+	viewMode: ViewMode = 'yearly',
+	goal?: RenewableGoal | null
 ): ChartData {
 	return {
 		raw: data,
@@ -254,7 +344,7 @@ export function buildChartData(
 			rows: data,
 			filename: `${params.energy}-${viewMode === 'cumulative' ? 'kumuliert' : 'zubau-jaehrlich'}`
 		},
-		placeholders: getPlaceholders(data, region, params),
+		placeholders: getPlaceholders(data, region, params, goal),
 		meta: {
 			updateDate,
 			source: 'Marktstammdatenregister der Bundesnetzagentur',
