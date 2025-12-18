@@ -55,7 +55,7 @@
 	$: promise = selectedRegion ? getDataForSelectedRegion(selectedRegion, regions) : null;
 </script>
 
-<div class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3">
+<div class="">
 	<RegionSearch {regions} bind:selectedRegion />
 
 	{#if selectedRegion}
