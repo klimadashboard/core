@@ -61,7 +61,7 @@ export const categoryColors: Record<string, { main: string; light: string; dark:
 export const goalConfig = {
 	startYear: 2024,
 	endYear: 2035,
-	targetSustainablePercent: 62
+	targetSustainablePercent: 66
 };
 
 /** Get historic years only (for optional display) */
