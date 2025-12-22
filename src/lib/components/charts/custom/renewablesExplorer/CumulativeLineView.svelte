@@ -8,6 +8,7 @@
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
 	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import Loader from '$lib/components/Loader.svelte';
 	import {
 		fetchData,
 		fetchComparisonData,
@@ -47,7 +48,8 @@
 	let mainData: RenewablesRawData[] = [];
 	let comparisonSeries: ComparisonSeries[] = [];
 	let goal: RenewableGoal | null = null;
-	let loading = true;
+	let initialLoading = true;
+	let comparisonLoading = false;
 	let error: string | null = null;
 	let containerEl: HTMLElement;
 	let selectedUnit: 'absolute' | 'perArea' = 'absolute';
@@ -82,21 +84,34 @@
 	// Get parent region IDs from current region
 	$: parentRegionIds = new Set(region?.parents?.map((p) => p.id) || []);
 
+	// Check if we should show the goal line (only when main region is the only selected region)
+	$: mainRegionCode = region?.codeShort || region?.code_short || 'DE';
+	$: showGoal = comparisonSeries.length === 1 && comparisonSeries[0]?.code === mainRegionCode;
+
 	// Prepare chart data with unit conversion
-	$: chartData = prepareChartData(comparisonSeries, mainData, selectedUnit, regionArea, goal);
+	$: chartData = prepareChartData(
+		comparisonSeries,
+		mainData,
+		selectedUnit,
+		regionArea,
+		goal,
+		showGoal
+	);
 
 	function prepareChartData(
 		series: ComparisonSeries[],
 		main: RenewablesRawData[],
 		unit: string,
 		area: number | null,
-		goalData: RenewableGoal | null
+		goalData: RenewableGoal | null,
+		shouldShowGoal: boolean
 	) {
 		const result: Array<{
 			name: string;
 			code?: string;
 			color: string;
 			isDashed?: boolean;
+			isGoal?: boolean;
 			data: Array<{ year: number; value: number }>;
 		}> = [];
 
@@ -118,8 +133,8 @@
 			});
 		}
 
-		// Add goal line from Directus data
-		if (goalData && main.length > 0) {
+		// Add goal line (only for absolute view and when main region is the only selection)
+		if (goalData && main.length > 0 && unit === 'absolute' && shouldShowGoal) {
 			const currentYear = new Date().getFullYear();
 			const lastDataYear = main[main.length - 1]?.year || currentYear;
 			const lastCumulative = main[main.length - 1]?.cumulative_power_kw || 0;
@@ -128,18 +143,16 @@
 			const goalLineData: Array<{ year: number; value: number }> = [];
 
 			// Start from last data point
-			const startValue = unit === 'perArea' && area ? lastCumulative / area : lastCumulative;
-			goalLineData.push({ year: lastDataYear, value: startValue });
+			goalLineData.push({ year: lastDataYear, value: lastCumulative });
 
 			// End at target
-			const targetValue =
-				unit === 'perArea' && area ? goalData.target_power_kw / area : goalData.target_power_kw;
-			goalLineData.push({ year: goalData.target_year, value: targetValue });
+			goalLineData.push({ year: goalData.target_year, value: goalData.target_power_kw });
 
 			result.push({
 				name: `Ziel ${goalData.target_year} (${formatPower(goalData.target_power_kw, selectedEnergy)})`,
 				color: '#999',
 				isDashed: true,
+				isGoal: true,
 				data: goalLineData
 			});
 		}
@@ -183,13 +196,21 @@
 		return parentRegionIds.has(r.id);
 	});
 
+	// Helper to check if a region is already selected
+	function isRegionSelected(r: { code: string; code_short?: string }): boolean {
+		const code = r.code_short || r.code;
+		// Check both the code and code_short against selectedCodes
+		return (
+			selectedCodes.has(code) ||
+			selectedCodes.has(r.code) ||
+			(r.code_short ? selectedCodes.has(r.code_short) : false)
+		);
+	}
+
 	$: searchableRegions = (() => {
 		// If no search term, show parent regions first
 		if (!searchTerm || searchTerm.length < 2) {
-			return parentRegions.filter((r) => {
-				const code = r.code_short || r.code;
-				return !selectedCodes.has(code);
-			});
+			return parentRegions.filter((r) => !isRegionSelected(r));
 		}
 
 		// Otherwise search all regions
@@ -200,8 +221,7 @@
 				// Exclude hidden regions
 				if (r.visible === false) return false;
 				// Exclude already selected regions
-				const code = r.code_short || r.code;
-				if (selectedCodes.has(code)) return false;
+				if (isRegionSelected(r)) return false;
 				// Filter by search term
 				if (!r.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
 				return true;
@@ -286,7 +306,7 @@
 	}
 
 	async function loadData() {
-		loading = true;
+		initialLoading = true;
 		error = null;
 
 		console.log('[CumulativeLineView] loadData() called');
@@ -340,7 +360,7 @@
 			goal = null;
 			onChartData?.(null);
 		} finally {
-			loading = false;
+			initialLoading = false;
 		}
 	}
 
@@ -355,7 +375,7 @@
 			console.log('[CumulativeLineView] Removing region:', codeToUse);
 			comparisonSeries = comparisonSeries.filter((d) => d.code !== codeToUse);
 		} else if (!isSelected) {
-			loading = true;
+			comparisonLoading = true;
 			try {
 				console.log('[CumulativeLineView] Fetching comparison data for:', codeToUse);
 				const data = await fetchComparisonData(codeToUse, params);
@@ -363,7 +383,7 @@
 
 				if (data.length === 0) {
 					console.warn(`[CumulativeLineView] No data found for region ${codeToUse}`);
-					loading = false;
+					comparisonLoading = false;
 					return;
 				}
 
@@ -384,7 +404,7 @@
 			} catch (e) {
 				console.error('[CumulativeLineView] Failed to fetch comparison data:', e);
 			} finally {
-				loading = false;
+				comparisonLoading = false;
 			}
 		}
 
@@ -402,10 +422,35 @@
 			searchDropdownOpen = false;
 		}, 200);
 	}
+
+	function handleLegendClick(series: { code?: string; isGoal?: boolean }) {
+		// Don't allow removing goal line or if it's the last region
+		if (series.isGoal || !series.code) return;
+		if (comparisonSeries.length <= 1) return;
+		toggleRegion({ code: series.code });
+	}
 </script>
 
+{#snippet removeIcon()}
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		width="14"
+		height="14"
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	>
+		<circle cx="12" cy="12" r="10" />
+		<path d="m15 9-6 6" />
+		<path d="m9 9 6 6" />
+	</svg>
+{/snippet}
+
 <div bind:this={containerEl} class="cumulative-line-view">
-	{#if loading || regionLoading}
+	{#if initialLoading || regionLoading}
 		<div class="h-96 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
 		<div class="h-96 flex items-center justify-center text-red-500">{error}</div>
@@ -480,13 +525,11 @@
 
 		<!-- Chart -->
 		<div class="relative">
-			{#if loading}
+			{#if comparisonLoading}
 				<div
-					class="absolute inset-0 bg-white/70 dark:bg-gray-900/70 flex items-center justify-center z-10"
+					class="absolute inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[1px] flex items-center justify-center z-10 rounded"
 				>
-					<div
-						class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"
-					></div>
+					<Loader />
 				</div>
 			{/if}
 
@@ -573,14 +616,15 @@
 		</div>
 
 		<!-- Legend -->
-		<div class="flex flex-wrap gap-3 mt-4 text-sm">
+		<div class="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-sm">
 			{#each chartData as series}
-				<div
-					class="flex items-center gap-2 cursor-pointer"
+				{@const canRemove = !series.isGoal && series.code && comparisonSeries.length > 1}
+				<button
+					class="flex items-center gap-2 transition-opacity {canRemove ? 'hover:opacity-70' : ''}"
 					on:mouseenter={() => (hoveredSeries = series.name)}
 					on:mouseleave={() => (hoveredSeries = null)}
-					role="button"
-					tabindex="0"
+					on:click={() => handleLegendClick(series)}
+					disabled={!canRemove}
 				>
 					<div
 						class="w-5 h-0.5"
@@ -589,16 +633,12 @@
 							: ''}"
 					></div>
 					<span class:font-bold={hoveredSeries === series.name}>{series.name}</span>
-					{#if !series.isDashed && series.code && comparisonSeries.length > 1}
-						<button
-							on:click|stopPropagation={() => toggleRegion({ code: series.code || '' })}
-							class="text-red-600 hover:text-red-700 ml-1"
-							aria-label="Entfernen"
-						>
-							×
-						</button>
+					{#if canRemove}
+						<span class="text-gray-400 hover:text-red-500 transition-colors">
+							{@render removeIcon()}
+						</span>
 					{/if}
-				</div>
+				</button>
 			{/each}
 		</div>
 	{/if}

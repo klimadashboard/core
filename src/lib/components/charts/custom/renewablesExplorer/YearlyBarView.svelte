@@ -42,6 +42,7 @@
 	$: colors = getColors(selectedEnergy);
 
 	// Calculate required yearly addition (same height for all goal bars)
+	// Goal should be reached BY the target year (start of year), so last addition year is target_year - 1
 	$: goalInfo = (() => {
 		if (!goal || data.length === 0) return null;
 
@@ -53,14 +54,17 @@
 		const remainingKw = goal.target_power_kw - currentCumulative;
 		if (remainingKw <= 0) return null;
 
-		const yearsRemaining = goal.target_year - currentYear + 1;
+		// Last year of additions is the year BEFORE the target year
+		const lastAdditionYear = goal.target_year - 1;
+		const yearsRemaining = lastAdditionYear - currentYear + 1;
 		if (yearsRemaining <= 0) return null;
 
 		const yearlyRequired = remainingKw / yearsRemaining;
 
 		return {
 			startYear: currentYear,
-			endYear: goal.target_year,
+			endYear: lastAdditionYear, // Exclude target year
+			targetYear: goal.target_year,
 			yearlyRequired,
 			remainingKw
 		};
@@ -88,7 +92,7 @@
 			});
 		}
 
-		// Add future years that don't have data yet
+		// Add future years that don't have data yet (up to but NOT including target year)
 		for (let year = goalInfo.startYear; year <= goalInfo.endYear; year++) {
 			if (!result.find((d) => d.year === year)) {
 				result.push({
@@ -184,7 +188,14 @@
 				let:hover
 			>
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
-				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={String} />
+				<AxisX
+					{xScale}
+					{xDomain}
+					{innerWidth}
+					{innerHeight}
+					format={String}
+					tickCount={Math.ceil(xDomain.length / 3)}
+				/>
 				<RuleY y={0} {yScale} {innerWidth} />
 
 				<!-- Goal bars (dashed outline) - rendered first so actual bars appear on top -->
@@ -302,7 +313,7 @@
 						style="border-color: {colors.dark}; background: {colors.light}; opacity: 0.6"
 					></div>
 					<span
-						>Benötigt: {formatPower(goalInfo.yearlyRequired, selectedEnergy)}/Jahr bis {goal.target_year}</span
+						>Benötigt: {formatPower(goalInfo.yearlyRequired, selectedEnergy)}/Jahr bis {goalInfo.targetYear}</span
 					>
 				</div>
 			</div>
