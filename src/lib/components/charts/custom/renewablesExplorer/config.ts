@@ -212,7 +212,79 @@ export async function fetchComparisonData(
 	}
 }
 
-/** Fetch turbine/unit data for map view */
+/** Fetch all turbines with minimal data (ID + coordinates only) */
+export async function fetchAllTurbines(energy: EnergyType): Promise<TurbineData[]> {
+	if (typeof window === 'undefined') return [];
+
+	try {
+		const url = `https://base.klimadashboard.org/items/energy_${energy}_units?limit=-1&fields=id,lat,lon&filter[status][_in]=31,35`;
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}`);
+		}
+
+		const result = await response.json();
+		const items = result.data || [];
+
+		return items
+			.filter((d: any) => d.lat && d.lon)
+			.map((d: any) => ({
+				id: d.id,
+				operator_id: '',
+				lat: parseFloat(d.lat),
+				lon: parseFloat(d.lon),
+				net_power_kw: 0,
+				coordinates: [parseFloat(d.lon), parseFloat(d.lat)] as [number, number]
+			}));
+	} catch (error) {
+		console.error('Failed to load renewable units:', error);
+		return [];
+	}
+}
+
+/** Fetch detailed turbine data for tooltip */
+export async function fetchTurbineDetails(
+	id: string,
+	energy: EnergyType
+): Promise<TurbineData | null> {
+	if (typeof window === 'undefined') return null;
+
+	try {
+		const url = `https://base.klimadashboard.org/items/energy_${energy}_units/${id}`;
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}`);
+		}
+
+		const result = await response.json();
+		const d = result.data;
+
+		if (!d) return null;
+
+		return {
+			id: d.id,
+			operator_id: d.operator_id || '',
+			name: d.name,
+			lat: parseFloat(d.lat),
+			lon: parseFloat(d.lon),
+			net_power_kw: d.net_power_kw || 0,
+			commissioning_date: d.commissioning_date,
+			manufacturer: d.manufacturer,
+			height: d.hub_height_m,
+			rotor_diameter: d.rotor_diameter_m,
+			municipality: d.municipality,
+			district: d.district,
+			coordinates: [parseFloat(d.lon), parseFloat(d.lat)] as [number, number]
+		};
+	} catch (error) {
+		console.error('Failed to load turbine details:', error);
+		return null;
+	}
+}
+
+/** @deprecated - Use fetchAllTurbines instead */
 export async function fetchTurbines(
 	center: [string, string],
 	energy: EnergyType,
