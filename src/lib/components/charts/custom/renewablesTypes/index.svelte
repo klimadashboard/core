@@ -96,21 +96,54 @@
 	</svg>
 {/snippet}
 
+{#snippet shareIcon(pct: number)}
+	{@const percentage = Math.min(Math.max(pct, 0), 100)}
+	{@const angle = (percentage / 100) * 360}
+	{@const radians = ((angle - 90) * Math.PI) / 180}
+	{@const x = 12 + 9 * Math.cos(radians)}
+	{@const y = 12 + 9 * Math.sin(radians)}
+	{@const largeArc = angle > 180 ? 1 : 0}
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		width="24"
+		height="24"
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		class="w-3.5 h-3.5"
+	>
+		<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+		{#if percentage > 0}
+			<path d="M 12 3 A 9 9 0 {largeArc} 1 {x} {y} L 12 12 Z" fill="currentColor" stroke="none" />
+		{/if}
+		<circle cx="12" cy="12" r="9" />
+	</svg>
+{/snippet}
+
 {#snippet statCard(value: number, unit: string, pctLabel: string, added: number)}
+	{@const pctValue = parseFloat(pctLabel) || 0}
 	<div class="">
 		<div class="flex items-baseline gap-1">
 			<span class="text-3xl font-light font-condensed">{formatNumber(value)}</span>
 			<span class="text-sm font-medium">{unit}</span>
-			<span class="text-sm opacity-80">({pctLabel})</span>
+		</div>
+		<div
+			class="w-max flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
+		>
+			{@render shareIcon(pctValue)}
+			{pctLabel} Anteil an Gesamt
 		</div>
 		{#if added > 0}
-			<span
-				class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"
+			<div
+				class="w-max flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"
 			>
 				{@render trendIcon()}
 				+{formatNumber(added)}
 				{unit} in {currentYear}
-			</span>
+			</div>
 		{/if}
 	</div>
 {/snippet}
@@ -142,8 +175,8 @@
 	<div class="flex flex-col gap-3">
 		{#each enrichedTypes as type}
 			<div class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
-				<div class="flex flex-col md:flex-row">
-					<div class="h-32 md:h-auto md:w-36 flex-shrink-0">
+				<div class="flex flex-col lg:flex-row">
+					<div class="h-32 lg:h-auto lg:w-36 flex-shrink-0">
 						<img
 							src={getImageUrl(type.image)}
 							alt={type.label}
