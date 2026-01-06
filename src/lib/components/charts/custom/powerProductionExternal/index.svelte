@@ -21,7 +21,7 @@
 
 	// Chart configuration
 	const height = 400;
-	const margin = { top: 30, right: 10, bottom: 40, left: 70 };
+	const margin = { top: 30, right: 15, bottom: 40, left: 70 };
 
 	// Colors
 	const colors = {
@@ -154,9 +154,19 @@
 	$: projectedAreaPath = projectedAreaData.length > 0 ? areaGenerator(projectedAreaData) : '';
 	$: projectedLinePath = projectedLineData.length > 0 ? lineGenerator(projectedLineData) : '';
 
-	// Tooltip data
+	// Tooltip data - include goal year
 	$: tooltipData = (() => {
 		if (hoveredYear === null) return null;
+
+		// Check if it's the goal year
+		if (hoveredYear === goalYear && goalRow) {
+			return {
+				title: `${hoveredYear} (Ziel)`,
+				items: [{ label: 'Ziel', value: `${formatGWh(goalValueGWh)} GWh`, color: colors.total }]
+			};
+		}
+
+		// Otherwise show actual data
 		const yearData = actualDataGWh.find((d) => d.year === hoveredYear);
 		if (!yearData) return null;
 
@@ -178,7 +188,8 @@
 		const mouseX = e.clientX - rect.left - margin.left;
 		const year = Math.round(xScale.invert(mouseX));
 
-		if (actualDataGWh.some((d) => d.year === year)) {
+		// Allow hovering on actual data years or the goal year
+		if (actualDataGWh.some((d) => d.year === year) || year === goalYear) {
 			hoveredYear = year;
 			hoverClientX = e.clientX;
 			hoverClientY = e.clientY;
@@ -212,6 +223,45 @@
 	$: if (containerEl && ro) {
 		ro.observe(containerEl);
 	}
+
+	// Generate smart x-axis ticks with goal year always included
+	$: xAxisTicks = (() => {
+		const baseTicks = xScale.ticks(width > 600 ? 10 : 5);
+
+		// Add goal year if it exists and isn't already in the ticks
+		if (goalYear && !baseTicks.includes(goalYear)) {
+			baseTicks.push(goalYear);
+			baseTicks.sort((a, b) => a - b);
+		}
+
+		// Filter out ticks that are too close together (min 40px distance)
+		const minPixelDistance = 40;
+		const filteredTicks: number[] = [];
+
+		for (let i = 0; i < baseTicks.length; i++) {
+			const tick = baseTicks[i];
+			const tickX = xScale(tick);
+			const isGoalYear = tick === goalYear;
+
+			// Always include goal year
+			let shouldInclude = isGoalYear;
+
+			if (!shouldInclude && filteredTicks.length === 0) {
+				shouldInclude = true; // Always include first tick
+			} else if (!shouldInclude) {
+				const lastTick = filteredTicks[filteredTicks.length - 1];
+				const lastTickX = xScale(lastTick);
+				const distance = Math.abs(tickX - lastTickX);
+				shouldInclude = distance >= minPixelDistance;
+			}
+
+			if (shouldInclude) {
+				filteredTicks.push(tick);
+			}
+		}
+
+		return filteredTicks;
+	})();
 </script>
 
 {#if loading || regionLoading}
@@ -234,7 +284,7 @@
 			<svg {width} {height}>
 				<!-- X axis -->
 				<g transform="translate({margin.left},{margin.top + innerHeight})">
-					{#each xScale.ticks(width > 600 ? 10 : 5) as tick}
+					{#each xAxisTicks as tick}
 						<g transform="translate({xScale(tick)}, 0)" class="text-xs">
 							<line y2={5} class="stroke-current opacity-10" />
 							<text y={20} text-anchor="middle" fill="currentColor" class="opacity-70">{tick}</text>
@@ -273,11 +323,6 @@
 
 				<!-- Chart area -->
 				<g transform="translate({margin.left},{margin.top})">
-					<!-- Projected area (gray fill under projected line) -->
-					{#if projectedAreaPath}
-						<path d={projectedAreaPath} fill={colors.projected} opacity={0.6} />
-					{/if}
-
 					<!-- Stacked areas -->
 					{#if windAreaPath}
 						<path d={windAreaPath} fill={colors.wind} opacity={0.85} />

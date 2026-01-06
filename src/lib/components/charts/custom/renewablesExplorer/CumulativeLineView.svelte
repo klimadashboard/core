@@ -160,8 +160,18 @@
 		return result;
 	}
 
-	// Flatten data for Chart component
-	$: allLineData = chartData.flatMap((s) => s.data);
+	// Flatten data for Chart component - include ALL unique years from all series (including goal)
+	$: allLineData = (() => {
+		const yearMap = new Map<number, any>();
+		for (const series of chartData) {
+			for (const point of series.data) {
+				if (!yearMap.has(point.year)) {
+					yearMap.set(point.year, { year: point.year });
+				}
+			}
+		}
+		return Array.from(yearMap.values()).sort((a, b) => a.year - b.year);
+	})();
 	$: allValues = chartData.flatMap((s) => s.data.map((d) => d.value));
 	$: maxValue = Math.max(...allValues, 1);
 
@@ -557,6 +567,8 @@
 						{innerWidth}
 						{innerHeight}
 						format={(v) => String(Math.round(v))}
+						tickCount={10}
+						forceTicks={goal && showGoal ? [goal.target_year] : []}
 					/>
 
 					{#each chartData as series, i}
