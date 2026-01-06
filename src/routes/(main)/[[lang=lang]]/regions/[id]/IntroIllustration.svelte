@@ -90,9 +90,4 @@
 			</p>
 		</div>
 	</div>
-	<p
-		class=" text-white text-xs mt-1 -rotate-90 translate-x-1/2 -translate-y-full absolute bottom-13 right-5 text-right"
-	>
-		Illustration: Laura Mayer
-	</p>
 </div>

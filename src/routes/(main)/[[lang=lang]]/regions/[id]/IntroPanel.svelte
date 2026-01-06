@@ -4,7 +4,7 @@
 </script>
 
 <div
-	class="reg-card flex flex-col p-4 relative"
+	class="reg-card flex flex-col p-4 pb-10 relative"
 	style="background: {data.colorBackground}; color: {data.colorText}"
 >
 	<h3 class="font-bold uppercase">{data.title}</h3>
