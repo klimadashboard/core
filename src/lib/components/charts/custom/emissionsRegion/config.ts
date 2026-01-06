@@ -311,21 +311,39 @@ export function buildChartData(
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : version === 'de' ? 'Mt CO₂eq' : 't CO₂eq';
 	const tableData = data.filter((d) => d.source !== 'climate-target');
 
+	// Get unique categories and years
+	const categories = [...new Set(tableData.map((d) => d.category_label).filter((c): c is string => !!c))].sort();
+	const years = [...new Set(tableData.map((d) => d.year))].sort((a, b) => a - b);
+
+	// Build wide format rows (years as rows, categories as columns)
+	const wideRows = years.map((year) => {
+		const row: Record<string, any> = { year };
+		categories.forEach((category) => {
+			const dataPoint = tableData.find(
+				(d) => d.year === year && d.category_label === category
+			);
+			row[category] = dataPoint?.value ?? null;
+		});
+		return row;
+	});
+
+	// Build columns for wide format
+	const wideColumns: TableColumn[] = [
+		{ key: 'year', label: 'Jahr', align: 'left' },
+		...categories.map((category) => ({
+			key: category,
+			label: `${category} (${unit})`,
+			align: 'right' as const,
+			format: (v: any) =>
+				typeof v === 'number' ? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) : '–'
+		}))
+	];
+
 	return {
 		raw: data,
 		table: {
-			columns: [
-				{ key: 'year', label: 'Jahr', align: 'left' },
-				{ key: 'category_label', label: 'Sektor', align: 'left' },
-				{
-					key: 'value',
-					label: `Emissionen (${unit})`,
-					align: 'right',
-					format: (v) =>
-						typeof v === 'number' ? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) : '–'
-				}
-			],
-			rows: tableData,
+			columns: wideColumns,
+			rows: wideRows,
 			filename: 'emissions_by_sector'
 		},
 		placeholders: {
