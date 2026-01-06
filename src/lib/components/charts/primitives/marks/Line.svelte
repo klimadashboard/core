@@ -1,6 +1,6 @@
 <!-- $lib/components/charts/primitives/marks/Line.svelte -->
 <script lang="ts">
-	import { line as d3Line, curveLinear, curveMonotoneX } from 'd3-shape';
+	import { line as d3Line, area as d3Area, curveLinear, curveMonotoneX } from 'd3-shape';
 	import type { HoverState } from '../../types';
 
 	export let data: any[] = [];
@@ -15,6 +15,10 @@
 	export let dots: boolean = false;
 	export let dotRadius: number = 3;
 	export let hover: HoverState = { x: null, clientX: 0, clientY: 0 };
+	export let fillGradient: boolean = false;
+	export let fillOpacity: number = 0.5;
+
+	let gradientId = `line-gradient-${Math.random().toString(36).substr(2, 9)}`;
 
 	function getX(d: any): number {
 		if (!xScale) return 0;
@@ -31,11 +35,32 @@
 		.curve(curve === 'monotone' ? curveMonotoneX : curveLinear)
 		.defined((d) => d[y] != null && !isNaN(d[y]));
 
+	$: areaGenerator = d3Area<any>()
+		.x((d) => getX(d))
+		.y0(yScale?.range()[0] ?? 0)
+		.y1((d) => yScale?.(d[y]) ?? 0)
+		.curve(curve === 'monotone' ? curveMonotoneX : curveLinear)
+		.defined((d) => d[y] != null && !isNaN(d[y]));
+
 	$: pathD = xScale && yScale ? lineGenerator(data) || '' : '';
+	$: areaD = xScale && yScale && fillGradient ? areaGenerator(data) || '' : '';
 </script>
 
 {#if xScale && yScale && data.length > 0}
+	<defs>
+		{#if fillGradient}
+			<linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+				<stop offset="0%" style="stop-color:{stroke};stop-opacity:{fillOpacity}" />
+				<stop offset="100%" style="stop-color:{stroke};stop-opacity:0" />
+			</linearGradient>
+		{/if}
+	</defs>
+
 	<g class="mark-line">
+		{#if fillGradient && areaD}
+			<path d={areaD} fill="url(#{gradientId})" />
+		{/if}
+
 		<path
 			d={pathD}
 			fill="none"

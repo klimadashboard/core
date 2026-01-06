@@ -559,11 +559,12 @@
 						format={(v) => String(Math.round(v))}
 					/>
 
-					{#each chartData as series}
+					{#each chartData as series, i}
 						{@const seriesData = series.data.map((d) => ({
 							year: d.year,
 							value: d.value / divisor
 						}))}
+						{@const isMainSeries = i === 0 && series.color === colors.dark}
 						<g
 							class="cursor-pointer"
 							on:mouseenter={() => (hoveredSeries = series.name)}
@@ -578,6 +579,8 @@
 								stroke={series.color}
 								strokeWidth={hoveredSeries === series.name || !hoveredSeries ? 2 : 1}
 								strokeDasharray={series.isDashed ? '5,5' : null}
+								fillGradient={isMainSeries}
+								fillOpacity={0.5}
 								{hover}
 							/>
 						</g>
