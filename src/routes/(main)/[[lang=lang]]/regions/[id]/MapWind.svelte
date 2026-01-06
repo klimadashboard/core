@@ -1,0 +1,337 @@
+<script>
+	import { onMount } from 'svelte';
+	import { scaleThreshold } from 'd3-scale';
+	import { interpolateRgb } from 'd3-interpolate';
+	import { PUBLIC_VERSION } from '$env/static/public';
+	import Loader from '$lib/components/Loader.svelte';
+
+	export let map;
+	export let regionId;
+	export let regionName;
+
+	const colors = ['#E5F3FA', '#003B80'];
+	let loading = false;
+	let legendSteps = [];
+	let selectedLayer = 'municipalities';
+	let hoveredRegion = null;
+	let tooltipX = 0;
+	let tooltipY = 0;
+	let regionData = [];
+	let hoverTimeout = null;
+
+	const layers = [
+		{ key: 'municipalities', keySingular: 'municipality', zoom: 9.5 },
+		{ key: 'districts', keySingular: 'district', zoom: 7 },
+		{ key: 'states', keySingular: 'state', zoom: 6 }
+	];
+
+	function getInterpolatedColors(start, end, steps) {
+		const interp = interpolateRgb(start, end);
+		return Array.from({ length: steps }, (_, i) => interp(i / (steps - 1)));
+	}
+
+	function createColorScale(data) {
+		if (!Array.isArray(data)) return { scale: () => '#F2F2F2', range: [], thresholds: [] };
+		const values = data.map((d) => d.value).filter((v) => v != null);
+		if (!values.length) return { scale: () => '#F2F2F2', range: [], thresholds: [] };
+
+		const sorted = [...values].sort((a, b) => a - b);
+		const steps = 7;
+		const thresholds = Array.from({ length: steps - 1 }, (_, i) => {
+			const p = (i + 1) / steps;
+			return sorted[Math.floor(p * sorted.length)];
+		});
+
+		const colorRange = getInterpolatedColors(colors[0], colors[1], steps);
+		const scale = scaleThreshold(thresholds, colorRange);
+
+		return { scale, range: colorRange, thresholds };
+	}
+
+	function idPropertyForLayer(layer) {
+		return 'AGS';
+	}
+
+	function tilesURLForLayer(layer) {
+		const cc = PUBLIC_VERSION.toLowerCase();
+		return `https://tiles.klimadashboard.org/data/${layer}-${cc}/{z}/{x}/{y}.pbf`;
+	}
+
+	function fillLayerId(layer) {
+		return `${layer}-wind-fill`;
+	}
+
+	function outlineLayerId(layer) {
+		return `${layer}-wind-outline`;
+	}
+
+	function highlightLayerId(layer) {
+		return `${layer}-wind-highlight`;
+	}
+
+	async function getData(selectedEnergy, selectedLayer) {
+		const level =
+			selectedLayer === 'districts'
+				? 'district'
+				: selectedLayer === 'states'
+					? 'state'
+					: 'municipality';
+		const url = `https://base.klimadashboard.org/get-region-stats-for-renewables?table=energy_${selectedEnergy}_units&level=${level}`;
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+		const json = await res.json();
+		return Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+	}
+
+	function applyColorsToActiveLayer(dataArr) {
+		if (!map || !Array.isArray(dataArr) || dataArr.length === 0) return;
+
+		const unique = new Map();
+		for (const row of dataArr) {
+			if (row?.region && row.power_per_area_kw_per_km2 != null && !unique.has(row.region)) {
+				unique.set(row.region, row.power_per_area_kw_per_km2);
+			}
+		}
+		const entriesArray = Array.from(unique.entries()).map(([region, value]) => ({ region, value }));
+		if (entriesArray.length === 0) return;
+
+		const { scale, range, thresholds } = createColorScale(entriesArray);
+		const idProp = idPropertyForLayer(selectedLayer);
+
+		const matchExpression = ['match', ['get', idProp]];
+		for (const { region, value } of entriesArray) {
+			matchExpression.push(region, scale(value));
+		}
+		matchExpression.push('#F2F2F2');
+
+		const fid = fillLayerId(selectedLayer);
+		if (map.getLayer(fid)) {
+			map.setPaintProperty(fid, 'fill-color', matchExpression);
+		}
+
+		legendSteps = range.map((color, i) => {
+			const lower = i === 0 ? 0 : thresholds[i - 1];
+			const upper = thresholds[i];
+			const label =
+				upper !== undefined ? `${Math.round(lower)}–${Math.round(upper)}` : `> ${Math.round(lower)}`;
+			return { color, label };
+		});
+	}
+
+	async function loadData() {
+		loading = true;
+		try {
+			const rows = await getData('wind', selectedLayer);
+			regionData = rows; // Store for tooltip lookup
+			applyColorsToActiveLayer(rows);
+		} catch (e) {
+			console.error('Stats fetch error:', e);
+		} finally {
+			loading = false;
+		}
+	}
+
+	function handleMouseMove(e) {
+		if (!e.features || e.features.length === 0) return;
+
+		const feature = e.features[0];
+		const regionCode = feature.properties[idPropertyForLayer(selectedLayer)];
+		const regionName = feature.properties.GEN || feature.properties.name || feature.properties.NAME || regionCode;
+		const data = regionData.find(d => d.region === regionCode);
+
+		hoveredRegion = {
+			name: regionName,
+			code: regionCode,
+			powerPerArea: data?.power_per_area_kw_per_km2 || 0,
+			totalPower: data?.total_power_kw || 0,
+			unitCount: data?.unit_count || 0
+		};
+
+		tooltipX = e.point.x;
+		tooltipY = e.point.y;
+
+		// Debounce highlight updates
+		if (hoverTimeout) clearTimeout(hoverTimeout);
+		hoverTimeout = setTimeout(() => {
+			if (map.getLayer(highlightLayerId(selectedLayer))) {
+				map.setFilter(highlightLayerId(selectedLayer), ['==', ['get', idPropertyForLayer(selectedLayer)], regionCode]);
+			}
+		}, 50);
+	}
+
+	function handleMouseLeave() {
+		hoveredRegion = null;
+
+		// Clear timeout and highlight
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+			hoverTimeout = null;
+		}
+
+		if (map.getLayer(highlightLayerId(selectedLayer))) {
+			map.setFilter(highlightLayerId(selectedLayer), ['==', ['get', idPropertyForLayer(selectedLayer)], '']);
+		}
+	}
+
+	function installRegionLayers() {
+		if (!map) return;
+
+		const srcTiles = tilesURLForLayer(selectedLayer);
+		const srcLayer = selectedLayer;
+
+		// Add source if it doesn't exist
+		if (!map.getSource('regions-wind')) {
+			map.addSource('regions-wind', {
+				type: 'vector',
+				tiles: [srcTiles],
+				minzoom: 4,
+				maxzoom: 12
+			});
+		}
+
+		// Add fill layer
+		if (!map.getLayer(fillLayerId(selectedLayer))) {
+			map.addLayer({
+				id: fillLayerId(selectedLayer),
+				type: 'fill',
+				source: 'regions-wind',
+				'source-layer': srcLayer,
+				paint: {
+					'fill-color': '#ccc',
+					'fill-opacity': ['interpolate', ['linear'], ['zoom'], 6, 1, 8, 0.8, 10, 0.4]
+				}
+			});
+		}
+
+		// Add outline layer
+		if (!map.getLayer(outlineLayerId(selectedLayer))) {
+			map.addLayer({
+				id: outlineLayerId(selectedLayer),
+				type: 'line',
+				source: 'regions-wind',
+				'source-layer': srcLayer,
+				paint: { 'line-color': '#fff', 'line-width': 0.5 }
+			});
+		}
+
+		// Add highlight layer
+		if (!map.getLayer(highlightLayerId(selectedLayer))) {
+			map.addLayer({
+				id: highlightLayerId(selectedLayer),
+				type: 'line',
+				source: 'regions-wind',
+				'source-layer': srcLayer,
+				paint: {
+					'line-color': '#000',
+					'line-width': 3
+				},
+				filter: ['==', ['get', idPropertyForLayer(selectedLayer)], '']
+			});
+		}
+
+		// Add hover handlers
+		map.on('mousemove', fillLayerId(selectedLayer), handleMouseMove);
+		map.on('mouseleave', fillLayerId(selectedLayer), handleMouseLeave);
+		map.on('mouseenter', fillLayerId(selectedLayer), () => {
+			map.getCanvas().style.cursor = 'pointer';
+		});
+		map.on('mouseleave', fillLayerId(selectedLayer), () => {
+			map.getCanvas().style.cursor = '';
+		});
+
+		loadData();
+	}
+
+	function formatPower(kw) {
+		if (kw >= 1000000) {
+			return `${(kw / 1000000).toFixed(1)} GW`;
+		} else if (kw >= 1000) {
+			return `${(kw / 1000).toFixed(1)} MW`;
+		}
+		return `${Math.round(kw)} kW`;
+	}
+
+	function removeRegionLayers() {
+		if (!map) return;
+		layers.forEach((l) => {
+			const f = fillLayerId(l.key);
+			const o = outlineLayerId(l.key);
+			const h = highlightLayerId(l.key);
+			if (map.getLayer(f)) map.removeLayer(f);
+			if (map.getLayer(o)) map.removeLayer(o);
+			if (map.getLayer(h)) map.removeLayer(h);
+		});
+		if (map.getSource('regions-wind')) map.removeSource('regions-wind');
+	}
+
+	onMount(() => {
+		if (map) {
+			installRegionLayers();
+		}
+
+		return () => {
+			// Cleanup layers when component unmounts
+			removeRegionLayers();
+		};
+	});
+
+	// Reactive: reinstall layers when selectedLayer changes
+	$: if (map && selectedLayer) {
+		removeRegionLayers();
+		installRegionLayers();
+	}
+</script>
+
+{#if loading}
+	<div class="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-auto">
+		<Loader showText={true} />
+	</div>
+{/if}
+
+<!-- Layer Selector -->
+<div class="absolute top-4 left-4 z-40 pointer-events-auto flex flex-col gap-2">
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1.5 px-2 border border-gray-200 dark:border-gray-700">
+		<select bind:value={selectedLayer} class="appearance-none text-sm bg-transparent cursor-pointer">
+			{#each layers as layer}
+				<option value={layer.key}>
+					{layer.key === 'municipalities' ? 'Gemeinden' : layer.key === 'districts' ? 'Kreise' : 'Bundesländer'}
+				</option>
+			{/each}
+		</select>
+	</div>
+
+	{#if legendSteps.length}
+		<div class="bg-white dark:bg-gray-800 text-xs rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700">
+			<div class="font-semibold mb-2">Windleistung (kW/km²)</div>
+			{#each legendSteps as step}
+				<div class="flex items-center gap-2 mb-1">
+					<span class="inline-block w-4 h-4 rounded" style="background-color: {step.color}"></span>
+					<span>{step.label}</span>
+				</div>
+			{/each}
+		</div>
+	{/if}
+</div>
+
+{#if hoveredRegion}
+	<div
+		class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 text-sm pointer-events-none"
+		style="left: {tooltipX + 10}px; top: {tooltipY + 10}px;"
+	>
+		<div class="font-bold mb-2 text-base">{hoveredRegion.name}</div>
+		<div class="space-y-1">
+			<div class="flex justify-between gap-4">
+				<span class="text-gray-600 dark:text-gray-400">Leistung pro Fläche:</span>
+				<span class="font-semibold">{Math.round(hoveredRegion.powerPerArea)} kW/km²</span>
+			</div>
+			<div class="flex justify-between gap-4">
+				<span class="text-gray-600 dark:text-gray-400">Gesamtleistung:</span>
+				<span class="font-semibold">{formatPower(hoveredRegion.totalPower)}</span>
+			</div>
+			<div class="flex justify-between gap-4">
+				<span class="text-gray-600 dark:text-gray-400">Anzahl Anlagen:</span>
+				<span class="font-semibold">{hoveredRegion.unitCount.toLocaleString('de-DE')}</span>
+			</div>
+		</div>
+	</div>
+{/if}

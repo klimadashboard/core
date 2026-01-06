@@ -4,6 +4,8 @@
 	import maplibregl from 'maplibre-gl';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import MapCarsDensity from './MapCarsDensity.svelte';
+	import MapSolar from './MapSolar.svelte';
+	import MapWind from './MapWind.svelte';
 
 	export let regionId;
 	export let regionName;
@@ -15,6 +17,7 @@
 	let map;
 	let mapReady = false;
 	let selectedLayer = initialLayerId || 'car-density';
+	let isDarkMode = false;
 
 	// Map layer registry - just metadata
 	const mapLayers = [
@@ -32,7 +35,7 @@
 			category: 'energy',
 			icon: '☀️',
 			relatedChartId: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
-			component: null // TODO
+			component: MapSolar
 		},
 		{
 			id: 'wind-power',
@@ -40,15 +43,7 @@
 			category: 'energy',
 			icon: '💨',
 			relatedChartId: '1e135ce2-06d2-4eae-b8f8-fdb4cbae910c',
-			component: null // TODO
-		},
-		{
-			id: 'ev-charging-stations',
-			title: 'Ladestationen für E-Autos',
-			category: 'mobility',
-			icon: '🔌',
-			relatedChartId: '68b0f853-b1b1-4120-aedd-87de58ea3209',
-			component: null // TODO
+			component: MapWind
 		}
 	];
 
@@ -64,7 +59,24 @@
 	};
 	const { center, zoom } = defaultView[COUNTRY_CODE] || defaultView.DE;
 
+	// Dark mode detection
+	function detectDarkMode() {
+		if (typeof document !== 'undefined') {
+			return document.body.classList.contains('dark');
+		}
+		return false;
+	}
+
+	// Get basemap style URL based on dark mode
+	function getBasemapStyle(dark) {
+		return dark
+			? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+			: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+	}
+
 	onMount(() => {
+		isDarkMode = detectDarkMode();
+
 		map = new maplibregl.Map({
 			container: mapContainer,
 			style: {
@@ -90,6 +102,35 @@
 		map.scrollZoom.disable();
 
 		map.on('load', () => {
+			// Add CARTO basemap
+			const basemapTiles = isDarkMode
+				? [
+						'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+						'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+						'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+						'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+					]
+				: [
+						'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+						'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+						'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+						'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+					];
+
+			map.addSource('carto-basemap', {
+				type: 'raster',
+				tiles: basemapTiles,
+				tileSize: 256,
+				maxzoom: 20
+			});
+
+			map.addLayer({
+				id: 'carto-basemap',
+				type: 'raster',
+				source: 'carto-basemap',
+				paint: { 'raster-opacity': 1 }
+			});
+
 			// Add city labels layer
 			map.addLayer({
 				id: 'city-labels',
@@ -102,7 +143,11 @@
 					'text-size': 12,
 					'symbol-sort-key': ['get', 'population']
 				},
-				paint: { 'text-color': '#000', 'text-halo-color': '#fff', 'text-halo-width': 1 },
+				paint: {
+					'text-color': isDarkMode ? '#fff' : '#000',
+					'text-halo-color': isDarkMode ? '#000' : '#fff',
+					'text-halo-width': 1
+				},
 				minzoom: 4,
 				maxzoom: 9
 			});
@@ -110,12 +155,82 @@
 			mapReady = true;
 		});
 
+		// Watch for dark mode changes
+		const observer = new MutationObserver((mutations) => {
+			for (const mutation of mutations) {
+				if (mutation.attributeName === 'class') {
+					const newDarkMode = detectDarkMode();
+					if (newDarkMode !== isDarkMode && map) {
+						isDarkMode = newDarkMode;
+						updateBasemap();
+					}
+				}
+			}
+		});
+		observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
 		return () => {
+			observer.disconnect();
 			if (map) {
 				map.remove();
 			}
 		};
 	});
+
+	function updateBasemap() {
+		if (!map) return;
+
+		const basemapTiles = isDarkMode
+			? [
+					'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+					'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+					'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+					'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+				]
+			: [
+					'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+					'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+					'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+					'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+				];
+
+		// Update the source tiles - keep the source, just update tiles
+		const source = map.getSource('carto-basemap');
+		if (source && source.type === 'raster') {
+			// Remove and re-add the layer with new tiles
+			if (map.getLayer('carto-basemap')) {
+				map.removeLayer('carto-basemap');
+			}
+			map.removeSource('carto-basemap');
+
+			map.addSource('carto-basemap', {
+				type: 'raster',
+				tiles: basemapTiles,
+				tileSize: 256,
+				maxzoom: 20
+			});
+
+			// Get the first layer id to insert before (should be city-labels or first data layer)
+			const firstLayerId = map.getStyle().layers[0]?.id;
+
+			// Re-add the layer at the very bottom (before all other layers)
+			map.addLayer(
+				{
+					id: 'carto-basemap',
+					type: 'raster',
+					source: 'carto-basemap',
+					paint: { 'raster-opacity': 1 }
+				},
+				firstLayerId
+			);
+		}
+
+		// Update label colors
+		if (map.getLayer('city-labels')) {
+			map.setPaintProperty('city-labels', 'text-color', isDarkMode ? '#fff' : '#000');
+			map.setPaintProperty('city-labels', 'text-halo-color', isDarkMode ? '#000' : '#fff');
+		}
+	}
 
 	function handleClose() {
 		dispatch('close');
@@ -146,7 +261,7 @@
 	aria-label="Overlay schließen"
 >
 	<div
-		class="absolute inset-4 md:inset-8 top-32 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex"
+		class="absolute top-18 left-4 right-4 bottom-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex"
 		transition:fly={{ y: 50, duration: 300 }}
 		on:click={(e) => e.stopPropagation()}
 		role="dialog"

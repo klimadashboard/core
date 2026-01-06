@@ -43,6 +43,10 @@
 	let switchingLayer = false;
 	let legendSteps: Array<{ color: string; label: string }> = [];
 	let idProp = 'AGS';
+	let hoveredRegion: { name: string; code: string; value: number } | null = null;
+	let tooltipX = 0;
+	let tooltipY = 0;
+	let hoverTimeout: number | null = null;
 
 	// Load data
 	onMount(async () => {
@@ -189,6 +193,66 @@
 		});
 	}
 
+	function handleMouseMove(e: any): void {
+		if (!e.features || e.features.length === 0) return;
+
+		const feature = e.features[0];
+		const regionCode = String(feature.properties?.[idProp]);
+		const regionName = feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
+
+		// Find the region data
+		const regionData = regions.find((r) => {
+			const code = PUBLIC_VERSION === 'at' ? String(r.code) : String(r.code_short ?? r.code);
+			return code === regionCode;
+		});
+
+		if (!regionData) {
+			hoveredRegion = null;
+			return;
+		}
+
+		const dataArr =
+			selectedView === 'pop'
+				? regionData.carsPer1000Inhabitants
+				: selectedView === 'private'
+					? regionData.carsPrivateShare
+					: regionData.carsCompanyShare;
+
+		const hit = dataArr.find((row) => String(row.period) === String(selectedPeriod));
+		const value = hit?.value ?? 0;
+
+		hoveredRegion = {
+			name: regionName,
+			code: regionCode,
+			value
+		};
+
+		tooltipX = e.point.x;
+		tooltipY = e.point.y;
+
+		// Debounce highlight updates
+		if (hoverTimeout) clearTimeout(hoverTimeout);
+		hoverTimeout = window.setTimeout(() => {
+			if (map.getLayer('cars-highlight-outline')) {
+				map.setFilter('cars-highlight-outline', ['==', idProp, regionCode]);
+			}
+		}, 50);
+	}
+
+	function handleMouseLeave(): void {
+		hoveredRegion = null;
+
+		// Clear timeout and highlight
+		if (hoverTimeout) {
+			clearTimeout(hoverTimeout);
+			hoverTimeout = null;
+		}
+
+		if (map.getLayer('cars-highlight-outline')) {
+			map.setFilter('cars-highlight-outline', ['==', idProp, '']);
+		}
+	}
+
 	function removeRegionSourceAndLayers(): void {
 		(['municipalities', 'districts'] as const).forEach((lyr) => {
 			const f = fillLayerId(lyr);
@@ -259,6 +323,8 @@
 			}
 		});
 
+		map.on('mousemove', fillLayerId(selectedLayer), handleMouseMove);
+		map.on('mouseleave', fillLayerId(selectedLayer), handleMouseLeave);
 		map.on(
 			'mouseenter',
 			fillLayerId(selectedLayer),
@@ -367,6 +433,26 @@
 				<span>{step.label}</span>
 			</div>
 		{/each}
+	</div>
+{/if}
+
+<!-- Tooltip -->
+{#if hoveredRegion}
+	<div
+		class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 text-sm pointer-events-none"
+		style="left: {tooltipX + 10}px; top: {tooltipY + 10}px;"
+	>
+		<div class="font-bold mb-2 text-base">{hoveredRegion.name}</div>
+		<div class="space-y-1">
+			<div class="flex justify-between gap-4">
+				<span class="text-gray-600 dark:text-gray-400"
+					>{views.find((v) => v.key === selectedView)?.label}:</span
+				>
+				<span class="font-semibold"
+					>{Math.round(hoveredRegion.value)}{selectedUnit ? ` ${selectedUnit}` : ''}</span
+				>
+			</div>
+		</div>
 	</div>
 {/if}
 
