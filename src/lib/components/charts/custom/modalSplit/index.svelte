@@ -4,6 +4,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import { scaleLinear } from 'd3-scale';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import TransportIcons from './TransportIcons.svelte';
 	import {
 		fetchData,
@@ -37,7 +38,8 @@
 	let ready = false;
 	let loading = true;
 	let error: string | null = null;
-	let showHistoric = false;
+	// Initialize showHistoric from URL parameter
+	let showHistoric = $page.url.searchParams.get('historic') === 'true';
 
 	let rawData: ModalSplitRawData[] = [];
 	let historicYears: number[] = [];
@@ -53,9 +55,21 @@
 	// Process data for current and goal years
 	$: currentYearData = processYearData(rawData, latestDataYear);
 	$: goalYearData = (() => {
-		const projectionData = calculateProjection(rawData, goalConfig.endYear);
-		const combined = [...rawData, ...projectionData];
-		return processYearData(combined, goalConfig.endYear);
+		// For goal year, we only show joint values for sustainable (Umweltverbund) and motorized (MIV)
+		return [
+			{
+				category: 'umweltverbund',
+				value: goalConfig.targetSustainablePercent,
+				x0: 0,
+				x1: goalConfig.targetSustainablePercent
+			},
+			{
+				category: 'motorized',
+				value: 100 - goalConfig.targetSustainablePercent,
+				x0: goalConfig.targetSustainablePercent,
+				x1: 100
+			}
+		];
 	})();
 
 	// Calculate sustainable totals
@@ -66,22 +80,28 @@
 		.filter((s) => sustainableCategories.includes(s.category))
 		.reduce((sum, s) => sum + s.value, 0);
 
-	// Calculate total height
-	$: totalHeight = (() => {
-		let h = 0;
-		h += displayYears.length * (SMALL_BAR_HEIGHT + BAR_GAP);
-		h += LARGE_BAR_HEIGHT + BAR_GAP;
-		h += CONNECTOR_HEIGHT;
-		h += LARGE_BAR_HEIGHT;
-		h += 30;
-		return h;
-	})();
+	// Calculate connector polygon coordinates
+	$: sustainableX0 = xScale(
+		currentYearData
+			.filter((s) => sustainableCategories.includes(s.category))
+			.reduce((min, s) => Math.min(min, s.x0), 100)
+	);
+	$: sustainableX1 = xScale(
+		currentYearData
+			.filter((s) => sustainableCategories.includes(s.category))
+			.reduce((max, s) => Math.max(max, s.x1), 0)
+	);
+	$: goalSustainableX1 = xScale(goalConfig.targetSustainablePercent);
+	$: motorizedX0 = xScale(
+		currentYearData
+			.filter((s) => !sustainableCategories.includes(s.category))
+			.reduce((min, s) => Math.min(min, s.x0), 100)
+	);
+	$: motorizedX1 = xScale(100);
+	$: goalMotorizedX0 = xScale(goalConfig.targetSustainablePercent);
 
-	// Calculate Y positions
-	$: currentYearY = displayYears.length * (SMALL_BAR_HEIGHT + BAR_GAP);
-	$: connectorY = currentYearY + LARGE_BAR_HEIGHT;
-	$: goalYearY = connectorY + CONNECTOR_HEIGHT;
-	$: umweltverbundWidth = xScale(goalSustainableTotal);
+	// Calculate widths for summary lines
+	$: umweltverbundWidth = xScale(currentSustainableTotal);
 
 	// Load data
 	$: if (!regionLoading) {
@@ -98,7 +118,7 @@
 			historicYears = getHistoricYears(rawData);
 			latestDataYear = getLatestDataYear(rawData);
 
-			const chartData = buildChartData(rawData, result.updateDate, region);
+			const chartData = buildChartData(rawData, result.updateDate, result.source, region);
 			onChartData?.(chartData);
 		} catch (e) {
 			console.error('[ModalSplitStreet] Error:', e);
@@ -184,6 +204,32 @@
 	{/each}
 {/snippet}
 
+<!-- Snippet: Goal bar segments (joint values only) -->
+{#snippet goalBarSegments(
+	segments: Array<{ category: string; value: number; x0: number; x1: number }>
+)}
+	{#each segments as segment}
+		{@const segmentWidth = xScale(segment.value)}
+		{@const segmentX = xScale(segment.x0)}
+		{@const bgColor = segment.category === 'umweltverbund' ? '#059669' : '#475569'}
+		{@const label =
+			segment.category === 'umweltverbund' ? 'Umweltverbund' : 'Motorisierter Individualverkehr'}
+		<div
+			class="absolute top-0 bottom-0"
+			style="left: {segmentX}px; width: {segmentWidth}px; background: {bgColor};"
+		>
+			<div class="absolute top-1.5 left-2 flex flex-col text-white">
+				{#if segmentWidth > 45}
+					<span class="text-base font-bold leading-tight">{formatPercent(segment.value)}</span>
+					{#if segmentWidth > 120}
+						<span class="leading-tight">{label}</span>
+					{/if}
+				{/if}
+			</div>
+		</div>
+	{/each}
+{/snippet}
+
 <!-- Snippet: Legend group -->
 {#snippet legendGroup(title: string, categories: string[])}
 	<div class="flex items-center gap-3">
@@ -217,16 +263,12 @@
 			<span>Zeige historische Entwicklung</span>
 		</label>
 
-		<div class="relative" style="height: {totalHeight}px;">
+		<div class="flex flex-col">
 			<!-- Historic years (small bars) -->
 			{#if showHistoric}
-				{#each displayYears as year, i}
-					{@const yPos = i * (SMALL_BAR_HEIGHT + BAR_GAP)}
+				{#each displayYears as year}
 					{@const segments = processYearData(rawData, year)}
-					<div
-						class="absolute left-0 right-0 flex items-center"
-						style="top: {yPos}px; height: {SMALL_BAR_HEIGHT}px;"
-					>
+					<div class="flex items-center my-0.5" style="height: {SMALL_BAR_HEIGHT}px;">
 						<div
 							class="flex-shrink-0 flex items-center justify-end pr-3 text-xs text-gray-400"
 							style="width: {LABEL_WIDTH}px;"
@@ -243,51 +285,69 @@
 				{/each}
 			{/if}
 
-			<!-- Current year (LARGE bar) -->
-			<div
-				class="absolute left-0 right-0 flex items-stretch"
-				style="top: {currentYearY}px; height: {LARGE_BAR_HEIGHT}px;"
-			>
-				<div
-					class="flex-shrink-0 flex flex-col justify-center pr-4 opacity-70"
-					style="width: {LABEL_WIDTH}px;"
-				>
-					<span class="text-xl font-bold">{latestDataYear}</span>
-					<span class="text-sm">Modal Split aktuell</span>
+			<!-- Current year (LARGE bar) with Umweltverbund indicator -->
+			<div class="flex flex-col">
+				<!-- Umweltverbund indicator -->
+				<div class="flex items-end mb-1">
+					<div class="flex-shrink-0" style="width: {LABEL_WIDTH}px;"></div>
+					<div class="flex flex-col items-start text-[#059669]">
+						<span class="text-sm font-medium mb-0.5">
+							{formatPercent(currentSustainableTotal)} Umweltverbund
+						</span>
+						<svg width={umweltverbundWidth} height="12" class="overflow-visible stroke-current">
+							<line x1="0" y1="0" x2="0" y2="8" stroke-width="2" />
+							<line x1="0" y1="8" x2={umweltverbundWidth} y2="8" stroke-width="2" />
+							<line
+								x1={umweltverbundWidth}
+								y1="8"
+								x2={umweltverbundWidth}
+								y2="0"
+								stroke-width="2"
+							/>
+						</svg>
+					</div>
 				</div>
-				<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-					{@render largeBarSegments(currentYearData)}
+
+				<!-- Current year bar -->
+				<div class="flex items-stretch" style="height: {LARGE_BAR_HEIGHT}px;">
+					<div
+						class="flex-shrink-0 flex flex-col justify-center pr-4 opacity-70"
+						style="width: {LABEL_WIDTH}px;"
+					>
+						<span class="text-xl font-bold">{latestDataYear}</span>
+						<span class="text-sm">Modal Split aktuell</span>
+					</div>
+					<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
+						{@render largeBarSegments(currentYearData)}
+					</div>
 				</div>
 			</div>
 
 			<!-- Connector polygons -->
-			<svg
-				class="absolute rounded"
-				style="top: {connectorY}px; left: {LABEL_WIDTH}px; width: {chartWidth}px; height: {CONNECTOR_HEIGHT}px;"
-			>
-				{#each categoryOrder as cat}
-					{@const currentSeg = currentYearData.find((s) => s.category === cat)}
-					{@const goalSeg = goalYearData.find((s) => s.category === cat)}
-					{#if currentSeg && goalSeg}
-						{@const colors = categoryColors[cat]}
-						{@const x0Top = xScale(currentSeg.x0)}
-						{@const x1Top = xScale(currentSeg.x1)}
-						{@const x0Bottom = xScale(goalSeg.x0)}
-						{@const x1Bottom = xScale(goalSeg.x1)}
-						<polygon
-							points="{x0Top},0 {x1Top},0 {x1Bottom},{CONNECTOR_HEIGHT} {x0Bottom},{CONNECTOR_HEIGHT}"
-							fill={colors.main}
-							opacity="0.35"
-						/>
-					{/if}
-				{/each}
-			</svg>
+			<div class="relative flex" style="height: {CONNECTOR_HEIGHT}px;">
+				<div class="flex-shrink-0" style="width: {LABEL_WIDTH}px;"></div>
+				<svg
+					class="flex-1 rounded-lg overflow-hidden"
+					style="width: {chartWidth}px; height: {CONNECTOR_HEIGHT}px;"
+				>
+					<!-- Sustainable categories -> Umweltverbund -->
+					<polygon
+						points="{sustainableX0},0 {sustainableX1},0 {goalSustainableX1},{CONNECTOR_HEIGHT} 0,{CONNECTOR_HEIGHT}"
+						fill="#059669"
+						opacity="0.25"
+					/>
+
+					<!-- Motorized categories -> MIV -->
+					<polygon
+						points="{motorizedX0},0 {motorizedX1},0 {chartWidth},{CONNECTOR_HEIGHT} {goalMotorizedX0},{CONNECTOR_HEIGHT}"
+						fill="#475569"
+						opacity="0.25"
+					/>
+				</svg>
+			</div>
 
 			<!-- Goal year (LARGE bar) -->
-			<div
-				class="absolute left-0 right-0 flex items-stretch"
-				style="top: {goalYearY}px; height: {LARGE_BAR_HEIGHT}px;"
-			>
+			<div class="flex items-stretch" style="height: {LARGE_BAR_HEIGHT}px;">
 				<div
 					class="flex-shrink-0 flex flex-col justify-center pr-4 text-[#059669]"
 					style="width: {LABEL_WIDTH}px;"
@@ -296,28 +356,13 @@
 					<span class="text-sm">Zielsetzung</span>
 				</div>
 				<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-					{@render largeBarSegments(goalYearData)}
+					{@render goalBarSegments(goalYearData)}
 				</div>
-			</div>
-
-			<!-- Umweltverbund indicator below goal bar -->
-			<div
-				class="absolute flex flex-col items-start text-[#059669]"
-				style="top: {goalYearY + LARGE_BAR_HEIGHT + 4}px; left: {LABEL_WIDTH}px;"
-			>
-				<svg width={umweltverbundWidth} height="12" class="overflow-visible stroke-current">
-					<line x1="0" y1="0" x2="0" y2="8" stroke-width="2" />
-					<line x1="0" y1="8" x2={umweltverbundWidth} y2="8" stroke-width="2" />
-					<line x1={umweltverbundWidth} y1="0" x2={umweltverbundWidth} y2="8" stroke-width="2" />
-				</svg>
-				<span class="text-sm font-medium mt-1">
-					{goalConfig.endYear}-Ziel: {formatPercent(goalSustainableTotal)} Umweltverbund
-				</span>
 			</div>
 		</div>
 
 		<!-- Legend -->
-		<div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+		<div class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
 			{@render legendGroup(
 				'Umweltverbund',
 				categoryOrder.filter((c) => sustainableCategories.includes(c))

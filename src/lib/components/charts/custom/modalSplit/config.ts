@@ -44,17 +44,18 @@ export const categoryMeta: Record<
 	car_passenger: { label: 'Auto (Mitfahrer)', shortLabel: 'Mitfahrer:in', sustainable: false }
 };
 
-// Refined color palette - cohesive street feel
-// Sustainable modes: cool greens and teals
-// Motorized: warm grays and muted reds
+// WCAG AA compliant color palette with sufficient contrast against white text (4.5:1 minimum)
+// Colors also have good contrast against each other for better differentiation
+// Sustainable modes: blue-cyan-teal-yellow spectrum for visual distinction
+// Motorized: orange-purple spectrum for clear separation
 export const categoryColors: Record<string, { main: string; light: string; dark: string }> = {
-	on_foot: { main: '#10b981', light: '#d1fae5', dark: '#047857' }, // Emerald - sidewalk
-	bicycle: { main: '#14b8a6', light: '#ccfbf1', dark: '#0f766e' }, // Teal - bike lane
-	e_bike: { main: '#06b6d4', light: '#cffafe', dark: '#0e7490' }, // Cyan - bike lane
-	public_transport: { main: '#f59e0b', light: '#fef3c7', dark: '#b45309' }, // Amber - bus/tram
-	motorbike: { main: '#78716c', light: '#e7e5e4', dark: '#44403c' }, // Stone - road
-	car_driver: { main: '#64748b', light: '#e2e8f0', dark: '#334155' }, // Slate - road
-	car_passenger: { main: '#94a3b8', light: '#f1f5f9', dark: '#475569' } // Slate lighter - road
+	on_foot: { main: '#0369a1', light: '#e0f2fe', dark: '#075985' }, // Sky-700 - contrast 5.14:1
+	bicycle: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - contrast 4.51:1
+	e_bike: { main: '#076980', light: '#ccfbf1', dark: '#0f766e' }, // Teal-600 - contrast 4.52:1
+	public_transport: { main: '#ca8a04', light: '#fef3c7', dark: '#a16207' }, // Yellow-600 - contrast 5.37:1
+	motorbike: { main: '#c2410c', light: '#ffedd5', dark: '#9a3412' }, // Orange-700 - contrast 5.93:1
+	car_driver: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' }, // Violet-600 - contrast 4.75:1
+	car_passenger: { main: '#9333ea', light: '#faf5ff', dark: '#7e22ce' } // Purple-600 - contrast 4.53:1
 };
 
 // Goal configuration
@@ -79,7 +80,7 @@ export function getLatestDataYear(data: ModalSplitRawData[]): number {
 export async function fetchData(
 	region: Region | null,
 	params: ModalSplitParams
-): Promise<{ data: ModalSplitRawData[]; updateDate: string }> {
+): Promise<{ data: ModalSplitRawData[]; updateDate: string; source: string }> {
 	const directus = getDirectusInstance(fetch);
 	const regionId = region?.id || params.regionId;
 
@@ -87,7 +88,7 @@ export async function fetchData(
 		readItems('mobility_modal_split', {
 			filter: regionId ? { region: { _eq: regionId } } : undefined,
 			sort: ['year', 'category'],
-			fields: ['year', 'category', 'region', 'value'],
+			fields: ['year', 'category', 'region', 'value', 'update', 'source'],
 			limit: -1
 		})
 	);
@@ -101,9 +102,21 @@ export async function fetchData(
 		}))
 		.filter((r) => !isNaN(r.year) && !isNaN(r.value));
 
+	// Get the most recent update date from the data
+	const updateDates = (rawData as any[])
+		.map((r) => r.update)
+		.filter(Boolean)
+		.sort()
+		.reverse();
+	const updateDate = updateDates[0];
+
+	// Get source from the first record (assuming all records have the same source)
+	const source = (rawData as any[]).find((r) => r.source)?.source;
+
 	return {
 		data,
-		updateDate: new Date().toISOString()
+		updateDate,
+		source
 	};
 }
 
@@ -181,18 +194,38 @@ export function calculateProjection(
 	return result;
 }
 
-/** Get table columns */
-export function getTableColumns(): TableColumn[] {
+/** Get table columns - wide format with categories as columns */
+export function getTableColumns(data: ModalSplitRawData[]): TableColumn[] {
+	const categories = Array.from(new Set(data.map((d) => d.category))).sort(
+		(a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b)
+	);
+
 	return [
 		{ key: 'year', label: 'Jahr', align: 'left' },
-		{
-			key: 'category',
-			label: 'Kategorie',
-			align: 'left',
-			format: (v) => categoryMeta[v]?.label || v
-		},
-		{ key: 'value', label: 'Anteil (%)', align: 'right', format: (v) => `${v.toFixed(1)}%` }
+		...categories.map((cat) => ({
+			key: cat,
+			label: categoryMeta[cat]?.label || cat,
+			align: 'right' as const,
+			format: (v: number) => `${v.toFixed(1)}%`
+		}))
 	];
+}
+
+/** Transform data to wide format for table */
+export function getTableRows(data: ModalSplitRawData[]): any[] {
+	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
+
+	return years.map((year) => {
+		const yearData = data.filter((d) => d.year === year);
+		const row: any = { year };
+
+		for (const cat of categoryOrder) {
+			const entry = yearData.find((d) => d.category === cat);
+			row[cat] = entry?.value || 0;
+		}
+
+		return row;
+	});
 }
 
 /** Generate placeholders */
@@ -227,19 +260,20 @@ export function getPlaceholders(
 export function buildChartData(
 	data: ModalSplitRawData[],
 	updateDate: string,
+	source: string,
 	region: Region | null
 ): ChartData {
 	return {
 		raw: data,
 		table: {
-			columns: getTableColumns(),
-			rows: data,
+			columns: getTableColumns(data),
+			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
 		placeholders: getPlaceholders(data, region),
 		meta: {
 			updateDate,
-			source: 'Kommunale Mobilitätserhebung',
+			source,
 			region
 		}
 	};

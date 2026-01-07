@@ -167,7 +167,6 @@
 			activeView={activeMode}
 			on:itemClick={(event) => {
 				activeMode = event.detail;
-				loadData();
 			}}
 		/>
 	</div>
@@ -205,7 +204,7 @@
 					{innerWidth}
 					{innerHeight}
 					format={formatPercent}
-					unit="%"
+					unit=""
 					gridLines={true}
 				/>
 				<AxisX
