@@ -218,7 +218,7 @@
 			<Navigation {sections} />
 
 			{#each sections.filter((d) => d.countries?.includes(PUBLIC_VERSION)) as section}
-				<section id={section.id} class="mt-16 relative overflow-hidden">
+				<section id={section.id} class="mt-10 relative overflow-hidden">
 					<div>
 						<div class="p-4">
 							{#if section.navigation !== false}

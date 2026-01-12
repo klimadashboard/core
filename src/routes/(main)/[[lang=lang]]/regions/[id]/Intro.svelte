@@ -68,10 +68,12 @@
 	}
 </script>
 
-<!-- Desktop Layout: 4 Columns -->
-<div class="hidden lg:grid lg:grid-cols-4 gap-1 p-1">
-	<!-- Column 1: Welcome -->
-	<div class="reg-card rounded-xl overflow-hidden relative bg-gradient-green text-black/90">
+<!-- Desktop Layout: 4 Columns, 2 Rows -->
+<div class="hidden lg:grid lg:grid-cols-4 lg:grid-rows-2 gap-1 p-1">
+	<!-- Column 1: Welcome (spans both rows) -->
+	<div
+		class="reg-card-half rounded-xl overflow-hidden relative bg-gradient-green text-black/90 row-span-2"
+	>
 		<div class="p-6 flex flex-col h-full">
 			<h1 class="font-bold text-2xl xl:text-5xl leading-none mb-4">
 				Klimadashboard {data.page.name}
@@ -171,8 +173,8 @@
 		</div>
 	</div>
 
-	<!-- Column 2: Illustrations Slider -->
-	<div class="reg-card rounded-xl overflow-hidden relative">
+	<!-- Column 2: Illustrations Slider (spans both rows) -->
+	<div class="reg-card-half rounded-xl overflow-hidden relative row-span-2">
 		{#if illustrations.length > 0}
 			<Splide
 				bind:this={illustrationsSlider}
@@ -200,11 +202,10 @@
 		{/if}
 	</div>
 
-	<!-- Column 3: Statistics Slider -->
-	<div class="reg-card rounded-xl overflow-hidden relative">
-		{#if panels.length > 0}
+	<!-- Row 1: Statistics Slider (top half) -->
+	<div class="reg-card-quarter rounded-xl overflow-hidden relative">
+		{#if panels.slice(0, Math.ceil(panels.length / 2)).length > 0}
 			<Splide
-				bind:this={statisticsSlider}
 				hasTrack={false}
 				class="splide--desktop"
 				options={{
@@ -218,7 +219,7 @@
 				}}
 			>
 				<SplideTrack class="h-full">
-					{#each panels as panel}
+					{#each panels.slice(0, Math.ceil(panels.length / 2)) as panel}
 						<SplideSlide class="h-full">
 							<IntroPanel data={panel} />
 						</SplideSlide>
@@ -229,9 +230,9 @@
 		{/if}
 	</div>
 
-	<!-- Column 4: Map -->
+	<!-- Column 4: Map (spans both rows) -->
 	<div
-		class="reg-card rounded-xl overflow-hidden relative cursor-pointer border border-current/10"
+		class="reg-card-half rounded-xl overflow-hidden relative cursor-pointer border border-current/10 row-span-2"
 		on:click={openMapOverlay}
 	>
 		{#if data.page.center}
@@ -260,6 +261,34 @@
 				<span class="text-lg font-bold leading-tight">Datenlandkarte erkunden</span>
 			</div>
 		</div>
+	</div>
+
+	<!-- Row 2: Statistics Slider (bottom half) -->
+	<div class="reg-card-quarter rounded-xl overflow-hidden relative">
+		{#if panels.slice(Math.ceil(panels.length / 2)).length > 0}
+			<Splide
+				hasTrack={false}
+				class="splide--desktop"
+				options={{
+					type: 'loop',
+					height: '100%',
+					autoplay: true,
+					interval: 5000,
+					pagination: true,
+					arrows: false,
+					pauseOnHover: true
+				}}
+			>
+				<SplideTrack class="h-full">
+					{#each panels.slice(Math.ceil(panels.length / 2)) as panel}
+						<SplideSlide class="h-full">
+							<IntroPanel data={panel} />
+						</SplideSlide>
+					{/each}
+				</SplideTrack>
+				<div class="splide__pagination splide__pagination--custom"></div>
+			</Splide>
+		{/if}
 	</div>
 </div>
 
@@ -482,7 +511,13 @@
 
 	@media (min-width: 1024px) {
 		:global(.reg-card) {
-			@apply w-full max-w-full h-[70vh];
+			@apply w-full max-w-full h-[60vh];
+		}
+		:global(.reg-card-half) {
+			@apply w-full max-w-full h-[60vh];
+		}
+		:global(.reg-card-quarter) {
+			@apply w-full max-w-full h-[calc(30vh-0.125rem)];
 		}
 	}
 

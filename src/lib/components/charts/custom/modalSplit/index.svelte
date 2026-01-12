@@ -266,23 +266,25 @@
 		<div class="flex flex-col">
 			<!-- Historic years (small bars) -->
 			{#if showHistoric}
-				{#each displayYears as year}
-					{@const segments = processYearData(rawData, year)}
-					<div class="flex items-center my-0.5" style="height: {SMALL_BAR_HEIGHT}px;">
-						<div
-							class="flex-shrink-0 flex items-center justify-end pr-3 text-xs text-gray-400"
-							style="width: {LABEL_WIDTH}px;"
-						>
-							{year}
+				<div class="mb-4">
+					{#each displayYears as year}
+						{@const segments = processYearData(rawData, year)}
+						<div class="flex items-center my-0.5" style="height: {SMALL_BAR_HEIGHT}px;">
+							<div
+								class="flex-shrink-0 flex items-center justify-end pr-3 text-xs text-gray-400"
+								style="width: {LABEL_WIDTH}px;"
+							>
+								{year}
+							</div>
+							<div
+								class="flex-1 relative rounded overflow-hidden bg-gray-200 dark:bg-gray-700"
+								style="height: {SMALL_BAR_HEIGHT}px;"
+							>
+								{@render smallBarSegments(segments)}
+							</div>
 						</div>
-						<div
-							class="flex-1 relative rounded overflow-hidden bg-gray-200 dark:bg-gray-700"
-							style="height: {SMALL_BAR_HEIGHT}px;"
-						>
-							{@render smallBarSegments(segments)}
-						</div>
-					</div>
-				{/each}
+					{/each}
+				</div>
 			{/if}
 
 			<!-- Current year (LARGE bar) with Umweltverbund indicator -->
@@ -296,7 +298,7 @@
 						</span>
 						<svg width={umweltverbundWidth} height="12" class="overflow-visible stroke-current">
 							<line x1="0" y1="0" x2="0" y2="8" stroke-width="2" />
-							<line x1="0" y1="8" x2={umweltverbundWidth} y2="8" stroke-width="2" />
+							<line x1="0" y1="0" x2={umweltverbundWidth} y2="0" stroke-width="2" />
 							<line
 								x1={umweltverbundWidth}
 								y1="8"

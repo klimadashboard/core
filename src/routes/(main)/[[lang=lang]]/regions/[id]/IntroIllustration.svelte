@@ -27,9 +27,7 @@
 		/>
 	</div>
 
-	<h3
-		class="font-bold absolute left-4 top-4 right-16 leading-tight text-white uppercase text-shadow"
-	>
+	<h3 class="font-bold absolute left-4 top-4 right-16 text-white text-shadow">
 		{data.translations[0].title}
 	</h3>
 
