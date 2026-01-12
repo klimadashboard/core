@@ -206,7 +206,7 @@
 	tabindex="0"
 >
 	{#if isVisible}
-		<div bind:this={contentEl} class="p-5 pb-3 min-h-[280px] relative" in:fade={{ duration: 200 }}>
+		<div bind:this={contentEl} class="p-5 pb-3 min-h-[280px] relative flex-1 overflow-y-auto" in:fade={{ duration: 200 }}>
 			<!-- Skeleton -->
 			{#if isLoading}
 				<div
@@ -376,7 +376,7 @@
 
 		<!-- Bottom bar -->
 		<div
-			class="no-card-click bg-gray-100 dark:bg-gray-800 flex items-stretch justify-between mt-auto"
+			class="no-card-click bg-gray-100 dark:bg-gray-800 flex items-stretch justify-between flex-shrink-0 relative z-10"
 		>
 			<!-- Tabs on the left - connected to content above -->
 			<div class="flex items-stretch" role="tablist" aria-label="Chart views">

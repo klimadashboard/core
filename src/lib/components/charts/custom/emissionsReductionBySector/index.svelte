@@ -48,13 +48,18 @@
 	const trackHeight = 24;
 	const arrowSize = 10;
 
-	// Region candidates from page context
-	$: currentId = page.data?.page?.id;
-	$: parentIds = page.data?.page?.parents?.map((p: any) => p.id) || [];
+	// Region candidates: prioritize region prop (from Card/RegionProvider, which handles URL params),
+	// fall back to page context
+	$: regionFromProp = region?.id;
+	$: regionParentsFromProp = region?.parents?.map((p: any) => p.id) || [];
+	$: currentId = regionFromProp || page.data?.page?.id;
+	$: parentIds = regionFromProp
+		? regionParentsFromProp
+		: page.data?.page?.parents?.map((p: any) => p.id) || [];
 	$: regionCandidates = [currentId, ...parentIds].filter(Boolean);
 
-	// Fetch data
-	$: if (regionCandidates.length > 0 && !dataFetched) {
+	// Fetch data when region candidates are available and region is done loading
+	$: if (regionCandidates.length > 0 && !dataFetched && !regionLoading) {
 		dataFetched = true;
 		loadData();
 	}
