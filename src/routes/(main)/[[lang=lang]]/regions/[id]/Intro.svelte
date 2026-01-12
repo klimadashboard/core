@@ -16,8 +16,22 @@
 	let place = '';
 	let panels = [];
 	let illustrationsSlider;
-	let statisticsSlider;
+	let statisticsSliderTop;
+	let statisticsSliderBottom;
 	let mobileSlider;
+
+	function handleSliderClick(event, slider) {
+		if (!slider?.splide) return;
+		const rect = event.currentTarget.getBoundingClientRect();
+		const clickX = event.clientX - rect.left;
+		const width = rect.width;
+
+		if (clickX < width * 0.2) {
+			slider.splide.go('<');
+		} else {
+			slider.splide.go('>');
+		}
+	}
 
 	let illustrations = [];
 	let combinedSlides = new Array(10).fill({ type: 'loading' });
@@ -55,7 +69,8 @@
 		combinedSlides = combinedSlides.splice(0, 9);
 		await tick();
 		illustrationsSlider?.splide?.refresh();
-		statisticsSlider?.splide?.refresh();
+		statisticsSliderTop?.splide?.refresh();
+		statisticsSliderBottom?.splide?.refresh();
 		mobileSlider?.splide?.refresh();
 	});
 
@@ -173,7 +188,39 @@
 		</div>
 	</div>
 
-	<!-- Column 2: Illustrations Slider (spans both rows) -->
+	<!-- Column 2: Statistics Slider (top half) -->
+	<div
+		class="reg-card-quarter rounded-xl overflow-hidden relative cursor-pointer"
+		on:click={(e) => handleSliderClick(e, statisticsSliderTop)}
+	>
+		{#if panels.slice(0, Math.ceil(panels.length / 2)).length > 0}
+			<Splide
+				bind:this={statisticsSliderTop}
+				hasTrack={false}
+				class="splide--desktop"
+				options={{
+					type: 'loop',
+					height: '100%',
+					autoplay: true,
+					interval: 4500,
+					pagination: true,
+					arrows: false,
+					pauseOnHover: true
+				}}
+			>
+				<SplideTrack class="h-full">
+					{#each panels.slice(0, Math.ceil(panels.length / 2)) as panel}
+						<SplideSlide class="h-full">
+							<IntroPanel data={panel} />
+						</SplideSlide>
+					{/each}
+				</SplideTrack>
+				<div class="splide__pagination splide__pagination--custom"></div>
+			</Splide>
+		{/if}
+	</div>
+
+	<!-- Column 3: Illustrations Slider (spans both rows) -->
 	<div class="reg-card-half rounded-xl overflow-hidden relative row-span-2">
 		{#if illustrations.length > 0}
 			<Splide
@@ -194,34 +241,6 @@
 					{#each illustrations as illustration}
 						<SplideSlide class="h-full">
 							<IntroIllustration data={illustration} />
-						</SplideSlide>
-					{/each}
-				</SplideTrack>
-				<div class="splide__pagination splide__pagination--custom"></div>
-			</Splide>
-		{/if}
-	</div>
-
-	<!-- Row 1: Statistics Slider (top half) -->
-	<div class="reg-card-quarter rounded-xl overflow-hidden relative">
-		{#if panels.slice(0, Math.ceil(panels.length / 2)).length > 0}
-			<Splide
-				hasTrack={false}
-				class="splide--desktop"
-				options={{
-					type: 'loop',
-					height: '100%',
-					autoplay: true,
-					interval: 4500,
-					pagination: true,
-					arrows: false,
-					pauseOnHover: true
-				}}
-			>
-				<SplideTrack class="h-full">
-					{#each panels.slice(0, Math.ceil(panels.length / 2)) as panel}
-						<SplideSlide class="h-full">
-							<IntroPanel data={panel} />
 						</SplideSlide>
 					{/each}
 				</SplideTrack>
@@ -264,9 +283,13 @@
 	</div>
 
 	<!-- Row 2: Statistics Slider (bottom half) -->
-	<div class="reg-card-quarter rounded-xl overflow-hidden relative">
+	<div
+		class="reg-card-quarter rounded-xl overflow-hidden relative cursor-pointer"
+		on:click={(e) => handleSliderClick(e, statisticsSliderBottom)}
+	>
 		{#if panels.slice(Math.ceil(panels.length / 2)).length > 0}
 			<Splide
+				bind:this={statisticsSliderBottom}
 				hasTrack={false}
 				class="splide--desktop"
 				options={{
