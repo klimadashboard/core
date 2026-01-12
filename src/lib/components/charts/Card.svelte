@@ -297,7 +297,7 @@
 						</RegionProvider>
 					</div>
 
-					<div class="text-xs text-gray-500 mt-auto flex pt-4">
+					<div class="text-xs text-gray-500 mt-4 flex">
 						{#if source}
 							<div class="">
 								<p>
@@ -319,7 +319,7 @@
 							height="16"
 							viewBox="0 0 36 16"
 							fill="none"
-							class="ml-auto"
+							class="ml-auto h-4"
 							xmlns="http://www.w3.org/2000/svg"
 						>
 							<path
