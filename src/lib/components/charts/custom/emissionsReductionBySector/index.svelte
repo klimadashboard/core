@@ -46,8 +46,11 @@
 	let hoverClientY = 0;
 
 	// Layout
-	const trackHeight = 24;
-	const arrowSize = 10;
+	const trackHeight = 20;
+
+	// Animation state
+	let animationProgress = 0;
+	let hasAnimated = false;
 
 	// Region candidates: prioritize region prop (from Card/RegionProvider, which handles URL params),
 	// fall back to page context
@@ -142,7 +145,41 @@
 	$: useMegatons = selectedRegion ? shouldUseMegatons(selectedRegion.data) : false;
 
 	// Track dimensions
-	$: trackWidth = Math.max(0, width - 180);
+	$: trackWidth = Math.max(0, width - 220);
+
+	// Calculate linear progress (how far we should be based on time elapsed)
+	$: linearProgress = (() => {
+		if (!summaryStats) return 0;
+		const startYear = summaryStats.firstYear;
+		const targetYear = summaryStats.targetYear ?? TARGET_YEAR;
+		const currentYear = summaryStats.lastYear;
+		const totalYears = targetYear - startYear;
+		const elapsedYears = currentYear - startYear;
+		if (totalYears <= 0) return 0;
+		return Math.min(100, (elapsedYears / totalYears) * 100);
+	})();
+
+	// Trigger animation when data is ready and component is visible
+	$: if (width > 0 && sectorProgress.length > 0 && !hasAnimated) {
+		hasAnimated = true;
+		animationProgress = 0;
+		// Use requestAnimationFrame for smooth animation
+		const startTime = performance.now();
+		const duration = 800; // 800ms animation
+		const animate = (currentTime: number) => {
+			const elapsed = currentTime - startTime;
+			animationProgress = Math.min(1, elapsed / duration);
+			if (animationProgress < 1) {
+				requestAnimationFrame(animate);
+			}
+		};
+		requestAnimationFrame(animate);
+	}
+
+	// Reset animation when data changes
+	$: if (activeLayer) {
+		hasAnimated = false;
+	}
 
 	// Unit
 	$: unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
@@ -248,98 +285,57 @@
 	<!-- Progress tracks -->
 	<div bind:this={containerEl} class="relative select-none w-full">
 		{#if width > 0}
-			{@const scaleLabelZeroX = hasNegativeProgress ? (trackWidth * 20) / 140 : 0}
-			{@const scaleLabelHundredX = hasNegativeProgress ? (trackWidth * 120) / 140 : trackWidth}
+			{@const linearProgressX = (trackWidth * linearProgress) / 100}
 			<div class="space-y-1">
-				<!-- Total progress arrow -->
+				<!-- Total progress bar -->
 				{#if summaryStats}
 					{@const totalProgress = Math.max(0, Math.min(100, summaryStats.overallProgress))}
-					{@const totalArrowX = hasNegativeProgress
-						? (trackWidth * (totalProgress + 20)) / 140
-						: (trackWidth * totalProgress) / 100}
-					{@const totalHundredX = hasNegativeProgress ? (trackWidth * 120) / 140 : trackWidth}
-					{@const totalZeroX = hasNegativeProgress ? (trackWidth * 20) / 140 : 0}
+					{@const animatedTotalProgress = totalProgress * animationProgress}
+					{@const progressWidth = (animatedTotalProgress / 100) * trackWidth}
 
-					<div class="flex items-center gap-3 py-3 border-b border-current/10 mb-2">
-						<div class="w-40 flex-shrink-0 text-sm text-right pr-2">
+					<div class="flex items-center gap-3 py-2 border-b border-current/10 mb-1">
+						<div class="w-32 flex-shrink-0 text-sm text-right pr-2">
 							<span class="font-bold">Gesamt</span>
 						</div>
 						<div class="relative flex-1" style="height: {trackHeight}px;">
-							<svg width="100%" height={trackHeight} class="overflow-visible">
-								<!-- Background track -->
-								<line
-									x1="0"
-									y1={trackHeight / 2}
-									x2={trackWidth}
-									y2={trackHeight / 2}
-									stroke="currentColor"
-									stroke-width="3"
-									opacity="0.1"
-								/>
+							<!-- Background track (gray rounded bar) -->
+							<div
+								class="absolute inset-0 bg-current/10 rounded-full"
+								style="height: {trackHeight}px;"
+							></div>
 
-								<!-- 100% marker -->
-								<line
-									x1={totalHundredX}
-									y1={trackHeight / 2 - 10}
-									x2={totalHundredX}
-									y2={trackHeight / 2 + 10}
-									stroke="currentColor"
-									stroke-width="2"
-									opacity="0.3"
-								/>
+							<!-- Progress fill (animated) -->
+							<div
+								class="absolute left-0 top-0 bg-current/70 rounded-full transition-none"
+								style="height: {trackHeight}px; width: {progressWidth}px;"
+							></div>
 
-								<!-- Progress line -->
-								<line
-									x1={totalZeroX}
-									y1={trackHeight / 2}
-									x2={totalArrowX}
-									y2={trackHeight / 2}
-									stroke="currentColor"
-									stroke-width="4"
-									stroke-linecap="round"
-									opacity="0.7"
-								/>
+							<!-- Percentage label inside bar -->
+							<span
+								class="absolute top-1/2 -translate-y-1/2 text-xs font-bold whitespace-nowrap"
+								style="left: {Math.max(progressWidth + 6, 6)}px;"
+							>
+								{Math.round(summaryStats.overallProgress)}%
+							</span>
 
-								<!-- Arrow head -->
-								<g transform="translate({totalArrowX}, {trackHeight / 2})">
-									<polygon
-										points="0,-{arrowSize * 0.7} {arrowSize * 1.2},0 0,{arrowSize * 0.7}"
-										fill="currentColor"
-										opacity="0.7"
-									/>
-								</g>
-
-								<!-- Percentage label -->
-								<text
-									x={totalArrowX + arrowSize + 6}
-									y={trackHeight / 2}
-									text-anchor="start"
-									dominant-baseline="middle"
-									fill="currentColor"
-									font-size="14"
-									font-weight="700"
-								>
-									{Math.round(summaryStats.overallProgress)}%
-								</text>
-							</svg>
+							<!-- Linear progress marker (where we should be) -->
+							<div
+								class="absolute top-1/2 -translate-y-1/2 w-0.5 bg-current/10"
+								style="left: {linearProgressX}px; height: {trackHeight}px;"
+							></div>
 						</div>
 					</div>
 				{/if}
 
-				<!-- Sector progress arrows -->
+				<!-- Sector progress bars -->
 				{#each sectorProgress as sector}
-					{@const progressClamped = hasNegativeProgress
-						? Math.max(-20, Math.min(120, sector.contributionPercent))
-						: Math.max(0, Math.min(100, sector.contributionPercent))}
-					{@const zeroX = hasNegativeProgress ? (trackWidth * 20) / 140 : 0}
-					{@const hundredX = hasNegativeProgress ? (trackWidth * 120) / 140 : trackWidth}
-					{@const arrowX = hasNegativeProgress
-						? (trackWidth * (progressClamped + 20)) / 140
-						: (trackWidth * progressClamped) / 100}
+					{@const progressClamped = Math.max(0, Math.min(100, sector.contributionPercent))}
+					{@const animatedProgress = progressClamped * animationProgress}
+					{@const sectorProgressWidth = (animatedProgress / 100) * trackWidth}
 					{@const isNegative = sector.contributionPercent < 0}
 
 					<div
-						class="flex items-center gap-3 py-2 cursor-pointer transition-opacity {hoveredSector !==
+						class="flex items-center gap-3 py-1.5 cursor-pointer transition-opacity {hoveredSector !==
 							null && hoveredSector !== sector.sector
 							? 'opacity-40'
 							: ''}"
@@ -350,104 +346,62 @@
 						tabindex="0"
 					>
 						<!-- Sector label -->
-						<div class="w-40 flex-shrink-0 text-sm text-right pr-2">
+						<div class="w-32 flex-shrink-0 text-sm leading-none text-right pr-2">
 							<span class="font-medium">{sector.label}</span>
 						</div>
 
 						<!-- Track -->
 						<div class="relative flex-1" style="height: {trackHeight}px;">
-							<svg width="100%" height={trackHeight} class="overflow-visible">
-								<!-- Background track -->
-								<line
-									x1="0"
-									y1={trackHeight / 2}
-									x2={trackWidth}
-									y2={trackHeight / 2}
-									stroke="currentColor"
-									stroke-width="2"
-									opacity="0.1"
-								/>
+							<!-- Background track (gray rounded bar) -->
+							<div
+								class="absolute inset-0 bg-current/10 rounded-full"
+								style="height: {trackHeight}px;"
+							></div>
 
-								<!-- Zero line (only if negative progress exists) -->
-								{#if hasNegativeProgress}
-									<line
-										x1={zeroX}
-										y1={trackHeight / 2 - 12}
-										x2={zeroX}
-										y2={trackHeight / 2 + 12}
-										stroke="currentColor"
-										stroke-width="2"
-										opacity="0.3"
-									/>
-								{/if}
+							<!-- Progress fill (animated) -->
+							{#if !isNegative}
+								<div
+									class="absolute left-0 top-0 rounded-full transition-none"
+									style="height: {trackHeight}px; width: {sectorProgressWidth}px; background-color: {sector.color};"
+								></div>
+							{:else}
+								<!-- For negative progress, show a red indicator -->
+								<div
+									class="absolute left-0 top-0 rounded-full bg-red-500/30"
+									style="height: {trackHeight}px; width: {Math.min(
+										20,
+										Math.abs(sector.contributionPercent)
+									) * animationProgress}px;"
+								></div>
+							{/if}
 
-								<!-- 100% marker -->
-								<line
-									x1={hundredX}
-									y1={trackHeight / 2 - 8}
-									x2={hundredX}
-									y2={trackHeight / 2 + 8}
-									stroke="currentColor"
-									stroke-width="1"
-									opacity="0.2"
-								/>
+							<!-- Percentage label inside bar -->
+							<span
+								class="absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold whitespace-nowrap"
+								style="left: {Math.max(sectorProgressWidth + 6, 6)}px; color: {isNegative
+									? '#ef4444'
+									: sector.color};"
+							>
+								{Math.round(sector.contributionPercent)}%
+							</span>
 
-								<!-- Progress line from zero to arrow -->
-								<line
-									x1={zeroX}
-									y1={trackHeight / 2}
-									x2={arrowX}
-									y2={trackHeight / 2}
-									stroke={sector.color}
-									stroke-width="3"
-									stroke-linecap="round"
-								/>
-
-								<!-- Arrow head -->
-								{#if isNegative}
-									<g transform="translate({arrowX}, {trackHeight / 2})">
-										<polygon
-											points="-{arrowSize},-{arrowSize / 2} 0,0 -{arrowSize},{arrowSize / 2}"
-											fill={sector.color}
-										/>
-									</g>
-								{:else}
-									<g transform="translate({arrowX}, {trackHeight / 2})">
-										<polygon
-											points="0,-{arrowSize / 2} {arrowSize},0 0,{arrowSize / 2}"
-											fill={sector.color}
-										/>
-									</g>
-								{/if}
-
-								<!-- Percentage label -->
-								<text
-									x={arrowX + (isNegative ? -arrowSize - 4 : arrowSize + 4)}
-									y={trackHeight / 2}
-									text-anchor={isNegative ? 'end' : 'start'}
-									dominant-baseline="middle"
-									fill={sector.color}
-									font-size="12"
-									font-weight="600"
-								>
-									{Math.round(sector.contributionPercent)}%
-								</text>
-							</svg>
+							<!-- Linear progress marker (where we should be) -->
+							<div
+								class="absolute top-1/2 -translate-y-1/2 w-0.5 bg-current/10"
+								style="left: {linearProgressX}px; height: {trackHeight}px;"
+							></div>
 						</div>
 					</div>
 				{/each}
 			</div>
 
 			<!-- Scale labels -->
-			<div class="flex items-center gap-3 mt-2 text-xs opacity-50">
-				<div class="w-40 flex-shrink-0"></div>
-				<div class="relative flex-1" style="height: 20px;">
-					<span class="absolute" style="left: {scaleLabelZeroX}px; transform: translateX(-50%);"
-						>0%</span
-					>
-					<span class="absolute" style="left: {scaleLabelHundredX}px; transform: translateX(-50%);"
-						>100%</span
-					>
+			<div class="flex items-center gap-3 mt-2 text-xs">
+				<div class="w-32 flex-shrink-0"></div>
+				<div class="relative flex-1 flex justify-between gap-2">
+					<span>{summaryStats.firstYear}</span>
+					<span class="border-t flex-1 translate-y-2 border-current"></span>
+					<span>Ziel</span>
 				</div>
 			</div>
 
@@ -467,14 +421,14 @@
 	</div>
 
 	<!-- Legend -->
-	<div class="flex flex-wrap gap-4 mt-6 text-sm">
+	<div class="flex flex-wrap gap-x-6 gap-y-2 mt-6 text-xs">
 		<div class="flex items-center gap-2">
-			<div class="w-8 h-0.5 bg-current opacity-30"></div>
-			<span class="opacity-70">0% = Keine Reduktion seit {summaryStats.firstYear}</span>
+			<div class="w-0.5 h-3 bg-current/40"></div>
+			<span class="opacity-70">Linearer Fortschritt</span>
 		</div>
 		<div class="flex items-center gap-2">
-			<div class="w-8 h-0.5 bg-current opacity-30"></div>
-			<span class="opacity-70">100% = {TARGET_REDUCTION_PERCENT}% Reduktion erreicht</span>
+			<div class="w-6 h-2 bg-current/70 rounded-full"></div>
+			<span class="opacity-70">Ziel: {TARGET_REDUCTION_PERCENT}% Reduktion</span>
 		</div>
 	</div>
 
