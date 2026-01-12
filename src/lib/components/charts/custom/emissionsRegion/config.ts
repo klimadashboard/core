@@ -13,6 +13,7 @@ export interface EmissionsRawData {
 	value: number;
 	source: string;
 	region?: string;
+	update?: string;
 }
 
 export interface RegionResult {
@@ -45,6 +46,29 @@ export interface YearGroup {
 	}>;
 	total: number;
 	stackedSectors: StackedBar[];
+}
+
+// Threshold for displaying in megatons (1 million tons)
+const MEGATON_THRESHOLD = 1_000_000;
+
+/** Determine if values should be displayed in megatons based on max value */
+export function shouldUseMegatons(data: EmissionsRawData[]): boolean {
+	const maxValue = Math.max(...data.map((d) => d.value), 0);
+	return maxValue >= MEGATON_THRESHOLD;
+}
+
+/** Convert tons to megatons */
+export function toMegatons(value: number): number {
+	return value / 1_000_000;
+}
+
+/** Transform data to megatons if needed */
+export function transformToDisplayUnit(
+	data: EmissionsRawData[],
+	useMegatons: boolean
+): EmissionsRawData[] {
+	if (!useMegatons) return data;
+	return data.map((d) => ({ ...d, value: toMegatons(d.value) }));
 }
 
 // Custom sector order for stacking (bottom to top)
@@ -210,7 +234,7 @@ function buildCategoryOrder(
 	return [...orderedCodes, ...remainingCodes];
 }
 
-/** Transform data for per-capita display */
+/** Transform data for per-capita display (data is in tons, result is in tons per capita) */
 export function transformForPerCapita(
 	data: EmissionsRawData[],
 	populationByYear: Record<number, number>,
@@ -223,7 +247,7 @@ export function transformForPerCapita(
 		if (population) {
 			return {
 				...d,
-				value: (d.value * 1_000_000) / population
+				value: d.value / population
 			};
 		}
 		return d;
@@ -259,7 +283,7 @@ export function groupAndStack(data: EmissionsRawData[], categoryOrder: string[])
 	});
 }
 
-/** Get climate targets from data */
+/** Get climate targets from data (data is in tons) */
 export function getClimateTargets(
 	data: EmissionsRawData[],
 	populationByYear: Record<number, number>,
@@ -273,7 +297,7 @@ export function getClimateTargets(
 				const yearPopulation = populationByYear[d.year];
 				const population = yearPopulation || fallbackPopulation;
 				if (population) {
-					return { ...d, value: (d.value * 1_000_000) / population };
+					return { ...d, value: d.value / population };
 				}
 			}
 			return d;
@@ -306,9 +330,9 @@ export function buildChartData(
 	data: EmissionsRawData[],
 	region: RegionResult,
 	showPerCapita: boolean,
-	version: string
+	useMegatons: boolean
 ): ChartData {
-	const unit = showPerCapita ? 't CO₂eq/Kopf' : version === 'de' ? 'Mt CO₂eq' : 't CO₂eq';
+	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 	const tableData = data.filter((d) => d.source !== 'climate-target');
 
 	// Get unique categories and years
@@ -339,6 +363,10 @@ export function buildChartData(
 		}))
 	];
 
+	// Get source and update date from data (use first non-climate-target entry)
+	const dataSource = tableData[0]?.source || 'Emissions data';
+	const updateDate = tableData[0]?.update || new Date().toISOString();
+
 	return {
 		raw: data,
 		table: {
@@ -352,11 +380,8 @@ export function buildChartData(
 			unit
 		},
 		meta: {
-			updateDate: new Date().toISOString(),
-			source:
-				version === 'de'
-					? 'Statistische Ämter des Bundes und der Länder (Tabelle 86431-Z-04)'
-					: data[0]?.source || 'Emissions data',
+			updateDate,
+			source: dataSource,
 			region: { name: region.name, id: region.id } as any
 		}
 	};

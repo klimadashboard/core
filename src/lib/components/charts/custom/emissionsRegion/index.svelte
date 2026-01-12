@@ -8,10 +8,13 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import Switch from '$lib/components/Switch.svelte';
 	import {
 		fetchEmissionsData,
 		buildChartData,
 		transformForPerCapita,
+		transformToDisplayUnit,
+		shouldUseMegatons,
 		groupAndStack,
 		getClimateTargets,
 		getDisplayedCategories,
@@ -125,19 +128,18 @@
 		if (onChartData && results.length > 0 && activeLayer) {
 			const selectedResult = results.find((r) => r.key === activeLayer);
 			if (selectedResult) {
-				const transformedData = showPerCapita
+				// First apply per-capita if needed
+				const perCapitaData = showPerCapita
 					? transformForPerCapita(
 							selectedResult.data,
 							getPopulationForRegion(selectedResult.id),
 							selectedResult.population
 						)
 					: selectedResult.data;
-				const chartData = buildChartData(
-					transformedData,
-					selectedResult,
-					showPerCapita,
-					PUBLIC_VERSION
-				);
+				// Then convert to megatons for display if values are large (only when not per-capita)
+				const useMegatons = !showPerCapita && shouldUseMegatons(selectedResult.data);
+				const displayData = transformToDisplayUnit(perCapitaData, useMegatons);
+				const chartData = buildChartData(displayData, selectedResult, showPerCapita, useMegatons);
 				onChartData(chartData);
 			}
 		}
@@ -183,24 +185,34 @@
 	// Current selected region
 	$: selectedRegion = results.find((r) => r.key === activeLayer) || null;
 
+	// Determine if we should display in megatons (only when not per-capita and values are large)
+	$: useMegatons =
+		selectedRegion && !showPerCapita ? shouldUseMegatons(selectedRegion.data) : false;
+
 	// Transformed and processed data for current selection
 	$: currentData = selectedRegion
-		? showPerCapita
-			? transformForPerCapita(
-					selectedRegion.data,
-					getPopulationForRegion(selectedRegion.id),
-					selectedRegion.population
-				)
-			: selectedRegion.data
+		? (() => {
+				const perCapitaData = showPerCapita
+					? transformForPerCapita(
+							selectedRegion.data,
+							getPopulationForRegion(selectedRegion.id),
+							selectedRegion.population
+						)
+					: selectedRegion.data;
+				return transformToDisplayUnit(perCapitaData, useMegatons);
+			})()
 		: [];
 
 	$: grouped = selectedRegion ? groupAndStack(currentData, selectedRegion.categoryOrder) : [];
 	$: climateTargets = selectedRegion
-		? getClimateTargets(
-				selectedRegion.data,
-				getPopulationForRegion(selectedRegion.id),
-				selectedRegion.population,
-				showPerCapita
+		? transformToDisplayUnit(
+				getClimateTargets(
+					selectedRegion.data,
+					getPopulationForRegion(selectedRegion.id),
+					selectedRegion.population,
+					showPerCapita
+				),
+				useMegatons
 			)
 		: [];
 	$: displayedCategories = selectedRegion
@@ -260,7 +272,11 @@
 	})();
 
 	// Unit label
-	$: unit = showPerCapita ? 't CO₂eq pro Kopf' : PUBLIC_VERSION === 'de' ? 'Mt CO₂eq' : 't CO₂eq';
+	$: unit = showPerCapita ? 't CO₂eq pro Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
+
+	// Data source and update date (from actual data)
+	$: dataSource = currentData.find((d) => d.source !== 'climate-target')?.source || null;
+	$: dataUpdate = currentData.find((d) => d.source !== 'climate-target')?.update || null;
 
 	// Latest data
 	$: latestYear = historicYears.length > 0 ? Math.max(...historicYears) : null;
@@ -275,7 +291,12 @@
 	);
 
 	// Switch options
-	$: switchOptions = [{ key: 'all', label: 'Sektoren' }, ...displayedCategories];
+	// Circle icon for category colors
+	const circleIcon = '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>';
+	$: switchOptions = [
+		{ key: 'all', label: 'Sektoren' },
+		...displayedCategories.map((c) => ({ ...c, icon: circleIcon }))
+	];
 
 	// Tooltip data
 	$: tooltipData = (() => {
@@ -380,18 +401,12 @@
 {:else if selectedRegion}
 	<!-- Layer switch -->
 	{#if filteredViews.length > 1}
-		<div class="flex flex-wrap gap-2 mb-4">
-			{#each filteredViews as view}
-				<button
-					class="px-3 py-1.5 text-sm rounded-full transition-colors
-						{activeLayer === view.key
-						? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-						: 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}"
-					on:click={() => (activeLayer = view.key)}
-				>
-					{view.label}
-				</button>
-			{/each}
+		<div class="mb-4">
+			<Switch
+				views={filteredViews}
+				activeView={activeLayer}
+				on:itemClick={(e) => (activeLayer = e.detail)}
+			/>
 		</div>
 	{/if}
 
@@ -591,24 +606,12 @@
 
 	<!-- Category switch (only for vertical chart) -->
 	{#if !isHorizontal}
-		<div class="flex flex-wrap gap-2 mt-4">
-			{#each switchOptions as option}
-				<button
-					class="px-3 py-1.5 text-sm rounded-full transition-colors
-						{activeCategory === option.key
-						? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-						: 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}"
-					on:click={() => (activeCategory = option.key)}
-				>
-					{#if option.key !== 'all'}
-						<span
-							class="inline-block w-2 h-2 rounded-full mr-1.5"
-							style="background-color: {option.color}"
-						></span>
-					{/if}
-					{option.label}
-				</button>
-			{/each}
+		<div class="mt-4">
+			<Switch
+				views={switchOptions}
+				activeView={activeCategory}
+				on:itemClick={(e) => (activeCategory = e.detail)}
+			/>
 		</div>
 	{:else}
 		<!-- Legend for horizontal chart -->
@@ -632,11 +635,6 @@
 
 	<!-- Source note -->
 	<div class="text-sm leading-tight mt-4 opacity-70">
-		{#if PUBLIC_VERSION === 'de'}
-			<p>Datenquelle: Statistische Ämter des Bundes und der Länder (Tabelle 86431-Z-04)</p>
-		{:else}
-			<p>Datenquelle: {currentData[0]?.source}</p>
-		{/if}
 		{#if showPerCapita && Object.keys(getPopulationForRegion(selectedRegion.id)).length > 0}
 			<p class="mt-1">Pro-Kopf-Werte basieren auf jahresspezifischen Bevölkerungsdaten.</p>
 		{:else if showPerCapita && selectedRegion.population}

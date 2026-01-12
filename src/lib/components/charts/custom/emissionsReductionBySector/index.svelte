@@ -3,15 +3,16 @@
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import { PUBLIC_VERSION } from '$env/static/public';
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import Switch from '$lib/components/Switch.svelte';
 	import {
 		fetchEmissionsData,
 		calculateSectorProgress,
 		buildChartData,
 		getLayerPriority,
+		shouldUseMegatons,
 		TARGET_REDUCTION_PERCENT,
 		TARGET_YEAR,
 		type RegionResult,
@@ -97,17 +98,23 @@
 			return;
 		}
 
+		// Determine if we should display in megatons based on data magnitude
+		const useMegatons = shouldUseMegatons(selectedRegion.data);
+
 		const {
 			sectors,
 			summary,
 			hasNegativeProgress: hasNeg
-		} = calculateSectorProgress(selectedRegion);
+		} = calculateSectorProgress(selectedRegion, useMegatons);
 		sectorProgress = sectors;
 		summaryStats = summary;
 		hasNegativeProgress = hasNeg;
 
 		if (onChartData) {
-			const chartData = buildChartData(selectedRegion, sectors, summary, PUBLIC_VERSION);
+			// Get source from actual data
+			const dataSource =
+				selectedRegion.data.find((d) => d.source !== 'climate-target')?.source || 'Emissions data';
+			const chartData = buildChartData(selectedRegion, sectors, summary, useMegatons, dataSource);
 			onChartData(chartData);
 		}
 	}
@@ -131,11 +138,17 @@
 	// Current selected region
 	$: selectedRegion = results.find((r) => r.key === activeLayer) || null;
 
+	// Determine if we should display in megatons based on data magnitude
+	$: useMegatons = selectedRegion ? shouldUseMegatons(selectedRegion.data) : false;
+
 	// Track dimensions
 	$: trackWidth = Math.max(0, width - 180);
 
 	// Unit
-	$: unit = PUBLIC_VERSION === 'de' ? 'Mt CO₂eq' : 't CO₂eq';
+	$: unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
+
+	// Data source (from actual data)
+	$: dataSource = selectedRegion?.data.find((d) => d.source !== 'climate-target')?.source || null;
 
 	// Tooltip data
 	$: tooltipData = (() => {
@@ -209,18 +222,12 @@
 {:else if selectedRegion && summaryStats}
 	<!-- Layer switch -->
 	{#if filteredViews.length > 1}
-		<div class="flex flex-wrap gap-2 mb-4">
-			{#each filteredViews as view}
-				<button
-					class="px-3 py-1.5 text-sm rounded-full transition-colors
-						{activeLayer === view.key
-						? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-						: 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}"
-					on:click={() => (activeLayer = view.key)}
-				>
-					{view.label}
-				</button>
-			{/each}
+		<div class="mb-4">
+			<Switch
+				views={filteredViews}
+				activeView={activeLayer}
+				on:itemClick={(e) => (activeLayer = e.detail)}
+			/>
 		</div>
 	{/if}
 
@@ -473,9 +480,6 @@
 
 	<!-- Source note -->
 	<div class="text-sm leading-tight mt-4 opacity-70">
-		{#if PUBLIC_VERSION === 'de'}
-			<p>Datenquelle: Statistische Ämter des Bundes und der Länder (Tabelle 86431-Z-04)</p>
-		{/if}
 		<p class="mt-1">
 			Zeigt den Fortschritt jedes Sektors auf dem Weg zur {TARGET_REDUCTION_PERCENT}%-Reduktion bis {TARGET_YEAR}.
 			Basis: {summaryStats.firstYear} ({formatNumber(summaryStats.firstYearTotal)}
