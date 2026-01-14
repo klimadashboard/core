@@ -131,14 +131,14 @@
 			<span class="text-sm font-medium">{unit}</span>
 		</div>
 		<div
-			class="w-max flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
+			class="w-max flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
 		>
 			{@render shareIcon(pctValue)}
 			{pctLabel} Anteil an Gesamt
 		</div>
 		{#if added > 0}
 			<div
-				class="w-max flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"
+				class="w-max flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"
 			>
 				{@render trendIcon()}
 				+{formatNumber(added)}
@@ -175,8 +175,8 @@
 	<div class="flex flex-col gap-3">
 		{#each enrichedTypes as type}
 			<div class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
-				<div class="flex flex-col lg:flex-row">
-					<div class="h-32 lg:h-auto lg:w-36 flex-shrink-0">
+				<div class="flex flex-col md:flex-row">
+					<div class="h-32 md:h-auto md:w-36 flex-shrink-0">
 						<img
 							src={getImageUrl(type.image)}
 							alt={type.label}
