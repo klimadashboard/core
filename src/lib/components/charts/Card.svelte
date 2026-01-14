@@ -11,7 +11,8 @@
 		exportCSV,
 		exportJSON,
 		copyToClipboard,
-		generateEmbedCode
+		generateEmbedCode,
+		generateScriptEmbedCode
 	} from '$lib/components/charts/utils/export';
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
@@ -30,11 +31,15 @@
 	let activeTab: 'chart' | 'table' | 'text' = 'chart';
 	let chartData: ChartData | null = null;
 	let showDownloadMenu = false;
+	let showEmbedMenu = false;
 
-	// Close download menu when clicking outside
+	// Close menus when clicking outside
 	function handleClickOutside(e: MouseEvent) {
 		if (showDownloadMenu && !(e.target as HTMLElement).closest('.download-menu')) {
 			showDownloadMenu = false;
+		}
+		if (showEmbedMenu && !(e.target as HTMLElement).closest('.embed-menu')) {
+			showEmbedMenu = false;
 		}
 	}
 
@@ -155,13 +160,29 @@
 	function toggleDownloadMenu(e: MouseEvent) {
 		e.stopPropagation();
 		showDownloadMenu = !showDownloadMenu;
+		showEmbedMenu = false;
 	}
 
-	async function handleEmbed(e: MouseEvent) {
+	function toggleEmbedMenu(e: MouseEvent) {
+		e.stopPropagation();
+		showEmbedMenu = !showEmbedMenu;
+		showDownloadMenu = false;
+	}
+
+	async function handleEmbedIframe(e: MouseEvent) {
 		e.stopPropagation();
 		const code = generateEmbedCode(chart.id, page.data.page?.id);
 		await copyToClipboard(code);
+		showEmbedMenu = false;
 		alert('iFrame-Code kopiert!');
+	}
+
+	async function handleEmbedScript(e: MouseEvent) {
+		e.stopPropagation();
+		const code = generateScriptEmbedCode(chart.id, page.data.page?.id);
+		await copyToClipboard(code);
+		showEmbedMenu = false;
+		alert('Script-Code kopiert!');
 	}
 
 	async function handleImage(e: MouseEvent) {
@@ -600,30 +621,72 @@
 					</svg>
 				</button>
 
-				<!-- Embed code -->
-				<button
-					on:click={handleEmbed}
-					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-					aria-label="Einbettungscode kopieren"
-					title="Einbetten"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
+				<!-- Embed code menu -->
+				<div class="relative embed-menu">
+					<button
+						on:click={toggleEmbedMenu}
+						class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-0.5"
+						aria-label="Einbettungscode kopieren"
+						aria-expanded={showEmbedMenu}
+						aria-haspopup="true"
+						title="Einbetten"
 					>
-						<polyline points="7 8 3 12 7 16" /><polyline points="17 8 21 12 17 16" /><line
-							x1="14"
-							y1="4"
-							x2="10"
-							y2="20"
-						/>
-					</svg>
-				</button>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
+							<polyline points="7 8 3 12 7 16" /><polyline points="17 8 21 12 17 16" /><line
+								x1="14"
+								y1="4"
+								x2="10"
+								y2="20"
+							/>
+						</svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="10"
+							height="10"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="transition-transform {showEmbedMenu ? 'rotate-180' : ''}"
+						>
+							<polyline points="6 9 12 15 18 9" />
+						</svg>
+					</button>
+
+					{#if showEmbedMenu}
+						<div
+							class="absolute bottom-full right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-20 min-w-[180px]"
+							transition:fade={{ duration: 100 }}
+						>
+							<button
+								on:click={handleEmbedIframe}
+								class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+							>
+								<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+									>iframe</span
+								>
+								<span>Feste Höhe</span>
+							</button>
+							<button
+								on:click={handleEmbedScript}
+								class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+							>
+								<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+									>script</span
+								>
+								<span>Auto-Höhe</span>
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 	{:else}

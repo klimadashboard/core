@@ -65,3 +65,11 @@ export function generateEmbedCode(chartId: string, regionId?: string): string {
 	const url = regionId ? `${base}/embed/${chartId}?region=${regionId}` : `${base}/embed/${chartId}`;
 	return `<iframe src="${url}" width="100%" height="450" frameborder="0"></iframe>`;
 }
+
+export function generateScriptEmbedCode(chartId: string, regionId?: string): string {
+	const base = typeof window !== 'undefined' ? window.location.origin : '';
+	const uniqueId = `kd-${chartId}-${Math.random().toString(36).slice(2, 8)}`;
+	const params = regionId ? ` data-region="${regionId}"` : '';
+	return `<div id="${uniqueId}"></div>
+<script src="${base}/embed.js" data-chart="${chartId}" data-target="${uniqueId}"${params}></script>`;
+}
