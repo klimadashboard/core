@@ -2,10 +2,14 @@
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
+import Papa from 'papaparse';
+
+export type DataMode = 'bestand' | 'neuzulassungen';
 
 export interface VehicleParams {
 	layer?: 'municipality' | 'district';
 	country?: string;
+	mode?: DataMode;
 }
 
 export interface VehicleShareData {
@@ -86,8 +90,8 @@ function findRegionMatch(apiData: ApiRegionData[], region: Region | null): ApiRe
 	return null;
 }
 
-/** Fetch data from the mobility cars endpoint */
-export async function fetchData(
+/** Fetch Bestand data from the mobility cars endpoint */
+async function fetchBestandData(
 	region: Region | null,
 	params: VehicleParams
 ): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string }> {
@@ -158,6 +162,88 @@ export async function fetchData(
 	const updateDate = new Date(latestYear, 0, 1).toISOString();
 
 	return { data, categories, updateDate, regionName };
+}
+
+/** Fetch Neuzulassungen data from TSV file (national data only) */
+async function fetchNeuzulassungenData(
+	_region: Region | null,
+	params: VehicleParams
+): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string }> {
+	const country = params.country || 'DE';
+	const regionName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
+
+	// Neuzulassungen data comes from a TSV file (national level only)
+	const url = '/data_temp/neuzulassungen-test.tsv';
+
+	return new Promise((resolve, reject) => {
+		Papa.parse(url, {
+			download: true,
+			header: true,
+			dynamicTyping: true,
+			complete: (results: { data: Record<string, unknown>[] }) => {
+				const xKey = 'Stichtag';
+				const rows = results.data.filter((d: Record<string, unknown>) => d[xKey]) as Record<string, unknown>[];
+
+				if (rows.length === 0) {
+					reject(new Error('No data found'));
+					return;
+				}
+
+				// Get the latest row
+				const latestRow = rows[rows.length - 1];
+				const categories = Object.keys(latestRow).filter((k) => k !== xKey);
+
+				// Sort categories by configured order
+				const sortedCategories = categories.sort((a, b) => {
+					const orderA = categoryConfig[a]?.order ?? 99;
+					const orderB = categoryConfig[b]?.order ?? 99;
+					return orderA - orderB;
+				});
+
+				// Calculate total and build data
+				// The TSV contains share values (0-1), not absolute values
+				// So we'll use the shares directly and set absolute to 0
+				const categoriesData: Record<string, number> = {};
+				const sharesData: Record<string, number> = {};
+
+				for (const cat of sortedCategories) {
+					const value = latestRow[cat];
+					const share = typeof value === 'number' ? value : 0;
+					sharesData[cat] = share;
+					categoriesData[cat] = 0; // No absolute values in TSV
+				}
+
+				const dateStr = latestRow[xKey] as string;
+				const date = new Date(dateStr);
+				const year = date.getFullYear();
+
+				const data: VehicleRawData = {
+					year,
+					total: 0, // No total in share-based data
+					categories: categoriesData,
+					shares: sharesData
+				};
+
+				const updateDate = date.toISOString();
+
+				resolve({ data, categories: sortedCategories, updateDate, regionName });
+			},
+			error: (error: Error) => {
+				reject(new Error(`Failed to parse data: ${error.message}`));
+			}
+		});
+	});
+}
+
+/** Fetch data based on mode */
+export async function fetchData(
+	region: Region | null,
+	params: VehicleParams
+): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string }> {
+	if (params.mode === 'neuzulassungen') {
+		return fetchNeuzulassungenData(region, params);
+	}
+	return fetchBestandData(region, params);
 }
 
 /** Aggregate data from all regions */
@@ -281,7 +367,8 @@ export function buildChartData(
 	waffleData: VehicleShareData[],
 	updateDate: string,
 	regionName: string,
-	region: Region | null
+	region: Region | null,
+	mode: DataMode = 'bestand'
 ): ChartData {
 	// Transform waffleData to clean table rows
 	const tableRows = waffleData.map((cat) => ({
@@ -290,13 +377,15 @@ export function buildChartData(
 		share: cat.share
 	}));
 
+	const modeLabel = mode === 'neuzulassungen' ? 'neuzulassungen' : 'bestand';
+
 	return {
 		// Wrap in array so Card.svelte's `hasData` check works (chartData.raw.length > 0)
 		raw: [data],
 		table: {
 			columns: getTableColumns(),
 			rows: tableRows,
-			filename: `kfz-bestand-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
+			filename: `kfz-${modeLabel}-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
 		},
 		placeholders: getPlaceholders(data, waffleData, regionName),
 		meta: {

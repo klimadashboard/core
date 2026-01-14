@@ -6,12 +6,14 @@
 		fetchData,
 		buildChartData,
 		buildWaffleData,
-		buildWaffleGrid,
 		categoryConfig,
 		type VehicleRawData,
-		type VehicleShareData
+		type VehicleShareData,
+		type DataMode
 	} from './config';
 	import { formatNumber } from '$lib/utils/formatters';
+	import Switch from '$lib/components/Switch.svelte';
+	import { tick } from 'svelte';
 
 	// Props from Card slot
 	export let region: Region | null = null;
@@ -23,56 +25,77 @@
 	// State
 	let data: VehicleRawData | null = null;
 	let waffleData: VehicleShareData[] = [];
-	let grid: string[] = [];
 	let regionName: string = '';
 	let loading = true;
 	let error: string | null = null;
 	let visibleCells = new Set<number>();
 	let animationComplete = false;
-	let shuffledIndices: number[] = [];
+
+	// Mode switch
+	let activeMode: DataMode = 'bestand';
+	const modeViews = [
+		{ key: 'bestand', label: 'Bestand' },
+		{ key: 'neuzulassungen', label: 'Neuzulassungen' }
+	];
 
 	// Derived params
-	$: params = { layer, country };
+	$: params = { layer, country, mode: activeMode };
 
 	// Get color for a category
 	function getColor(key: string): string {
 		return categoryConfig[key]?.color || '#6B7280';
 	}
 
-	// Animation effect - random order per row
-	function startAnimation() {
+	// Sort waffle data by cells (percentage) descending
+	$: sortedWaffleData = [...waffleData].sort((a, b) => b.cells - a.cells);
+
+	// Build column-first grid (left to right, biggest to smallest)
+	// 20 columns x 5 rows = 100 cells, filled column by column via CSS grid-auto-flow: column
+	$: columnGrid = buildColumnGrid(sortedWaffleData);
+
+	function buildColumnGrid(data: VehicleShareData[]): { key: string }[] {
+		const grid: { key: string }[] = [];
+
+		for (const category of data) {
+			for (let i = 0; i < category.cells; i++) {
+				grid.push({ key: category.key });
+			}
+		}
+
+		return grid;
+	}
+
+	// Animation effect - animate by column (left to right)
+	async function startAnimation() {
 		visibleCells = new Set();
 		animationComplete = false;
 
-		// Create shuffled indices by row (each row shuffled independently)
-		// 5 rows of 20 columns = 100 cells
-		shuffledIndices = [];
-		for (let row = 0; row < 5; row++) {
-			const rowIndices = Array.from({ length: 20 }, (_, i) => row * 20 + i);
-			// Fisher-Yates shuffle for each row
-			for (let i = rowIndices.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[rowIndices[i], rowIndices[j]] = [rowIndices[j], rowIndices[i]];
-			}
-			shuffledIndices.push(...rowIndices);
-		}
+		// Wait for reactive updates to complete
+		await tick();
 
 		let count = 0;
+		const totalCells = columnGrid.length;
+
+		if (totalCells === 0) {
+			animationComplete = true;
+			return;
+		}
+
 		const interval = setInterval(() => {
-			if (count < 100) {
-				visibleCells.add(shuffledIndices[count]);
+			if (count < totalCells) {
+				visibleCells.add(count);
 				visibleCells = visibleCells; // Trigger reactivity
 				count++;
 			}
-			if (count >= 100) {
+			if (count >= totalCells) {
 				clearInterval(interval);
 				animationComplete = true;
 			}
-		}, 35);
+		}, 25);
 	}
 
 	// Load data when region or params change
-	$: if (!regionLoading) {
+	$: if (!regionLoading && activeMode) {
 		loadData();
 	}
 
@@ -85,14 +108,14 @@
 			data = result.data;
 			regionName = result.regionName;
 			waffleData = buildWaffleData(result.data, result.categories);
-			grid = buildWaffleGrid(waffleData);
 
 			const builtChartData = buildChartData(
 				result.data,
 				waffleData,
 				result.updateDate,
 				regionName,
-				region
+				region,
+				activeMode
 			);
 			onChartData?.(builtChartData);
 
@@ -110,63 +133,63 @@
 
 	// Calculate when each category becomes visible based on cell index
 	function isCategoryVisible(categoryKey: string): boolean {
-		let cellsBefore = 0;
-		for (const cat of waffleData) {
-			if (cat.key === categoryKey) {
-				// Check if any cell of this category is visible
-				for (let i = 0; i < cat.cells; i++) {
-					if (visibleCells.has(cellsBefore + i)) {
-						return true;
-					}
-				}
-				return false;
+		for (let i = 0; i < columnGrid.length; i++) {
+			if (columnGrid[i].key === categoryKey && visibleCells.has(i)) {
+				return true;
 			}
-			cellsBefore += cat.cells;
 		}
 		return false;
 	}
 </script>
 
 <div class="vehicle-waffle">
+	<!-- Mode Switch -->
+	<div class="mb-4">
+		<Switch
+			views={modeViews}
+			activeView={activeMode}
+			on:itemClick={(event) => {
+				activeMode = event.detail;
+			}}
+		/>
+	</div>
+
 	{#if loading || regionLoading}
 		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
 		<div class="h-[300px] flex items-center justify-center text-red-500">{error}</div>
-	{:else if !data || grid.length === 0}
+	{:else if !data || columnGrid.length === 0}
 		<div class="h-[300px] flex items-center justify-center text-gray-500">
 			Keine Daten verfügbar
 		</div>
 	{:else}
 		<div class="waffle-container">
-			<!-- Waffle Grid with Highway Style -->
-			<div class="waffle-highway">
-				<!-- Road background -->
-				<div class="road-bg"></div>
-
-				<!-- Lane markings -->
-				{#each Array.from({ length: 19 }, (_, i) => i + 1) as col}
-					<div class="lane-marking" style="left: {col * 5}%"></div>
-				{/each}
-
-				<!-- Car Grid -->
+			<!-- Waffle Grid - Plain Background -->
+			<div class="waffle-plain">
+				<!-- Car Grid (10 columns x 10 rows, filled by column) -->
 				<div class="waffle-grid">
-					{#each grid as cellType, i}
-						<div class="waffle-cell" class:visible={visibleCells.has(i)}>
-							{#if visibleCells.has(i)}
-								<svg viewBox="0 0 24 17" fill={getColor(cellType)} class="car-icon">
-									<path
-										d="M18.92 5.01C18.72 4.42 18.16 4 17.5 4h-11c-.66 0-1.21.42-1.42 1.01L3 11v7c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-7l-2.08-4.99zM6.5 15c-.83 0-1.5-.67-1.5-1.5S5.67 12 6.5 12s1.5.67 1.5 1.5S7.33 15 6.5 15zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 10l1.5-4.5h11L19 10H5z"
-									/>
-								</svg>
-							{/if}
+					{#each columnGrid as cell, i}
+						<div
+							class="waffle-cell"
+							class:visible={visibleCells.has(i) || animationComplete}
+							style="color: {getColor(cell.key)}"
+						>
+							<!-- Front-facing car SVG -->
+							<svg viewBox="0 0 699 465" fill="currentColor" class="car-icon">
+								<path
+									fill-rule="evenodd"
+									clip-rule="evenodd"
+									d="M512 0C529 0 552 9 562 22C574 63 586 103 597 144C613 132 699 124 699 172C699 207 667 206 643 206C649 220 655 241 655 270C656 329 656 387 656 445C656 456 647 465 637 465H550C539 465 530 456 530 445C530 438 530 430 530 422H168C168 430 168 438 168 445C168 456 160 465 149 465H62C52 465 43 456 43 445C43 387 43 329 44 270C44 241 50 220 56 206C32 206 0 207 0 172C0 124 86 132 102 144C113 103 124 63 137 22C147 9 170 0 187 0H512ZM557 141C548 106 539 71 529 37H169C160 71 151 106 141 141H557ZM191 206C165 206 144 227 144 253C144 280 165 301 191 301C217 301 239 280 239 253C239 227 217 206 191 206ZM191 224C175 224 162 237 162 253C162 270 175 283 191 283C207 283 220 270 220 253C220 237 207 224 191 224ZM508 206C534 206 555 227 555 253C555 280 534 301 508 301C481 301 460 280 460 253C460 227 481 206 508 206ZM508 224C524 224 537 237 537 253C537 270 524 283 508 283C492 283 478 270 478 253C478 237 492 224 508 224Z"
+								/>
+							</svg>
 						</div>
 					{/each}
 				</div>
 			</div>
 
-			<!-- Legend -->
+			<!-- Legend (sorted by size) -->
 			<div class="waffle-legend">
-				{#each waffleData as category}
+				{#each sortedWaffleData as category}
 					<div
 						class="legend-item"
 						class:visible={isCategoryVisible(category.key)}
@@ -175,7 +198,9 @@
 						<div class="legend-color" style="background-color: {category.color}"></div>
 						<div class="legend-content">
 							<span class="legend-label">{category.label}: {category.cells}%</span>
-							<span class="legend-value">{formatNumber(category.absolute, 0)}</span>
+							{#if activeMode === 'bestand' && category.absolute > 0}
+								<span class="legend-value">{formatNumber(category.absolute, 0)}</span>
+							{/if}
 						</div>
 					</div>
 				{/each}
@@ -195,78 +220,52 @@
 		gap: 1rem;
 	}
 
-	.waffle-highway {
-		position: relative;
-		overflow: hidden;
-		border-radius: 8px;
-	}
-
-	.road-bg {
-		position: absolute;
-		inset: 0;
+	:global(.dark) .waffle-plain {
 		background: #1f2937;
-		border-radius: 8px;
-	}
-
-	.lane-marking {
-		position: absolute;
-		top: 2%;
-		bottom: 2%;
-		width: 2px;
-		transform: translateX(-50%);
-		background: repeating-linear-gradient(
-			180deg,
-			white 0px,
-			white 14px,
-			transparent 14px,
-			transparent 28px
-		);
-		opacity: 0.8;
-		z-index: 1;
 	}
 
 	.waffle-grid {
 		display: grid;
 		grid-template-columns: repeat(20, 1fr);
 		grid-template-rows: repeat(5, 1fr);
-		gap: 1px 2px;
-		position: relative;
-		z-index: 2;
-		padding: 4px;
+		grid-auto-flow: column;
+		gap: 4px 6px;
+		padding: 8px;
 	}
 
 	.waffle-cell {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 2px;
 		opacity: 0;
+		aspect-ratio: 1;
 	}
 
 	.waffle-cell.visible {
 		opacity: 1;
-		animation: driveUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 	}
 
 	.waffle-cell:hover {
-		transform: scale(1.2);
+		transform: scale(1.15);
 		z-index: 10;
 	}
 
-	@keyframes driveUp {
+	.car-icon {
+		width: 90%;
+		height: 90%;
+		max-height: 90%;
+	}
+
+	@keyframes fadeIn {
 		0% {
-			transform: translateY(60px);
+			transform: scale(0.8);
 			opacity: 0;
 		}
 		100% {
-			transform: translateY(0);
+			transform: scale(1);
 			opacity: 1;
 		}
-	}
-
-	.car-icon {
-		width: 100%;
-		height: auto;
 	}
 
 	.waffle-legend {
