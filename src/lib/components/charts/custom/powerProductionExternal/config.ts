@@ -32,10 +32,7 @@ export const categoryColors: Record<string, string> = {
 };
 
 // Goal configuration
-export const goalConfig = {
-	endYear: 2035,
-	targetValue: 200000
-};
+export const goalConfig = {};
 
 // Conversion factor: kWh to GWh
 const KWH_TO_GWH = 1_000_000;
@@ -58,8 +55,7 @@ const hardcodedData: RenewableDataPoint[] = [
 	{ year: 2021, pv: 0, wind: 126012387, total: 126012387 },
 	{ year: 2022, pv: 0, wind: 139698965, total: 139698965 },
 	{ year: 2023, pv: 172212, wind: 169217145, total: 169389357 },
-	{ year: 2024, pv: 12179040, wind: 142175660, total: 154354700 },
-	{ year: 2035, goal: 1300000000 }
+	{ year: 2024, pv: 12179040, wind: 142175660, total: 154354700 }
 ];
 
 /** Fetch renewable capacity data */
@@ -79,7 +75,7 @@ export function processData(data: RenewableDataPoint[]): {
 	actualData: RenewableDataPoint[];
 	goalRow: RenewableDataPoint | null;
 	actualDataGWh: Array<{ year: number; pv: number; wind: number; total: number }>;
-	goalValueGWh: number;
+	goalValueGWh: number | null;
 } {
 	const actualData = data.filter((d) => d.total != null);
 	const goalRow = data.find((d) => d.goal != null) ?? null;
@@ -92,7 +88,7 @@ export function processData(data: RenewableDataPoint[]): {
 		total: toGWh(d.total)
 	}));
 
-	const goalValueGWh = toGWh(goalRow?.goal);
+	const goalValueGWh = goalRow?.goal != null ? toGWh(goalRow.goal) : null;
 
 	return { actualData, goalRow, actualDataGWh, goalValueGWh };
 }
@@ -106,7 +102,7 @@ export function calculateProjection(data: RenewableDataPoint[]): {
 } | null {
 	const { actualDataGWh, goalRow, goalValueGWh } = processData(data);
 
-	if (actualDataGWh.length === 0 || !goalRow) return null;
+	if (actualDataGWh.length === 0 || !goalRow || goalValueGWh == null) return null;
 
 	const lastActual = actualDataGWh[actualDataGWh.length - 1];
 
@@ -147,8 +143,10 @@ export function getTableColumns(): TableColumn[] {
 export function getPlaceholders(
 	data: RenewableDataPoint[],
 	region: Region | null
-): Record<string, string | number> {
+): Record<string, string | number | boolean | null> {
 	const { actualDataGWh, goalRow, goalValueGWh } = processData(data);
+
+	const hasGoal = goalRow != null && goalValueGWh != null;
 
 	if (actualDataGWh.length === 0) {
 		return {
@@ -161,8 +159,9 @@ export function getPlaceholders(
 			latestPVRaw: 0,
 			latestWind: '0',
 			latestWindRaw: 0,
-			goalYear: goalRow?.year ?? goalConfig.endYear,
-			goalValue: formatGWh(goalValueGWh),
+			hasGoal,
+			goalYear: goalRow?.year ?? null,
+			goalValue: hasGoal ? formatGWh(goalValueGWh) : null,
 			goalValueRaw: goalValueGWh,
 			growthNeeded: '0',
 			growthNeededRaw: 0,
@@ -186,13 +185,17 @@ export function getPlaceholders(
 	const latestTotal = lastActual.total;
 	const latestPV = lastActual.pv;
 	const latestWind = lastActual.wind;
-	const goalYear = goalRow?.year ?? goalConfig.endYear;
+	const goalYear = goalRow?.year ?? null;
 
-	// Calculate growth metrics (all in GWh)
-	const growthNeeded = goalValueGWh - latestTotal;
-	const growthPercent = latestTotal > 0 ? ((goalValueGWh - latestTotal) / latestTotal) * 100 : 0;
-	const yearsToGoal = goalYear - latestYear;
-	const avgAnnualGrowth = yearsToGoal > 0 ? growthNeeded / yearsToGoal : 0;
+	// Calculate growth metrics (all in GWh) - only if goal exists
+	const growthNeeded = hasGoal ? goalValueGWh - latestTotal : null;
+	const growthPercent =
+		hasGoal && latestTotal > 0 ? ((goalValueGWh - latestTotal) / latestTotal) * 100 : null;
+	const yearsToGoal = hasGoal && goalYear ? goalYear - latestYear : null;
+	const avgAnnualGrowth =
+		growthNeeded != null && yearsToGoal != null && yearsToGoal > 0
+			? growthNeeded / yearsToGoal
+			: null;
 
 	// Determine dominant source
 	const dominantSource: SourceCategory = latestPV >= latestWind ? 'pv' : 'wind';
@@ -209,14 +212,15 @@ export function getPlaceholders(
 		latestPVRaw: latestPV,
 		latestWind: formatGWh(latestWind),
 		latestWindRaw: latestWind,
+		hasGoal,
 		goalYear,
-		goalValue: formatGWh(goalValueGWh),
+		goalValue: hasGoal ? formatGWh(goalValueGWh) : null,
 		goalValueRaw: goalValueGWh,
-		growthNeeded: formatGWh(growthNeeded),
+		growthNeeded: growthNeeded != null ? formatGWh(growthNeeded) : null,
 		growthNeededRaw: growthNeeded,
-		growthPercent: growthPercent.toFixed(0),
+		growthPercent: growthPercent != null ? growthPercent.toFixed(0) : null,
 		growthPercentRaw: growthPercent,
-		avgAnnualGrowth: formatGWh(avgAnnualGrowth),
+		avgAnnualGrowth: avgAnnualGrowth != null ? formatGWh(avgAnnualGrowth) : null,
 		avgAnnualGrowthRaw: avgAnnualGrowth,
 		dominantSource,
 		dominantSourceLabel,
@@ -228,14 +232,24 @@ export function getPlaceholders(
 }
 
 /** Generate dynamic title */
-export function generateTitle(placeholders: Record<string, string | number>): string {
-	const { latestYear, latestTotal, goalYear, goalValue } = placeholders;
-	return `Erneuerbare Kapazität erreichte ${latestTotal} GWh in ${latestYear}, Ziel: ${goalValue} GWh bis ${goalYear}`;
+export function generateTitle(
+	placeholders: Record<string, string | number | boolean | null>
+): string {
+	const { latestYear, latestTotal, hasGoal, goalYear, goalValue } = placeholders;
+
+	if (hasGoal) {
+		return `Erneuerbare Kapazität erreichte ${latestTotal} GWh in ${latestYear}, Ziel: ${goalValue} GWh bis ${goalYear}`;
+	}
+
+	return `Erneuerbare Kapazität erreichte ${latestTotal} GWh in ${latestYear}`;
 }
 
 /** Generate dynamic subtitle */
-export function generateSubtitle(placeholders: Record<string, string | number>): string {
+export function generateSubtitle(
+	placeholders: Record<string, string | number | boolean | null>
+): string {
 	const {
+		hasGoal,
 		growthNeeded,
 		growthPercent,
 		avgAnnualGrowth,
@@ -245,9 +259,12 @@ export function generateSubtitle(placeholders: Record<string, string | number>):
 		latestYear
 	} = placeholders;
 
-	const years = Number(goalYear) - Number(latestYear);
+	if (hasGoal && goalYear != null) {
+		const years = Number(goalYear) - Number(latestYear);
+		return `${dominantSourceLabel} führt mit ${dominantSourceValue} GWh. Um das Ziel ${goalYear} zu erreichen, müssen ${growthNeeded} GWh zugebaut werden (${growthPercent}% Steigerung), durchschnittlich ${avgAnnualGrowth} GWh/Jahr über ${years} Jahre.`;
+	}
 
-	return `${dominantSourceLabel} führt mit ${dominantSourceValue} GWh. Um das Ziel ${goalYear} zu erreichen, müssen ${growthNeeded} GWh zugebaut werden (${growthPercent}% Steigerung), durchschnittlich ${avgAnnualGrowth} GWh/Jahr über ${years} Jahre.`;
+	return `${dominantSourceLabel} führt mit ${dominantSourceValue} GWh.`;
 }
 
 /** Build ChartData object for Card integration */

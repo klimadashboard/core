@@ -424,9 +424,12 @@
 			<span class="w-4 h-0.5" style="background-color: {colors.total}"></span>
 			<span>Gesamt</span>
 		</div>
-		<div class="flex items-center gap-2 text-sm">
-			<span class="w-4 h-0.5 border-t-2 border-dashed" style="border-color: {colors.total}"></span>
-			<span>Zielpfad</span>
-		</div>
+		{#if goalRow}
+			<div class="flex items-center gap-2 text-sm">
+				<span class="w-4 h-0.5 border-t-2 border-dashed" style="border-color: {colors.total}"
+				></span>
+				<span>Zielpfad</span>
+			</div>
+		{/if}
 	</div>
 {/if}
