@@ -1,4 +1,4 @@
-ARS,AGS,GEN,BEZ,netPotentialShare,buildingWithPVShare,MStRInstalledNetPower,SolarPotentialInMWhPerYear,NumberOfBuildingsWithPV,NumberOfBuildings
+ARS,AGS,GEN,BEZ,netPotentialShare,buildingsWithPVShare,MStRInstalledNetPower,SolarPotentialInMWhPerYear,NumberOfBuildingsWithPV,NumberOfBuildings
 160775052043,16077043,Schmölln,Stadt,7.92,5.72,9397.13,118585.31,414,7238
 160775052003,16077003,Dobitschen,Gemeinde,5.74,4.14,285.58,4976.14,22,531
 160775051036,16077036,Nobitz,Gemeinde,12.21,6.31,9213.56,75442.15,388,6150

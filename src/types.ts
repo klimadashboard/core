@@ -210,6 +210,10 @@ export type Query = {
   energy_aggregated: Array<Energy_Aggregated>;
   energy_by_id?: Maybe<Energy>;
   energy_by_version?: Maybe<Version_Energy>;
+  energy_goals: Array<Energy_Goals>;
+  energy_goals_aggregated: Array<Energy_Goals_Aggregated>;
+  energy_goals_by_id?: Maybe<Energy_Goals>;
+  energy_goals_by_version?: Maybe<Version_Energy_Goals>;
   energy_heating_systems: Array<Energy_Heating_Systems>;
   energy_heating_systems_aggregated: Array<Energy_Heating_Systems_Aggregated>;
   energy_heating_systems_by_id?: Maybe<Energy_Heating_Systems>;
@@ -1966,6 +1970,39 @@ export type QueryEnergy_By_IdArgs = {
 
 
 export type QueryEnergy_By_VersionArgs = {
+  id: Scalars['ID']['input'];
+  version: Scalars['String']['input'];
+};
+
+
+export type QueryEnergy_GoalsArgs = {
+  filter?: InputMaybe<Energy_Goals_Filter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Goals_AggregatedArgs = {
+  filter?: InputMaybe<Energy_Goals_Filter>;
+  groupBy?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type QueryEnergy_Goals_By_IdArgs = {
+  id: Scalars['ID']['input'];
+  version?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryEnergy_Goals_By_VersionArgs = {
   id: Scalars['ID']['input'];
   version: Scalars['String']['input'];
 };
@@ -3988,6 +4025,7 @@ export type Subscription = {
   emissions_category_mutated?: Maybe<Emissions_Category_Mutated>;
   emissions_data_mutated?: Maybe<Emissions_Data_Mutated>;
   emissions_mutated?: Maybe<Emissions_Mutated>;
+  energy_goals_mutated?: Maybe<Energy_Goals_Mutated>;
   energy_heating_systems_mutated?: Maybe<Energy_Heating_Systems_Mutated>;
   energy_mutated?: Maybe<Energy_Mutated>;
   energy_renewable_share_mutated?: Maybe<Energy_Renewable_Share_Mutated>;
@@ -4294,6 +4332,11 @@ export type SubscriptionEmissions_Data_MutatedArgs = {
 
 
 export type SubscriptionEmissions_MutatedArgs = {
+  event?: InputMaybe<EventEnum>;
+};
+
+
+export type SubscriptionEnergy_Goals_MutatedArgs = {
   event?: InputMaybe<EventEnum>;
 };
 
@@ -6227,6 +6270,8 @@ export type Carbon_Prices_Mutated = {
 
 export type Charts = {
   __typename?: 'charts';
+  config?: Maybe<Scalars['JSON']['output']>;
+  config_func?: Maybe<Count_Functions>;
   custom_sveltestring?: Maybe<Scalars['String']['output']>;
   date_created?: Maybe<Scalars['Date']['output']>;
   date_created_func?: Maybe<Datetime_Functions>;
@@ -6300,6 +6345,7 @@ export type Charts_Aggregated = {
 
 export type Charts_Aggregated_Count = {
   __typename?: 'charts_aggregated_count';
+  config?: Maybe<Scalars['Int']['output']>;
   custom_sveltestring?: Maybe<Scalars['Int']['output']>;
   date_created?: Maybe<Scalars['Int']['output']>;
   date_updated?: Maybe<Scalars['Int']['output']>;
@@ -6321,6 +6367,8 @@ export type Charts_Aggregated_Count = {
 export type Charts_Filter = {
   _and?: InputMaybe<Array<InputMaybe<Charts_Filter>>>;
   _or?: InputMaybe<Array<InputMaybe<Charts_Filter>>>;
+  config?: InputMaybe<String_Filter_Operators>;
+  config_func?: InputMaybe<Count_Function_Filter_Operators>;
   custom_sveltestring?: InputMaybe<String_Filter_Operators>;
   date_created?: InputMaybe<Date_Filter_Operators>;
   date_created_func?: InputMaybe<Datetime_Function_Filter_Operators>;
@@ -8045,6 +8093,62 @@ export type Energy_Filter = {
   value?: InputMaybe<Number_Filter_Operators>;
 };
 
+export type Energy_Goals = {
+  __typename?: 'energy_goals';
+  energy?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  region?: Maybe<Scalars['String']['output']>;
+  target_power_kw?: Maybe<Scalars['Float']['output']>;
+  target_year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Energy_Goals_Aggregated = {
+  __typename?: 'energy_goals_aggregated';
+  avg?: Maybe<Energy_Goals_Aggregated_Fields>;
+  avgDistinct?: Maybe<Energy_Goals_Aggregated_Fields>;
+  count?: Maybe<Energy_Goals_Aggregated_Count>;
+  countAll?: Maybe<Scalars['Int']['output']>;
+  countDistinct?: Maybe<Energy_Goals_Aggregated_Count>;
+  group?: Maybe<Scalars['JSON']['output']>;
+  max?: Maybe<Energy_Goals_Aggregated_Fields>;
+  min?: Maybe<Energy_Goals_Aggregated_Fields>;
+  sum?: Maybe<Energy_Goals_Aggregated_Fields>;
+  sumDistinct?: Maybe<Energy_Goals_Aggregated_Fields>;
+};
+
+export type Energy_Goals_Aggregated_Count = {
+  __typename?: 'energy_goals_aggregated_count';
+  energy?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['Int']['output']>;
+  region?: Maybe<Scalars['Int']['output']>;
+  target_power_kw?: Maybe<Scalars['Int']['output']>;
+  target_year?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Energy_Goals_Aggregated_Fields = {
+  __typename?: 'energy_goals_aggregated_fields';
+  id?: Maybe<Scalars['Float']['output']>;
+  target_power_kw?: Maybe<Scalars['Float']['output']>;
+  target_year?: Maybe<Scalars['Float']['output']>;
+};
+
+export type Energy_Goals_Filter = {
+  _and?: InputMaybe<Array<InputMaybe<Energy_Goals_Filter>>>;
+  _or?: InputMaybe<Array<InputMaybe<Energy_Goals_Filter>>>;
+  energy?: InputMaybe<String_Filter_Operators>;
+  id?: InputMaybe<Number_Filter_Operators>;
+  region?: InputMaybe<String_Filter_Operators>;
+  target_power_kw?: InputMaybe<Number_Filter_Operators>;
+  target_year?: InputMaybe<Number_Filter_Operators>;
+};
+
+export type Energy_Goals_Mutated = {
+  __typename?: 'energy_goals_mutated';
+  data?: Maybe<Energy_Goals>;
+  event?: Maybe<EventEnum>;
+  key: Scalars['ID']['output'];
+};
+
 export type Energy_Heating_Systems = {
   __typename?: 'energy_heating_systems';
   category?: Maybe<Scalars['String']['output']>;
@@ -8302,6 +8406,7 @@ export type Energy_Wind_Units = {
   municipality?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   net_power_kw?: Maybe<Scalars['Float']['output']>;
+  operator_id?: Maybe<Scalars['String']['output']>;
   power_kw?: Maybe<Scalars['Float']['output']>;
   region?: Maybe<Scalars['String']['output']>;
   rotor_diameter?: Maybe<Scalars['Float']['output']>;
@@ -8338,6 +8443,7 @@ export type Energy_Wind_Units_Aggregated_Count = {
   municipality?: Maybe<Scalars['Int']['output']>;
   name?: Maybe<Scalars['Int']['output']>;
   net_power_kw?: Maybe<Scalars['Int']['output']>;
+  operator_id?: Maybe<Scalars['Int']['output']>;
   power_kw?: Maybe<Scalars['Int']['output']>;
   region?: Maybe<Scalars['Int']['output']>;
   rotor_diameter?: Maybe<Scalars['Int']['output']>;
@@ -8372,6 +8478,7 @@ export type Energy_Wind_Units_Filter = {
   municipality?: InputMaybe<String_Filter_Operators>;
   name?: InputMaybe<String_Filter_Operators>;
   net_power_kw?: InputMaybe<Number_Filter_Operators>;
+  operator_id?: InputMaybe<String_Filter_Operators>;
   power_kw?: InputMaybe<Number_Filter_Operators>;
   region?: InputMaybe<String_Filter_Operators>;
   rotor_diameter?: InputMaybe<Number_Filter_Operators>;
@@ -9301,6 +9408,9 @@ export type Mobility_Modal_Split = {
   category?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   region?: Maybe<Regions>;
+  source?: Maybe<Scalars['String']['output']>;
+  update?: Maybe<Scalars['Date']['output']>;
+  update_func?: Maybe<Date_Functions>;
   value?: Maybe<Scalars['Float']['output']>;
   year?: Maybe<Scalars['Int']['output']>;
 };
@@ -9334,6 +9444,8 @@ export type Mobility_Modal_Split_Aggregated_Count = {
   category?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
   region?: Maybe<Scalars['Int']['output']>;
+  source?: Maybe<Scalars['Int']['output']>;
+  update?: Maybe<Scalars['Int']['output']>;
   value?: Maybe<Scalars['Int']['output']>;
   year?: Maybe<Scalars['Int']['output']>;
 };
@@ -9351,6 +9463,9 @@ export type Mobility_Modal_Split_Filter = {
   category?: InputMaybe<String_Filter_Operators>;
   id?: InputMaybe<Number_Filter_Operators>;
   region?: InputMaybe<Regions_Filter>;
+  source?: InputMaybe<String_Filter_Operators>;
+  update?: InputMaybe<Date_Filter_Operators>;
+  update_func?: InputMaybe<Date_Function_Filter_Operators>;
   value?: InputMaybe<Number_Filter_Operators>;
   year?: InputMaybe<Number_Filter_Operators>;
 };
@@ -12032,6 +12147,7 @@ export type Solar_Potential_De = {
   NumberOfBuildings?: Maybe<Scalars['Int']['output']>;
   NumberOfBuildingsWithPV?: Maybe<Scalars['Int']['output']>;
   SolarPotentialInMWhPerYear?: Maybe<Scalars['Float']['output']>;
+  buildingsWithPVShare?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
   netPotentialShare?: Maybe<Scalars['Float']['output']>;
 };
@@ -12060,6 +12176,7 @@ export type Solar_Potential_De_Aggregated_Count = {
   NumberOfBuildings?: Maybe<Scalars['Int']['output']>;
   NumberOfBuildingsWithPV?: Maybe<Scalars['Int']['output']>;
   SolarPotentialInMWhPerYear?: Maybe<Scalars['Int']['output']>;
+  buildingsWithPVShare?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['Int']['output']>;
   netPotentialShare?: Maybe<Scalars['Int']['output']>;
 };
@@ -12072,6 +12189,7 @@ export type Solar_Potential_De_Aggregated_Fields = {
   NumberOfBuildings?: Maybe<Scalars['Float']['output']>;
   NumberOfBuildingsWithPV?: Maybe<Scalars['Float']['output']>;
   SolarPotentialInMWhPerYear?: Maybe<Scalars['Float']['output']>;
+  buildingsWithPVShare?: Maybe<Scalars['Float']['output']>;
   id?: Maybe<Scalars['Float']['output']>;
   netPotentialShare?: Maybe<Scalars['Float']['output']>;
 };
@@ -12087,6 +12205,7 @@ export type Solar_Potential_De_Filter = {
   SolarPotentialInMWhPerYear?: InputMaybe<Number_Filter_Operators>;
   _and?: InputMaybe<Array<InputMaybe<Solar_Potential_De_Filter>>>;
   _or?: InputMaybe<Array<InputMaybe<Solar_Potential_De_Filter>>>;
+  buildingsWithPVShare?: InputMaybe<Number_Filter_Operators>;
   id?: InputMaybe<Number_Filter_Operators>;
   netPotentialShare?: InputMaybe<Number_Filter_Operators>;
 };
@@ -12560,6 +12679,8 @@ export type Version_Carbon_Prices = {
 
 export type Version_Charts = {
   __typename?: 'version_charts';
+  config?: Maybe<Scalars['JSON']['output']>;
+  config_func?: Maybe<Count_Functions>;
   custom_sveltestring?: Maybe<Scalars['String']['output']>;
   date_created?: Maybe<Scalars['Date']['output']>;
   date_created_func?: Maybe<Datetime_Functions>;
@@ -12820,6 +12941,15 @@ export type Version_Energy = {
   value?: Maybe<Scalars['Float']['output']>;
 };
 
+export type Version_Energy_Goals = {
+  __typename?: 'version_energy_goals';
+  energy?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  region?: Maybe<Scalars['String']['output']>;
+  target_power_kw?: Maybe<Scalars['Float']['output']>;
+  target_year?: Maybe<Scalars['Int']['output']>;
+};
+
 export type Version_Energy_Heating_Systems = {
   __typename?: 'version_energy_heating_systems';
   category?: Maybe<Scalars['String']['output']>;
@@ -12884,6 +13014,7 @@ export type Version_Energy_Wind_Units = {
   municipality?: Maybe<Scalars['String']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   net_power_kw?: Maybe<Scalars['Float']['output']>;
+  operator_id?: Maybe<Scalars['String']['output']>;
   power_kw?: Maybe<Scalars['Float']['output']>;
   region?: Maybe<Scalars['String']['output']>;
   rotor_diameter?: Maybe<Scalars['Float']['output']>;
@@ -13037,6 +13168,9 @@ export type Version_Mobility_Modal_Split = {
   category?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   region?: Maybe<Scalars['JSON']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  update?: Maybe<Scalars['Date']['output']>;
+  update_func?: Maybe<Date_Functions>;
   value?: Maybe<Scalars['Float']['output']>;
   year?: Maybe<Scalars['Int']['output']>;
 };
@@ -13468,6 +13602,7 @@ export type Version_Solar_Potential_De = {
   NumberOfBuildings?: Maybe<Scalars['Int']['output']>;
   NumberOfBuildingsWithPV?: Maybe<Scalars['Int']['output']>;
   SolarPotentialInMWhPerYear?: Maybe<Scalars['Float']['output']>;
+  buildingsWithPVShare?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
   netPotentialShare?: Maybe<Scalars['Float']['output']>;
 };

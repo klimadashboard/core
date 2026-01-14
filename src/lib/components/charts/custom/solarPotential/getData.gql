@@ -1,7 +1,15 @@
-query GetSolarPotentialDe {
-	solar_potential_de(limit: 100) {
+query GetSolarPotentialDe($limit: Int, $offset: Int, $search: String, $sort: [String]) {
+	solar_potential_de(limit: $limit, offset: $offset, search: $search, sort: $sort) {
 		id
-		BEZ
+		AGS
+		ARS
 		GEN
+		BEZ
+		netPotentialShare
+		buildingsWithPVShare
+		MStRInstalledNetPower
+		SolarPotentialInMWhPerYear
+		NumberOfBuildingsWithPV
+		NumberOfBuildings
 	}
 }
