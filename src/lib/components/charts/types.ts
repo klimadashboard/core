@@ -39,7 +39,7 @@ export interface ChartData {
 		rows: DataPoint[];
 		filename: string;
 	};
-	placeholders: Record<string, string | number>;
+	placeholders: Record<string, string | number | boolean | null>;
 	meta: {
 		updateDate?: string;
 		source?: string;
