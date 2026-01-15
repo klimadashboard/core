@@ -32,6 +32,12 @@
 	let containerEl: HTMLElement;
 	let hoveredSeries: string | null = null;
 
+	// Default highlighted series (electric cars)
+	const defaultHighlight = 'Elektro';
+
+	// Active highlight: hovered series takes precedence, otherwise default
+	$: activeHighlight = hoveredSeries ?? defaultHighlight;
+
 	// Mode switch
 	let activeMode: DataMode = 'neuzulassungen';
 	const modeViews = [
@@ -216,20 +222,22 @@
 					tickCount={activeMode === 'bestand' ? Math.min(data.length, 6) : 6}
 				/>
 
-				<!-- Lines for each category -->
-				{#each seriesConfigs as series}
+				<!-- Lines for each category (non-highlighted first, then highlighted on top) -->
+				{@const sortedSeries = [...seriesConfigs].sort((a, b) => {
+					if (a.key === activeHighlight) return 1;
+					if (b.key === activeHighlight) return -1;
+					return 0;
+				})}
+				{#each sortedSeries as series}
 					{@const seriesData = chartData
 						.map((d) => ({
 							timestamp: d.timestamp,
 							value: d[series.key]
 						}))
 						.filter((d) => d.value != null)}
+					{@const isHighlighted = series.key === activeHighlight}
 
-					<g
-						class="cursor-pointer"
-						on:mouseenter={() => (hoveredSeries = series.key)}
-						on:mouseleave={() => (hoveredSeries = null)}
-					>
+					<g class="transition-opacity duration-200" opacity={isHighlighted ? 1 : 0.6}>
 						<Line
 							data={seriesData}
 							x="timestamp"
@@ -237,7 +245,7 @@
 							{xScale}
 							{yScale}
 							stroke={series.color}
-							strokeWidth={hoveredSeries === series.key || !hoveredSeries ? 2 : 1}
+							strokeWidth={isHighlighted ? 2.5 : 2}
 							curve="monotone"
 							{hover}
 						/>
@@ -249,6 +257,7 @@
 				{#each resolvedLabels as label}
 					{@const labelX = xScale(label.x)}
 					{@const originalY = yScale(label.y)}
+					{@const isHighlighted = label.key === activeHighlight}
 					{#if labelX != null}
 						<!-- Connector line if label was moved -->
 						{#if Math.abs(label.adjustedY - originalY) > 2}
@@ -259,29 +268,35 @@
 								y2={label.adjustedY}
 								stroke={label.color}
 								stroke-width="1"
-								opacity={hoveredSeries === label.key || !hoveredSeries ? 0.5 : 0.15}
-								class="transition-opacity"
+								opacity={isHighlighted ? 0.5 : 0.2}
+								class="transition-opacity duration-200"
 							/>
 						{/if}
 						<!-- Dot at data point -->
 						<circle
 							cx={labelX}
 							cy={originalY}
-							r={hoveredSeries === label.key ? 4 : 3}
+							r={isHighlighted ? 4 : 3}
 							fill={label.color}
-							opacity={hoveredSeries === label.key || !hoveredSeries ? 1 : 0.3}
-							class="transition-all"
+							opacity={isHighlighted ? 1 : 0.35}
+							class="transition-all duration-200"
 						/>
-						<!-- Label text -->
+						<!-- Label text (interactive) -->
 						<text
 							x={labelX + 8}
 							y={label.adjustedY}
 							fill={label.color}
 							font-size="11"
-							font-weight={hoveredSeries === label.key ? '600' : '500'}
+							font-weight={isHighlighted ? '600' : '500'}
 							dominant-baseline="middle"
-							opacity={hoveredSeries === label.key || !hoveredSeries ? 1 : 0.3}
-							class="transition-opacity pointer-events-none"
+							opacity={isHighlighted ? 1 : 0.35}
+							class="transition-all duration-200 cursor-pointer select-none"
+							on:mouseenter={() => (hoveredSeries = label.key)}
+							on:mouseleave={() => (hoveredSeries = null)}
+							role="button"
+							tabindex="0"
+							on:focus={() => (hoveredSeries = label.key)}
+							on:blur={() => (hoveredSeries = null)}
 						>
 							{label.label} ({label.displayValue})
 						</text>

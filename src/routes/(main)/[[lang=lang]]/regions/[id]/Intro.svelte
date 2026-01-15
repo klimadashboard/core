@@ -10,6 +10,7 @@
 	import { page } from '$app/state';
 	import IntroPanel from './IntroPanel.svelte';
 	import IntroIllustration from './IntroIllustration.svelte';
+	import RegionOutline from './RegionOutline.svelte';
 
 	export let data;
 
@@ -89,7 +90,7 @@
 	<div
 		class="reg-card-half rounded-xl overflow-hidden relative bg-gradient-green text-black/90 row-span-2"
 	>
-		<div class="p-6 flex flex-col h-full">
+		<div class="p-4 flex flex-col h-full relative z-10">
 			<h1 class="font-bold text-2xl xl:text-5xl leading-none mb-4">
 				Klimadashboard {data.page.name}
 			</h1>
@@ -98,6 +99,9 @@
 				begleitet die Umsetzung der Energie- und Mobilitätswende und weitere Klimaschutzmaßnahmen bei
 				dir vor Ort.
 			</p>
+			{#if data.page.outline}
+				<RegionOutline outline={data.page.outline} />
+			{/if}
 			<div class="flex gap-2 mt-4 items-center flex-wrap leading-none text-sm">
 				<div class="flex items-center gap-0.5">
 					<svg

@@ -219,7 +219,7 @@
 
 <div
 	bind:this={cardEl}
-	class="chart-card group relative bg-white h-full dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-700 flex flex-col justify-between"
+	class="chart-card group relative bg-white h-full dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all flex flex-col justify-between"
 	style="grid-column: span {span};"
 	on:click={handleClick}
 	on:keydown={(e) => e.key === 'Enter' && handleClick(e)}
@@ -693,9 +693,3 @@
 		<div class="min-h-[280px] bg-gray-50 dark:bg-gray-900"></div>
 	{/if}
 </div>
-
-<style>
-	.chart-card:hover {
-		transform: translateY(-1px);
-	}
-</style>
