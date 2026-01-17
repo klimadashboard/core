@@ -45,6 +45,12 @@ export interface TurbineData {
 	coordinates?: [number, number];
 }
 
+/** A single point in the goal path (cumulative target for a specific year) */
+export interface GoalPathPoint {
+	year: number;
+	cumulative_power_kw: number;
+}
+
 export interface RenewableGoal {
 	id: string;
 	region_code: string;
@@ -53,6 +59,8 @@ export interface RenewableGoal {
 	target_year: number;
 	source?: string;
 	notes?: string;
+	/** Optional custom goal path with yearly cumulative targets. If provided, used instead of linear interpolation. */
+	goal_path?: GoalPathPoint[];
 }
 
 // ============================================================================
@@ -135,6 +143,30 @@ export async function fetchGoal(
 
 		if (goals.length === 0) return null;
 
+		// Parse goal_path if present (JSON from Directus)
+		// Supports both { year, value } and { year, cumulative_power_kw } formats
+		let goalPath: GoalPathPoint[] | undefined;
+		if (goals[0].goal_path) {
+			try {
+				const parsed =
+					typeof goals[0].goal_path === 'string'
+						? JSON.parse(goals[0].goal_path)
+						: goals[0].goal_path;
+				if (Array.isArray(parsed)) {
+					goalPath = parsed
+						.map((p: any) => ({
+							year: Number(p.year),
+							// Accept either 'value' or 'cumulative_power_kw'
+							cumulative_power_kw: Number(p.value ?? p.cumulative_power_kw)
+						}))
+						.filter((p: GoalPathPoint) => !isNaN(p.year) && !isNaN(p.cumulative_power_kw))
+						.sort((a: GoalPathPoint, b: GoalPathPoint) => a.year - b.year);
+				}
+			} catch (e) {
+				console.warn('[config] Failed to parse goal_path:', e);
+			}
+		}
+
 		return {
 			id: goals[0].id,
 			region_code: goals[0].region,
@@ -142,7 +174,8 @@ export async function fetchGoal(
 			target_power_kw: goals[0].target_power_kw,
 			target_year: goals[0].target_year,
 			source: goals[0].source,
-			notes: goals[0].notes
+			notes: goals[0].notes,
+			goal_path: goalPath
 		};
 	} catch (e) {
 		console.error('[config] Failed to fetch renewable goal:', e);
@@ -150,12 +183,41 @@ export async function fetchGoal(
 	}
 }
 
-/** Calculate required yearly additions to reach goal */
+/** Calculate required yearly additions to reach goal.
+ * If goal has a goal_path, uses the difference between consecutive path points.
+ * Otherwise, distributes remaining capacity evenly across years.
+ */
 export function calculateRequiredYearlyAdditions(
 	currentCumulativeKw: number,
 	goal: RenewableGoal,
 	startYear: number
 ): Array<{ year: number; required_kw: number }> {
+	// If goal_path is provided, calculate yearly additions from path differences
+	if (goal.goal_path && goal.goal_path.length > 0) {
+		const result: Array<{ year: number; required_kw: number }> = [];
+		const path = goal.goal_path;
+
+		// For each consecutive pair in the path, calculate the yearly addition needed
+		for (let i = 0; i < path.length; i++) {
+			const current = path[i];
+			const previous = i > 0 ? path[i - 1] : null;
+
+			// Skip years before startYear
+			if (current.year < startYear) continue;
+
+			// Calculate addition for this year
+			const previousCumulative = previous?.cumulative_power_kw ?? currentCumulativeKw;
+			const required = current.cumulative_power_kw - previousCumulative;
+
+			if (required > 0) {
+				result.push({ year: current.year, required_kw: required });
+			}
+		}
+
+		return result;
+	}
+
+	// Fallback: distribute evenly (original behavior)
 	const remainingKw = goal.target_power_kw - currentCumulativeKw;
 	if (remainingKw <= 0) return [];
 

@@ -139,14 +139,30 @@
 			const lastDataYear = main[main.length - 1]?.year || currentYear;
 			const lastCumulative = main[main.length - 1]?.cumulative_power_kw || 0;
 
-			// Create goal line from last data point to target year
+			// Create goal line - use goal_path if available, otherwise straight line
 			const goalLineData: Array<{ year: number; value: number }> = [];
 
-			// Start from last data point
-			goalLineData.push({ year: lastDataYear, value: lastCumulative });
+			if (goalData.goal_path && goalData.goal_path.length > 0) {
+				// Use custom goal path - start from last data point, then follow path
+				goalLineData.push({ year: lastDataYear, value: lastCumulative });
 
-			// End at target
-			goalLineData.push({ year: goalData.target_year, value: goalData.target_power_kw });
+				// Add all path points that are after the last data year
+				for (const point of goalData.goal_path) {
+					if (point.year > lastDataYear) {
+						goalLineData.push({ year: point.year, value: point.cumulative_power_kw });
+					}
+				}
+
+				// Ensure the final target is included if not already in path
+				const lastPathYear = goalLineData[goalLineData.length - 1]?.year;
+				if (lastPathYear !== goalData.target_year) {
+					goalLineData.push({ year: goalData.target_year, value: goalData.target_power_kw });
+				}
+			} else {
+				// Fallback: straight line from last data point to target
+				goalLineData.push({ year: lastDataYear, value: lastCumulative });
+				goalLineData.push({ year: goalData.target_year, value: goalData.target_power_kw });
+			}
 
 			result.push({
 				name: `Ziel ${goalData.target_year} (${formatPower(goalData.target_power_kw, selectedEnergy)})`,
@@ -605,16 +621,19 @@
 						{@const items = chartData
 							.map((s) => {
 								const point = s.data.find((d) => d.year === year);
-								return point
-									? {
-											label: s.name,
-											value:
-												selectedUnit === 'perArea'
-													? `${formatNumber(point.value, 1)} kW/km²`
-													: formatPower(point.value, selectedEnergy),
-											color: s.color
-										}
-									: null;
+								if (!point) return null;
+
+								// For goal line, show simpler label like "Ziel 2030" instead of full name
+								const label = s.isGoal ? `Ziel ${year}` : s.name;
+
+								return {
+									label,
+									value:
+										selectedUnit === 'perArea'
+											? `${formatNumber(point.value, 1)} kW/km²`
+											: formatPower(point.value, selectedEnergy),
+									color: s.color
+								};
 							})
 							.filter(Boolean)}
 						<Tooltip

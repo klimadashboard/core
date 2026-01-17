@@ -41,8 +41,8 @@
 	$: color = getColor(selectedEnergy);
 	$: colors = getColors(selectedEnergy);
 
-	// Calculate required yearly addition (same height for all goal bars)
-	// Goal should be reached BY the target year (start of year), so last addition year is target_year - 1
+	// Calculate required yearly additions
+	// If goal has goal_path, use variable yearly requirements; otherwise use even distribution
 	$: goalInfo = (() => {
 		if (!goal || data.length === 0) return null;
 
@@ -50,12 +50,51 @@
 		const lastEntry = data[data.length - 1];
 		const currentCumulative = lastEntry?.cumulative_power_kw || 0;
 
-		// Calculate remaining capacity and years
+		// Calculate remaining capacity
 		const remainingKw = goal.target_power_kw - currentCumulative;
 		if (remainingKw <= 0) return null;
 
 		// Last year of additions is the year BEFORE the target year
 		const lastAdditionYear = goal.target_year - 1;
+
+		// If goal_path exists, build a map of year -> required addition
+		if (goal.goal_path && goal.goal_path.length > 0) {
+			const yearlyRequiredMap = new Map<number, number>();
+			const path = goal.goal_path;
+
+			for (let i = 0; i < path.length; i++) {
+				const current = path[i];
+				// Skip the target year itself (goal should be reached BY that year)
+				if (current.year > lastAdditionYear) continue;
+				if (current.year < currentYear) continue;
+
+				const previous = i > 0 ? path[i - 1] : null;
+				const previousCumulative = previous?.cumulative_power_kw ?? currentCumulative;
+				const required = current.cumulative_power_kw - previousCumulative;
+
+				if (required > 0) {
+					yearlyRequiredMap.set(current.year, required);
+				}
+			}
+
+			if (yearlyRequiredMap.size === 0) return null;
+
+			// Calculate average for legend display
+			const totalRequired = Array.from(yearlyRequiredMap.values()).reduce((a, b) => a + b, 0);
+			const avgYearlyRequired = totalRequired / yearlyRequiredMap.size;
+
+			return {
+				startYear: Math.min(...yearlyRequiredMap.keys()),
+				endYear: Math.max(...yearlyRequiredMap.keys()),
+				targetYear: goal.target_year,
+				yearlyRequired: avgYearlyRequired, // Average for legend
+				yearlyRequiredMap, // Per-year values for bars
+				remainingKw,
+				hasCustomPath: true
+			};
+		}
+
+		// Fallback: even distribution (original behavior)
 		const yearsRemaining = lastAdditionYear - currentYear + 1;
 		if (yearsRemaining <= 0) return null;
 
@@ -63,10 +102,12 @@
 
 		return {
 			startYear: currentYear,
-			endYear: lastAdditionYear, // Exclude target year
+			endYear: lastAdditionYear,
 			targetYear: goal.target_year,
 			yearlyRequired,
-			remainingKw
+			yearlyRequiredMap: null,
+			remainingKw,
+			hasCustomPath: false
 		};
 	})();
 
@@ -82,26 +123,38 @@
 			goalRequired: number;
 		}> = [];
 
+		// Helper to get required value for a year
+		const getGoalRequired = (year: number): number => {
+			if (goalInfo.yearlyRequiredMap) {
+				return goalInfo.yearlyRequiredMap.get(year) || 0;
+			}
+			return goalInfo.yearlyRequired;
+		};
+
 		// Add all historical data
 		for (const d of data) {
 			const isGoalYear = d.year >= goalInfo.startYear && d.year <= goalInfo.endYear;
 			result.push({
 				...d,
 				isGoalYear,
-				goalRequired: isGoalYear ? goalInfo.yearlyRequired : 0
+				goalRequired: isGoalYear ? getGoalRequired(d.year) : 0
 			});
 		}
 
 		// Add future years that don't have data yet (up to but NOT including target year)
 		for (let year = goalInfo.startYear; year <= goalInfo.endYear; year++) {
 			if (!result.find((d) => d.year === year)) {
-				result.push({
-					year,
-					net_power_kw: 0,
-					cumulative_power_kw: 0,
-					isGoalYear: true,
-					goalRequired: goalInfo.yearlyRequired
-				});
+				const goalRequired = getGoalRequired(year);
+				// Only add if there's actually a goal value for this year
+				if (goalRequired > 0 || !goalInfo.hasCustomPath) {
+					result.push({
+						year,
+						net_power_kw: 0,
+						cumulative_power_kw: 0,
+						isGoalYear: true,
+						goalRequired
+					});
+				}
 			}
 		}
 
@@ -111,15 +164,24 @@
 	// X domain includes all years
 	$: xDomain = combinedData.map((d) => d.year);
 
+	// Get max goal value (could be from map or single value)
+	$: maxGoalRequired = (() => {
+		if (!goalInfo) return 0;
+		if (goalInfo.yearlyRequiredMap) {
+			return Math.max(...goalInfo.yearlyRequiredMap.values(), 0);
+		}
+		return goalInfo.yearlyRequired;
+	})();
+
 	// Max value considers both actual data and goal
 	$: maxAbs = Math.max(
 		...combinedData.map((d) => Math.abs(d.net_power_kw)),
-		goalInfo?.yearlyRequired || 0,
+		maxGoalRequired,
 		1
 	);
 
 	// Y-axis max needs to include goal bars
-	$: yMax = Math.max(...combinedData.map((d) => d.net_power_kw), goalInfo?.yearlyRequired || 0, 1);
+	$: yMax = Math.max(...combinedData.map((d) => d.net_power_kw), maxGoalRequired, 1);
 
 	$: unit = getPowerUnit(maxAbs, selectedEnergy);
 	$: yFormat = (v: number) => formatNumber(convertPowerUnit(v, maxAbs), 0);
@@ -312,9 +374,13 @@
 						class="w-4 h-3 rounded-sm border-2 border-dashed"
 						style="border-color: {colors.dark}; background: {colors.light}; opacity: 0.6"
 					></div>
-					<span
-						>Benötigt: {formatPower(goalInfo.yearlyRequired, selectedEnergy)}/Jahr bis {goalInfo.targetYear}</span
-					>
+					<span>
+						{#if goalInfo.hasCustomPath}
+							Zielpfad bis {goalInfo.targetYear}
+						{:else}
+							Benötigt: {formatPower(goalInfo.yearlyRequired, selectedEnergy)}/Jahr bis {goalInfo.targetYear}
+						{/if}
+					</span>
 				</div>
 			</div>
 		{/if}
