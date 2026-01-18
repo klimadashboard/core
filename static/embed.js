@@ -30,6 +30,7 @@
 			var chartId = script.dataset.chart;
 			var targetId = script.dataset.target;
 			var region = script.dataset.region;
+			var view = script.dataset.view;
 
 			if (!chartId || !targetId) return;
 
@@ -45,6 +46,9 @@
 
 			if (region) {
 				embedUrl += '&region=' + encodeURIComponent(region);
+			}
+			if (view) {
+				embedUrl += '&view=' + encodeURIComponent(view);
 			}
 
 			var iframe = document.createElement('iframe');

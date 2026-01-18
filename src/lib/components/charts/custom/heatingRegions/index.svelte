@@ -26,6 +26,11 @@
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
+	export let view: 'full' | 'simple' = 'full';
+
+	// Check URL for view parameter (for embeds)
+	$: urlView = page.url?.searchParams?.get('view');
+	$: effectiveView = urlView === 'simple' ? 'simple' : view;
 
 	// State
 	let allRegions: RegionWithDistance[] = [];
@@ -203,51 +208,59 @@
 		</div>
 	{:else if selectedRegion}
 		{#if data.length > 0}
-			<!-- Desktop: 2/3 Chart + 1/3 PerDay cards -->
-			<div class="hidden lg:grid lg:grid-cols-3 gap-6 mt-4">
-				<div class="lg:col-span-2">
+			{#if effectiveView === 'simple'}
+				<!-- Simple view: Full-width chart only -->
+				<div class="mt-4">
 					<HeatingChart {data} {categories} />
 				</div>
-				<div class="lg:col-span-1">
-					<ExchangeRateCards {data} layout="stacked" />
-					<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-						Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {TARGET_YEAR}.
-					</p>
+			{:else}
+				<!-- Full view: Chart + PerDay cards + RegionComparison -->
+				<!-- Desktop: 2/3 Chart + 1/3 PerDay cards -->
+				<div class="hidden lg:grid lg:grid-cols-3 gap-6 mt-4">
+					<div class="lg:col-span-2">
+						<HeatingChart {data} {categories} />
+					</div>
+					<div class="lg:col-span-1">
+						<ExchangeRateCards {data} layout="stacked" />
+						<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+							Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {TARGET_YEAR}.
+						</p>
+					</div>
 				</div>
-			</div>
 
-			<!-- Mobile: Chart then PerDay slider -->
-			<div class="lg:hidden mt-4">
-				<HeatingChart {data} {categories} />
+				<!-- Mobile: Chart then PerDay slider -->
+				<div class="lg:hidden mt-4">
+					<HeatingChart {data} {categories} />
 
-				<!-- Mobile slider for PerDay cards -->
-				<div class="mt-6">
-					<Splide
-						hasTrack={false}
-						options={{
-							perPage: 1,
-							gap: '0.75rem',
-							padding: { right: '2rem' },
-							pagination: true,
-							arrows: false
-						}}
-					>
-						<SplideTrack>
-							{#each exchangeCards as card}
-								<SplideSlide>
-									{@render exchangeCard(card)}
-								</SplideSlide>
-							{/each}
-						</SplideTrack>
-						<div class="splide__pagination mt-2"></div>
-					</Splide>
-					<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-						Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {TARGET_YEAR}.
-					</p>
+					<!-- Mobile slider for PerDay cards -->
+					<div class="mt-6">
+						<Splide
+							hasTrack={false}
+							options={{
+								perPage: 1,
+								gap: '0.75rem',
+								padding: { right: '2rem' },
+								pagination: true,
+								arrows: false
+							}}
+						>
+							<SplideTrack>
+								{#each exchangeCards as card}
+									<SplideSlide>
+										{@render exchangeCard(card)}
+									</SplideSlide>
+								{/each}
+							</SplideTrack>
+							<div class="splide__pagination mt-2"></div>
+						</Splide>
+						<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+							Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {TARGET_YEAR}.
+						</p>
+					</div>
 				</div>
-			</div>
 
-			<RegionComparison {allRegions} {selectedRegion} {categories} />
+				<RegionComparison {allRegions} {selectedRegion} {categories} />
+			{/if}
 		{:else}
 			<div
 				class="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-xl text-gray-600 dark:text-gray-400"

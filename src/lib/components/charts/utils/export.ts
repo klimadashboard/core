@@ -60,16 +60,27 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 	}
 }
 
-export function generateEmbedCode(chartId: string, regionId?: string): string {
+export interface EmbedOptions {
+	region?: string;
+	view?: 'full' | 'simple';
+}
+
+export function generateEmbedCode(chartId: string, options: EmbedOptions = {}): string {
 	const base = typeof window !== 'undefined' ? window.location.origin : '';
-	const url = regionId ? `${base}/embed/${chartId}?region=${regionId}` : `${base}/embed/${chartId}`;
+	const params = new URLSearchParams();
+	if (options.region) params.set('region', options.region);
+	if (options.view) params.set('view', options.view);
+	const queryString = params.toString();
+	const url = queryString ? `${base}/embed/${chartId}?${queryString}` : `${base}/embed/${chartId}`;
 	return `<iframe src="${url}" width="100%" height="450" frameborder="0"></iframe>`;
 }
 
-export function generateScriptEmbedCode(chartId: string, regionId?: string): string {
+export function generateScriptEmbedCode(chartId: string, options: EmbedOptions = {}): string {
 	const base = typeof window !== 'undefined' ? window.location.origin : '';
 	const uniqueId = `kd-${chartId}-${Math.random().toString(36).slice(2, 8)}`;
-	const params = regionId ? ` data-region="${regionId}"` : '';
+	let dataAttrs = '';
+	if (options.region) dataAttrs += ` data-region="${options.region}"`;
+	if (options.view) dataAttrs += ` data-view="${options.view}"`;
 	return `<div id="${uniqueId}"></div>
-<script src="${base}/embed.js" data-chart="${chartId}" data-target="${uniqueId}"${params}></script>`;
+<script src="${base}/embed.js" data-chart="${chartId}" data-target="${uniqueId}"${dataAttrs}></script>`;
 }
