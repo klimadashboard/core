@@ -60,12 +60,12 @@ export interface CarDensityData {
 // =============================================================================
 
 export const colors = {
-	cars: '#1E40AF', // royal blue
-	carsLight: '#DBEAFE', // light blue
-	private: '#1E40AF', // dark green
-	privateLight: '#DBEAFE', // pale green
-	company: '#166534', // rich amber
-	companyLight: '#DCFCE7' // light amber
+	cars: '#84112E', // royal blue
+	carsLight: '#B5173F', // light blue
+	private: '#B04C21', // dark green
+	privateLight: '#D75D28', // pale green
+	company: '#DA9B34', // rich amber
+	companyLight: '#E5B870' // light amber
 };
 
 // =============================================================================

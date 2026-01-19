@@ -1,12 +1,10 @@
 // $lib/components/charts/custom/vehicleRegistrations/config.ts
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
-import Papa from 'papaparse';
 
 export type DataMode = 'neuzulassungen' | 'bestand';
 
 export interface VehicleParams {
-	dataUrl?: string;
 	mode?: DataMode;
 }
 
@@ -23,15 +21,15 @@ export interface SeriesConfig {
 
 // Category configuration with colors and display order
 export const categoryConfig: Record<string, { label: string; color: string; order: number }> = {
-	Benzin: { label: 'Benzin', color: '#DC2626', order: 0 },
-	Diesel: { label: 'Diesel', color: '#B45309', order: 1 },
-	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#EAB308', order: 2 },
-	Hybrid: { label: 'Hybrid', color: '#EAB308', order: 2 },
-	Elektro: { label: 'Elektro', color: '#047857', order: 3 },
-	'Plug-in-Hybrid': { label: 'Plug-in', color: '#1D4ED8', order: 4 },
-	Sonstige: { label: 'Sonstige', color: '#6B7280', order: 5 },
-	Gas: { label: 'Gas', color: '#6B7280', order: 6 },
-	'Sonstige Kraftstoffarten': { label: 'Sonstige', color: '#6B7280', order: 7 }
+	Benzin: { label: 'Benzin', color: '#E58A28', order: 0 },
+	Diesel: { label: 'Diesel', color: '#9E2668', order: 1 },
+	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#379AC5', order: 2 },
+	Hybrid: { label: 'Hybrid', color: '#379AC5', order: 2 },
+	Elektro: { label: 'Elektro', color: '#097347', order: 3 },
+	'Plug-in-Hybrid': { label: 'Plug-in', color: '#1C128E', order: 4 },
+	Sonstige: { label: 'Sonstige', color: '#464E5C', order: 5 },
+	Gas: { label: 'Gas', color: '#464E5C', order: 6 },
+	'Sonstige Kraftstoffarten': { label: 'Sonstige', color: '#464E5C', order: 7 }
 };
 
 // Fallback colors
@@ -134,38 +132,66 @@ export async function fetchBestandData(
 	return { data, categories, updateDate };
 }
 
-/** Fetch Neuzulassungen data from CSV */
+/** Fetch Neuzulassungen data from Directus */
 export async function fetchNeuzulassungenData(
-	params: VehicleParams
+	region: Region | null
 ): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string }> {
-	const url = params.dataUrl || '/data_temp/neuzulassungen-test.tsv';
+	const regionCode = region?.id || 'DE';
 
-	return new Promise((resolve, reject) => {
-		Papa.parse(url, {
-			download: true,
-			header: true,
-			dynamicTyping: true,
-			complete: (results) => {
-				const xKey = 'Stichtag';
-				const categories = Object.keys(results.data[0] || {}).filter((d) => d !== xKey);
+	// Build Directus API URL with filters
+	const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${regionCode}&filter[country][_eq]=DE&sort=period&limit=-1`;
 
-				const data = results.data
-					.filter((d: any) => d[xKey])
-					.map((d: any) => ({
-						...d,
-						date: new Date(d[xKey])
-					})) as VehicleRawData[];
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch Neuzulassungen data: ${response.status}`);
+	}
 
-				const lastRow = data[data.length - 1];
-				const updateDate = lastRow?.date?.toISOString() || new Date().toISOString();
+	const result = await response.json();
+	const records = (result.data || []) as Array<{
+		region: string;
+		country: string;
+		period: string;
+		category: string;
+		value: number;
+		source?: string;
+	}>;
 
-				resolve({ data, categories, updateDate });
-			},
-			error: (error) => {
-				reject(new Error(`Failed to parse data: ${error.message}`));
-			}
-		});
+	if (records.length === 0) {
+		return { data: [], categories: [], updateDate: new Date().toISOString() };
+	}
+
+	// Get unique periods and categories
+	const periods = [...new Set(records.map((r) => r.period))].sort();
+	const rawCategories = [...new Set(records.map((r) => r.category))];
+
+	// Sort categories by configured order
+	const categories = rawCategories.sort((a, b) => {
+		const orderA = categoryConfig[a]?.order ?? 99;
+		const orderB = categoryConfig[b]?.order ?? 99;
+		return orderA - orderB;
 	});
+
+	// Build time series data
+	const data: VehicleRawData[] = periods.map((period) => {
+		const periodRecords = records.filter((r) => r.period === period);
+
+		const row: VehicleRawData = {
+			date: new Date(period)
+		};
+
+		// Add share values for each category
+		for (const cat of categories) {
+			const record = periodRecords.find((r) => r.category === cat);
+			row[cat] = record?.value || 0;
+		}
+
+		return row;
+	});
+
+	const lastRow = data[data.length - 1];
+	const updateDate = lastRow?.date?.toISOString() || new Date().toISOString();
+
+	return { data, categories, updateDate };
 }
 
 /** Fetch data based on mode */
@@ -176,7 +202,7 @@ export async function fetchData(
 	if (params.mode === 'bestand') {
 		return fetchBestandData(region);
 	}
-	return fetchNeuzulassungenData(params);
+	return fetchNeuzulassungenData(region);
 }
 
 /** Get table columns dynamically based on categories */
@@ -201,7 +227,7 @@ export function getTableColumns(categories: string[]): TableColumn[] {
 export function getPlaceholders(
 	data: VehicleRawData[],
 	categories: string[],
-	_region: Region | null
+	region: Region | null
 ): Record<string, string | number> {
 	const lastRow = data[data.length - 1];
 	const currentYear = new Date().getFullYear();
@@ -215,6 +241,7 @@ export function getPlaceholders(
 	}
 
 	return {
+		regionName: region?.name ?? '',
 		currentYear,
 		lastUpdateDate: lastRow?.date instanceof Date ? lastRow.date.toLocaleDateString('de-DE') : '',
 		categoryCount: categories.length,

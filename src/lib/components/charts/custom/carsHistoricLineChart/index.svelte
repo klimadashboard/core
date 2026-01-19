@@ -21,7 +21,6 @@
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
-	export let dataUrl: string = '/data_temp/neuzulassungen-test.tsv';
 
 	// State
 	let data: VehicleRawData[] = [];
@@ -46,7 +45,7 @@
 	];
 
 	// Derived
-	$: params = { dataUrl, mode: activeMode };
+	$: params = { mode: activeMode };
 
 	// Transform data for Chart component (needs numeric x values)
 	$: chartData = data.map((d) => ({

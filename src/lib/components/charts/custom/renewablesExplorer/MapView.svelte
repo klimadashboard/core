@@ -7,6 +7,7 @@
 	import { fetchRegion } from '$lib/utils/getRegion';
 	import type { Region } from '$lib/utils/getRegion';
 	import Loader from '$lib/components/Loader.svelte';
+	import type { ChartData } from '$lib/components/charts/types';
 	import {
 		fetchAllTurbines,
 		fetchTurbineDetails,
@@ -22,6 +23,7 @@
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
 	export let regionId: string | null = null;
+	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
 	const dispatch = createEventDispatcher();
 
@@ -419,6 +421,24 @@
 	let mounted = false;
 	$: if (mounted && (effectiveRegionId !== undefined || region)) {
 		loadRegion();
+	}
+
+	// Send chart data with placeholders when region is available
+	$: if (onChartData && effectiveRegion !== undefined) {
+		onChartData({
+			raw: [],
+			table: { columns: [], rows: [], filename: `${selectedEnergy}-map` },
+			placeholders: {
+				regionName: effectiveRegion?.name || 'Deutschland',
+				energyType: selectedEnergy,
+				energyLabel: selectedEnergy === 'solar' ? 'Solar' : 'Wind'
+			},
+			meta: {
+				updateDate: new Date().toISOString(),
+				source: 'Marktstammdatenregister der Bundesnetzagentur',
+				region: effectiveRegion
+			}
+		});
 	}
 
 	// Reactive: Reload turbines when energy type changes

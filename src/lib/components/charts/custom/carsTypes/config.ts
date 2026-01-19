@@ -2,7 +2,6 @@
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
-import Papa from 'papaparse';
 
 export type DataMode = 'bestand' | 'neuzulassungen';
 
@@ -30,13 +29,13 @@ export interface VehicleRawData {
 
 // Category configuration with colors and order
 export const categoryConfig: Record<string, { label: string; color: string; order: number }> = {
-	Benzin: { label: 'Benzin', color: '#EF4444', order: 0 },
-	Diesel: { label: 'Diesel', color: '#8B5CF6', order: 1 },
-	Hybrid: { label: 'Hybrid', color: '#F59E0B', order: 2 },
-	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#F59E0B', order: 2 },
-	Elektro: { label: 'Elektro', color: '#10B981', order: 3 },
-	'Plug-in-Hybrid': { label: 'Plug-in', color: '#3B82F6', order: 4 },
-	Sonstige: { label: 'Sonstige', color: '#9CA3AF', order: 5 }
+	Benzin: { label: 'Benzin', color: '#E58A28', order: 0 },
+	Diesel: { label: 'Diesel', color: '#9E2668', order: 1 },
+	Hybrid: { label: 'Hybrid', color: '#379AC5', order: 2 },
+	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#379AC5', order: 2 },
+	Elektro: { label: 'Elektro', color: '#097347', order: 3 },
+	'Plug-in-Hybrid': { label: 'Plug-in', color: '#1C128E', order: 4 },
+	Sonstige: { label: 'Sonstige', color: '#464E5C', order: 5 }
 };
 
 // Fallback colors for unknown categories
@@ -164,75 +163,83 @@ async function fetchBestandData(
 	return { data, categories, updateDate, regionName };
 }
 
-/** Fetch Neuzulassungen data from TSV file (national data only) */
+/** Fetch Neuzulassungen data from Directus */
 async function fetchNeuzulassungenData(
-	_region: Region | null,
+	region: Region | null,
 	params: VehicleParams
 ): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string }> {
 	const country = params.country || 'DE';
-	const regionName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
+	const regionCode = region?.id;
+	const defaultRegionName =
+		country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 
-	// Neuzulassungen data comes from a TSV file (national level only)
-	const url = '/data_temp/neuzulassungen-test.tsv';
+	// Build Directus API URL with filters
+	const filters = [`filter[country][_eq]=${country}`];
+	if (region) {
+		filters.push(`filter[region][_eq]=${regionCode}`);
+	} else {
+		// Default to national level (region = country code)
+		filters.push(`filter[region][_eq]=${country}`);
+	}
 
-	return new Promise((resolve, reject) => {
-		Papa.parse(url, {
-			download: true,
-			header: true,
-			dynamicTyping: true,
-			complete: (results: { data: Record<string, unknown>[] }) => {
-				const xKey = 'Stichtag';
-				const rows = results.data.filter((d: Record<string, unknown>) => d[xKey]) as Record<string, unknown>[];
+	const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?${filters.join('&')}&sort=-period&limit=-1`;
 
-				if (rows.length === 0) {
-					reject(new Error('No data found'));
-					return;
-				}
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch Neuzulassungen data: ${response.status}`);
+	}
 
-				// Get the latest row
-				const latestRow = rows[rows.length - 1];
-				const categories = Object.keys(latestRow).filter((k) => k !== xKey);
+	const result = await response.json();
+	const records = (result.data || []) as Array<{
+		region: string;
+		country: string;
+		period: string;
+		category: string;
+		value: number;
+		source?: string;
+	}>;
 
-				// Sort categories by configured order
-				const sortedCategories = categories.sort((a, b) => {
-					const orderA = categoryConfig[a]?.order ?? 99;
-					const orderB = categoryConfig[b]?.order ?? 99;
-					return orderA - orderB;
-				});
+	if (records.length === 0) {
+		throw new Error('No data found');
+	}
 
-				// Calculate total and build data
-				// The TSV contains share values (0-1), not absolute values
-				// So we'll use the shares directly and set absolute to 0
-				const categoriesData: Record<string, number> = {};
-				const sharesData: Record<string, number> = {};
+	// Get the latest period
+	const periods = [...new Set(records.map((r) => r.period))].sort();
+	const latestPeriod = periods[periods.length - 1];
+	const latestRecords = records.filter((r) => r.period === latestPeriod);
 
-				for (const cat of sortedCategories) {
-					const value = latestRow[cat];
-					const share = typeof value === 'number' ? value : 0;
-					sharesData[cat] = share;
-					categoriesData[cat] = 0; // No absolute values in TSV
-				}
-
-				const dateStr = latestRow[xKey] as string;
-				const date = new Date(dateStr);
-				const year = date.getFullYear();
-
-				const data: VehicleRawData = {
-					year,
-					total: 0, // No total in share-based data
-					categories: categoriesData,
-					shares: sharesData
-				};
-
-				const updateDate = date.toISOString();
-
-				resolve({ data, categories: sortedCategories, updateDate, regionName });
-			},
-			error: (error: Error) => {
-				reject(new Error(`Failed to parse data: ${error.message}`));
-			}
-		});
+	// Get all categories and sort by configured order
+	const categories = [...new Set(latestRecords.map((r) => r.category))].sort((a, b) => {
+		const orderA = categoryConfig[a]?.order ?? 99;
+		const orderB = categoryConfig[b]?.order ?? 99;
+		return orderA - orderB;
 	});
+
+	// Build data structure
+	const categoriesData: Record<string, number> = {};
+	const sharesData: Record<string, number> = {};
+
+	for (const cat of categories) {
+		const record = latestRecords.find((r) => r.category === cat);
+		const share = record?.value || 0;
+		sharesData[cat] = share;
+		categoriesData[cat] = 0; // No absolute values in this dataset
+	}
+
+	const date = new Date(latestPeriod);
+	const year = date.getFullYear();
+
+	const data: VehicleRawData = {
+		year,
+		total: 0, // No total in share-based data
+		categories: categoriesData,
+		shares: sharesData
+	};
+
+	const updateDate = date.toISOString();
+	const regionName = region?.name || defaultRegionName;
+
+	return { data, categories, updateDate, regionName };
 }
 
 /** Fetch data based on mode */

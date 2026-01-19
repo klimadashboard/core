@@ -112,6 +112,7 @@
 				{region}
 				{regionLoading}
 				{regionId}
+				{onChartData}
 				on:openMapOverlay={handleMapOverlay}
 			/>
 		{/if}
