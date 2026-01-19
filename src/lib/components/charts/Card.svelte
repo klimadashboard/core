@@ -47,6 +47,16 @@
 	// Get current region ID for embed options
 	$: currentRegionId = chartData?.meta?.region?.id || page.data.page?.id || null;
 
+	// Check if we're on an embed route and have a region parameter
+	$: isEmbedRoute = page.url.pathname.startsWith('/embed/');
+	$: urlRegionId = page.url.searchParams.get('region');
+
+	// Logo link: on embed route with region param, link to regional dashboard; otherwise main site
+	$: logoHref =
+		isEmbedRoute && urlRegionId
+			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${urlRegionId}`
+			: `https://klimadashboard.${PUBLIC_VERSION}`;
+
 	// Close menus when clicking outside
 	function handleClickOutside(e: MouseEvent) {
 		if (showDownloadMenu && !(e.target as HTMLElement).closest('.download-menu')) {
@@ -252,9 +262,9 @@
 					{title || chart.content?.title}
 				</h2>
 				<a
-					href="https://klimadashboard.org"
+					href={logoHref}
 					target="_blank"
-					aria-label="Klimadashboard.org"
+					aria-label="Klimadashboard.{PUBLIC_VERSION}"
 					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
 					on:click={(e) => e.stopPropagation()}
 				>
