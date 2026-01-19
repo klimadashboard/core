@@ -6,6 +6,7 @@
 		copyToClipboard,
 		type EmbedOptions
 	} from '$lib/components/charts/utils/export';
+	import type { EmbedOption } from '$lib/components/charts/types';
 
 	export let chartId: string;
 	export let currentRegionId: string | null = null;
@@ -13,25 +14,58 @@
 		view?: boolean;
 		region?: boolean;
 	} = {};
+	/** Custom embed options from chart's chartData.embedOptions */
+	export let customEmbedOptions: EmbedOption[] = [];
 	export let onClose: () => void;
 
 	// Embed type
 	let embedType: 'iframe' | 'script' = 'script';
 
-	// Options
+	// Built-in options
 	let includeRegion = !!currentRegionId;
 	let viewMode: 'full' | 'simple' = 'full';
+
+	// Custom options state - track which are enabled and their selected values
+	let customOptionsState: Record<string, { enabled: boolean; value: string }> = {};
+
+	// Initialize custom options state from props
+	$: {
+		for (const opt of customEmbedOptions) {
+			if (!(opt.key in customOptionsState)) {
+				customOptionsState[opt.key] = {
+					enabled: true, // Default to enabled
+					value: opt.currentValue
+				};
+			}
+		}
+	}
+
+	// Build custom params object from enabled custom options
+	$: customParams = (() => {
+		const params: Record<string, string> = {};
+		for (const opt of customEmbedOptions) {
+			const state = customOptionsState[opt.key];
+			if (state?.enabled) {
+				params[opt.key] = state.value;
+			}
+		}
+		return Object.keys(params).length > 0 ? params : undefined;
+	})();
 
 	// Computed embed code
 	$: embedOptions = {
 		region: includeRegion && currentRegionId ? currentRegionId : undefined,
-		view: availableOptions.view && viewMode !== 'full' ? viewMode : undefined
+		view: availableOptions.view && viewMode !== 'full' ? viewMode : undefined,
+		customParams
 	} satisfies EmbedOptions;
 
 	$: embedCode =
 		embedType === 'iframe'
 			? generateEmbedCode(chartId, embedOptions)
 			: generateScriptEmbedCode(chartId, embedOptions);
+
+	// Check if we have any options to show
+	$: hasOptions = currentRegionId || availableOptions.view || customEmbedOptions.length > 0;
 
 	let copied = false;
 	async function handleCopy() {
@@ -50,6 +84,20 @@
 		if (e.key === 'Escape') {
 			onClose();
 		}
+	}
+
+	function toggleCustomOption(key: string) {
+		customOptionsState[key] = {
+			...customOptionsState[key],
+			enabled: !customOptionsState[key].enabled
+		};
+	}
+
+	function setCustomOptionValue(key: string, value: string) {
+		customOptionsState[key] = {
+			...customOptionsState[key],
+			value
+		};
 	}
 </script>
 
@@ -123,7 +171,7 @@
 			</div>
 
 			<!-- Options -->
-			{#if currentRegionId || availableOptions.view}
+			{#if hasOptions}
 				<div class="space-y-3">
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
 						Optionen
@@ -157,6 +205,39 @@
 							</label>
 						</div>
 					{/if}
+
+					<!-- Custom embed options from chart -->
+					{#each customEmbedOptions as option (option.key)}
+						{@const state = customOptionsState[option.key]}
+						<div>
+							<label class="flex items-center gap-3 cursor-pointer mb-2">
+								<input
+									type="checkbox"
+									checked={state?.enabled ?? true}
+									on:change={() => toggleCustomOption(option.key)}
+									class="w-4 h-4 rounded border-gray-300 text-[#28A889] focus:ring-[#28A889]"
+								/>
+								<span class="text-sm text-gray-700 dark:text-gray-300">
+									{option.label}
+								</span>
+							</label>
+							{#if state?.enabled}
+								<div class="ml-7 flex flex-wrap gap-2">
+									{#each option.choices as choice}
+										<button
+											on:click={() => setCustomOptionValue(option.key, choice.value)}
+											class="px-3 py-1.5 rounded text-sm font-medium transition
+												{state?.value === choice.value
+												? 'bg-[#28A889]/10 text-[#28A889] border border-[#28A889]'
+												: 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}"
+										>
+											{choice.label}
+										</button>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/each}
 				</div>
 			{/if}
 

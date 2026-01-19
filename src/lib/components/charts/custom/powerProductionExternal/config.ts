@@ -1,18 +1,27 @@
-// $lib/components/charts/custom/renewableCapacity/config.ts
+// $lib/components/charts/custom/powerProductionExternal/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 
-export interface RenewableCapacityParams {
+export interface PowerProductionParams {
 	regionId?: string;
 }
 
-export interface RenewableDataPoint {
+export interface PowerProductionDataPoint {
 	year: number;
-	pv?: number;
-	wind?: number;
-	total?: number;
-	goal?: number;
+	pv: number;
+	wind: number;
+	total: number;
+}
+
+// Raw API response type
+interface ApiRecord {
+	region: string;
+	country: string;
+	period: string;
+	category: string;
+	value: number;
+	source?: string;
 }
 
 // Category definitions
@@ -31,9 +40,6 @@ export const categoryColors: Record<string, string> = {
 	projected: '#D1D5DB'
 };
 
-// Goal configuration
-export const goalConfig = {};
-
 // Conversion factor: kWh to GWh
 const KWH_TO_GWH = 1_000_000;
 
@@ -48,70 +54,84 @@ export function formatGWh(value: number): string {
 	return value.toLocaleString('de-DE', { maximumFractionDigits: 1 });
 }
 
-// Hardcoded data in kWh (will be converted to GWh for display)
-const hardcodedData: RenewableDataPoint[] = [
-	{ year: 2019, pv: 0, wind: 154662873, total: 154662873 },
-	{ year: 2020, pv: 0, wind: 155892735, total: 155892735 },
-	{ year: 2021, pv: 0, wind: 126012387, total: 126012387 },
-	{ year: 2022, pv: 0, wind: 139698965, total: 139698965 },
-	{ year: 2023, pv: 172212, wind: 169217145, total: 169389357 },
-	{ year: 2024, pv: 12179040, wind: 142175660, total: 154354700 }
-];
-
-/** Fetch renewable capacity data */
+/** Fetch power production data from Directus */
 export async function fetchData(
 	region: Region | null,
-	params: RenewableCapacityParams
-): Promise<{ data: RenewableDataPoint[]; updateDate: string }> {
-	// TODO: Replace with Directus fetch
-	return {
-		data: hardcodedData,
-		updateDate: new Date().toISOString()
-	};
+	params: PowerProductionParams
+): Promise<{ data: PowerProductionDataPoint[]; updateDate: string; source: string }> {
+	const regionId = region?.id;
+
+	if (!regionId) {
+		return { data: [], updateDate: new Date().toISOString(), source: '' };
+	}
+
+	const url = `https://base.klimadashboard.org/items/power_production_external?filter[region][_eq]=${encodeURIComponent(regionId)}&sort=period`;
+
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch power production data: ${response.status}`);
+	}
+
+	const result = await response.json();
+	const records: ApiRecord[] = result.data || [];
+
+	if (records.length === 0) {
+		return { data: [], updateDate: new Date().toISOString(), source: '' };
+	}
+
+	// Group by period (year)
+	const byYear = new Map<number, { pv: number; wind: number }>();
+
+	for (const record of records) {
+		const year = parseInt(record.period, 10);
+		if (isNaN(year)) continue;
+
+		if (!byYear.has(year)) {
+			byYear.set(year, { pv: 0, wind: 0 });
+		}
+
+		const yearData = byYear.get(year)!;
+		if (record.category === 'pv') {
+			yearData.pv += record.value;
+		} else if (record.category === 'wind') {
+			yearData.wind += record.value;
+		}
+	}
+
+	// Convert to array and calculate totals
+	const data: PowerProductionDataPoint[] = Array.from(byYear.entries())
+		.map(([year, values]) => ({
+			year,
+			pv: values.pv,
+			wind: values.wind,
+			total: values.pv + values.wind
+		}))
+		.sort((a, b) => a.year - b.year);
+
+	// Get source and update date from first record
+	const source = records[0]?.source || '';
+	const latestPeriod = records.reduce((max, r) => {
+		const year = parseInt(r.period, 10);
+		return year > max ? year : max;
+	}, 0);
+	const updateDate = new Date(latestPeriod, 11, 31).toISOString();
+
+	return { data, updateDate, source };
 }
 
-/** Process data - separate actual data from goal, convert to GWh */
-export function processData(data: RenewableDataPoint[]): {
-	actualData: RenewableDataPoint[];
-	goalRow: RenewableDataPoint | null;
-	actualDataGWh: Array<{ year: number; pv: number; wind: number; total: number }>;
-	goalValueGWh: number | null;
+/** Process data - convert to GWh for display */
+export function processData(data: PowerProductionDataPoint[]): {
+	dataGWh: Array<{ year: number; pv: number; wind: number; total: number }>;
 } {
-	const actualData = data.filter((d) => d.total != null);
-	const goalRow = data.find((d) => d.goal != null) ?? null;
-
 	// Convert to GWh for display
-	const actualDataGWh = actualData.map((d) => ({
+	const dataGWh = data.map((d) => ({
 		year: d.year,
 		pv: toGWh(d.pv),
 		wind: toGWh(d.wind),
 		total: toGWh(d.total)
 	}));
 
-	const goalValueGWh = goalRow?.goal != null ? toGWh(goalRow.goal) : null;
-
-	return { actualData, goalRow, actualDataGWh, goalValueGWh };
-}
-
-/** Calculate projection from last actual to goal */
-export function calculateProjection(data: RenewableDataPoint[]): {
-	startYear: number;
-	startValue: number;
-	endYear: number;
-	endValue: number;
-} | null {
-	const { actualDataGWh, goalRow, goalValueGWh } = processData(data);
-
-	if (actualDataGWh.length === 0 || !goalRow || goalValueGWh == null) return null;
-
-	const lastActual = actualDataGWh[actualDataGWh.length - 1];
-
-	return {
-		startYear: lastActual.year,
-		startValue: lastActual.total,
-		endYear: goalRow.year,
-		endValue: goalValueGWh
-	};
+	return { dataGWh };
 }
 
 /** Get table columns */
@@ -141,14 +161,12 @@ export function getTableColumns(): TableColumn[] {
 
 /** Generate placeholders for titles/descriptions */
 export function getPlaceholders(
-	data: RenewableDataPoint[],
+	data: PowerProductionDataPoint[],
 	region: Region | null
 ): Record<string, string | number | boolean | null> {
-	const { actualDataGWh, goalRow, goalValueGWh } = processData(data);
+	const { dataGWh } = processData(data);
 
-	const hasGoal = goalRow != null && goalValueGWh != null;
-
-	if (actualDataGWh.length === 0) {
+	if (dataGWh.length === 0) {
 		return {
 			regionName: region?.name || 'Region',
 			unit: 'GWh',
@@ -159,16 +177,6 @@ export function getPlaceholders(
 			latestPVRaw: 0,
 			latestWind: '0',
 			latestWindRaw: 0,
-			hasGoal,
-			goalYear: goalRow?.year ?? null,
-			goalValue: hasGoal ? formatGWh(goalValueGWh) : null,
-			goalValueRaw: goalValueGWh,
-			growthNeeded: '0',
-			growthNeededRaw: 0,
-			growthPercent: '0',
-			growthPercentRaw: 0,
-			avgAnnualGrowth: '0',
-			avgAnnualGrowthRaw: 0,
 			dominantSource: 'wind',
 			dominantSourceLabel: 'Wind',
 			dominantSourceValue: '0',
@@ -178,24 +186,13 @@ export function getPlaceholders(
 		};
 	}
 
-	const years = actualDataGWh.map((d) => d.year).sort((a, b) => a - b);
-	const lastActual = actualDataGWh[actualDataGWh.length - 1];
+	const years = dataGWh.map((d: { year: number }) => d.year).sort((a: number, b: number) => a - b);
+	const lastActual = dataGWh[dataGWh.length - 1];
 
 	const latestYear = lastActual.year;
 	const latestTotal = lastActual.total;
 	const latestPV = lastActual.pv;
 	const latestWind = lastActual.wind;
-	const goalYear = goalRow?.year ?? null;
-
-	// Calculate growth metrics (all in GWh) - only if goal exists
-	const growthNeeded = hasGoal ? goalValueGWh - latestTotal : null;
-	const growthPercent =
-		hasGoal && latestTotal > 0 ? ((goalValueGWh - latestTotal) / latestTotal) * 100 : null;
-	const yearsToGoal = hasGoal && goalYear ? goalYear - latestYear : null;
-	const avgAnnualGrowth =
-		growthNeeded != null && yearsToGoal != null && yearsToGoal > 0
-			? growthNeeded / yearsToGoal
-			: null;
 
 	// Determine dominant source
 	const dominantSource: SourceCategory = latestPV >= latestWind ? 'pv' : 'wind';
@@ -212,16 +209,6 @@ export function getPlaceholders(
 		latestPVRaw: latestPV,
 		latestWind: formatGWh(latestWind),
 		latestWindRaw: latestWind,
-		hasGoal,
-		goalYear,
-		goalValue: hasGoal ? formatGWh(goalValueGWh) : null,
-		goalValueRaw: goalValueGWh,
-		growthNeeded: growthNeeded != null ? formatGWh(growthNeeded) : null,
-		growthNeededRaw: growthNeeded,
-		growthPercent: growthPercent != null ? growthPercent.toFixed(0) : null,
-		growthPercentRaw: growthPercent,
-		avgAnnualGrowth: avgAnnualGrowth != null ? formatGWh(avgAnnualGrowth) : null,
-		avgAnnualGrowthRaw: avgAnnualGrowth,
 		dominantSource,
 		dominantSourceLabel,
 		dominantSourceValue: formatGWh(dominantSourceValue),
@@ -235,73 +222,40 @@ export function getPlaceholders(
 export function generateTitle(
 	placeholders: Record<string, string | number | boolean | null>
 ): string {
-	const { latestYear, latestTotal, hasGoal, goalYear, goalValue } = placeholders;
-
-	if (hasGoal) {
-		return `Erneuerbare Kapazität erreichte ${latestTotal} GWh in ${latestYear}, Ziel: ${goalValue} GWh bis ${goalYear}`;
-	}
-
-	return `Erneuerbare Kapazität erreichte ${latestTotal} GWh in ${latestYear}`;
+	const { latestYear, latestTotal } = placeholders;
+	return `Erneuerbare Produktion erreichte ${latestTotal} GWh in ${latestYear}`;
 }
 
 /** Generate dynamic subtitle */
 export function generateSubtitle(
 	placeholders: Record<string, string | number | boolean | null>
 ): string {
-	const {
-		hasGoal,
-		growthNeeded,
-		growthPercent,
-		avgAnnualGrowth,
-		dominantSourceLabel,
-		dominantSourceValue,
-		goalYear,
-		latestYear
-	} = placeholders;
-
-	if (hasGoal && goalYear != null) {
-		const years = Number(goalYear) - Number(latestYear);
-		return `${dominantSourceLabel} führt mit ${dominantSourceValue} GWh. Um das Ziel ${goalYear} zu erreichen, müssen ${growthNeeded} GWh zugebaut werden (${growthPercent}% Steigerung), durchschnittlich ${avgAnnualGrowth} GWh/Jahr über ${years} Jahre.`;
-	}
-
+	const { dominantSourceLabel, dominantSourceValue } = placeholders;
 	return `${dominantSourceLabel} führt mit ${dominantSourceValue} GWh.`;
 }
 
 /** Build ChartData object for Card integration */
 export function buildChartData(
-	data: RenewableDataPoint[],
+	data: PowerProductionDataPoint[],
 	updateDate: string,
-	region: Region | null
+	region: Region | null,
+	source: string
 ): ChartData {
-	const { actualDataGWh, goalRow, goalValueGWh } = processData(data);
-
-	// Table rows in GWh
-	const tableRows = [
-		...actualDataGWh,
-		...(goalRow
-			? [
-					{
-						year: goalRow.year,
-						pv: null as number | null,
-						wind: null as number | null,
-						total: goalValueGWh
-					}
-				]
-			: [])
-	];
+	const { dataGWh } = processData(data);
 
 	return {
 		raw: data,
 		table: {
 			columns: getTableColumns(),
-			rows: tableRows,
-			filename: 'renewable_capacity'
+			rows: dataGWh,
+			filename: 'power_production_external'
 		},
 		placeholders: getPlaceholders(data, region),
 		meta: {
 			updateDate,
-			source: 'Stadtwerke',
+			source: source || 'Stadtwerke',
 			region
-		}
+		},
+		hasData: data.length > 0
 	};
 }

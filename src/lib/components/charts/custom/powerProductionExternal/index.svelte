@@ -1,4 +1,4 @@
-<!-- $lib/components/charts/custom/renewableCapacity/index.svelte -->
+<!-- $lib/components/charts/custom/powerProductionExternal/index.svelte -->
 <script lang="ts">
 	import { scaleLinear } from 'd3-scale';
 	import { area as d3Area, line as d3Line, curveLinear } from 'd3-shape';
@@ -11,7 +11,7 @@
 		buildChartData,
 		processData,
 		formatGWh,
-		type RenewableDataPoint
+		type PowerProductionDataPoint
 	} from './config';
 
 	// Props from Card slot
@@ -27,14 +27,13 @@
 	const colors = {
 		pv: '#E0A906',
 		wind: '#003B80',
-		total: '#111827',
-		projected: '#D1D5DB'
+		total: '#111827'
 	};
 
 	// State
 	let containerEl: HTMLElement;
 	let width = 0;
-	let data: RenewableDataPoint[] = [];
+	let data: PowerProductionDataPoint[] = [];
 	let loading = true;
 	let error: string | null = null;
 
@@ -57,10 +56,10 @@
 			data = result.data;
 
 			// Build and emit chart data for Card integration
-			const builtChartData = buildChartData(data, result.updateDate, region);
+			const builtChartData = buildChartData(data, result.updateDate, region, result.source);
 			onChartData?.(builtChartData);
 		} catch (e) {
-			console.error('[RenewableCapacity] Error:', e);
+			console.error('[PowerProductionExternal] Error:', e);
 			error = e instanceof Error ? e.message : 'Fehler beim Laden';
 			data = [];
 			onChartData?.(null);
@@ -71,38 +70,35 @@
 
 	// Derived data (converted to GWh)
 	$: processedData = processData(data);
-	$: actualDataGWh = processedData.actualDataGWh;
-	$: goalRow = processedData.goalRow;
-	$: goalValueGWh = processedData.goalValueGWh;
-	$: lastActual = actualDataGWh.length > 0 ? actualDataGWh[actualDataGWh.length - 1] : null;
+	$: dataGWh = processedData.dataGWh;
+	$: lastActual = dataGWh.length > 0 ? dataGWh[dataGWh.length - 1] : null;
 	$: lastYear = lastActual?.year ?? 0;
 	$: lastTotal = lastActual?.total ?? 0;
-	$: goalYear = goalRow?.year ?? 0;
 
 	// Dimensions
 	$: innerWidth = Math.max(0, width - margin.left - margin.right);
 	$: innerHeight = Math.max(0, height - margin.top - margin.bottom);
 
 	// Scales
-	$: allYears = [...actualDataGWh.map((d) => d.year), goalYear].filter(Boolean);
+	$: allYears = dataGWh.map((d) => d.year);
 	$: minYear = allYears.length > 0 ? Math.min(...allYears) : 2020;
-	$: maxYear = allYears.length > 0 ? Math.max(...allYears) : 2035;
-	$: maxValue = Math.max(...actualDataGWh.map((d) => d.total), goalValueGWh, 0) * 1.1;
+	$: maxYear = allYears.length > 0 ? Math.max(...allYears) : 2025;
+	$: maxValue = dataGWh.length > 0 ? Math.max(...dataGWh.map((d) => d.total)) * 1.1 : 100;
 
 	$: xScale = scaleLinear().domain([minYear, maxYear]).range([0, innerWidth]);
 	$: yScale = scaleLinear()
-		.domain([0, Math.max(220, maxValue)])
+		.domain([0, Math.max(50, maxValue)])
 		.range([innerHeight, 0]);
 
 	// Stacked area data (in GWh)
 	$: stackedAreas = (() => {
-		const windArea = actualDataGWh.map((d) => ({
+		const windArea = dataGWh.map((d) => ({
 			year: d.year,
 			y0: 0,
 			y1: d.wind
 		}));
 
-		const pvArea = actualDataGWh.map((d) => ({
+		const pvArea = dataGWh.map((d) => ({
 			year: d.year,
 			y0: d.wind,
 			y1: d.wind + d.pv
@@ -125,49 +121,21 @@
 		.curve(curveLinear);
 
 	// Total line data
-	$: totalLineData = actualDataGWh.map((d) => ({
+	$: totalLineData = dataGWh.map((d) => ({
 		year: d.year,
 		value: d.total
 	}));
-
-	// Projected area and line
-	$: projectedAreaData =
-		lastActual && goalRow
-			? [
-					{ year: lastYear, y0: 0, y1: lastTotal },
-					{ year: goalYear, y0: 0, y1: goalValueGWh }
-				]
-			: [];
-
-	$: projectedLineData =
-		lastActual && goalRow
-			? [
-					{ year: lastYear, value: lastTotal },
-					{ year: goalYear, value: goalValueGWh }
-				]
-			: [];
 
 	// Path strings
 	$: windAreaPath = stackedAreas.wind.length > 0 ? areaGenerator(stackedAreas.wind) : '';
 	$: pvAreaPath = stackedAreas.pv.length > 0 ? areaGenerator(stackedAreas.pv) : '';
 	$: totalLinePath = totalLineData.length > 0 ? lineGenerator(totalLineData) : '';
-	$: projectedAreaPath = projectedAreaData.length > 0 ? areaGenerator(projectedAreaData) : '';
-	$: projectedLinePath = projectedLineData.length > 0 ? lineGenerator(projectedLineData) : '';
 
-	// Tooltip data - include goal year
+	// Tooltip data
 	$: tooltipData = (() => {
 		if (hoveredYear === null) return null;
 
-		// Check if it's the goal year
-		if (hoveredYear === goalYear && goalRow) {
-			return {
-				title: `${hoveredYear} (Ziel)`,
-				items: [{ label: 'Ziel', value: `${formatGWh(goalValueGWh)} GWh`, color: colors.total }]
-			};
-		}
-
-		// Otherwise show actual data
-		const yearData = actualDataGWh.find((d) => d.year === hoveredYear);
+		const yearData = dataGWh.find((d) => d.year === hoveredYear);
 		if (!yearData) return null;
 
 		return {
@@ -188,8 +156,8 @@
 		const mouseX = e.clientX - rect.left - margin.left;
 		const year = Math.round(xScale.invert(mouseX));
 
-		// Allow hovering on actual data years or the goal year
-		if (actualDataGWh.some((d) => d.year === year) || year === goalYear) {
+		// Allow hovering on actual data years
+		if (dataGWh.some((d) => d.year === year)) {
 			hoveredYear = year;
 			hoverClientX = e.clientX;
 			hoverClientY = e.clientY;
@@ -224,40 +192,37 @@
 		ro.observe(containerEl);
 	}
 
-	// Generate smart x-axis ticks with goal year always included
+	// Generate x-axis ticks - only full years (integers)
 	$: xAxisTicks = (() => {
-		const baseTicks = xScale.ticks(width > 600 ? 10 : 5);
+		// Get all years from data as integers
+		const years = dataGWh.map((d) => d.year);
+		if (years.length === 0) return [];
 
-		// Add goal year if it exists and isn't already in the ticks
-		if (goalYear && !baseTicks.includes(goalYear)) {
-			baseTicks.push(goalYear);
-			baseTicks.sort((a, b) => a - b);
+		// If we have few years, show all of them
+		if (years.length <= 8) {
+			return years;
 		}
 
-		// Filter out ticks that are too close together (min 40px distance)
-		const minPixelDistance = 40;
+		// Otherwise, filter to avoid overcrowding
+		const minPixelDistance = 50;
 		const filteredTicks: number[] = [];
 
-		for (let i = 0; i < baseTicks.length; i++) {
-			const tick = baseTicks[i];
-			const tickX = xScale(tick);
-			const isGoalYear = tick === goalYear;
-
-			// Always include goal year
-			let shouldInclude = isGoalYear;
-
-			if (!shouldInclude && filteredTicks.length === 0) {
-				shouldInclude = true; // Always include first tick
-			} else if (!shouldInclude) {
+		for (const year of years) {
+			if (filteredTicks.length === 0) {
+				filteredTicks.push(year);
+			} else {
 				const lastTick = filteredTicks[filteredTicks.length - 1];
-				const lastTickX = xScale(lastTick);
-				const distance = Math.abs(tickX - lastTickX);
-				shouldInclude = distance >= minPixelDistance;
+				const distance = Math.abs(xScale(year) - xScale(lastTick));
+				if (distance >= minPixelDistance) {
+					filteredTicks.push(year);
+				}
 			}
+		}
 
-			if (shouldInclude) {
-				filteredTicks.push(tick);
-			}
+		// Always include the last year
+		const lastYear = years[years.length - 1];
+		if (!filteredTicks.includes(lastYear)) {
+			filteredTicks.push(lastYear);
 		}
 
 		return filteredTicks;
@@ -331,47 +296,14 @@
 						<path d={pvAreaPath} fill={colors.pv} opacity={0.85} />
 					{/if}
 
-					<!-- Total line (actuals) -->
+					<!-- Total line -->
 					{#if totalLinePath}
 						<path d={totalLinePath} fill="none" stroke={colors.total} stroke-width={2.5} />
 					{/if}
 
-					<!-- Projected line (dotted) -->
-					{#if projectedLinePath}
-						<path
-							d={projectedLinePath}
-							fill="none"
-							stroke={colors.total}
-							stroke-width={2}
-							stroke-dasharray="4 4"
-						/>
-					{/if}
-
-					<!-- Goal point -->
-					{#if goalRow}
-						<circle
-							cx={xScale(goalYear)}
-							cy={yScale(goalValueGWh)}
-							r={5}
-							fill={colors.total}
-							stroke="#FFFFFF"
-							stroke-width={1.5}
-						/>
-						<!-- Goal annotation -->
-						<text
-							x={xScale(goalYear) - 8}
-							y={yScale(goalValueGWh) - 10}
-							text-anchor="end"
-							fill={colors.total}
-							class="text-xs"
-						>
-							Ziel {goalYear}: {formatGWh(goalValueGWh)} GWh
-						</text>
-					{/if}
-
 					<!-- Hover indicator -->
 					{#if hoveredYear !== null}
-						{@const yearData = actualDataGWh.find((d) => d.year === hoveredYear)}
+						{@const yearData = dataGWh.find((d) => d.year === hoveredYear)}
 						{#if yearData}
 							<line
 								x1={xScale(hoveredYear)}
@@ -424,12 +356,5 @@
 			<span class="w-4 h-0.5" style="background-color: {colors.total}"></span>
 			<span>Gesamt</span>
 		</div>
-		{#if goalRow}
-			<div class="flex items-center gap-2 text-sm">
-				<span class="w-4 h-0.5 border-t-2 border-dashed" style="border-color: {colors.total}"
-				></span>
-				<span>Zielpfad</span>
-			</div>
-		{/if}
 	</div>
 {/if}

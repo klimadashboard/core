@@ -63,6 +63,8 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 export interface EmbedOptions {
 	region?: string;
 	view?: 'full' | 'simple';
+	/** Custom parameters from chart's embedOptions */
+	customParams?: Record<string, string>;
 }
 
 export function generateEmbedCode(chartId: string, options: EmbedOptions = {}): string {
@@ -70,6 +72,12 @@ export function generateEmbedCode(chartId: string, options: EmbedOptions = {}): 
 	const params = new URLSearchParams();
 	if (options.region) params.set('region', options.region);
 	if (options.view) params.set('view', options.view);
+	// Add custom parameters
+	if (options.customParams) {
+		for (const [key, value] of Object.entries(options.customParams)) {
+			params.set(key, value);
+		}
+	}
 	const queryString = params.toString();
 	const url = queryString ? `${base}/embed/${chartId}?${queryString}` : `${base}/embed/${chartId}`;
 	return `<iframe src="${url}" width="100%" height="450" frameborder="0"></iframe>`;
@@ -81,6 +89,12 @@ export function generateScriptEmbedCode(chartId: string, options: EmbedOptions =
 	let dataAttrs = '';
 	if (options.region) dataAttrs += ` data-region="${options.region}"`;
 	if (options.view) dataAttrs += ` data-view="${options.view}"`;
+	// Add custom parameters as data attributes
+	if (options.customParams) {
+		for (const [key, value] of Object.entries(options.customParams)) {
+			dataAttrs += ` data-${key}="${value}"`;
+		}
+	}
 	return `<div id="${uniqueId}"></div>
 <script src="${base}/embed.js" data-chart="${chartId}" data-target="${uniqueId}"${dataAttrs}></script>`;
 }

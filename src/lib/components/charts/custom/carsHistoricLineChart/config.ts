@@ -1,8 +1,13 @@
 // $lib/components/charts/custom/vehicleRegistrations/config.ts
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import { PUBLIC_VERSION } from '$env/static/public';
 
 export type DataMode = 'neuzulassungen' | 'bestand';
+
+// Get country code from PUBLIC_VERSION
+const getCountryCode = () => PUBLIC_VERSION.toUpperCase();
+
 
 export interface VehicleParams {
 	mode?: DataMode;
@@ -53,12 +58,13 @@ interface DirectusRecord {
 /** Fetch Bestand data from Directus */
 export async function fetchBestandData(
 	region: Region | null
-): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string }> {
-	const regionCode = region?.code || '08111'; // Default to Stuttgart
+): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string }> {
+	const country = getCountryCode();
+	const regionCode = region?.code || (country === 'DE' ? '08111' : country); // Default to Stuttgart for DE, or country code
 
-	// Fetch from Directus - filter by region code (5-digit version)
-	const regionCode5 = regionCode.length > 5 ? regionCode.substring(0, 5) : regionCode;
-	const url = `https://base.klimadashboard.org/items/mobility_cars?filter[region][_starts_with]=${regionCode5}&filter[country][_eq]=DE&limit=-1`;
+	// Fetch from Directus - filter by region code (5-digit version for DE)
+	const regionCode5 = country === 'DE' && regionCode.length > 5 ? regionCode.substring(0, 5) : regionCode;
+	const url = `https://base.klimadashboard.org/items/mobility_cars?filter[region][_starts_with]=${regionCode5}&filter[country][_eq]=${country}&limit=-1`;
 
 	const response = await fetch(url);
 	if (!response.ok) {
@@ -69,7 +75,7 @@ export async function fetchBestandData(
 	const records: DirectusRecord[] = result.data || [];
 
 	if (records.length === 0) {
-		return { data: [], categories: [], updateDate: new Date().toISOString() };
+		return { data: [], categories: [], updateDate: new Date().toISOString(), source: '' };
 	}
 
 	// Get unique periods and categories
@@ -129,17 +135,21 @@ export async function fetchBestandData(
 	const lastRow = data[data.length - 1];
 	const updateDate = lastRow?.date?.toISOString() || new Date().toISOString();
 
-	return { data, categories, updateDate };
+	// Extract source from first record
+	const source = records[0]?.source || '';
+
+	return { data, categories, updateDate, source };
 }
 
 /** Fetch Neuzulassungen data from Directus */
 export async function fetchNeuzulassungenData(
 	region: Region | null
-): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string }> {
-	const regionCode = region?.id || 'DE';
+): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string }> {
+	const country = getCountryCode();
+	const regionCode = region?.id || country;
 
 	// Build Directus API URL with filters
-	const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${regionCode}&filter[country][_eq]=DE&sort=period&limit=-1`;
+	const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${regionCode}&filter[country][_eq]=${country}&sort=period&limit=-1`;
 
 	const response = await fetch(url);
 	if (!response.ok) {
@@ -157,7 +167,7 @@ export async function fetchNeuzulassungenData(
 	}>;
 
 	if (records.length === 0) {
-		return { data: [], categories: [], updateDate: new Date().toISOString() };
+		return { data: [], categories: [], updateDate: new Date().toISOString(), source: '' };
 	}
 
 	// Get unique periods and categories
@@ -191,14 +201,17 @@ export async function fetchNeuzulassungenData(
 	const lastRow = data[data.length - 1];
 	const updateDate = lastRow?.date?.toISOString() || new Date().toISOString();
 
-	return { data, categories, updateDate };
+	// Extract source from first record
+	const source = records[0]?.source || '';
+
+	return { data, categories, updateDate, source };
 }
 
 /** Fetch data based on mode */
 export async function fetchData(
 	region: Region | null,
 	params: VehicleParams
-): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string }> {
+): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string }> {
 	if (params.mode === 'bestand') {
 		return fetchBestandData(region);
 	}
@@ -259,20 +272,55 @@ export function buildSeriesConfigs(categories: string[]): SeriesConfig[] {
 	}));
 }
 
+/** Check which data modes are available for a region */
+export async function checkDataAvailability(
+	region: Region | null
+): Promise<{ hasBestand: boolean; hasNeuzulassungen: boolean }> {
+	const [bestandResult, neuzulassungenResult] = await Promise.all([
+		fetchBestandData(region).catch(() => ({ data: [] })),
+		fetchNeuzulassungenData(region).catch(() => ({ data: [] }))
+	]);
+
+	return {
+		hasBestand: bestandResult.data.length > 0,
+		hasNeuzulassungen: neuzulassungenResult.data.length > 0
+	};
+}
+
 /** Build ChartData object */
 export function buildChartData(
 	data: VehicleRawData[],
 	categories: string[],
 	updateDate: string,
 	region: Region | null,
-	mode: DataMode = 'neuzulassungen'
+	mode: DataMode = 'neuzulassungen',
+	hasData: boolean = true,
+	availability?: { hasBestand: boolean; hasNeuzulassungen: boolean },
+	source?: string
 ): ChartData {
 	const tableRows = data.map((d) => ({
 		date: d.date,
 		...Object.fromEntries(categories.map((cat) => [cat, d[cat]]))
 	}));
 
+	// Build embed options if both modes are available
+	const embedOptions =
+		availability?.hasBestand && availability?.hasNeuzulassungen
+			? [
+					{
+						key: 'mode',
+						label: 'Datenansicht vorauswählen',
+						choices: [
+							{ value: 'neuzulassungen', label: 'Neuzulassungen' },
+							{ value: 'bestand', label: 'Bestand' }
+						],
+						currentValue: mode
+					}
+				]
+			: [];
+
 	return {
+		hasData,
 		raw: data,
 		table: {
 			columns: getTableColumns(categories),
@@ -282,11 +330,9 @@ export function buildChartData(
 		placeholders: getPlaceholders(data, categories, region),
 		meta: {
 			updateDate,
-			source:
-				mode === 'bestand'
-					? 'DESTATIS (GENESIS, Tabelle 46251-0021)'
-					: 'Kraftfahrt-Bundesamt (KBA)',
+			source: source || '',
 			region
-		}
+		},
+		embedOptions
 	};
 }

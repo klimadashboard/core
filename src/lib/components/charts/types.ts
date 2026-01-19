@@ -31,6 +31,21 @@ export interface TableColumn {
 	format?: (value: any) => string;
 }
 
+/** Embed option definition for custom chart parameters */
+export interface EmbedOption {
+	/** Parameter name used in URL query string */
+	key: string;
+	/** Display label in embed modal */
+	label: string;
+	/** Available choices */
+	choices: Array<{
+		value: string;
+		label: string;
+	}>;
+	/** Currently selected value */
+	currentValue: string;
+}
+
 /** Chart data exposed to Card */
 export interface ChartData {
 	raw: DataPoint[];
@@ -45,4 +60,15 @@ export interface ChartData {
 		source?: string;
 		region?: Region | null;
 	};
+	/**
+	 * Override for data availability check. When true, the chart is considered
+	 * to have data even if raw[] is empty (useful for map views, etc.).
+	 * When undefined, falls back to checking raw.length > 0.
+	 */
+	hasData?: boolean;
+	/**
+	 * Custom embed options that this chart supports.
+	 * These will be displayed in the embed modal as configurable parameters.
+	 */
+	embedOptions?: EmbedOption[];
 }

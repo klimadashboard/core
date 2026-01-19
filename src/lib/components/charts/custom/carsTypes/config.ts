@@ -2,12 +2,16 @@
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
+import { PUBLIC_VERSION } from '$env/static/public';
 
 export type DataMode = 'bestand' | 'neuzulassungen';
 
+// Get country code from PUBLIC_VERSION
+const getCountryCode = () => PUBLIC_VERSION.toUpperCase();
+
+
 export interface VehicleParams {
 	layer?: 'municipality' | 'district';
-	country?: string;
 	mode?: DataMode;
 }
 
@@ -58,32 +62,73 @@ interface ApiRegionData {
 function findRegionMatch(apiData: ApiRegionData[], region: Region | null): ApiRegionData | null {
 	if (!region) return null;
 
+	// Helper to get region identifier from API item (handles both nested object and flat string)
+	const getRegionId = (a: ApiRegionData): string | undefined => {
+		// Check if region is a nested object
+		if (typeof a.region === 'object' && a.region !== null) {
+			return a.region.id;
+		}
+		// Region might be a flat string
+		return a.region as unknown as string;
+	};
+
+	const getRegionCode = (a: ApiRegionData): string | undefined => {
+		if (typeof a.region === 'object' && a.region !== null) {
+			return a.region.code;
+		}
+		return a.region as unknown as string;
+	};
+
+	const getRegionCodeShort = (a: ApiRegionData): string | undefined => {
+		if (typeof a.region === 'object' && a.region !== null) {
+			return a.region.code_short;
+		}
+		return undefined;
+	};
+
+	const getRegionName = (a: ApiRegionData): string | undefined => {
+		if (typeof a.region === 'object' && a.region !== null) {
+			return a.region.name;
+		}
+		return undefined;
+	};
+
+	// Try matching by id first (unified identifier across countries)
+	if (region.id) {
+		const match = apiData.find((a) => getRegionId(a) === region.id);
+		if (match) {
+			return match;
+		}
+	}
+
 	// Try matching by code
 	if (region.code) {
 		const match =
-			apiData.find((a) => a.region?.code === region.code) ||
-			apiData.find((a) => a.region?.code_short === region.code);
-		if (match) return match;
+			apiData.find((a) => getRegionCode(a) === region.code) ||
+			apiData.find((a) => getRegionCodeShort(a) === region.code) ||
+			apiData.find((a) => getRegionId(a) === region.code);
+		if (match) {
+			return match;
+		}
 	}
 
 	// Try matching by codeShort
 	if (region.codeShort) {
 		const match =
-			apiData.find((a) => a.region?.code === region.codeShort) ||
-			apiData.find((a) => a.region?.code_short === region.codeShort);
-		if (match) return match;
-	}
-
-	// Try matching by id
-	if (region.id) {
-		const match = apiData.find((a) => a.region?.id === region.id);
-		if (match) return match;
+			apiData.find((a) => getRegionCode(a) === region.codeShort) ||
+			apiData.find((a) => getRegionCodeShort(a) === region.codeShort) ||
+			apiData.find((a) => getRegionId(a) === region.codeShort);
+		if (match) {
+			return match;
+		}
 	}
 
 	// Try matching by name
 	if (region.name) {
-		const match = apiData.find((a) => a.region?.name?.toLowerCase() === region.name?.toLowerCase());
-		if (match) return match;
+		const match = apiData.find((a) => getRegionName(a)?.toLowerCase() === region.name?.toLowerCase());
+		if (match) {
+			return match;
+		}
 	}
 
 	return null;
@@ -93,9 +138,9 @@ function findRegionMatch(apiData: ApiRegionData[], region: Region | null): ApiRe
 async function fetchBestandData(
 	region: Region | null,
 	params: VehicleParams
-): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string }> {
+): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string }> {
 	const layer = params.layer || 'district';
-	const country = params.country || 'DE';
+	const country = getCountryCode();
 
 	const url = `https://base.klimadashboard.org/get-mobility-cars?layer=${encodeURIComponent(layer)}&country=${encodeURIComponent(country)}&includeMeta=true`;
 
@@ -113,7 +158,11 @@ async function fetchBestandData(
 	const match = findRegionMatch(apiData, region);
 	if (match) {
 		regionData = match.data;
-		regionName = match.region.name || region?.name || region?.code || regionName;
+		// Handle both nested object and flat string region formats
+		const matchedRegionName = typeof match.region === 'object' && match.region !== null
+			? match.region.name
+			: undefined;
+		regionName = matchedRegionName || region?.name || region?.code || regionName;
 	}
 
 	// If no specific region, aggregate all non-country regions
@@ -131,8 +180,9 @@ async function fetchBestandData(
 	const yearData = regionData[String(latestYear)] || {};
 	const total = yearData['Insgesamt'] || 0;
 
-	// Get all categories (excluding 'Insgesamt')
-	const allCategories = Object.keys(yearData).filter((k) => k !== 'Insgesamt');
+	// Get all categories (excluding 'Insgesamt', 'Privat', 'Firmen' which are ownership types, not drive types)
+	const excludedCategories = ['Insgesamt', 'Privat', 'Firmen'];
+	const allCategories = Object.keys(yearData).filter((k) => !excludedCategories.includes(k));
 
 	// Sort categories by configured order
 	const categories = allCategories.sort((a, b) => {
@@ -160,15 +210,18 @@ async function fetchBestandData(
 
 	const updateDate = new Date(latestYear, 0, 1).toISOString();
 
-	return { data, categories, updateDate, regionName };
+	// Extract source from first record's metadata if available
+	const source = (apiData[0] as any)?.source || '';
+
+	return { data, categories, updateDate, regionName, source };
 }
 
 /** Fetch Neuzulassungen data from Directus */
 async function fetchNeuzulassungenData(
 	region: Region | null,
 	params: VehicleParams
-): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string }> {
-	const country = params.country || 'DE';
+): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string }> {
+	const country = getCountryCode();
 	const regionCode = region?.id;
 	const defaultRegionName =
 		country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
@@ -239,14 +292,17 @@ async function fetchNeuzulassungenData(
 	const updateDate = date.toISOString();
 	const regionName = region?.name || defaultRegionName;
 
-	return { data, categories, updateDate, regionName };
+	// Extract source from first record
+	const source = records[0]?.source || '';
+
+	return { data, categories, updateDate, regionName, source };
 }
 
 /** Fetch data based on mode */
 export async function fetchData(
 	region: Region | null,
 	params: VehicleParams
-): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string }> {
+): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string }> {
 	if (params.mode === 'neuzulassungen') {
 		return fetchNeuzulassungenData(region, params);
 	}
@@ -258,7 +314,14 @@ function aggregateAllRegions(apiData: ApiRegionData[]): Record<string, Record<st
 	const aggregated: Record<string, Record<string, number>> = {};
 
 	// Filter to only non-country regions to avoid double counting
-	const subRegions = apiData.filter((a) => a.region?.layer !== 'country');
+	// Handle both nested object and flat string region formats
+	const subRegions = apiData.filter((a) => {
+		if (typeof a.region === 'object' && a.region !== null) {
+			return a.region.layer !== 'country';
+		}
+		// For flat string regions, include all (no layer info available)
+		return true;
+	});
 
 	for (const regionItem of subRegions) {
 		for (const [year, catData] of Object.entries(regionItem.data || {})) {
@@ -368,6 +431,27 @@ export function getPlaceholders(
 	return placeholders;
 }
 
+/** Check which data modes are available for a region */
+export async function checkDataAvailability(
+	region: Region | null,
+	params: Omit<VehicleParams, 'mode'>
+): Promise<{ hasBestand: boolean; hasNeuzulassungen: boolean }> {
+	const [bestandResult, neuzulassungenResult] = await Promise.all([
+		fetchBestandData(region, { ...params, mode: 'bestand' }).catch(() => ({
+			data: { year: 0, total: 0, categories: {}, shares: {} }
+		})),
+		fetchNeuzulassungenData(region, { ...params, mode: 'neuzulassungen' }).catch(() => ({
+			data: { year: 0, total: 0, categories: {}, shares: {} }
+		}))
+	]);
+
+	// Check if data has meaningful content
+	const hasBestand = Object.keys(bestandResult.data.shares).length > 0;
+	const hasNeuzulassungen = Object.keys(neuzulassungenResult.data.shares).length > 0;
+
+	return { hasBestand, hasNeuzulassungen };
+}
+
 /** Build ChartData object */
 export function buildChartData(
 	data: VehicleRawData,
@@ -375,7 +459,10 @@ export function buildChartData(
 	updateDate: string,
 	regionName: string,
 	region: Region | null,
-	mode: DataMode = 'bestand'
+	mode: DataMode = 'bestand',
+	hasData: boolean = true,
+	availability?: { hasBestand: boolean; hasNeuzulassungen: boolean },
+	source?: string
 ): ChartData {
 	// Transform waffleData to clean table rows
 	const tableRows = waffleData.map((cat) => ({
@@ -386,7 +473,24 @@ export function buildChartData(
 
 	const modeLabel = mode === 'neuzulassungen' ? 'neuzulassungen' : 'bestand';
 
+	// Build embed options if both modes are available
+	const embedOptions =
+		availability?.hasBestand && availability?.hasNeuzulassungen
+			? [
+					{
+						key: 'mode',
+						label: 'Datenansicht vorauswählen',
+						choices: [
+							{ value: 'bestand', label: 'Bestand' },
+							{ value: 'neuzulassungen', label: 'Neuzulassungen' }
+						],
+						currentValue: mode
+					}
+				]
+			: [];
+
 	return {
+		hasData,
 		// Wrap in array so Card.svelte's `hasData` check works (chartData.raw.length > 0)
 		raw: [data],
 		table: {
@@ -397,8 +501,9 @@ export function buildChartData(
 		placeholders: getPlaceholders(data, waffleData, regionName),
 		meta: {
 			updateDate,
-			source: 'Kraftfahrt-Bundesamt (KBA)',
+			source: source || '',
 			region
-		}
+		},
+		embedOptions
 	};
 }

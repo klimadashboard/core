@@ -1,4 +1,5 @@
 <script>
+	import { createEventDispatcher } from 'svelte';
 	import Builder from './builder/index.svelte';
 	import Custom from './custom/index.svelte';
 	import Wrapper from './Wrapper.svelte';
@@ -13,6 +14,8 @@
 	export let options;
 	export let span;
 	export let hideWrapper = false;
+
+	const dispatch = createEventDispatcher();
 
 	$: getChart = async (locale) => {
 		const directus = getDirectusInstance();
@@ -54,7 +57,7 @@
 	{#if hideWrapper || type == 'small'}
 		<svelte:component this={c.chartComponent} chart={c.chart} {type} {options} />
 	{:else if type == 'card'}
-		<Card chart={c.chart} {span} let:region let:regionLoading let:onChartData>
+		<Card chart={c.chart} {span} let:region let:regionLoading let:onChartData on:dataAvailable>
 			<svelte:component
 				this={c.chartComponent}
 				chart={c.chart}

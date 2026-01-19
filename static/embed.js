@@ -29,8 +29,6 @@
 
 			var chartId = script.dataset.chart;
 			var targetId = script.dataset.target;
-			var region = script.dataset.region;
-			var view = script.dataset.view;
 
 			if (!chartId || !targetId) return;
 
@@ -44,12 +42,13 @@
 			var baseUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/'));
 			var embedUrl = baseUrl + '/embed/' + chartId + '?auto=true';
 
-			if (region) {
-				embedUrl += '&region=' + encodeURIComponent(region);
-			}
-			if (view) {
-				embedUrl += '&view=' + encodeURIComponent(view);
-			}
+			// Forward all data-* attributes (except reserved ones) as URL parameters
+			var reservedAttrs = ['chart', 'target', 'processed'];
+			Object.keys(script.dataset).forEach(function (key) {
+				if (reservedAttrs.indexOf(key) === -1 && script.dataset[key]) {
+					embedUrl += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(script.dataset[key]);
+				}
+			});
 
 			var iframe = document.createElement('iframe');
 			iframe.src = embedUrl;

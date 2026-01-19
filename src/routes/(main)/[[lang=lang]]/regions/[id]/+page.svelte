@@ -17,6 +17,14 @@
 
 	export let data;
 
+	// Track which charts have data available
+	// undefined = not yet loaded, true = has data, false = no data
+	let chartVisibility = {};
+
+	function handleDataAvailable(chartId, event) {
+		chartVisibility[chartId] = event.detail.hasData;
+	}
+
 	const coordinates = data.page?.center?.map((d) => parseFloat(d)).join(',') || [];
 
 	onMount(() => {
@@ -233,7 +241,14 @@
 							<div class="grid md:grid-cols-12 gap-1 m-1">
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
 									{#if chart.id}
-										<Chart id={chart.id} span={chart.span || 12} type="card" />
+										{#if chartVisibility[chart.id] !== false}
+											<Chart
+												id={chart.id}
+												span={chart.span || 12}
+												type="card"
+												on:dataAvailable={(e) => handleDataAvailable(chart.id, e)}
+											/>
+										{/if}
 									{:else}
 										<div class="" style="grid-column: span {chart.span || 12};">
 											<ComingSoonChart text={chart.text} />

@@ -1,11 +1,13 @@
 <!-- $lib/components/charts/custom/vehicleRegistrations/index.svelte -->
 <script lang="ts">
+	import { page } from '$app/state';
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import {
 		fetchData,
 		buildChartData,
 		buildWaffleData,
+		checkDataAvailability,
 		categoryConfig,
 		type VehicleRawData,
 		type VehicleShareData,
@@ -20,7 +22,11 @@
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 	export let layer: 'municipality' | 'district' = 'district';
-	export let country: string = 'DE';
+	export let mode: DataMode | undefined = undefined;
+
+	// Check URL for mode parameter (for embeds)
+	$: urlMode = page.url?.searchParams?.get('mode') as DataMode | null;
+	$: initialMode = urlMode || mode;
 
 	// State
 	let data: VehicleRawData | null = null;
@@ -31,15 +37,25 @@
 	let visibleCells = new Set<number>();
 	let animationComplete = false;
 
+	// Data availability state
+	let hasBestand = false;
+	let hasNeuzulassungen = false;
+	let availabilityChecked = false;
+
 	// Mode switch
 	let activeMode: DataMode = 'bestand';
-	const modeViews = [
-		{ key: 'bestand', label: 'Bestand' },
-		{ key: 'neuzulassungen', label: 'Neuzulassungen' }
+
+	// Dynamic mode views based on availability
+	$: modeViews = [
+		...(hasBestand ? [{ key: 'bestand', label: 'Bestand' }] : []),
+		...(hasNeuzulassungen ? [{ key: 'neuzulassungen', label: 'Neuzulassungen' }] : [])
 	];
 
+	// Show switch if at least one mode is available
+	$: showSwitch = hasBestand || hasNeuzulassungen;
+
 	// Derived params
-	$: params = { layer, country, mode: activeMode };
+	$: params = { layer, mode: activeMode };
 
 	// Get color for a category
 	function getColor(key: string): string {
@@ -94,8 +110,61 @@
 		}, 25);
 	}
 
-	// Load data when region or params change
-	$: if (!regionLoading && activeMode) {
+	// Check availability when region changes
+	$: if (!regionLoading) {
+		checkAvailability();
+	}
+
+	async function checkAvailability() {
+		loading = true;
+		availabilityChecked = false;
+
+		try {
+			const availability = await checkDataAvailability(region, { layer });
+			hasBestand = availability.hasBestand;
+			hasNeuzulassungen = availability.hasNeuzulassungen;
+			availabilityChecked = true;
+
+			// If no data is available at all, report hasData: false
+			if (!hasBestand && !hasNeuzulassungen) {
+				data = null;
+				waffleData = [];
+				const emptyChartData = buildChartData(
+					{ year: 0, total: 0, categories: {}, shares: {} },
+					[],
+					new Date().toISOString(),
+					'',
+					region,
+					'bestand',
+					false
+				);
+				onChartData?.(emptyChartData);
+				loading = false;
+				return;
+			}
+
+			// Set mode: use initialMode if specified and available, otherwise prefer Bestand
+			if (initialMode === 'neuzulassungen' && hasNeuzulassungen) {
+				activeMode = 'neuzulassungen';
+			} else if (initialMode === 'bestand' && hasBestand) {
+				activeMode = 'bestand';
+			} else if (hasBestand) {
+				activeMode = 'bestand';
+			} else {
+				activeMode = 'neuzulassungen';
+			}
+
+			// Load data for the selected mode
+			await loadData();
+		} catch (e) {
+			console.error('[VehicleRegistrations] Error checking availability:', e);
+			error = e instanceof Error ? e.message : 'Fehler beim Laden';
+			loading = false;
+		}
+	}
+
+	// Load data when mode changes (after availability check)
+	$: if (availabilityChecked && activeMode) {
 		loadData();
 	}
 
@@ -115,7 +184,10 @@
 				result.updateDate,
 				regionName,
 				region,
-				activeMode
+				activeMode,
+				true,
+				{ hasBestand, hasNeuzulassungen },
+				result.source
 			);
 			onChartData?.(builtChartData);
 
@@ -143,16 +215,18 @@
 </script>
 
 <div class="vehicle-waffle">
-	<!-- Mode Switch -->
-	<div class="mb-4">
-		<Switch
-			views={modeViews}
-			activeView={activeMode}
-			on:itemClick={(event) => {
-				activeMode = event.detail;
-			}}
-		/>
-	</div>
+	<!-- Mode Switch (only show if at least one mode is available) -->
+	{#if showSwitch}
+		<div class="mb-4">
+			<Switch
+				views={modeViews}
+				activeView={activeMode}
+				on:itemClick={(event) => {
+					activeMode = event.detail;
+				}}
+			/>
+		</div>
+	{/if}
 
 	{#if loading || regionLoading}
 		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>

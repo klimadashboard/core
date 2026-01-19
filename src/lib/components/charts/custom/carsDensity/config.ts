@@ -712,19 +712,25 @@ export function generateSubtitle(placeholders: Record<string, string | number>):
 export function buildChartData(data: CarDensityData, region?: Region | null): ChartData {
 	const { region: regionData, periods, source } = data;
 	const placeholders = getPlaceholders(data, region);
+	const tableRows = buildTableRows(regionData, periods);
+
+	// Use latest period as update date (format: "YYYY" -> "YYYY-12-31")
+	const latestPeriod = periods[periods.length - 1];
+	const updateDate = latestPeriod ? `${latestPeriod}-12-31` : new Date().toISOString();
 
 	return {
-		raw: regionData,
+		raw: tableRows,
 		table: {
 			columns: getTableColumns(),
-			rows: buildTableRows(regionData, periods),
+			rows: tableRows,
 			filename: 'car_density'
 		},
 		placeholders,
 		meta: {
-			updateDate: new Date().toISOString(),
+			updateDate,
 			source,
 			region: region ?? ({ name: regionData.name, id: regionData.code } as any)
-		}
+		},
+		hasData: tableRows.length > 0 && tableRows.some((row) => row.cars != null)
 	};
 }

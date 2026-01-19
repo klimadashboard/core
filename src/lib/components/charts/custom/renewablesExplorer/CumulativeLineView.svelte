@@ -376,7 +376,8 @@
 				region,
 				params,
 				'cumulative',
-				goal
+				goal,
+				result.gridOperatorCheckedRatio
 			);
 			onChartData?.(builtChartData);
 		} catch (e) {

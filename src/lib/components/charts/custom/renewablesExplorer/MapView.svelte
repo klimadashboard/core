@@ -437,7 +437,8 @@
 				updateDate: new Date().toISOString(),
 				source: 'Marktstammdatenregister der Bundesnetzagentur',
 				region: effectiveRegion
-			}
+			},
+			hasData: true // Map view is always considered to have data
 		});
 	}
 

@@ -21,16 +21,28 @@
 
 	let cardEl: HTMLElement;
 	let contentEl: HTMLElement;
+	let headerEl: HTMLElement;
 	let isVisible = false;
 	let isLoading = true;
 	let activeTab: 'chart' | 'table' | 'text' = 'chart';
 	let chartData: ChartData | null = null;
 	let showDownloadMenu = false;
 	let showEmbedModal = false;
+	let textPanelMaxHeight = 280;
+
+	// Calculate available height for text panel when switching to text tab
+	$: if (activeTab === 'text' && contentEl && headerEl) {
+		// Content area height minus header height minus padding (mb-3 = 12px)
+		const contentHeight = contentEl.clientHeight;
+		const headerHeight = headerEl.clientHeight;
+		const padding = 12; // mb-3
+		textPanelMaxHeight = Math.max(200, contentHeight - headerHeight - padding);
+	}
 
 	// Charts that support the 'view' option (simple view)
 	const chartsWithViewOption = ['heatingRegions'];
-	$: hasViewOption = chart.custom_sveltestring && chartsWithViewOption.includes(chart.custom_sveltestring);
+	$: hasViewOption =
+		chart.custom_sveltestring && chartsWithViewOption.includes(chart.custom_sveltestring);
 
 	// Get current region ID for embed options
 	$: currentRegionId = chartData?.meta?.region?.id || page.data.page?.id || null;
@@ -81,7 +93,13 @@
 
 	$: showTable = chartData?.table && chartData.table.rows.length > 0;
 	$: showText = !!text || !!methods;
-	$: hasData = chartData?.raw && chartData.raw.length > 0;
+	// Check if chart has data - use explicit hasData flag if provided, otherwise check raw array
+	$: hasData = chartData?.hasData ?? (chartData?.raw && chartData.raw.length > 0);
+
+	// Dispatch visibility event when data availability changes
+	$: if (chartData !== null) {
+		dispatch('dataAvailable', { hasData });
+	}
 	$: source = chartData?.meta?.source || chart.content?.source;
 	$: updateDate = chartData?.meta?.updateDate;
 
@@ -225,7 +243,11 @@
 			{/if}
 
 			<!-- Header (always visible) -->
-			<div class="flex justify-between items-start mb-3" class:opacity-0={isLoading}>
+			<div
+				bind:this={headerEl}
+				class="flex justify-between items-start mb-3"
+				class:opacity-0={isLoading}
+			>
 				<h2 class="text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight">
 					{title || chart.content?.title}
 				</h2>
@@ -368,9 +390,11 @@
 					role="tabpanel"
 					aria-labelledby="tab-text"
 					hidden={activeTab !== 'text'}
+					class="overflow-y-auto"
+					style="max-height: {textPanelMaxHeight}px;"
 				>
 					{#if text}
-						<div class="text-lg">
+						<div class="text-base max-w-xl">
 							{@html text}
 						</div>
 					{/if}
@@ -638,6 +662,7 @@
 		chartId={chart.id}
 		{currentRegionId}
 		availableOptions={{ view: hasViewOption, region: !!currentRegionId }}
+		customEmbedOptions={chartData?.embedOptions || []}
 		onClose={() => (showEmbedModal = false)}
 	/>
 {/if}

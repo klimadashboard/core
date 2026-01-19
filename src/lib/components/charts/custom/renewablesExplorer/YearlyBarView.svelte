@@ -208,7 +208,7 @@
 			console.log('[YearlyBarView] Data loaded:', data.length, 'records');
 			console.log('[YearlyBarView] Goal:', goal);
 
-			const chartData = buildChartData(data, result.updateDate, region, params, 'yearly', goal);
+			const chartData = buildChartData(data, result.updateDate, region, params, 'yearly', goal, result.gridOperatorCheckedRatio);
 			onChartData?.(chartData);
 		} catch (e) {
 			console.error('[YearlyBarView] Error:', e);

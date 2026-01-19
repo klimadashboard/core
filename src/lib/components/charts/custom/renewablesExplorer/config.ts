@@ -19,6 +19,9 @@ export interface RenewablesRawData {
 	year: number;
 	net_power_kw: number;
 	cumulative_power_kw: number;
+	added_units?: number;
+	net_units?: number;
+	cumulative_units?: number;
 }
 
 export interface ComparisonSeries {
@@ -238,7 +241,7 @@ export function calculateRequiredYearlyAdditions(
 export async function fetchData(
 	region: Region | null,
 	params: RenewablesParams
-): Promise<{ data: RenewablesRawData[]; updateDate: string }> {
+): Promise<{ data: RenewablesRawData[]; updateDate: string; gridOperatorCheckedRatio: number | null }> {
 	const { energy } = params;
 	const regionCode = region?.codeShort;
 
@@ -252,7 +255,8 @@ export async function fetchData(
 	const result = await response.json();
 	return {
 		data: result.by_year || [],
-		updateDate: result.update_date || ''
+		updateDate: result.update_date || '',
+		gridOperatorCheckedRatio: result.grid_operator_checked_ratio ?? null
 	};
 }
 
@@ -407,7 +411,9 @@ export function getPlaceholders(
 	data: RenewablesRawData[],
 	region: Region | null,
 	params: RenewablesParams,
-	goal?: RenewableGoal | null
+	goal?: RenewableGoal | null,
+	updateDate?: string,
+	gridOperatorCheckedRatio?: number | null
 ): Record<string, string | number> {
 	const { energy } = params;
 	const currentYear = new Date().getFullYear();
@@ -444,6 +450,44 @@ export function getPlaceholders(
 		goalPlaceholders.goalProgress = ((currentCumulative / goal.target_power_kw) * 100).toFixed(1);
 	}
 
+	// Format update date
+	let updateDateFormatted = '';
+	if (updateDate) {
+		try {
+			const date = new Date(updateDate);
+			updateDateFormatted = date.toLocaleDateString('de-DE', {
+				day: '2-digit',
+				month: '2-digit',
+				year: 'numeric',
+				hour: '2-digit',
+				minute: '2-digit'
+			});
+		} catch {
+			updateDateFormatted = updateDate;
+		}
+	}
+
+	// Calculate unverified percentage from grid operator checked ratio
+	const unverifiedPercent =
+		gridOperatorCheckedRatio != null ? (100 - gridOperatorCheckedRatio).toFixed(1) : '';
+	const verifiedPercent = gridOperatorCheckedRatio != null ? gridOperatorCheckedRatio.toFixed(1) : '';
+
+	// Calculate dataYearEnd as last completed year (previous year) and dataYearStart as 10 years before
+	const lastCompletedYear = currentYear - 1;
+	const dataYearEnd = lastCompletedYear;
+	const dataYearStart = lastCompletedYear - 10;
+
+	// Find the strongest year (year with highest net_power_kw) - only consider completed years
+	const completedYearsData = data.filter((d) => d.year <= lastCompletedYear);
+	const strongestYearData = completedYearsData.reduce(
+		(max, d) => (d.net_power_kw > (max?.net_power_kw || 0) ? d : max),
+		null as RenewablesRawData | null
+	);
+
+	// Get data for specific years
+	const dataYearStartData = data.find((d) => d.year === dataYearStart);
+	const dataYearEndData = data.find((d) => d.year === dataYearEnd);
+
 	return {
 		regionName: region?.name || 'Deutschland',
 		currentYear,
@@ -456,8 +500,27 @@ export function getPlaceholders(
 		growthPercent,
 		energyType: energy,
 		energyLabel: energy === 'solar' ? 'Solar' : 'Wind',
-		dataYearStart: data[0]?.year || currentYear,
-		dataYearEnd: lastEntry?.year || currentYear,
+		dataYearStart,
+		dataYearEnd,
+		// Cumulative values at dataYearStart and dataYearEnd
+		dataYearStartPower: formatPower(dataYearStartData?.cumulative_power_kw || 0, energy),
+		dataYearStartPowerRaw: dataYearStartData?.cumulative_power_kw || 0,
+		dataYearEndPower: formatPower(dataYearEndData?.cumulative_power_kw || 0, energy),
+		dataYearEndPowerRaw: dataYearEndData?.cumulative_power_kw || 0,
+		// Strongest year placeholders
+		strongestYear: strongestYearData?.year || lastCompletedYear,
+		strongestYearPower: formatPower(strongestYearData?.net_power_kw || 0, energy),
+		strongestYearPowerRaw: strongestYearData?.net_power_kw || 0,
+		// New placeholders for installation counts
+		currentYearUnits: formatNumber(currentYearData?.added_units || 0),
+		currentYearUnitsRaw: currentYearData?.added_units || 0,
+		totalUnits: formatNumber(lastEntry?.cumulative_units || 0),
+		totalUnitsRaw: lastEntry?.cumulative_units || 0,
+		// New placeholder for update date
+		updateDate: updateDateFormatted,
+		// New placeholders for verification status
+		unverifiedPercent,
+		verifiedPercent,
 		...goalPlaceholders
 	};
 }
@@ -469,7 +532,8 @@ export function buildChartData(
 	region: Region | null,
 	params: RenewablesParams,
 	viewMode: ViewMode = 'yearly',
-	goal?: RenewableGoal | null
+	goal?: RenewableGoal | null,
+	gridOperatorCheckedRatio?: number | null
 ): ChartData {
 	return {
 		raw: data,
@@ -478,7 +542,7 @@ export function buildChartData(
 			rows: data,
 			filename: `${params.energy}-${viewMode === 'cumulative' ? 'kumuliert' : 'zubau-jaehrlich'}`
 		},
-		placeholders: getPlaceholders(data, region, params, goal),
+		placeholders: getPlaceholders(data, region, params, goal, updateDate, gridOperatorCheckedRatio),
 		meta: {
 			updateDate,
 			source: 'Marktstammdatenregister der Bundesnetzagentur',

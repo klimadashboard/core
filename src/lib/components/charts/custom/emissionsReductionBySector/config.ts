@@ -486,6 +486,9 @@ export function buildChartData(
 ): ChartData {
 	const unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 
+	// Get update date from region data (use first entry's update field)
+	const updateDate = region.data[0]?.update || new Date().toISOString();
+
 	return {
 		raw: sectors,
 		table: {
@@ -495,7 +498,7 @@ export function buildChartData(
 		},
 		placeholders: getPlaceholders(region, sectors, summary, useMegatons),
 		meta: {
-			updateDate: new Date().toISOString(),
+			updateDate,
 			source: dataSource,
 			region: { name: region.name, id: region.id } as any
 		}
