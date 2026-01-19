@@ -45,17 +45,17 @@ export const categoryMeta: Record<
 };
 
 // WCAG AA compliant color palette with sufficient contrast against white text (4.5:1 minimum)
-// Colors also have good contrast against each other for better differentiation
-// Sustainable modes: blue-cyan-teal-yellow spectrum for visual distinction
-// Motorized: orange-purple spectrum for clear separation
+// Colors chosen for maximum distinguishability - spread across color wheel
+// Sustainable modes: blue-cyan-teal-yellow spectrum
+// Motorized: orange, rose/pink, violet - distinctly different hues
 export const categoryColors: Record<string, { main: string; light: string; dark: string }> = {
 	on_foot: { main: '#0369a1', light: '#e0f2fe', dark: '#075985' }, // Sky-700 - contrast 5.14:1
 	bicycle: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - contrast 4.51:1
-	e_bike: { main: '#076980', light: '#ccfbf1', dark: '#0f766e' }, // Teal-600 - contrast 4.52:1
+	e_bike: { main: '#0d9488', light: '#ccfbf1', dark: '#0f766e' }, // Teal-600 - contrast 4.52:1
 	public_transport: { main: '#ca8a04', light: '#fef3c7', dark: '#a16207' }, // Yellow-600 - contrast 5.37:1
 	motorbike: { main: '#c2410c', light: '#ffedd5', dark: '#9a3412' }, // Orange-700 - contrast 5.93:1
-	car_driver: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' }, // Violet-600 - contrast 4.75:1
-	car_passenger: { main: '#9333ea', light: '#faf5ff', dark: '#7e22ce' } // Purple-600 - contrast 4.53:1
+	car_driver: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' }, // Pink-700 - contrast 5.64:1
+	car_passenger: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' } // Violet-600 - contrast 4.75:1
 };
 
 // Goal configuration
@@ -261,7 +261,8 @@ export function buildChartData(
 	data: ModalSplitRawData[],
 	updateDate: string,
 	source: string,
-	region: Region | null
+	region: Region | null,
+	showHistoric: boolean = false
 ): ChartData {
 	return {
 		raw: data,
@@ -275,6 +276,17 @@ export function buildChartData(
 			updateDate,
 			source,
 			region
-		}
+		},
+		embedOptions: [
+			{
+				key: 'historic',
+				label: 'Historische Entwicklung anzeigen',
+				choices: [
+					{ value: 'false', label: 'Nein' },
+					{ value: 'true', label: 'Ja' }
+				],
+				currentValue: showHistoric ? 'true' : 'false'
+			}
+		]
 	};
 }

@@ -108,6 +108,10 @@
 		loadData();
 	}
 
+	// Store metadata for rebuilding chartData when showHistoric changes
+	let updateDate: string = '';
+	let source: string = '';
+
 	async function loadData() {
 		loading = true;
 		error = null;
@@ -117,8 +121,10 @@
 			rawData = result.data;
 			historicYears = getHistoricYears(rawData);
 			latestDataYear = getLatestDataYear(rawData);
+			updateDate = result.updateDate;
+			source = result.source;
 
-			const chartData = buildChartData(rawData, result.updateDate, result.source, region);
+			const chartData = buildChartData(rawData, updateDate, source, region, showHistoric);
 			onChartData?.(chartData);
 		} catch (e) {
 			console.error('[ModalSplitStreet] Error:', e);
@@ -127,6 +133,12 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	// Update chartData when showHistoric changes (for embed modal to reflect current state)
+	$: if (rawData.length > 0 && !loading) {
+		const chartData = buildChartData(rawData, updateDate, source, region, showHistoric);
+		onChartData?.(chartData);
 	}
 
 	// Resize observer

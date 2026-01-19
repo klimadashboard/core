@@ -15,11 +15,26 @@
 		if (!xScale) return [];
 
 		if (isBandScale) {
+			let baseTicks: any[];
 			if (xDomain.length > tickCount * 2) {
 				const step = Math.ceil(xDomain.length / tickCount);
-				return xDomain.filter((_: any, i: number) => i % step === 0);
+				baseTicks = xDomain.filter((_: any, i: number) => i % step === 0);
+			} else {
+				baseTicks = [...xDomain];
 			}
-			return xDomain;
+
+			// Add forced ticks for band scales too
+			if (forceTicks.length > 0) {
+				const tickSet = new Set(baseTicks);
+				for (const forcedTick of forceTicks) {
+					if (xDomain.includes(forcedTick)) {
+						tickSet.add(forcedTick);
+					}
+				}
+				baseTicks = Array.from(tickSet).sort((a, b) => Number(a) - Number(b));
+			}
+
+			return baseTicks;
 		}
 
 		// For linear scales

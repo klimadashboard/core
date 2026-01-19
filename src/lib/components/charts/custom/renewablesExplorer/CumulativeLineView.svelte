@@ -143,12 +143,10 @@
 			const goalLineData: Array<{ year: number; value: number }> = [];
 
 			if (goalData.goal_path && goalData.goal_path.length > 0) {
-				// Use custom goal path - start from last data point, then follow path
-				goalLineData.push({ year: lastDataYear, value: lastCumulative });
-
-				// Add all path points that are after the last data year
+				// Use custom goal path - include all points from current year onwards
+				// This shows the goal value even for years that have actual data
 				for (const point of goalData.goal_path) {
-					if (point.year > lastDataYear) {
+					if (point.year >= lastDataYear) {
 						goalLineData.push({ year: point.year, value: point.cumulative_power_kw });
 					}
 				}
@@ -156,6 +154,12 @@
 				// Ensure the final target is included if not already in path
 				const lastPathYear = goalLineData[goalLineData.length - 1]?.year;
 				if (lastPathYear !== goalData.target_year) {
+					goalLineData.push({ year: goalData.target_year, value: goalData.target_power_kw });
+				}
+
+				// If no goal path points start at or after lastDataYear, fall back to connecting from actual
+				if (goalLineData.length === 0) {
+					goalLineData.push({ year: lastDataYear, value: lastCumulative });
 					goalLineData.push({ year: goalData.target_year, value: goalData.target_power_kw });
 				}
 			} else {
@@ -578,6 +582,19 @@
 					let:hover
 				>
 					<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} unit={unitLabel} />
+					{@const lastDataYear = mainData.length > 0 ? mainData[mainData.length - 1].year : null}
+					{@const goalSeries = chartData.find((s) => s.isGoal)}
+					{@const firstGoalYear = goalSeries?.data[0]?.year}
+					{@const ticksToForce = [
+						// Only show lastDataYear if it's not within 1 year of the first goal year
+						...(lastDataYear && (!firstGoalYear || Math.abs(firstGoalYear - lastDataYear) > 1)
+							? [lastDataYear]
+							: []),
+						// Show first goal year if it exists (this is where the goal line starts)
+						...(firstGoalYear ? [firstGoalYear] : []),
+						// Always show target year
+						...(goal && showGoal ? [goal.target_year] : [])
+					]}
 					<AxisX
 						{xScale}
 						xDomain={[]}
@@ -585,7 +602,7 @@
 						{innerHeight}
 						format={(v) => String(Math.round(v))}
 						tickCount={10}
-						forceTicks={goal && showGoal ? [goal.target_year] : []}
+						forceTicks={ticksToForce}
 					/>
 
 					{#each chartData as series, i}

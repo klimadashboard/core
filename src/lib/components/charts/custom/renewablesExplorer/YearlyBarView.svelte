@@ -54,9 +54,6 @@
 		const remainingKw = goal.target_power_kw - currentCumulative;
 		if (remainingKw <= 0) return null;
 
-		// Last year of additions is the year BEFORE the target year
-		const lastAdditionYear = goal.target_year - 1;
-
 		// If goal_path exists, build a map of year -> required addition
 		if (goal.goal_path && goal.goal_path.length > 0) {
 			const yearlyRequiredMap = new Map<number, number>();
@@ -64,8 +61,8 @@
 
 			for (let i = 0; i < path.length; i++) {
 				const current = path[i];
-				// Skip the target year itself (goal should be reached BY that year)
-				if (current.year > lastAdditionYear) continue;
+				// Include all years from current year up to and including target year
+				if (current.year > goal.target_year) continue;
 				if (current.year < currentYear) continue;
 
 				const previous = i > 0 ? path[i - 1] : null;
@@ -95,6 +92,8 @@
 		}
 
 		// Fallback: even distribution (original behavior)
+		// Last year of additions is the year BEFORE the target year
+		const lastAdditionYear = goal.target_year - 1;
 		const yearsRemaining = lastAdditionYear - currentYear + 1;
 		if (yearsRemaining <= 0) return null;
 
@@ -250,6 +249,7 @@
 				let:hover
 			>
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
+				{@const lastYear = xDomain.length > 0 ? xDomain[xDomain.length - 1] : null}
 				<AxisX
 					{xScale}
 					{xDomain}
@@ -257,6 +257,7 @@
 					{innerHeight}
 					format={String}
 					tickCount={Math.ceil(xDomain.length / 3)}
+					forceTicks={lastYear ? [lastYear] : []}
 				/>
 				<RuleY y={0} {yScale} {innerWidth} />
 

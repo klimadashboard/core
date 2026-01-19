@@ -70,6 +70,12 @@
 		timestamp: d.date.getTime()
 	}));
 
+	// Filter out series where all values are 0 or null
+	$: visibleSeriesConfigs = seriesConfigs.filter((series) => {
+		const values = data.map((d) => d[series.key]).filter((v): v is number => typeof v === 'number');
+		return values.some((v) => v > 0);
+	});
+
 	// Y domain (0 to max value with some padding)
 	$: allValues = data.flatMap((d) =>
 		categories.map((cat) => d[cat]).filter((v): v is number => typeof v === 'number')
@@ -80,10 +86,10 @@
 	$: xMin = data.length > 0 ? Math.min(...data.map((d) => d.date.getTime())) : Date.now();
 	$: xMax = data.length > 0 ? Math.max(...data.map((d) => d.date.getTime())) : Date.now();
 
-	// End labels data with values
+	// End labels data with values (only for visible series)
 	$: labelData =
 		data.length > 0
-			? seriesConfigs.map((series) => {
+			? visibleSeriesConfigs.map((series) => {
 					const validRows = data.filter((d) => d[series.key] != null);
 					const lastRow = validRows[validRows.length - 1];
 					const value = (lastRow?.[series.key] as number) || 0;
@@ -102,7 +108,7 @@
 	function resolveOverlaps(
 		labels: typeof labelData,
 		yScale: (v: number) => number,
-		minSpacing: number = 14
+		minSpacing: number = 18
 	): Array<(typeof labelData)[0] & { adjustedY: number }> {
 		if (labels.length === 0) return [];
 
@@ -290,7 +296,7 @@
 				/>
 
 				<!-- Lines for each category (non-highlighted first, then highlighted on top) -->
-				{@const sortedSeries = [...seriesConfigs].sort((a, b) => {
+				{@const sortedSeries = [...visibleSeriesConfigs].sort((a, b) => {
 					if (a.key === activeHighlight) return 1;
 					if (b.key === activeHighlight) return -1;
 					return 0;
@@ -353,7 +359,7 @@
 							x={labelX + 8}
 							y={label.adjustedY}
 							fill={label.color}
-							font-size="11"
+							font-size="13"
 							font-weight={isHighlighted ? '600' : '500'}
 							dominant-baseline="middle"
 							opacity={isHighlighted ? 1 : 0.35}
@@ -377,7 +383,7 @@
 					{@const date = new Date(timestamp)}
 					{@const point = chartData.find((d) => d.timestamp === timestamp)}
 					{@const items = point
-						? seriesConfigs
+						? visibleSeriesConfigs
 								.map((s) => {
 									const value = point[s.key];
 									return typeof value === 'number'

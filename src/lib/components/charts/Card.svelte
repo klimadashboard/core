@@ -325,13 +325,11 @@
 						{#if source}
 							<div class="">
 								<p>
-									{page.data.translations?.source || 'Quelle'}:
+									{page.data.translations?.source}:
 									{@html source}
 									{#if updateDate}
 										<span class="ml-1">
-											| {page.data.translations?.lastUpdated || 'Stand'}: {dayjs(updateDate).format(
-												'DD.MM.YYYY'
-											)}
+											| {page.data.translations?.dataDate}: {dayjs(updateDate).format('DD.MM.YYYY')}
 										</span>
 									{/if}
 								</p>
@@ -666,3 +664,11 @@
 		onClose={() => (showEmbedModal = false)}
 	/>
 {/if}
+
+<style>
+	@reference "tailwindcss/theme";
+
+	:global(#tabpanel-text p) {
+		@apply my-2;
+	}
+</style>
