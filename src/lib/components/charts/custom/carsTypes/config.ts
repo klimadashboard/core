@@ -390,6 +390,11 @@ export function buildWaffleGrid(waffleData: VehicleShareData[]): string[] {
 	return grid;
 }
 
+/** Format percentage with German locale (comma as decimal separator) */
+function formatPercent(value: number): string {
+	return (value * 100).toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '%';
+}
+
 /** Get table columns */
 export function getTableColumns(): TableColumn[] {
 	return [
@@ -399,29 +404,88 @@ export function getTableColumns(): TableColumn[] {
 			key: 'share',
 			label: 'Anteil',
 			align: 'right',
-			format: (v: number) => `${(v * 100).toFixed(1)}%`
+			format: (v: number) => (v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'
 		}
 	];
+}
+
+/** Generate dynamic title based on mode and electric share */
+function generateTitle(
+	waffleData: VehicleShareData[],
+	regionName: string,
+	mode: DataMode
+): string {
+	const elektro = waffleData.find((c) => c.key === 'Elektro');
+	const elektroShare = elektro?.share ?? 0;
+	const elektroPercent = Math.round(elektroShare * 100);
+
+	if (mode === 'bestand') {
+		// For Bestand: "In Stuttgart werden 84% der Autos mit fossilen Kraftstoffen betankt - Elektroautos machen bisher lediglich 6% aus"
+		const benzin = waffleData.find((c) => c.key === 'Benzin');
+		const diesel = waffleData.find((c) => c.key === 'Diesel');
+		const fossilShare = (benzin?.share ?? 0) + (diesel?.share ?? 0);
+		const fossilPercent = Math.round(fossilShare * 100);
+		return `In ${regionName} werden ${fossilPercent}% der Autos mit fossilen Kraftstoffen betankt – Elektroautos machen bisher lediglich ${elektroPercent}% aus.`;
+	}
+
+	// For Neuzulassungen: dynamic phrasing based on electric share
+	// Thresholds: exact fractions (50%, 33.33%, 25%, 20%, etc.)
+	// "mehr als" for anything above the exact fraction
+	const sharePercent = elektroShare * 100;
+
+	if (sharePercent >= 50) {
+		return `Mehr als jeder zweite Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent === 50) {
+		return `Jeder zweite Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent >= 45) {
+		return `Fast jeder zweite Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent >= 40) {
+		return `Zwei von fünf Neuwagen in ${regionName} sind E-Autos.`;
+	} else if (sharePercent > 33.33) {
+		return `Mehr als jeder dritte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent >= 30) {
+		return `Fast jeder dritte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent > 25) {
+		return `Mehr als jeder vierte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent >= 23) {
+		return `Fast jeder vierte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent > 20) {
+		return `Mehr als jeder fünfte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent >= 18) {
+		return `Fast jeder fünfte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent > 16.67) {
+		return `Mehr als jeder sechste Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent >= 14) {
+		return `Fast jeder sechste Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent > 10) {
+		return `Mehr als jeder zehnte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else if (sharePercent >= 8) {
+		return `Fast jeder zehnte Neuwagen in ${regionName} ist ein E-Auto.`;
+	} else {
+		return `${elektroPercent}% der Neuwagen in ${regionName} sind E-Autos.`;
+	}
 }
 
 /** Generate placeholders for text templates */
 export function getPlaceholders(
 	data: VehicleRawData,
 	waffleData: VehicleShareData[],
-	regionName: string
+	regionName: string,
+	mode: DataMode = 'bestand'
 ): Record<string, string | number> {
 	const placeholders: Record<string, string | number> = {
 		year: data.year,
 		total: formatNumber(data.total, 0),
 		totalRaw: data.total,
-		regionName
+		regionName,
+		title: generateTitle(waffleData, regionName, mode)
 	};
 
 	// Add per-category placeholders
 	for (const cat of waffleData) {
 		const safeKey = cat.key.replace(/[^a-zA-Z0-9]/g, '_');
-		// Use cat.cells (rounded to whole number) for share display
-		placeholders[`${safeKey}_share`] = `${cat.cells}%`;
+		// Use formatPercent for German locale formatting
+		placeholders[`${safeKey}_share`] = formatPercent(cat.share);
 		placeholders[`${safeKey}_shareRaw`] = cat.share;
 		placeholders[`${safeKey}_absolute`] = formatNumber(cat.absolute, 0);
 		placeholders[`${safeKey}_absoluteRaw`] = cat.absolute;
@@ -498,7 +562,7 @@ export function buildChartData(
 			rows: tableRows,
 			filename: `kfz-${modeLabel}-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
 		},
-		placeholders: getPlaceholders(data, waffleData, regionName),
+		placeholders: getPlaceholders(data, waffleData, regionName, mode),
 		meta: {
 			updateDate,
 			source: source || '',

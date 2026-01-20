@@ -45,9 +45,11 @@ export interface SectorProgress {
 export interface ReductionSummary {
 	firstYear: number;
 	lastYear: number;
+	baseYear: number; // Base year from climate target (or first data year as fallback)
 	targetYear: number | undefined;
 	firstYearTotal: number;
 	lastYearTotal: number;
+	baseYearTotal: number;
 	targetValue: number;
 	totalReductionNeeded: number;
 	totalReductionAchieved: number;
@@ -249,7 +251,25 @@ function buildCategoryOrder(
 // DATA PROCESSING
 // ============================================================================
 
-/** Get climate target from data */
+/** Get climate targets from data (returns past and future targets) */
+export function getClimateTargets(data: EmissionsRawData[]): {
+	pastTarget: EmissionsRawData | null;
+	futureTarget: EmissionsRawData | null;
+} {
+	const currentYear = new Date().getFullYear();
+	const targets = data.filter((d) => d.source === 'climate-target').sort((a, b) => a.year - b.year);
+
+	// Find the most recent past target (base year) and the earliest future target
+	const pastTargets = targets.filter((t) => t.year <= currentYear);
+	const futureTargets = targets.filter((t) => t.year > currentYear);
+
+	return {
+		pastTarget: pastTargets.length > 0 ? pastTargets[0] : null, // First (earliest) past target as base year
+		futureTarget: futureTargets.length > 0 ? futureTargets[futureTargets.length - 1] : null // Last (latest) future target
+	};
+}
+
+/** Get climate target from data (legacy - returns latest target) */
 export function getClimateTarget(data: EmissionsRawData[]): EmissionsRawData | null {
 	const targets = data.filter((d) => d.source === 'climate-target').sort((a, b) => b.year - a.year);
 	return targets[0] || null;
@@ -277,28 +297,36 @@ export function calculateSectorProgress(
 
 	const firstYear = years[0];
 	const lastYear = years[years.length - 1];
-	const climateTarget = getClimateTarget(region.data);
+	const { pastTarget, futureTarget } = getClimateTargets(region.data);
+
+	// Base year: use past climate target year if available, otherwise first data year
+	const baseYear = pastTarget?.year ?? firstYear;
 
 	// Helper to convert value if needed
 	const convert = (value: number) => (useMegatons ? toMegatons(value) : value);
 
-	// Get totals for first and last year (raw values for percentage calculations)
+	// Get totals for first year, base year, and last year (raw values for percentage calculations)
 	const firstYearTotalRaw = barData
 		.filter((d) => d.year === firstYear)
 		.reduce((sum, d) => sum + d.value, 0);
+
+	// Base year total: if base year differs from first year, try to get that year's data
+	const baseYearTotalRaw = barData
+		.filter((d) => d.year === baseYear)
+		.reduce((sum, d) => sum + d.value, 0) || firstYearTotalRaw;
 
 	const lastYearTotalRaw = barData
 		.filter((d) => d.year === lastYear)
 		.reduce((sum, d) => sum + d.value, 0);
 
-	// Target value based on target reduction percentage
+	// Target value based on target reduction percentage (use future target if available)
 	const targetValueRaw =
-		climateTarget?.value ?? firstYearTotalRaw * (1 - TARGET_REDUCTION_PERCENT / 100);
-	const targetYear = climateTarget?.year ?? TARGET_YEAR;
+		futureTarget?.value ?? firstYearTotalRaw * (1 - TARGET_REDUCTION_PERCENT / 100);
+	const targetYear = futureTarget?.year ?? TARGET_YEAR;
 
-	// Total reduction needed and achieved (raw values for percentage)
-	const totalReductionNeededRaw = firstYearTotalRaw * (TARGET_REDUCTION_PERCENT / 100);
-	const totalReductionAchievedRaw = firstYearTotalRaw - lastYearTotalRaw;
+	// Total reduction needed and achieved (raw values for percentage) - based on base year
+	const totalReductionNeededRaw = baseYearTotalRaw * (TARGET_REDUCTION_PERCENT / 100);
+	const totalReductionAchievedRaw = baseYearTotalRaw - lastYearTotalRaw;
 	const overallProgress =
 		totalReductionNeededRaw > 0 ? (totalReductionAchievedRaw / totalReductionNeededRaw) * 100 : 0;
 
@@ -307,7 +335,9 @@ export function calculateSectorProgress(
 	let hasNegativeProgress = false;
 
 	for (const category of region.categoryOrder) {
-		const firstYearData = barData.find((d) => d.year === firstYear && d.category === category);
+		// Use base year for sector calculations
+		const baseYearData = barData.find((d) => d.year === baseYear && d.category === category);
+		const firstYearData = baseYearData || barData.find((d) => d.year === firstYear && d.category === category);
 		const lastYearData = barData.find((d) => d.year === lastYear && d.category === category);
 
 		if (!firstYearData && !lastYearData) continue;
@@ -354,9 +384,11 @@ export function calculateSectorProgress(
 	const summary: ReductionSummary = {
 		firstYear,
 		lastYear,
+		baseYear,
 		targetYear,
 		firstYearTotal: convert(firstYearTotalRaw),
 		lastYearTotal: convert(lastYearTotalRaw),
+		baseYearTotal: convert(baseYearTotalRaw),
 		targetValue: convert(targetValueRaw),
 		totalReductionNeeded: convert(totalReductionNeededRaw),
 		totalReductionAchieved: convert(totalReductionAchievedRaw),
@@ -423,7 +455,8 @@ export function getPlaceholders(
 	region: RegionResult,
 	sectors: SectorProgress[],
 	summary: ReductionSummary | null,
-	useMegatons: boolean
+	useMegatons: boolean,
+	locale: string = 'de'
 ): Record<string, string | number> {
 	const unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 
@@ -445,15 +478,25 @@ export function getPlaceholders(
 	// Sectors with negative progress (emissions increased)
 	const negativeSectors = sectors.filter((s) => s.contributionPercent < 0);
 
+	// Calculate change from base year to last year
+	const totalChange = summary.lastYearTotal - summary.baseYearTotal;
+	const changePercent = summary.baseYearTotal > 0 ? Math.abs(totalChange / summary.baseYearTotal) * 100 : 0;
+	const changeVerb = totalChange < 0 ? (locale === 'de' ? 'gesunken' : 'decreased') : (locale === 'de' ? 'gestiegen' : 'increased');
+	const formattedChangePercent = changePercent.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 	return {
 		regionName: region.name,
 		layerLabel: region.layer_label,
 		unit,
 		firstYear: summary.firstYear,
 		lastYear: summary.lastYear,
+		baseYear: summary.baseYear,
+		changeVerb,
+		changePercentage: `${formattedChangePercent}%`,
 		targetYear: summary.targetYear ?? 'Klimaneutralität',
 		firstYearTotal: summary.firstYearTotal.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		lastYearTotal: summary.lastYearTotal.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
+		baseYearTotal: summary.baseYearTotal.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		targetValue:
 			summary.targetValue === 0
 				? 'Klimaneutralität'
@@ -482,7 +525,8 @@ export function buildChartData(
 	sectors: SectorProgress[],
 	summary: ReductionSummary | null,
 	useMegatons: boolean,
-	dataSource: string
+	dataSource: string,
+	locale: string = 'de'
 ): ChartData {
 	const unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 
@@ -496,7 +540,7 @@ export function buildChartData(
 			rows: sectors,
 			filename: 'emissions_reduction_progress'
 		},
-		placeholders: getPlaceholders(region, sectors, summary, useMegatons),
+		placeholders: getPlaceholders(region, sectors, summary, useMegatons, locale),
 		meta: {
 			updateDate,
 			source: dataSource,

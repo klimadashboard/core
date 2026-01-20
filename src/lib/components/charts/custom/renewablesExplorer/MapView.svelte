@@ -25,6 +25,17 @@
 	export let regionId: string | null = null;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
+	// Shared data props (from parent) - for placeholders like titleWind
+	export let yearlyData: Array<{
+		year: number;
+		added_units?: number;
+		cumulative_units?: number;
+	}> = [];
+	export let goal: any = null;
+	export let updateDate: string = '';
+	export let gridOperatorCheckedRatio: number | null = null;
+	export let dataLoading: boolean = true;
+
 	const dispatch = createEventDispatcher();
 
 	// Stadtwerke Stuttgart wind turbine IDs
@@ -423,6 +434,40 @@
 		loadRegion();
 	}
 
+	// Build titleWind placeholder for map view using shared yearly data
+	$: titleWind = (() => {
+		if (selectedEnergy !== 'wind') return '';
+		const regionDisplayName = effectiveRegion?.name || 'Deutschland';
+
+		// Use shared yearly data if available (for accurate "last installation year" info)
+		if (yearlyData.length > 0) {
+			const lastEntry = yearlyData[yearlyData.length - 1];
+			const totalCumulativeUnits = lastEntry?.cumulative_units || 0;
+
+			if (totalCumulativeUnits === 0) {
+				return `In ${regionDisplayName} ist aktuell kein Windrad in Betrieb.`;
+			}
+
+			// Find the most recent year with new installations
+			const lastYearWithInstallation = [...yearlyData].reverse().find((d) => (d.added_units || 0) > 0);
+			if (lastYearWithInstallation) {
+				return `Zuletzt wurde im Jahr ${lastYearWithInstallation.year} ein Windrad in ${regionDisplayName} in Betrieb genommen.`;
+			}
+
+			// Has cumulative but no yearly data - fallback
+			return `In ${regionDisplayName} sind Windräder in Betrieb.`;
+		}
+
+		// Fallback to turbine count if yearly data not yet loaded
+		const totalTurbines = turbines.length;
+		if (totalTurbines === 0 && !loading && !regionLoading && !internalRegionLoading && !dataLoading) {
+			return `In ${regionDisplayName} ist aktuell kein Windrad in Betrieb.`;
+		} else if (totalTurbines > 0) {
+			return `In ${regionDisplayName} sind Windräder in Betrieb.`;
+		}
+		return '';
+	})();
+
 	// Send chart data with placeholders when region is available
 	$: if (onChartData && effectiveRegion !== undefined) {
 		onChartData({
@@ -431,7 +476,8 @@
 			placeholders: {
 				regionName: effectiveRegion?.name || 'Deutschland',
 				energyType: selectedEnergy,
-				energyLabel: selectedEnergy === 'solar' ? 'Solar' : 'Wind'
+				energyLabel: selectedEnergy === 'solar' ? 'Solar' : 'Wind',
+				titleWind
 			},
 			meta: {
 				updateDate: new Date().toISOString(),

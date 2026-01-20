@@ -11,7 +11,6 @@
 	import {
 		fetchData,
 		getPlaceholders,
-		generateTitle,
 		getLatestData,
 		buildChartData,
 		colors,
@@ -68,7 +67,6 @@
 
 	// Derived data
 	$: placeholders = data ? getPlaceholders(data) : null;
-	$: title = placeholders ? generateTitle(placeholders) : '';
 	$: latestData = data ? getLatestData(data.region, data.periods) : null;
 	$: nationalLatest = data ? getLatestData(data.national, data.periods) : null;
 
@@ -163,11 +161,6 @@
 		aufgrund von Gemeindezusammenlegungen keine Daten verfügbar.
 	</p>
 {:else}
-	<!-- Title -->
-	<h2 class="text-2xl max-w-lg text-balance leading-tight mb-4">
-		{title}
-	</h2>
-
 	<div class="grid md:grid-cols-2 gap-6">
 		<!-- Left: Line chart showing total cars over time -->
 		<div>

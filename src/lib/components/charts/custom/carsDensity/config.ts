@@ -669,11 +669,16 @@ export function getPlaceholders(
 			? ((latest.carsPer1000 ?? 0) / (nationalLatest.carsPer1000 ?? 1) - 1) * 100
 			: 0;
 
+	// Format numbers for display in text templates
+	const formatNumber = (n: number) => n.toLocaleString('de-DE');
+
 	return {
 		regionName: region?.name ?? regionData.name,
 		population: regionData.population,
+		totalPopulation: formatNumber(regionData.population),
 		latestPeriod: latest.period,
-		totalCars: latest.cars ?? 0,
+		totalCars: formatNumber(latest.cars ?? 0),
+		totalCarsRaw: latest.cars ?? 0,
 		carsPer1000: latest.carsPer1000 ?? 0,
 		privateShare: latest.privateShare ?? 0,
 		companyShare: latest.companyShare ?? 0,

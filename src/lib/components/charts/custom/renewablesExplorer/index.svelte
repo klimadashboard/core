@@ -11,8 +11,12 @@
 		getAvailableViews,
 		getViewLabels,
 		getViewIcons,
+		fetchData,
+		fetchGoal,
 		type EnergyType,
-		type ViewMode
+		type ViewMode,
+		type RenewablesRawData,
+		type RenewableGoal
 	} from './config';
 
 	// Props from Card slot (passed through Custom/index.svelte)
@@ -34,6 +38,14 @@
 	}> = [];
 
 	const dispatch = createEventDispatcher();
+
+	// Shared data state (fetched once, shared across views)
+	let sharedData: RenewablesRawData[] = [];
+	let sharedGoal: RenewableGoal | null = null;
+	let sharedUpdateDate: string = '';
+	let sharedGridOperatorCheckedRatio: number | null = null;
+	let dataLoading = true;
+	let dataFetched = false;
 
 	/**
 	 * Configuration from Directus (chart.config)
@@ -81,6 +93,39 @@
 	// Get regionId from the region prop if available
 	$: regionId = region?.id || null;
 
+	// Fetch shared data when region or energy changes
+	$: if (!regionLoading && selectedEnergy) {
+		loadSharedData();
+	}
+
+	async function loadSharedData() {
+		// Reset on region/energy change
+		dataLoading = true;
+		dataFetched = false;
+
+		try {
+			const params = { energy: selectedEnergy };
+			const [result, goalResult] = await Promise.all([
+				fetchData(region, params),
+				fetchGoal(region, params)
+			]);
+
+			sharedData = result.data;
+			sharedGoal = goalResult;
+			sharedUpdateDate = result.updateDate;
+			sharedGridOperatorCheckedRatio = result.gridOperatorCheckedRatio;
+			dataFetched = true;
+		} catch (e) {
+			console.error('[renewablesExplorer] Error loading shared data:', e);
+			sharedData = [];
+			sharedGoal = null;
+			sharedUpdateDate = '';
+			sharedGridOperatorCheckedRatio = null;
+		} finally {
+			dataLoading = false;
+		}
+	}
+
 	// Handle view switch
 	function handleViewSwitch(event: CustomEvent) {
 		currentView = event.detail.key ?? event.detail;
@@ -103,9 +148,30 @@
 	<!-- Chart Views -->
 	<div class="chart-container">
 		{#if currentView === 'yearly'}
-			<YearlyBarView {selectedEnergy} {region} {regionLoading} {onChartData} />
+			<YearlyBarView
+				{selectedEnergy}
+				{region}
+				{regionLoading}
+				{onChartData}
+				data={sharedData}
+				goal={sharedGoal}
+				updateDate={sharedUpdateDate}
+				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
+				{dataLoading}
+			/>
 		{:else if currentView === 'cumulative'}
-			<CumulativeLineView {selectedEnergy} {region} {regionLoading} {onChartData} {regions} />
+			<CumulativeLineView
+				{selectedEnergy}
+				{region}
+				{regionLoading}
+				{onChartData}
+				{regions}
+				data={sharedData}
+				goal={sharedGoal}
+				updateDate={sharedUpdateDate}
+				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
+				{dataLoading}
+			/>
 		{:else if currentView === 'map'}
 			<MapView
 				{selectedEnergy}
@@ -114,6 +180,11 @@
 				{regionId}
 				{onChartData}
 				on:openMapOverlay={handleMapOverlay}
+				yearlyData={sharedData}
+				goal={sharedGoal}
+				updateDate={sharedUpdateDate}
+				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
+				{dataLoading}
 			/>
 		{/if}
 	</div>

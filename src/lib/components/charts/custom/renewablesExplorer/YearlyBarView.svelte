@@ -9,8 +9,6 @@
 	import RuleY from '$lib/components/charts/primitives/marks/RuleY.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import {
-		fetchData,
-		fetchGoal,
 		buildChartData,
 		getColor,
 		getColors,
@@ -29,11 +27,14 @@
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
+	// Shared data props (from parent)
+	export let data: RenewablesRawData[] = [];
+	export let goal: RenewableGoal | null = null;
+	export let updateDate: string = '';
+	export let gridOperatorCheckedRatio: number | null = null;
+	export let dataLoading: boolean = true;
+
 	// State
-	let data: RenewablesRawData[] = [];
-	let goal: RenewableGoal | null = null;
-	let loading = true;
-	let error: string | null = null;
 	let containerEl: HTMLElement;
 
 	// Derived
@@ -185,47 +186,18 @@
 	$: unit = getPowerUnit(maxAbs, selectedEnergy);
 	$: yFormat = (v: number) => formatNumber(convertPowerUnit(v, maxAbs), 0);
 
-	// Load data when region or energy changes
-	$: if (!regionLoading) {
-		loadData();
-	}
-
-	async function loadData() {
-		loading = true;
-		error = null;
-
-		try {
-			// Fetch main data and goal in parallel
-			const [result, goalResult] = await Promise.all([
-				fetchData(region, params),
-				fetchGoal(region, params)
-			]);
-
-			data = result.data;
-			goal = goalResult;
-
-			console.log('[YearlyBarView] Data loaded:', data.length, 'records');
-			console.log('[YearlyBarView] Goal:', goal);
-
-			const chartData = buildChartData(data, result.updateDate, region, params, 'yearly', goal, result.gridOperatorCheckedRatio);
-			onChartData?.(chartData);
-		} catch (e) {
-			console.error('[YearlyBarView] Error:', e);
-			error = e instanceof Error ? e.message : 'Fehler beim Laden';
-			data = [];
-			goal = null;
-			onChartData?.(null);
-		} finally {
-			loading = false;
-		}
+	// Update chart data when shared data changes
+	$: if (!dataLoading && data.length > 0) {
+		const chartData = buildChartData(data, updateDate, region, params, 'yearly', goal, gridOperatorCheckedRatio);
+		onChartData?.(chartData);
+	} else if (!dataLoading && data.length === 0) {
+		onChartData?.(null);
 	}
 </script>
 
 <div bind:this={containerEl} class="yearly-bar-view">
-	{#if loading || regionLoading}
+	{#if dataLoading || regionLoading}
 		<div class="h-72 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
-	{:else if error}
-		<div class="h-72 flex items-center justify-center text-red-500">{error}</div>
 	{:else if data.length === 0}
 		<div class="h-72 flex items-center justify-center text-gray-500">Keine Daten verfügbar</div>
 	{:else}

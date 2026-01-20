@@ -10,9 +10,7 @@
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import {
-		fetchData,
 		fetchComparisonData,
-		fetchGoal,
 		buildChartData,
 		getColors,
 		getDistance,
@@ -31,6 +29,13 @@
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
+	// Shared data props (from parent)
+	export let data: RenewablesRawData[] = [];
+	export let goal: RenewableGoal | null = null;
+	export let updateDate: string = '';
+	export let gridOperatorCheckedRatio: number | null = null;
+	export let dataLoading: boolean = true;
+
 	// Optional: pre-provided regions list (if empty, will fetch from API)
 	export let regions: Array<{
 		code: string;
@@ -47,7 +52,6 @@
 	// State
 	let mainData: RenewablesRawData[] = [];
 	let comparisonSeries: ComparisonSeries[] = [];
-	let goal: RenewableGoal | null = null;
 	let initialLoading = true;
 	let comparisonLoading = false;
 	let error: string | null = null;
@@ -330,38 +334,23 @@
 		}
 	}
 
-	// Load data when region or energy changes
-	$: if (!regionLoading) {
-		loadData();
+	// Initialize from shared data when it changes
+	$: if (!dataLoading && data.length > 0) {
+		initializeFromSharedData();
 	}
 
-	async function loadData() {
+	async function initializeFromSharedData() {
 		initialLoading = true;
 		error = null;
-
-		console.log('[CumulativeLineView] loadData() called');
-		console.log('[CumulativeLineView] Current region:', region);
-		console.log('[CumulativeLineView] Parent region IDs:', [...parentRegionIds]);
 
 		try {
 			// Fetch regions list if not provided
 			if (regions.length === 0 && !regionsLoaded) {
-				console.log('[CumulativeLineView] No regions yet, fetching...');
 				await fetchAvailableRegions();
 			}
 
-			// Fetch main data and goal in parallel
-			console.log('[CumulativeLineView] Fetching main data and goal...');
-			const [result, goalResult] = await Promise.all([
-				fetchData(region, params),
-				fetchGoal(region, params)
-			]);
-
-			mainData = result.data;
-			goal = goalResult;
-
-			console.log('[CumulativeLineView] Main data loaded:', mainData.length, 'records');
-			console.log('[CumulativeLineView] Goal loaded:', goal);
+			// Use shared data
+			mainData = data;
 
 			// Initialize comparison series with main region
 			comparisonSeries = [
@@ -372,23 +361,21 @@
 					color: colors.dark
 				}
 			];
-			console.log('[CumulativeLineView] Initial comparison series:', comparisonSeries);
 
 			const builtChartData = buildChartData(
 				mainData,
-				result.updateDate,
+				updateDate,
 				region,
 				params,
 				'cumulative',
 				goal,
-				result.gridOperatorCheckedRatio
+				gridOperatorCheckedRatio
 			);
 			onChartData?.(builtChartData);
 		} catch (e) {
 			console.error('[CumulativeLineView] Error:', e);
 			error = e instanceof Error ? e.message : 'Fehler beim Laden';
 			mainData = [];
-			goal = null;
 			onChartData?.(null);
 		} finally {
 			initialLoading = false;
@@ -481,7 +468,7 @@
 {/snippet}
 
 <div bind:this={containerEl} class="cumulative-line-view">
-	{#if initialLoading || regionLoading}
+	{#if initialLoading || regionLoading || dataLoading}
 		<div class="h-96 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
 		<div class="h-96 flex items-center justify-center text-red-500">{error}</div>

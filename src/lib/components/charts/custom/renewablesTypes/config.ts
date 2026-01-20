@@ -138,44 +138,44 @@ export function getPlaceholders(
 		updateDate: data?.update_date || '',
 
 		// Totals
-		totalUnits,
-		totalPower,
-		totalPowerMW: Math.round(totalPower / 1000),
-		totalPowerGW: (totalPower / 1_000_000).toFixed(2),
-		totalAddedUnitsThisYear,
-		totalAddedPowerThisYear,
-		totalAddedPowerThisYearMW: Math.round(totalAddedPowerThisYear / 1000),
+		totalUnits: formatNumber(totalUnits),
+		totalPower: formatNumber(totalPower),
+		totalPowerMW: formatNumber(Math.round(totalPower / 1000)),
+		totalPowerGW: (totalPower / 1_000_000).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+		totalAddedUnitsThisYear: formatNumber(totalAddedUnitsThisYear),
+		totalAddedPowerThisYear: formatNumber(totalAddedPowerThisYear),
+		totalAddedPowerThisYearMW: formatNumber(Math.round(totalAddedPowerThisYear / 1000)),
 
 		// Rooftop (Dachanlagen) - type 853
-		rooftopUnits: rooftop.units,
-		rooftopPower: rooftop.power_kw,
-		rooftopPowerMW: Math.round(rooftop.power_kw / 1000),
-		rooftopAddedUnitsThisYear: rooftop.added_units_this_year,
-		rooftopAddedPowerThisYear: rooftop.added_power_kw_this_year,
+		rooftopUnits: formatNumber(rooftop.units),
+		rooftopPower: formatNumber(rooftop.power_kw),
+		rooftopPowerMW: formatNumber(Math.round(rooftop.power_kw / 1000)),
+		rooftopAddedUnitsThisYear: formatNumber(rooftop.added_units_this_year),
+		rooftopAddedPowerThisYear: formatNumber(rooftop.added_power_kw_this_year),
 		rooftopPowerPercent: totalPower > 0 ? Math.round((rooftop.power_kw / totalPower) * 100) : 0,
 
 		// Ground-mounted (Freiflächenanlagen) - type 852
-		groundMountedUnits: groundMounted.units,
-		groundMountedPower: groundMounted.power_kw,
-		groundMountedPowerMW: Math.round(groundMounted.power_kw / 1000),
-		groundMountedAddedUnitsThisYear: groundMounted.added_units_this_year,
-		groundMountedAddedPowerThisYear: groundMounted.added_power_kw_this_year,
+		groundMountedUnits: formatNumber(groundMounted.units),
+		groundMountedPower: formatNumber(groundMounted.power_kw),
+		groundMountedPowerMW: formatNumber(Math.round(groundMounted.power_kw / 1000)),
+		groundMountedAddedUnitsThisYear: formatNumber(groundMounted.added_units_this_year),
+		groundMountedAddedPowerThisYear: formatNumber(groundMounted.added_power_kw_this_year),
 		groundMountedPowerPercent:
 			totalPower > 0 ? Math.round((groundMounted.power_kw / totalPower) * 100) : 0,
 
 		// Balcony (Balkonkraftwerke) - type 2961
-		balconyUnits: balcony.units,
-		balconyPower: balcony.power_kw,
-		balconyPowerMW: Math.round(balcony.power_kw / 1000),
-		balconyAddedUnitsThisYear: balcony.added_units_this_year,
-		balconyAddedPowerThisYear: balcony.added_power_kw_this_year,
+		balconyUnits: formatNumber(balcony.units),
+		balconyPower: formatNumber(balcony.power_kw),
+		balconyPowerMW: formatNumber(Math.round(balcony.power_kw / 1000)),
+		balconyAddedUnitsThisYear: formatNumber(balcony.added_units_this_year),
+		balconyAddedPowerThisYear: formatNumber(balcony.added_power_kw_this_year),
 		balconyPowerPercent: totalPower > 0 ? Math.round((balcony.power_kw / totalPower) * 100) : 0,
 
 		// Other types
-		otherUnits: otherStats.units,
-		otherPower: otherStats.power_kw,
-		otherAddedUnitsThisYear: otherStats.added_units_this_year,
-		otherAddedPowerThisYear: otherStats.added_power_kw_this_year,
+		otherUnits: formatNumber(otherStats.units),
+		otherPower: formatNumber(otherStats.power_kw),
+		otherAddedUnitsThisYear: formatNumber(otherStats.added_units_this_year),
+		otherAddedPowerThisYear: formatNumber(otherStats.added_power_kw_this_year),
 		otherPowerPercent: totalPower > 0 ? Math.round((otherStats.power_kw / totalPower) * 100) : 0
 	};
 }

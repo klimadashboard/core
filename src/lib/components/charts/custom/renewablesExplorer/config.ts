@@ -488,6 +488,27 @@ export function getPlaceholders(
 	const dataYearStartData = data.find((d) => d.year === dataYearStart);
 	const dataYearEndData = data.find((d) => d.year === dataYearEnd);
 
+	// Build titleWind placeholder for wind energy
+	let titleWind = '';
+	if (energy === 'wind') {
+		const regionDisplayName = region?.name || 'Deutschland';
+		const totalCumulativeUnits = lastEntry?.cumulative_units || 0;
+
+		if (totalCumulativeUnits === 0) {
+			// No wind turbines in operation
+			titleWind = `In ${regionDisplayName} ist aktuell kein Windrad in Betrieb.`;
+		} else {
+			// Find the most recent year with new installations
+			const lastYearWithInstallation = [...data].reverse().find((d) => (d.added_units || 0) > 0);
+			if (lastYearWithInstallation) {
+				titleWind = `Zuletzt wurde im Jahr ${lastYearWithInstallation.year} ein Windrad in ${regionDisplayName} in Betrieb genommen.`;
+			} else {
+				// Has cumulative but no yearly data - fallback
+				titleWind = `In ${regionDisplayName} sind Windräder in Betrieb.`;
+			}
+		}
+	}
+
 	return {
 		regionName: region?.name || 'Deutschland',
 		currentYear,
@@ -521,6 +542,8 @@ export function getPlaceholders(
 		// New placeholders for verification status
 		unverifiedPercent,
 		verifiedPercent,
+		// Wind-specific title placeholder
+		titleWind,
 		...goalPlaceholders
 	};
 }

@@ -218,6 +218,11 @@ export async function fetchData(
 	return fetchNeuzulassungenData(region);
 }
 
+/** Format percentage with German locale (comma as decimal separator) */
+function formatPercent(value: number): string {
+	return (value * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+}
+
 /** Get table columns dynamically based on categories */
 export function getTableColumns(categories: string[]): TableColumn[] {
 	return [
@@ -231,7 +236,7 @@ export function getTableColumns(categories: string[]): TableColumn[] {
 			key: cat,
 			label: categoryConfig[cat]?.label || cat,
 			align: 'right' as const,
-			format: (v: number) => (v != null ? `${(v * 100).toFixed(1)}%` : '–')
+			format: (v: number) => (v != null ? formatPercent(v) : '–')
 		}))
 	];
 }
@@ -240,7 +245,8 @@ export function getTableColumns(categories: string[]): TableColumn[] {
 export function getPlaceholders(
 	data: VehicleRawData[],
 	categories: string[],
-	region: Region | null
+	region: Region | null,
+	mode: DataMode = 'neuzulassungen'
 ): Record<string, string | number> {
 	const lastRow = data[data.length - 1];
 	const currentYear = new Date().getFullYear();
@@ -249,9 +255,31 @@ export function getPlaceholders(
 	for (const cat of categories) {
 		const value = lastRow?.[cat];
 		if (typeof value === 'number') {
-			latestValues[cat.replace(/[^a-zA-Z0-9]/g, '_')] = `${(value * 100).toFixed(1)}%`;
+			latestValues[cat.replace(/[^a-zA-Z0-9]/g, '_')] = formatPercent(value);
 		}
 	}
+
+	// Calculate Elektro share change over last 5 years
+	const lastYear = lastRow?.date instanceof Date ? lastRow.date.getFullYear() : currentYear;
+	const targetYear = lastYear - 5;
+
+	// Find the data point closest to 5 years ago
+	const startRow = data.find((d) => d.date instanceof Date && d.date.getFullYear() === targetYear);
+	const elektroStart = typeof startRow?.Elektro === 'number' ? startRow.Elektro : null;
+	const elektroEnd = typeof lastRow?.Elektro === 'number' ? lastRow.Elektro : null;
+
+	// Format percentages with German locale
+	const elektroShareStart = elektroStart !== null ? formatPercent(elektroStart) : '–';
+	const elektroShareEnd = elektroEnd !== null ? formatPercent(elektroEnd) : '–';
+
+	// Determine change verb
+	let changeVerb = '';
+	if (elektroStart !== null && elektroEnd !== null) {
+		changeVerb = elektroEnd >= elektroStart ? 'gestiegen' : 'gesunken';
+	}
+
+	// Mode label
+	const modeLabel = mode === 'bestand' ? 'im Bestand' : 'bei den Neuzulassungen';
 
 	return {
 		regionName: region?.name ?? '',
@@ -259,6 +287,10 @@ export function getPlaceholders(
 		lastUpdateDate: lastRow?.date instanceof Date ? lastRow.date.toLocaleDateString('de-DE') : '',
 		categoryCount: categories.length,
 		dataPointCount: data.length,
+		elektroShareStart,
+		elektroShareEnd,
+		changeVerb,
+		modeLabel,
 		...latestValues
 	};
 }
@@ -327,7 +359,7 @@ export function buildChartData(
 			rows: tableRows,
 			filename: mode === 'bestand' ? 'kfz-bestand' : 'neuzulassungen'
 		},
-		placeholders: getPlaceholders(data, categories, region),
+		placeholders: getPlaceholders(data, categories, region, mode),
 		meta: {
 			updateDate,
 			source: source || '',

@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
@@ -117,7 +118,7 @@
 			// Get source from actual data
 			const dataSource =
 				selectedRegion.data.find((d) => d.source !== 'climate-target')?.source || 'Emissions data';
-			const chartData = buildChartData(selectedRegion, sectors, summary, useMegatons, dataSource);
+			const chartData = buildChartData(selectedRegion, sectors, summary, useMegatons, dataSource, PUBLIC_VERSION);
 			onChartData(chartData);
 		}
 	}
@@ -150,7 +151,7 @@
 	// Calculate linear progress (how far we should be based on time elapsed)
 	$: linearProgress = (() => {
 		if (!summaryStats) return 0;
-		const startYear = summaryStats.firstYear;
+		const startYear = summaryStats.baseYear;
 		const targetYear = summaryStats.targetYear ?? TARGET_YEAR;
 		const currentYear = summaryStats.lastYear;
 		const totalYears = targetYear - startYear;
@@ -197,7 +198,7 @@
 			title: sector.label,
 			items: [
 				{
-					label: `${summaryStats.firstYear}`,
+					label: `${summaryStats.baseYear}`,
 					value: `${formatNumber(sector.firstYearValue)} ${unit}`,
 					color: sector.color
 				},
@@ -267,20 +268,6 @@
 			/>
 		</div>
 	{/if}
-
-	<!-- Summary -->
-	<p class="text-xl max-w-xl mb-6">
-		<strong>{selectedRegion.name}</strong> hat zwischen {summaryStats.firstYear} und {summaryStats.lastYear}
-		insgesamt <strong>{formatNumber(summaryStats.totalReductionAchieved)} {unit}</strong> eingespart
-		– das sind <strong>{Math.round(summaryStats.overallProgress)}%</strong> des Weges
-		{#if summaryStats.targetYear}
-			zum Ziel {summaryStats.targetYear}{summaryStats.targetValue === 0
-				? ' (Klimaneutralität)'
-				: ''}.
-		{:else}
-			zur Klimaneutralität.
-		{/if}
-	</p>
 
 	<!-- Progress tracks -->
 	<div bind:this={containerEl} class="relative select-none w-full">
@@ -399,7 +386,7 @@
 			<div class="flex items-center gap-3 mt-2 text-xs">
 				<div class="w-32 flex-shrink-0"></div>
 				<div class="relative flex-1 flex justify-between gap-2">
-					<span>{summaryStats.firstYear}</span>
+					<span>{summaryStats.baseYear}</span>
 					<span class="border-t flex-1 translate-y-2 border-current"></span>
 					<span>Ziel</span>
 				</div>
@@ -436,7 +423,7 @@
 	<div class="text-sm leading-tight mt-4 opacity-70">
 		<p class="mt-1">
 			Zeigt den Fortschritt jedes Sektors auf dem Weg zur {TARGET_REDUCTION_PERCENT}%-Reduktion bis {TARGET_YEAR}.
-			Basis: {summaryStats.firstYear} ({formatNumber(summaryStats.firstYearTotal)}
+			Basis: {summaryStats.baseYear} ({formatNumber(summaryStats.baseYearTotal)}
 			{unit}).
 		</p>
 	</div>

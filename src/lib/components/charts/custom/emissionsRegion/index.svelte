@@ -139,7 +139,7 @@
 				// Then convert to megatons for display if values are large (only when not per-capita)
 				const useMegatons = !showPerCapita && shouldUseMegatons(selectedResult.data);
 				const displayData = transformToDisplayUnit(perCapitaData, useMegatons);
-				const chartData = buildChartData(displayData, selectedResult, showPerCapita, useMegatons);
+				const chartData = buildChartData(displayData, selectedResult, showPerCapita, useMegatons, PUBLIC_VERSION);
 				onChartData(chartData);
 			}
 		}
@@ -569,20 +569,17 @@
 									opacity={0.1}
 								/>
 							{/each}
-							{#if historicYears.length > 0 && climateTargets.length > 0}
-								{@const firstYear = Math.min(...historicYears)}
-								{@const firstYearData = grouped.find((g) => g.year === firstYear)}
+							{#if climateTargets.length >= 2}
+								{@const baseTarget = climateTargets[0]}
 								{@const goalTarget = climateTargets[climateTargets.length - 1]}
-								{#if firstYearData && goalTarget}
-									<path
-										d={`M ${xScale(firstYear)},${yScale(firstYearData.total)} L ${xScale(goalTarget.year)},${yScale(goalTarget.value)}`}
-										fill="none"
-										stroke="currentColor"
-										stroke-width={2}
-										stroke-dasharray="4 4"
-										opacity={0.5}
-									/>
-								{/if}
+								<path
+									d={`M ${xScale(baseTarget.year)},${yScale(baseTarget.value)} L ${xScale(goalTarget.year)},${yScale(goalTarget.value)}`}
+									fill="none"
+									stroke="currentColor"
+									stroke-width={2}
+									stroke-dasharray="4 4"
+									opacity={0.5}
+								/>
 							{/if}
 						</g>
 					{/if}

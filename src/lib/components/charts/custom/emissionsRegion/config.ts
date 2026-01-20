@@ -325,12 +325,89 @@ export function getDisplayedCategories(
 		);
 }
 
+/** Calculate change statistics for emissions data */
+function calculateChangeStats(
+	tableData: EmissionsRawData[],
+	locale: string = 'de'
+): {
+	changeVerb: string;
+	changePercentage: string;
+	lastYear: number | null;
+	sectorIncrease: string;
+} {
+	const years = [...new Set(tableData.map((d) => d.year))].sort((a, b) => a - b);
+
+	if (years.length < 2) {
+		return {
+			changeVerb: '',
+			changePercentage: '',
+			lastYear: years[0] ?? null,
+			sectorIncrease: ''
+		};
+	}
+
+	const lastYear = years[years.length - 1];
+	const previousYear = years[years.length - 2];
+
+	// Calculate totals for previous and last year (year-over-year change)
+	const previousYearTotal = tableData
+		.filter((d) => d.year === previousYear)
+		.reduce((sum, d) => sum + d.value, 0);
+	const lastYearTotal = tableData
+		.filter((d) => d.year === lastYear)
+		.reduce((sum, d) => sum + d.value, 0);
+
+	// Calculate overall change (year-over-year)
+	const totalChange = lastYearTotal - previousYearTotal;
+	const changePercent = previousYearTotal > 0 ? Math.abs(totalChange / previousYearTotal) * 100 : 0;
+	const changeVerb = totalChange < 0 ? (locale === 'de' ? 'sanken' : 'decreased') : (locale === 'de' ? 'stiegen' : 'increased');
+	const formattedPercent = changePercent.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+	const changePercentage = `${formattedPercent}%`;
+
+	// Find sectors that increased
+	const categories = [...new Set(tableData.map((d) => d.category))];
+	const sectorChanges: Array<{ category: string; label: string; change: number }> = [];
+
+	categories.forEach((category) => {
+		const previousValue = tableData.find((d) => d.year === previousYear && d.category === category)?.value ?? 0;
+		const lastValue = tableData.find((d) => d.year === lastYear && d.category === category)?.value ?? 0;
+		const change = lastValue - previousValue;
+
+		if (change > 0) {
+			const label = tableData.find((d) => d.category === category)?.category_label ?? category;
+			sectorChanges.push({ category, label, change });
+		}
+	});
+
+	// Sort by change (biggest increase first) and get the top one
+	sectorChanges.sort((a, b) => b.change - a.change);
+	const biggestIncrease = sectorChanges[0];
+
+	// Build sectorIncrease sentence
+	let sectorIncrease = '';
+	if (biggestIncrease) {
+		if (locale === 'de') {
+			sectorIncrease = `Im Sektor ${biggestIncrease.label} stiegen sie.`;
+		} else {
+			sectorIncrease = `In the ${biggestIncrease.label} sector, they increased.`;
+		}
+	}
+
+	return {
+		changeVerb,
+		changePercentage,
+		lastYear,
+		sectorIncrease
+	};
+}
+
 /** Build ChartData for Card integration */
 export function buildChartData(
 	data: EmissionsRawData[],
 	region: RegionResult,
 	showPerCapita: boolean,
-	useMegatons: boolean
+	useMegatons: boolean,
+	locale: string = 'de'
 ): ChartData {
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 	const tableData = data.filter((d) => d.source !== 'climate-target');
@@ -367,6 +444,9 @@ export function buildChartData(
 	const dataSource = tableData[0]?.source || 'Emissions data';
 	const updateDate = tableData[0]?.update || new Date().toISOString();
 
+	// Calculate change statistics
+	const changeStats = calculateChangeStats(tableData, locale);
+
 	return {
 		raw: data,
 		table: {
@@ -377,7 +457,11 @@ export function buildChartData(
 		placeholders: {
 			regionName: region.name,
 			layerLabel: region.layer_label,
-			unit
+			unit,
+			changeVerb: changeStats.changeVerb,
+			changePercentage: changeStats.changePercentage,
+			lastYear: changeStats.lastYear?.toString() ?? '',
+			sectorIncrease: changeStats.sectorIncrease
 		},
 		meta: {
 			updateDate,
