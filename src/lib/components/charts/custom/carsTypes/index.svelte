@@ -4,10 +4,10 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import {
-		fetchData,
+		fetchDataWithFallback,
 		buildChartData,
 		buildWaffleData,
-		checkDataAvailability,
+		checkDataAvailabilityWithFallback,
 		categoryConfig,
 		type VehicleRawData,
 		type VehicleShareData,
@@ -44,6 +44,22 @@
 
 	// Mode switch
 	let activeMode: DataMode = 'bestand';
+
+	// Build region candidates from current region + parents (for fallback)
+	$: regionCandidates = region
+		? [
+				{ id: region.id, name: region.name, layer: region.layer, layer_label: region.layer_label },
+				...(region.parents?.map((p: any) => ({
+					id: p.id,
+					name: p.name || 'Parent region',
+					layer: p.layer,
+					layer_label: p.layer_label
+				})) || [])
+			]
+		: [];
+
+	// Track region candidates for reactivity (stringified for comparison)
+	$: regionCandidatesKey = JSON.stringify(regionCandidates.map(c => c.id));
 
 	// Dynamic mode views based on availability
 	$: modeViews = [
@@ -110,23 +126,26 @@
 		}, 25);
 	}
 
-	// Check availability when region changes
-	$: if (!regionLoading) {
+	// Check availability when region candidates change or region loading completes
+	$: if (!regionLoading && regionCandidatesKey !== undefined) {
 		checkAvailability();
 	}
 
 	async function checkAvailability() {
+		console.log('[carsTypes] checkAvailability called, regionCandidates:', regionCandidates);
 		loading = true;
 		availabilityChecked = false;
 
 		try {
-			const availability = await checkDataAvailability(region, { layer });
+			const availability = await checkDataAvailabilityWithFallback(regionCandidates);
+			console.log('[carsTypes] Availability result:', availability);
 			hasBestand = availability.hasBestand;
 			hasNeuzulassungen = availability.hasNeuzulassungen;
 			availabilityChecked = true;
 
 			// If no data is available at all, report hasData: false
 			if (!hasBestand && !hasNeuzulassungen) {
+				console.log('[carsTypes] No data available at all, setting hasData: false');
 				data = null;
 				waffleData = [];
 				const emptyChartData = buildChartData(
@@ -154,10 +173,9 @@
 				activeMode = 'neuzulassungen';
 			}
 
-			// Load data for the selected mode
-			await loadData();
+			// Note: loadData() will be triggered by the reactive statement when availabilityChecked becomes true
 		} catch (e) {
-			console.error('[VehicleRegistrations] Error checking availability:', e);
+			console.error('[carsTypes] Error checking availability:', e);
 			error = e instanceof Error ? e.message : 'Fehler beim Laden';
 			loading = false;
 		}
@@ -169,32 +187,72 @@
 	}
 
 	async function loadData() {
+		console.log('[carsTypes] loadData called, activeMode:', activeMode, 'params:', params);
 		loading = true;
 		error = null;
 
 		try {
-			const result = await fetchData(region, params);
+			const result = await fetchDataWithFallback(regionCandidates, params);
+			console.log('[carsTypes] loadData result:', result ? { regionName: result.regionName, regionLayerLabel: result.regionLayerLabel } : null);
+
+			if (!result) {
+				console.log('[carsTypes] loadData: No result, setting empty data');
+				data = null;
+				waffleData = [];
+				const emptyChartData = buildChartData(
+					{ year: 0, total: 0, categories: {}, shares: {} },
+					[],
+					new Date().toISOString(),
+					'',
+					region,
+					activeMode,
+					false
+				);
+				onChartData?.(emptyChartData);
+				loading = false;
+				return;
+			}
+
 			data = result.data;
 			regionName = result.regionName;
 			waffleData = buildWaffleData(result.data, result.categories);
+			console.log('[carsTypes] loadData: Data loaded successfully, regionName:', regionName);
+
+			// Create a region object for the data source (may be a parent region)
+			const dataRegion: Region = {
+				id: result.regionId,
+				name: result.regionName
+			} as Region;
+
+			// Build fallback info if showing data from a different region
+			const fallbackInfo = region && result.regionName !== region.name
+				? {
+						originalRegionName: region.name,
+						dataRegionName: result.regionName,
+						originalLayerLabel: region.layer_label || '',
+						dataLayerLabel: result.regionLayerLabel || ''
+					}
+				: undefined;
 
 			const builtChartData = buildChartData(
 				result.data,
 				waffleData,
 				result.updateDate,
 				regionName,
-				region,
+				dataRegion,
 				activeMode,
 				true,
 				{ hasBestand, hasNeuzulassungen },
-				result.source
+				result.source,
+				fallbackInfo,
+				result.regionLayerLabel
 			);
 			onChartData?.(builtChartData);
 
 			// Start animation after data loads
 			startAnimation();
 		} catch (e) {
-			console.error('[VehicleRegistrations] Error:', e);
+			console.error('[carsTypes] Error:', e);
 			error = e instanceof Error ? e.message : 'Fehler beim Laden';
 			data = null;
 			onChartData?.(null);

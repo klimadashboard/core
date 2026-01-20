@@ -383,9 +383,9 @@ function calculateChangeStats(
 	sectorChanges.sort((a, b) => b.change - a.change);
 	const biggestIncrease = sectorChanges[0];
 
-	// Build sectorIncrease sentence
+	// Build sectorIncrease sentence - only if overall emissions fell
 	let sectorIncrease = '';
-	if (biggestIncrease) {
+	if (biggestIncrease && totalChange < 0) {
 		if (locale === 'de') {
 			sectorIncrease = `Im Sektor ${biggestIncrease.label} stiegen sie.`;
 		} else {
