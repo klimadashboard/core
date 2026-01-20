@@ -330,7 +330,7 @@
 						<div class="legend-color" style="background-color: {category.color}"></div>
 						<div class="legend-content">
 							<span class="legend-label">{category.label}: {category.cells}%</span>
-							{#if activeMode === 'bestand' && category.absolute > 0}
+							{#if category.absolute > 0}
 								<span class="legend-value">{formatNumber(category.absolute, 0)}</span>
 							{/if}
 						</div>

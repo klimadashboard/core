@@ -246,18 +246,22 @@ export async function fetchNeuzulassungenData(
 		return orderA - orderB;
 	});
 
-	// Build time series data
+	// Build time series data - values are now absolute numbers, calculate shares
 	const data: VehicleRawData[] = periods.map((period) => {
 		const periodRecords = records.filter((r) => r.period === period);
+
+		// Calculate total for this period
+		const total = periodRecords.reduce((sum, r) => sum + (r.value || 0), 0);
 
 		const row: VehicleRawData = {
 			date: new Date(period)
 		};
 
-		// Add share values for each category
+		// Calculate share values for each category from absolute values
 		for (const cat of categories) {
 			const record = periodRecords.find((r) => r.category === cat);
-			row[cat] = record?.value || 0;
+			const absolute = record?.value || 0;
+			row[cat] = total > 0 ? absolute / total : 0;
 		}
 
 		return row;

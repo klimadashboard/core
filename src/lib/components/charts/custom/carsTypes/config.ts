@@ -224,15 +224,22 @@ async function fetchNeuzulassungenData(
 		return orderA - orderB;
 	});
 
-	// Build data structure
+	// Build data structure - values are now absolute numbers
 	const categoriesData: Record<string, number> = {};
 	const sharesData: Record<string, number> = {};
 
+	// First pass: collect absolute values and calculate total
+	let total = 0;
 	for (const cat of categories) {
 		const record = latestRecords.find((r) => r.category === cat);
-		const share = record?.value || 0;
-		sharesData[cat] = share;
-		categoriesData[cat] = 0; // No absolute values in this dataset
+		const absolute = record?.value || 0;
+		categoriesData[cat] = absolute;
+		total += absolute;
+	}
+
+	// Second pass: calculate shares from absolute values
+	for (const cat of categories) {
+		sharesData[cat] = total > 0 ? categoriesData[cat] / total : 0;
 	}
 
 	const date = new Date(latestPeriod);
@@ -240,7 +247,7 @@ async function fetchNeuzulassungenData(
 
 	const data: VehicleRawData = {
 		year,
-		total: 0, // No total in share-based data
+		total,
 		categories: categoriesData,
 		shares: sharesData
 	};
@@ -251,7 +258,7 @@ async function fetchNeuzulassungenData(
 	// Extract source from first record
 	const source = records[0]?.source || '';
 
-	console.log('[carsTypes fetchNeuzulassungenData] Returning data:', { year, categories, regionName });
+	console.log('[carsTypes fetchNeuzulassungenData] Returning data:', { year, categories, regionName, total });
 
 	return { data, categories, updateDate, regionName, source };
 }
