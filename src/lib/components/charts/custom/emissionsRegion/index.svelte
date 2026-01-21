@@ -320,20 +320,28 @@
 			if (!yearData) return null;
 
 			if (activeCategory === 'all') {
+				const sectorItems = yearData.sectors
+					.filter((s) => s.value > 0)
+					.sort((a, b) => {
+						const aIdx = selectedRegion?.categoryOrder.indexOf(a.sector) ?? 0;
+						const bIdx = selectedRegion?.categoryOrder.indexOf(b.sector) ?? 0;
+						return aIdx - bIdx;
+					})
+					.map((s) => ({
+						label: s.label,
+						value: `${formatNumber(s.value)} ${unit}`,
+						color: s.color
+					}));
 				return {
 					title: `${hoveredYear}`,
-					items: yearData.sectors
-						.filter((s) => s.value > 0)
-						.sort((a, b) => {
-							const aIdx = selectedRegion?.categoryOrder.indexOf(a.sector) ?? 0;
-							const bIdx = selectedRegion?.categoryOrder.indexOf(b.sector) ?? 0;
-							return aIdx - bIdx;
-						})
-						.map((s) => ({
-							label: s.label,
-							value: `${formatNumber(s.value)} ${unit}`,
-							color: s.color
-						}))
+					items: [
+						...sectorItems,
+						{
+							label: 'Gesamt',
+							value: `${formatNumber(yearData.total)} ${unit}`,
+							color: '#374151'
+						}
+					]
 				};
 			} else {
 				const sector = yearData.sectors.find((s) => s.sector === activeCategory);
