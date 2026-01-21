@@ -229,7 +229,7 @@
 <div
 	bind:this={cardEl}
 	class="chart-card group relative bg-white h-full dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all flex flex-col justify-between"
-	style="grid-column: span {span};"
+	style="--span: {span};"
 	on:click={handleClick}
 	on:keydown={(e) => e.key === 'Enter' && handleClick(e)}
 	role="button"
@@ -677,6 +677,17 @@
 
 <style>
 	@reference "tailwindcss/theme";
+
+	/* Responsive grid span: full width on mobile, respect --span on md+ */
+	.chart-card {
+		grid-column: span 1;
+	}
+
+	@media (min-width: 768px) {
+		.chart-card {
+			grid-column: span var(--span, 12);
+		}
+	}
 
 	:global(#tabpanel-text p) {
 		@apply my-2;

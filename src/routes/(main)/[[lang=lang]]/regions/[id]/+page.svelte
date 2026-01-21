@@ -238,7 +238,7 @@
 						</div>
 
 						{#if section.charts}
-							<div class="grid md:grid-cols-12 gap-1 m-1">
+							<div class="grid grid-cols-1 md:grid-cols-12 gap-1 m-1">
 								{#each section.charts.filter((c) => c.countries.includes(PUBLIC_VERSION)) as chart}
 									{#if chart.id}
 										{#if chartVisibility[chart.id] !== false}
@@ -250,7 +250,7 @@
 											/>
 										{/if}
 									{:else}
-										<div class="" style="grid-column: span {chart.span || 12};">
+										<div class="coming-soon-wrapper" style="--span: {chart.span || 12};">
 											<ComingSoonChart text={chart.text} />
 										</div>
 									{/if}
@@ -276,4 +276,14 @@
 </main>
 
 <style>
+	/* Responsive grid span for ComingSoonChart: full width on mobile, respect --span on md+ */
+	.coming-soon-wrapper {
+		grid-column: span 1;
+	}
+
+	@media (min-width: 768px) {
+		.coming-soon-wrapper {
+			grid-column: span var(--span, 12);
+		}
+	}
 </style>
