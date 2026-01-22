@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import TransportIcons from './TransportIcons.svelte';
+	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import {
 		fetchData,
 		buildChartData,
@@ -165,17 +166,73 @@
 	function formatPercent(value: number): string {
 		return `${Math.round(value)}%`;
 	}
+
+	// Hover state for tooltip
+	let hoveredYear: number | null = null;
+	let hoverClientX = 0;
+	let hoverClientY = 0;
+
+	function handleBarMouseMove(e: MouseEvent, year: number) {
+		hoveredYear = year;
+		hoverClientX = e.clientX;
+		hoverClientY = e.clientY;
+	}
+
+	function handleBarMouseLeave() {
+		hoveredYear = null;
+	}
+
+	// Tooltip data
+	$: tooltipData = (() => {
+		if (hoveredYear === null) return null;
+
+		// Handle goal year separately
+		if (hoveredYear === goalConfig.endYear) {
+			const items = goalYearData.map((s) => ({
+				label: s.category === 'umweltverbund' ? 'Umweltverbund' : 'Motorisierter Individualverkehr',
+				value: `${s.value.toFixed(1)}%`,
+				color: s.category === 'umweltverbund' ? '#059669' : '#475569'
+			}));
+
+			return {
+				title: `${hoveredYear} (Ziel)`,
+				items
+			};
+		}
+
+		// Regular historic/current year data
+		const segments = processYearData(rawData, hoveredYear);
+		if (segments.length === 0) return null;
+
+		const items = segments.map((s) => ({
+			label: categoryMeta[s.category]?.label || s.category,
+			value: `${s.value.toFixed(1)}%`,
+			color: categoryColors[s.category]?.main || '#6b7280'
+		}));
+
+		return {
+			title: String(hoveredYear),
+			items
+		};
+	})();
 </script>
 
 <!-- Snippet: Small bar segments -->
-{#snippet smallBarSegments(segments: ReturnType<typeof processYearData>)}
+{#snippet smallBarSegments(segments: ReturnType<typeof processYearData>, year: number)}
 	{#each segments as segment}
 		{@const segmentWidth = xScale(segment.value)}
 		{@const segmentX = xScale(segment.x0)}
 		{@const colors = categoryColors[segment.category]}
 		<div
-			class="absolute top-0 bottom-0"
+			class="absolute top-0 bottom-0 cursor-pointer"
 			style="left: {segmentX}px; width: {segmentWidth}px; background: {colors.main};"
+			on:mouseenter={(e) => handleBarMouseMove(e, year)}
+			on:mousemove={(e) => {
+				hoverClientX = e.clientX;
+				hoverClientY = e.clientY;
+			}}
+			on:mouseleave={handleBarMouseLeave}
+			role="presentation"
 		>
 			{#if segmentWidth > 25}
 				<span
@@ -189,15 +246,22 @@
 {/snippet}
 
 <!-- Snippet: Large bar segments with icons -->
-{#snippet largeBarSegments(segments: ReturnType<typeof processYearData>)}
+{#snippet largeBarSegments(segments: ReturnType<typeof processYearData>, year: number)}
 	{#each segments as segment}
 		{@const segmentWidth = xScale(segment.value)}
 		{@const segmentX = xScale(segment.x0)}
 		{@const colors = categoryColors[segment.category]}
 		{@const meta = categoryMeta[segment.category]}
 		<div
-			class="absolute top-0 bottom-0"
+			class="absolute top-0 bottom-0 cursor-pointer"
 			style="left: {segmentX}px; width: {segmentWidth}px; background: {colors.main};"
+			on:mouseenter={(e) => handleBarMouseMove(e, year)}
+			on:mousemove={(e) => {
+				hoverClientX = e.clientX;
+				hoverClientY = e.clientY;
+			}}
+			on:mouseleave={handleBarMouseLeave}
+			role="presentation"
 		>
 			<div class="absolute top-1.5 left-2 flex flex-col text-white">
 				{#if segmentWidth > 45}
@@ -218,7 +282,8 @@
 
 <!-- Snippet: Goal bar segments (joint values only) -->
 {#snippet goalBarSegments(
-	segments: Array<{ category: string; value: number; x0: number; x1: number }>
+	segments: Array<{ category: string; value: number; x0: number; x1: number }>,
+	year: number
 )}
 	{#each segments as segment}
 		{@const segmentWidth = xScale(segment.value)}
@@ -227,8 +292,15 @@
 		{@const label =
 			segment.category === 'umweltverbund' ? 'Umweltverbund' : 'Motorisierter Individualverkehr'}
 		<div
-			class="absolute top-0 bottom-0"
+			class="absolute top-0 bottom-0 cursor-pointer"
 			style="left: {segmentX}px; width: {segmentWidth}px; background: {bgColor};"
+			on:mouseenter={(e) => handleBarMouseMove(e, year)}
+			on:mousemove={(e) => {
+				hoverClientX = e.clientX;
+				hoverClientY = e.clientY;
+			}}
+			on:mouseleave={handleBarMouseLeave}
+			role="presentation"
 		>
 			<div class="absolute top-1.5 left-2 flex flex-col text-white">
 				{#if segmentWidth > 45}
@@ -292,7 +364,7 @@
 								class="flex-1 relative rounded overflow-hidden bg-gray-200 dark:bg-gray-700"
 								style="height: {SMALL_BAR_HEIGHT}px;"
 							>
-								{@render smallBarSegments(segments)}
+								{@render smallBarSegments(segments, year)}
 							</div>
 						</div>
 					{/each}
@@ -332,7 +404,7 @@
 						<span class="text-sm">Modal Split aktuell</span>
 					</div>
 					<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-						{@render largeBarSegments(currentYearData)}
+						{@render largeBarSegments(currentYearData, latestDataYear)}
 					</div>
 				</div>
 			</div>
@@ -370,7 +442,7 @@
 					<span class="text-sm">Zielsetzung</span>
 				</div>
 				<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-					{@render goalBarSegments(goalYearData)}
+					{@render goalBarSegments(goalYearData, goalConfig.endYear)}
 				</div>
 			</div>
 		</div>
@@ -386,5 +458,17 @@
 				categoryOrder.filter((c) => !sustainableCategories.includes(c))
 			)}
 		</div>
+
+		<!-- Tooltip -->
+		{#if tooltipData}
+			<Tooltip
+				visible={true}
+				x={hoverClientX}
+				y={hoverClientY}
+				title={tooltipData.title}
+				items={tooltipData.items}
+				container={containerEl}
+			/>
+		{/if}
 	{/if}
 </div>

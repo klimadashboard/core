@@ -51,7 +51,7 @@ export const categoryMeta: Record<
 export const categoryColors: Record<string, { main: string; light: string; dark: string }> = {
 	on_foot: { main: '#0369a1', light: '#e0f2fe', dark: '#075985' }, // Sky-700 - contrast 5.14:1
 	bicycle: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - contrast 4.51:1
-	e_bike: { main: '#0d9488', light: '#ccfbf1', dark: '#0f766e' }, // Teal-600 - contrast 4.52:1
+	e_bike: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - same as bicycle
 	public_transport: { main: '#ca8a04', light: '#fef3c7', dark: '#a16207' }, // Yellow-600 - contrast 5.37:1
 	motorbike: { main: '#c2410c', light: '#ffedd5', dark: '#9a3412' }, // Orange-700 - contrast 5.93:1
 	car_driver: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' }, // Pink-700 - contrast 5.64:1
