@@ -206,7 +206,7 @@
 					type: 'loop',
 					height: '100%',
 					autoplay: true,
-					interval: 4500,
+					interval: 7000,
 					pagination: true,
 					arrows: false,
 					pauseOnHover: true
@@ -235,7 +235,7 @@
 					type: 'loop',
 					height: '100%',
 					autoplay: true,
-					interval: 5000,
+					interval: 7500,
 					pagination: true,
 					arrows: false,
 					pauseOnHover: true
@@ -300,7 +300,7 @@
 					type: 'loop',
 					height: '100%',
 					autoplay: true,
-					interval: 5000,
+					interval: 7200,
 					pagination: true,
 					arrows: false,
 					pauseOnHover: true
