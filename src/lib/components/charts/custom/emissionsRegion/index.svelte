@@ -113,8 +113,6 @@
 
 			// Select smallest available layer
 			activeLayer = filteredViews[0]?.key ?? views[0]?.key ?? null;
-
-			updateChartData();
 		} catch (error) {
 			console.error('Error fetching emissions data:', error);
 			results = [];
@@ -124,7 +122,7 @@
 		}
 	}
 
-	function updateChartData() {
+	function updateChartData(climateNeutralityText: string | null = null) {
 		if (onChartData && results.length > 0 && activeLayer) {
 			const selectedResult = results.find((r) => r.key === activeLayer);
 			if (selectedResult) {
@@ -139,7 +137,14 @@
 				// Then convert to megatons for display if values are large (only when not per-capita)
 				const useMegatons = !showPerCapita && shouldUseMegatons(selectedResult.data);
 				const displayData = transformToDisplayUnit(perCapitaData, useMegatons);
-				const chartData = buildChartData(displayData, selectedResult, showPerCapita, useMegatons, PUBLIC_VERSION);
+				const chartData = buildChartData(
+					displayData,
+					selectedResult,
+					showPerCapita,
+					useMegatons,
+					PUBLIC_VERSION,
+					climateNeutralityText
+				);
 				onChartData(chartData);
 			}
 		}
@@ -170,11 +175,6 @@
 		if (selectedRegion?.layer_label === 'Bundesland' && selectedRegion.name.includes('Bayern')) {
 			showPerCapita = true;
 		}
-	}
-
-	// Update chart data when selection changes
-	$: if (activeLayer && results.length > 0) {
-		updateChartData();
 	}
 
 	// Helper to get population for a specific region
@@ -290,9 +290,21 @@
 		(r) => r.population || Object.keys(getPopulationForRegion(r.id)).length > 0
 	);
 
+	// Climate neutrality text for dynamic heading placeholder
+	$: climateNeutrality =
+		lastTarget && activeCategory === 'all' && !isHorizontal && selectedRegion
+			? `Bis ${lastTarget.year} möchte ${selectedRegion.name} ${lastTarget.value === 0 ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreichen.`
+			: null;
+
+	// Update chart data when selection or climateNeutrality changes
+	$: if (activeLayer && results.length > 0) {
+		updateChartData(climateNeutrality);
+	}
+
 	// Switch options
 	// Circle icon for category colors
-	const circleIcon = '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>';
+	const circleIcon =
+		'<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>';
 	$: switchOptions = [
 		{ key: 'all', label: 'Sektoren' },
 		...displayedCategories.map((c) => ({ ...c, icon: circleIcon }))
@@ -444,27 +456,6 @@
 			<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
 		</label>
 	{/if}
-
-	<!-- Summary text -->
-	<p class="text-xl max-w-xl mb-4">
-		<strong>{selectedRegion.name}</strong>: {isHorizontal ? singleYear : latestYear} entfielen die meisten
-		Emissionen
-		{#if showPerCapita}pro Kopf{/if}
-		auf die Sektoren
-		{#each (isHorizontal ? horizontalStackedData : latestData?.sectors || [])
-			.slice()
-			.sort((a, b) => b.value - a.value)
-			.slice(0, 3) as s, i}
-			<span
-				class="inline-block px-1 py-0.5 rounded text-white"
-				style="background-color: {s.category_color || s.color}">{s.category_label || s.label}</span
-			>{i < 2 ? ', ' : ''}
-		{/each}
-		{#if lastTarget && activeCategory === 'all' && !isHorizontal}
-			Bis {lastTarget.year} möchte {selectedRegion.name}
-			{lastTarget.value === 0 ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreichen.
-		{/if}
-	</p>
 
 	<!-- Chart container -->
 	<div

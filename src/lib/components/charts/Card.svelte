@@ -258,7 +258,9 @@
 				class="flex justify-between items-start mb-3"
 				class:opacity-0={isLoading}
 			>
-				<h2 class="text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight">
+				<h2
+					class="text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
+				>
 					{title || chart.content?.title}
 				</h2>
 				<a
@@ -319,7 +321,7 @@
 					hidden={activeTab !== 'chart'}
 				>
 					{#if heading}
-						<p class="text-2xl mb-3">{@html heading}</p>
+						<h3 class="text-2xl mb-3 text-balance">{@html heading}</h3>
 					{/if}
 
 					<div class="my-3 relative">

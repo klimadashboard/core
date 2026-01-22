@@ -360,22 +360,37 @@ function calculateChangeStats(
 	// Calculate overall change (year-over-year)
 	const totalChange = lastYearTotal - previousYearTotal;
 	const changePercent = previousYearTotal > 0 ? Math.abs(totalChange / previousYearTotal) * 100 : 0;
-	const changeVerb = totalChange < 0 ? (locale === 'de' ? 'sanken' : 'decreased') : (locale === 'de' ? 'stiegen' : 'increased');
-	const formattedPercent = changePercent.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+	const changeVerb =
+		totalChange < 0
+			? locale === 'de'
+				? 'sanken'
+				: 'decreased'
+			: locale === 'de'
+				? 'stiegen'
+				: 'increased';
+	const formattedPercent = changePercent.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US', {
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1
+	});
 	const changePercentage = `${formattedPercent}%`;
 
 	// Find sectors that increased
 	const categories = [...new Set(tableData.map((d) => d.category))];
-	const sectorChanges: Array<{ category: string; label: string; change: number }> = [];
+	const sectorChanges: Array<{ category: string; label: string; color: string; change: number }> =
+		[];
 
 	categories.forEach((category) => {
-		const previousValue = tableData.find((d) => d.year === previousYear && d.category === category)?.value ?? 0;
-		const lastValue = tableData.find((d) => d.year === lastYear && d.category === category)?.value ?? 0;
+		const previousValue =
+			tableData.find((d) => d.year === previousYear && d.category === category)?.value ?? 0;
+		const lastValue =
+			tableData.find((d) => d.year === lastYear && d.category === category)?.value ?? 0;
 		const change = lastValue - previousValue;
 
 		if (change > 0) {
-			const label = tableData.find((d) => d.category === category)?.category_label ?? category;
-			sectorChanges.push({ category, label, change });
+			const categoryData = tableData.find((d) => d.category === category);
+			const label = categoryData?.category_label ?? category;
+			const color = categoryData?.category_color ?? '#6b7280';
+			sectorChanges.push({ category, label, color, change });
 		}
 	});
 
@@ -386,10 +401,11 @@ function calculateChangeStats(
 	// Build sectorIncrease sentence - only if overall emissions fell
 	let sectorIncrease = '';
 	if (biggestIncrease && totalChange < 0) {
+		const styledSector = `<span style="text-decoration: underline; text-decoration-color: ${biggestIncrease.color}; text-underline-offset: 4px; text-decoration-thickness: 0.1em;">${biggestIncrease.label}</span>`;
 		if (locale === 'de') {
-			sectorIncrease = `Im Sektor ${biggestIncrease.label} stiegen sie.`;
+			sectorIncrease = `Im Sektor ${styledSector} stiegen sie.`;
 		} else {
-			sectorIncrease = `In the ${biggestIncrease.label} sector, they increased.`;
+			sectorIncrease = `In the ${styledSector} sector, they increased.`;
 		}
 	}
 
@@ -407,22 +423,23 @@ export function buildChartData(
 	region: RegionResult,
 	showPerCapita: boolean,
 	useMegatons: boolean,
-	locale: string = 'de'
+	locale: string = 'de',
+	climateNeutralityText: string | null = null
 ): ChartData {
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 	const tableData = data.filter((d) => d.source !== 'climate-target');
 
 	// Get unique categories and years
-	const categories = [...new Set(tableData.map((d) => d.category_label).filter((c): c is string => !!c))].sort();
+	const categories = [
+		...new Set(tableData.map((d) => d.category_label).filter((c): c is string => !!c))
+	].sort();
 	const years = [...new Set(tableData.map((d) => d.year))].sort((a, b) => a - b);
 
 	// Build wide format rows (years as rows, categories as columns)
 	const wideRows = years.map((year) => {
 		const row: Record<string, any> = { year };
 		categories.forEach((category) => {
-			const dataPoint = tableData.find(
-				(d) => d.year === year && d.category_label === category
-			);
+			const dataPoint = tableData.find((d) => d.year === year && d.category_label === category);
 			row[category] = dataPoint?.value ?? null;
 		});
 		return row;
@@ -461,7 +478,8 @@ export function buildChartData(
 			changeVerb: changeStats.changeVerb,
 			changePercentage: changeStats.changePercentage,
 			lastYear: changeStats.lastYear?.toString() ?? '',
-			sectorIncrease: changeStats.sectorIncrease
+			sectorIncrease: changeStats.sectorIncrease,
+			climateNeutrality: climateNeutralityText ?? ''
 		},
 		meta: {
 			updateDate,
