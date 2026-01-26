@@ -38,26 +38,8 @@
 
 	const dispatch = createEventDispatcher();
 
-	// Stadtwerke Stuttgart wind turbine IDs
-	const STADTWERKE_STUTTGART_IDS = new Set([
-		'SEE920284488199',
-		'SEE996908093841',
-		'SEE938927894269',
-		'SEE965762012312',
-		'SEE983057620462',
-		'SEE995842886410',
-		'SEE946197232964',
-		'SEE967983876582',
-		'SEE998885409684',
-		'SEE961906592917',
-		'SEE900831369416',
-		'SEE942807556642',
-		'SEE909415974497',
-		'SEE932544425592'
-	]);
-
-	// Colors
-	const STADTWERKE_COLOR = '#0ea5e9';
+	// Color for highlighted (region-owned) turbines
+	const HIGHLIGHTED_COLOR = '#0ea5e9';
 
 	// State
 	let loading = true;
@@ -95,9 +77,10 @@
 
 	$: color = getColor(selectedEnergy);
 
-	// Check if a turbine belongs to Stadtwerke Stuttgart
-	function isStadtwerkeStuttgart(turbineId: string): boolean {
-		return STADTWERKE_STUTTGART_IDS.has(turbineId);
+	// Check if a turbine is owned by the current region
+	function isRegionOwned(turbine: TurbineData): boolean {
+		if (!effectiveRegionId || !turbine.region_owner) return false;
+		return turbine.region_owner === effectiveRegionId;
 	}
 
 	// Detect dark mode
@@ -105,9 +88,9 @@
 		isDarkMode = document.body.classList.contains('dark');
 	}
 
-	// Count turbines by category
-	$: stadtwerkeTurbines = turbines.filter((t) => t.id && isStadtwerkeStuttgart(t.id));
-	$: regularTurbines = turbines.filter((t) => !t.id || !isStadtwerkeStuttgart(t.id));
+	// Count turbines by category (region-owned vs regular)
+	$: highlightedTurbines = turbines.filter((t) => isRegionOwned(t));
+	$: regularTurbines = turbines.filter((t) => !isRegionOwned(t));
 
 	// Load region data (only if not provided via prop)
 	async function loadRegion() {
@@ -329,6 +312,104 @@
 		}
 	}
 
+	/** Calculate bounding box for an array of turbines */
+	function calculateBounds(
+		turbineList: TurbineData[]
+	): [[number, number], [number, number]] | null {
+		if (turbineList.length === 0) return null;
+
+		let minLon = Infinity,
+			maxLon = -Infinity,
+			minLat = Infinity,
+			maxLat = -Infinity;
+
+		for (const t of turbineList) {
+			if (t.lon < minLon) minLon = t.lon;
+			if (t.lon > maxLon) maxLon = t.lon;
+			if (t.lat < minLat) minLat = t.lat;
+			if (t.lat > maxLat) maxLat = t.lat;
+		}
+
+		return [
+			[minLon, minLat],
+			[maxLon, maxLat]
+		];
+	}
+
+	/** Fit map to show all highlighted turbines with padding */
+	function fitToHighlightedTurbines(highlightedList: TurbineData[]) {
+		if (!map || highlightedList.length === 0) return;
+
+		const bounds = calculateBounds(highlightedList);
+		if (!bounds) return;
+
+		// Add padding around the bounds
+		const padding = { top: 50, bottom: 50, left: 50, right: 50 };
+
+		map.fitBounds(bounds, {
+			padding,
+			maxZoom: 10,
+			duration: 1000
+		});
+	}
+
+	/** Fit map to region outline with padding */
+	function fitToRegionOutline() {
+		if (!map || !regionOutline) return;
+
+		try {
+			const outlineGeoJSON =
+				typeof regionOutline === 'string' ? JSON.parse(regionOutline) : regionOutline;
+
+			// Extract coordinates from GeoJSON to calculate bounds
+			const coords: [number, number][] = [];
+			const extractCoords = (geometry: any) => {
+				if (geometry.type === 'Polygon') {
+					geometry.coordinates[0].forEach((c: number[]) => coords.push([c[0], c[1]]));
+				} else if (geometry.type === 'MultiPolygon') {
+					geometry.coordinates.forEach((poly: number[][][]) => {
+						poly[0].forEach((c: number[]) => coords.push([c[0], c[1]]));
+					});
+				} else if (geometry.type === 'GeometryCollection') {
+					geometry.geometries.forEach(extractCoords);
+				} else if (geometry.type === 'Feature') {
+					extractCoords(geometry.geometry);
+				} else if (geometry.type === 'FeatureCollection') {
+					geometry.features.forEach((f: any) => extractCoords(f.geometry));
+				}
+			};
+
+			extractCoords(outlineGeoJSON);
+
+			if (coords.length === 0) return;
+
+			let minLon = Infinity,
+				maxLon = -Infinity,
+				minLat = Infinity,
+				maxLat = -Infinity;
+
+			for (const [lon, lat] of coords) {
+				if (lon < minLon) minLon = lon;
+				if (lon > maxLon) maxLon = lon;
+				if (lat < minLat) minLat = lat;
+				if (lat > maxLat) maxLat = lat;
+			}
+
+			const bounds: [[number, number], [number, number]] = [
+				[minLon, minLat],
+				[maxLon, maxLat]
+			];
+
+			map.fitBounds(bounds, {
+				padding: { top: 30, bottom: 30, left: 30, right: 30 },
+				maxZoom: 12,
+				duration: 1000
+			});
+		} catch (error) {
+			console.error('Failed to fit to region outline:', error);
+		}
+	}
+
 	function addTurbinesToMap() {
 		if (!map || turbines.length === 0) return;
 
@@ -336,22 +417,22 @@
 		if (map.getLayer('turbines-layer')) {
 			map.removeLayer('turbines-layer');
 		}
-		if (map.getLayer('turbines-stadtwerke-layer')) {
-			map.removeLayer('turbines-stadtwerke-layer');
+		if (map.getLayer('turbines-highlighted-layer')) {
+			map.removeLayer('turbines-highlighted-layer');
 		}
 		if (map.getSource('turbines')) {
 			map.removeSource('turbines');
 		}
-		if (map.getSource('turbines-stadtwerke')) {
-			map.removeSource('turbines-stadtwerke');
+		if (map.getSource('turbines-highlighted')) {
+			map.removeSource('turbines-highlighted');
 		}
 
 		// Add region outline first (so it appears below turbines)
 		addRegionOutline();
 
-		// Separate regular turbines and Stadtwerke
-		const regularTurbinesData = turbines.filter((t) => !isStadtwerkeStuttgart(t.id));
-		const stadtwerkeTurbinesData = turbines.filter((t) => isStadtwerkeStuttgart(t.id));
+		// Separate regular turbines and region-owned (highlighted) turbines
+		const regularTurbinesData = turbines.filter((t) => !isRegionOwned(t));
+		const highlightedTurbinesData = turbines.filter((t) => isRegionOwned(t));
 
 		// Add regular turbines
 		if (regularTurbinesData.length > 0) {
@@ -386,13 +467,13 @@
 			});
 		}
 
-		// Add Stadtwerke turbines
-		if (stadtwerkeTurbinesData.length > 0) {
-			map.addSource('turbines-stadtwerke', {
+		// Add highlighted (region-owned) turbines
+		if (highlightedTurbinesData.length > 0) {
+			map.addSource('turbines-highlighted', {
 				type: 'geojson',
 				data: {
 					type: 'FeatureCollection',
-					features: stadtwerkeTurbinesData.map((t) => ({
+					features: highlightedTurbinesData.map((t) => ({
 						type: 'Feature',
 						geometry: {
 							type: 'Point',
@@ -406,17 +487,23 @@
 			});
 
 			map.addLayer({
-				id: 'turbines-stadtwerke-layer',
+				id: 'turbines-highlighted-layer',
 				type: 'circle',
-				source: 'turbines-stadtwerke',
+				source: 'turbines-highlighted',
 				paint: {
 					'circle-radius': 5,
-					'circle-color': STADTWERKE_COLOR,
+					'circle-color': HIGHLIGHTED_COLOR,
 					'circle-stroke-color': '#ffffff',
 					'circle-stroke-width': 1.5,
 					'circle-opacity': 0.9
 				}
 			});
+
+			// Zoom to fit all highlighted turbines
+			fitToHighlightedTurbines(highlightedTurbinesData);
+		} else if (regionOutline) {
+			// No highlighted turbines - zoom to region boundary
+			fitToRegionOutline();
 		}
 	}
 
@@ -569,13 +656,11 @@
 						<span>Lade Details...</span>
 					</div>
 				{:else}
-					<div class="font-bold mb-1" class:text-sky-600={isStadtwerkeStuttgart(hoveredTurbine.id)}>
-						{isStadtwerkeStuttgart(hoveredTurbine.id)
-							? 'Windrad der Stadtwerke Stuttgart'
-							: hoveredTurbine.name || 'Anlage'}
+					<div class="font-bold mb-1" class:text-sky-600={isRegionOwned(hoveredTurbine)}>
+						{hoveredTurbine.name || 'Anlage'}
 					</div>
-					{#if isStadtwerkeStuttgart(hoveredTurbine.id)}
-						<div class="text-xs text-sky-600 mb-1">Stadtwerke Stuttgart</div>
+					{#if isRegionOwned(hoveredTurbine)}
+						<div class="text-xs text-sky-600 mb-1">Anlage von {regionName}</div>
 					{/if}
 					<div class="space-y-1 text-xs">
 						<div><strong>Leistung:</strong> {formatPowerValue(hoveredTurbine.net_power_kw)}</div>
@@ -629,13 +714,13 @@
 					<span>{energyLabel} ({formatNumber(regularTurbines.length)})</span>
 				</div>
 			{/if}
-			{#if stadtwerkeTurbines.length > 0}
+			{#if highlightedTurbines.length > 0}
 				<div class="flex items-center gap-2">
 					<div
 						class="w-5 h-5 rounded-full border-2 border-white shadow"
-						style="background-color: {STADTWERKE_COLOR}"
+						style="background-color: {HIGHLIGHTED_COLOR}"
 					></div>
-					<span>Windrad der Stadtwerke Stuttgart ({stadtwerkeTurbines.length})</span>
+					<span>Anlagen von {regionName} ({formatNumber(highlightedTurbines.length)})</span>
 				</div>
 			{/if}
 		</div>

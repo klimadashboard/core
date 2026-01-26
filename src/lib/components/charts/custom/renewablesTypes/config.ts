@@ -222,6 +222,21 @@ export function buildTableRows(data: SolarTypesResponse | null): Array<Record<st
 	});
 }
 
+/** Format update date for display */
+function formatUpdateDate(updateDate: string | undefined): string {
+	if (!updateDate) return '';
+	try {
+		const date = new Date(updateDate);
+		return date.toLocaleDateString('de-DE', {
+			day: '2-digit',
+			month: '2-digit',
+			year: 'numeric'
+		});
+	} catch {
+		return updateDate;
+	}
+}
+
 /** Build ChartData object for Card.svelte integration */
 export function buildChartData(
 	data: SolarTypesResponse | null,
@@ -232,6 +247,12 @@ export function buildChartData(
 	placeholders: Record<string, string | number>;
 	meta: { updateDate: string; source: string; region: Region | null };
 } {
+	const updateDate = data?.update_date || '';
+	const formattedDate = formatUpdateDate(updateDate);
+	const source = formattedDate
+		? `Marktstammdatenregister der Bundesnetzagentur (Stand: ${formattedDate})`
+		: 'Marktstammdatenregister der Bundesnetzagentur';
+
 	return {
 		raw: buildTableRows(data),
 		table: {
@@ -241,8 +262,8 @@ export function buildChartData(
 		},
 		placeholders: getPlaceholders(data, region),
 		meta: {
-			updateDate: data?.update_date || '',
-			source: 'Marktstammdatenregister der Bundesnetzagentur',
+			updateDate,
+			source,
 			region
 		}
 	};

@@ -46,6 +46,8 @@ export interface TurbineData {
 	municipality?: string;
 	district?: string;
 	coordinates?: [number, number];
+	/** Region ID that "owns" this unit (for highlighting on regional maps) */
+	region_owner?: string | null;
 }
 
 /** A single point in the goal path (cumulative target for a specific year) */
@@ -278,12 +280,12 @@ export async function fetchComparisonData(
 	}
 }
 
-/** Fetch all turbines with minimal data (ID + coordinates only) */
+/** Fetch all turbines with minimal data (ID + coordinates + region_owner) */
 export async function fetchAllTurbines(energy: EnergyType): Promise<TurbineData[]> {
 	if (typeof window === 'undefined') return [];
 
 	try {
-		const url = `https://base.klimadashboard.org/items/energy_${energy}_units?limit=-1&fields=id,lat,lon&filter[status][_in]=31,35`;
+		const url = `https://base.klimadashboard.org/items/energy_${energy}_units?limit=-1&fields=id,lat,lon,region_owner&filter[status][_in]=31,35`;
 		const response = await fetch(url);
 
 		if (!response.ok) {
@@ -301,7 +303,8 @@ export async function fetchAllTurbines(energy: EnergyType): Promise<TurbineData[
 				lat: parseFloat(d.lat),
 				lon: parseFloat(d.lon),
 				net_power_kw: 0,
-				coordinates: [parseFloat(d.lon), parseFloat(d.lat)] as [number, number]
+				coordinates: [parseFloat(d.lon), parseFloat(d.lat)] as [number, number],
+				region_owner: d.region_owner || null
 			}));
 	} catch (error) {
 		console.error('Failed to load renewable units:', error);
@@ -548,6 +551,21 @@ export function getPlaceholders(
 	};
 }
 
+/** Format update date for display */
+function formatUpdateDateForSource(updateDate: string | undefined): string {
+	if (!updateDate) return '';
+	try {
+		const date = new Date(updateDate);
+		return date.toLocaleDateString('de-DE', {
+			day: '2-digit',
+			month: '2-digit',
+			year: 'numeric'
+		});
+	} catch {
+		return updateDate;
+	}
+}
+
 /** Build ChartData object */
 export function buildChartData(
 	data: RenewablesRawData[],
@@ -558,6 +576,11 @@ export function buildChartData(
 	goal?: RenewableGoal | null,
 	gridOperatorCheckedRatio?: number | null
 ): ChartData {
+	const formattedDate = formatUpdateDateForSource(updateDate);
+	const source = formattedDate
+		? `Marktstammdatenregister der Bundesnetzagentur (Stand: ${formattedDate})`
+		: 'Marktstammdatenregister der Bundesnetzagentur';
+
 	return {
 		raw: data,
 		table: {
@@ -568,7 +591,7 @@ export function buildChartData(
 		placeholders: getPlaceholders(data, region, params, goal, updateDate, gridOperatorCheckedRatio),
 		meta: {
 			updateDate,
-			source: 'Marktstammdatenregister der Bundesnetzagentur',
+			source,
 			region
 		}
 	};
