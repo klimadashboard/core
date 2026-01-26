@@ -243,10 +243,12 @@
 	$: barWidth =
 		innerWidth > 0 ? Math.max(4, Math.round(innerWidth / (maxYear - minYear + 1)) - 4) : 10;
 
-	// Y domain based on active category
+	// Y domain based on active category (include nowcast values in max calculation)
 	$: visibleMax = (() => {
 		if (activeCategory === 'all') {
-			return Math.max(...grouped.map((g) => g.total), 0) * 1.1;
+			const maxTotal = Math.max(...grouped.map((g) => g.total), 0);
+			const maxNowcast = Math.max(...grouped.map((g) => g.nowcast ?? 0), 0);
+			return Math.max(maxTotal, maxNowcast) * 1.1;
 		} else {
 			return (
 				Math.max(
@@ -257,7 +259,9 @@
 		}
 	})();
 
-	$: xScale = scaleLinear().domain([minYear, maxYear]).range([barWidth / 2 + 8, innerWidth - barWidth / 2]);
+	$: xScale = scaleLinear()
+		.domain([minYear, maxYear])
+		.range([barWidth / 2 + 8, innerWidth - barWidth / 2]);
 	$: yScale = scaleLinear().domain([0, visibleMax]).range([innerHeight, 0]);
 
 	// Horizontal chart scales
@@ -284,6 +288,9 @@
 	$: latestData = latestYear ? grouped.find((g) => g.year === latestYear) : null;
 	$: latestTotal = latestData?.total ?? 0;
 	$: lastTarget = climateTargets.length > 0 ? climateTargets[climateTargets.length - 1] : null;
+
+	// Check if we have any nowcast data
+	$: hasNowcast = grouped.some((g) => g.nowcast != null && g.nowcast > 0);
 
 	// Per-capita availability
 	$: allowPerCapita = PUBLIC_VERSION === 'de';
@@ -345,16 +352,33 @@
 						value: `${formatNumber(s.value)} ${unit}`,
 						color: s.color
 					}));
+
+				// Build items array with optional nowcast
+				const items = [
+					...sectorItems,
+					...(yearData.total > 0
+						? [
+								{
+									label: t(page.data.translations, 'table.total'),
+									value: `${formatNumber(yearData.total)} ${unit}`,
+									color: '#374151'
+								}
+							]
+						: []),
+					...(yearData.nowcast != null && yearData.nowcast > 0
+						? [
+								{
+									label: t(page.data.translations, 'domain.emissions.nowcast') || 'Nowcast',
+									value: `${formatNumber(yearData.nowcast)} ${unit}`,
+									color: '#6b7280'
+								}
+							]
+						: [])
+				];
+
 				return {
 					title: `${hoveredYear}`,
-					items: [
-						...sectorItems,
-						{
-							label: t(page.data.translations, 'table.total'),
-							value: `${formatNumber(yearData.total)} ${unit}`,
-							color: '#374151'
-						}
-					]
+					items
 				};
 			} else {
 				const sector = yearData.sectors.find((s) => s.sector === activeCategory);
@@ -420,43 +444,45 @@
 {:else if results.length === 0}
 	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.noDataForRegion')}</p>
 {:else if selectedRegion}
-	<!-- Layer switch -->
-	{#if filteredViews.length > 1}
-		<div class="mb-4">
-			<Switch
-				views={filteredViews}
-				activeView={activeLayer}
-				on:itemClick={(e) => (activeLayer = e.detail)}
-			/>
-		</div>
-	{/if}
+	<div class="flex items-center gap-4 flex-wrap">
+		<!-- Layer switch -->
+		{#if filteredViews.length > 1}
+			<div class="">
+				<Switch
+					views={filteredViews}
+					activeView={activeLayer}
+					on:itemClick={(e) => (activeLayer = e.detail)}
+				/>
+			</div>
+		{/if}
 
-	<!-- Per-capita toggle -->
-	{#if allowPerCapita && canShowPerCapita}
-		<label
-			class="flex gap-2 text-sm items-center mb-4 cursor-pointer {showPerCapita
-				? 'text-gray-700 dark:text-gray-300'
-				: 'text-gray-400'}"
-			transition:fade
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5"
-				viewBox="0 0 24 24"
-				stroke-width="2"
-				stroke="currentColor"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
+		<!-- Per-capita toggle -->
+		{#if allowPerCapita && canShowPerCapita}
+			<label
+				class="flex gap-2 text-sm items-center cursor-pointer {showPerCapita
+					? 'text-gray-700 dark:text-gray-300'
+					: 'text-gray-400'}"
+				transition:fade
 			>
-				<circle cx="9" cy="7" r="4" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path
-					d="M16 3.13a4 4 0 0 1 0 7.75"
-				/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
-			</svg>
-			<span>{t(page.data.translations, 'ui.emissions.perCapita')}</span>
-			<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
-		</label>
-	{/if}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5"
+					viewBox="0 0 24 24"
+					stroke-width="2"
+					stroke="currentColor"
+					fill="none"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<circle cx="9" cy="7" r="4" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path
+						d="M16 3.13a4 4 0 0 1 0 7.75"
+					/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+				</svg>
+				<span>{t(page.data.translations, 'ui.emissions.perCapita')}</span>
+				<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
+			</label>
+		{/if}
+	</div>
 
 	<!-- Chart container -->
 	<div
@@ -573,6 +599,35 @@
 						{/each}
 					</g>
 
+					<!-- Nowcast/forecast bars (dashed outline showing total forecast) -->
+					{#if activeCategory === 'all'}
+						<g transform="translate({margin.left},{margin.top})">
+							{#each grouped as yearData}
+								{#if yearData.nowcast != null && yearData.nowcast > 0}
+									{@const nowcastHeight = Math.max(0, innerHeight - yScale(yearData.nowcast))}
+									<g transform="translate({xScale(yearData.year)}, 0)">
+										<!-- Dashed outline for nowcast -->
+										<rect
+											x={-barWidth / 2}
+											y={yScale(yearData.nowcast)}
+											width={barWidth}
+											height={nowcastHeight}
+											fill="none"
+											stroke="currentColor"
+											stroke-width="1.5"
+											stroke-dasharray="3,2"
+											opacity={hoveredYear === null || hoveredYear === yearData.year ? 0.6 : 0.25}
+											class="transition-opacity cursor-pointer"
+											on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
+											on:mousemove={(e) => handleMouseMove(e, yearData.year)}
+											on:mouseleave={handleMouseLeave}
+										/>
+									</g>
+								{/if}
+							{/each}
+						</g>
+					{/if}
+
 					<!-- Climate targets -->
 					{#if climateTargets.length > 0 && activeCategory === 'all'}
 						<g transform="translate({margin.left},{margin.top})">
@@ -627,6 +682,20 @@
 				on:itemClick={(e) => (activeCategory = e.detail)}
 			/>
 		</div>
+
+		<!-- Nowcast legend (when nowcast data is present and viewing all sectors) -->
+		{#if hasNowcast && activeCategory === 'all'}
+			<div class="flex items-center gap-2 mt-3 text-sm text-gray-600 dark:text-gray-400">
+				<span
+					class="w-4 h-3 border border-dashed border-current rounded-sm"
+					style="border-width: 1.5px;"
+				></span>
+				<span
+					>{t(page.data.translations, 'domain.emissions.nowcastLegend') ||
+						'Nowcast (Schätzung)'}</span
+				>
+			</div>
+		{/if}
 	{:else}
 		<!-- Legend for horizontal chart -->
 		<div class="flex flex-wrap gap-3 mt-4">

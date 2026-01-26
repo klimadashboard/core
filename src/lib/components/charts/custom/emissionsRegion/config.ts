@@ -17,6 +17,7 @@ export interface EmissionsRawData {
 	source: string;
 	region?: string;
 	update?: string;
+	type?: string; // 'none' for nowcast data
 }
 
 export interface RegionResult {
@@ -49,6 +50,7 @@ export interface YearGroup {
 	}>;
 	total: number;
 	stackedSectors: StackedBar[];
+	nowcast?: number; // Total nowcast/forecast value for this year
 }
 
 // Threshold for displaying in megatons (1 million tons)
@@ -114,7 +116,11 @@ export async function fetchEmissionsData(
 					{ category: { _neq: 'ksg' } },
 					{ category: { _neq: 'Emissions|CO2' } },
 					{
-						_or: [{ category: { _neq: 'total' } }, { source: { _eq: 'climate-target' } }]
+						_or: [
+						{ category: { _neq: 'total' } },
+						// Allow total with climate-target source (targets) or non-climate-target source (nowcast)
+						{ category: { _eq: 'total' } }
+					]
 					},
 					{
 						_or: [
@@ -267,10 +273,18 @@ export function transformForPerCapita(
 	});
 }
 
-/** Group and stack data by year (excludes climate-target from bars) */
+/** Group and stack data by year (excludes climate-target and nowcast totals from sector bars) */
 export function groupAndStack(data: EmissionsRawData[], categoryOrder: string[]): YearGroup[] {
-	const barData = data.filter((d) => d.source !== 'climate-target');
-	const years = [...new Set(barData.map((d) => d.year))].sort((a, b) => a - b);
+	// Exclude climate-target and all total data from sector bars
+	const barData = data.filter(
+		(d) => d.source !== 'climate-target' && d.category !== 'total'
+	);
+	// Extract nowcast total data (category: 'total' with non-climate-target source)
+	const nowcastData = data.filter((d) => d.category === 'total' && d.source !== 'climate-target');
+
+	const years = [...new Set([...barData.map((d) => d.year), ...nowcastData.map((d) => d.year)])].sort(
+		(a, b) => a - b
+	);
 
 	return years.map((year) => {
 		const sectors = categoryOrder.map((cat) => {
@@ -292,7 +306,11 @@ export function groupAndStack(data: EmissionsRawData[], categoryOrder: string[])
 			return { ...s, start, end: yOffset };
 		});
 
-		return { year, sectors, total, stackedSectors };
+		// Get nowcast value for this year if available
+		const nowcastEntry = nowcastData.find((d) => d.year === year);
+		const nowcast = nowcastEntry?.value;
+
+		return { year, sectors, total, stackedSectors, nowcast };
 	});
 }
 
@@ -318,12 +336,12 @@ export function getClimateTargets(
 		.sort((a, b) => a.year - b.year);
 }
 
-/** Get displayed categories for legend/switch */
+/** Get displayed categories for legend/switch (excludes 'total' nowcast category) */
 export function getDisplayedCategories(
 	data: EmissionsRawData[],
 	categoryOrder: string[]
 ): Array<{ key: string; label: string; color: string }> {
-	const barData = data.filter((d) => d.source !== 'climate-target');
+	const barData = data.filter((d) => d.source !== 'climate-target' && d.category !== 'total');
 
 	return categoryOrder
 		.map((cat) => {
@@ -433,7 +451,8 @@ export function buildChartData(
 	climateNeutralityText: string | null = null
 ): ChartData {
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
-	const tableData = data.filter((d) => d.source !== 'climate-target');
+	// Exclude climate-target and nowcast (total category) from table/statistics data
+	const tableData = data.filter((d) => d.source !== 'climate-target' && d.category !== 'total');
 
 	// Get unique categories and years
 	const categories = [
