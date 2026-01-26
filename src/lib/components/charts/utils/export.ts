@@ -20,7 +20,7 @@ function download(content: string, filename: string, type: string) {
 
 export function exportCSV(table: TableData, regionCode?: string) {
 	const { columns, rows, filename } = table;
-	const header = columns.map((c) => c.label).join(',');
+	const header = columns.map((c) => `"${c.label.replace(/"/g, '""')}"`).join(';');
 	const body = rows
 		.map((row) =>
 			columns
@@ -28,9 +28,9 @@ export function exportCSV(table: TableData, regionCode?: string) {
 					const v = row[c.key];
 					if (v == null) return '';
 					const s = String(v);
-					return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+					return s.includes(';') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
 				})
-				.join(',')
+				.join(';')
 		)
 		.join('\n');
 
