@@ -3,6 +3,8 @@
 	import { onMount } from 'svelte';
 	import { scaleLinear, scaleBand } from 'd3-scale';
 	import { min, max } from 'd3-array';
+	import { page } from '$app/state';
+	import { t } from '$lib/utils/t';
 	import type { DataPoint, HoverState } from '../types';
 
 	// Props
@@ -147,7 +149,7 @@
 
 		<slot name="tooltip" {hover} {data} {x} {xScale} {yScale} {margin} />
 	{:else if ready && data.length === 0}
-		<div class="flex items-center justify-center h-full text-gray-400">Keine Daten</div>
+		<div class="flex items-center justify-center h-full text-gray-400">{t(page.data.translations, 'status.noData')}</div>
 	{:else}
 		<!-- Loading placeholder while measuring -->
 		<div class="h-full bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>

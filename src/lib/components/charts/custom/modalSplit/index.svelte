@@ -4,9 +4,10 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import { scaleLinear } from 'd3-scale';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import TransportIcons from './TransportIcons.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import { t } from '$lib/utils/t';
 	import {
 		fetchData,
 		buildChartData,
@@ -14,13 +15,16 @@
 		calculateProjection,
 		getHistoricYears,
 		getLatestDataYear,
-		categoryMeta,
+		getCategoryMeta,
 		categoryColors,
 		categoryOrder,
 		sustainableCategories,
 		goalConfig,
 		type ModalSplitRawData
 	} from './config';
+
+	// Get categoryMeta reactively based on page translations
+	$: categoryMeta = getCategoryMeta(page.data.translations);
 
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
@@ -40,7 +44,7 @@
 	let loading = true;
 	let error: string | null = null;
 	// Initialize showHistoric from URL parameter
-	let showHistoric = $page.url.searchParams.get('historic') === 'true';
+	let showHistoric = page.url.searchParams.get('historic') === 'true';
 
 	let rawData: ModalSplitRawData[] = [];
 	let historicYears: number[] = [];
@@ -125,11 +129,18 @@
 			updateDate = result.updateDate;
 			source = result.source;
 
-			const chartData = buildChartData(rawData, updateDate, source, region, showHistoric);
+			const chartData = buildChartData(
+				rawData,
+				updateDate,
+				source,
+				region,
+				showHistoric,
+				page.data.translations
+			);
 			onChartData?.(chartData);
 		} catch (e) {
 			console.error('[ModalSplitStreet] Error:', e);
-			error = e instanceof Error ? e.message : 'Fehler beim Laden';
+			error = e instanceof Error ? e.message : t(page.data.translations, 'status.error');
 			onChartData?.(null);
 		} finally {
 			loading = false;
@@ -138,7 +149,14 @@
 
 	// Update chartData when showHistoric changes (for embed modal to reflect current state)
 	$: if (rawData.length > 0 && !loading) {
-		const chartData = buildChartData(rawData, updateDate, source, region, showHistoric);
+		const chartData = buildChartData(
+			rawData,
+			updateDate,
+			source,
+			region,
+			showHistoric,
+			page.data.translations
+		);
 		onChartData?.(chartData);
 	}
 
@@ -189,13 +207,16 @@
 		// Handle goal year separately
 		if (hoveredYear === goalConfig.endYear) {
 			const items = goalYearData.map((s) => ({
-				label: s.category === 'umweltverbund' ? 'Umweltverbund' : 'Motorisierter Individualverkehr',
+				label:
+					s.category === 'umweltverbund'
+						? t(page.data.translations, 'domain.transport.sustainable')
+						: t(page.data.translations, 'domain.transport.motorized'),
 				value: `${s.value.toFixed(1)}%`,
 				color: s.category === 'umweltverbund' ? '#059669' : '#475569'
 			}));
 
 			return {
-				title: `${hoveredYear} (Ziel)`,
+				title: `${hoveredYear} (${t(page.data.translations, 'ui.renewable.requiredForGoal')})`,
 				items
 			};
 		}
@@ -290,7 +311,9 @@
 		{@const segmentX = xScale(segment.x0)}
 		{@const bgColor = segment.category === 'umweltverbund' ? '#059669' : '#475569'}
 		{@const label =
-			segment.category === 'umweltverbund' ? 'Umweltverbund' : 'Motorisierter Individualverkehr'}
+			segment.category === 'umweltverbund'
+				? t(page.data.translations, 'domain.transport.sustainable')
+				: t(page.data.translations, 'domain.transport.motorized')}
 		<div
 			class="absolute top-0 bottom-0 cursor-pointer"
 			style="left: {segmentX}px; width: {segmentWidth}px; background: {bgColor};"
@@ -344,7 +367,7 @@
 				bind:checked={showHistoric}
 				class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
 			/>
-			<span>Zeige historische Entwicklung</span>
+			<span>{t(page.data.translations, 'ui.renewable.showHistoric')}</span>
 		</label>
 
 		<div class="flex flex-col">
@@ -378,7 +401,7 @@
 					<div class="flex-shrink-0" style="width: {LABEL_WIDTH}px;"></div>
 					<div class="flex flex-col items-start text-[#059669]">
 						<span class="text-sm font-medium mb-0.5">
-							{formatPercent(currentSustainableTotal)} Umweltverbund
+							{formatPercent(currentSustainableTotal)} {t(page.data.translations, 'domain.transport.sustainable')}
 						</span>
 						<svg width={umweltverbundWidth} height="12" class="overflow-visible stroke-current">
 							<line x1="0" y1="0" x2="0" y2="8" stroke-width="2" />
@@ -450,11 +473,11 @@
 		<!-- Legend -->
 		<div class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
 			{@render legendGroup(
-				'Umweltverbund',
+				t(page.data.translations, 'domain.transport.sustainable'),
 				categoryOrder.filter((c) => sustainableCategories.includes(c))
 			)}
 			{@render legendGroup(
-				'Motorisiert',
+				t(page.data.translations, 'domain.transport.motorized'),
 				categoryOrder.filter((c) => !sustainableCategories.includes(c))
 			)}
 		</div>

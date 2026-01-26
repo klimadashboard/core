@@ -1,5 +1,7 @@
 <!-- $lib/charts/primitives/Table.svelte -->
 <script lang="ts">
+	import { page } from '$app/state';
+	import { t } from '$lib/utils/t';
 	import type { TableColumn } from '../types';
 
 	export let columns: TableColumn[] = [];
@@ -73,5 +75,5 @@
 </div>
 
 {#if rows.length === 0}
-	<p class="text-center py-8 text-gray-500">Keine Daten</p>
+	<p class="text-center py-8 text-gray-500">{t(page.data.translations, 'status.noData')}</p>
 {/if}

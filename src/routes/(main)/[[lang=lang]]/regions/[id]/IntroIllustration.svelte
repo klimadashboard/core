@@ -1,5 +1,16 @@
 <script>
+	import { page } from '$app/stores';
+
 	export let data;
+	export let howWouldItBeBetterLabel = "Wie wär's besser?";
+
+	// Get the translation for current language, fallback to first translation
+	$: currentLang = $page.data?.language?.code || 'de';
+	$: translation =
+		data.translations?.find((tr) => tr.languages_code === currentLang) ||
+		data.translations?.find((tr) => tr.languages_code?.startsWith(currentLang)) ||
+		data.translations?.[0] ||
+		{};
 
 	let currentImage = {};
 	function toggleImage(id) {
@@ -28,12 +39,12 @@
 	</div>
 
 	<h3 class="font-bold absolute left-4 top-4 right-16 text-white text-shadow">
-		{data.translations[0].title}
+		{translation.title || ''}
 	</h3>
 
 	<button
 		class="cursor-pointer absolute top-2 right-2 w-16 h-16 shadow-2xl rounded-full bg-amber-200 rotate-3 hover:-rotate-2 transition flex items-center justify-center"
-		aria-label="Wie wär’s besser?"
+		aria-label={howWouldItBeBetterLabel}
 	>
 		<svg viewBox="0 0 120 120" class="absolute w-8/10 h-8/10 overflow-visible -rotate-[130deg]">
 			<defs>
@@ -45,7 +56,9 @@
 				/>
 			</defs>
 			<text fill="black" font-size="28" class="font-bold font-sans tracking-tighter">
-				<textPath href="#circlePath" startOffset="0"> Wie wär’s besser? </textPath>
+				<textPath href="#circlePath" startOffset="0">
+					{howWouldItBeBetterLabel}
+				</textPath>
 			</text>
 		</svg>
 
@@ -84,7 +97,7 @@
 				class="whitespace-pre-line overflow-hidden w-5/6 leading-snug text-ellipsis text-lg"
 				class:line-clamp-2={!expanded[data.id]}
 			>
-				{@html data.translations[0].text}
+				{@html translation.text || ''}
 			</p>
 		</div>
 	</div>

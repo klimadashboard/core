@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import { page } from '$app/state';
 	import {
 		generateEmbedCode,
 		generateScriptEmbedCode,
@@ -7,6 +8,7 @@
 		type EmbedOptions
 	} from '$lib/components/charts/utils/export';
 	import type { EmbedOption } from '$lib/components/charts/types';
+	import { t } from '$lib/utils/t';
 
 	export let chartId: string;
 	export let currentRegionId: string | null = null;
@@ -118,12 +120,12 @@
 		<!-- Header -->
 		<div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
 			<h2 id="embed-modal-title" class="text-lg font-bold text-gray-900 dark:text-white">
-				Grafik einbetten
+				{t(page.data.translations, 'ui.embed.title')}
 			</h2>
 			<button
 				on:click={onClose}
 				class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-				aria-label="Schließen"
+				aria-label={t(page.data.translations, 'action.close')}
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -144,7 +146,7 @@
 			<!-- Embed type selection -->
 			<div>
 				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-					Einbettungsart
+					{t(page.data.translations, 'ui.embed.type')}
 				</label>
 				<div class="flex gap-2">
 					<button
@@ -155,7 +157,7 @@
 							: 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}"
 					>
 						<span class="block font-mono text-xs mb-0.5">script</span>
-						<span class="block text-xs opacity-70">Auto-Höhe</span>
+						<span class="block text-xs opacity-70">{t(page.data.translations, 'ui.embed.autoHeight')}</span>
 					</button>
 					<button
 						on:click={() => (embedType = 'iframe')}
@@ -165,7 +167,7 @@
 							: 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'}"
 					>
 						<span class="block font-mono text-xs mb-0.5">iframe</span>
-						<span class="block text-xs opacity-70">Feste Höhe (450px)</span>
+						<span class="block text-xs opacity-70">{t(page.data.translations, 'ui.embed.fixedHeight')}</span>
 					</button>
 				</div>
 			</div>
@@ -174,7 +176,7 @@
 			{#if hasOptions}
 				<div class="space-y-3">
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-						Optionen
+						{t(page.data.translations, 'ui.embed.options')}
 					</label>
 
 					{#if currentRegionId}
@@ -185,7 +187,7 @@
 								class="w-4 h-4 rounded border-gray-300 text-[#28A889] focus:ring-[#28A889]"
 							/>
 							<span class="text-sm text-gray-700 dark:text-gray-300">
-								Region vorauswählen
+								{t(page.data.translations, 'ui.embed.preselectRegion')}
 							</span>
 						</label>
 					{/if}
@@ -200,7 +202,7 @@
 									class="w-4 h-4 rounded border-gray-300 text-[#28A889] focus:ring-[#28A889]"
 								/>
 								<span class="text-sm text-gray-700 dark:text-gray-300">
-									Vereinfachte Ansicht (nur Grafik)
+									{t(page.data.translations, 'ui.embed.simpleView')}
 								</span>
 							</label>
 						</div>
@@ -244,7 +246,7 @@
 			<!-- Code preview -->
 			<div>
 				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-					Einbettungscode
+					{t(page.data.translations, 'ui.embed.code')}
 				</label>
 				<div class="relative">
 					<pre
@@ -269,7 +271,7 @@
 					>
 						<polyline points="20 6 9 17 4 12" />
 					</svg>
-					Kopiert!
+					{t(page.data.translations, 'status.copied')}
 				{:else}
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -284,7 +286,7 @@
 							d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
 						/>
 					</svg>
-					Code kopieren
+					{t(page.data.translations, 'action.copyCode')}
 				{/if}
 			</button>
 		</div>

@@ -4,6 +4,9 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { t } from '$lib/utils/t';
+
+export type Translations = Record<string, string>;
 
 export interface EmissionsRawData {
 	year: number;
@@ -71,7 +74,17 @@ export function transformToDisplayUnit(
 	return data.map((d) => ({ ...d, value: toMegatons(d.value) }));
 }
 
-// Custom sector order for stacking (bottom to top)
+// Custom sector order for stacking (bottom to top) - keys for matching
+export const customSectorOrderKeys = [
+	'energie',
+	'industrie',
+	'gebäude',
+	'mobilität',
+	'landwirtschaft',
+	'abfallwirtschaft und sonstiges'
+];
+
+// Legacy export for backwards compatibility
 export const customSectorOrder = [
 	'Energie',
 	'Industrie',
@@ -328,7 +341,7 @@ export function getDisplayedCategories(
 /** Calculate change statistics for emissions data */
 function calculateChangeStats(
 	tableData: EmissionsRawData[],
-	locale: string = 'de'
+	translations: Translations
 ): {
 	changeVerb: string;
 	changePercentage: string;
@@ -362,13 +375,9 @@ function calculateChangeStats(
 	const changePercent = previousYearTotal > 0 ? Math.abs(totalChange / previousYearTotal) * 100 : 0;
 	const changeVerb =
 		totalChange < 0
-			? locale === 'de'
-				? 'sanken'
-				: 'decreased'
-			: locale === 'de'
-				? 'stiegen'
-				: 'increased';
-	const formattedPercent = changePercent.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US', {
+			? t(translations, 'domain.verb.decreased')
+			: t(translations, 'domain.verb.increased');
+	const formattedPercent = changePercent.toLocaleString('de-DE', {
 		minimumFractionDigits: 1,
 		maximumFractionDigits: 1
 	});
@@ -402,11 +411,8 @@ function calculateChangeStats(
 	let sectorIncrease = '';
 	if (biggestIncrease && totalChange < 0) {
 		const styledSector = `<span style="text-decoration: underline; text-decoration-color: ${biggestIncrease.color}; text-underline-offset: 4px; text-decoration-thickness: 0.1em;">${biggestIncrease.label}</span>`;
-		if (locale === 'de') {
-			sectorIncrease = `Im Sektor ${styledSector} stiegen sie.`;
-		} else {
-			sectorIncrease = `In the ${styledSector} sector, they increased.`;
-		}
+		// Full sentence: "Im Sektor {sector} sind die Emissionen gestiegen." / "In the {sector} sector, emissions rose."
+		sectorIncrease = t(translations, 'domain.emissions.sectorIncreased').replace('{sector}', styledSector);
 	}
 
 	return {
@@ -423,7 +429,7 @@ export function buildChartData(
 	region: RegionResult,
 	showPerCapita: boolean,
 	useMegatons: boolean,
-	locale: string = 'de',
+	translations: Translations,
 	climateNeutralityText: string | null = null
 ): ChartData {
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
@@ -447,7 +453,7 @@ export function buildChartData(
 
 	// Build columns for wide format
 	const wideColumns: TableColumn[] = [
-		{ key: 'year', label: 'Jahr', align: 'left' },
+		{ key: 'year', label: t(translations, 'table.year'), align: 'left' },
 		...categories.map((category) => ({
 			key: category,
 			label: `${category} (${unit})`,
@@ -462,7 +468,7 @@ export function buildChartData(
 	const updateDate = tableData[0]?.update || new Date().toISOString();
 
 	// Calculate change statistics
-	const changeStats = calculateChangeStats(tableData, locale);
+	const changeStats = calculateChangeStats(tableData, translations);
 
 	return {
 		raw: data,

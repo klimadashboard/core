@@ -3,8 +3,9 @@ import { error, redirect } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
+import { getRegionConfigWithFallback } from '$lib/utils/getRegionConfig';
 
-export async function load({ fetch, params, url }) {
+export async function load({ fetch, params, url, parent }) {
 	const directus = getDirectusInstance(fetch);
 
 	const host = url.hostname;
@@ -24,8 +25,16 @@ export async function load({ fetch, params, url }) {
 			throw error(404, 'Page not found');
 		}
 
+		// Get language from parent layout
+		const parentData = await parent();
+		const lang = parentData.language?.code || 'de';
+
+		// Load region-specific config (walks up hierarchy to find config)
+		const regionConfig = await getRegionConfigWithFallback(params.id, lang, fetch);
+
 		return {
 			page,
+			regionConfig,
 			content: {
 				title: page.name
 			}

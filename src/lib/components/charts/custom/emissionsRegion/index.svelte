@@ -9,6 +9,7 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import { t } from '$lib/utils/t';
 	import {
 		fetchEmissionsData,
 		buildChartData,
@@ -21,6 +22,7 @@
 		type RegionResult,
 		type YearGroup
 	} from './config';
+
 
 	// Props from Card slot
 	export let region: any = null;
@@ -142,7 +144,7 @@
 					selectedResult,
 					showPerCapita,
 					useMegatons,
-					PUBLIC_VERSION,
+					page.data.translations,
 					climateNeutralityText
 				);
 				onChartData(chartData);
@@ -306,7 +308,7 @@
 	const circleIcon =
 		'<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>';
 	$: switchOptions = [
-		{ key: 'all', label: 'Sektoren' },
+		{ key: 'all', label: t(page.data.translations, 'domain.sector.sectors') },
 		...displayedCategories.map((c) => ({ ...c, icon: circleIcon }))
 	];
 
@@ -349,7 +351,7 @@
 					items: [
 						...sectorItems,
 						{
-							label: 'Gesamt',
+							label: t(page.data.translations, 'table.total'),
 							value: `${formatNumber(yearData.total)} ${unit}`,
 							color: '#374151'
 						}
@@ -415,9 +417,9 @@
 </script>
 
 {#if loading || regionLoading}
-	<p class="text-sm text-gray-500">Lade Emissionsdaten…</p>
+	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.loadingEmissions')}</p>
 {:else if results.length === 0}
-	<p class="text-sm text-gray-500">Keine Emissionsdaten für diese Region verfügbar.</p>
+	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.noDataForRegion')}</p>
 {:else if selectedRegion}
 	<!-- Layer switch -->
 	{#if filteredViews.length > 1}
@@ -452,7 +454,7 @@
 					d="M16 3.13a4 4 0 0 1 0 7.75"
 				/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
 			</svg>
-			<span>Pro-Kopf Emissionen?</span>
+			<span>{t(page.data.translations, 'ui.emissions.perCapita')}</span>
 			<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
 		</label>
 	{/if}
@@ -632,12 +634,12 @@
 	<!-- Source note -->
 	<div class="text-sm leading-tight mt-4 opacity-70">
 		{#if showPerCapita && Object.keys(getPopulationForRegion(selectedRegion.id)).length > 0}
-			<p class="mt-1">Pro-Kopf-Werte basieren auf jahresspezifischen Bevölkerungsdaten.</p>
+			<p class="mt-1">{t(page.data.translations, 'ui.emissions.perCapitaNote')}</p>
 		{:else if showPerCapita && selectedRegion.population}
 			<p class="mt-1">
-				Pro-Kopf-Werte basieren auf einer Bevölkerung von {selectedRegion.population.toLocaleString(
+				{t(page.data.translations, 'ui.emissions.perCapitaNotePopulation')} {selectedRegion.population.toLocaleString(
 					'de-DE'
-				)} Einwohnern.
+				)}.
 			</p>
 		{/if}
 	</div>

@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import domtoimage from 'dom-to-image';
+	import { t } from '$lib/utils/t';
 
 	let item = null;
 
@@ -236,7 +237,7 @@
 							<line x1="4" y1="10" x2="20" y2="10" />
 							<line x1="10" y1="4" x2="10" y2="20" />
 						</svg>
-						<h3 class="">Datenquellen</h3>
+						<h3 class="">{t(page.data.translations, 'ui.wrapper.dataSources')}</h3>
 					</div>
 					<p class="text">
 						{@html chart.content?.source}

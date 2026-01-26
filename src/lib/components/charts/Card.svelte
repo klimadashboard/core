@@ -11,6 +11,7 @@
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
+	import { t } from '$lib/utils/t';
 
 	export let chart: any;
 	export let span = 12;
@@ -116,10 +117,10 @@
 	// Tab configuration
 	type TabId = 'chart' | 'table' | 'text';
 	$: tabs = [
-		{ id: 'chart' as TabId, label: 'Grafik', show: true },
-		{ id: 'table' as TabId, label: 'Tabelle', show: showTable },
-		{ id: 'text' as TabId, label: 'Info', show: showText }
-	].filter((t) => t.show);
+		{ id: 'chart' as TabId, label: t(page.data.translations, 'ui.card.tabChart'), show: true },
+		{ id: 'table' as TabId, label: t(page.data.translations, 'ui.card.tabTable'), show: showTable },
+		{ id: 'text' as TabId, label: t(page.data.translations, 'ui.card.tabInfo'), show: showText }
+	].filter((tab) => tab.show);
 
 	// Intersection observer
 	onMount(() => {
@@ -413,7 +414,7 @@
 							<summary
 								class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
 							>
-								Methodik
+								{t(page.data.translations, 'method')}
 							</summary>
 							<div class="mt-2 prose prose-sm dark:prose-invert max-w-none">
 								{@html methods}
@@ -428,8 +429,8 @@
 				<button
 					class="no-card-click absolute top-5 right-14 p-1.5 bg-blue-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
 					on:click={handleMap}
-					title="Karte"
-					aria-label="Auf Karte anzeigen"
+					title={t(page.data.translations, 'ui.card.map')}
+					aria-label={t(page.data.translations, 'ui.card.showOnMap')}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -529,10 +530,10 @@
 						<button
 							on:click={toggleDownloadMenu}
 							class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-0.5"
-							aria-label="Daten herunterladen"
+							aria-label={t(page.data.translations, 'action.downloadData')}
 							aria-expanded={showDownloadMenu}
 							aria-haspopup="true"
-							title="Daten herunterladen"
+							title={t(page.data.translations, 'action.downloadData')}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -573,7 +574,7 @@
 									<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
 										>CSV</span
 									>
-									<span>Tabelle</span>
+									<span>{t(page.data.translations, 'ui.card.tabTable')}</span>
 								</button>
 								<button
 									on:click={handleExportJSON}
@@ -582,7 +583,7 @@
 									<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
 										>JSON</span
 									>
-									<span>Rohdaten</span>
+									<span>{t(page.data.translations, 'ui.card.rawData')}</span>
 								</button>
 							</div>
 						{/if}
@@ -594,8 +595,8 @@
 					href="/charts/{chart.id}"
 					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
 					on:click={(e) => e.stopPropagation()}
-					aria-label="Permalink zur Grafik"
-					title="Permalink"
+					aria-label={t(page.data.translations, 'ui.card.permalink')}
+					title={t(page.data.translations, 'ui.card.permalink')}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -616,8 +617,8 @@
 				<button
 					on:click={handleImage}
 					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-					aria-label="Als Bild teilen"
-					title="Als Bild teilen"
+					aria-label={t(page.data.translations, 'action.shareImage')}
+					title={t(page.data.translations, 'action.shareImage')}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -640,8 +641,8 @@
 				<button
 					on:click={openEmbedModal}
 					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-					aria-label="Einbettungscode"
-					title="Einbetten"
+					aria-label={t(page.data.translations, 'ui.embed.code')}
+					title={t(page.data.translations, 'action.embed')}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

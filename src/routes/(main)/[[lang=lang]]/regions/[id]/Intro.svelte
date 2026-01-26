@@ -7,12 +7,15 @@
 	import getDirectusInstance from '@/lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import formatNumber from '$lib/stores/formatNumber';
-	import { page } from '$app/state';
+	import { page } from '$app/stores';
 	import IntroPanel from './IntroPanel.svelte';
 	import IntroIllustration from './IntroIllustration.svelte';
 	import RegionOutline from './RegionOutline.svelte';
 
 	export let data;
+
+	// Region config with translated labels
+	$: regionConfig = data.regionConfig;
 
 	let place = '';
 	let panels = [];
@@ -37,6 +40,42 @@
 	let illustrations = [];
 	let combinedSlides = new Array(10).fill({ type: 'loading' });
 	let showMapOverlay = false;
+	let mounted = false;
+
+	async function fetchPanels(lang) {
+		const regionId = data.page.id;
+		const res = await fetch(
+			`https://base.klimadashboard.org/get-region-summary?region=${regionId}&lang=${lang}`
+		);
+		const result = await res.json();
+		return result.panels;
+	}
+
+	async function updateCombinedSlides() {
+		if (illustrations.length || panels.length) {
+			const max = Math.max(illustrations.length, panels.length);
+			let newSlides = [];
+			for (let i = 0; i < max; i++) {
+				if (illustrations[i]) newSlides.push({ type: 'illustration', data: illustrations[i] });
+				if (panels[i]) newSlides.push({ type: 'panel', data: panels[i] });
+			}
+			combinedSlides = newSlides.slice(0, 9);
+		}
+		await tick();
+		illustrationsSlider?.splide?.refresh();
+		statisticsSliderTop?.splide?.refresh();
+		statisticsSliderBottom?.splide?.refresh();
+		mobileSlider?.splide?.refresh();
+	}
+
+	// Reactive: refetch panels when language changes
+	$: currentLang = $page.data?.language?.code || 'de';
+	$: if (mounted) {
+		fetchPanels(currentLang).then(async (result) => {
+			panels = result;
+			await updateCombinedSlides();
+		});
+	}
 
 	onMount(async () => {
 		place = data.page.name;
@@ -51,28 +90,10 @@
 			i.attributes.some((attr) => data.page.attributes.includes(attr))
 		);
 
-		const regionId = data.page.id;
-
-		const res = await fetch(
-			`https://base.klimadashboard.org/get-region-summary?region=${regionId}`
-		);
-		const result = await res.json();
-
-		panels = result.panels;
-		if (illustrations.length || panels.length) {
-			const max = Math.max(illustrations.length, panels.length);
-			combinedSlides = [];
-			for (let i = 0; i < max; i++) {
-				if (illustrations[i]) combinedSlides.push({ type: 'illustration', data: illustrations[i] });
-				if (panels[i]) combinedSlides.push({ type: 'panel', data: panels[i] });
-			}
-		}
-		combinedSlides = combinedSlides.splice(0, 9);
-		await tick();
-		illustrationsSlider?.splide?.refresh();
-		statisticsSliderTop?.splide?.refresh();
-		statisticsSliderBottom?.splide?.refresh();
-		mobileSlider?.splide?.refresh();
+		// Initial fetch
+		panels = await fetchPanels($page.data?.language?.code || 'de');
+		await updateCombinedSlides();
+		mounted = true;
 	});
 
 	function openMapOverlay() {
@@ -95,9 +116,7 @@
 				Klimadashboard {data.page.name}
 			</h1>
 			<p class="text-base xl:text-lg leading-snug mb-auto">
-				Das Klimadashboard {data.page.name} zeigt die Auswirkungen der Klimakrise in deiner Region und
-				begleitet die Umsetzung der Energie- und Mobilitätswende und weitere Klimaschutzmaßnahmen bei
-				dir vor Ort.
+				{regionConfig.intro_text.replace('{regionName}', data.page.name)}
 			</p>
 			{#if data.page.outline}
 				<RegionOutline outline={data.page.outline} />
@@ -119,7 +138,7 @@
 							d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z"
 						/><path d="M5 21v-7" /></svg
 					>
-					<p>{page.data.page.layer_label}</p>
+					<p>{$page.data.page.layer_label}</p>
 				</div>
 				<div class="flex items-center gap-1">
 					<svg
@@ -141,7 +160,7 @@
 							d="M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"
 						/><path d="M3 13v-1a2 2 0 0 1 2 -2h2" /></svg
 					>
-					<p>{formatNumber(page.data.page.population)}</p>
+					<p>{formatNumber($page.data.page.population)}</p>
 				</div>
 
 				<div class="flex items-center gap-0.5">
@@ -161,12 +180,12 @@
 						/>
 						<path d="M9 4v13" /><path d="M15 7v13" />
 					</svg>
-					<p>{formatNumber(page.data.page.area)} km²</p>
+					<p>{formatNumber($page.data.page.area)} km²</p>
 				</div>
 
-				{#if page.data.page.slug}
+				{#if $page.data.page.slug}
 					<div>
-						<a href="https://{page.url.host}/{page.data.page.slug.split(',')[0]}" target="_blank">
+						<a href="https://{$page.url.host}/{$page.data.page.slug.split(',')[0]}" target="_blank">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="24"
@@ -184,7 +203,7 @@
 									d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"
 								/></svg
 							>
-							{page.url.host}/{page.data.page.slug.split(',')[0]}</a
+							{$page.url.host}/{$page.data.page.slug.split(',')[0]}</a
 						>
 					</div>
 				{/if}
@@ -244,7 +263,7 @@
 				<SplideTrack class="h-full">
 					{#each illustrations as illustration}
 						<SplideSlide class="h-full">
-							<IntroIllustration data={illustration} />
+							<IntroIllustration data={illustration} howWouldItBeBetterLabel={regionConfig.how_would_it_be_better_label} />
 						</SplideSlide>
 					{/each}
 				</SplideTrack>
@@ -281,7 +300,7 @@
 						d="M8.887 6.748c-.163 0 -.337 .016 -.506 .057c-.172 .041 -.582 .165 -.838 .562l-.014 .02l-.607 1.05c-.307 .205 -.534 .46 -.693 .717l-.014 .02l-2.572 4.65a4.009 4.009 0 0 0 -.274 .494l-.006 .01a3.99 3.99 0 0 0 -.363 1.672a4 4 0 0 0 8 0v-1h2v1a4 4 0 1 0 7.635 -1.67l-.004 -.012a4.008 4.008 0 0 0 -.274 -.494l-2.572 -4.65l-.014 -.02a2.337 2.337 0 0 0 -.693 -.716l-.607 -1.051l-.014 -.02c-.256 -.397 -.667 -.52 -.838 -.562a2.225 2.225 0 0 0 -.664 -.051a2.06 2.06 0 0 0 -.68 .156c-.184 .081 -.638 .327 -.754 .889l-.007 .037l-.14 1.1c-.22 .283 -.374 .64 -.374 1.064v1h-2v-1c0 -.424 -.154 -.781 -.373 -1.064l-.14 -1.1l-.008 -.037c-.116 -.562 -.57 -.808 -.754 -.889a2.06 2.06 0 0 0 -.68 -.156a2.374 2.374 0 0 0 -.158 -.006zm-1.887 7.252a2 2 0 1 1 -1.838 1.209l.19 -.342c.36 -.523 .964 -.867 1.648 -.867zm10 0c.684 0 1.288 .344 1.648 .867l.19 .342a2 2 0 1 1 -1.838 -1.209z"
 					/></svg
 				>
-				<span class="text-lg font-bold leading-tight">Datenlandkarte erkunden</span>
+				<span class="text-lg font-bold leading-tight">{regionConfig.explore_map_label}</span>
 			</div>
 		</div>
 	</div>
@@ -385,10 +404,8 @@
 						<div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between">
 							<div class="">
 								<p class="text-xl font-bold max-w-md leading-tight">
-									Das Klimadashboard {data.page.name} zeigt die Auswirkungen der Klimakrise in deiner
-									Region und begleitet die Umsetzung der Energie- und Mobilitätswende und weitere Klimaschutzmaßnahmen
-									bei dir vor Ort.
-								</p>
+								{regionConfig.intro_text.replace('{regionName}', data.page.name)}
+							</p>
 								<div class="flex gap-2 mt-2 items-center flex-wrap leading-none">
 									<div class="flex items-center gap-0.5">
 										<svg
@@ -406,7 +423,7 @@
 												d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z"
 											/><path d="M5 21v-7" /></svg
 										>
-										<p>{page.data.page.layer_label}</p>
+										<p>{$page.data.page.layer_label}</p>
 									</div>
 									<div class="flex items-center gap-1">
 										<svg
@@ -428,7 +445,7 @@
 												d="M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"
 											/><path d="M3 13v-1a2 2 0 0 1 2 -2h2" /></svg
 										>
-										<p>{formatNumber(page.data.page.population)}</p>
+										<p>{formatNumber($page.data.page.population)}</p>
 									</div>
 
 									<div class="flex items-center gap-0.5">
@@ -448,13 +465,13 @@
 											/>
 											<path d="M9 4v13" /><path d="M15 7v13" />
 										</svg>
-										<p>{formatNumber(page.data.page.area)} km²</p>
+										<p>{formatNumber($page.data.page.area)} km²</p>
 									</div>
 
-									{#if page.data.page.slug}
+									{#if $page.data.page.slug}
 										<div>
 											<a
-												href="https://{page.url.host}/{page.data.page.slug.split(',')[0]}"
+												href="https://{$page.url.host}/{$page.data.page.slug.split(',')[0]}"
 												target="_blank"
 											>
 												<svg
@@ -474,7 +491,7 @@
 														d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"
 													/></svg
 												>
-												{page.url.host}/{page.data.page.slug.split(',')[0]}</a
+												{$page.url.host}/{$page.data.page.slug.split(',')[0]}</a
 											>
 										</div>
 									{/if}
@@ -482,7 +499,7 @@
 							</div>
 
 							<div class="flex items-center gap-2">
-								<p class="leading-none w-20 text-right">Scrollen für mehr Daten</p>
+								<p class="leading-none w-20 text-right">{regionConfig.scroll_for_more_label}</p>
 
 								<div class="w-10 h-10">
 									<div class="mousey">
@@ -509,7 +526,7 @@
 				{:else if item.type === 'illustration'}
 					<SplideSlide>
 						<div class="rounded-xl overflow-hidden">
-							<IntroIllustration data={item.data} />
+							<IntroIllustration data={item.data} howWouldItBeBetterLabel={regionConfig.how_would_it_be_better_label} />
 						</div>
 					</SplideSlide>
 				{:else if item.type === 'panel'}

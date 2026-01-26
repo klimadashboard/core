@@ -4,6 +4,9 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { t } from '$lib/utils/t';
+
+export type Translations = Record<string, string>;
 
 export interface ModalSplitParams {
 	regionId?: string;
@@ -31,18 +34,48 @@ export const categoryOrder = [
 export const sustainableCategories = ['on_foot', 'bicycle', 'e_bike', 'public_transport'];
 export const motorizedCategories = ['motorbike', 'car_driver', 'car_passenger'];
 
-export const categoryMeta: Record<
-	string,
-	{ label: string; shortLabel: string; sustainable: boolean }
-> = {
-	on_foot: { label: 'Zu Fuß', shortLabel: 'Fuß', sustainable: true },
-	bicycle: { label: 'Fahrrad', shortLabel: 'Rad', sustainable: true },
-	e_bike: { label: 'E-Bike', shortLabel: 'E-Bike', sustainable: true },
-	public_transport: { label: 'ÖPNV', shortLabel: 'ÖPNV', sustainable: true },
-	motorbike: { label: 'Motorrad', shortLabel: 'Moto', sustainable: false },
-	car_driver: { label: 'Auto (Fahrer)', shortLabel: 'Fahrer:in', sustainable: false },
-	car_passenger: { label: 'Auto (Mitfahrer)', shortLabel: 'Mitfahrer:in', sustainable: false }
-};
+/** Get category metadata with translated labels */
+export function getCategoryMeta(
+	translations: Translations
+): Record<string, { label: string; shortLabel: string; sustainable: boolean }> {
+	return {
+		on_foot: {
+			label: t(translations, 'domain.transport.onFoot'),
+			shortLabel: t(translations, 'domain.transport.onFootShort'),
+			sustainable: true
+		},
+		bicycle: {
+			label: t(translations, 'domain.transport.bicycle'),
+			shortLabel: t(translations, 'domain.transport.bicycleShort'),
+			sustainable: true
+		},
+		e_bike: {
+			label: t(translations, 'domain.transport.eBike'),
+			shortLabel: t(translations, 'domain.transport.eBike'),
+			sustainable: true
+		},
+		public_transport: {
+			label: t(translations, 'domain.transport.publicTransport'),
+			shortLabel: t(translations, 'domain.transport.publicTransportShort'),
+			sustainable: true
+		},
+		motorbike: {
+			label: t(translations, 'domain.transport.motorbike'),
+			shortLabel: t(translations, 'domain.transport.motorbikeShort'),
+			sustainable: false
+		},
+		car_driver: {
+			label: t(translations, 'domain.transport.carDriver'),
+			shortLabel: t(translations, 'domain.transport.carDriverShort'),
+			sustainable: false
+		},
+		car_passenger: {
+			label: t(translations, 'domain.transport.carPassenger'),
+			shortLabel: t(translations, 'domain.transport.carPassengerShort'),
+			sustainable: false
+		}
+	};
+}
 
 // WCAG AA compliant color palette with sufficient contrast against white text (4.5:1 minimum)
 // Colors chosen for maximum distinguishability - spread across color wheel
@@ -195,13 +228,17 @@ export function calculateProjection(
 }
 
 /** Get table columns - wide format with categories as columns */
-export function getTableColumns(data: ModalSplitRawData[]): TableColumn[] {
+export function getTableColumns(
+	data: ModalSplitRawData[],
+	translations: Translations
+): TableColumn[] {
 	const categories = Array.from(new Set(data.map((d) => d.category))).sort(
 		(a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b)
 	);
+	const categoryMeta = getCategoryMeta(translations);
 
 	return [
-		{ key: 'year', label: 'Jahr', align: 'left' },
+		{ key: 'year', label: t(translations, 'table.year'), align: 'left' },
 		...categories.map((cat) => ({
 			key: cat,
 			label: categoryMeta[cat]?.label || cat,
@@ -262,12 +299,13 @@ export function buildChartData(
 	updateDate: string,
 	source: string,
 	region: Region | null,
-	showHistoric: boolean = false
+	showHistoric: boolean = false,
+	translations: Translations
 ): ChartData {
 	return {
 		raw: data,
 		table: {
-			columns: getTableColumns(data),
+			columns: getTableColumns(data, translations),
 			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
@@ -280,10 +318,10 @@ export function buildChartData(
 		embedOptions: [
 			{
 				key: 'historic',
-				label: 'Historische Entwicklung anzeigen',
+				label: t(translations, 'ui.embedOption.historicDevelopment'),
 				choices: [
-					{ value: 'false', label: 'Nein' },
-					{ value: 'true', label: 'Ja' }
+					{ value: 'false', label: t(translations, 'ui.embedOption.no') },
+					{ value: 'true', label: t(translations, 'ui.embedOption.yes') }
 				],
 				currentValue: showHistoric ? 'true' : 'false'
 			}
