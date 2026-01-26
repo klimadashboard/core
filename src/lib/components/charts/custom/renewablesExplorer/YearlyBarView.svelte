@@ -209,7 +209,7 @@
 			{xDomain}
 			{yMax}
 			height={280}
-			margin={{ top: 15, right: 15, bottom: 35, left: 55 }}
+			margin={{ top: 15, right: 15, bottom: 35, left: 32 }}
 		>
 			<svelte:fragment
 				slot="default"

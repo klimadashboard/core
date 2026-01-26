@@ -30,9 +30,14 @@
 					/>
 				{/if}
 
-				<text x="-8" dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
-					{format(tick)}{#if isLast && unit}&nbsp;{unit}{/if}
+				<text x="-4" dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
+					{format(tick)}
 				</text>
+				{#if isLast && unit}
+					<text x="2" dy="0.32em" class="text-xs fill-gray-500">
+						{unit}
+					</text>
+				{/if}
 			</g>
 		{/each}
 

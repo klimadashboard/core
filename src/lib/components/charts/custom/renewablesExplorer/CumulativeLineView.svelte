@@ -558,7 +558,7 @@
 				xType="linear"
 				height={280}
 				yMax={maxValue / divisor}
-				margin={{ top: 10, right: 20, bottom: 40, left: 70 }}
+				margin={{ top: 10, right: 20, bottom: 40, left: 32 }}
 			>
 				<svelte:fragment
 					slot="default"
