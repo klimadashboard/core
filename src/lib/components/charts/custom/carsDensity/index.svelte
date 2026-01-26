@@ -8,12 +8,13 @@
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
+	import { theme } from '$lib/stores/theme';
 	import {
 		fetchData,
 		getPlaceholders,
 		getLatestData,
 		buildChartData,
-		colors,
+		getColor,
 		type CarDensityData
 	} from './config';
 
@@ -39,6 +40,12 @@
 	let hoveredPeriod: string | null = null;
 	let hoverClientX = 0;
 	let hoverClientY = 0;
+
+	// Theme-aware colors
+	$: isDark = $theme === 'dark';
+	$: carsColor = getColor('cars', isDark);
+	$: privateColor = getColor('private', isDark);
+	$: companyColor = getColor('company', isDark);
 
 	// Load data when region changes
 	$: if (!regionLoading) {
@@ -106,7 +113,7 @@
 		if (!point || point.value == null) return null;
 		return {
 			title: hoveredPeriod,
-			items: [{ label: 'Autos gesamt', value: formatNumber(point.value), color: colors.cars }]
+			items: [{ label: 'Autos gesamt', value: formatNumber(point.value), color: carsColor }]
 		};
 	})();
 
@@ -212,7 +219,7 @@
 						<!-- Line -->
 						<g transform="translate({margin.left},{margin.top})">
 							{#if linePath}
-								<path d={linePath} fill="none" stroke={colors.cars} stroke-width={2.5} />
+								<path d={linePath} fill="none" stroke={carsColor} stroke-width={2.5} />
 							{/if}
 
 							<!-- Data points -->
@@ -222,7 +229,7 @@
 										cx={xScale(Number(d.period))}
 										cy={yScale(d.value)}
 										r={d.period === hoveredPeriod ? 5 : 3}
-										fill={colors.cars}
+										fill={carsColor}
 										class="transition-all"
 									/>
 								{/if}
@@ -265,7 +272,7 @@
 
 		<!-- Right: Comparison numbers -->
 		<div class="border-l border-current/20 pl-4">
-			<div class="flex gap-1 items-end" style="color: {colors.cars}">
+			<div class="flex gap-1 items-end" style="color: {carsColor}">
 				<!-- Region value -->
 				<p class="text-5xl font-light tabular-nums">
 					{latestData.carsPer1000}
@@ -292,7 +299,7 @@
 						y="0"
 						width="{latestData.privateShare}%"
 						height={barChartHeight}
-						fill={colors.private}
+						fill={privateColor}
 						class="transition-all"
 					/>
 					<!-- Company share (right, amber) -->
@@ -301,7 +308,7 @@
 						y="0"
 						width="{latestData.companyShare}%"
 						height={barChartHeight}
-						fill={colors.company}
+						fill={companyColor}
 						class="transition-all"
 					/>
 
@@ -336,13 +343,13 @@
 		<div class="flex justify-between">
 			<div
 				class="flex items-center gap-2 text-sm border-l border-current pl-2 pt-1"
-				style="color: {colors.private}"
+				style="color: {privateColor}"
 			>
 				<span>Privat</span>
 			</div>
 			<div
 				class="flex items-center gap-2 text-sm border-r border-current pr-2 pt-1"
-				style="color: {colors.company}"
+				style="color: {companyColor}"
 			>
 				<span>Firmen</span>
 			</div>

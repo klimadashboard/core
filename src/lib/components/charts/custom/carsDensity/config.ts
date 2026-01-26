@@ -59,14 +59,23 @@ export interface CarDensityData {
 // Color Configuration
 // =============================================================================
 
+/** Colors with light/dark mode variants for accessibility */
 export const colors = {
-	cars: '#84112E', // royal blue
-	carsLight: '#B5173F', // light blue
-	private: '#B04C21', // dark green
-	privateLight: '#D75D28', // pale green
-	company: '#DA9B34', // rich amber
-	companyLight: '#E5B870' // light amber
+	cars: { light: '#84112E', dark: '#E85A7A' },
+	carsLight: { light: '#B5173F', dark: '#F08CA3' },
+	private: { light: '#B04C21', dark: '#E8844D' },
+	privateLight: { light: '#D75D28', dark: '#F5A86A' },
+	company: { light: '#DA9B34', dark: '#F5C563' },
+	companyLight: { light: '#E5B870', dark: '#FFD88A' }
 };
+
+/** Helper to get color based on current theme */
+export function getColor(
+	colorKey: keyof typeof colors,
+	isDark: boolean
+): string {
+	return isDark ? colors[colorKey].dark : colors[colorKey].light;
+}
 
 // =============================================================================
 // Data Fetching
@@ -107,8 +116,6 @@ export async function fetchData(
 			limit: -1
 		})
 	);
-
-	console.log(rawData);
 
 	// Extract metadata
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));

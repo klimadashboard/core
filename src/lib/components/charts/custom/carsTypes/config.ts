@@ -67,18 +67,19 @@ export interface VehicleRawData {
 }
 
 // Category configuration with colors and order
+// Colors chosen to work well in both light and dark modes
 export const categoryConfig: Record<string, { label: string; color: string; order: number }> = {
-	Benzin: { label: 'Benzin', color: '#E58A28', order: 0 },
-	Diesel: { label: 'Diesel', color: '#9E2668', order: 1 },
-	Hybrid: { label: 'Hybrid', color: '#379AC5', order: 2 },
-	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#379AC5', order: 2 },
-	Elektro: { label: 'Elektro', color: '#097347', order: 3 },
-	'Plug-in-Hybrid': { label: 'Plug-in', color: '#1C128E', order: 4 },
-	Sonstige: { label: 'Sonstige', color: '#464E5C', order: 5 }
+	Benzin: { label: 'Benzin', color: '#F59E0B', order: 0 },
+	Diesel: { label: 'Diesel', color: '#DB2777', order: 1 },
+	Hybrid: { label: 'Hybrid', color: '#38BDF8', order: 2 },
+	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#38BDF8', order: 2 },
+	Elektro: { label: 'Elektro', color: '#10B981', order: 3 },
+	'Plug-in-Hybrid': { label: 'Plug-in', color: '#8B5CF6', order: 4 },
+	Sonstige: { label: 'Sonstige', color: '#94A3B8', order: 5 }
 };
 
-// Fallback colors for unknown categories
-export const fallbackColors = ['#14B8A6', '#EC4899', '#F97316', '#06B6D4', '#84CC16'];
+// Fallback colors (work in both light and dark modes)
+export const fallbackColors = ['#10B981', '#3B82F6', '#94A3B8', '#EF4444', '#F59E0B'];
 
 /** Fetch Bestand data from the mobility cars endpoint */
 async function fetchBestandData(
@@ -91,26 +92,20 @@ async function fetchBestandData(
 	const regionKey = region?.id || (country === 'DE' ? 'DE' : country);
 	const url = `https://base.klimadashboard.org/get-mobility-cars?region=${encodeURIComponent(regionKey)}&country=${country}&includeMeta=true`;
 
-	console.log('[carsTypes fetchBestandData] Fetching for region:', { regionId: region?.id, regionKey, url });
-
 	const resp = await fetch(url);
-	console.log('[carsTypes fetchBestandData] Response status:', resp.status);
 
 	if (!resp.ok) {
 		// 404 or 400 means no data for this region
 		if (resp.status === 404 || resp.status === 400) {
-			console.log('[carsTypes fetchBestandData] No data (404/400) for region:', regionKey);
 			return null;
 		}
 		throw new Error(`Endpoint error ${resp.status}`);
 	}
 
 	const result = await resp.json();
-	console.log('[carsTypes fetchBestandData] Response result:', { hasError: !!result.error, regionInResult: result.region, dataKeys: result.data ? Object.keys(result.data) : null });
 
 	// Handle error responses from the endpoint
 	if (result.error) {
-		console.log('[carsTypes fetchBestandData] Error in response:', result.error);
 		return null;
 	}
 
@@ -139,7 +134,6 @@ async function fetchBestandData(
 
 	// If no usable categories found (only Privat/Firmen/Insgesamt), return null to trigger fallback
 	if (allCategories.length === 0) {
-		console.log('[carsTypes fetchBestandData] No usable categories found (only excluded categories like Privat/Firmen)');
 		return null;
 	}
 
@@ -172,8 +166,6 @@ async function fetchBestandData(
 	// Source from DESTATIS
 	const source = 'DESTATIS';
 
-	console.log('[carsTypes fetchBestandData] Returning data:', { year: latestYear, categories, regionName });
-
 	return { data, categories, updateDate, regionName, source };
 }
 
@@ -189,11 +181,8 @@ async function fetchNeuzulassungenData(
 	// Build Directus API URL with filters
 	const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${regionCode}&filter[country][_eq]=${country}&sort=-period&limit=-1`;
 
-	console.log('[carsTypes fetchNeuzulassungenData] Fetching for region:', { regionId: region?.id, regionCode, url });
-
 	const response = await fetch(url);
 	if (!response.ok) {
-		console.log('[carsTypes fetchNeuzulassungenData] Response not ok:', response.status);
 		return null;
 	}
 
@@ -208,7 +197,6 @@ async function fetchNeuzulassungenData(
 	}>;
 
 	if (records.length === 0) {
-		console.log('[carsTypes fetchNeuzulassungenData] No records found');
 		return null;
 	}
 
@@ -258,8 +246,6 @@ async function fetchNeuzulassungenData(
 	// Extract source from first record
 	const source = records[0]?.source || '';
 
-	console.log('[carsTypes fetchNeuzulassungenData] Returning data:', { year, categories, regionName, total });
-
 	return { data, categories, updateDate, regionName, source };
 }
 
@@ -268,8 +254,6 @@ export async function fetchDataWithFallback(
 	regionCandidates: Array<{ id: string; name: string; layer?: string; layer_label?: string }>,
 	params: VehicleParams
 ): Promise<FetchResult | null> {
-	console.log('[carsTypes fetchDataWithFallback] Called with candidates:', regionCandidates, 'params:', params);
-
 	const country = getCountryCode();
 	const countryName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 
@@ -277,8 +261,6 @@ export async function fetchDataWithFallback(
 	const candidates = regionCandidates.length > 0
 		? regionCandidates
 		: [{ id: country, name: countryName, layer: 'country', layer_label: 'Land' }];
-
-	console.log('[carsTypes fetchDataWithFallback] Using candidates:', candidates);
 
 	// Try fetching for each candidate in parallel
 	const results = await Promise.all(
@@ -291,13 +273,9 @@ export async function fetchDataWithFallback(
 					layer: candidate.layer || 'unknown'
 				} as Region;
 
-				console.log('[carsTypes fetchDataWithFallback] Trying candidate:', candidate.name, 'id:', candidate.id);
-
 				const result = params.mode === 'neuzulassungen'
 					? await fetchNeuzulassungenData(regionObj)
 					: await fetchBestandData(regionObj);
-
-				console.log('[carsTypes fetchDataWithFallback] Result for', candidate.name, ':', result ? { categories: Object.keys(result.data.shares) } : null);
 
 				if (result && Object.keys(result.data.shares).length > 0) {
 					return {
@@ -309,8 +287,7 @@ export async function fetchDataWithFallback(
 						layerPriority: getLayerPriority(candidate.layer || 'unknown')
 					} as FetchResult;
 				}
-			} catch (e) {
-				console.log('[carsTypes fetchDataWithFallback] Error for candidate', candidate.name, ':', e);
+			} catch {
 				// Ignore errors, try next candidate
 			}
 			return null;
@@ -320,8 +297,6 @@ export async function fetchDataWithFallback(
 	// Filter out null results and sort by layer priority (lowest = most local)
 	const validResults = results.filter((r): r is FetchResult => r !== null);
 	validResults.sort((a, b) => a.layerPriority - b.layerPriority);
-
-	console.log('[carsTypes fetchDataWithFallback] Valid results:', validResults.map(r => ({ regionId: r.regionId, regionName: r.regionName, layerPriority: r.layerPriority })));
 
 	// Return the most local result with data
 	return validResults[0] || null;
@@ -336,19 +311,10 @@ export async function checkDataAvailabilityWithFallback(
 	bestandRegion: { id: string; name: string } | null;
 	neuzulassungenRegion: { id: string; name: string } | null;
 }> {
-	console.log('[carsTypes checkDataAvailabilityWithFallback] Checking availability for candidates:', regionCandidates);
-
 	const [bestandResult, neuzulassungenResult] = await Promise.all([
 		fetchDataWithFallback(regionCandidates, { mode: 'bestand' }),
 		fetchDataWithFallback(regionCandidates, { mode: 'neuzulassungen' })
 	]);
-
-	console.log('[carsTypes checkDataAvailabilityWithFallback] Results:', {
-		hasBestand: bestandResult !== null,
-		hasNeuzulassungen: neuzulassungenResult !== null,
-		bestandRegion: bestandResult ? bestandResult.regionName : null,
-		neuzulassungenRegion: neuzulassungenResult ? neuzulassungenResult.regionName : null
-	});
 
 	return {
 		hasBestand: bestandResult !== null,

@@ -60,20 +60,21 @@ export interface SeriesConfig {
 }
 
 // Category configuration with colors and display order
+// Colors chosen to work well in both light and dark modes
 export const categoryConfig: Record<string, { label: string; color: string; order: number }> = {
-	Benzin: { label: 'Benzin', color: '#E58A28', order: 0 },
-	Diesel: { label: 'Diesel', color: '#9E2668', order: 1 },
-	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#379AC5', order: 2 },
-	Hybrid: { label: 'Hybrid', color: '#379AC5', order: 2 },
-	Elektro: { label: 'Elektro', color: '#097347', order: 3 },
-	'Plug-in-Hybrid': { label: 'Plug-in', color: '#1C128E', order: 4 },
-	Sonstige: { label: 'Sonstige', color: '#464E5C', order: 5 },
-	Gas: { label: 'Gas', color: '#464E5C', order: 6 },
-	'Sonstige Kraftstoffarten': { label: 'Sonstige', color: '#464E5C', order: 7 }
+	Benzin: { label: 'Benzin', color: '#F59E0B', order: 0 },
+	Diesel: { label: 'Diesel', color: '#DB2777', order: 1 },
+	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#38BDF8', order: 2 },
+	Hybrid: { label: 'Hybrid', color: '#38BDF8', order: 2 },
+	Elektro: { label: 'Elektro', color: '#10B981', order: 3 },
+	'Plug-in-Hybrid': { label: 'Plug-in', color: '#8B5CF6', order: 4 },
+	Sonstige: { label: 'Sonstige', color: '#94A3B8', order: 5 },
+	Gas: { label: 'Gas', color: '#94A3B8', order: 6 },
+	'Sonstige Kraftstoffarten': { label: 'Sonstige', color: '#94A3B8', order: 7 }
 };
 
-// Fallback colors
-export const categoryColors = ['#047857', '#1D4ED8', '#6B7280', '#DC2626', '#B45309', '#EAB308'];
+// Fallback colors (work in both light and dark modes)
+export const categoryColors = ['#10B981', '#3B82F6', '#94A3B8', '#EF4444', '#F59E0B', '#FBBF24'];
 
 // Categories to exclude from display
 const excludedCategories = ['Insgesamt', 'Privat', 'Firmen'];
@@ -92,25 +93,19 @@ export async function fetchBestandData(
 	const regionKey = region?.id || (country === 'DE' ? 'DE' : country);
 	const url = `https://base.klimadashboard.org/get-mobility-cars?region=${encodeURIComponent(regionKey)}&country=${country}&includeMeta=true`;
 
-	console.log('[fetchBestandData] Fetching for region:', { regionId: region?.id, regionCode: region?.code, regionKey, url });
-
 	const response = await fetch(url);
-	console.log('[fetchBestandData] Response status:', response.status);
 	if (!response.ok) {
 		// 404 or 400 means no data for this region
 		if (response.status === 404 || response.status === 400) {
-			console.log('[fetchBestandData] No data (404/400) for region:', regionKey);
 			return { data: [], categories: [], updateDate: new Date().toISOString(), source: '' };
 		}
 		throw new Error(`Failed to fetch Bestand data: ${response.status}`);
 	}
 
 	const result = await response.json();
-	console.log('[fetchBestandData] Response result:', { hasError: !!result.error, regionInResult: result.region, dataKeys: result.data ? Object.keys(result.data) : null });
 
 	// Handle error responses from the endpoint
 	if (result.error) {
-		console.log('[fetchBestandData] Error in response:', result.error);
 		return { data: [], categories: [], updateDate: new Date().toISOString(), source: '' };
 	}
 
@@ -135,7 +130,6 @@ export async function fetchBestandData(
 
 	// If no usable categories found (only Privat/Firmen/Insgesamt), return empty
 	if (allCategories.size === 0) {
-		console.log('[fetchBestandData] No usable categories found (only excluded categories like Privat/Firmen)');
 		return { data: [], categories: [], updateDate: new Date().toISOString(), source: '' };
 	}
 
@@ -157,7 +151,6 @@ export async function fetchBestandData(
 
 	// Double-check we have displayable categories
 	if (categories.length === 0) {
-		console.log('[fetchBestandData] No displayable categories after filtering');
 		return { data: [], categories: [], updateDate: new Date().toISOString(), source: '' };
 	}
 
@@ -200,8 +193,6 @@ export async function fetchBestandData(
 
 	// Source from DESTATIS
 	const source = 'DESTATIS';
-
-	console.log('[fetchBestandData] Returning data:', { dataLength: data.length, categories, regionName, firstRow: data[0], lastRow: data[data.length - 1] });
 
 	return { data, categories, updateDate, source, regionName };
 }
@@ -292,8 +283,6 @@ export async function fetchDataWithFallback(
 	regionCandidates: Array<{ id: string; name: string; layer?: string; layer_label?: string; code?: string }>,
 	params: VehicleParams
 ): Promise<FetchResult | null> {
-	console.log('[fetchDataWithFallback] Called with candidates:', regionCandidates, 'params:', params);
-
 	const country = getCountryCode();
 	const countryName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 
@@ -301,8 +290,6 @@ export async function fetchDataWithFallback(
 	const candidates = regionCandidates.length > 0
 		? regionCandidates
 		: [{ id: country, name: countryName, layer: 'country', layer_label: 'Land', code: country }];
-
-	console.log('[fetchDataWithFallback] Using candidates:', candidates);
 
 	// Try fetching for each candidate in parallel
 	const results = await Promise.all(
@@ -316,13 +303,9 @@ export async function fetchDataWithFallback(
 					layer: candidate.layer || 'unknown'
 				} as Region;
 
-				console.log('[fetchDataWithFallback] Trying candidate:', candidate.name, 'id:', candidate.id);
-
 				const result = params.mode === 'bestand'
 					? await fetchBestandData(regionObj)
 					: await fetchNeuzulassungenData(regionObj);
-
-				console.log('[fetchDataWithFallback] Result for', candidate.name, ':', { dataLength: result.data.length });
 
 				if (result.data.length > 0) {
 					return {
@@ -334,8 +317,7 @@ export async function fetchDataWithFallback(
 						layerPriority: getLayerPriority(candidate.layer || 'unknown')
 					} as FetchResult;
 				}
-			} catch (e) {
-				console.log('[fetchDataWithFallback] Error for candidate', candidate.name, ':', e);
+			} catch {
 				// Ignore errors, try next candidate
 			}
 			return null;
@@ -345,8 +327,6 @@ export async function fetchDataWithFallback(
 	// Filter out null results and sort by layer priority (lowest = most local)
 	const validResults = results.filter((r): r is FetchResult => r !== null);
 	validResults.sort((a, b) => a.layerPriority - b.layerPriority);
-
-	console.log('[fetchDataWithFallback] Valid results:', validResults.map(r => ({ regionId: r.regionId, regionName: r.regionName, dataLength: r.data.length, layerPriority: r.layerPriority })));
 
 	// Return the most local result with data
 	return validResults[0] || null;
@@ -361,19 +341,10 @@ export async function checkDataAvailabilityWithFallback(
 	bestandRegion: { id: string; name: string } | null;
 	neuzulassungenRegion: { id: string; name: string } | null;
 }> {
-	console.log('[checkDataAvailabilityWithFallback] Checking availability for candidates:', regionCandidates);
-
 	const [bestandResult, neuzulassungenResult] = await Promise.all([
 		fetchDataWithFallback(regionCandidates, { mode: 'bestand' }),
 		fetchDataWithFallback(regionCandidates, { mode: 'neuzulassungen' })
 	]);
-
-	console.log('[checkDataAvailabilityWithFallback] Results:', {
-		hasBestand: bestandResult !== null,
-		hasNeuzulassungen: neuzulassungenResult !== null,
-		bestandRegion: bestandResult ? bestandResult.regionName : null,
-		neuzulassungenRegion: neuzulassungenResult ? neuzulassungenResult.regionName : null
-	});
 
 	return {
 		hasBestand: bestandResult !== null,

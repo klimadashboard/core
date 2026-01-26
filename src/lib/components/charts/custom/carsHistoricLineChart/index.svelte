@@ -69,10 +69,6 @@
 			]
 		: [];
 
-	// Debug: Log region and candidates
-	$: console.log('[carsHistoricLineChart] Region:', region ? { id: region.id, name: region.name, code: region.code, country: region.country, layer: region.layer, parents: region.parents } : null);
-	$: console.log('[carsHistoricLineChart] Region candidates:', regionCandidates);
-
 	// Dynamic mode views based on availability
 	$: modeViews = [
 		...(hasNeuzulassungen ? [{ key: 'neuzulassungen', label: 'Neuzulassungen' }] : []),
@@ -182,13 +178,11 @@
 	}
 
 	async function checkAvailability() {
-		console.log('[carsHistoricLineChart] checkAvailability called, regionCandidates:', regionCandidates);
 		loading = true;
 		availabilityChecked = false;
 
 		try {
 			const availability = await checkDataAvailabilityWithFallback(regionCandidates);
-			console.log('[carsHistoricLineChart] Availability result:', availability);
 			hasBestand = availability.hasBestand;
 			hasNeuzulassungen = availability.hasNeuzulassungen;
 			bestandRegion = availability.bestandRegion;
@@ -197,7 +191,6 @@
 
 			// If no data is available at all, report hasData: false
 			if (!hasBestand && !hasNeuzulassungen) {
-				console.log('[carsHistoricLineChart] No data available at all, setting hasData: false');
 				data = [];
 				categories = [];
 				seriesConfigs = [];
@@ -235,16 +228,13 @@
 	let currentDataRegion: { id: string; name: string } | null = null;
 
 	async function loadData() {
-		console.log('[carsHistoricLineChart] loadData called, activeMode:', activeMode, 'params:', params);
 		loading = true;
 		error = null;
 
 		try {
 			const result = await fetchDataWithFallback(regionCandidates, params);
-			console.log('[carsHistoricLineChart] loadData result:', result ? { dataLength: result.data.length, regionName: result.regionName } : null);
 
 			if (!result) {
-				console.log('[carsHistoricLineChart] loadData: No result, setting empty data');
 				data = [];
 				categories = [];
 				seriesConfigs = [];
@@ -259,7 +249,6 @@
 			categories = result.categories;
 			seriesConfigs = buildSeriesConfigs(categories);
 			currentDataRegion = { id: result.regionId, name: result.regionName };
-			console.log('[carsHistoricLineChart] loadData: Data loaded successfully, dataLength:', data.length, 'categories:', categories);
 
 			// Create a region object for the data source (may be a parent region)
 			const dataRegion: Region = {

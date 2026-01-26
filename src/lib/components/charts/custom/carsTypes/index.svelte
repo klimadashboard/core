@@ -132,20 +132,17 @@
 	}
 
 	async function checkAvailability() {
-		console.log('[carsTypes] checkAvailability called, regionCandidates:', regionCandidates);
 		loading = true;
 		availabilityChecked = false;
 
 		try {
 			const availability = await checkDataAvailabilityWithFallback(regionCandidates);
-			console.log('[carsTypes] Availability result:', availability);
 			hasBestand = availability.hasBestand;
 			hasNeuzulassungen = availability.hasNeuzulassungen;
 			availabilityChecked = true;
 
 			// If no data is available at all, report hasData: false
 			if (!hasBestand && !hasNeuzulassungen) {
-				console.log('[carsTypes] No data available at all, setting hasData: false');
 				data = null;
 				waffleData = [];
 				const emptyChartData = buildChartData(
@@ -187,16 +184,13 @@
 	}
 
 	async function loadData() {
-		console.log('[carsTypes] loadData called, activeMode:', activeMode, 'params:', params);
 		loading = true;
 		error = null;
 
 		try {
 			const result = await fetchDataWithFallback(regionCandidates, params);
-			console.log('[carsTypes] loadData result:', result ? { regionName: result.regionName, regionLayerLabel: result.regionLayerLabel } : null);
 
 			if (!result) {
-				console.log('[carsTypes] loadData: No result, setting empty data');
 				data = null;
 				waffleData = [];
 				const emptyChartData = buildChartData(
@@ -216,7 +210,6 @@
 			data = result.data;
 			regionName = result.regionName;
 			waffleData = buildWaffleData(result.data, result.categories);
-			console.log('[carsTypes] loadData: Data loaded successfully, regionName:', regionName);
 
 			// Create a region object for the data source (may be a parent region)
 			const dataRegion: Region = {
