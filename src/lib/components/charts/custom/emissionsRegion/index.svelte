@@ -23,7 +23,6 @@
 		type YearGroup
 	} from './config';
 
-
 	// Props from Card slot
 	export let region: any = null;
 	export let regionLoading: boolean = false;
@@ -35,7 +34,7 @@
 	// Chart configuration
 	const height = 320;
 	const horizontalHeight = 96;
-	const margin = { top: 20, right: 20, bottom: 30, left: 90 };
+	const margin = { top: 24, right: 20, bottom: 30, left: 32 };
 
 	// State
 	let containerEl: HTMLElement;
@@ -258,7 +257,7 @@
 		}
 	})();
 
-	$: xScale = scaleLinear().domain([minYear, maxYear]).range([0, innerWidth]);
+	$: xScale = scaleLinear().domain([minYear, maxYear]).range([barWidth / 2 + 8, innerWidth - barWidth / 2]);
 	$: yScale = scaleLinear().domain([0, visibleMax]).range([innerHeight, 0]);
 
 	// Horizontal chart scales
@@ -505,11 +504,28 @@
 					<!-- Y axis -->
 					<g transform="translate(0,{margin.top})">
 						{#each yScale.ticks() as tick, i}
+							{@const isLast = i === yScale.ticks().length - 1}
 							<g transform="translate(0, {yScale(tick)})" class="text-xs">
 								<line x1={margin.left} x2={width} class="stroke-current opacity-10" />
-								<text x={4} dominant-baseline="middle" fill="currentColor" class="opacity-70">
-									{tick}{i === yScale.ticks().length - 1 ? ` ${unit}` : ''}
+								<text
+									x={margin.left - 4}
+									dominant-baseline="middle"
+									text-anchor="end"
+									fill="currentColor"
+									class="opacity-70"
+								>
+									{tick}
 								</text>
+								{#if isLast}
+									<text
+										x={margin.left + 2}
+										dominant-baseline="middle"
+										fill="currentColor"
+										class="opacity-70"
+									>
+										{unit}
+									</text>
+								{/if}
 							</g>
 						{/each}
 					</g>
@@ -637,9 +653,8 @@
 			<p class="mt-1">{t(page.data.translations, 'ui.emissions.perCapitaNote')}</p>
 		{:else if showPerCapita && selectedRegion.population}
 			<p class="mt-1">
-				{t(page.data.translations, 'ui.emissions.perCapitaNotePopulation')} {selectedRegion.population.toLocaleString(
-					'de-DE'
-				)}.
+				{t(page.data.translations, 'ui.emissions.perCapitaNotePopulation')}
+				{selectedRegion.population.toLocaleString('de-DE')}.
 			</p>
 		{/if}
 	</div>
