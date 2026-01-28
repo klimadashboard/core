@@ -103,6 +103,24 @@
 	function closeMapOverlay() {
 		showMapOverlay = false;
 	}
+
+	function handleScrollToChart(event) {
+		const { chartId } = event.detail;
+		showMapOverlay = false;
+
+		// Wait for overlay to close, then scroll to chart
+		setTimeout(() => {
+			const chartElement = document.querySelector(`[data-chart-id="${chartId}"]`);
+			if (chartElement) {
+				chartElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				// Add a brief highlight effect
+				chartElement.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+				setTimeout(() => {
+					chartElement.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
+				}, 2000);
+			}
+		}, 400);
+	}
 </script>
 
 <!-- Desktop Layout: 4 Columns, 2 Rows -->
@@ -112,7 +130,7 @@
 		class="reg-card-half rounded-xl overflow-hidden relative bg-gradient-green text-black/90 row-span-2"
 	>
 		<div class="p-4 flex flex-col h-full relative z-10">
-			<h1 class="font-bold text-2xl xl:text-5xl leading-none mb-4">
+			<h1 class="font-bold text-2xl xl:text-4xl leading-none mb-4 hyphens-auto">
 				Klimadashboard {data.page.name}
 			</h1>
 			<p class="text-base xl:text-lg leading-snug mb-auto">
@@ -263,7 +281,10 @@
 				<SplideTrack class="h-full">
 					{#each illustrations as illustration}
 						<SplideSlide class="h-full">
-							<IntroIllustration data={illustration} howWouldItBeBetterLabel={regionConfig.how_would_it_be_better_label} />
+							<IntroIllustration
+								data={illustration}
+								howWouldItBeBetterLabel={regionConfig.how_would_it_be_better_label}
+							/>
 						</SplideSlide>
 					{/each}
 				</SplideTrack>
@@ -404,8 +425,8 @@
 						<div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between">
 							<div class="">
 								<p class="text-xl font-bold max-w-md leading-tight">
-								{regionConfig.intro_text.replace('{regionName}', data.page.name)}
-							</p>
+									{regionConfig.intro_text.replace('{regionName}', data.page.name)}
+								</p>
 								<div class="flex gap-2 mt-2 items-center flex-wrap leading-none">
 									<div class="flex items-center gap-0.5">
 										<svg
@@ -526,7 +547,10 @@
 				{:else if item.type === 'illustration'}
 					<SplideSlide>
 						<div class="rounded-xl overflow-hidden">
-							<IntroIllustration data={item.data} howWouldItBeBetterLabel={regionConfig.how_would_it_be_better_label} />
+							<IntroIllustration
+								data={item.data}
+								howWouldItBeBetterLabel={regionConfig.how_would_it_be_better_label}
+							/>
 						</div>
 					</SplideSlide>
 				{:else if item.type === 'panel'}
@@ -544,7 +568,7 @@
 
 <!-- Map Overlay -->
 {#if showMapOverlay}
-	<MapOverlay regionId={data.page.id} regionName={data.page.name} on:close={closeMapOverlay} />
+	<MapOverlay regionId={data.page.id} regionName={data.page.name} on:close={closeMapOverlay} on:scrollToChart={handleScrollToChart} />
 {/if}
 
 <style>

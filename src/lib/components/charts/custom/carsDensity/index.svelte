@@ -130,26 +130,28 @@
 
 	type LinePoint = { year: number; value: number };
 
-	$: xScale = lineData.length > 0
-		? scaleLinear()
-				.domain([
-					min(lineData, (d: LinePoint) => d.year) ?? 0,
-					max(lineData, (d: LinePoint) => d.year) ?? 0
-				])
-				.range([0, innerWidth])
-		: scaleLinear().domain([0, 1]).range([0, innerWidth]);
+	$: xScale =
+		lineData.length > 0
+			? scaleLinear()
+					.domain([
+						min(lineData, (d: LinePoint) => d.year) ?? 0,
+						max(lineData, (d: LinePoint) => d.year) ?? 0
+					])
+					.range([0, innerWidth])
+			: scaleLinear().domain([0, 1]).range([0, innerWidth]);
 
 	$: yMin = 0;
 	$: yMax = lineData.length > 0 ? (max(lineData, (d: LinePoint) => d.value) ?? 0) * 1.05 : 1;
 
 	$: yScale = scaleLinear().domain([yMin, yMax]).range([innerHeight, 0]);
 
-	$: linePath = lineData.length > 1
-		? (d3Line<LinePoint>()
-				.x((d: LinePoint) => xScale(d.year))
-				.y((d: LinePoint) => yScale(d.value))
-				.curve(curveMonotoneX)(lineData) ?? '')
-		: '';
+	$: linePath =
+		lineData.length > 1
+			? (d3Line<LinePoint>()
+					.x((d: LinePoint) => xScale(d.year))
+					.y((d: LinePoint) => yScale(d.value))
+					.curve(curveMonotoneX)(lineData) ?? '')
+			: '';
 
 	function handleLineHover(event: MouseEvent) {
 		if (!lineData.length) return;
@@ -168,7 +170,11 @@
 			tooltipY = event.clientY;
 			tooltipTitle = String(point.year);
 			tooltipItems = [
-				{ label: t(page.data.translations, 'domain.transport.carsTotal'), value: formatNumber(point.value), color: carsColor }
+				{
+					label: t(page.data.translations, 'domain.transport.carsTotal'),
+					value: formatNumber(point.value),
+					color: carsColor
+				}
 			];
 		}
 	}
@@ -178,7 +184,13 @@
 	}
 </script>
 
-<Tooltip visible={tooltipVisible} x={tooltipX} y={tooltipY} title={tooltipTitle} items={tooltipItems} />
+<Tooltip
+	visible={tooltipVisible}
+	x={tooltipX}
+	y={tooltipY}
+	title={tooltipTitle}
+	items={tooltipItems}
+/>
 
 {#if loading || regionLoading}
 	<div class="h-64 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
@@ -189,195 +201,211 @@
 		{t(page.data.translations, 'domain.transport.selectRegionDensity')}
 	</p>
 {:else}
-	<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-		<!-- Left column: Pictogram + Private/Company -->
-		<div class="flex flex-col gap-6">
-			<!-- Pictogram: People vs Cars -->
-			<section class="flex flex-col gap-1">
-				<!-- Row 1: People (alternating man/woman) -->
-				<div class="flex items-center gap-2">
-					<div class="flex items-center shrink-0">
-						{#each Array(ICON_COUNT) as _, i}
-							<svg
-								viewBox={ICON_VIEWBOX}
-								class="w-6 h-6 shrink-0"
-								fill="currentColor"
-								opacity="0.45"
-							>
-								{#if i % 2 === 0}
-									<path d={MAN_PATH} />
-									<path d={MAN_HEAD} />
-								{:else}
-									<path d={WOMAN_PATH} />
-									<path d={WOMAN_HEAD} />
-								{/if}
-							</svg>
-						{/each}
+	<div class="@container">
+		<div class="grid grid-cols-1 @lg:grid-cols-2 gap-6">
+			<!-- Left column: Pictogram + Private/Company -->
+			<div class="flex flex-col gap-6">
+				<!-- Pictogram: People vs Cars -->
+				<section class="flex flex-col gap-1">
+					<!-- Row 1: People (alternating man/woman) -->
+					<div class="flex items-center gap-2">
+						<div class="flex items-center shrink-0">
+							{#each Array(ICON_COUNT) as _, i}
+								<svg
+									viewBox={ICON_VIEWBOX}
+									class="w-6 h-6 shrink-0"
+									fill="currentColor"
+									opacity="0.45"
+								>
+									{#if i % 2 === 0}
+										<path d={MAN_PATH} />
+										<path d={MAN_HEAD} />
+									{:else}
+										<path d={WOMAN_PATH} />
+										<path d={WOMAN_HEAD} />
+									{/if}
+								</svg>
+							{/each}
+						</div>
+						<span class="text-xs leading-tight whitespace-nowrap shrink-0"
+							>10 {t(page.data.translations, 'domain.transport.residents')}</span
+						>
 					</div>
-					<span class="text-xs leading-tight whitespace-nowrap shrink-0">10 {t(page.data.translations, 'domain.transport.residents')}</span>
-				</div>
 
-				<!-- Row 2: Region cars -->
-				<div class="flex items-center gap-2">
-					<div class="flex items-center shrink-0">
-						{#each Array(fullCarsRegion) as _, i}
-							<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" fill={carsColor}>
-								<path d={CAR_PATH} />
-							</svg>
-						{/each}
-						{#if partialFractionRegion > 0.05}
-							<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" style="overflow: hidden;">
-								<defs>
-									<clipPath id="partial-region-{uid}">
-										<rect x="0" y="0" width={24 * partialFractionRegion} height="24" />
-									</clipPath>
-								</defs>
-								<path d={CAR_PATH} fill={carsColor} opacity="0.15" />
-								<path d={CAR_PATH} fill={carsColor} clip-path="url(#partial-region-{uid})" />
-							</svg>
-						{/if}
+					<!-- Row 2: Region cars -->
+					<div class="flex items-center gap-2">
+						<div class="flex items-center shrink-0">
+							{#each Array(fullCarsRegion) as _, i}
+								<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" fill={carsColor}>
+									<path d={CAR_PATH} />
+								</svg>
+							{/each}
+							{#if partialFractionRegion > 0.05}
+								<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" style="overflow: hidden;">
+									<defs>
+										<clipPath id="partial-region-{uid}">
+											<rect x="0" y="0" width={24 * partialFractionRegion} height="24" />
+										</clipPath>
+									</defs>
+									<path d={CAR_PATH} fill={carsColor} opacity="0.15" />
+									<path d={CAR_PATH} fill={carsColor} clip-path="url(#partial-region-{uid})" />
+								</svg>
+							{/if}
+						</div>
+						<span
+							class="text-xs leading-tight whitespace-nowrap shrink-0"
+							style="color: {carsColor}"
+						>
+							{carsPerTenRegion.toFixed(1)}
+							{t(page.data.translations, 'domain.transport.carsIn')}
+							{data.region.name}
+						</span>
 					</div>
-					<span
-						class="text-xs leading-tight whitespace-nowrap shrink-0"
-						style="color: {carsColor}"
-					>
-						{carsPerTenRegion.toFixed(1)} {t(page.data.translations, 'domain.transport.carsIn')} {data.region.name}
-					</span>
-				</div>
 
-				<!-- Row 3: National cars -->
-				<div class="flex items-center gap-2">
-					<div class="flex items-center shrink-0">
-						{#each Array(fullCarsNational) as _, i}
-							<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" fill={carsColor} opacity="0.4">
-								<path d={CAR_PATH} />
-							</svg>
-						{/each}
-						{#if partialFractionNational > 0.05}
-							<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" style="overflow: hidden;">
-								<defs>
-									<clipPath id="partial-national-{uid}">
-										<rect x="0" y="0" width={24 * partialFractionNational} height="24" />
-									</clipPath>
-								</defs>
-								<path d={CAR_PATH} fill={carsColor} opacity="0.1" />
-								<path
-									d={CAR_PATH}
-									fill={carsColor}
-									opacity="0.4"
-									clip-path="url(#partial-national-{uid})"
+					<!-- Row 3: National cars -->
+					<div class="flex items-center gap-2">
+						<div class="flex items-center shrink-0">
+							{#each Array(fullCarsNational) as _, i}
+								<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" fill={carsColor} opacity="0.4">
+									<path d={CAR_PATH} />
+								</svg>
+							{/each}
+							{#if partialFractionNational > 0.05}
+								<svg viewBox={ICON_VIEWBOX} class="w-6 h-6 shrink-0" style="overflow: hidden;">
+									<defs>
+										<clipPath id="partial-national-{uid}">
+											<rect x="0" y="0" width={24 * partialFractionNational} height="24" />
+										</clipPath>
+									</defs>
+									<path d={CAR_PATH} fill={carsColor} opacity="0.1" />
+									<path
+										d={CAR_PATH}
+										fill={carsColor}
+										opacity="0.4"
+										clip-path="url(#partial-national-{uid})"
+									/>
+								</svg>
+							{/if}
+						</div>
+						<span class="text-xs leading-tight whitespace-nowrap shrink-0 opacity-50">
+							{carsPerTenNational.toFixed(1)}
+							{t(page.data.translations, 'domain.transport.carsIn')}
+							{data.country.name}
+						</span>
+					</div>
+				</section>
+
+				<!-- Privat vs. Firmen -->
+				{#if latestData.privateShare != null && latestData.companyShare != null}
+					<section class="flex flex-col gap-1">
+						<div class="rounded overflow-hidden">
+							<svg width="100%" height="20">
+								<rect
+									x="0"
+									y="0"
+									width="{privateShare}%"
+									height="20"
+									fill={privateColor}
+									class="transition-all"
+								/>
+								<rect
+									x="{privateShare}%"
+									y="0"
+									width="{companyShare}%"
+									height="20"
+									fill={companyColor}
+									class="transition-all"
 								/>
 							</svg>
-						{/if}
-					</div>
-					<span class="text-xs leading-tight whitespace-nowrap shrink-0 opacity-50">
-						{carsPerTenNational.toFixed(1)} {t(page.data.translations, 'domain.transport.carsIn')} {data.country.name}
-					</span>
-				</div>
-			</section>
+						</div>
+						<div class="flex justify-between text-xs font-semibold">
+							<span style="color: {privateColor}"
+								>{t(page.data.translations, 'domain.transport.privateCars')}
+								{Math.round(privateShare)}%</span
+							>
+							<span style="color: {companyColor}"
+								>{t(page.data.translations, 'domain.transport.companyCars')}
+								{Math.round(companyShare)}%</span
+							>
+						</div>
+					</section>
+				{/if}
+			</div>
 
-			<!-- Privat vs. Firmen -->
-			{#if latestData.privateShare != null && latestData.companyShare != null}
+			<!-- Right column: Historical line chart -->
+			{#if lineData.length > 1}
 				<section class="flex flex-col gap-1">
-					<div class="rounded overflow-hidden">
-						<svg width="100%" height="20">
-							<rect
-								x="0"
-								y="0"
-								width="{privateShare}%"
-								height="20"
-								fill={privateColor}
-								class="transition-all"
-							/>
-							<rect
-								x="{privateShare}%"
-								y="0"
-								width="{companyShare}%"
-								height="20"
-								fill={companyColor}
-								class="transition-all"
-							/>
+					<div bind:clientWidth={chartWidth}>
+						<svg width="100%" height={lineChartHeight}>
+							<g transform="translate({margin.left},{margin.top})">
+								<!-- Y-axis gridlines and labels -->
+								{#each yScale.ticks(3) as tick}
+									<line
+										x1="0"
+										y1={yScale(tick)}
+										x2={innerWidth}
+										y2={yScale(tick)}
+										stroke="currentColor"
+										stroke-opacity="0.1"
+									/>
+									<text
+										x="-6"
+										y={yScale(tick)}
+										text-anchor="end"
+										dominant-baseline="middle"
+										fill="currentColor"
+										font-size="10"
+										opacity="0.5"
+									>
+										{formatNumber(tick)}
+									</text>
+								{/each}
+
+								<!-- X-axis labels -->
+								{#each xScale
+									.ticks(Math.min(lineData.length, chartWidth > 300 ? 5 : 3))
+									.filter((t) => Number.isInteger(t)) as tick}
+									<text
+										x={xScale(tick)}
+										y={innerHeight + 16}
+										text-anchor="middle"
+										fill="currentColor"
+										font-size="10"
+										opacity="0.5"
+									>
+										{tick}
+									</text>
+								{/each}
+
+								<!-- Line -->
+								<path d={linePath} fill="none" stroke={carsColor} stroke-width="2" />
+
+								<!-- Hover overlay -->
+								<rect
+									x="0"
+									y="0"
+									width={innerWidth}
+									height={innerHeight}
+									fill="transparent"
+									on:mousemove={handleLineHover}
+									on:mouseleave={handleLineLeave}
+								/>
+
+								<!-- Data points -->
+								{#each lineData as point}
+									<circle
+										cx={xScale(point.year)}
+										cy={yScale(point.value)}
+										r="3"
+										fill={carsColor}
+										opacity="0.6"
+									/>
+								{/each}
+							</g>
 						</svg>
-					</div>
-					<div class="flex justify-between text-xs font-semibold">
-						<span style="color: {privateColor}">{t(page.data.translations, 'domain.transport.privateCars')} {Math.round(privateShare)}%</span>
-						<span style="color: {companyColor}">{t(page.data.translations, 'domain.transport.companyCars')} {Math.round(companyShare)}%</span>
 					</div>
 				</section>
 			{/if}
 		</div>
-
-		<!-- Right column: Historical line chart -->
-		{#if lineData.length > 1}
-			<section class="flex flex-col gap-1">
-				<div bind:clientWidth={chartWidth}>
-					<svg width="100%" height={lineChartHeight}>
-						<g transform="translate({margin.left},{margin.top})">
-							<!-- Y-axis gridlines and labels -->
-							{#each yScale.ticks(3) as tick}
-								<line
-									x1="0"
-									y1={yScale(tick)}
-									x2={innerWidth}
-									y2={yScale(tick)}
-									stroke="currentColor"
-									stroke-opacity="0.1"
-								/>
-								<text
-									x="-6"
-									y={yScale(tick)}
-									text-anchor="end"
-									dominant-baseline="middle"
-									fill="currentColor"
-									font-size="10"
-									opacity="0.5"
-								>
-									{formatNumber(tick)}
-								</text>
-							{/each}
-
-							<!-- X-axis labels -->
-							{#each xScale.ticks(Math.min(lineData.length, chartWidth > 300 ? 5 : 3)).filter((t) => Number.isInteger(t)) as tick}
-								<text
-									x={xScale(tick)}
-									y={innerHeight + 16}
-									text-anchor="middle"
-									fill="currentColor"
-									font-size="10"
-									opacity="0.5"
-								>
-									{tick}
-								</text>
-							{/each}
-
-							<!-- Line -->
-							<path d={linePath} fill="none" stroke={carsColor} stroke-width="2" />
-
-							<!-- Hover overlay -->
-							<rect
-								x="0"
-								y="0"
-								width={innerWidth}
-								height={innerHeight}
-								fill="transparent"
-								on:mousemove={handleLineHover}
-								on:mouseleave={handleLineLeave}
-							/>
-
-							<!-- Data points -->
-							{#each lineData as point}
-								<circle
-									cx={xScale(point.year)}
-									cy={yScale(point.value)}
-									r="3"
-									fill={carsColor}
-									opacity="0.6"
-								/>
-							{/each}
-						</g>
-					</svg>
-				</div>
-			</section>
-		{/if}
 	</div>
 {/if}

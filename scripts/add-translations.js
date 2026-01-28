@@ -234,7 +234,29 @@ const translations = [
 	// ========== Region Intro ==========
 	{ key: 'ui.region.intro', de: 'Das Klimadashboard {regionName} zeigt die Auswirkungen der Klimakrise in deiner Region und begleitet die Umsetzung der Energie- und Mobilitätswende und weitere Klimaschutzmaßnahmen bei dir vor Ort.', en: 'The Klimadashboard {regionName} shows the effects of the climate crisis in your region and accompanies the implementation of the energy and mobility transition and other climate protection measures in your area.' },
 	{ key: 'ui.region.exploreMap', de: 'Datenlandkarte erkunden', en: 'Explore data map' },
-	{ key: 'ui.region.scrollForMore', de: 'Scrollen für mehr Daten', en: 'Scroll for more data' }
+	{ key: 'ui.region.scrollForMore', de: 'Scrollen für mehr Daten', en: 'Scroll for more data' },
+
+	// ========== Map Overlay ==========
+	{ key: 'ui.map.explorer', de: 'Karten-Explorer', en: 'Map Explorer' },
+	{ key: 'ui.map.carDensity', de: 'PKW-Dichte', en: 'Car Density' },
+	{ key: 'ui.map.carTypes', de: 'PKW-Antriebsarten', en: 'Car Drive Types' },
+	{ key: 'ui.map.solarInstallations', de: 'Photovoltaik-Anlagen', en: 'Solar Installations' },
+	{ key: 'ui.map.windPower', de: 'Windkraftanlagen', en: 'Wind Turbines' },
+	{ key: 'ui.map.comingSoon', de: 'Bald verfügbar', en: 'Coming soon' },
+	{ key: 'ui.map.comingSoonLong', de: 'Diese Kartenebene wird in Kürze verfügbar sein.', en: 'This map layer will be available soon.' },
+	{ key: 'ui.map.goToChart', de: 'Zur Datenvisualisierung', en: 'Go to data visualization' },
+	{ key: 'ui.map.total', de: 'Gesamt', en: 'Total' },
+	{ key: 'ui.map.driveType', de: 'Antriebsart', en: 'Drive Type' },
+	{ key: 'ui.map.solarPower', de: 'Solarleistung', en: 'Solar Power' },
+	{ key: 'ui.map.powerPerArea', de: 'Leistung pro Fläche', en: 'Power per Area' },
+
+	// ========== Geographic Layers ==========
+	{ key: 'municipalities', de: 'Gemeinden', en: 'Municipalities' },
+	{ key: 'districts', de: 'Kreise', en: 'Districts' },
+	{ key: 'states', de: 'Bundesländer', en: 'States' },
+
+	// ========== Fuel Types (additional) ==========
+	{ key: 'domain.fuel.pluginHybrid', de: 'Plug-in-Hybrid', en: 'Plug-in Hybrid' }
 ];
 
 async function getExistingKeys() {

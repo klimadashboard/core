@@ -75,7 +75,8 @@ export const categoryConfig: Record<string, { label: string; color: string; orde
 	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#38BDF8', order: 2 },
 	Elektro: { label: 'Elektro', color: '#10B981', order: 3 },
 	'Plug-in-Hybrid': { label: 'Plug-in', color: '#8B5CF6', order: 4 },
-	Sonstige: { label: 'Sonstige', color: '#94A3B8', order: 5 }
+	Gas: { label: 'Gas', color: '#EF4444', order: 5 },
+	Sonstige: { label: 'Sonstige', color: '#94A3B8', order: 99 }
 };
 
 // Fallback colors (work in both light and dark modes)
@@ -328,13 +329,35 @@ export async function checkDataAvailabilityWithFallback(
 export function buildWaffleData(data: VehicleRawData, categories: string[]): VehicleShareData[] {
 	const result: VehicleShareData[] = [];
 
-	// Calculate cells for each category (round to nearest integer)
-	const cellCounts: { key: string; cells: number; share: number }[] = [];
+	// Separate categories into main (>1% share) and small (<=1% share)
+	const mainCategories: string[] = [];
+	let sonstigeShare = 0;
+	let sonstigeAbsolute = 0;
 
 	for (const cat of categories) {
 		const share = data.shares[cat] || 0;
+		if (share > 0.01) {
+			mainCategories.push(cat);
+		} else if (share > 0) {
+			// Combine into Sonstige
+			sonstigeShare += share;
+			sonstigeAbsolute += data.categories[cat] || 0;
+		}
+	}
+
+	// Calculate cells for each main category (round to nearest integer)
+	const cellCounts: { key: string; cells: number; share: number }[] = [];
+
+	for (const cat of mainCategories) {
+		const share = data.shares[cat] || 0;
 		const cells = Math.round(share * 100);
 		cellCounts.push({ key: cat, cells, share });
+	}
+
+	// Add Sonstige if there are small categories
+	if (sonstigeShare > 0) {
+		const cells = Math.round(sonstigeShare * 100);
+		cellCounts.push({ key: 'Sonstige', cells, share: sonstigeShare });
 	}
 
 	// Adjust for rounding errors (ensure total is exactly 100)
@@ -351,14 +374,25 @@ export function buildWaffleData(data: VehicleRawData, categories: string[]): Veh
 
 	for (const { key, cells } of cellCounts) {
 		const config = categoryConfig[key];
-		result.push({
-			key,
-			label: config?.label || key,
-			color: config?.color || fallbackColors[result.length % fallbackColors.length],
-			share: data.shares[key] || 0,
-			absolute: data.categories[key] || 0,
-			cells
-		});
+		if (key === 'Sonstige') {
+			result.push({
+				key,
+				label: config?.label || 'Sonstige',
+				color: config?.color || '#94A3B8',
+				share: sonstigeShare,
+				absolute: sonstigeAbsolute,
+				cells
+			});
+		} else {
+			result.push({
+				key,
+				label: config?.label || key,
+				color: config?.color || fallbackColors[result.length % fallbackColors.length],
+				share: data.shares[key] || 0,
+				absolute: data.categories[key] || 0,
+				cells
+			});
+		}
 	}
 
 	return result;

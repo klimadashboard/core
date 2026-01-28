@@ -217,6 +217,7 @@
 
 <div
 	bind:this={cardEl}
+	data-chart-id={chart.id}
 	class="chart-card group relative bg-white h-full dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all flex flex-col justify-between"
 	style="--span: {span};"
 	on:click={handleClick}

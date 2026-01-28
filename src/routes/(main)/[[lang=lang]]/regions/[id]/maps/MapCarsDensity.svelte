@@ -4,17 +4,22 @@
 	import { interpolateRgb } from 'd3-interpolate';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { page } from '$app/state';
+	import { page } from '$app/stores';
+	import { t } from '$lib/utils/t';
 	import Loader from '$lib/components/Loader.svelte';
 	import {
 		fetchAllRegions,
 		colors,
+		getColor,
 		type RegionWithData
 	} from '$lib/components/charts/custom/carsDensity/config';
 
 	export let map: any; // MapLibre GL map instance from parent
 	export let regionId: string | undefined = undefined;
 	export let regionName: string | undefined = undefined;
+	export let isDarkMode: boolean = false;
+
+	$: translations = $page.data?.translations;
 
 	type LayerPlural = 'municipalities' | 'districts';
 	type LayerSingular = 'municipality' | 'district';
@@ -25,11 +30,16 @@
 		{ key: 'districts', keySingular: 'district', zoom: 7 }
 	];
 
-	const views: Array<{ label: string; key: ViewKey; unit: string }> = [
-		{ label: 'Gesamt', key: 'pop', unit: '' },
-		{ label: 'Privat', key: 'private', unit: '%' },
-		{ label: 'Firmen', key: 'company', unit: '%' }
+	const views: Array<{ labelKey: string; labelFallback: string; key: ViewKey; unit: string }> = [
+		{ labelKey: 'ui.map.total', labelFallback: 'Gesamt', key: 'pop', unit: '' },
+		{ labelKey: 'domain.transport.privateCars', labelFallback: 'Privat', key: 'private', unit: '%' },
+		{ labelKey: 'domain.transport.companyCars', labelFallback: 'Firmen', key: 'company', unit: '%' }
 	];
+
+	function getViewLabel(view: typeof views[0]): string {
+		const translated = t(translations, view.labelKey);
+		return translated !== view.labelKey ? translated : view.labelFallback;
+	}
 
 	// State
 	let regions: RegionWithData[] = [];
@@ -85,11 +95,11 @@
 	function getColorRangeForView(view: ViewKey): [string, string] {
 		switch (view) {
 			case 'pop':
-				return [colors.carsLight, colors.cars];
+				return [getColor('carsLight', isDarkMode), getColor('cars', isDarkMode)];
 			case 'private':
-				return [colors.privateLight, colors.private];
+				return [getColor('privateLight', isDarkMode), getColor('private', isDarkMode)];
 			case 'company':
-				return [colors.companyLight, colors.company];
+				return [getColor('companyLight', isDarkMode), getColor('company', isDarkMode)];
 		}
 	}
 
@@ -354,27 +364,30 @@
 		applyColorsToActiveLayer();
 	}
 
+	// Re-apply colors when dark mode changes
+	$: if (!loading && map && isDarkMode !== undefined) {
+		applyColorsToActiveLayer();
+	}
+
 	$: selectedUnit = views.find((v) => v.key === selectedView)?.unit || '';
 </script>
 
-<!-- Controls positioned absolutely over map -->
-<div class="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
+<!-- Controls positioned absolutely over map - top left -->
+<div class="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto max-w-[calc(100%-120px)]">
 	<!-- Layer Selector -->
-	<div
-		class="bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1.5 px-2 border border-gray-200 dark:border-gray-700"
-	>
-		<select bind:value={selectedLayer} class="appearance-none text-sm bg-transparent">
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1.5 px-2 border border-gray-200 dark:border-gray-700">
+		<select bind:value={selectedLayer} class="appearance-none text-sm bg-transparent cursor-pointer">
 			{#each layers as layer}
-				<option value={layer.key}>{page.data.translations?.[layer.key] || layer.key}</option>
+				<option value={layer.key}>
+					{t(translations, layer.key) !== layer.key ? t(translations, layer.key) : (layer.key === 'municipalities' ? 'Gemeinden' : 'Kreise')}
+				</option>
 			{/each}
 		</select>
 	</div>
 
 	<!-- View Switcher -->
-	<div
-		class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
-	>
-		<div class="flex gap-1">
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+		<div class="flex gap-1 flex-wrap">
 			{#each views as view}
 				<button
 					class="px-3 py-1 text-xs rounded transition-colors {selectedView === view.key
@@ -382,7 +395,7 @@
 						: 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}"
 					on:click={() => (selectedView = view.key)}
 				>
-					{view.label}
+					{getViewLabel(view)}
 				</button>
 			{/each}
 		</div>
@@ -390,9 +403,7 @@
 
 	<!-- Period Slider (Austria only) -->
 	{#if PUBLIC_VERSION === 'at' && availablePeriods.length > 1}
-		<div
-			class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
-		>
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
 			<div class="flex gap-2 items-center">
 				<input
 					type="range"
@@ -407,34 +418,32 @@
 		</div>
 	{/if}
 
+	<!-- Legend - positioned below controls -->
+	{#if legendSteps.length && !loading}
+		<div
+			class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 text-xs border border-gray-200 dark:border-gray-700"
+			transition:fade
+		>
+			<div class="font-semibold mb-2">
+				{getViewLabel(views.find((v) => v.key === selectedView)!)}
+				{#if selectedUnit}({selectedUnit}){/if}
+			</div>
+			{#each legendSteps as step}
+				<div class="flex items-center gap-2 mb-1">
+					<span class="inline-block w-4 h-4 rounded" style="background-color: {step.color}"></span>
+					<span>{step.label}</span>
+				</div>
+			{/each}
+		</div>
+	{/if}
+
 	<!-- Loading Indicator -->
 	{#if loading || switchingLayer}
-		<div
-			class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
-		>
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
 			<Loader />
 		</div>
 	{/if}
 </div>
-
-<!-- Legend -->
-{#if legendSteps.length && !loading}
-	<div
-		class="absolute top-4 right-4 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 text-xs pointer-events-auto border border-gray-200 dark:border-gray-700"
-		transition:fade
-	>
-		<div class="font-semibold mb-2">
-			{views.find((v) => v.key === selectedView)?.label}
-			{#if selectedUnit}({selectedUnit}){/if}
-		</div>
-		{#each legendSteps as step}
-			<div class="flex items-center gap-2 mb-1">
-				<span class="inline-block w-4 h-4 rounded" style="background-color: {step.color}"></span>
-				<span>{step.label}</span>
-			</div>
-		{/each}
-	</div>
-{/if}
 
 <!-- Tooltip -->
 {#if hoveredRegion}
@@ -445,19 +454,13 @@
 		<div class="font-bold mb-2 text-base">{hoveredRegion.name}</div>
 		<div class="space-y-1">
 			<div class="flex justify-between gap-4">
-				<span class="text-gray-600 dark:text-gray-400"
-					>{views.find((v) => v.key === selectedView)?.label}:</span
-				>
-				<span class="font-semibold"
-					>{Math.round(hoveredRegion.value)}{selectedUnit ? ` ${selectedUnit}` : ''}</span
-				>
+				<span class="text-gray-600 dark:text-gray-400">
+					{getViewLabel(views.find((v) => v.key === selectedView)!)}:
+				</span>
+				<span class="font-semibold">
+					{Math.round(hoveredRegion.value)}{selectedUnit ? ` ${selectedUnit}` : ''}
+				</span>
 			</div>
 		</div>
 	</div>
 {/if}
-
-<style>
-	select {
-		cursor: pointer;
-	}
-</style>
