@@ -13,6 +13,7 @@
 	import {
 		fetchEmissionsData,
 		buildChartData,
+		computeInfoTextPlaceholders,
 		transformForPerCapita,
 		transformToDisplayUnit,
 		shouldUseMegatons,
@@ -21,7 +22,8 @@
 		getDisplayedCategories,
 		sortCategoryOrderByFirstYear,
 		type RegionResult,
-		type YearGroup
+		type YearGroup,
+		type PageRegionContext
 	} from './config';
 
 	// Props from Card slot
@@ -49,6 +51,7 @@
 	let dataFetched = false;
 	let populationByYear: Record<string, Record<number, number>> = {};
 	let activeCategory = 'all';
+	let infoTextPlaceholders: Record<string, string | number | boolean> = {};
 
 	// Hover state
 	let hoveredYear: number | null = null;
@@ -107,6 +110,12 @@
 			results = fetchedResults;
 			populationByYear = fetchedPopulation;
 
+			// Compute static info-text placeholders once from page region context
+			const pageRegionContext: PageRegionContext | null = region
+				? { name: region.name, layer: region.layer, parents: region.parents }
+				: null;
+			infoTextPlaceholders = computeInfoTextPlaceholders(results, pageRegionContext);
+
 			// Sort views by layer hierarchy (smallest/most local first)
 			views = results
 				.map((r) => ({ key: r.key, label: r.label, priority: getLayerPriority(r.layer_label) }))
@@ -145,7 +154,8 @@
 					showPerCapita,
 					useMegatons,
 					page.data.translations,
-					climateNeutralityText
+					climateNeutralityText,
+					infoTextPlaceholders
 				);
 				onChartData(chartData);
 			}

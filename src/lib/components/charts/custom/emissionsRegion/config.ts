@@ -455,6 +455,103 @@ function calculateChangeStats(
 	};
 }
 
+/** Context about the page region (stable, not affected by user toggling layers) */
+export interface PageRegionContext {
+	name: string;
+	layer: string;
+	parents?: Array<{ id: string; layer: string; name?: string; layer_label?: string }>;
+}
+
+/** Compute static info-text placeholders from the page region's data */
+export function computeInfoTextPlaceholders(
+	results: RegionResult[],
+	pageRegion: PageRegionContext | null
+): Record<string, string | number | boolean> {
+	if (results.length === 0) return {};
+
+	// Match the result that belongs to the page region (by name), fall back to first result
+	const regionName = pageRegion?.name ?? results[0].name;
+	const pageResult = results.find((r) => r.name === regionName) ?? results[0];
+
+	const rawData = pageResult.data.filter(
+		(d) => d.source !== 'climate-target' && d.category !== 'total'
+	);
+	const years = [...new Set(rawData.map((d) => d.year))].sort((a, b) => a - b);
+	const firstYear = years[0];
+	const lastYear = years[years.length - 1];
+
+	// Totals for first and last year (in raw tons)
+	const firstYearTotal = firstYear != null
+		? rawData.filter((d) => d.year === firstYear).reduce((sum, d) => sum + d.value, 0)
+		: 0;
+	const lastYearTotal = lastYear != null
+		? rawData.filter((d) => d.year === lastYear).reduce((sum, d) => sum + d.value, 0)
+		: 0;
+
+	// Format as millions of tons with one decimal
+	const fmt = (v: number) =>
+		(v / 1_000_000).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+	// Total reduction from first to last year
+	const reductionPercent =
+		firstYearTotal > 0
+			? (((firstYearTotal - lastYearTotal) / firstYearTotal) * 100)
+			: 0;
+	const fmtReduction = Math.abs(reductionPercent).toLocaleString('de-DE', {
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1
+	});
+
+	// State name: either the region itself (if it's a state) or the parent state
+	const pageLayer = pageRegion?.layer ?? '';
+	const isState = pageLayer === 'state';
+	const parentState = pageRegion?.parents?.find(
+		(p) => p.layer === 'state' || p.layer_label === 'Bundesland'
+	);
+	const stateName = isState
+		? (pageRegion?.name ?? '')
+		: (parentState?.name ?? '');
+
+	const isStuttgart = regionName === 'Stuttgart';
+	const hasParentState = !!(stateName && !isState);
+
+	// Climate target data from the page region's result specifically
+	const climateTargetEntries = pageResult.data
+		.filter((d) => d.source === 'climate-target')
+		.sort((a, b) => a.year - b.year);
+	const lastTarget = climateTargetEntries[climateTargetEntries.length - 1];
+	const hasClimateTargetStatic = !!lastTarget;
+	const climateTargetYear = lastTarget?.year?.toString() ?? '';
+	const climateTargetValue = lastTarget
+		? lastTarget.value === 0
+			? 'Klimaneutralität'
+			: `${fmt(lastTarget.value)} Millionen Tonnen CO₂-Äquivalente`
+		: '';
+
+	// Reduction percentage from first data year to climate target
+	const climateTargetReduction = lastTarget && firstYearTotal > 0
+		? (((firstYearTotal - lastTarget.value) / firstYearTotal) * 100).toLocaleString('de-DE', {
+				minimumFractionDigits: 0,
+				maximumFractionDigits: 0
+			})
+		: '';
+
+	return {
+		firstYear: firstYear?.toString() ?? '',
+		firstYearTotal: fmt(firstYearTotal),
+		lastYearTotal: fmt(lastYearTotal),
+		totalReduction: fmtReduction,
+		stateName,
+		isStuttgart,
+		isState,
+		hasParentState,
+		hasClimateTargetStatic,
+		climateTargetYear,
+		climateTargetValue,
+		climateTargetReduction
+	};
+}
+
 /** Build ChartData for Card integration */
 export function buildChartData(
 	data: EmissionsRawData[],
@@ -462,7 +559,8 @@ export function buildChartData(
 	showPerCapita: boolean,
 	useMegatons: boolean,
 	translations: Translations,
-	climateNeutralityText: string | null = null
+	climateNeutralityText: string | null = null,
+	infoTextPlaceholders: Record<string, string | number | boolean> = {}
 ): ChartData {
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 	// Exclude climate-target and nowcast (total category) from table/statistics data
@@ -518,7 +616,10 @@ export function buildChartData(
 			changePercentage: changeStats.changePercentage,
 			lastYear: changeStats.lastYear?.toString() ?? '',
 			sectorIncrease: changeStats.sectorIncrease,
-			climateNeutrality: climateNeutralityText ?? ''
+			climateNeutrality: climateNeutralityText ?? '',
+			hasClimateTarget: !!climateNeutralityText,
+			hasSectorIncrease: changeStats.sectorIncrease !== '',
+			...infoTextPlaceholders
 		},
 		meta: {
 			updateDate,

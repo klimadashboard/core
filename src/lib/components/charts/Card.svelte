@@ -65,42 +65,30 @@
 		}
 	}
 
-	// Replace {{placeholders}} in text
-	$: heading = (() => {
-		const text = chart.content?.heading;
-		if (!text || !chartData?.placeholders) return text || '';
-		return text.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
-			const v = chartData!.placeholders[k];
+	// Replace {{#if key}}, {{#if not key}}, and {{placeholder}} in text
+	function resolveText(raw: string | undefined, placeholders: Record<string, any> | undefined): string {
+		if (!raw || !placeholders) return raw || '';
+		// Step 1: conditional blocks {{#if key}}...{{/if}} and {{#if not key}}...{{/if}}
+		let result = raw.replace(
+			/\{\{#if\s+(not\s+)?(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
+			(_: string, negation: string | undefined, key: string, content: string) => {
+				const value = placeholders[key];
+				const show = negation ? !value : !!value;
+				return show ? content : '';
+			}
+		);
+		// Step 2: replace {{placeholder}} values
+		result = result.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+			const v = placeholders[k];
 			return v !== undefined ? String(v) : `{{${k}}}`;
 		});
-	})();
+		return result;
+	}
 
-	$: text = (() => {
-		const t = chart.content?.text;
-		if (!t || !chartData?.placeholders) return t || '';
-		return t.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
-			const v = chartData!.placeholders[k];
-			return v !== undefined ? String(v) : `{{${k}}}`;
-		});
-	})();
-
-	$: methods = (() => {
-		const m = chart.content?.methods;
-		if (!m || !chartData?.placeholders) return m || '';
-		return m.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
-			const v = chartData!.placeholders[k];
-			return v !== undefined ? String(v) : `{{${k}}}`;
-		});
-	})();
-
-	$: title = (() => {
-		const t = chart.content?.title;
-		if (!t || !chartData?.placeholders) return t || '';
-		return t.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
-			const v = chartData!.placeholders[k];
-			return v !== undefined ? String(v) : `{{${k}}}`;
-		});
-	})();
+	$: heading = resolveText(chart.content?.heading, chartData?.placeholders);
+	$: text = resolveText(chart.content?.text, chartData?.placeholders);
+	$: methods = resolveText(chart.content?.methods, chartData?.placeholders);
+	$: title = resolveText(chart.content?.title, chartData?.placeholders);
 
 	$: showTable = chartData?.table && chartData.table.rows.length > 0;
 	$: showText = !!text || !!methods;
@@ -410,16 +398,9 @@
 						</div>
 					{/if}
 					{#if methods}
-						<details class="mt-4" open={!text}>
-							<summary
-								class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-							>
-								{t(page.data.translations, 'method')}
-							</summary>
-							<div class="mt-2 prose prose-sm dark:prose-invert max-w-none">
-								{@html methods}
-							</div>
-						</details>
+						<div class="mt-4 text-base max-w-xl">
+							{@html methods}
+						</div>
 					{/if}
 				</div>
 			</div>
