@@ -646,7 +646,7 @@
 
 					<!-- Climate targets -->
 					{#if climateTargets.length > 0 && activeCategory === 'all'}
-						<g transform="translate({margin.left},{margin.top})">
+						<g transform="translate({margin.left},{margin.top})" pointer-events="none">
 							{#each climateTargets as target}
 								<rect
 									x={xScale(target.year) - barWidth / 2}
