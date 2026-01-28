@@ -1,7 +1,6 @@
 <script>
 	export let id = null;
 	export let value = null;
-	export let icon = null;
 	export let placeholder = null;
 </script>
 
@@ -34,13 +33,3 @@
 		</svg>
 	</div>
 </div>
-
-<style>
-	.icon {
-		height: 42px;
-		width: 42px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-</style>

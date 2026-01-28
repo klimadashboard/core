@@ -22,10 +22,11 @@
 	export let marginTop = 0;
 	export let xTicksInterval = 10;
 	export let minValue = 0;
-	export let preselectedIndex;
+	export let preselectedIndex = 0;
 	export let showPulse = false;
 	export let invalidX;
 	export let invalidText;
+	export let additionalYAxisUnit = '';
 
 	let chartHeight;
 	let chartWidth;
@@ -50,11 +51,12 @@
 		.domain([
 			minValue,
 			max(
-				data.map((item, index) => {
+				data.map((item) => {
 					if (visualisation == 'stacked') {
 						// get total of all values for keys
-						var total = 0;
-						for (var k = 0; k < shownKeys.length; k++) {
+						let total = 0;
+						for (let k = 0; k < shownKeys.length; k++) {
+							// Use let instead of var
 							if (!isNaN(item[shownKeys[k]])) {
 								total += item[shownKeys[k]];
 							}
@@ -62,14 +64,14 @@
 						return total;
 					} else {
 						// get max of values
-						var values = [];
-						for (var k = 0; k < shownKeys.length; k++) {
+						const values = [];
+						for (let k = 0; k < shownKeys.length; k++) {
+							// Use let instead of var
 							if (!isNaN(item[shownKeys[k]])) {
 								values.push(item[shownKeys[k]]);
 							}
 						}
-						var max = Math.max(...values);
-						return max;
+						return Math.max(...values);
 					}
 				})
 			) +
@@ -175,16 +177,16 @@
 						.filter((d) => d !== null)
 						.slice(-1)
 				)
-		  ]
+			]
 		: [];
 </script>
 
 <div class="h-full relative" bind:clientHeight={chartHeight} bind:clientWidth={chartWidth}>
 	<svg width={'100%'} height={'100%'}>
 		{#if chartWidth && chartHeight}
-			<g class="chart-y-axis text-sm text-gray-600" style="transform: translate(0,{margin.top}px">
+			<g class="chart-y-axis text-sm opacity-80" style="transform: translate(0,{margin.top}px">
 				{#each yScale.ticks(6) as tick, index}
-					<g transform={`translate(0, ${yScale(tick)})`} class="text-gray-500">
+					<g transform={`translate(0, ${yScale(tick)})`} class="opacity-80">
 						<line
 							x1="0"
 							x2={chartWidth}
@@ -195,7 +197,9 @@
 						/>
 						<text class="text-xs fill-current bg-white" x="2" y="-3"
 							>{prettifyTick(tick)}
-							<tspan dx="2">{index == yScale.ticks(6).length - 1 ? unit : ''}</tspan></text
+							<tspan dx="2"
+								>{index == yScale.ticks(6).length - 1 ? unit + additionalYAxisUnit : ''}</tspan
+							></text
 						>
 					</g>
 				{/each}
@@ -284,11 +288,17 @@
 				{/if}
 				{#if invalidX}
 					<g>
+						<defs>
+							<linearGradient id="fadeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+								<stop offset="0%" stop-color="rgb(229, 231, 235)" stop-opacity="0" />
+								<stop offset="100%" stop-color="rgb(229, 231, 235)" stop-opacity="0.60" />
+							</linearGradient>
+						</defs>
 						<rect
 							y={-5}
 							width={xScale(invalidX)}
 							height={innerChartHeight + 5}
-							class="fill-gray-200 opacity-50"
+							fill="url(#fadeGradient)"
 						/>
 						<line
 							x1={xScale(invalidX)}
@@ -299,7 +309,7 @@
 							stroke-dasharray="2 8"
 						/>
 						<text
-							class="text-sm fill-gray-600"
+							class="text-sm fill-gray-600 dark:fill-gray-900"
 							text-anchor="end"
 							x={xScale(invalidX) - 10}
 							y={innerChartHeight - 10}>{invalidText}</text
@@ -320,11 +330,11 @@
 				transform={`translate(${margin.left}, ${margin.top + innerChartHeight})`}
 			>
 				{#each data.filter((d) => (max(data, (d) => d.x) - d.x) % xTicksInterval == 0) as d, i}
-					<g transform={`translate(${xScale(d.x)}, 0)`} class="text-xs text-gray-500">
+					<g transform={`translate(${xScale(d.x)}, 0)`} class="text-xs opacity-80">
 						<text dy={15} text-anchor="middle" fill="currentColor">
 							{d.label}
 						</text>
-						<g class="text-gray-500">
+						<g class="opacity-80">
 							<line y1={0} y2={4} stroke="currentColor" />
 						</g>
 					</g>
@@ -332,7 +342,7 @@
 			</g>
 
 			<g
-				class="chart-selected-index text-gray-600 selection-indicator"
+				class="chart-selected-index opacity-80 selection-indicator"
 				transform={`translate(${margin.left + xScale(selectedIndex)},${margin.top})`}
 			>
 				<line
@@ -344,7 +354,12 @@
 					stroke-opacity="0.7"
 				/>
 				<g class="text-xs" transform={`translate(0, ${innerChartHeight + circleRadius})`}>
-					<rect class="text-white fill-current" width="40" x="-20" height={margin.bottom} />
+					<rect
+						class="text-white fill-white dark:fill-gray-900"
+						width="40"
+						x="-20"
+						height={margin.bottom}
+					/>
 					<text fill="currentColor" text-anchor="middle" y="10">{data[selectedIndex].label}</text>
 				</g>
 			</g>
@@ -362,7 +377,7 @@
 						class="font-semibold tracking-wide px-2 py-1 text-white text-xs rounded-full"
 						style="background-color:{colors[i]}"
 					>
-						<span class="uppercase">{labels[i]}: </span>
+						<span>{labels[i]}: </span>
 						{#if typeof data[selectedIndex][key] === 'number'}
 							<span class="">{formatNumber(data[selectedIndex][key])}</span>
 							{#if unit.length < 8}
@@ -378,7 +393,7 @@
 				<div
 					class="font-semibold tracking-wide px-3 py-1 text-white text-xs rounded-full bg-gray-500"
 				>
-					<span class="uppercase">Gesamt: </span>
+					<span>Gesamt: </span>
 					<span class="">{formatNumber(Math.round(totals[selectedIndex] * 100) / 100)}</span>
 					{#if unit.length < 8}
 						<span class="text-xs transform -translate-x-0.5 inline-block">{unit}</span>

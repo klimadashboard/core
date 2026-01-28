@@ -1,20 +1,17 @@
 <script>
-	import Blocks from './index.svelte';
 	export let block;
 </script>
 
-<section class="container my-4">
-	<details class="max-w-4xl" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-		<summary class="text-xl border-b" itemprop="name">{block.content.label}</summary>
-		<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-			{#if block.content.blocks}
-				<div itemprop="text">
-					<Blocks content={JSON.parse(block.content.blocks)} />
-				</div>
-			{/if}
-		</div>
-	</details>
-</section>
+<div class="my-8 text-lg container text">
+	<div class="max-w-2xl mx-auto px-4">
+		<details itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+			<summary class="text-xl border-b" itemprop="name">{block.question}</summary>
+			<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+				{@html block.answer}
+			</div>
+		</details>
+	</div>
+</div>
 
 <style>
 	:global(details[open] summary ~ *) {

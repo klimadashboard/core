@@ -3,7 +3,7 @@ name: 'Deploy emissions-federal-states branch'
 on:
   push:
     branches:
-      - feat/emissions-federal-states-de
+      - feat/de-federal-states-emissions
 
 jobs:
   ploi-deploy:
@@ -20,4 +20,4 @@ jobs:
         with:
           api_token: ${{ secrets.PLOI_API_KEY }}
           server_id: 47649
-          site_id: 230604
+          site_id: 253022

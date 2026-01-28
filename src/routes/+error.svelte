@@ -1,17 +1,12 @@
 <script>
-	import Header from '$lib/components/header.svelte';
-	import Footer from '$lib/components/footer.svelte';
+	import Header from '$lib/components/sections/header/index.svelte';
+	import Footer from '$lib/components/sections/footer/index.svelte';
 	import { page } from '$app/stores';
 </script>
 
 <Header />
 
-<main
-	class="pt-32 container"
-	itemscope
-	itemtype="https://schema.org/FAQPage"
-	style="min-height:60vh;"
->
+<main class="py-20 container" style="min-height:60vh;">
 	<h1 class="text-4xl mb-4">Entschuldigung! 🚨</h1>
 	<p class="text-lg max-w-2xl">
 		Diese Seite konnte nicht gefunden werden oder ein Teil dieser Seite ist fehlerhaft. Navigieren

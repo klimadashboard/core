@@ -2,14 +2,11 @@
 	import Chart from '$lib/components/charts/index.svelte';
 
 	export let block;
-	$: hideWrapper = block.content.hidewrapper == 'true';
-	$: multipleCharts = block.content.chart.length > 1;
+	$: hideWrapper = block.hidewrapper;
 </script>
 
-<div
-	class="my-4 {hideWrapper ? '' : 'container'} {multipleCharts ? 'grid gap-4 md:grid-cols-2' : ''}"
->
-	{#each block.content.chart as chart}
-		<Chart id={chart.replace('page://', '')} {hideWrapper} />
+<div class="my-4 space-y-4 {hideWrapper ? '' : 'container'}">
+	{#each block.charts as chart}
+		<Chart id={chart.chart} {hideWrapper} />
 	{/each}
 </div>
