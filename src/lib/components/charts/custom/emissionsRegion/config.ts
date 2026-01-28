@@ -273,6 +273,20 @@ export function transformForPerCapita(
 	});
 }
 
+/** Sort category order by first-year absolute value (descending: biggest first = bottom of stack) */
+export function sortCategoryOrderByFirstYear(data: EmissionsRawData[], categoryOrder: string[]): string[] {
+	const barData = data.filter((d) => d.source !== 'climate-target' && d.category !== 'total');
+	const years = [...new Set(barData.map((d) => d.year))].sort((a, b) => a - b);
+	const firstYear = years[0];
+	if (firstYear == null) return categoryOrder;
+
+	return [...categoryOrder].sort((a, b) => {
+		const aValue = barData.find((d) => d.year === firstYear && d.category === a)?.value ?? 0;
+		const bValue = barData.find((d) => d.year === firstYear && d.category === b)?.value ?? 0;
+		return bValue - aValue;
+	});
+}
+
 /** Group and stack data by year (excludes climate-target and nowcast totals from sector bars) */
 export function groupAndStack(data: EmissionsRawData[], categoryOrder: string[]): YearGroup[] {
 	// Exclude climate-target and all total data from sector bars

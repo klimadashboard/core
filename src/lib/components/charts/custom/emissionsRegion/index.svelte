@@ -19,6 +19,7 @@
 		groupAndStack,
 		getClimateTargets,
 		getDisplayedCategories,
+		sortCategoryOrderByFirstYear,
 		type RegionResult,
 		type YearGroup
 	} from './config';
@@ -204,7 +205,12 @@
 			})()
 		: [];
 
-	$: grouped = selectedRegion ? groupAndStack(currentData, selectedRegion.categoryOrder) : [];
+	// Sort category order by first-year value (biggest at bottom, uniform across all years)
+	$: sortedCategoryOrder = selectedRegion
+		? sortCategoryOrderByFirstYear(currentData, selectedRegion.categoryOrder)
+		: [];
+
+	$: grouped = selectedRegion ? groupAndStack(currentData, sortedCategoryOrder) : [];
 	$: climateTargets = selectedRegion
 		? transformToDisplayUnit(
 				getClimateTargets(
@@ -217,7 +223,7 @@
 			)
 		: [];
 	$: displayedCategories = selectedRegion
-		? getDisplayedCategories(selectedRegion.data, selectedRegion.categoryOrder)
+		? getDisplayedCategories(selectedRegion.data, sortedCategoryOrder)
 		: [];
 
 	// Determine chart mode
@@ -343,9 +349,9 @@
 				const sectorItems = yearData.sectors
 					.filter((s) => s.value > 0)
 					.sort((a, b) => {
-						const aIdx = selectedRegion?.categoryOrder.indexOf(a.sector) ?? 0;
-						const bIdx = selectedRegion?.categoryOrder.indexOf(b.sector) ?? 0;
-						return aIdx - bIdx;
+						const aIdx = sortedCategoryOrder.indexOf(a.sector);
+						const bIdx = sortedCategoryOrder.indexOf(b.sector);
+						return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
 					})
 					.map((s) => ({
 						label: s.label,

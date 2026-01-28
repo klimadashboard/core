@@ -370,16 +370,8 @@ export function calculateSectorProgress(
 		});
 	}
 
-	// Sort by custom sector order
-	const sortedSectors = sectors.sort((a, b) => {
-		const aIdx = customSectorOrder.findIndex((s) =>
-			a.label.toLowerCase().includes(s.toLowerCase())
-		);
-		const bIdx = customSectorOrder.findIndex((s) =>
-			b.label.toLowerCase().includes(s.toLowerCase())
-		);
-		return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
-	});
+	// Sort by first-year absolute value (biggest at top, smallest at bottom)
+	const sortedSectors = sectors.sort((a, b) => b.firstYearValue - a.firstYearValue);
 
 	const summary: ReductionSummary = {
 		firstYear,
