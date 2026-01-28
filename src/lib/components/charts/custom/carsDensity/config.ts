@@ -669,6 +669,25 @@ export function getPlaceholders(
 	const lastCars = latest.cars ?? 0;
 	const carsTrend = firstCars > 0 ? ((lastCars - firstCars) / firstCars) * 100 : 0;
 
+	// Calculate recent trend (last 2–3 periods) for heading description
+	const recentPeriods = periods.slice(-3);
+	const recentValues = recentPeriods
+		.map((p) => regionData.cars.find((d) => d.period === p)?.value)
+		.filter((v): v is number => v != null);
+	let trendDescription = 'konstant geblieben';
+	if (recentValues.length >= 2) {
+		const first = recentValues[0];
+		const last = recentValues[recentValues.length - 1];
+		const recentChange = first > 0 ? ((last - first) / first) * 100 : 0;
+		if (recentChange > 5) trendDescription = 'gestiegen';
+		else if (recentChange > 2) trendDescription = 'leicht gestiegen';
+		else if (recentChange < -5) trendDescription = 'gesunken';
+		else if (recentChange < -2) trendDescription = 'leicht gesunken';
+	}
+
+	// Cars per 10 people (for pictogram)
+	const carsPerTen = (latest.carsPer1000 ?? 0) / 100;
+
 	// Comparison to national
 	const vsNational = (latest.carsPer1000 ?? 0) - (nationalLatest.carsPer1000 ?? 0);
 	const vsNationalPercent =
@@ -679,14 +698,17 @@ export function getPlaceholders(
 	// Format numbers for display in text templates
 	const formatNumber = (n: number) => n.toLocaleString('de-DE');
 
+	const regionName = region?.name ?? regionData.name;
+
 	return {
-		regionName: region?.name ?? regionData.name,
+		regionName,
 		population: regionData.population,
 		totalPopulation: formatNumber(regionData.population),
 		latestPeriod: latest.period,
 		totalCars: formatNumber(latest.cars ?? 0),
 		totalCarsRaw: latest.cars ?? 0,
 		carsPer1000: latest.carsPer1000 ?? 0,
+		carsPerTen: Math.round(carsPerTen * 10) / 10,
 		privateShare: latest.privateShare ?? 0,
 		companyShare: latest.companyShare ?? 0,
 		nationalCarsPer1000: nationalLatest.carsPer1000 ?? 0,
@@ -695,6 +717,8 @@ export function getPlaceholders(
 		vsNational,
 		vsNationalPercent,
 		carsTrend,
+		trendDescription,
+		title: `In ${regionName} kommen ${(Math.round(carsPerTen * 10) / 10).toLocaleString('de-DE')} Autos auf 10 Einwohner:innen. Zuletzt ist die Anzahl der Autos ${trendDescription}.`,
 		dataYearStart: periods[0],
 		dataYearEnd: latest.period
 	};

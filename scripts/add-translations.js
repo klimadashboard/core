@@ -150,6 +150,19 @@ const translations = [
 	{ key: 'domain.transport.eMobilityShare', de: 'Anteil der Elektromobilität', en: 'Share of e-mobility' },
 	{ key: 'domain.transport.publicTransportConnection', de: 'Anbindung an den öffentlichen Verkehr', en: 'Connection to public transport' },
 
+	// Car density & area charts
+	{ key: 'domain.transport.cars', de: 'Autos', en: 'Cars' },
+	{ key: 'domain.transport.carsIn', de: 'Autos in', en: 'cars in' },
+	{ key: 'domain.transport.carsTotal', de: 'Autos gesamt', en: 'Total cars' },
+	{ key: 'domain.transport.residents', de: 'Einwohner:innen', en: 'residents' },
+	{ key: 'domain.transport.privateCars', de: 'Privat-PKW', en: 'Private cars' },
+	{ key: 'domain.transport.companyCars', de: 'Firmen-PKW', en: 'Company cars' },
+	{ key: 'domain.transport.selectRegionDensity', de: 'Wähle eine Region auf der Karte, um mehr zur PKW-Dichte zu erfahren. Für manche Regionen sind aufgrund von Gemeindezusammenlegungen keine Daten verfügbar.', en: 'Select a region on the map to learn more about car density. For some regions, data is unavailable due to municipal mergers.' },
+	{ key: 'domain.transport.selectRegionArea', de: 'Wähle eine Region auf der Karte, um mehr zur Parkfläche zu erfahren.', en: 'Select a region on the map to learn more about parking area.' },
+	{ key: 'domain.transport.footballPitches', de: 'Fußballfelder', en: 'football pitches' },
+	{ key: 'domain.transport.footballPitch', de: 'Fußballfeld', en: 'football pitch' },
+	{ key: 'domain.transport.pitch', de: 'Feld', en: 'pitch' },
+
 	// ========== Domain: Energy ==========
 	{ key: 'domain.energy.gas', de: 'Gasheizungen', en: 'Gas heating' },
 	{ key: 'domain.energy.gasShort', de: 'Gas', en: 'Gas' },
