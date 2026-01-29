@@ -14,8 +14,6 @@
 		buildChartData,
 		getLayerPriority,
 		shouldUseMegatons,
-		TARGET_REDUCTION_PERCENT,
-		TARGET_YEAR,
 		type RegionResult,
 		type SectorProgress,
 		type ReductionSummary
@@ -150,9 +148,9 @@
 
 	// Calculate linear progress (how far we should be based on time elapsed)
 	$: linearProgress = (() => {
-		if (!summaryStats) return 0;
+		if (!summaryStats || !summaryStats.targetYear) return 0;
 		const startYear = summaryStats.baseYear;
-		const targetYear = summaryStats.targetYear ?? TARGET_YEAR;
+		const targetYear = summaryStats.targetYear;
 		const currentYear = summaryStats.lastYear;
 		const totalYears = targetYear - startYear;
 		const elapsedYears = currentYear - startYear;
@@ -213,7 +211,7 @@
 					color: sector.reduction >= 0 ? '#22c55e' : '#ef4444'
 				},
 				{
-					label: `Fortschritt zum ${TARGET_REDUCTION_PERCENT}%-Ziel`,
+					label: 'Fortschritt zum Klimaziel',
 					value: `${formatNumber(sector.contributionPercent, 1)}%`,
 					color: sector.contributionPercent >= 0 ? '#22c55e' : '#ef4444'
 				}
@@ -415,14 +413,14 @@
 		</div>
 		<div class="flex items-center gap-2">
 			<div class="w-6 h-2 bg-current/70 rounded-full"></div>
-			<span class="opacity-70">Ziel: {TARGET_REDUCTION_PERCENT}% Reduktion</span>
+			<span class="opacity-70">Ziel: Klimaneutralität bis {summaryStats.targetYear}</span>
 		</div>
 	</div>
 
 	<!-- Source note -->
 	<div class="text-sm leading-tight mt-4 opacity-70">
 		<p class="mt-1">
-			Zeigt den Fortschritt jedes Sektors auf dem Weg zur {TARGET_REDUCTION_PERCENT}%-Reduktion bis {TARGET_YEAR}.
+			Zeigt den Fortschritt jedes Sektors auf dem Weg zur Klimaneutralität bis {summaryStats.targetYear}.
 			Basis: {summaryStats.baseYear} ({formatNumber(summaryStats.baseYearTotal)}
 			{unit}).
 		</p>

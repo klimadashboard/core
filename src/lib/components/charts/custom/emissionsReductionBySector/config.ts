@@ -275,9 +275,7 @@ export function getClimateTarget(data: EmissionsRawData[]): EmissionsRawData | n
 	return targets[0] || null;
 }
 
-// Target reduction percentage (hardcoded for now)
-export const TARGET_REDUCTION_PERCENT = 94;
-export const TARGET_YEAR = 2035;
+// Target reduction percentage: always 100% (climate neutrality)
 
 /** Calculate reduction progress per sector (data is in tons, converts to megatons if needed) */
 export function calculateSectorProgress(
@@ -299,6 +297,11 @@ export function calculateSectorProgress(
 	const lastYear = years[years.length - 1];
 	const { pastTarget, futureTarget } = getClimateTargets(region.data);
 
+	// Require a future climate target to show the chart
+	if (!futureTarget) {
+		return { sectors: [], summary: null, hasNegativeProgress: false };
+	}
+
 	// Base year: use past climate target year if available, otherwise first data year
 	const baseYear = pastTarget?.year ?? firstYear;
 
@@ -319,18 +322,17 @@ export function calculateSectorProgress(
 		.filter((d) => d.year === lastYear)
 		.reduce((sum, d) => sum + d.value, 0);
 
-	// Target value based on target reduction percentage (use future target if available)
-	const targetValueRaw =
-		futureTarget?.value ?? firstYearTotalRaw * (1 - TARGET_REDUCTION_PERCENT / 100);
-	const targetYear = futureTarget?.year ?? TARGET_YEAR;
+	// Target is always 100% reduction (climate neutrality), target year from climate-target
+	const targetValueRaw = futureTarget.value;
+	const targetYear = futureTarget.year;
 
-	// Total reduction needed and achieved (raw values for percentage) - based on base year
-	const totalReductionNeededRaw = baseYearTotalRaw * (TARGET_REDUCTION_PERCENT / 100);
+	// Total reduction needed: 100% of base year emissions (goal is climate neutrality)
+	const totalReductionNeededRaw = baseYearTotalRaw;
 	const totalReductionAchievedRaw = baseYearTotalRaw - lastYearTotalRaw;
 	const overallProgress =
 		totalReductionNeededRaw > 0 ? (totalReductionAchievedRaw / totalReductionNeededRaw) * 100 : 0;
 
-	// Calculate per-sector progress towards their own 94% reduction target
+	// Calculate per-sector progress towards their own 100% reduction target
 	const sectors: SectorProgress[] = [];
 	let hasNegativeProgress = false;
 
@@ -346,8 +348,8 @@ export function calculateSectorProgress(
 		const lastValueRaw = lastYearData?.value ?? 0;
 		const reductionRaw = firstValueRaw - lastValueRaw;
 
-		// Each sector needs to reduce by TARGET_REDUCTION_PERCENT
-		const sectorTargetReductionRaw = firstValueRaw * (TARGET_REDUCTION_PERCENT / 100);
+		// Each sector needs to reduce by 100% (climate neutrality)
+		const sectorTargetReductionRaw = firstValueRaw;
 
 		// What percentage of this sector's own target has been achieved?
 		const progressPercent =
@@ -366,7 +368,7 @@ export function calculateSectorProgress(
 			lastYearValue: convert(lastValueRaw),
 			reduction: convert(reductionRaw),
 			reductionPercent,
-			contributionPercent: progressPercent // Now represents progress towards own 94% target
+			contributionPercent: progressPercent // Now represents progress towards own 100% target
 		});
 	}
 
