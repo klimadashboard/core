@@ -70,8 +70,8 @@ function getTableColumns(): TableColumn[] {
 // =============================================================================
 
 /** Build ChartData for Card integration */
-export function buildChartData(data: CarDensityData, region?: Region | null): ChartData {
-	const { periods, source, region: regionData } = data;
+export function buildChartData(data: CarDensityData, region?: Region | null, privacyNote?: string): ChartData {
+	const { periods, source, region: regionData, hasPrivacySuppression } = data;
 	const latest = getLatestData(regionData, periods);
 	const placeholders = getPlaceholders(data, region);
 
@@ -99,7 +99,8 @@ export function buildChartData(data: CarDensityData, region?: Region | null): Ch
 		meta: {
 			updateDate,
 			source,
-			region: region ?? ({ name: regionData.name, id: regionData.code } as any)
+			region: region ?? ({ name: regionData.name, id: regionData.code } as any),
+			note: hasPrivacySuppression ? privacyNote : undefined
 		},
 		hasData: totalCars > 0
 	};

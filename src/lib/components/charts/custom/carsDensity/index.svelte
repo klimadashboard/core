@@ -83,7 +83,8 @@
 			data = await fetchData(fetch, region);
 
 			if (onChartData && data) {
-				onChartData(buildChartData(data, region));
+				const privacyNote = t(page.data.translations, 'ui.card.privacyNote');
+				onChartData(buildChartData(data, region, privacyNote));
 			}
 		} catch (e) {
 			console.error('[CarDensity] Error loading data:', e);

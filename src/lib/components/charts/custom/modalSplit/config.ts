@@ -91,12 +91,37 @@ export const categoryColors: Record<string, { main: string; light: string; dark:
 	car_passenger: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' } // Violet-600 - contrast 4.75:1
 };
 
-// Goal configuration
-export const goalConfig = {
-	startYear: 2024,
-	endYear: 2035,
-	targetSustainablePercent: 66
-};
+// ============================================================================
+// GOAL TYPES
+// ============================================================================
+
+export type GoalType = 'sustainable_total' | 'category_specific' | 'multi_year_path';
+
+export interface GoalPathPoint {
+	year: number;
+	sustainable: number;
+}
+
+export interface ModalSplitGoal {
+	id: string;
+	region: string;
+	target_year: number;
+	goal_type: GoalType;
+	sustainable_target: number | null;
+	category_targets: Record<string, number> | null;
+	goal_path: GoalPathPoint[] | null;
+	source: string | null;
+}
+
+/** Resolved goal config for use in calculations (derived from ModalSplitGoal + data) */
+export interface ResolvedGoalConfig {
+	startYear: number; // Derived from latest year in data
+	endYear: number;
+	targetSustainablePercent: number;
+	goalPath: GoalPathPoint[] | null;
+	categoryTargets: Record<string, number> | null;
+	source: string | null;
+}
 
 /** Get historic years only (for optional display) */
 export function getHistoricYears(data: ModalSplitRawData[]): number[] {
@@ -107,6 +132,92 @@ export function getHistoricYears(data: ModalSplitRawData[]): number[] {
 export function getLatestDataYear(data: ModalSplitRawData[]): number {
 	const years = getHistoricYears(data);
 	return years[years.length - 1] || new Date().getFullYear();
+}
+
+/** Fetch modal split goal from Directus */
+export async function fetchGoal(region: Region | null): Promise<ModalSplitGoal | null> {
+	if (!region?.id) return null;
+
+	const directus = getDirectusInstance(fetch);
+
+	try {
+		const goals = await directus.request(
+			readItems('mobility_modal_split_goals', {
+				filter: { region: { _eq: region.id } },
+				limit: 1
+			})
+		);
+
+		if (!goals || goals.length === 0) return null;
+
+		const goal = goals[0] as any;
+
+		// Parse goal_path if present
+		let goalPath: GoalPathPoint[] | null = null;
+		if (goal.goal_path) {
+			try {
+				const parsed = typeof goal.goal_path === 'string' ? JSON.parse(goal.goal_path) : goal.goal_path;
+				if (Array.isArray(parsed)) {
+					goalPath = parsed
+						.map((p: any) => ({
+							year: Number(p.year),
+							sustainable: Number(p.sustainable)
+						}))
+						.filter((p: GoalPathPoint) => !isNaN(p.year) && !isNaN(p.sustainable))
+						.sort((a: GoalPathPoint, b: GoalPathPoint) => a.year - b.year);
+				}
+			} catch (e) {
+				console.warn('[modalSplit] Failed to parse goal_path:', e);
+			}
+		}
+
+		// Parse category_targets if present
+		let categoryTargets: Record<string, number> | null = null;
+		if (goal.category_targets) {
+			try {
+				categoryTargets =
+					typeof goal.category_targets === 'string'
+						? JSON.parse(goal.category_targets)
+						: goal.category_targets;
+			} catch (e) {
+				console.warn('[modalSplit] Failed to parse category_targets:', e);
+			}
+		}
+
+		return {
+			id: goal.id,
+			region: goal.region,
+			target_year: goal.target_year,
+			goal_type: goal.goal_type,
+			sustainable_target: goal.sustainable_target,
+			category_targets: categoryTargets,
+			goal_path: goalPath,
+			source: goal.source
+		};
+	} catch (e) {
+		console.warn('[modalSplit] Failed to fetch goal:', e);
+		return null;
+	}
+}
+
+/** Resolve goal to a config usable for calculations */
+export function resolveGoalConfig(
+	goal: ModalSplitGoal | null,
+	data: ModalSplitRawData[]
+): ResolvedGoalConfig | null {
+	if (!goal) return null;
+
+	// Start year is derived from the latest year in the historic data
+	const startYear = getLatestDataYear(data);
+
+	return {
+		startYear,
+		endYear: goal.target_year,
+		targetSustainablePercent: goal.sustainable_target ?? 0,
+		goalPath: goal.goal_path,
+		categoryTargets: goal.category_targets,
+		source: goal.source
+	};
 }
 
 /** Fetch modal split data from Directus */
@@ -182,10 +293,13 @@ export function processYearData(
 /** Calculate projection data for future years */
 export function calculateProjection(
 	data: ModalSplitRawData[],
-	targetYear: number
+	targetYear: number,
+	goalConfig: ResolvedGoalConfig | null
 ): ModalSplitRawData[] {
+	if (!goalConfig) return [];
+
 	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
-	const { startYear, endYear, targetSustainablePercent } = goalConfig;
+	const { startYear, endYear, targetSustainablePercent, goalPath, categoryTargets } = goalConfig;
 
 	const baselineYear =
 		years.filter((y) => y <= startYear).sort((a, b) => b - a)[0] || years[years.length - 1];
@@ -202,10 +316,44 @@ export function calculateProjection(
 
 	const baseSustainablePercent = total ? (baseSustainable / total) * 100 : 0;
 
+	// If we have category-specific targets, use those directly
+	if (categoryTargets && Object.keys(categoryTargets).length > 0) {
+		const result: ModalSplitRawData[] = [];
+		for (const cat of categoryOrder) {
+			const targetValue = categoryTargets[cat];
+			if (targetValue !== undefined) {
+				result.push({ year: targetYear, category: cat, value: targetValue });
+			}
+		}
+		return result;
+	}
+
+	// If we have a goal path, interpolate from it
+	let effectiveTargetPercent = targetSustainablePercent;
+	if (goalPath && goalPath.length > 0) {
+		// Find the appropriate target from the path
+		const pathPoint = goalPath.find((p) => p.year === targetYear);
+		if (pathPoint) {
+			effectiveTargetPercent = pathPoint.sustainable;
+		} else {
+			// Interpolate between path points
+			const before = goalPath.filter((p) => p.year <= targetYear).pop();
+			const after = goalPath.find((p) => p.year > targetYear);
+			if (before && after) {
+				const t = (targetYear - before.year) / (after.year - before.year);
+				effectiveTargetPercent = before.sustainable + t * (after.sustainable - before.sustainable);
+			} else if (before) {
+				effectiveTargetPercent = before.sustainable;
+			} else if (after) {
+				effectiveTargetPercent = after.sustainable;
+			}
+		}
+	}
+
 	// For the target year, redistribute proportionally
 	const t = Math.min(1, (targetYear - startYear) / (endYear - startYear));
 	const targetSustainable =
-		baseSustainablePercent + t * (targetSustainablePercent - baseSustainablePercent);
+		baseSustainablePercent + t * (effectiveTargetPercent - baseSustainablePercent);
 	const targetMotorized = 100 - targetSustainable;
 
 	// Scale each category proportionally within its group
@@ -268,7 +416,8 @@ export function getTableRows(data: ModalSplitRawData[]): any[] {
 /** Generate placeholders */
 export function getPlaceholders(
 	data: ModalSplitRawData[],
-	region: Region | null
+	region: Region | null,
+	goalConfig: ResolvedGoalConfig | null
 ): Record<string, string | number> {
 	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
 	const latestYear = years[years.length - 1];
@@ -286,10 +435,11 @@ export function getPlaceholders(
 		latestYear,
 		sustainablePercent: Math.round(sustainablePercent),
 		motorizedPercent: Math.round(100 - sustainablePercent),
-		targetYear: goalConfig.endYear,
-		targetPercent: goalConfig.targetSustainablePercent,
+		targetYear: goalConfig?.endYear || '',
+		targetPercent: goalConfig?.targetSustainablePercent || '',
 		dataYearStart: years[0] || '',
-		dataYearEnd: latestYear || ''
+		dataYearEnd: latestYear || '',
+		hasGoal: goalConfig ? 'true' : 'false'
 	};
 }
 
@@ -300,7 +450,8 @@ export function buildChartData(
 	source: string,
 	region: Region | null,
 	showHistoric: boolean = false,
-	translations: Translations
+	translations: Translations,
+	goalConfig: ResolvedGoalConfig | null = null
 ): ChartData {
 	return {
 		raw: data,
@@ -309,7 +460,7 @@ export function buildChartData(
 			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
-		placeholders: getPlaceholders(data, region),
+		placeholders: getPlaceholders(data, region, goalConfig),
 		meta: {
 			updateDate,
 			source,

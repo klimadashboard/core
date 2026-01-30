@@ -37,6 +37,7 @@ const translations = [
 	{ key: 'ui.card.showOnMap', de: 'Auf Karte anzeigen', en: 'Show on map' },
 	{ key: 'ui.card.rawData', de: 'Rohdaten', en: 'Raw data' },
 	{ key: 'ui.card.permalink', de: 'Permalink', en: 'Permalink' },
+	{ key: 'ui.card.privacyNote', de: 'Aus Datenschutzgründen wurden Kategorien mit 6 Datenpunkten oder weniger auf 0 gesetzt.', en: 'For data privacy reasons, categories with 6 data points or fewer have been set to 0.' },
 
 	// Embed modal
 	{ key: 'ui.embed.title', de: 'Grafik einbetten', en: 'Embed chart' },

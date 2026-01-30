@@ -101,6 +101,7 @@
 	}
 	$: source = chartData?.meta?.source || chart.content?.source;
 	$: updateDate = chartData?.meta?.updateDate;
+	$: note = chartData?.meta?.note;
 
 	// Tab configuration
 	type TabId = 'chart' | 'table' | 'text';
@@ -324,17 +325,22 @@
 					</div>
 
 					<div class="text-xs text-gray-500 mt-4 flex">
-						{#if source}
+						{#if source || note}
 							<div class="">
-								<p>
-									{page.data.translations?.source}:
-									{@html source}
-									{#if updateDate}
-										<span class="ml-1">
-											| {page.data.translations?.dataDate}: {dayjs(updateDate).format('DD.MM.YYYY')}
-										</span>
-									{/if}
-								</p>
+								{#if source}
+									<p>
+										{page.data.translations?.source}:
+										{@html source}
+										{#if updateDate}
+											<span class="ml-1">
+												| {page.data.translations?.dataDate}: {dayjs(updateDate).format('DD.MM.YYYY')}
+											</span>
+										{/if}
+									</p>
+								{/if}
+								{#if note}
+									<p class="mt-1 italic">{note}</p>
+								{/if}
 							</div>
 						{/if}
 

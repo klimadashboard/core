@@ -16,6 +16,7 @@
 	import { formatNumber } from '$lib/utils/formatters';
 	import Switch from '$lib/components/Switch.svelte';
 	import { tick } from 'svelte';
+	import { t } from '$lib/utils/t';
 
 	// Props from Card slot
 	export let region: Region | null = null;
@@ -227,6 +228,7 @@
 					}
 				: undefined;
 
+			const privacyNote = t(page.data.translations, 'ui.card.privacyNote');
 			const builtChartData = buildChartData(
 				result.data,
 				waffleData,
@@ -238,7 +240,9 @@
 				{ hasBestand, hasNeuzulassungen },
 				result.source,
 				fallbackInfo,
-				result.regionLayerLabel
+				result.regionLayerLabel,
+				result.hasPrivacySuppression,
+				privacyNote
 			);
 			onChartData?.(builtChartData);
 

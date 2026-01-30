@@ -49,7 +49,7 @@
 	});
 </script>
 
-<div class="isolate relative inline-flex max-w-full">
+<div class="switch isolate relative inline-flex max-w-full">
 	<!-- Left overflow gradient -->
 	{#if canScrollLeft}
 		<div

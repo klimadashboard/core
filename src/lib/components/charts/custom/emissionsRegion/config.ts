@@ -560,7 +560,9 @@ export function buildChartData(
 	useMegatons: boolean,
 	translations: Translations,
 	climateNeutralityText: string | null = null,
-	infoTextPlaceholders: Record<string, string | number | boolean> = {}
+	infoTextPlaceholders: Record<string, string | number | boolean> = {},
+	isHorizontal: boolean = false,
+	singleYear: number | null = null
 ): ChartData {
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 	// Exclude climate-target and nowcast (total category) from table/statistics data
@@ -619,6 +621,9 @@ export function buildChartData(
 			climateNeutrality: climateNeutralityText ?? '',
 			hasClimateTarget: !!climateNeutralityText,
 			hasSectorIncrease: changeStats.sectorIncrease !== '',
+			isHorizontal,
+			isSingleYear: isHorizontal,
+			singleYear: singleYear?.toString() ?? '',
 			...infoTextPlaceholders
 		},
 		meta: {

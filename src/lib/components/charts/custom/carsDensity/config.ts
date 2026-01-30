@@ -6,6 +6,7 @@ import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { getRegions } from '$lib/utils/regions';
 import { PUBLIC_VERSION } from '$env/static/public';
+import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
 
 // =============================================================================
 // Types
@@ -53,6 +54,8 @@ export interface CarDensityData {
 	periods: string[];
 	source: string;
 	country: RegionShape;
+	/** Whether any values were suppressed for data privacy */
+	hasPrivacySuppression?: boolean;
 }
 
 // =============================================================================
@@ -128,8 +131,11 @@ export async function fetchData(
 
 	// If we have a specific region, we can build the data directly
 	if (inputRegion && regionCode && rawData.length > 0) {
+		// Track privacy suppression
+		const privacyTracker = { hasPrivacySuppression: false };
+
 		// Build region data from the filtered results
-		const regionWithData = buildRegionWithDataFromRaw(inputRegion, rawData);
+		const regionWithData = buildRegionWithDataFromRaw(inputRegion, rawData, privacyTracker);
 
 		// For national comparison, we need to fetch national stats separately
 		// Use a lightweight approach - just get the country-level data if available
@@ -149,7 +155,8 @@ export async function fetchData(
 			national,
 			periods,
 			source,
-			country: countryShape
+			country: countryShape,
+			hasPrivacySuppression: privacyTracker.hasPrivacySuppression
 		};
 	}
 
@@ -161,15 +168,27 @@ export async function fetchData(
 /** Build RegionWithData from raw mobility records and Region object */
 function buildRegionWithDataFromRaw(
 	inputRegion: Region,
-	rawData: RawMobilityRecord[]
+	rawData: RawMobilityRecord[],
+	privacyTracker?: { hasPrivacySuppression: boolean }
 ): RegionWithData {
 	const periods = Array.from(new Set(rawData.map((d) => d.period))).sort(
 		(a, b) => Number(a) - Number(b)
 	);
 
+	// Helper to apply privacy filter
+	const filterValue = (value: number | undefined): number | null => {
+		if (value == null) return null;
+		if (value > 0 && value <= PRIVACY_THRESHOLD) {
+			if (privacyTracker) privacyTracker.hasPrivacySuppression = true;
+			return 0;
+		}
+		return value;
+	};
+
 	const cars = periods.map((p) => {
 		const total = rawData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
-		return { period: p, value: total ?? null };
+		const filtered = filterValue(total);
+		return { period: p, value: filtered };
 	});
 
 	const population = inputRegion.population ?? 0;
@@ -183,14 +202,18 @@ function buildRegionWithDataFromRaw(
 	});
 
 	const carsPrivateShare = periods.map((p) => {
-		const privat = rawData.find((d) => d.category === 'Privat' && d.period === p)?.value;
-		const total = rawData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
+		const privatRaw = rawData.find((d) => d.category === 'Privat' && d.period === p)?.value;
+		const totalRaw = rawData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
+		const privat = filterValue(privatRaw);
+		const total = filterValue(totalRaw);
 		return { period: p, value: privat != null && total ? (privat / total) * 100 : null };
 	});
 
 	const carsCompanyShare = periods.map((p) => {
-		const firmen = rawData.find((d) => d.category === 'Firmen' && d.period === p)?.value;
-		const total = rawData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
+		const firmenRaw = rawData.find((d) => d.category === 'Firmen' && d.period === p)?.value;
+		const totalRaw = rawData.find((d) => d.category === 'Insgesamt' && d.period === p)?.value;
+		const firmen = filterValue(firmenRaw);
+		const total = filterValue(totalRaw);
 		return { period: p, value: firmen != null && total ? (firmen / total) * 100 : null };
 	});
 
@@ -745,8 +768,8 @@ export function generateSubtitle(placeholders: Record<string, string | number>):
 // =============================================================================
 
 /** Build ChartData object for Card integration */
-export function buildChartData(data: CarDensityData, region?: Region | null): ChartData {
-	const { region: regionData, periods, source } = data;
+export function buildChartData(data: CarDensityData, region?: Region | null, privacyNote?: string): ChartData {
+	const { region: regionData, periods, source, hasPrivacySuppression } = data;
 	const placeholders = getPlaceholders(data, region);
 	const tableRows = buildTableRows(regionData, periods);
 
@@ -765,7 +788,8 @@ export function buildChartData(data: CarDensityData, region?: Region | null): Ch
 		meta: {
 			updateDate,
 			source,
-			region: region ?? ({ name: regionData.name, id: regionData.code } as any)
+			region: region ?? ({ name: regionData.name, id: regionData.code } as any),
+			note: hasPrivacySuppression ? privacyNote : undefined
 		},
 		hasData: tableRows.length > 0 && tableRows.some((row) => row.cars != null)
 	};

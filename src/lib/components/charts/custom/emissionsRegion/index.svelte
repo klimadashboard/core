@@ -133,7 +133,11 @@
 		}
 	}
 
-	function updateChartData(climateNeutralityText: string | null = null) {
+	function updateChartData(
+		climateNeutralityText: string | null = null,
+		horizontalMode: boolean = false,
+		yearForSingleYear: number | null = null
+	) {
 		if (onChartData && results.length > 0 && activeLayer) {
 			const selectedResult = results.find((r) => r.key === activeLayer);
 			if (selectedResult) {
@@ -155,7 +159,9 @@
 					useMegatons,
 					page.data.translations,
 					climateNeutralityText,
-					infoTextPlaceholders
+					infoTextPlaceholders,
+					horizontalMode,
+					yearForSingleYear
 				);
 				onChartData(chartData);
 			}
@@ -237,7 +243,7 @@
 		: [];
 
 	// Determine chart mode
-	$: barData = currentData.filter((d) => d.source !== 'climate-target');
+	$: barData = currentData.filter((d) => d.source !== 'climate-target' && d.category !== 'total');
 	$: uniqueYears = new Set(barData.map((d) => d.year));
 	$: isHorizontal = uniqueYears.size === 1 && barData.length > 1;
 	$: singleYear = isHorizontal ? [...uniqueYears][0] : null;
@@ -320,9 +326,9 @@
 			? `Bis ${lastTarget.year} möchte ${selectedRegion.name} ${lastTarget.value === 0 ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreichen.`
 			: null;
 
-	// Update chart data when selection or climateNeutrality changes
+	// Update chart data when selection, climateNeutrality, or chart mode changes
 	$: if (activeLayer && results.length > 0) {
-		updateChartData(climateNeutrality);
+		updateChartData(climateNeutrality, isHorizontal, singleYear);
 	}
 
 	// Switch options
@@ -517,6 +523,7 @@
 							width={Math.max(0, horizontalXScale(d.value))}
 							height={horizontalHeight}
 							fill={d.category_color}
+							transform="translate(0,{margin.top})"
 							opacity={hoveredSector === null || hoveredSector === d.category ? 1 : 0.4}
 							class="transition-opacity cursor-pointer"
 							on:mouseenter={(e) => handleHorizontalMouseMove(e, d.category)}
@@ -729,6 +736,11 @@
 					<span class="text-gray-500">({formatNumber(sector.value)} {unit})</span>
 				</div>
 			{/each}
+			<!-- Total -->
+			<div class="flex items-center gap-1.5 text-sm font-medium">
+				<span>{t(page.data.translations, 'table.total')}:</span>
+				<span>{formatNumber(horizontalTotal)} {unit}</span>
+			</div>
 		</div>
 	{/if}
 

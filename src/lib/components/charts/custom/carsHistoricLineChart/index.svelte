@@ -9,6 +9,7 @@
 	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import { t } from '$lib/utils/t';
 	import {
 		fetchDataWithFallback,
 		buildChartData,
@@ -266,6 +267,7 @@
 					}
 				: undefined;
 
+			const privacyNote = t(page.data.translations, 'ui.card.privacyNote');
 			const builtChartData = buildChartData(
 				data,
 				categories,
@@ -276,7 +278,9 @@
 				{ hasBestand, hasNeuzulassungen },
 				result.source,
 				fallbackInfo,
-				result.regionLayerLabel
+				result.regionLayerLabel,
+				result.hasPrivacySuppression,
+				privacyNote
 			);
 			onChartData?.(builtChartData);
 		} catch (e) {

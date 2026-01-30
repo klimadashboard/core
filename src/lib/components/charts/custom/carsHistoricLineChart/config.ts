@@ -2,6 +2,7 @@
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { PUBLIC_VERSION } from '$env/static/public';
+import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
 
 export type DataMode = 'neuzulassungen' | 'bestand';
 
@@ -46,6 +47,8 @@ export interface FetchResult {
 	regionName: string;
 	regionLayerLabel: string;
 	layerPriority: number;
+	/** Whether any category values were suppressed for data privacy */
+	hasPrivacySuppression?: boolean;
 }
 
 export interface VehicleRawData {
@@ -85,7 +88,7 @@ const sonstigeCategories = ['Gas', 'Sonstige Kraftstoffarten'];
 /** Fetch Bestand data using the get-mobility-cars endpoint */
 export async function fetchBestandData(
 	region: Region | null
-): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string; regionName?: string }> {
+): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string; regionName?: string; hasPrivacySuppression?: boolean }> {
 	const country = getCountryCode();
 
 	// Use the custom endpoint that handles region lookup and aggregation
@@ -154,23 +157,14 @@ export async function fetchBestandData(
 		return { data: [], categories: [], updateDate: new Date().toISOString(), source: '' };
 	}
 
-	// Build time series data with shares
+	// Build time series data with shares, applying privacy filter
+	let hasPrivacySuppression = false;
+
 	const data: VehicleRawData[] = periods.map((period) => {
 		const periodData = yearData[period] || {};
-		const total =
-			periodData['Insgesamt'] ||
-			Object.entries(periodData).reduce((sum, [cat, value]) => {
-				if (!excludedCategories.includes(cat)) {
-					return sum + (value as number);
-				}
-				return sum;
-			}, 0);
 
-		const row: VehicleRawData = {
-			date: new Date(parseInt(period), 0, 1) // January 1st of the year
-		};
-
-		// Calculate shares for each category
+		// First collect raw absolute values and apply privacy filter
+		const filteredValues: Record<string, number> = {};
 		for (const cat of categories) {
 			if (cat === 'Sonstige') {
 				// Sum up all sonstige categories
@@ -178,11 +172,35 @@ export async function fetchBestandData(
 					(sum, sCat) => sum + ((periodData[sCat] as number) || 0),
 					0
 				);
-				row[cat] = total > 0 ? sonstigeValue / total : 0;
+				// Apply privacy filter
+				if (sonstigeValue > 0 && sonstigeValue <= PRIVACY_THRESHOLD) {
+					filteredValues[cat] = 0;
+					hasPrivacySuppression = true;
+				} else {
+					filteredValues[cat] = sonstigeValue;
+				}
 			} else {
-				const value = periodData[cat] as number;
-				row[cat] = total > 0 && value ? value / total : 0;
+				const value = (periodData[cat] as number) || 0;
+				// Apply privacy filter
+				if (value > 0 && value <= PRIVACY_THRESHOLD) {
+					filteredValues[cat] = 0;
+					hasPrivacySuppression = true;
+				} else {
+					filteredValues[cat] = value;
+				}
 			}
+		}
+
+		// Calculate total from filtered values
+		const total = Object.values(filteredValues).reduce((sum, val) => sum + val, 0);
+
+		const row: VehicleRawData = {
+			date: new Date(parseInt(period), 0, 1) // January 1st of the year
+		};
+
+		// Calculate shares from filtered values
+		for (const cat of categories) {
+			row[cat] = total > 0 ? filteredValues[cat] / total : 0;
 		}
 
 		return row;
@@ -194,13 +212,13 @@ export async function fetchBestandData(
 	// Source from DESTATIS
 	const source = 'DESTATIS';
 
-	return { data, categories, updateDate, source, regionName };
+	return { data, categories, updateDate, source, regionName, hasPrivacySuppression };
 }
 
 /** Fetch Neuzulassungen data from Directus */
 export async function fetchNeuzulassungenData(
 	region: Region | null
-): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string; regionName?: string }> {
+): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string; regionName?: string; hasPrivacySuppression?: boolean }> {
 	const country = getCountryCode();
 	const regionCode = region?.id || country;
 
@@ -237,22 +255,36 @@ export async function fetchNeuzulassungenData(
 		return orderA - orderB;
 	});
 
-	// Build time series data - values are now absolute numbers, calculate shares
+	// Build time series data with privacy filter
+	let hasPrivacySuppression = false;
+
 	const data: VehicleRawData[] = periods.map((period) => {
 		const periodRecords = records.filter((r) => r.period === period);
 
-		// Calculate total for this period
-		const total = periodRecords.reduce((sum, r) => sum + (r.value || 0), 0);
+		// First collect and filter absolute values
+		const filteredValues: Record<string, number> = {};
+		for (const cat of categories) {
+			const record = periodRecords.find((r) => r.category === cat);
+			const absolute = record?.value || 0;
+			// Apply privacy filter
+			if (absolute > 0 && absolute <= PRIVACY_THRESHOLD) {
+				filteredValues[cat] = 0;
+				hasPrivacySuppression = true;
+			} else {
+				filteredValues[cat] = absolute;
+			}
+		}
+
+		// Calculate total from filtered values
+		const total = Object.values(filteredValues).reduce((sum, val) => sum + val, 0);
 
 		const row: VehicleRawData = {
 			date: new Date(period)
 		};
 
-		// Calculate share values for each category from absolute values
+		// Calculate share values from filtered absolute values
 		for (const cat of categories) {
-			const record = periodRecords.find((r) => r.category === cat);
-			const absolute = record?.value || 0;
-			row[cat] = total > 0 ? absolute / total : 0;
+			row[cat] = total > 0 ? filteredValues[cat] / total : 0;
 		}
 
 		return row;
@@ -264,7 +296,7 @@ export async function fetchNeuzulassungenData(
 	// Extract source from first record
 	const source = records[0]?.source || '';
 
-	return { data, categories, updateDate, source, regionName: region?.name };
+	return { data, categories, updateDate, source, regionName: region?.name, hasPrivacySuppression };
 }
 
 /** Fetch data based on mode */
@@ -472,7 +504,9 @@ export function buildChartData(
 	availability?: { hasBestand: boolean; hasNeuzulassungen: boolean },
 	source?: string,
 	fallbackInfo?: { originalRegionName: string; dataRegionName: string; originalLayerLabel?: string; dataLayerLabel?: string },
-	regionLayerLabel?: string
+	regionLayerLabel?: string,
+	hasPrivacySuppression?: boolean,
+	privacyNote?: string
 ): ChartData {
 	const tableRows = data.map((d) => ({
 		date: d.date,
@@ -521,7 +555,8 @@ export function buildChartData(
 		meta: {
 			updateDate,
 			source: sourceText,
-			region
+			region,
+			note: hasPrivacySuppression ? privacyNote : undefined
 		},
 		embedOptions
 	};

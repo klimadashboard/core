@@ -3,6 +3,7 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
+import { filterCategoryValues } from '$lib/components/charts/utils/privacyFilter';
 
 export type DataMode = 'bestand' | 'neuzulassungen';
 
@@ -48,6 +49,8 @@ export interface FetchResult {
 	regionName: string;
 	regionLayerLabel: string;
 	layerPriority: number;
+	/** Whether any category values were suppressed for data privacy */
+	hasPrivacySuppression?: boolean;
 }
 
 export interface VehicleShareData {
@@ -85,7 +88,7 @@ export const fallbackColors = ['#10B981', '#3B82F6', '#94A3B8', '#EF4444', '#F59
 /** Fetch Bestand data from the mobility cars endpoint */
 async function fetchBestandData(
 	region: Region | null
-): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string } | null> {
+): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string; hasPrivacySuppression?: boolean } | null> {
 	const country = getCountryCode();
 
 	// Use the custom endpoint that handles region lookup and aggregation
@@ -127,7 +130,6 @@ async function fetchBestandData(
 
 	const latestYear = years[0];
 	const latestYearData = yearData[String(latestYear)] || {};
-	const total = latestYearData['Insgesamt'] || 0;
 
 	// Get all categories (excluding 'Insgesamt', 'Privat', 'Firmen' which are ownership types, not drive types)
 	const excludedCategories = ['Insgesamt', 'Privat', 'Firmen'];
@@ -146,18 +148,27 @@ async function fetchBestandData(
 	});
 
 	// Build raw data for latest year
-	const categoriesData: Record<string, number> = {};
-	const sharesData: Record<string, number> = {};
+	const rawCategoriesData: Record<string, number> = {};
 
 	for (const cat of categories) {
-		const absolute = latestYearData[cat] || 0;
-		categoriesData[cat] = absolute;
-		sharesData[cat] = total > 0 ? absolute / total : 0;
+		rawCategoriesData[cat] = latestYearData[cat] || 0;
+	}
+
+	// Apply privacy filter to category values
+	const { data: categoriesData, hasPrivacySuppression } = filterCategoryValues(rawCategoriesData);
+
+	// Recalculate total after privacy filtering
+	const filteredTotal = Object.values(categoriesData).reduce((sum, val) => sum + val, 0);
+
+	// Calculate shares from filtered values
+	const sharesData: Record<string, number> = {};
+	for (const cat of categories) {
+		sharesData[cat] = filteredTotal > 0 ? categoriesData[cat] / filteredTotal : 0;
 	}
 
 	const data: VehicleRawData = {
 		year: latestYear,
-		total,
+		total: filteredTotal,
 		categories: categoriesData,
 		shares: sharesData
 	};
@@ -167,13 +178,13 @@ async function fetchBestandData(
 	// Source from DESTATIS
 	const source = 'DESTATIS';
 
-	return { data, categories, updateDate, regionName, source };
+	return { data, categories, updateDate, regionName, source, hasPrivacySuppression };
 }
 
 /** Fetch Neuzulassungen data from Directus */
 async function fetchNeuzulassungenData(
 	region: Region | null
-): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string } | null> {
+): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string; hasPrivacySuppression?: boolean } | null> {
 	const country = getCountryCode();
 	const regionCode = region?.id || country;
 	const defaultRegionName =
@@ -214,19 +225,22 @@ async function fetchNeuzulassungenData(
 	});
 
 	// Build data structure - values are now absolute numbers
-	const categoriesData: Record<string, number> = {};
-	const sharesData: Record<string, number> = {};
+	const rawCategoriesData: Record<string, number> = {};
 
-	// First pass: collect absolute values and calculate total
-	let total = 0;
+	// First pass: collect absolute values
 	for (const cat of categories) {
 		const record = latestRecords.find((r) => r.category === cat);
-		const absolute = record?.value || 0;
-		categoriesData[cat] = absolute;
-		total += absolute;
+		rawCategoriesData[cat] = record?.value || 0;
 	}
 
-	// Second pass: calculate shares from absolute values
+	// Apply privacy filter to category values
+	const { data: categoriesData, hasPrivacySuppression } = filterCategoryValues(rawCategoriesData);
+
+	// Calculate total from filtered values
+	const total = Object.values(categoriesData).reduce((sum, val) => sum + val, 0);
+
+	// Calculate shares from filtered absolute values
+	const sharesData: Record<string, number> = {};
 	for (const cat of categories) {
 		sharesData[cat] = total > 0 ? categoriesData[cat] / total : 0;
 	}
@@ -247,7 +261,7 @@ async function fetchNeuzulassungenData(
 	// Extract source from first record
 	const source = records[0]?.source || '';
 
-	return { data, categories, updateDate, regionName, source };
+	return { data, categories, updateDate, regionName, source, hasPrivacySuppression };
 }
 
 /** Fetch data for multiple region candidates and return the best match (most local with data) */
@@ -544,7 +558,9 @@ export function buildChartData(
 	availability?: { hasBestand: boolean; hasNeuzulassungen: boolean },
 	source?: string,
 	fallbackInfo?: { originalRegionName: string; dataRegionName: string; originalLayerLabel?: string; dataLayerLabel?: string },
-	regionLayerLabel?: string
+	regionLayerLabel?: string,
+	hasPrivacySuppression?: boolean,
+	privacyNote?: string
 ): ChartData {
 	// Transform waffleData to clean table rows
 	const tableRows = waffleData.map((cat) => ({
@@ -603,7 +619,8 @@ export function buildChartData(
 		meta: {
 			updateDate,
 			source: sourceText,
-			region
+			region,
+			note: hasPrivacySuppression ? privacyNote : undefined
 		},
 		embedOptions
 	};

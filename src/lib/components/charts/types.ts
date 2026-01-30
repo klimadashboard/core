@@ -59,6 +59,8 @@ export interface ChartData {
 		updateDate?: string;
 		source?: string;
 		region?: Region | null;
+		/** Optional note to display below the source (e.g., privacy disclaimer) */
+		note?: string;
 	};
 	/**
 	 * Override for data availability check. When true, the chart is considered
