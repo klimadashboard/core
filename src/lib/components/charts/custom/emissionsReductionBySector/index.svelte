@@ -14,9 +14,11 @@
 		buildChartData,
 		getLayerPriority,
 		shouldUseMegatons,
+		computeInfoTextPlaceholders,
 		type RegionResult,
 		type SectorProgress,
-		type ReductionSummary
+		type ReductionSummary,
+		type PageRegionContext
 	} from './config';
 
 	// Props from Card slot
@@ -90,6 +92,21 @@
 		}
 	}
 
+	// Page region context for info text placeholders (stable, based on page region prop)
+	$: pageRegionContext = (region
+		? {
+				name: region.name,
+				layer: region.layer,
+				parents: region.parents
+			}
+		: page.data?.page
+			? {
+					name: page.data.page.name,
+					layer: page.data.page.layer,
+					parents: page.data.page.parents
+				}
+			: null) as PageRegionContext | null;
+
 	function updateChartData() {
 		const selectedRegion = results.find((r) => r.key === activeLayer);
 		if (!selectedRegion) {
@@ -116,7 +133,9 @@
 			// Get source from actual data
 			const dataSource =
 				selectedRegion.data.find((d) => d.source !== 'climate-target')?.source || 'Emissions data';
-			const chartData = buildChartData(selectedRegion, sectors, summary, useMegatons, dataSource, PUBLIC_VERSION);
+			// Compute info text placeholders from page region context
+			const infoTextPlaceholders = computeInfoTextPlaceholders(results, pageRegionContext);
+			const chartData = buildChartData(selectedRegion, sectors, summary, useMegatons, dataSource, PUBLIC_VERSION, infoTextPlaceholders);
 			onChartData(chartData);
 		}
 	}

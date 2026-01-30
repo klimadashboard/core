@@ -17,6 +17,9 @@
 	export let map: any; // MapLibre GL map instance from parent
 	export let regionId: string | undefined = undefined;
 	export let regionName: string | undefined = undefined;
+	export let regionCode: string | null = null;
+	export let regionCodeShort: string | null = null;
+	export let regionLayer: string | null = null; // 'municipality', 'district', etc.
 	export let isDarkMode: boolean = false;
 
 	$: translations = $page.data?.translations;
@@ -41,12 +44,18 @@
 		return translated !== view.labelKey ? translated : view.labelFallback;
 	}
 
+	// Determine initial layer based on the current region's layer
+	function getInitialLayer(): LayerPlural {
+		if (regionLayer === 'district') return 'districts';
+		return 'municipalities';
+	}
+
 	// State
 	let regions: RegionWithData[] = [];
 	let availablePeriods: string[] = [];
 	let selectedPeriodIndex = 0;
 	let selectedPeriod = '';
-	let selectedLayer: LayerPlural = 'municipalities';
+	let selectedLayer: LayerPlural = getInitialLayer();
 	let selectedView: ViewKey = 'pop';
 	let selectedRegion: string | null = null;
 	let loading = true;
@@ -57,9 +66,18 @@
 	let tooltipX = 0;
 	let tooltipY = 0;
 	let hoverTimeout: number | null = null;
+	let currentRegionCode: string | null = null; // Code of the current page's region for highlighting
 
 	// Load data
 	onMount(async () => {
+		// Set the current region's code for highlighting from props FIRST
+		if (regionCode || regionCodeShort) {
+			currentRegionCode = PUBLIC_VERSION === 'at'
+				? String(regionCode)
+				: String(regionCodeShort ?? regionCode);
+			console.log('[MapCarsDensity] Current region code set to:', currentRegionCode, 'from props:', { regionCode, regionCodeShort });
+		}
+
 		try {
 			const payload = await fetchAllRegions(fetch);
 			regions = payload.regions;
@@ -271,6 +289,7 @@
 			if (map.getLayer(o)) map.removeLayer(o);
 		});
 		if (map.getLayer('cars-highlight-outline')) map.removeLayer('cars-highlight-outline');
+		if (map.getLayer('cars-current-region-outline')) map.removeLayer('cars-current-region-outline');
 		if (map.getSource('cars-regions')) map.removeSource('cars-regions');
 	}
 
@@ -325,6 +344,22 @@
 			map.getLayer('city-labels') ? 'city-labels' : undefined
 		);
 
+		// Add a persistent highlight layer for the current page's region
+		map.addLayer(
+			{
+				id: 'cars-current-region-outline',
+				type: 'line',
+				source: 'cars-regions',
+				'source-layer': srcLayer,
+				paint: {
+					'line-color': '#3b82f6', // Blue color to indicate current region
+					'line-width': 3
+				},
+				filter: currentRegionCode ? ['==', idProp, currentRegionCode] : ['==', idProp, '']
+			},
+			map.getLayer('city-labels') ? 'city-labels' : undefined
+		);
+
 		map.on('click', fillLayerId(selectedLayer), (e: any) => {
 			const feature = e.features?.[0];
 			if (feature) {
@@ -348,6 +383,12 @@
 				detectIdProp();
 				switchingLayer = false;
 				applyColorsToActiveLayer();
+
+				// Update the current region highlight filter with the correct idProp
+				if (currentRegionCode && map.getLayer('cars-current-region-outline')) {
+					console.log('[MapCarsDensity] Setting filter with idProp:', idProp, 'currentRegionCode:', currentRegionCode);
+					map.setFilter('cars-current-region-outline', ['==', idProp, currentRegionCode]);
+				}
 			}
 		};
 		map.on('sourcedata', onData);

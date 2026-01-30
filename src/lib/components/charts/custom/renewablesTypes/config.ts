@@ -19,6 +19,7 @@ export interface SolarTypesResponse {
 		cumulative_units: number;
 	}>;
 	update_date: string;
+	grid_operator_checked_ratio?: number | null;
 }
 
 export interface Region {
@@ -79,6 +80,21 @@ export async function fetchSolarTypesData(region: Region | null): Promise<SolarT
 	return await response.json();
 }
 
+/** Format update date for display */
+function formatUpdateDate(updateDate: string | undefined): string {
+	if (!updateDate) return '';
+	try {
+		const date = new Date(updateDate);
+		return date.toLocaleDateString('de-DE', {
+			day: '2-digit',
+			month: '2-digit',
+			year: 'numeric'
+		});
+	} catch {
+		return updateDate;
+	}
+}
+
 /** Generate placeholders for text templates */
 export function getPlaceholders(
 	data: SolarTypesResponse | null,
@@ -87,6 +103,14 @@ export function getPlaceholders(
 	const currentYear = new Date().getFullYear();
 	const currentByType = data?.current_by_type || {};
 	const knownTypeKeys = new Set(solarTypeConfigs.map((t) => t.key));
+
+	// Calculate unverified percentage from grid operator checked ratio
+	const gridOperatorCheckedRatio = data?.grid_operator_checked_ratio;
+	const unverifiedPercentage =
+		gridOperatorCheckedRatio != null ? (100 - gridOperatorCheckedRatio).toFixed(1) : '';
+
+	// Format update date for display
+	const updateDateFormatted = formatUpdateDate(data?.update_date);
 
 	// Calculate totals
 	const totalUnits = Object.values(currentByType).reduce((sum, d) => sum + (d.units || 0), 0);
@@ -135,7 +159,10 @@ export function getPlaceholders(
 
 		// Time
 		currentYear,
-		updateDate: data?.update_date || '',
+		updateDate: updateDateFormatted,
+
+		// Verification status
+		unverifiedPercentage,
 
 		// Totals
 		totalUnits: formatNumber(totalUnits),
@@ -220,21 +247,6 @@ export function buildTableRows(data: SolarTypesResponse | null): Array<Record<st
 			added_power_kw_this_year: entry?.added_power_kw_this_year || 0
 		};
 	});
-}
-
-/** Format update date for display */
-function formatUpdateDate(updateDate: string | undefined): string {
-	if (!updateDate) return '';
-	try {
-		const date = new Date(updateDate);
-		return date.toLocaleDateString('de-DE', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric'
-		});
-	} catch {
-		return updateDate;
-	}
 }
 
 /** Build ChartData object for Card.svelte integration */

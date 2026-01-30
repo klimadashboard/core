@@ -21,7 +21,7 @@ export { fetchData, getColor, type CarDensityData };
 export const PITCH_AREA_SQM = 7140;
 export const PITCH_W = 105;
 export const PITCH_H = 68;
-export const SQM_PER_CAR = 12;
+export const SQM_PER_CAR = 11.5;
 
 // =============================================================================
 // Placeholders & Text Generation
@@ -32,7 +32,7 @@ export function getPlaceholders(
 	data: CarDensityData,
 	region?: Region | null
 ): Record<string, string | number> {
-	const { region: regionData, periods } = data;
+	const { region: regionData, periods, source } = data;
 	const latest = getLatestData(regionData, periods);
 
 	const totalCars = latest.cars ?? 0;
@@ -45,10 +45,15 @@ export function getPlaceholders(
 		regionName,
 		totalCars: formatNumber(totalCars),
 		totalCarsRaw: totalCars,
+		totalArea: formatNumber(parkingAreaSqm),
 		parkingAreaSqm: formatNumber(parkingAreaSqm),
+		footballFields: formatNumber(Math.round(footballPitches)),
 		footballPitches: formatNumber(Math.round(footballPitches)),
 		footballPitchesRaw: Math.round(footballPitches * 10) / 10,
 		latestPeriod: latest.period,
+		sqmPerCar: SQM_PER_CAR,
+		pitchAreaSqm: formatNumber(PITCH_AREA_SQM),
+		source: source || '',
 		title: `${formatNumber(totalCars)} Autos in ${regionName} verbrauchen eine Fläche von ${formatNumber(Math.round(footballPitches))} Fußballfeldern.`
 	};
 }
@@ -70,7 +75,11 @@ function getTableColumns(): TableColumn[] {
 // =============================================================================
 
 /** Build ChartData for Card integration */
-export function buildChartData(data: CarDensityData, region?: Region | null, privacyNote?: string): ChartData {
+export function buildChartData(
+	data: CarDensityData,
+	region?: Region | null,
+	privacyNote?: string
+): ChartData {
 	const { periods, source, region: regionData, hasPrivacySuppression } = data;
 	const latest = getLatestData(regionData, periods);
 	const placeholders = getPlaceholders(data, region);
@@ -102,6 +111,6 @@ export function buildChartData(data: CarDensityData, region?: Region | null, pri
 			region: region ?? ({ name: regionData.name, id: regionData.code } as any),
 			note: hasPrivacySuppression ? privacyNote : undefined
 		},
-		hasData: totalCars > 0
+		hasData: totalCars > 0 && footballPitches >= 2
 	};
 }

@@ -10,9 +10,19 @@
 	export let map;
 	export let regionId;
 	export let regionName;
+	export let regionCode = null;
+	export let regionCodeShort = null;
+	export let regionLayer = null; // 'municipality', 'district', 'state', etc.
 	export let isDarkMode = false;
 
 	$: translations = $page.data?.translations;
+
+	// Determine initial layer based on the current region's layer
+	function getInitialLayer() {
+		if (regionLayer === 'district') return 'districts';
+		if (regionLayer === 'state') return 'states';
+		return 'municipalities';
+	}
 
 	// Colors that work in both light and dark mode (solar/yellow theme)
 	const colorsLight = ['#F0E1C2', '#E0A906'];
@@ -20,12 +30,13 @@
 	$: colors = isDarkMode ? colorsDark : colorsLight;
 	let loading = false;
 	let legendSteps = [];
-	let selectedLayer = 'municipalities';
+	let selectedLayer = getInitialLayer();
 	let hoveredRegion = null;
 	let tooltipX = 0;
 	let tooltipY = 0;
 	let regionData = [];
 	let hoverTimeout = null;
+	let currentRegionCode = null; // Code of the current page's region for highlighting
 
 	const layers = [
 		{ key: 'municipalities', keySingular: 'municipality', zoom: 9.5 },
@@ -75,6 +86,10 @@
 
 	function highlightLayerId(layer) {
 		return `${layer}-solar-highlight`;
+	}
+
+	function currentRegionLayerId(layer) {
+		return `${layer}-solar-current-region`;
 	}
 
 	async function getData(selectedEnergy, selectedLayer) {
@@ -233,7 +248,7 @@
 			});
 		}
 
-		// Add highlight layer
+		// Add highlight layer (for hover)
 		if (!map.getLayer(highlightLayerId(selectedLayer))) {
 			map.addLayer({
 				id: highlightLayerId(selectedLayer),
@@ -245,6 +260,21 @@
 					'line-width': 3
 				},
 				filter: ['==', ['get', idPropertyForLayer(selectedLayer)], '']
+			});
+		}
+
+		// Add current region highlight layer (persistent)
+		if (!map.getLayer(currentRegionLayerId(selectedLayer)) && currentRegionCode) {
+			map.addLayer({
+				id: currentRegionLayerId(selectedLayer),
+				type: 'line',
+				source: 'regions-solar',
+				'source-layer': srcLayer,
+				paint: {
+					'line-color': '#3b82f6', // Blue color to indicate current region
+					'line-width': 3
+				},
+				filter: ['==', ['get', idPropertyForLayer(selectedLayer)], currentRegionCode]
 			});
 		}
 
@@ -276,14 +306,24 @@
 			const f = fillLayerId(l.key);
 			const o = outlineLayerId(l.key);
 			const h = highlightLayerId(l.key);
+			const c = currentRegionLayerId(l.key);
 			if (map.getLayer(f)) map.removeLayer(f);
 			if (map.getLayer(o)) map.removeLayer(o);
 			if (map.getLayer(h)) map.removeLayer(h);
+			if (map.getLayer(c)) map.removeLayer(c);
 		});
 		if (map.getSource('regions-solar')) map.removeSource('regions-solar');
 	}
 
 	onMount(() => {
+		// Set the current region's code for highlighting from props
+		if (regionCode || regionCodeShort) {
+			currentRegionCode = PUBLIC_VERSION === 'at'
+				? String(regionCode)
+				: String(regionCodeShort ?? regionCode);
+			console.log('[MapSolar] Current region code set to:', currentRegionCode, 'from props:', { regionCode, regionCodeShort, regionLayer });
+		}
+
 		if (map) {
 			installRegionLayers();
 		}

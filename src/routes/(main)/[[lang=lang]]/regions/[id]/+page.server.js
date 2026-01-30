@@ -19,7 +19,11 @@ export async function load({ fetch, params, url, parent }) {
 	}
 
 	try {
-		const page = await directus.request(readItem('regions', params.id));
+		const page = await directus.request(
+			readItem('regions', params.id, {
+				fields: ['*', 'parents.id', 'parents.name', 'parents.layer', 'parents.layer_label']
+			})
+		);
 
 		if (!page.visible) {
 			throw error(404, 'Page not found');

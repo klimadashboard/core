@@ -175,8 +175,8 @@ async function fetchBestandData(
 
 	const updateDate = new Date(latestYear, 0, 1).toISOString();
 
-	// Source from DESTATIS
-	const source = 'DESTATIS';
+	// Get source from API response, fallback to empty string
+	const source = result.source || result.meta?.source || '';
 
 	return { data, categories, updateDate, regionName, source, hasPrivacySuppression };
 }
@@ -506,13 +506,15 @@ export function getPlaceholders(
 	data: VehicleRawData,
 	waffleData: VehicleShareData[],
 	regionName: string,
-	mode: DataMode = 'bestand'
+	mode: DataMode = 'bestand',
+	source?: string
 ): Record<string, string | number> {
 	const placeholders: Record<string, string | number> = {
 		year: data.year,
 		total: formatNumber(data.total, 0),
 		totalRaw: data.total,
 		regionName,
+		source: source || '',
 		title: generateTitle(waffleData, regionName, mode)
 	};
 
@@ -615,7 +617,7 @@ export function buildChartData(
 			rows: tableRows,
 			filename: `kfz-${modeLabel}-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
 		},
-		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode),
+		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode, source),
 		meta: {
 			updateDate,
 			source: sourceText,

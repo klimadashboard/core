@@ -112,13 +112,22 @@ export async function fetchData(
 	}
 
 	// Fetch mobility data (filtered if region specified)
-	const rawData = await directus.request(
+	let rawData = await directus.request(
 		readItems<RawMobilityRecord>('mobility_cars', {
 			filter: mobilityFilter,
 			fields: ['period', 'region', 'category', 'value', 'source'],
 			limit: -1
 		})
 	);
+
+	// If no direct data found for region, try to aggregate from child municipalities
+	// This handles cases like Vienna (state) where data exists at Bezirk level
+	if (inputRegion && regionCode && rawData.length === 0) {
+		const aggregatedResult = await fetchAggregatedFromChildren(fetchFn, inputRegion, countryCode);
+		if (aggregatedResult) {
+			return aggregatedResult;
+		}
+	}
 
 	// Extract metadata
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
@@ -163,6 +172,167 @@ export async function fetchData(
 	// Fallback: No specific region - need to compute national aggregate
 	// This is the slower path, but only used when no region is specified
 	return fetchNationalAggregate(fetchFn, countryCode, source);
+}
+
+/** Fetch and aggregate data from child municipalities when no direct data exists */
+async function fetchAggregatedFromChildren(
+	fetchFn: typeof fetch,
+	parentRegion: Region,
+	countryCode: string
+): Promise<CarDensityData | null> {
+	const directus = getDirectusInstance(fetchFn);
+
+	// Find all municipalities in this country
+	const allMunicipalities = await directus.request(
+		readItems('regions', {
+			filter: {
+				layer: { _eq: 'municipality' },
+				country: { _eq: countryCode }
+			},
+			fields: ['id', 'code', 'code_short', 'name', 'layer', 'country', 'population', 'parents'],
+			limit: -1
+		})
+	) as RegionShape[];
+
+	// Filter to municipalities that have the parent region as a parent
+	// IMPORTANT: Exclude municipalities with the same name as the parent
+	// (to avoid including aggregate entries like Wien 90001)
+	const parentNameLower = parentRegion.name?.toLowerCase() || '';
+	const childMunicipalities = allMunicipalities.filter((m) => {
+		const muniNameLower = m.name?.toLowerCase() || '';
+		// Exclude same-name municipalities
+		if (parentNameLower && muniNameLower === parentNameLower) {
+			return false;
+		}
+		// Check if this municipality has the parent region as a parent
+		return (
+			Array.isArray(m.parents) &&
+			m.parents.some((p: any) => p.id === parentRegion.id)
+		);
+	});
+
+	if (childMunicipalities.length === 0) {
+		return null;
+	}
+
+	// Get all codes for child municipalities
+	const childCodes = childMunicipalities
+		.flatMap((m) => [m.code, m.code_short].filter(Boolean))
+		.filter((c): c is string => !!c);
+
+	// Fetch mobility data for all child municipalities
+	const rawData = await directus.request(
+		readItems<RawMobilityRecord>('mobility_cars', {
+			filter: {
+				country: { _eq: countryCode },
+				category: { _in: ['Privat', 'Firmen', 'Insgesamt'] },
+				region: { _in: childCodes }
+			},
+			fields: ['period', 'region', 'category', 'value', 'source'],
+			limit: -1
+		})
+	);
+
+	if (rawData.length === 0) {
+		return null;
+	}
+
+	// Extract metadata
+	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
+	const source = sources.join(', ');
+
+	// Get all periods
+	const periods = Array.from(
+		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+	).sort((a, b) => Number(a) - Number(b));
+
+	// Group data by municipality code
+	const dataByCode = new Map<string, RawMobilityRecord[]>();
+	for (const record of rawData) {
+		if (!dataByCode.has(record.region)) {
+			dataByCode.set(record.region, []);
+		}
+		dataByCode.get(record.region)!.push(record);
+	}
+
+	// Calculate total population from child municipalities
+	const totalPopulation = childMunicipalities.reduce((sum, m) => sum + (m.population || 0), 0);
+
+	// Aggregate data across all periods
+	const cars: TimeSeriesPoint[] = periods.map((p) => {
+		let sum = 0;
+		for (const [code, records] of dataByCode) {
+			const val = records.find((r) => r.period === p && r.category === 'Insgesamt')?.value;
+			if (val != null) sum += val;
+		}
+		return { period: p, value: sum };
+	});
+
+	const carsPer1000Inhabitants: TimeSeriesPoint[] = periods.map((p) => {
+		const total = cars.find((c) => c.period === p)?.value ?? 0;
+		return {
+			period: p,
+			value: totalPopulation > 0 ? Math.round((total / totalPopulation) * 1000) : null
+		};
+	});
+
+	const carsPrivateShare: TimeSeriesPoint[] = periods.map((p) => {
+		let privatSum = 0;
+		let totalSum = 0;
+		for (const [code, records] of dataByCode) {
+			const privat = records.find((r) => r.period === p && r.category === 'Privat')?.value;
+			const total = records.find((r) => r.period === p && r.category === 'Insgesamt')?.value;
+			if (privat != null) privatSum += privat;
+			if (total != null) totalSum += total;
+		}
+		return { period: p, value: totalSum > 0 ? (privatSum / totalSum) * 100 : null };
+	});
+
+	const carsCompanyShare: TimeSeriesPoint[] = periods.map((p) => {
+		let firmenSum = 0;
+		let totalSum = 0;
+		for (const [code, records] of dataByCode) {
+			const firmen = records.find((r) => r.period === p && r.category === 'Firmen')?.value;
+			const total = records.find((r) => r.period === p && r.category === 'Insgesamt')?.value;
+			if (firmen != null) firmenSum += firmen;
+			if (total != null) totalSum += total;
+		}
+		return { period: p, value: totalSum > 0 ? (firmenSum / totalSum) * 100 : null };
+	});
+
+	const regionWithData: RegionWithData = {
+		code: parentRegion.code,
+		code_short: parentRegion.codeShort,
+		name: parentRegion.name,
+		layer: parentRegion.layer,
+		country: countryCode,
+		population: totalPopulation,
+		center: parentRegion.center as [number, number] | undefined,
+		cars,
+		carsPer1000Inhabitants,
+		carsPrivateShare,
+		carsCompanyShare
+	};
+
+	// Fetch national data for comparison
+	const national = await fetchNationalData(fetchFn, countryCode, periods);
+
+	// Get country shape for metadata
+	const countryShape: RegionShape = {
+		code: countryCode,
+		name: countryCode === 'DE' ? 'Deutschland' : 'Österreich',
+		layer: 'country',
+		country: countryCode,
+		population: national.population
+	};
+
+	return {
+		region: regionWithData,
+		national,
+		periods,
+		source,
+		country: countryShape
+	};
 }
 
 /** Build RegionWithData from raw mobility records and Region object */
@@ -720,8 +890,11 @@ export function getPlaceholders(
 
 	// Format numbers for display in text templates
 	const formatNumber = (n: number) => n.toLocaleString('de-DE');
+	const formatPercent = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 	const regionName = region?.name ?? regionData.name;
+	const countryName = data.country?.name ?? (PUBLIC_VERSION === 'at' ? 'Österreich' : 'Deutschland');
+	const nationalCarsPerTen = (nationalLatest.carsPer1000 ?? 0) / 100;
 
 	return {
 		regionName,
@@ -734,9 +907,14 @@ export function getPlaceholders(
 		carsPerTen: Math.round(carsPerTen * 10) / 10,
 		privateShare: latest.privateShare ?? 0,
 		companyShare: latest.companyShare ?? 0,
+		privateShareFormatted: formatPercent(latest.privateShare ?? 0),
+		companyShareFormatted: formatPercent(latest.companyShare ?? 0),
 		nationalCarsPer1000: nationalLatest.carsPer1000 ?? 0,
+		nationalCarsPerTen: Math.round(nationalCarsPerTen * 10) / 10,
 		nationalPrivateShare: nationalLatest.privateShare ?? 0,
 		nationalCompanyShare: nationalLatest.companyShare ?? 0,
+		countryName,
+		source: data.source,
 		vsNational,
 		vsNationalPercent,
 		carsTrend,

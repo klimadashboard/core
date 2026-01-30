@@ -209,8 +209,8 @@ export async function fetchBestandData(
 	const lastRow = data[data.length - 1];
 	const updateDate = lastRow?.date?.toISOString() || new Date().toISOString();
 
-	// Source from DESTATIS
-	const source = 'DESTATIS';
+	// Get source from API response, fallback to empty string
+	const source = result.source || result.meta?.source || '';
 
 	return { data, categories, updateDate, source, regionName, hasPrivacySuppression };
 }
@@ -415,7 +415,8 @@ export function getPlaceholders(
 	categories: string[],
 	region: Region | null,
 	mode: DataMode = 'neuzulassungen',
-	regionLayerLabel?: string
+	regionLayerLabel?: string,
+	source?: string
 ): Record<string, string | number> {
 	const lastRow = data[data.length - 1];
 	const currentYear = new Date().getFullYear();
@@ -455,6 +456,12 @@ export function getPlaceholders(
 		? `${regionLayerLabel} ${region.name}`
 		: region?.name ?? '';
 
+	// Calculate first and last year for data range
+	const firstRow = data[0];
+	const firstYear = firstRow?.date instanceof Date ? firstRow.date.getFullYear() : '';
+	const dataYearStart = firstYear;
+	const dataYearEnd = lastYear;
+
 	return {
 		regionName,
 		currentYear,
@@ -465,6 +472,9 @@ export function getPlaceholders(
 		elektroShareEnd,
 		changeVerb,
 		modeLabel,
+		dataYearStart,
+		dataYearEnd,
+		source: source || '',
 		...latestValues
 	};
 }
@@ -551,7 +561,7 @@ export function buildChartData(
 			rows: tableRows,
 			filename: mode === 'bestand' ? 'kfz-bestand' : 'neuzulassungen'
 		},
-		placeholders: getPlaceholders(data, categories, region, mode, fallbackInfo?.dataLayerLabel || regionLayerLabel),
+		placeholders: getPlaceholders(data, categories, region, mode, fallbackInfo?.dataLayerLabel || regionLayerLabel, source),
 		meta: {
 			updateDate,
 			source: sourceText,

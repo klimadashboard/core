@@ -82,18 +82,29 @@
 						</div>
 
 						{#if section.charts && section.charts.length > 0}
-							<div class="grid grid-cols-1 md:grid-cols-12 gap-1 m-1">
-								{#each section.charts as chart}
-									{#if chartVisibility[chart.id] !== false}
-										<Chart
-											id={chart.id}
-											span={chart.span || 12}
-											type="card"
-											on:dataAvailable={(e) => handleDataAvailable(chart.id, e)}
-										/>
-									{/if}
-								{/each}
-							</div>
+							{@const visibleCharts = section.charts.filter((c) => chartVisibility[c.id] !== false)}
+							{@const allChartsLoaded = section.charts.every(
+								(c) => chartVisibility[c.id] !== undefined
+							)}
+							{@const allChartsHidden = allChartsLoaded && visibleCharts.length === 0}
+							{#if allChartsHidden}
+								<p class="text-sm text-gray-500 text-center py-8">
+									{data.translations?.['status.noDataAvailable'] || 'Keine Daten verfügbar.'}
+								</p>
+							{:else}
+								<div class="grid grid-cols-1 md:grid-cols-12 gap-1 m-1">
+									{#each section.charts as chart}
+										{#if chartVisibility[chart.id] !== false}
+											<Chart
+												id={chart.id}
+												span={chart.span || 12}
+												type="card"
+												on:dataAvailable={(e) => handleDataAvailable(chart.id, e)}
+											/>
+										{/if}
+									{/each}
+								</div>
+							{/if}
 						{/if}
 
 						{#if section.block && blockComponents[section.block]}
@@ -110,4 +121,3 @@
 	<Credits />
 	<RelatedRegions {data} />
 </main>
-

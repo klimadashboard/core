@@ -12,9 +12,18 @@
 	export let map;
 	export let regionId;
 	export let regionName;
+	export let regionCode = null;
+	export let regionCodeShort = null;
+	export let regionLayer = null; // 'municipality', 'district', etc.
 	export let isDarkMode = false;
 
 	$: translations = $page.data?.translations;
+
+	// Determine initial layer based on the current region's layer
+	function getInitialLayer() {
+		if (regionLayer === 'municipality') return 'municipalities';
+		return 'districts'; // Default to districts for CarTypes
+	}
 
 	// Drive types to visualize (matching categoryConfig from carsTypes/config.ts)
 	const driveTypes = [
@@ -32,7 +41,7 @@
 
 	let loading = true;
 	let switchingLayer = false;
-	let selectedLayer = 'districts';
+	let selectedLayer = getInitialLayer();
 	let selectedDriveType = 'Elektro';
 	let regionData = new Map(); // Map of region -> { Elektro: %, Diesel: %, etc. }
 	let legendSteps = [];
@@ -41,6 +50,7 @@
 	let tooltipX = 0;
 	let tooltipY = 0;
 	let hoverTimeout = null;
+	let currentRegionCode = null; // Code of the current page's region for highlighting
 
 	// Colors for the gradient (green for EV share)
 	function getColorRange() {
@@ -270,6 +280,7 @@
 			if (map.getLayer(o)) map.removeLayer(o);
 		});
 		if (map.getLayer('car-types-highlight-outline')) map.removeLayer('car-types-highlight-outline');
+		if (map.getLayer('car-types-current-region-outline')) map.removeLayer('car-types-current-region-outline');
 		if (map.getSource('car-types-regions')) map.removeSource('car-types-regions');
 	}
 
@@ -324,6 +335,22 @@
 			map.getLayer('city-labels') ? 'city-labels' : undefined
 		);
 
+		// Add a persistent highlight layer for the current page's region
+		map.addLayer(
+			{
+				id: 'car-types-current-region-outline',
+				type: 'line',
+				source: 'car-types-regions',
+				'source-layer': srcLayer,
+				paint: {
+					'line-color': '#3b82f6', // Blue color to indicate current region
+					'line-width': 3
+				},
+				filter: currentRegionCode ? ['==', idProp, currentRegionCode] : ['==', idProp, '']
+			},
+			map.getLayer('city-labels') ? 'city-labels' : undefined
+		);
+
 		map.on('mousemove', fillLayerId(selectedLayer), handleMouseMove);
 		map.on('mouseleave', fillLayerId(selectedLayer), handleMouseLeave);
 		map.on('mouseenter', fillLayerId(selectedLayer), () => (map.getCanvas().style.cursor = 'pointer'));
@@ -335,12 +362,24 @@
 				detectIdProp();
 				switchingLayer = false;
 				applyColorsToActiveLayer();
+
+				// Update the current region highlight filter with the correct idProp
+				if (currentRegionCode && map.getLayer('car-types-current-region-outline')) {
+					map.setFilter('car-types-current-region-outline', ['==', idProp, currentRegionCode]);
+				}
 			}
 		};
 		map.on('sourcedata', onData);
 	}
 
 	onMount(async () => {
+		// Set the current region's code for highlighting from props
+		if (regionCode || regionCodeShort) {
+			currentRegionCode = PUBLIC_VERSION === 'at'
+				? String(regionCode)
+				: String(regionCodeShort ?? regionCode);
+		}
+
 		await loadData();
 		if (map && map.loaded()) {
 			installRegionSourceAndLayers();

@@ -9,4 +9,7 @@ node_modules
 static/data
 static/data-handler
 .vscode
+/scripts
+
+# AI tooling
 .claude/settings.local.json

@@ -86,15 +86,23 @@
 			{@const svgW = containerWidth}
 			{@const areaW = svgW - pad * 2}
 			{@const areaH = svgH - pad * 2}
-			{@const fieldScale = 1 / Math.sqrt(footballPitches)}
-			{@const fieldW = Math.max(areaW * fieldScale, 3)}
-			{@const fieldH = Math.max(fieldW * (PITCH_H / PITCH_W), 2)}
+			{@const totalArea = areaW * areaH}
+			{@const fieldAreaScaled = totalArea / footballPitches}
+			{@const pitchRatio = PITCH_H / PITCH_W}
+			{@const fieldW = Math.max(Math.sqrt(fieldAreaScaled / pitchRatio), 3)}
+			{@const fieldH = Math.max(fieldW * pitchRatio, 2)}
 			{@const fieldX = pad + areaW - fieldW}
 			{@const fieldY = pad + areaH - fieldH}
 			{@const arrowTipX = fieldX - 2}
 			{@const arrowTipY = fieldY + fieldH / 2}
 			{@const arrowStartX = Math.min(arrowTipX - 40, svgW * 0.6)}
 			{@const arrowStartY = Math.min(arrowTipY - 30, svgH * 0.3)}
+			{@const arrowAngle = Math.atan2(arrowTipY - arrowStartY, arrowTipX - arrowStartX)}
+			{@const arrowSize = 6}
+			{@const arrowP1X = arrowTipX - arrowSize * Math.cos(arrowAngle - Math.PI / 6)}
+			{@const arrowP1Y = arrowTipY - arrowSize * Math.sin(arrowAngle - Math.PI / 6)}
+			{@const arrowP2X = arrowTipX - arrowSize * Math.cos(arrowAngle + Math.PI / 6)}
+			{@const arrowP2Y = arrowTipY - arrowSize * Math.sin(arrowAngle + Math.PI / 6)}
 
 			<svg
 				viewBox="0 0 {svgW} {svgH}"
@@ -228,7 +236,7 @@
 					opacity="0.5"
 				/>
 				<polygon
-					points="{arrowTipX},{arrowTipY} {arrowTipX - 5},{arrowTipY - 3} {arrowTipX - 5},{arrowTipY + 3}"
+					points="{arrowTipX},{arrowTipY} {arrowP1X},{arrowP1Y} {arrowP2X},{arrowP2Y}"
 					fill="currentColor"
 					opacity="0.5"
 				/>

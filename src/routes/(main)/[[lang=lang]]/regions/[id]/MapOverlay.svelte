@@ -13,6 +13,9 @@
 
 	export let regionId;
 	export let regionName;
+	export let regionCode = null;
+	export let regionCodeShort = null;
+	export let regionLayer = null; // 'municipality', 'district', 'state', etc.
 	export let initialLayerId = null;
 	export let embed = false;
 
@@ -142,7 +145,6 @@
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
-		map.scrollZoom.disable();
 
 		map.on('load', () => {
 			// Add CARTO basemap
@@ -497,7 +499,7 @@
 			<!-- Layer Component Overlay -->
 			{#if mapReady && LayerComponent}
 				<div class="absolute inset-0 pointer-events-none">
-					<svelte:component this={LayerComponent} {map} {regionId} {regionName} {isDarkMode} />
+					<svelte:component this={LayerComponent} {map} {regionId} {regionName} {regionCode} {regionCodeShort} {regionLayer} {isDarkMode} />
 				</div>
 			{:else if mapReady && !LayerComponent}
 				<!-- Placeholder for unimplemented layers -->

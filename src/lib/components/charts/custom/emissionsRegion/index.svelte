@@ -248,6 +248,9 @@
 	$: isHorizontal = uniqueYears.size === 1 && barData.length > 1;
 	$: singleYear = isHorizontal ? [...uniqueYears][0] : null;
 
+	// Check if we only have climate targets but no historical data
+	$: hasOnlyClimateTargets = selectedRegion && barData.length === 0 && climateTargets.length > 0;
+
 	// Dimensions
 	$: innerWidth = Math.max(0, width - margin.left - margin.right);
 	$: innerHeight = Math.max(
@@ -328,7 +331,12 @@
 
 	// Update chart data when selection, climateNeutrality, or chart mode changes
 	$: if (activeLayer && results.length > 0) {
-		updateChartData(climateNeutrality, isHorizontal, singleYear);
+		if (hasOnlyClimateTargets) {
+			// Signal to Card that there's no data to display (only climate targets, no historical data)
+			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
+		} else {
+			updateChartData(climateNeutrality, isHorizontal, singleYear);
+		}
 	}
 
 	// Switch options
@@ -465,6 +473,8 @@
 	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.loadingEmissions')}</p>
 {:else if results.length === 0}
 	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.noDataForRegion')}</p>
+{:else if selectedRegion && hasOnlyClimateTargets}
+	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.noDataAvailable')}</p>
 {:else if selectedRegion}
 	<div class="flex items-center gap-4 flex-wrap">
 		<!-- Layer switch -->

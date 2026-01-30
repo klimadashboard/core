@@ -417,7 +417,7 @@ function calculateChangeStats(
 
 	// Find sectors that increased
 	const categories = [...new Set(tableData.map((d) => d.category))];
-	const sectorChanges: Array<{ category: string; label: string; color: string; change: number }> =
+	const sectorChanges: Array<{ category: string; label: string; color: string; change: number; sectorShareOfTotal: number; increasePercent: number }> =
 		[];
 
 	categories.forEach((category) => {
@@ -431,13 +431,20 @@ function calculateChangeStats(
 			const categoryData = tableData.find((d) => d.category === category);
 			const label = categoryData?.category_label ?? category;
 			const color = categoryData?.category_color ?? '#6b7280';
-			sectorChanges.push({ category, label, color, change });
+			// Calculate sector's share of total and increase percentage
+			const sectorShareOfTotal = lastYearTotal > 0 ? (lastValue / lastYearTotal) * 100 : 0;
+			const increasePercent = previousValue > 0 ? (change / previousValue) * 100 : 0;
+			sectorChanges.push({ category, label, color, change, sectorShareOfTotal, increasePercent });
 		}
 	});
 
 	// Sort by change (biggest increase first) and get the top one
-	sectorChanges.sort((a, b) => b.change - a.change);
-	const biggestIncrease = sectorChanges[0];
+	// Only consider sectors that are >10% of total and increased by >5%
+	const significantSectorChanges = sectorChanges.filter(
+		(s) => s.sectorShareOfTotal > 10 && s.increasePercent > 5
+	);
+	significantSectorChanges.sort((a, b) => b.change - a.change);
+	const biggestIncrease = significantSectorChanges[0];
 
 	// Build sectorIncrease sentence - only if overall emissions fell
 	let sectorIncrease = '';

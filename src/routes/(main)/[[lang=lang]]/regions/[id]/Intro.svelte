@@ -568,7 +568,15 @@
 
 <!-- Map Overlay -->
 {#if showMapOverlay}
-	<MapOverlay regionId={data.page.id} regionName={data.page.name} on:close={closeMapOverlay} on:scrollToChart={handleScrollToChart} />
+	<MapOverlay
+		regionId={data.page.id}
+		regionName={data.page.name}
+		regionCode={data.page.code}
+		regionCodeShort={data.page.code_short}
+		regionLayer={data.page.layer}
+		on:close={closeMapOverlay}
+		on:scrollToChart={handleScrollToChart}
+	/>
 {/if}
 
 <style>

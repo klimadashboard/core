@@ -10,9 +10,19 @@
 	export let map;
 	export let regionId;
 	export let regionName;
+	export let regionCode = null;
+	export let regionCodeShort = null;
+	export let regionLayer = null; // 'municipality', 'district', 'state', etc.
 	export let isDarkMode = false;
 
 	$: translations = $page.data?.translations;
+
+	// Determine initial layer based on the current region's layer
+	function getInitialLayer() {
+		if (regionLayer === 'district') return 'districts';
+		if (regionLayer === 'state') return 'states';
+		return 'municipalities';
+	}
 
 	// Colors that work in both light and dark mode (wind/blue theme)
 	const colorsLight = ['#E5F3FA', '#003B80'];
@@ -21,12 +31,13 @@
 
 	let loading = false;
 	let legendSteps = [];
-	let selectedLayer = 'municipalities';
+	let selectedLayer = getInitialLayer();
 	let hoveredRegion = null;
 	let tooltipX = 0;
 	let tooltipY = 0;
 	let regionData = [];
 	let hoverTimeout = null;
+	let currentRegionCode = null; // Code of the current page's region for highlighting
 
 	const layers = [
 		{ key: 'municipalities', keySingular: 'municipality', zoom: 9.5 },
@@ -76,6 +87,10 @@
 
 	function highlightLayerId(layer) {
 		return `${layer}-wind-highlight`;
+	}
+
+	function currentRegionLayerId(layer) {
+		return `${layer}-wind-current-region`;
 	}
 
 	async function getData(selectedEnergy, selectedLayer) {
@@ -230,6 +245,21 @@
 			});
 		}
 
+		// Add current region highlight layer (persistent)
+		if (!map.getLayer(currentRegionLayerId(selectedLayer)) && currentRegionCode) {
+			map.addLayer({
+				id: currentRegionLayerId(selectedLayer),
+				type: 'line',
+				source: 'regions-wind',
+				'source-layer': srcLayer,
+				paint: {
+					'line-color': '#3b82f6', // Blue color to indicate current region
+					'line-width': 3
+				},
+				filter: ['==', ['get', idPropertyForLayer(selectedLayer)], currentRegionCode]
+			});
+		}
+
 		map.on('mousemove', fillLayerId(selectedLayer), handleMouseMove);
 		map.on('mouseleave', fillLayerId(selectedLayer), handleMouseLeave);
 		map.on('mouseenter', fillLayerId(selectedLayer), () => {
@@ -257,14 +287,23 @@
 			const f = fillLayerId(l.key);
 			const o = outlineLayerId(l.key);
 			const h = highlightLayerId(l.key);
+			const c = currentRegionLayerId(l.key);
 			if (map.getLayer(f)) map.removeLayer(f);
 			if (map.getLayer(o)) map.removeLayer(o);
 			if (map.getLayer(h)) map.removeLayer(h);
+			if (map.getLayer(c)) map.removeLayer(c);
 		});
 		if (map.getSource('regions-wind')) map.removeSource('regions-wind');
 	}
 
 	onMount(() => {
+		// Set the current region's code for highlighting from props
+		if (regionCode || regionCodeShort) {
+			currentRegionCode = PUBLIC_VERSION === 'at'
+				? String(regionCode)
+				: String(regionCodeShort ?? regionCode);
+		}
+
 		if (map) {
 			installRegionLayers();
 		}

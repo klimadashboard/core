@@ -22,7 +22,8 @@
 		categoryOrder,
 		sustainableCategories,
 		type ModalSplitRawData,
-		type ResolvedGoalConfig
+		type ResolvedGoalConfig,
+		type ModalSplitFetchResult
 	} from './config';
 
 	// Get categoryMeta reactively based on page translations
@@ -52,6 +53,8 @@
 	let historicYears: number[] = [];
 	let latestDataYear: number = 0;
 	let goalConfig: ResolvedGoalConfig | null = null;
+	let matchedRegionName: string | null = null;
+	let usedFallback: boolean = false;
 
 	// Computed dimensions
 	$: chartWidth = Math.max(0, width - LABEL_WIDTH);
@@ -115,31 +118,62 @@
 	// Calculate widths for summary lines
 	$: umweltverbundWidth = xScale(currentSustainableTotal);
 
-	// Load data
-	$: if (!regionLoading) {
-		loadData();
-	}
-
 	// Store metadata for rebuilding chartData when showHistoric changes
 	let updateDate: string = '';
 	let source: string = '';
+
+	// Build region candidates: current region + parents
+	// IMPORTANT: This must be declared BEFORE the loadData reactive statement
+	$: regionCandidates = (() => {
+		const candidates: string[] = [];
+		if (region?.id) {
+			candidates.push(region.id);
+		}
+		// Add parents in order (closest first)
+		if (region?.parents && Array.isArray(region.parents)) {
+			for (const parent of region.parents) {
+				if (parent.id) {
+					candidates.push(parent.id);
+				}
+			}
+		}
+		return candidates;
+	})();
+
+	// Load data when region is ready
+	// IMPORTANT: Must be after regionCandidates is declared
+	$: if (!regionLoading && region) {
+		loadData();
+	}
 
 	async function loadData() {
 		loading = true;
 		error = null;
 
 		try {
-			// Fetch data and goal in parallel
-			const [result, goal] = await Promise.all([
-				fetchData(region, { regionId: region?.id }),
-				fetchGoal(region)
-			]);
+			// Fetch data with region candidates (supports parent fallback)
+			const result = await fetchData(region, {
+				regionId: region?.id,
+				regionCandidates
+			});
 
 			rawData = result.data;
 			historicYears = getHistoricYears(rawData);
 			latestDataYear = getLatestDataYear(rawData);
 			updateDate = result.updateDate;
 			source = result.source;
+			matchedRegionName = result.matchedRegionName;
+			usedFallback = result.usedFallback;
+
+			// Fetch goal for the matched region (not the original region) if fallback was used
+			const goalRegionId = result.matchedRegionId || region?.id;
+			const goal = goalRegionId
+				? await fetchGoal(
+						usedFallback && result.matchedRegionId
+							? ({ id: result.matchedRegionId, name: result.matchedRegionName } as any)
+							: region
+				  )
+				: null;
 
 			// Resolve goal config (derives startYear from data)
 			goalConfig = resolveGoalConfig(goal, rawData);
@@ -151,7 +185,8 @@
 				region,
 				showHistoric,
 				page.data.translations,
-				goalConfig
+				goalConfig,
+				matchedRegionName
 			);
 			onChartData?.(chartData);
 		} catch (e) {
@@ -172,7 +207,8 @@
 			region,
 			showHistoric,
 			page.data.translations,
-			goalConfig
+			goalConfig,
+			matchedRegionName
 		);
 		onChartData?.(chartData);
 	}
@@ -228,7 +264,7 @@
 					s.category === 'umweltverbund'
 						? t(page.data.translations, 'domain.transport.sustainable')
 						: t(page.data.translations, 'domain.transport.motorized'),
-				value: `${s.value.toFixed(1)}%`,
+				value: `${(typeof s.value === 'number' ? s.value : Number(s.value) || 0).toFixed(1)}%`,
 				color: s.category === 'umweltverbund' ? '#059669' : '#475569'
 			}));
 
@@ -244,7 +280,7 @@
 
 		const items = segments.map((s) => ({
 			label: categoryMeta[s.category]?.label || s.category,
-			value: `${s.value.toFixed(1)}%`,
+			value: `${(typeof s.value === 'number' ? s.value : Number(s.value) || 0).toFixed(1)}%`,
 			color: categoryColors[s.category]?.main || '#6b7280'
 		}));
 

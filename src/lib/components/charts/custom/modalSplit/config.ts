@@ -10,6 +10,7 @@ export type Translations = Record<string, string>;
 
 export interface ModalSplitParams {
 	regionId?: string;
+	regionCandidates?: string[];
 }
 
 export interface ModalSplitRawData {
@@ -220,24 +221,172 @@ export function resolveGoalConfig(
 	};
 }
 
-/** Fetch modal split data from Directus */
+/** Layer hierarchy for determining which region data to prefer (smallest/most local first) */
+const layerHierarchy = [
+	'municipality',
+	'gemeinde',
+	'district',
+	'bezirk',
+	'kreis',
+	'landkreis',
+	'city',
+	'stadt',
+	'region',
+	'regierungsbezirk',
+	'bundesland',
+	'state',
+	'gruppe',
+	'country',
+	'land'
+];
+
+/** Get priority for a layer (lower = more local = preferred) */
+function getLayerPriority(layer: string): number {
+	const lowerLayer = layer.toLowerCase();
+	const index = layerHierarchy.findIndex((l) => lowerLayer.includes(l));
+	return index === -1 ? 999 : index;
+}
+
+export interface ModalSplitFetchResult {
+	data: ModalSplitRawData[];
+	updateDate: string;
+	source: string;
+	/** The region ID that had data (may differ from requested region if fallback was used) */
+	matchedRegionId: string | null;
+	/** The name of the matched region */
+	matchedRegionName: string | null;
+	/** The layer of the matched region */
+	matchedRegionLayer: string | null;
+	/** Whether a fallback to parent region was used */
+	usedFallback: boolean;
+}
+
+/** Fetch modal split data from Directus with parent fallback */
 export async function fetchData(
 	region: Region | null,
 	params: ModalSplitParams
-): Promise<{ data: ModalSplitRawData[]; updateDate: string; source: string }> {
+): Promise<ModalSplitFetchResult> {
 	const directus = getDirectusInstance(fetch);
-	const regionId = region?.id || params.regionId;
 
+	// Build region candidates: current region + parents (if available)
+	const regionCandidates: string[] = params.regionCandidates || [];
+	if (regionCandidates.length === 0 && region?.id) {
+		regionCandidates.push(region.id);
+	}
+	if (regionCandidates.length === 0 && params.regionId) {
+		regionCandidates.push(params.regionId);
+	}
+
+	// If no candidates, return empty
+	if (regionCandidates.length === 0) {
+		return {
+			data: [],
+			updateDate: '',
+			source: '',
+			matchedRegionId: null,
+			matchedRegionName: null,
+			matchedRegionLayer: null,
+			usedFallback: false
+		};
+	}
+
+	// Fetch data for all region candidates at once
 	const rawData = await directus.request(
 		readItems('mobility_modal_split', {
-			filter: regionId ? { region: { _eq: regionId } } : undefined,
+			filter: { region: { _in: regionCandidates } },
 			sort: ['year', 'category'],
 			fields: ['year', 'category', 'region', 'value', 'update', 'source'],
 			limit: -1
 		})
 	);
 
-	const data = (rawData as any[])
+	// Group data by region
+	const dataByRegion = new Map<string, any[]>();
+	for (const record of rawData as any[]) {
+		const regionId = record.region;
+		if (!dataByRegion.has(regionId)) {
+			dataByRegion.set(regionId, []);
+		}
+		dataByRegion.get(regionId)!.push(record);
+	}
+
+	// If we have data for the primary region (first candidate), use it
+	const primaryRegionId = regionCandidates[0];
+	if (dataByRegion.has(primaryRegionId) && dataByRegion.get(primaryRegionId)!.length > 0) {
+		const regionRecords = dataByRegion.get(primaryRegionId)!;
+		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, false);
+	}
+
+	// Otherwise, need to find the best fallback from parents
+	// Fetch region metadata for candidates that have data to determine layer priority
+	const candidatesWithData = regionCandidates.filter(
+		(id) => dataByRegion.has(id) && dataByRegion.get(id)!.length > 0
+	);
+
+	if (candidatesWithData.length === 0) {
+		return {
+			data: [],
+			updateDate: '',
+			source: '',
+			matchedRegionId: null,
+			matchedRegionName: null,
+			matchedRegionLayer: null,
+			usedFallback: false
+		};
+	}
+
+	// Fetch region metadata to determine which parent is closest
+	const regionsMetadata = await directus.request(
+		readItems('regions', {
+			filter: { id: { _in: candidatesWithData } },
+			fields: ['id', 'name', 'layer'],
+			limit: -1
+		})
+	) as Array<{ id: string; name: string; layer: string }>;
+
+	// Sort by layer priority (most local first) and by order in regionCandidates (closer parent first)
+	const sortedCandidates = candidatesWithData
+		.map((id) => {
+			const meta = regionsMetadata.find((r) => r.id === id);
+			return {
+				id,
+				name: meta?.name || null,
+				layer: meta?.layer || null,
+				layerPriority: meta?.layer ? getLayerPriority(meta.layer) : 999,
+				candidateIndex: regionCandidates.indexOf(id)
+			};
+		})
+		.sort((a, b) => {
+			// First sort by candidate index (preserves parent order - closer parent first)
+			if (a.candidateIndex !== b.candidateIndex) {
+				return a.candidateIndex - b.candidateIndex;
+			}
+			// Then by layer priority
+			return a.layerPriority - b.layerPriority;
+		});
+
+	// Use the best candidate (first after sorting)
+	const bestCandidate = sortedCandidates[0];
+	const bestRegionRecords = dataByRegion.get(bestCandidate.id)!;
+
+	return buildFetchResult(
+		bestRegionRecords,
+		bestCandidate.id,
+		bestCandidate.name,
+		bestCandidate.layer,
+		true // Used fallback since primary region had no data
+	);
+}
+
+/** Helper to build fetch result from raw records */
+function buildFetchResult(
+	rawRecords: any[],
+	regionId: string,
+	regionName: string | null,
+	regionLayer: string | null,
+	usedFallback: boolean
+): ModalSplitFetchResult {
+	const data = rawRecords
 		.map((r) => ({
 			year: typeof r.year === 'string' ? Number(r.year) : r.year,
 			category: r.category,
@@ -247,20 +396,24 @@ export async function fetchData(
 		.filter((r) => !isNaN(r.year) && !isNaN(r.value));
 
 	// Get the most recent update date from the data
-	const updateDates = (rawData as any[])
+	const updateDates = rawRecords
 		.map((r) => r.update)
 		.filter(Boolean)
 		.sort()
 		.reverse();
-	const updateDate = updateDates[0];
+	const updateDate = updateDates[0] || '';
 
-	// Get source from the first record (assuming all records have the same source)
-	const source = (rawData as any[]).find((r) => r.source)?.source;
+	// Get source from the first record
+	const source = rawRecords.find((r) => r.source)?.source || '';
 
 	return {
 		data,
 		updateDate,
-		source
+		source,
+		matchedRegionId: regionId,
+		matchedRegionName: regionName,
+		matchedRegionLayer: regionLayer,
+		usedFallback
 	};
 }
 
@@ -417,29 +570,72 @@ export function getTableRows(data: ModalSplitRawData[]): any[] {
 export function getPlaceholders(
 	data: ModalSplitRawData[],
 	region: Region | null,
-	goalConfig: ResolvedGoalConfig | null
-): Record<string, string | number> {
+	goalConfig: ResolvedGoalConfig | null,
+	matchedRegionName?: string | null
+): Record<string, string | number | boolean> {
 	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
-	const latestYear = years[years.length - 1];
-	const latestData = data.filter((d) => d.year === latestYear);
+	const firstYear = years[0];
+	const lastYear = years[years.length - 1];
 
-	const total = latestData.reduce((sum, d) => sum + d.value, 0);
-	const sustainableTotal = latestData
+	// Calculate sustainable share for first year
+	const firstYearData = data.filter((d) => d.year === firstYear);
+	const firstYearTotal = firstYearData.reduce((sum, d) => sum + d.value, 0);
+	const firstYearSustainable = firstYearData
 		.filter((d) => sustainableCategories.includes(d.category))
 		.reduce((sum, d) => sum + d.value, 0);
+	const firstYearEcoShare = firstYearTotal ? Math.round((firstYearSustainable / firstYearTotal) * 100) : 0;
 
-	const sustainablePercent = total ? (sustainableTotal / total) * 100 : 0;
+	// Calculate sustainable share for last year
+	const lastYearData = data.filter((d) => d.year === lastYear);
+	const lastYearTotal = lastYearData.reduce((sum, d) => sum + d.value, 0);
+	const lastYearSustainable = lastYearData
+		.filter((d) => sustainableCategories.includes(d.category))
+		.reduce((sum, d) => sum + d.value, 0);
+	const lastYearEcoShare = lastYearTotal ? Math.round((lastYearSustainable / lastYearTotal) * 100) : 0;
+
+	// Calculate change in eco share
+	const ecoShareChange = lastYearEcoShare - firstYearEcoShare;
+	const ecoShareChangeDirection = ecoShareChange >= 0 ? 'Zuwachs' : 'Rückgang';
+	const ecoShareChangeAbs = Math.abs(ecoShareChange);
+	const yearSpan = lastYear - firstYear;
+
+	// Goal-related placeholders
+	const hasGoal = !!goalConfig;
+	const goalYear = goalConfig?.endYear || 0;
+	const goalEcoShare = goalConfig?.targetSustainablePercent || 0;
+	const goalChangeAbs = hasGoal ? Math.abs(goalEcoShare - lastYearEcoShare) : 0;
+	const goalYearSpan = hasGoal ? goalYear - lastYear : 0;
+
+	// Check if we have historical data (more than one year)
+	const hasHistoricalData = years.length > 1;
+
+	// Use matched region name if fallback was used, otherwise use the region prop
+	const displayRegionName = matchedRegionName || region?.name || 'Region';
 
 	return {
-		regionName: region?.name || 'Region',
-		latestYear,
-		sustainablePercent: Math.round(sustainablePercent),
-		motorizedPercent: Math.round(100 - sustainablePercent),
+		regionName: displayRegionName,
+		latestYear: lastYear,
+		sustainablePercent: lastYearEcoShare,
+		motorizedPercent: Math.round(100 - lastYearEcoShare),
 		targetYear: goalConfig?.endYear || '',
 		targetPercent: goalConfig?.targetSustainablePercent || '',
-		dataYearStart: years[0] || '',
-		dataYearEnd: latestYear || '',
-		hasGoal: goalConfig ? 'true' : 'false'
+		dataYearStart: firstYear || '',
+		dataYearEnd: lastYear || '',
+
+		// New placeholders for info text
+		firstYear,
+		lastYear,
+		firstYearEcoShare,
+		lastYearEcoShare,
+		ecoShareChangeDirection,
+		ecoShareChangeAbs,
+		yearSpan,
+		hasHistoricalData,
+		hasGoal,
+		goalYear,
+		goalEcoShare,
+		goalChangeAbs,
+		goalYearSpan
 	};
 }
 
@@ -451,7 +647,8 @@ export function buildChartData(
 	region: Region | null,
 	showHistoric: boolean = false,
 	translations: Translations,
-	goalConfig: ResolvedGoalConfig | null = null
+	goalConfig: ResolvedGoalConfig | null = null,
+	matchedRegionName?: string | null
 ): ChartData {
 	return {
 		raw: data,
@@ -460,7 +657,7 @@ export function buildChartData(
 			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
-		placeholders: getPlaceholders(data, region, goalConfig),
+		placeholders: getPlaceholders(data, region, goalConfig, matchedRegionName),
 		meta: {
 			updateDate,
 			source,

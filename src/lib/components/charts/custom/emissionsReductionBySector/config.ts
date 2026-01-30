@@ -444,6 +444,72 @@ export function getTableColumns(unit: string): TableColumn[] {
 	];
 }
 
+/** Context about the page region (stable, not affected by user toggling layers) */
+export interface PageRegionContext {
+	name: string;
+	layer: string;
+	parents?: Array<{ id: string; layer: string; name?: string; layer_label?: string }>;
+}
+
+/** Compute static info-text placeholders from the page region's data */
+export function computeInfoTextPlaceholders(
+	results: RegionResult[],
+	pageRegion: PageRegionContext | null
+): Record<string, string | number | boolean> {
+	if (results.length === 0) return {};
+
+	// Match the result that belongs to the page region (by name), fall back to first result
+	const regionName = pageRegion?.name ?? results[0].name;
+	const pageResult = results.find((r) => r.name === regionName) ?? results[0];
+
+	const rawData = pageResult.data.filter((d) => d.source !== 'climate-target');
+	const years = [...new Set(rawData.map((d) => d.year))].sort((a, b) => a - b);
+	const lastDataYear = years[years.length - 1];
+
+	// List of all available regions (for intro text)
+	const availableRegions = results.map((r) => r.name).join(', ');
+
+	// State name: either the region itself (if it's a state) or the parent state
+	const pageLayer = pageRegion?.layer ?? '';
+	const isState = pageLayer === 'state';
+	const parentState = pageRegion?.parents?.find(
+		(p) => p.layer === 'state' || p.layer_label === 'Bundesland'
+	);
+	const stateName = isState ? (pageRegion?.name ?? '') : (parentState?.name ?? '');
+
+	// Boolean checks for conditionals
+	const hasParentState = !!(stateName && !isState);
+
+	// Check if there's a switch with state layer available (for methodology text)
+	const hasStateSwitch = results.some(
+		(r) => r.key === 'state' || r.key === 'bundesland' || r.layer_label === 'Bundesland'
+	);
+
+	// Region ID for conditional content
+	// Use in templates as {{#if region_REGION_ID}}...{{/if}}
+	// e.g., {{#if region_08111000}}Stuttgart-specific content{{/if}}
+	const regionId = pageResult.id;
+
+	// Build dynamic placeholders object
+	const placeholders: Record<string, string | number | boolean> = {
+		availableRegions,
+		regionId,
+		isState,
+		hasParentState,
+		hasStateSwitch,
+		stateName,
+		lastDataYear: lastDataYear?.toString() ?? ''
+	};
+
+	// Add dynamic region boolean: region_<id> = true for current region
+	// This allows {{#if region_abc123}}...{{/if}} in templates
+	if (regionId) {
+		placeholders[`region_${regionId}`] = true;
+	}
+
+	return placeholders;
+}
+
 /** Generate placeholders for text templates */
 export function getPlaceholders(
 	region: RegionResult,
@@ -520,7 +586,8 @@ export function buildChartData(
 	summary: ReductionSummary | null,
 	useMegatons: boolean,
 	dataSource: string,
-	locale: string = 'de'
+	locale: string = 'de',
+	infoTextPlaceholders: Record<string, string | number | boolean> = {}
 ): ChartData {
 	const unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 
@@ -534,7 +601,10 @@ export function buildChartData(
 			rows: sectors,
 			filename: 'emissions_reduction_progress'
 		},
-		placeholders: getPlaceholders(region, sectors, summary, useMegatons, locale),
+		placeholders: {
+			...getPlaceholders(region, sectors, summary, useMegatons, locale),
+			...infoTextPlaceholders
+		},
 		meta: {
 			updateDate,
 			source: dataSource,
