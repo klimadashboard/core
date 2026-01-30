@@ -519,7 +519,7 @@ export function computeInfoTextPlaceholders(
 		? (pageRegion?.name ?? '')
 		: (parentState?.name ?? '');
 
-	const isStuttgart = regionName === 'Stuttgart';
+	const isCity = pageLayer === 'municipality' || pageLayer === 'district';
 	const hasParentState = !!(stateName && !isState);
 
 	// Climate target data from the page region's result specifically
@@ -549,7 +549,7 @@ export function computeInfoTextPlaceholders(
 		lastYearTotal: fmt(lastYearTotal),
 		totalReduction: fmtReduction,
 		stateName,
-		isStuttgart,
+		isCity,
 		isState,
 		hasParentState,
 		hasClimateTargetStatic,

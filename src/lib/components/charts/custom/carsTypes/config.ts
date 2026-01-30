@@ -88,7 +88,14 @@ export const fallbackColors = ['#10B981', '#3B82F6', '#94A3B8', '#EF4444', '#F59
 /** Fetch Bestand data from the mobility cars endpoint */
 async function fetchBestandData(
 	region: Region | null
-): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string; hasPrivacySuppression?: boolean } | null> {
+): Promise<{
+	data: VehicleRawData;
+	categories: string[];
+	updateDate: string;
+	regionName: string;
+	source: string;
+	hasPrivacySuppression?: boolean;
+} | null> {
 	const country = getCountryCode();
 
 	// Use the custom endpoint that handles region lookup and aggregation
@@ -116,7 +123,8 @@ async function fetchBestandData(
 	// The endpoint returns { region: {...}, data: { [year]: { [category]: value } } }
 	const yearData = result.data || {};
 	const periods = Object.keys(yearData).sort();
-	const regionName = result.region?.name || region?.name || (country === 'DE' ? 'Deutschland' : country);
+	const regionName =
+		result.region?.name || region?.name || (country === 'DE' ? 'Deutschland' : country);
 
 	if (periods.length === 0) {
 		return null;
@@ -184,7 +192,14 @@ async function fetchBestandData(
 /** Fetch Neuzulassungen data from Directus */
 async function fetchNeuzulassungenData(
 	region: Region | null
-): Promise<{ data: VehicleRawData; categories: string[]; updateDate: string; regionName: string; source: string; hasPrivacySuppression?: boolean } | null> {
+): Promise<{
+	data: VehicleRawData;
+	categories: string[];
+	updateDate: string;
+	regionName: string;
+	source: string;
+	hasPrivacySuppression?: boolean;
+} | null> {
 	const country = getCountryCode();
 	const regionCode = region?.id || country;
 	const defaultRegionName =
@@ -273,9 +288,10 @@ export async function fetchDataWithFallback(
 	const countryName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 
 	// If no candidates, add country as fallback
-	const candidates = regionCandidates.length > 0
-		? regionCandidates
-		: [{ id: country, name: countryName, layer: 'country', layer_label: 'Land' }];
+	const candidates =
+		regionCandidates.length > 0
+			? regionCandidates
+			: [{ id: country, name: countryName, layer: 'country', layer_label: 'Land' }];
 
 	// Try fetching for each candidate in parallel
 	const results = await Promise.all(
@@ -288,9 +304,10 @@ export async function fetchDataWithFallback(
 					layer: candidate.layer || 'unknown'
 				} as Region;
 
-				const result = params.mode === 'neuzulassungen'
-					? await fetchNeuzulassungenData(regionObj)
-					: await fetchBestandData(regionObj);
+				const result =
+					params.mode === 'neuzulassungen'
+						? await fetchNeuzulassungenData(regionObj)
+						: await fetchBestandData(regionObj);
 
 				if (result && Object.keys(result.data.shares).length > 0) {
 					return {
@@ -334,8 +351,12 @@ export async function checkDataAvailabilityWithFallback(
 	return {
 		hasBestand: bestandResult !== null,
 		hasNeuzulassungen: neuzulassungenResult !== null,
-		bestandRegion: bestandResult ? { id: bestandResult.regionId, name: bestandResult.regionName } : null,
-		neuzulassungenRegion: neuzulassungenResult ? { id: neuzulassungenResult.regionId, name: neuzulassungenResult.regionName } : null
+		bestandRegion: bestandResult
+			? { id: bestandResult.regionId, name: bestandResult.regionName }
+			: null,
+		neuzulassungenRegion: neuzulassungenResult
+			? { id: neuzulassungenResult.regionId, name: neuzulassungenResult.regionName }
+			: null
 	};
 }
 
@@ -427,7 +448,10 @@ export function buildWaffleGrid(waffleData: VehicleShareData[]): string[] {
 
 /** Format percentage with German locale (comma as decimal separator) */
 function formatPercent(value: number): string {
-	return (value * 100).toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '%';
+	return (
+		(value * 100).toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) +
+		'%'
+	);
 }
 
 /** Get table columns */
@@ -439,23 +463,20 @@ export function getTableColumns(): TableColumn[] {
 			key: 'share',
 			label: 'Anteil',
 			align: 'right',
-			format: (v: number) => (v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'
+			format: (v: number) =>
+				(v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) +
+				'%'
 		}
 	];
 }
 
 /** Generate dynamic title based on mode and electric share */
-function generateTitle(
-	waffleData: VehicleShareData[],
-	regionName: string,
-	mode: DataMode
-): string {
+function generateTitle(waffleData: VehicleShareData[], regionName: string, mode: DataMode): string {
 	const elektro = waffleData.find((c) => c.key === 'Elektro');
 	const elektroShare = elektro?.share ?? 0;
 	const elektroPercent = Math.round(elektroShare * 100);
 
 	if (mode === 'bestand') {
-		// For Bestand: "In Stuttgart werden 84% der Autos mit fossilen Kraftstoffen betankt - Elektroautos machen bisher lediglich 6% aus"
 		const benzin = waffleData.find((c) => c.key === 'Benzin');
 		const diesel = waffleData.find((c) => c.key === 'Diesel');
 		const fossilShare = (benzin?.share ?? 0) + (diesel?.share ?? 0);
@@ -543,7 +564,8 @@ export async function checkDataAvailability(
 
 	// Check if data has meaningful content
 	const hasBestand = bestandResult !== null && Object.keys(bestandResult.data.shares).length > 0;
-	const hasNeuzulassungen = neuzulassungenResult !== null && Object.keys(neuzulassungenResult.data.shares).length > 0;
+	const hasNeuzulassungen =
+		neuzulassungenResult !== null && Object.keys(neuzulassungenResult.data.shares).length > 0;
 
 	return { hasBestand, hasNeuzulassungen };
 }
@@ -559,7 +581,12 @@ export function buildChartData(
 	hasData: boolean = true,
 	availability?: { hasBestand: boolean; hasNeuzulassungen: boolean },
 	source?: string,
-	fallbackInfo?: { originalRegionName: string; dataRegionName: string; originalLayerLabel?: string; dataLayerLabel?: string },
+	fallbackInfo?: {
+		originalRegionName: string;
+		dataRegionName: string;
+		originalLayerLabel?: string;
+		dataLayerLabel?: string;
+	},
 	regionLayerLabel?: string,
 	hasPrivacySuppression?: boolean,
 	privacyNote?: string
@@ -604,9 +631,10 @@ export function buildChartData(
 	}
 
 	// Build regionName with layer_label prefix if available (e.g., "Landkreis Meißen")
-	const displayRegionName = (fallbackInfo?.dataLayerLabel || regionLayerLabel) && regionName
-		? `${fallbackInfo?.dataLayerLabel || regionLayerLabel} ${regionName}`
-		: regionName;
+	const displayRegionName =
+		(fallbackInfo?.dataLayerLabel || regionLayerLabel) && regionName
+			? `${fallbackInfo?.dataLayerLabel || regionLayerLabel} ${regionName}`
+			: regionName;
 
 	return {
 		hasData,

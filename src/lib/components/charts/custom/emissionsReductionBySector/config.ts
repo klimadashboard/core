@@ -314,9 +314,9 @@ export function calculateSectorProgress(
 		.reduce((sum, d) => sum + d.value, 0);
 
 	// Base year total: if base year differs from first year, try to get that year's data
-	const baseYearTotalRaw = barData
-		.filter((d) => d.year === baseYear)
-		.reduce((sum, d) => sum + d.value, 0) || firstYearTotalRaw;
+	const baseYearTotalRaw =
+		barData.filter((d) => d.year === baseYear).reduce((sum, d) => sum + d.value, 0) ||
+		firstYearTotalRaw;
 
 	const lastYearTotalRaw = barData
 		.filter((d) => d.year === lastYear)
@@ -339,7 +339,8 @@ export function calculateSectorProgress(
 	for (const category of region.categoryOrder) {
 		// Use base year for sector calculations
 		const baseYearData = barData.find((d) => d.year === baseYear && d.category === category);
-		const firstYearData = baseYearData || barData.find((d) => d.year === firstYear && d.category === category);
+		const firstYearData =
+			baseYearData || barData.find((d) => d.year === firstYear && d.category === category);
 		const lastYearData = barData.find((d) => d.year === lastYear && d.category === category);
 
 		if (!firstYearData && !lastYearData) continue;
@@ -486,8 +487,6 @@ export function computeInfoTextPlaceholders(
 	);
 
 	// Region ID for conditional content
-	// Use in templates as {{#if region_REGION_ID}}...{{/if}}
-	// e.g., {{#if region_08111000}}Stuttgart-specific content{{/if}}
 	const regionId = pageResult.id;
 
 	// Build dynamic placeholders object
@@ -540,9 +539,20 @@ export function getPlaceholders(
 
 	// Calculate change from base year to last year
 	const totalChange = summary.lastYearTotal - summary.baseYearTotal;
-	const changePercent = summary.baseYearTotal > 0 ? Math.abs(totalChange / summary.baseYearTotal) * 100 : 0;
-	const changeVerb = totalChange < 0 ? (locale === 'de' ? 'gesunken' : 'decreased') : (locale === 'de' ? 'gestiegen' : 'increased');
-	const formattedChangePercent = changePercent.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+	const changePercent =
+		summary.baseYearTotal > 0 ? Math.abs(totalChange / summary.baseYearTotal) * 100 : 0;
+	const changeVerb =
+		totalChange < 0
+			? locale === 'de'
+				? 'gesunken'
+				: 'decreased'
+			: locale === 'de'
+				? 'gestiegen'
+				: 'increased';
+	const formattedChangePercent = changePercent.toLocaleString(locale === 'de' ? 'de-DE' : 'en-US', {
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1
+	});
 
 	return {
 		regionName: region.name,
