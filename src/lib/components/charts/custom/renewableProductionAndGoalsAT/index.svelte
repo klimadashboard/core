@@ -8,7 +8,7 @@
 	let dataGoals;
 	let dataProduction = {};
 
-	// Smooth data to monthly if more frequent data is available
+	// Smooth data to ~monthly intervals, working backwards from the latest data point
 	function smoothToMonthly(data) {
 		if (!data || data.length < 2) return data;
 
@@ -21,21 +21,27 @@
 
 		if (avgInterval >= 25) return data;
 
-		const monthlyData = new Map();
-		data.forEach((d) => {
-			const key = `${d.x.getFullYear()}-${String(d.x.getMonth() + 1).padStart(2, '0')}`;
-			if (!monthlyData.has(key)) {
-				monthlyData.set(key, { values: [], date: new Date(d.x.getFullYear(), d.x.getMonth(), 15) });
-			}
-			monthlyData.get(key).values.push(d.y);
-		});
+		// Sort by date and get the latest data point
+		const sorted = [...data].sort((a, b) => a.x - b.x);
+		const latestDate = sorted[sorted.length - 1].x;
+		const earliestDate = sorted[0].x;
 
-		return Array.from(monthlyData.entries())
-			.map(([, { values, date }]) => ({
-				x: date,
-				y: values.reduce((a, b) => a + b, 0) / values.length
-			}))
-			.sort((a, b) => a.x - b.x);
+		// Create 30-day buckets working backwards from the latest date
+		const buckets = [];
+		let bucketEnd = latestDate;
+		while (bucketEnd >= earliestDate) {
+			const bucketStart = new Date(bucketEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+			const bucketData = sorted.filter((d) => d.x > bucketStart && d.x <= bucketEnd);
+			if (bucketData.length > 0) {
+				buckets.push({
+					x: bucketEnd,
+					y: bucketData.reduce((sum, d) => sum + d.y, 0) / bucketData.length
+				});
+			}
+			bucketEnd = bucketStart;
+		}
+
+		return buckets.sort((a, b) => a.x - b.x);
 	}
 
 	onMount(async () => {
