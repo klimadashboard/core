@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @config '../../tailwind.config.cjs';
 
+@utility no-scrollbar {
+	@apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
 @utility container {
 	margin-inline: auto;
 	padding-inline: 1rem;

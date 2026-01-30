@@ -39,7 +39,8 @@ export async function load({ fetch, params }) {
 			readTranslations({
 				filter: {
 					language: localeLong
-				}
+				},
+				limit: -1
 			})
 		);
 		const translations = translationsData.reduce((acc, { key, value }) => {

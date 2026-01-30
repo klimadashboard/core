@@ -6,6 +6,6 @@
 
 <div class="">
 	<div class="container my-16">
-		<Chart id={data.id} />
+		<Chart id={data.id} type="card" />
 	</div>
 </div>

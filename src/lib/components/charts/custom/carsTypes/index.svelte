@@ -1,427 +1,445 @@
-<script>
-	import Map from './Map.svelte';
-	import Inspector from './Inspector.svelte';
-	import Switch from '$lib/components/Switch.svelte';
-	import { colors } from './scales';
-	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
+<!-- $lib/components/charts/custom/vehicleRegistrations/index.svelte -->
+<script lang="ts">
 	import { page } from '$app/state';
-	import Loader from '$lib/components/Loader.svelte';
+	import type { ChartData } from '$lib/components/charts/types';
+	import type { Region } from '$lib/utils/getRegion';
+	import {
+		fetchDataWithFallback,
+		buildChartData,
+		buildWaffleData,
+		checkDataAvailabilityWithFallback,
+		categoryConfig,
+		type VehicleRawData,
+		type VehicleShareData,
+		type DataMode
+	} from './config';
+	import { formatNumber } from '$lib/utils/formatters';
+	import Switch from '$lib/components/Switch.svelte';
+	import { tick } from 'svelte';
+	import { t } from '$lib/utils/t';
 
-	import { getRegions } from '$lib/utils/regions';
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItem } from '@directus/sdk';
-	import { PUBLIC_VERSION } from '$env/static/public';
+	// Props from Card slot
+	export let region: Region | null = null;
+	export let regionLoading: boolean = false;
+	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
+	export let layer: 'municipality' | 'district' = 'district';
+	export let mode: DataMode | undefined = undefined;
 
-	let minPeriod;
-	let maxPeriod;
-	let source;
-	let countryName;
-	let regions = [];
-	let selectedPeriodIndex;
-	let periods = [];
+	// Check URL for mode parameter (for embeds)
+	$: urlMode = page.url?.searchParams?.get('mode') as DataMode | null;
+	$: initialMode = urlMode || mode;
 
-	$: console.log(page.data);
+	// State
+	let data: VehicleRawData | null = null;
+	let waffleData: VehicleShareData[] = [];
+	let regionName: string = '';
+	let loading = true;
+	let error: string | null = null;
+	let visibleCells = new Set<number>();
+	let animationComplete = false;
 
-	const availableLayers = [
-		{
-			layer: 'municipality',
-			layers: 'municipalities'
-		},
-		{
-			layer: 'district',
-			layers: 'districts'
-		}
+	// Data availability state
+	let hasBestand = false;
+	let hasNeuzulassungen = false;
+	let availabilityChecked = false;
+
+	// Mode switch
+	let activeMode: DataMode = 'bestand';
+
+	// Build region candidates from current region + parents (for fallback)
+	$: regionCandidates = region
+		? [
+				{ id: region.id, name: region.name, layer: region.layer, layer_label: region.layer_label },
+				...(region.parents?.map((p: any) => ({
+					id: p.id,
+					name: p.name || 'Parent region',
+					layer: p.layer,
+					layer_label: p.layer_label
+				})) || [])
+			]
+		: [];
+
+	// Track region candidates for reactivity (stringified for comparison)
+	$: regionCandidatesKey = JSON.stringify(regionCandidates.map(c => c.id));
+
+	// Dynamic mode views based on availability
+	$: modeViews = [
+		...(hasBestand ? [{ key: 'bestand', label: 'Bestand' }] : []),
+		...(hasNeuzulassungen ? [{ key: 'neuzulassungen', label: 'Neuzulassungen' }] : [])
 	];
 
-	// NEW: layer switching (matches Map.svelte)
-	let selectedLayer =
-		PUBLIC_VERSION.toUpperCase() === 'AT'
-			? availableLayers.find((d) => d.layer == page.data.page?.layer)?.layers
-			: 'districts';
-	let previousLayer = selectedLayer;
+	// Show switch if at least one mode is available
+	$: showSwitch = hasBestand || hasNeuzulassungen;
 
-	const LAYER_TO_ENDPOINT = {
-		municipalities: 'municipality',
-		districts: 'district'
-	};
+	// Derived params
+	$: params = { layer, mode: activeMode };
 
-	const viewPresets = [
-		{ label: 'Elektro', key: 'Elektro', colorKey: 'electric', publicVersions: ['at', 'de'] },
-		{ label: 'Hybrid', key: 'Hybrid', colorKey: 'hybrid', publicVersions: ['at'] },
-		{
-			label: 'Plug-in-Hybrid',
-			key: 'Plug-in-Hybrid',
-			colorKey: 'plugInHybrid',
-			publicVersions: ['de']
-		},
-		{
-			label: 'Hybrid (ohne Plug-in)',
-			key: 'Hybrid (ohne Plug-in)',
-			colorKey: 'hybrid',
-			publicVersions: ['de']
-		},
-		{ label: 'Benzin', key: 'Benzin', colorKey: 'benzin', publicVersions: ['at', 'de'] },
-		{ label: 'Diesel', key: 'Diesel', colorKey: 'diesel', publicVersions: ['at', 'de'] },
-		{ label: 'Sonstige', key: 'Sonstige', colorKey: 'other', publicVersions: ['at', 'de'] }
-	];
-
-	$: views = viewPresets.filter((v) => v.publicVersions.includes(PUBLIC_VERSION));
-
-	// reactive defaults (run once on init)
-	$: selectedView = views[0].key;
-	$: selectedRegion = null;
-
-	function normalizeNumber(v) {
-		const n = Number(v);
-		return Number.isFinite(n) ? n : 0;
+	// Get color for a category
+	function getColor(key: string): string {
+		return categoryConfig[key]?.color || '#6B7280';
 	}
 
-	function yearsFromEndpointData(obj) {
-		// obj shape: { "2019": { "Benzin": 2, "Diesel": 1, ... }, "2025": {...}, ... }
-		return Object.keys(obj || {})
-			.map((y) => parseInt(y))
-			.filter((y) => Number.isFinite(y))
-			.sort((a, b) => a - b);
-	}
+	// Sort waffle data by cells (percentage) descending
+	$: sortedWaffleData = [...waffleData].sort((a, b) => b.cells - a.cells);
 
-	// load data reactively (also depends on selectedLayer)
-	$: promise = getData(selectedLayer);
+	// Build column-first grid (left to right, biggest to smallest)
+	// 20 columns x 5 rows = 100 cells, filled column by column via CSS grid-auto-flow: column
+	$: columnGrid = buildColumnGrid(sortedWaffleData);
 
-	async function getData(layerKey /* 'municipalities' | 'districts' */) {
-		const directus = getDirectusInstance(fetch);
-		const countryCode = PUBLIC_VERSION.toUpperCase();
+	function buildColumnGrid(data: VehicleShareData[]): { key: string }[] {
+		const grid: { key: string }[] = [];
 
-		const targetLayer = LAYER_TO_ENDPOINT[layerKey];
-
-		// 1) fetch aggregated data from the new endpoint (with meta)
-		const url = `https://base.klimadashboard.org/get-mobility-cars?layer=${encodeURIComponent(targetLayer)}&country=${encodeURIComponent(countryCode)}&includeMeta=true`;
-
-		const resp = await fetch(url);
-		if (!resp.ok) {
-			throw new Error(`Endpoint error ${resp.status}`);
-		}
-		/** @type {Array<{ region: {id:string, name?:string, layer?:string, country?:string, code?:string, code_short?:string}, aggregated_from?: string, data: Record<string, Record<string, number>> }>} */
-		const agg = await resp.json();
-
-		// 2) get region metadata (outlines, centers, etc.)
-		const allRegions = await getRegions();
-		// include the country polygon too (you rely on it later)
-		const filtered = allRegions
-			.filter(
-				(r) => r.country === countryCode && (r.layer === targetLayer || r.layer === 'country')
-			)
-			// unique by code (as before)
-			.filter((r, i, arr) => arr.findIndex((rr) => rr.code === r.code) === i);
-
-		// country name (as before)
-		countryName = 'TODO';
-
-		// 3) compute periods across all regions from endpoint
-		const allPeriods = Array.from(
-			new Set(agg.flatMap((item) => yearsFromEndpointData(item.data)))
-		).sort((a, b) => a - b);
-
-		periods = allPeriods;
-		selectedPeriodIndex = periods.length - 1;
-
-		// 4) source label
-		if (PUBLIC_VERSION === 'de') {
-			source =
-				"<a href='https://www-genesis.destatis.de/datenbank/online/url/802b92c5'>Kraftfahrtbundesamt (2025)</a>";
-		} else {
-			source = 'STATISTIK AUSTRIA (Bestand, diverse Jahre)';
-		}
-
-		// 5) transform endpoint payload into the same per-region shape you pass to sub-components
-		const catsForCalc = views.filter((d) => d.key !== 'Sonstige').map((d) => d.key);
-
-		const totalForYear = (regionDataObj, year) =>
-			normalizeNumber(regionDataObj?.[String(year)]?.['Insgesamt']);
-
-		const regionsWithData = filtered.map((regionMeta) => {
-			const match =
-				agg.find((a) => a.region?.code && a.region.code === regionMeta.code) ||
-				agg.find((a) => a.region?.code_short && a.region.code_short === regionMeta.code);
-
-			const regionDataObj = match?.data || {};
-
-			const absoluteByCategory = {};
-			const sharesByCategory = {};
-
-			catsForCalc.forEach((catKey) => {
-				absoluteByCategory[catKey] = periods.map((p) => {
-					const v = normalizeNumber(regionDataObj?.[String(p)]?.[catKey]);
-					return { period: p, value: v };
-				});
-				sharesByCategory[catKey] = absoluteByCategory[catKey].map(({ period, value }) => {
-					const total = totalForYear(regionDataObj, period);
-					return { period, value: total > 0 ? (value / total) * 100 : 0 };
-				});
-			});
-
-			// Sonstige = Gesamt − known
-			absoluteByCategory.Sonstige = periods.map((p, i) => {
-				const total = totalForYear(regionDataObj, p);
-				const known = catsForCalc
-					.map((k) => absoluteByCategory[k]?.[i]?.value || 0)
-					.reduce((a, b) => a + b, 0);
-				return { period: p, value: Math.max(0, total - known) };
-			});
-
-			sharesByCategory.Sonstige = absoluteByCategory.Sonstige.map(({ period, value }) => {
-				const total = totalForYear(regionDataObj, period);
-				return { period, value: total > 0 ? (value / total) * 100 : 0 };
-			});
-
-			return {
-				...regionMeta,
-				outline: regionMeta.outline_simple,
-				center: regionMeta.center,
-				layer: regionMeta.layer, // municipality or district or country
-				name: regionMeta.name,
-				parents: regionMeta.parents, // keep parents for selection logic
-				absoluteByCategory,
-				sharesByCategory
-			};
-		});
-
-		regions = regionsWithData;
-
-		// initial region selection logic (first load or when layer changes)
-		updateSelectedRegionAfterLayerChange();
-
-		// global min/max years
-		minPeriod = Math.min(...periods);
-		maxPeriod = Math.max(...periods);
-
-		// sanity: warn on unknown categories
-		const allCategories = Array.from(
-			new Set(
-				agg.flatMap((a) => Object.values(a.data || {}).flatMap((byCat) => Object.keys(byCat || {})))
-			)
-		);
-		const knownCategories = [
-			'Elektro',
-			'Benzin',
-			'Diesel',
-			'Insgesamt',
-			'Hybrid',
-			'Plug-in-Hybrid',
-			'Hybrid (ohne Plug-in)',
-			'Hybrid (ohne Plug-in)',
-			'Hybrid (ohne Plug-In)'
-		];
-		const unknownCategories = allCategories.filter((cat) => !knownCategories.includes(cat));
-		if (unknownCategories.length > 0) {
-			console.warn('🚨 Unknown vehicle categories found in endpoint data:', unknownCategories);
-		}
-
-		return { regions, minPeriod, maxPeriod, countryName };
-	}
-
-	// --- Layer-aware region selection (implements your rule set #71) ---
-	function updateSelectedRegionAfterLayerChange() {
-		// If nothing selected yet → country or page match
-		const national = regions.find((r) => r.layer === 'country');
-
-		// Try page context first (if it exists and matches current layer)
-		const pageCode = page?.data?.page?.code;
-		if (pageCode) {
-			const inLayer = regions.find((r) => r.code === pageCode);
-			if (inLayer) {
-				selectedRegion = inLayer.code;
-				return;
+		for (const category of data) {
+			for (let i = 0; i < category.cells; i++) {
+				grid.push({ key: category.key });
 			}
 		}
 
-		// If we already have a selection, try to preserve intent across layers
-		const prevLayer = previousLayer;
-		const nextLayer = selectedLayer;
-		const currentObj = regions.find((r) => r.code === selectedRegion);
+		return grid;
+	}
 
-		// If we had no valid selection object, fall back to page match or country
-		if (!currentObj) {
-			const match = findMatchingRegion(page.data.page, regions);
-			selectedRegion = match ?? national?.code ?? selectedRegion;
-			previousLayer = selectedLayer;
+	// Animation effect - animate by column (left to right)
+	async function startAnimation() {
+		visibleCells = new Set();
+		animationComplete = false;
+
+		// Wait for reactive updates to complete
+		await tick();
+
+		let count = 0;
+		const totalCells = columnGrid.length;
+
+		if (totalCells === 0) {
+			animationComplete = true;
 			return;
 		}
 
-		// Determine direction (municipalities < districts)
-		const order = { municipalities: 0, districts: 1 };
-		const movingUp = order[prevLayer] < order[nextLayer];
-		const movingDown = order[prevLayer] > order[nextLayer];
-
-		// Moving up: pick parent in target layer
-		if (movingUp && Array.isArray(currentObj.parents)) {
-			const targetSingular = LAYER_TO_ENDPOINT[selectedLayer]; // 'district' | 'municipality'
-			const parent = currentObj.parents.find((p) => p.layer === targetSingular);
-			if (parent) {
-				const match = regions.find((r) => r.id === parent.id);
-				if (match) {
-					selectedRegion = match.code;
-					previousLayer = selectedLayer;
-					return;
-				}
+		const interval = setInterval(() => {
+			if (count < totalCells) {
+				visibleCells.add(count);
+				visibleCells = visibleCells; // Trigger reactivity
+				count++;
 			}
-		}
+			if (count >= totalCells) {
+				clearInterval(interval);
+				animationComplete = true;
+			}
+		}, 25);
+	}
 
-		// Moving down: pick any child under the previously selected region
-		if (movingDown) {
-			const targetSingular = LAYER_TO_ENDPOINT[selectedLayer];
-			const child = regions
-				.slice()
-				.sort((a, b) => a.code.localeCompare(b.code))
-				.find((r) => r.layer === targetSingular && r.parents?.some((p) => p.id === currentObj.id));
-			if (child) {
-				selectedRegion = child.code;
-				previousLayer = selectedLayer;
+	// Check availability when region candidates change or region loading completes
+	$: if (!regionLoading && regionCandidatesKey !== undefined) {
+		checkAvailability();
+	}
+
+	async function checkAvailability() {
+		loading = true;
+		availabilityChecked = false;
+
+		try {
+			const availability = await checkDataAvailabilityWithFallback(regionCandidates);
+			hasBestand = availability.hasBestand;
+			hasNeuzulassungen = availability.hasNeuzulassungen;
+			availabilityChecked = true;
+
+			// If no data is available at all, report hasData: false
+			if (!hasBestand && !hasNeuzulassungen) {
+				data = null;
+				waffleData = [];
+				const emptyChartData = buildChartData(
+					{ year: 0, total: 0, categories: {}, shares: {} },
+					[],
+					new Date().toISOString(),
+					'',
+					region,
+					'bestand',
+					false
+				);
+				onChartData?.(emptyChartData);
+				loading = false;
 				return;
 			}
-		}
 
-		// Same layer or no mapping → keep if exists in this layer, else country
-		const stillExists = regions.find((r) => r.code === selectedRegion);
-		if (!stillExists) {
-			selectedRegion = national?.code ?? selectedRegion;
+			// Set mode: use initialMode if specified and available, otherwise prefer Bestand
+			if (initialMode === 'neuzulassungen' && hasNeuzulassungen) {
+				activeMode = 'neuzulassungen';
+			} else if (initialMode === 'bestand' && hasBestand) {
+				activeMode = 'bestand';
+			} else if (hasBestand) {
+				activeMode = 'bestand';
+			} else {
+				activeMode = 'neuzulassungen';
+			}
+
+			// Note: loadData() will be triggered by the reactive statement when availabilityChecked becomes true
+		} catch (e) {
+			console.error('[carsTypes] Error checking availability:', e);
+			error = e instanceof Error ? e.message : 'Fehler beim Laden';
+			loading = false;
 		}
-		previousLayer = selectedLayer;
 	}
 
-	function getSelectedRegionData(p, selCode) {
-		if (!p) return [];
-
-		const region = p.regions.find((r) => r.code === selCode);
-		const isCountry = !region || region.layer === 'country';
-
-		if (isCountry) {
-			const subs = p.regions.filter((r) => r.layer !== 'country');
-			const allP = Array.from(
-				new Set(
-					subs.flatMap((r) =>
-						Object.values(r.absoluteByCategory).flatMap((arr) => arr.map((d) => d.period))
-					)
-				)
-			).sort((a, b) => a - b);
-
-			return views.map((v) => {
-				const history = allP.map((period) => {
-					const abs = subs.map(
-						(r) =>
-							r.absoluteByCategory[v.key]?.find((d) => String(d.period) === String(period))
-								?.value || 0
-					);
-					const pct = subs.map(
-						(r) =>
-							r.sharesByCategory[v.key]?.find((d) => String(d.period) === String(period))?.value ||
-							0
-					);
-					return {
-						period,
-						absolute: abs.reduce((a, b) => a + b, 0),
-						percentage: pct.reduce((a, b) => a + b, 0) / (pct.length || 1)
-					};
-				});
-				return {
-					label: v.label,
-					key: v.key,
-					selected: v.key === selectedView,
-					color: colors[v.colorKey][1],
-					history
-				};
-			});
-		}
-
-		return views.map((v) => ({
-			label: v.label,
-			key: v.key,
-			selected: v.key === selectedView,
-			color: colors[v.colorKey][1],
-			history: region.absoluteByCategory[v.key].map((d, i) => ({
-				period: d.period,
-				absolute: d.value,
-				percentage: region.sharesByCategory[v.key][i].value
-			}))
-		}));
+	// Load data when mode changes (after availability check)
+	$: if (availabilityChecked && activeMode) {
+		loadData();
 	}
 
-	$: selectedPeriod = periods[selectedPeriodIndex];
+	async function loadData() {
+		loading = true;
+		error = null;
 
-	function extentForViewAcrossYears(regs, viewKey) {
-		// ignore the country rollup so the scale reflects subregions only
-		const vals = regs
-			.filter((r) => r.layer !== 'country')
-			.flatMap((r) => r.sharesByCategory?.[viewKey]?.map((d) => d.value) ?? [])
-			.filter((v) => Number.isFinite(v));
+		try {
+			const result = await fetchDataWithFallback(regionCandidates, params);
 
-		if (!vals.length) return [0, 0];
-		return [Math.min(...vals), Math.max(...vals)];
+			if (!result) {
+				data = null;
+				waffleData = [];
+				const emptyChartData = buildChartData(
+					{ year: 0, total: 0, categories: {}, shares: {} },
+					[],
+					new Date().toISOString(),
+					'',
+					region,
+					activeMode,
+					false
+				);
+				onChartData?.(emptyChartData);
+				loading = false;
+				return;
+			}
+
+			data = result.data;
+			regionName = result.regionName;
+			waffleData = buildWaffleData(result.data, result.categories);
+
+			// Create a region object for the data source (may be a parent region)
+			const dataRegion: Region = {
+				id: result.regionId,
+				name: result.regionName
+			} as Region;
+
+			// Build fallback info if showing data from a different region
+			const fallbackInfo = region && result.regionName !== region.name
+				? {
+						originalRegionName: region.name,
+						dataRegionName: result.regionName,
+						originalLayerLabel: region.layer_label || '',
+						dataLayerLabel: result.regionLayerLabel || ''
+					}
+				: undefined;
+
+			const privacyNote = t(page.data.translations, 'ui.card.privacyNote');
+			const builtChartData = buildChartData(
+				result.data,
+				waffleData,
+				result.updateDate,
+				regionName,
+				dataRegion,
+				activeMode,
+				true,
+				{ hasBestand, hasNeuzulassungen },
+				result.source,
+				fallbackInfo,
+				result.regionLayerLabel,
+				result.hasPrivacySuppression,
+				privacyNote
+			);
+			onChartData?.(builtChartData);
+
+			// Start animation after data loads
+			startAnimation();
+		} catch (e) {
+			console.error('[carsTypes] Error:', e);
+			error = e instanceof Error ? e.message : 'Fehler beim Laden';
+			data = null;
+			onChartData?.(null);
+		} finally {
+			loading = false;
+		}
+	}
+
+	// Calculate when each category becomes visible based on cell index
+	function isCategoryVisible(categoryKey: string): boolean {
+		for (let i = 0; i < columnGrid.length; i++) {
+			if (columnGrid[i].key === categoryKey && visibleCells.has(i)) {
+				return true;
+			}
+		}
+		return false;
 	}
 </script>
 
-<div>
-	<div class="flex flex-col items-center space-y-2">
-		<div class="flex gap-2">
-			<input
-				type="range"
-				class="w-20"
-				min={0}
-				max={periods.length - 1}
-				step={1}
-				bind:value={selectedPeriodIndex}
-				aria-label="Zeitraum"
+<div class="vehicle-waffle">
+	<!-- Mode Switch (only show if at least one mode is available) -->
+	{#if showSwitch}
+		<div class="mb-4">
+			<Switch
+				views={modeViews}
+				activeView={activeMode}
+				on:itemClick={(event) => {
+					activeMode = event.detail;
+				}}
 			/>
-			<span>{selectedPeriod}</span>
 		</div>
-		<Switch
-			type="small"
-			{views}
-			bind:activeView={selectedView}
-			on:itemClick={(e) => (selectedView = e.detail)}
-		/>
-	</div>
+	{/if}
 
-	<div class="min-h-[60vh]">
-		{#await promise}
-			<Loader />
-		{:then p}
-			<div>
-				<div class="h-[40vh]">
-					<Map
-						{selectedPeriod}
-						regions={p.regions.map((r) => ({
-							code: r.code,
-							outline: r.outline,
-							center: r.center,
-							layer: r.layer,
-							name: r.name,
-							data: r.sharesByCategory[selectedView]
-						}))}
-						colors={colors[views.find((v) => v.key === selectedView).colorKey]}
-						min={extentForViewAcrossYears(p.regions, selectedView)[0]}
-						max={extentForViewAcrossYears(p.regions, selectedView)[1]}
-						bind:selectedRegion
-						bind:selectedLayer
-						on:changeLayer={() => {}}
-						on:selectRegion={(e) => (selectedRegion = e.detail)}
-					/>
-				</div>
-				<div
-					class="bg-white dark:bg-gray-900 border border-current/10 shadow p-3 rounded-2xl -mt-10 z-30 relative max-w-3xl mx-auto"
-				>
-					<Inspector
-						selectedRegionData={getSelectedRegionData(p, selectedRegion)}
-						region={p.regions.find((r) => r.code === selectedRegion)}
-						{selectedPeriod}
-					/>
-					<p class="text-sm opacity-80 mt-4 leading-tight">
-						Datenquelle: {@html source}<br />
-						Die Summe beträgt aufgrund von Rundungen nicht unbedingt 100%.
-					</p>
+	{#if loading || regionLoading}
+		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+	{:else if error}
+		<div class="h-[300px] flex items-center justify-center text-red-500">{error}</div>
+	{:else if !data || columnGrid.length === 0}
+		<div class="h-[300px] flex items-center justify-center text-gray-500">
+			Keine Daten verfügbar
+		</div>
+	{:else}
+		<div class="waffle-container">
+			<!-- Waffle Grid - Plain Background -->
+			<div class="waffle-plain">
+				<!-- Car Grid (10 columns x 10 rows, filled by column) -->
+				<div class="waffle-grid">
+					{#each columnGrid as cell, i}
+						<div
+							class="waffle-cell"
+							class:visible={visibleCells.has(i) || animationComplete}
+							style="color: {getColor(cell.key)}"
+						>
+							<!-- Front-facing car SVG -->
+							<svg viewBox="0 0 699 465" fill="currentColor" class="car-icon">
+								<path
+									fill-rule="evenodd"
+									clip-rule="evenodd"
+									d="M512 0C529 0 552 9 562 22C574 63 586 103 597 144C613 132 699 124 699 172C699 207 667 206 643 206C649 220 655 241 655 270C656 329 656 387 656 445C656 456 647 465 637 465H550C539 465 530 456 530 445C530 438 530 430 530 422H168C168 430 168 438 168 445C168 456 160 465 149 465H62C52 465 43 456 43 445C43 387 43 329 44 270C44 241 50 220 56 206C32 206 0 207 0 172C0 124 86 132 102 144C113 103 124 63 137 22C147 9 170 0 187 0H512ZM557 141C548 106 539 71 529 37H169C160 71 151 106 141 141H557ZM191 206C165 206 144 227 144 253C144 280 165 301 191 301C217 301 239 280 239 253C239 227 217 206 191 206ZM191 224C175 224 162 237 162 253C162 270 175 283 191 283C207 283 220 270 220 253C220 237 207 224 191 224ZM508 206C534 206 555 227 555 253C555 280 534 301 508 301C481 301 460 280 460 253C460 227 481 206 508 206ZM508 224C524 224 537 237 537 253C537 270 524 283 508 283C492 283 478 270 478 253C478 237 492 224 508 224Z"
+								/>
+							</svg>
+						</div>
+					{/each}
 				</div>
 			</div>
-		{:catch err}
-			<p class="text-red-600 p-4">Fehler beim Laden der Daten: {err.message}</p>
-		{/await}
-	</div>
+
+			<!-- Legend (sorted by size) -->
+			<div class="waffle-legend">
+				{#each sortedWaffleData as category}
+					<div
+						class="legend-item"
+						class:visible={isCategoryVisible(category.key)}
+						style="--color: {category.color}"
+					>
+						<div class="legend-color" style="background-color: {category.color}"></div>
+						<div class="legend-content">
+							<span class="legend-label">{category.label}: {category.cells}%</span>
+							{#if category.absolute > 0}
+								<span class="legend-value">{formatNumber(category.absolute, 0)}</span>
+							{/if}
+						</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
 </div>
+
+<style>
+	.vehicle-waffle {
+		width: 100%;
+	}
+
+	.waffle-container {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	:global(.dark) .waffle-plain {
+		background: #1f2937;
+	}
+
+	.waffle-grid {
+		display: grid;
+		grid-template-columns: repeat(20, 1fr);
+		grid-template-rows: repeat(5, 1fr);
+		grid-auto-flow: column;
+		gap: 4px 6px;
+		padding: 8px;
+	}
+
+	.waffle-cell {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		opacity: 0;
+		aspect-ratio: 1;
+	}
+
+	.waffle-cell.visible {
+		opacity: 1;
+		animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	.waffle-cell:hover {
+		transform: scale(1.15);
+		z-index: 10;
+	}
+
+	.car-icon {
+		width: 90%;
+		height: 90%;
+		max-height: 90%;
+	}
+
+	@keyframes fadeIn {
+		0% {
+			transform: scale(0.8);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
+
+	.waffle-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem 1.5rem;
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		opacity: 0.3;
+		transition: opacity 0.3s ease;
+	}
+
+	.legend-item.visible {
+		opacity: 1;
+	}
+
+	.legend-color {
+		width: 12px;
+		height: 12px;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+
+	.legend-content {
+		display: flex;
+		flex-direction: column;
+		line-height: 1.2;
+	}
+
+	.legend-label {
+		font-weight: 600;
+		font-size: 0.875rem;
+		color: var(--color);
+	}
+
+	.legend-value {
+		font-size: 0.75rem;
+		color: #6b7280;
+	}
+
+	:global(.dark) .legend-value {
+		color: #9ca3af;
+	}
+</style>

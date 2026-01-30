@@ -1,55 +1,103 @@
-<script>
-	import formatNumber from '$lib/stores/formatNumber';
+<script lang="ts">
 	import { page } from '$app/state';
-	export let data;
+	import { formatExchangeRate, formatNumber, TARGET_YEAR, type HeatingDataPoint } from './config';
 
-	// Find the needed entries
-	const gasEntry = data.find((d) => d.category === 'gas');
-	const oilEntry = data.find((d) => d.category === 'heating oil');
+	export let data: HeatingDataPoint[];
+	export let layout: 'stacked' | 'grid' = 'stacked';
 
-	// Extract the values
-	const gasTotal = gasEntry?.value || 0;
-	const oilTotal = oilEntry?.value || 0;
+	$: gasEntry = data.find((d) => d.category === 'gas');
+	$: oilEntry = data.find((d) => d.category === 'heating oil');
 
-	// Total number of days left
-	const totalDays = 8267;
+	$: gasRate = formatExchangeRate(gasEntry?.value ?? 0);
+	$: oilRate = formatExchangeRate(oilEntry?.value ?? 0);
 
-	// Calculate how many gas/oil heatings need to be exchanged per day
-	const gasPerDay = gasTotal / totalDays;
-	const oilPerDay = oilTotal / totalDays;
-
-	// Helper to format the output based on quantity
-	function formatRate(perDay) {
-		const perMonth = perDay * 30.4375; // average month length
-		const perYear = perDay * 365;
-
-		if (perYear > 100) {
-			if (perMonth > 60) {
-				return [Math.round(perDay), 'day'];
-			} else {
-				return [Math.round(perMonth), 'month'];
-			}
-		} else {
-			return [Math.round(perYear), 'year'];
-		}
+	function getUnitLabel(unit: 'day' | 'month' | 'year'): string {
+		return page.data?.translations?.[unit] ?? unit;
 	}
+
+	interface CardConfig {
+		color: string;
+		icon: 'flame' | 'leaf';
+		label: string;
+		rate: { value: number; unit: 'day' | 'month' | 'year' };
+	}
+
+	$: cards = [
+		{ color: '#118BD2', icon: 'flame', label: 'Gasheizungen', rate: gasRate },
+		{ color: '#9C3A03', icon: 'leaf', label: 'Ölheizungen', rate: oilRate }
+	] as CardConfig[];
 </script>
 
-<div class="grid grid-cols-2 gap-1 mt-4">
-	<div class="rounded-2xl p-3 border border-current/20">
-		<p class="text-6xl font-light tabular-nums">{formatNumber(formatRate(gasPerDay)[0])}</p>
-		<p class="text-lg leading-snug">
-			<strong>Gasheizungen</strong> müssen im Schnitt zwischen Mitte 2022 & Anfang 2045
-			<strong>pro {page.data.translations[formatRate(gasPerDay)[1]]}</strong> getauscht werden, um die
-			Klimaziele einzuhalten.
-		</p>
+{#snippet exchangeCard(config: CardConfig)}
+	<div
+		class="rounded-xl p-4 border h-full"
+		style="background-color: {config.color}10; border-color: {config.color}33;"
+	>
+		<div class="flex items-start gap-3">
+			<div
+				class="w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0"
+				style="background-color: {config.color};"
+			>
+				{#if config.icon === 'flame'}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path
+							d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"
+						/>
+					</svg>
+				{:else}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path
+							d="M2 12a5 5 0 0 0 5 5 8 8 0 0 1 5 2 8 8 0 0 1 5-2 5 5 0 0 0 5-5V7h-5a8 8 0 0 0-5 2 8 8 0 0 0-5-2H2z"
+						/>
+						<path d="M6 11c1.5 0 3 .5 3 2-2 0-3 0-3-2z" />
+						<path d="M18 11c-1.5 0-3 .5-3 2 2 0 3 0 3-2z" />
+					</svg>
+				{/if}
+			</div>
+			<div class="flex-1 min-w-0">
+				<p class="text-4xl font-light tabular-nums" style="color: {config.color};">
+					{formatNumber(config.rate.value)}
+				</p>
+				<p class="mt-1 leading-snug">
+					<strong>{config.label}</strong> müssen pro
+					<strong>{getUnitLabel(config.rate.unit)}</strong>
+					getauscht werden, um bis {TARGET_YEAR} die Klimaziele einzuhalten.
+				</p>
+			</div>
+		</div>
 	</div>
-	<div class="rounded-2xl p-3 border border-current/20">
-		<p class="text-6xl font-light tabular-nums">{formatNumber(formatRate(oilPerDay)[0])}</p>
-		<p class="text-lg leading-snug">
-			<strong>Ölheizungen</strong> müssen im Schnitt zwischen Mitte 2022 & Anfang 2045
-			<strong>pro {page.data.translations[formatRate(oilPerDay)[1]]}</strong> getauscht werden, um die
-			Klimaziele einzuhalten.
-		</p>
+{/snippet}
+
+{#if layout === 'stacked'}
+	<div class="flex flex-col gap-3">
+		{#each cards as card}
+			{@render exchangeCard(card)}
+		{/each}
 	</div>
-</div>
+{:else}
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+		{#each cards as card}
+			{@render exchangeCard(card)}
+		{/each}
+	</div>
+{/if}
