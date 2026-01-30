@@ -3,13 +3,11 @@
 	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import '@splidejs/svelte-splide/css/core';
 	import { getRegions } from '$lib/utils/regions';
-	import { findMatchingRegion } from '$lib/utils/findMatchingRegion';
 	import type { Region } from '$lib/utils/getRegion';
 	import type { ChartData } from '$lib/components/charts/types';
 	import HeatingChart from './Chart.svelte';
 	import ExchangeRateCards from './PerDay.svelte';
 	import RegionComparison from './RegionComparison.svelte';
-	import RegionSearch from './RegionSearch.svelte';
 	import {
 		fetchHeatingData,
 		buildChartData,
@@ -34,16 +32,9 @@
 
 	// State
 	let allRegions: RegionWithDistance[] = [];
-	let selectedRegion: RegionWithDistance | null = null;
 	let data: HeatingDataPoint[] = [];
 	let loading = true;
 	let regionsLoaded = false;
-
-	// Region candidates: prioritize region prop (from Card/RegionProvider, which handles URL params),
-	// fall back to page context
-	$: regionFromProp = region?.id;
-	$: pageRegionId = page.data?.page?.id;
-	$: effectiveRegionId = regionFromProp || pageRegionId;
 
 	// Load all regions on mount
 	async function loadRegions() {
@@ -59,31 +50,11 @@
 		loadRegions();
 	}
 
-	// Auto-select region when regions are loaded and we have an effective region ID
-	$: if (regionsLoaded && effectiveRegionId && !selectedRegion) {
-		// First try to match by ID
-		const matchById = allRegions.find((r) => r.id === effectiveRegionId);
-		if (matchById) {
-			selectedRegion = matchById;
-		} else if (page.data?.page) {
-			// Fall back to findMatchingRegion
-			const foundCode = findMatchingRegion(page.data.page, allRegions);
-			if (foundCode) {
-				selectedRegion = allRegions.find((r) => r.code === foundCode) || null;
-			}
-		}
-	}
-
-	// Also auto-select when region prop is available and has code
-	$: if (regionsLoaded && region?.code && !selectedRegion) {
-		const match = allRegions.find((r) => r.code === region!.code);
-		if (match) {
-			selectedRegion = match;
-		}
-	}
+	// Use region prop directly as selectedRegion (cast to RegionWithDistance)
+	$: selectedRegion = region as RegionWithDistance | null;
 
 	// Load heating data when region changes
-	$: if (selectedRegion && regionsLoaded) {
+	$: if (selectedRegion && regionsLoaded && !regionLoading) {
 		loadData();
 	}
 
@@ -194,7 +165,6 @@
 {/snippet}
 
 <div class="heating-regions">
-	<RegionSearch {allRegions} bind:selectedRegion />
 
 	{#if loading || regionLoading || !regionsLoaded}
 		<div class="mt-4 space-y-3">
