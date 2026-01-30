@@ -7,42 +7,43 @@
 	import { readItems } from '@directus/sdk';
 	import { pivot_multikey } from '@/lib/utils/data';
 
-
 	let rawData;
 	let unit;
 
 	const getEmissionsData = async function () {
-		try{
+		try {
 			const directus = getDirectusInstance(fetch);
 			let data = await directus.request(
 				readItems('emissions_data', {
 					filter: {
 						_and: [
-							{ 
+							{
 								country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source: { _in: ["OLI 2023 (1990-2022)", "manual_consumption"] },
-								category: { _in: ["0", "consumption_based"] },
-								gas: { _eq: "THG" }
+								source: { _in: ['OLI 2025 (1990-2024)', 'manual_consumption'] },
+								gas: { _eq: 'THG' }
 							}
 						]
 					},
-					sort: "year",
-					fields: ["category","gas.name","gas.unit","id","source","type","value","year"],
+					sort: 'year',
+					fields: ['category', 'gas.name', 'gas.unit', 'id', 'source', 'type', 'value', 'year'],
 					limit: -1
 				})
 			);
+
+			data = data.filter((d) => d.type == null || d.type == 'Gesamt');
+
+			console.log(data);
 
 			data = data.map((row, i) => ({
 				value: row.value,
 				year: row.year,
 				unit: row.gas?.name,
-				category: row.category === "0" ? "production_based" : row.category,
+				category: row.category === 'ksg' ? 'production_based' : row.category
 			}));
-			const pivot_table = pivot_multikey(data, ["year", "unit"], "category")
+			const pivot_table = pivot_multikey(data, ['year', 'unit'], 'category');
 
-			rawData = pivot_table
+			rawData = pivot_table;
 			unit = rawData[0].unit;
-
 		} catch (error) {
 			console.error('Error fetching emission data:', error);
 		}
