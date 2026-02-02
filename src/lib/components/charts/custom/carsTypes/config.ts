@@ -71,14 +71,15 @@ export interface VehicleRawData {
 
 // Category configuration with colors and order
 // Colors chosen to work well in both light and dark modes
+// Order: clean (left) to dirty (right), with "Sonstige" at the end
 export const categoryConfig: Record<string, { label: string; color: string; order: number }> = {
-	Benzin: { label: 'Benzin', color: '#F59E0B', order: 0 },
-	Diesel: { label: 'Diesel', color: '#DB2777', order: 1 },
+	Elektro: { label: 'Elektro', color: '#10B981', order: 0 },
+	'Plug-in-Hybrid': { label: 'Plug-in', color: '#8B5CF6', order: 1 },
 	Hybrid: { label: 'Hybrid', color: '#38BDF8', order: 2 },
 	'Hybrid (ohne Plug-in)': { label: 'Hybrid', color: '#38BDF8', order: 2 },
-	Elektro: { label: 'Elektro', color: '#10B981', order: 3 },
-	'Plug-in-Hybrid': { label: 'Plug-in', color: '#8B5CF6', order: 4 },
-	Gas: { label: 'Gas', color: '#EF4444', order: 5 },
+	Gas: { label: 'Gas', color: '#EF4444', order: 3 },
+	Benzin: { label: 'Benzin', color: '#F59E0B', order: 4 },
+	Diesel: { label: 'Diesel', color: '#DB2777', order: 5 },
 	Sonstige: { label: 'Sonstige', color: '#94A3B8', order: 99 }
 };
 

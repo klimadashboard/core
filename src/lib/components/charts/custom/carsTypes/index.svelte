@@ -79,8 +79,12 @@
 		return categoryConfig[key]?.color || '#6B7280';
 	}
 
-	// Sort waffle data by cells (percentage) descending
-	$: sortedWaffleData = [...waffleData].sort((a, b) => b.cells - a.cells);
+	// Sort waffle data by configured order (clean to dirty)
+	$: sortedWaffleData = [...waffleData].sort((a, b) => {
+		const orderA = categoryConfig[a.key]?.order ?? 99;
+		const orderB = categoryConfig[b.key]?.order ?? 99;
+		return orderA - orderB;
+	});
 
 	// Build column-first grid (left to right, biggest to smallest)
 	// 20 columns x 5 rows = 100 cells, filled column by column via CSS grid-auto-flow: column
