@@ -38,7 +38,8 @@
 	const LARGE_BAR_HEIGHT = 80;
 	const CONNECTOR_HEIGHT = 40;
 	const BAR_GAP = 3;
-	const LABEL_WIDTH = 140;
+	const LABEL_WIDTH_MAX = 140;
+	const LABEL_WIDTH_MIN = 70;
 
 	// State
 	let containerEl: HTMLElement;
@@ -56,8 +57,9 @@
 	let matchedRegionName: string | null = null;
 	let usedFallback: boolean = false;
 
-	// Computed dimensions
-	$: chartWidth = Math.max(0, width - LABEL_WIDTH);
+	// Computed dimensions - label width scales with container
+	$: labelWidth = width < 500 ? LABEL_WIDTH_MIN : LABEL_WIDTH_MAX;
+	$: chartWidth = Math.max(0, width - labelWidth);
 	$: xScale = scaleLinear().domain([0, 100]).range([0, chartWidth]);
 
 	// Get years to display based on checkbox
@@ -172,7 +174,7 @@
 						usedFallback && result.matchedRegionId
 							? ({ id: result.matchedRegionId, name: result.matchedRegionName } as any)
 							: region
-				  )
+					)
 				: null;
 
 			// Resolve goal config (derives startYear from data)
@@ -432,7 +434,7 @@
 						<div class="flex items-center my-0.5" style="height: {SMALL_BAR_HEIGHT}px;">
 							<div
 								class="flex-shrink-0 flex items-center justify-end pr-3 text-xs text-gray-400"
-								style="width: {LABEL_WIDTH}px;"
+								style="width: {labelWidth}px;"
 							>
 								{year}
 							</div>
@@ -451,10 +453,11 @@
 			<div class="flex flex-col">
 				<!-- Umweltverbund indicator -->
 				<div class="flex items-end mb-1">
-					<div class="flex-shrink-0" style="width: {LABEL_WIDTH}px;"></div>
+					<div class="flex-shrink-0" style="width: {labelWidth}px;"></div>
 					<div class="flex flex-col items-start text-[#059669]">
 						<span class="text-sm font-medium mb-0.5">
-							{formatPercent(currentSustainableTotal)} {t(page.data.translations, 'domain.transport.sustainable')}
+							{formatPercent(currentSustainableTotal)}
+							{t(page.data.translations, 'domain.transport.sustainable')}
 						</span>
 						<svg width={umweltverbundWidth} height="12" class="overflow-visible stroke-current">
 							<line x1="0" y1="0" x2="0" y2="8" stroke-width="2" />
@@ -474,7 +477,7 @@
 				<div class="flex items-stretch" style="height: {LARGE_BAR_HEIGHT}px;">
 					<div
 						class="flex-shrink-0 flex flex-col justify-center pr-4 opacity-70"
-						style="width: {LABEL_WIDTH}px;"
+						style="width: {labelWidth}px;"
 					>
 						<span class="text-xl font-bold">{latestDataYear}</span>
 						<span class="text-sm">Modal Split aktuell</span>
@@ -488,7 +491,7 @@
 			{#if goalConfig}
 				<!-- Connector polygons -->
 				<div class="relative flex" style="height: {CONNECTOR_HEIGHT}px;">
-					<div class="flex-shrink-0" style="width: {LABEL_WIDTH}px;"></div>
+					<div class="flex-shrink-0" style="width: {labelWidth}px;"></div>
 					<svg
 						class="flex-1 rounded-lg overflow-hidden"
 						style="width: {chartWidth}px; height: {CONNECTOR_HEIGHT}px;"
@@ -513,7 +516,7 @@
 				<div class="flex items-stretch" style="height: {LARGE_BAR_HEIGHT}px;">
 					<div
 						class="flex-shrink-0 flex flex-col justify-center pr-4 text-[#059669]"
-						style="width: {LABEL_WIDTH}px;"
+						style="width: {labelWidth}px;"
 					>
 						<span class="text-xl font-bold">{goalConfig.endYear}</span>
 						<span class="text-sm">Zielsetzung</span>
