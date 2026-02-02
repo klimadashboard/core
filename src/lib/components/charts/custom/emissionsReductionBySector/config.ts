@@ -398,49 +398,57 @@ export function calculateSectorProgress(
 // ============================================================================
 
 /** Get table columns */
-export function getTableColumns(unit: string): TableColumn[] {
+export function getTableColumns(
+	unit: string,
+	firstYear?: number,
+	lastYear?: number
+): TableColumn[] {
+	const firstYearLabel = firstYear ? `Startwert ${firstYear}` : 'Startwert';
+	const lastYearLabel = lastYear ? `Aktuell ${lastYear}` : 'Aktuell';
+
 	return [
 		{ key: 'label', label: 'Sektor', align: 'left' },
 		{
 			key: 'firstYearValue',
-			label: 'Startwert',
+			label: `${firstYearLabel} (${unit})`,
 			align: 'right',
 			format: (v) =>
 				typeof v === 'number'
-					? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ` ${unit}`
+					? v.toLocaleString('de-DE', { maximumFractionDigits: 2 })
 					: '–'
 		},
 		{
 			key: 'lastYearValue',
-			label: 'Aktuell',
+			label: `${lastYearLabel} (${unit})`,
 			align: 'right',
 			format: (v) =>
 				typeof v === 'number'
-					? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ` ${unit}`
+					? v.toLocaleString('de-DE', { maximumFractionDigits: 2 })
 					: '–'
 		},
 		{
 			key: 'reduction',
-			label: 'Reduktion',
+			label: `Veränderung (${unit})`,
 			align: 'right',
-			format: (v) =>
-				typeof v === 'number'
-					? v.toLocaleString('de-DE', { maximumFractionDigits: 2 }) + ` ${unit}`
-					: '–'
+			format: (v) => {
+				if (typeof v !== 'number') return '–';
+				// Show change as negative of reduction (negative = emissions decreased)
+				const change = -v;
+				const sign = change < 0 ? '' : '+';
+				return sign + change.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+			}
 		},
 		{
 			key: 'reductionPercent',
-			label: 'Reduktion %',
+			label: 'Veränderung (%)',
 			align: 'right',
-			format: (v) =>
-				typeof v === 'number' ? v.toLocaleString('de-DE', { maximumFractionDigits: 1 }) + '%' : '–'
-		},
-		{
-			key: 'contributionPercent',
-			label: 'Beitrag zum Ziel',
-			align: 'right',
-			format: (v) =>
-				typeof v === 'number' ? v.toLocaleString('de-DE', { maximumFractionDigits: 1 }) + '%' : '–'
+			format: (v) => {
+				if (typeof v !== 'number') return '–';
+				// Show change as negative of reduction percent (negative = emissions decreased)
+				const changePercent = -v;
+				const sign = changePercent < 0 ? '' : '+';
+				return sign + changePercent.toLocaleString('de-DE', { maximumFractionDigits: 1 });
+			}
 		}
 	];
 }
@@ -607,7 +615,7 @@ export function buildChartData(
 	return {
 		raw: sectors,
 		table: {
-			columns: getTableColumns(unit),
+			columns: getTableColumns(unit, summary?.firstYear, summary?.lastYear),
 			rows: sectors,
 			filename: 'emissions_reduction_progress'
 		},
