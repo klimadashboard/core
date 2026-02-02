@@ -162,11 +162,8 @@
 	// Determine if we should display in megatons based on data magnitude
 	$: useMegatons = selectedRegion ? shouldUseMegatons(selectedRegion.data) : false;
 
-	// Track dimensions
-	$: trackWidth = Math.max(0, width - 220);
-
-	// Calculate linear progress (how far we should be based on time elapsed)
-	$: linearProgress = (() => {
+	// Linear progress percentage for positioning the marker (how far we should be based on time elapsed)
+	$: linearProgressPercent = (() => {
 		if (!summaryStats || !summaryStats.targetYear) return 0;
 		const startYear = summaryStats.baseYear;
 		const targetYear = summaryStats.targetYear;
@@ -289,13 +286,11 @@
 	<!-- Progress tracks -->
 	<div bind:this={containerEl} class="relative select-none w-full">
 		{#if width > 0}
-			{@const linearProgressX = (trackWidth * linearProgress) / 100}
 			<div class="space-y-1">
 				<!-- Total progress bar -->
 				{#if summaryStats}
 					{@const totalProgress = Math.max(0, Math.min(100, summaryStats.overallProgress))}
 					{@const animatedTotalProgress = totalProgress * animationProgress}
-					{@const progressWidth = (animatedTotalProgress / 100) * trackWidth}
 
 					<div class="flex items-center gap-3 py-2 border-b border-current/10 mb-1">
 						<div class="w-32 flex-shrink-0 text-sm text-right pr-2">
@@ -308,16 +303,16 @@
 								style="height: {trackHeight}px;"
 							></div>
 
-							<!-- Progress fill (animated) -->
+							<!-- Progress fill (animated) - using percentage for accurate sizing -->
 							<div
 								class="absolute left-0 top-0 bg-current/70 rounded-full transition-none"
-								style="height: {trackHeight}px; width: {progressWidth}px;"
+								style="height: {trackHeight}px; width: {animatedTotalProgress}%;"
 							></div>
 
 							<!-- Percentage label inside bar -->
 							<span
 								class="absolute top-1/2 -translate-y-1/2 text-xs font-bold whitespace-nowrap"
-								style="left: {Math.max(progressWidth + 6, 6)}px;"
+								style="left: calc({animatedTotalProgress}% + 6px);"
 							>
 								{Math.round(summaryStats.overallProgress)}%
 							</span>
@@ -325,7 +320,7 @@
 							<!-- Linear progress marker (where we should be) -->
 							<div
 								class="absolute top-1/2 -translate-y-1/2 w-0.5 bg-current/10"
-								style="left: {linearProgressX}px; height: {trackHeight}px;"
+								style="left: {linearProgressPercent}%; height: {trackHeight}px;"
 							></div>
 						</div>
 					</div>
@@ -335,7 +330,6 @@
 				{#each sectorProgress as sector}
 					{@const progressClamped = Math.max(0, Math.min(100, sector.contributionPercent))}
 					{@const animatedProgress = progressClamped * animationProgress}
-					{@const sectorProgressWidth = (animatedProgress / 100) * trackWidth}
 					{@const isNegative = sector.contributionPercent < 0}
 
 					<div
@@ -362,11 +356,11 @@
 								style="height: {trackHeight}px;"
 							></div>
 
-							<!-- Progress fill (animated) -->
+							<!-- Progress fill (animated) - using percentage for accurate sizing -->
 							{#if !isNegative}
 								<div
 									class="absolute left-0 top-0 rounded-full transition-none"
-									style="height: {trackHeight}px; width: {sectorProgressWidth}px; background-color: {sector.color};"
+									style="height: {trackHeight}px; width: {animatedProgress}%; background-color: {sector.color};"
 								></div>
 							{:else}
 								<!-- For negative progress, show a red indicator -->
@@ -375,14 +369,14 @@
 									style="height: {trackHeight}px; width: {Math.min(
 										20,
 										Math.abs(sector.contributionPercent)
-									) * animationProgress}px;"
+									) * animationProgress}%;"
 								></div>
 							{/if}
 
 							<!-- Percentage label inside bar -->
 							<span
 								class="absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold whitespace-nowrap"
-								style="left: {Math.max(sectorProgressWidth + 6, 6)}px; color: {isNegative
+								style="left: calc({animatedProgress}% + 6px); color: {isNegative
 									? '#ef4444'
 									: sector.color};"
 							>
@@ -392,7 +386,7 @@
 							<!-- Linear progress marker (where we should be) -->
 							<div
 								class="absolute top-1/2 -translate-y-1/2 w-0.5 bg-current/10"
-								style="left: {linearProgressX}px; height: {trackHeight}px;"
+								style="left: {linearProgressPercent}%; height: {trackHeight}px;"
 							></div>
 						</div>
 					</div>

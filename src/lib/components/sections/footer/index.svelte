@@ -213,5 +213,3 @@
 		{/if}
 	</div>
 </footer>
-
-<DonationBanner />

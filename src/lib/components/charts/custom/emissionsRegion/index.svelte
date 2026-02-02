@@ -333,13 +333,7 @@
 	$: if (activeLayer && results.length > 0) {
 		if (hasOnlyClimateTargets) {
 			// Signal to Card that there's no data to display (only climate targets, no historical data)
-			onChartData?.({
-				raw: [],
-				hasData: false,
-				table: { columns: [], rows: [], filename: '' },
-				placeholders: {},
-				meta: {}
-			});
+			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
 		} else {
 			updateChartData(climateNeutrality, isHorizontal, singleYear);
 		}
@@ -502,10 +496,6 @@
 					: 'text-gray-400'}"
 				transition:fade
 			>
-				<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
-
-				<span>{t(page.data.translations, 'ui.emissions.perCapita')}</span>
-
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-5 w-5"
@@ -519,8 +509,10 @@
 					<circle cx="9" cy="7" r="4" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path
 						d="M16 3.13a4 4 0 0 1 0 7.75"
 					/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
-				</svg></label
-			>
+				</svg>
+				<span>{t(page.data.translations, 'ui.emissions.perCapita')}</span>
+				<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
+			</label>
 		{/if}
 	</div>
 

@@ -41,7 +41,7 @@
 						_and: [
 							{
 								country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source: { _in: ['BLI 2025 (1990-2023)', 'NowCast (1990-2024)'] }
+								source: { _in: ['BLI 2025 (1990-2023)', 'OLI 2025 (1990-2024)', 'Abschätzung UBA'] }
 							}
 						]
 					},
@@ -75,9 +75,15 @@
 				classification: row.type
 			}));
 
+			// Add isEstimate flag for 'Abschätzung UBA' source (projection data)
+			data = data.map((row) => ({
+				...row,
+				isEstimate: row.source === 'Abschätzung UBA'
+			}));
+
 			const pivot_table = pivot_multikey(
 				data,
-				['year', 'classification', 'pollutant', 'region', 'region_id', 'source', 'unit'],
+				['year', 'classification', 'pollutant', 'region', 'region_id', 'source', 'unit', 'isEstimate'],
 				'sektor'
 			);
 
@@ -226,8 +232,8 @@
 					const valueIndustry = entry['Industrie'];
 					value = valueEnergy + valueIndustry;
 				} else {
-					// default approach
-					value = entry[item.key];
+					// default approach - also check 'Gesamt' for UBA data which uses 'total' category
+					value = entry[item.key] ?? (item.key === 'KSG' ? entry['Gesamt'] : undefined);
 				}
 
 				if (showPerCapita) {
@@ -240,7 +246,8 @@
 				return {
 					label: item.label + ' ' + entry.year,
 					value: value,
-					color: item.color
+					color: item.color,
+					estimate: entry.isEstimate
 				};
 			})
 		});
@@ -308,29 +315,8 @@
 		percentage1990lastYear = getPercentageChange(firstYearEmissions, lastYearEmissions) / 100;
 	}
 
-	// Add a forecast (example logic) if conditions match
-	$: if (
-		dataset &&
-		selectedRegion == 'Österreich' &&
-		(activeView == 'sector_overview' || activeView == 'KSG') &&
-		selectedClassification == 'Gesamt' &&
-		!showPerCapita &&
-		!showFlightEmissions
-	) {
-		dataset.push({
-			label: 2024,
-			annotation: '',
-			categories: [
-				{
-					label: 'Nowcast 2024',
-					value: 66800000,
-					estimate: true,
-					color: '#4DB263'
-				}
-			],
-			estimate: true
-		});
-	}
+	// Note: 2024 data is now included in OLI 2025 (1990-2024) source
+	// Previously had a hardcoded nowcast here which has been removed
 
 	// Optionally freeze Y-axis scale
 	let freezeYAxis = false;
