@@ -39,6 +39,16 @@
 	let error: string | null = null;
 	let containerEl: HTMLElement;
 	let hoveredSeries: string | null = null;
+	let containerWidth = 0;
+
+	// Responsive margins based on container width
+	$: isMobile = containerWidth < 500;
+	$: chartMargin = {
+		top: 20,
+		right: isMobile ? 100 : 140,
+		bottom: 40,
+		left: isMobile ? 35 : 50
+	};
 
 	// Default highlighted series (electric cars)
 	const defaultHighlight = 'Elektro';
@@ -294,7 +304,7 @@
 	}
 </script>
 
-<div bind:this={containerEl} class="vehicle-registrations">
+<div bind:this={containerEl} bind:clientWidth={containerWidth} class="vehicle-registrations">
 	<!-- Mode Switch (only show if both modes are available) -->
 	{#if showSwitch}
 		<div class="mb-4">
@@ -326,7 +336,7 @@
 			height={300}
 			yMin={0}
 			{yMax}
-			margin={{ top: 20, right: 140, bottom: 40, left: 50 }}
+			margin={chartMargin}
 		>
 			<svelte:fragment
 				slot="default"
@@ -385,7 +395,7 @@
 				{/each}
 
 				<!-- End labels with values (resolved to avoid overlap) -->
-				{@const resolvedLabels = resolveOverlaps(labelData, yScale)}
+				{@const resolvedLabels = resolveOverlaps(labelData, yScale, isMobile ? 14 : 18)}
 				{#each resolvedLabels as label}
 					{@const labelX = xScale(label.x)}
 					{@const originalY = yScale(label.y)}
@@ -418,7 +428,7 @@
 							x={labelX + 8}
 							y={label.adjustedY}
 							fill={label.color}
-							font-size="13"
+							font-size={isMobile ? '11' : '13'}
 							font-weight={isHighlighted ? '600' : '500'}
 							dominant-baseline="middle"
 							opacity={isHighlighted ? 1 : 0.35}

@@ -947,8 +947,15 @@ export function generateSubtitle(placeholders: Record<string, string | number>):
 
 /** Build ChartData object for Card integration */
 export function buildChartData(data: CarDensityData, region?: Region | null, privacyNote?: string): ChartData {
-	const { region: regionData, periods, source, hasPrivacySuppression } = data;
+	const { region: regionData, source, hasPrivacySuppression } = data;
 	const placeholders = getPlaceholders(data, region);
+
+	// Derive periods from actual cars data to ensure consistency with the line chart
+	const periods = regionData.cars
+		.filter((d) => d.value != null)
+		.map((d) => d.period)
+		.sort((a, b) => Number(a) - Number(b));
+
 	const tableRows = buildTableRows(regionData, periods);
 
 	// Use latest period as update date (format: "YYYY" -> "YYYY-12-31")

@@ -89,9 +89,10 @@ export function buildChartData(
 	const footballPitches = parkingAreaSqm / PITCH_AREA_SQM;
 
 	const tableRows = [
-		{ label: 'Autos gesamt', value: formatNumber(totalCars) },
-		{ label: 'Parkfläche (m²)', value: formatNumber(parkingAreaSqm) },
-		{ label: 'Fußballfelder', value: formatNumber(Math.round(footballPitches)) }
+		{ label: 'Autos gesamt (Stichtag)', value: formatNumber(totalCars) },
+		{ label: 'Parkplatzfläche (m²)', value: String(SQM_PER_CAR).replace('.', ',') },
+		{ label: 'Parkfläche gesamt (m²)', value: formatNumber(parkingAreaSqm) },
+		{ label: 'Fußballfelder (105 × 68 Meter)', value: formatNumber(Math.round(footballPitches)) }
 	];
 
 	const latestPeriod = periods[periods.length - 1];

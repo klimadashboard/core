@@ -79,8 +79,12 @@
 		return categoryConfig[key]?.color || '#6B7280';
 	}
 
-	// Sort waffle data by cells (percentage) descending
-	$: sortedWaffleData = [...waffleData].sort((a, b) => b.cells - a.cells);
+	// Sort waffle data by configured order (clean to dirty)
+	$: sortedWaffleData = [...waffleData].sort((a, b) => {
+		const orderA = categoryConfig[a.key]?.order ?? 99;
+		const orderB = categoryConfig[b.key]?.order ?? 99;
+		return orderA - orderB;
+	});
 
 	// Build column-first grid (left to right, biggest to smallest)
 	// 20 columns x 5 rows = 100 cells, filled column by column via CSS grid-auto-flow: column
@@ -355,11 +359,20 @@
 
 	.waffle-grid {
 		display: grid;
-		grid-template-columns: repeat(20, 1fr);
-		grid-template-rows: repeat(5, 1fr);
+		grid-template-columns: repeat(10, 1fr);
+		grid-template-rows: repeat(10, 1fr);
 		grid-auto-flow: column;
-		gap: 4px 6px;
-		padding: 8px;
+		gap: 2px;
+		padding: 4px;
+	}
+
+	@media (min-width: 640px) {
+		.waffle-grid {
+			grid-template-columns: repeat(20, 1fr);
+			grid-template-rows: repeat(5, 1fr);
+			gap: 4px 6px;
+			padding: 8px;
+		}
 	}
 
 	.waffle-cell {

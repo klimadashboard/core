@@ -86,7 +86,7 @@
 		} catch (error) {
 			console.error('Error fetching emissions data:', error);
 			results = [];
-			onChartData?.(null);
+			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
 		} finally {
 			loading = false;
 		}
@@ -113,7 +113,7 @@
 			sectorProgress = [];
 			summaryStats = null;
 			hasNegativeProgress = false;
-			onChartData?.(null);
+			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
 			return;
 		}
 
@@ -130,6 +130,11 @@
 		hasNegativeProgress = hasNeg;
 
 		if (onChartData) {
+			// Signal no data if sectors are empty (no climate target)
+			if (sectors.length === 0) {
+				onChartData({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
+				return;
+			}
 			// Get source from actual data
 			const dataSource =
 				selectedRegion.data.find((d) => d.source !== 'climate-target')?.source || 'Emissions data';
@@ -162,17 +167,6 @@
 	// Determine if we should display in megatons based on data magnitude
 	$: useMegatons = selectedRegion ? shouldUseMegatons(selectedRegion.data) : false;
 
-	// Linear progress percentage for positioning the marker (how far we should be based on time elapsed)
-	$: linearProgressPercent = (() => {
-		if (!summaryStats || !summaryStats.targetYear) return 0;
-		const startYear = summaryStats.baseYear;
-		const targetYear = summaryStats.targetYear;
-		const currentYear = summaryStats.lastYear;
-		const totalYears = targetYear - startYear;
-		const elapsedYears = currentYear - startYear;
-		if (totalYears <= 0) return 0;
-		return Math.min(100, (elapsedYears / totalYears) * 100);
-	})();
 
 	// Trigger animation when data is ready and component is visible
 	$: if (width > 0 && sectorProgress.length > 0 && !hasAnimated) {
@@ -208,6 +202,12 @@
 		const sector = sectorProgress.find((s) => s.sector === hoveredSector);
 		if (!sector) return null;
 
+		// Change is lastValue - firstValue (negative means emissions decreased, positive means increased)
+		const change = -sector.reduction;
+		const changePercent = -sector.reductionPercent;
+		const changeSign = change < 0 ? '' : '+';
+		const changePercentSign = changePercent < 0 ? '' : '+';
+
 		return {
 			title: sector.label,
 			items: [
@@ -222,14 +222,9 @@
 					color: sector.color
 				},
 				{
-					label: 'Reduktion',
-					value: `${sector.reduction >= 0 ? '-' : '+'}${formatNumber(Math.abs(sector.reduction))} ${unit} (${sector.reductionPercent >= 0 ? '-' : '+'}${formatNumber(Math.abs(sector.reductionPercent), 1)}%)`,
-					color: sector.reduction >= 0 ? '#22c55e' : '#ef4444'
-				},
-				{
-					label: 'Fortschritt zum Klimaziel',
-					value: `${formatNumber(sector.contributionPercent, 1)}%`,
-					color: sector.contributionPercent >= 0 ? '#22c55e' : '#ef4444'
+					label: 'Veränderung',
+					value: `${changeSign}${formatNumber(change)} ${unit} (${changePercentSign}${formatNumber(changePercent, 1)}%)`,
+					color: change <= 0 ? '#22c55e' : '#ef4444'
 				}
 			]
 		};
@@ -270,7 +265,7 @@
 {#if loading || regionLoading}
 	<p class="text-sm text-gray-500">Lade Emissionsdaten…</p>
 {:else if results.length === 0 || sectorProgress.length === 0}
-	<p class="text-sm text-gray-500">Keine Reduktionsdaten für diese Region verfügbar.</p>
+	<!-- No data: render nothing, Card/page will hide this chart based on hasData: false -->
 {:else if selectedRegion && summaryStats}
 	<!-- Layer switch -->
 	{#if filteredViews.length > 1}
@@ -316,12 +311,6 @@
 							>
 								{Math.round(summaryStats.overallProgress)}%
 							</span>
-
-							<!-- Linear progress marker (where we should be) -->
-							<div
-								class="absolute top-1/2 -translate-y-1/2 w-0.5 bg-current/10"
-								style="left: {linearProgressPercent}%; height: {trackHeight}px;"
-							></div>
 						</div>
 					</div>
 				{/if}
@@ -357,37 +346,23 @@
 							></div>
 
 							<!-- Progress fill (animated) - using percentage for accurate sizing -->
+							<!-- Only show bar for positive progress, negative shows text only -->
 							{#if !isNegative}
 								<div
 									class="absolute left-0 top-0 rounded-full transition-none"
 									style="height: {trackHeight}px; width: {animatedProgress}%; background-color: {sector.color};"
-								></div>
-							{:else}
-								<!-- For negative progress, show a red indicator -->
-								<div
-									class="absolute left-0 top-0 rounded-full bg-red-500/30"
-									style="height: {trackHeight}px; width: {Math.min(
-										20,
-										Math.abs(sector.contributionPercent)
-									) * animationProgress}%;"
 								></div>
 							{/if}
 
 							<!-- Percentage label inside bar -->
 							<span
 								class="absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold whitespace-nowrap"
-								style="left: calc({animatedProgress}% + 6px); color: {isNegative
+								style="left: {isNegative ? '6px' : `calc(${animatedProgress}% + 6px)`}; color: {isNegative
 									? '#ef4444'
 									: sector.color};"
 							>
 								{Math.round(sector.contributionPercent)}%
 							</span>
-
-							<!-- Linear progress marker (where we should be) -->
-							<div
-								class="absolute top-1/2 -translate-y-1/2 w-0.5 bg-current/10"
-								style="left: {linearProgressPercent}%; height: {trackHeight}px;"
-							></div>
 						</div>
 					</div>
 				{/each}
@@ -420,10 +395,6 @@
 
 	<!-- Legend -->
 	<div class="flex flex-wrap gap-x-6 gap-y-2 mt-6 text-xs">
-		<div class="flex items-center gap-2">
-			<div class="w-0.5 h-3 bg-current/40"></div>
-			<span class="opacity-70">Linearer Fortschritt</span>
-		</div>
 		<div class="flex items-center gap-2">
 			<div class="w-6 h-2 bg-current/70 rounded-full"></div>
 			<span class="opacity-70">Ziel: Klimaneutralität bis {summaryStats.targetYear}</span>

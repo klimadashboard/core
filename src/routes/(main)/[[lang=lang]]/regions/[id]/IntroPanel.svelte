@@ -20,7 +20,7 @@
 			{/each}
 		{/if}
 	</ul>
-	<p class="text-sm opacity-80 relative z-10">
+	<p class="text-xs opacity-80 relative z-10 pr-20 leading-none text-balance">
 		{data.source}
 	</p>
 
