@@ -53,6 +53,7 @@ export interface FetchResult {
 
 export interface VehicleRawData {
 	date: Date;
+	/** Dynamic keys: category names for percentages (0-1), category_abs for absolute values */
 	[key: string]: number | Date;
 }
 
@@ -198,9 +199,10 @@ export async function fetchBestandData(
 			date: new Date(parseInt(period), 0, 1) // January 1st of the year
 		};
 
-		// Calculate shares from filtered values
+		// Store both absolute values and shares
 		for (const cat of categories) {
-			row[cat] = total > 0 ? filteredValues[cat] / total : 0;
+			row[`${cat}_abs`] = filteredValues[cat]; // Absolute value
+			row[cat] = total > 0 ? filteredValues[cat] / total : 0; // Share (percentage)
 		}
 
 		return row;
@@ -282,9 +284,10 @@ export async function fetchNeuzulassungenData(
 			date: new Date(period)
 		};
 
-		// Calculate share values from filtered absolute values
+		// Store both absolute values and shares
 		for (const cat of categories) {
-			row[cat] = total > 0 ? filteredValues[cat] / total : 0;
+			row[`${cat}_abs`] = filteredValues[cat]; // Absolute value
+			row[cat] = total > 0 ? filteredValues[cat] / total : 0; // Share (percentage)
 		}
 
 		return row;
@@ -386,13 +389,46 @@ export async function checkDataAvailabilityWithFallback(
 	};
 }
 
-/** Format percentage with German locale (comma as decimal separator) */
+/** Format percentage with German locale (comma as decimal separator) - includes % sign for text output */
 function formatPercent(value: number): string {
 	return (value * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
 }
 
+/** Format percentage for table cells (without % sign, since it's in the column header) */
+function formatPercentForTable(value: number): string {
+	return (value * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+/** Format absolute number with German locale (dot as thousand separator) */
+function formatAbsolute(value: number): string {
+	return value.toLocaleString('de-DE');
+}
+
 /** Get table columns dynamically based on categories */
 export function getTableColumns(categories: string[]): TableColumn[] {
+	const categoryColumns: TableColumn[] = [];
+
+	// For each category, add both absolute and percentage columns
+	for (const cat of categories) {
+		const label = categoryConfig[cat]?.label || cat;
+
+		// Absolute value column
+		categoryColumns.push({
+			key: `${cat}_abs`,
+			label: `${label} (Anzahl)`,
+			align: 'right' as const,
+			format: (v: number) => (v != null ? formatAbsolute(v) : '–')
+		});
+
+		// Percentage column
+		categoryColumns.push({
+			key: cat,
+			label: `${label} (%)`,
+			align: 'right' as const,
+			format: (v: number) => (v != null ? formatPercentForTable(v) : '–')
+		});
+	}
+
 	return [
 		{
 			key: 'date',
@@ -400,12 +436,7 @@ export function getTableColumns(categories: string[]): TableColumn[] {
 			align: 'left',
 			format: (v) => (v instanceof Date ? v.toLocaleDateString('de-DE') : String(v))
 		},
-		...categories.map((cat) => ({
-			key: cat,
-			label: categoryConfig[cat]?.label || cat,
-			align: 'right' as const,
-			format: (v: number) => (v != null ? formatPercent(v) : '–')
-		}))
+		...categoryColumns
 	];
 }
 
@@ -520,7 +551,13 @@ export function buildChartData(
 ): ChartData {
 	const tableRows = data.map((d) => ({
 		date: d.date,
-		...Object.fromEntries(categories.map((cat) => [cat, d[cat]]))
+		// Include both absolute values and percentages for each category
+		...Object.fromEntries(
+			categories.flatMap((cat) => [
+				[`${cat}_abs`, d[`${cat}_abs`]], // Absolute value
+				[cat, d[cat]] // Percentage
+			])
+		)
 	}));
 
 	// Build embed options if both modes are available

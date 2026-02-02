@@ -359,11 +359,20 @@
 
 	.waffle-grid {
 		display: grid;
-		grid-template-columns: repeat(20, 1fr);
-		grid-template-rows: repeat(5, 1fr);
+		grid-template-columns: repeat(10, 1fr);
+		grid-template-rows: repeat(10, 1fr);
 		grid-auto-flow: column;
-		gap: 4px 6px;
-		padding: 8px;
+		gap: 2px;
+		padding: 4px;
+	}
+
+	@media (min-width: 640px) {
+		.waffle-grid {
+			grid-template-columns: repeat(20, 1fr);
+			grid-template-rows: repeat(5, 1fr);
+			gap: 4px 6px;
+			padding: 8px;
+		}
 	}
 
 	.waffle-cell {

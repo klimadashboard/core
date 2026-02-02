@@ -456,17 +456,16 @@ function formatPercent(value: number): string {
 }
 
 /** Get table columns */
-export function getTableColumns(): TableColumn[] {
+export function getTableColumns(year?: number): TableColumn[] {
 	return [
 		{ key: 'label', label: 'Antriebsart', align: 'left' },
-		{ key: 'absolute', label: 'Anzahl', align: 'right', format: (v: number) => formatNumber(v, 0) },
+		{ key: 'absolute', label: `Anzahl${year ? ` (${year})` : ''}`, align: 'right', format: (v: number) => formatNumber(v, 0) },
 		{
 			key: 'share',
-			label: 'Anteil',
+			label: 'Anteil (%)',
 			align: 'right',
 			format: (v: number) =>
-				(v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) +
-				'%'
+				(v * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 		}
 	];
 }
@@ -642,7 +641,7 @@ export function buildChartData(
 		// Wrap in array so Card.svelte's `hasData` check works (chartData.raw.length > 0)
 		raw: [data],
 		table: {
-			columns: getTableColumns(),
+			columns: getTableColumns(data.year),
 			rows: tableRows,
 			filename: `kfz-${modeLabel}-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
 		},
