@@ -86,7 +86,7 @@
 		} catch (error) {
 			console.error('Error fetching emissions data:', error);
 			results = [];
-			onChartData?.(null);
+			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
 		} finally {
 			loading = false;
 		}
@@ -113,7 +113,7 @@
 			sectorProgress = [];
 			summaryStats = null;
 			hasNegativeProgress = false;
-			onChartData?.(null);
+			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
 			return;
 		}
 
@@ -130,6 +130,11 @@
 		hasNegativeProgress = hasNeg;
 
 		if (onChartData) {
+			// Signal no data if sectors are empty (no climate target)
+			if (sectors.length === 0) {
+				onChartData({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
+				return;
+			}
 			// Get source from actual data
 			const dataSource =
 				selectedRegion.data.find((d) => d.source !== 'climate-target')?.source || 'Emissions data';
@@ -270,7 +275,7 @@
 {#if loading || regionLoading}
 	<p class="text-sm text-gray-500">Lade Emissionsdaten…</p>
 {:else if results.length === 0 || sectorProgress.length === 0}
-	<p class="text-sm text-gray-500">Keine Reduktionsdaten für diese Region verfügbar.</p>
+	<!-- No data: render nothing, Card/page will hide this chart based on hasData: false -->
 {:else if selectedRegion && summaryStats}
 	<!-- Layer switch -->
 	{#if filteredViews.length > 1}

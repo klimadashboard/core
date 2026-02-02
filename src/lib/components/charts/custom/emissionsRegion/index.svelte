@@ -131,10 +131,15 @@
 
 			// Select smallest available layer
 			activeLayer = filteredViews[0]?.key ?? views[0]?.key ?? null;
+
+			// Signal no data if results are empty
+			if (fetchedResults.length === 0) {
+				onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
+			}
 		} catch (error) {
 			console.error('Error fetching emissions data:', error);
 			results = [];
-			onChartData?.(null);
+			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
 		} finally {
 			loading = false;
 		}
@@ -538,10 +543,8 @@
 
 {#if loading || regionLoading}
 	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.loadingEmissions')}</p>
-{:else if results.length === 0}
-	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.noDataForRegion')}</p>
-{:else if selectedRegion && hasOnlyClimateTargets}
-	<p class="text-sm text-gray-500">{t(page.data.translations, 'status.noDataAvailable')}</p>
+{:else if results.length === 0 || (selectedRegion && hasOnlyClimateTargets)}
+	<!-- No data: render nothing, Card/page will hide this chart based on hasData: false -->
 {:else if selectedRegion}
 	<div class="flex items-center gap-4 flex-wrap">
 		<!-- Layer switch -->
