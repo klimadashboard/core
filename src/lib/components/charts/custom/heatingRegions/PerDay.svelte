@@ -24,7 +24,7 @@
 
 	$: cards = [
 		{ color: '#118BD2', icon: 'flame', label: 'Gasheizungen', rate: gasRate },
-		{ color: '#9C3A03', icon: 'leaf', label: 'Ölheizungen', rate: oilRate }
+		{ color: '#9C3A03', icon: 'flame', label: 'Ölheizungen', rate: oilRate }
 	] as CardConfig[];
 </script>
 

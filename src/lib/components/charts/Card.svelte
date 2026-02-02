@@ -66,7 +66,10 @@
 	}
 
 	// Replace {{#if key}}, {{#if not key}}, and {{placeholder}} in text
-	function resolveText(raw: string | undefined, placeholders: Record<string, any> | undefined): string {
+	function resolveText(
+		raw: string | undefined,
+		placeholders: Record<string, any> | undefined
+	): string {
 		if (!raw || !placeholders) return raw || '';
 		// Step 1: conditional blocks {{#if key}}...{{/if}} and {{#if not key}}...{{/if}}
 		let result = raw.replace(
@@ -250,7 +253,7 @@
 				class:opacity-0={isLoading}
 			>
 				<h2
-					class="text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
+					class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
 				>
 					{title || chart.content?.title}
 				</h2>
@@ -312,7 +315,7 @@
 					hidden={activeTab !== 'chart'}
 				>
 					{#if heading}
-						<h3 class="text-2xl mb-3 text-balance">{@html heading}</h3>
+						<h3 class="text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
 					{/if}
 
 					<div class="my-3 relative">
@@ -333,7 +336,9 @@
 										{@html source}
 										{#if updateDate}
 											<span class="ml-1">
-												| {page.data.translations?.dataDate}: {dayjs(updateDate).format('DD.MM.YYYY')}
+												| {page.data.translations?.dataDate}: {dayjs(updateDate).format(
+													'DD.MM.YYYY'
+												)}
 											</span>
 										{/if}
 									</p>
