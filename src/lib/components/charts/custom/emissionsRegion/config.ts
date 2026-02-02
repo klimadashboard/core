@@ -569,17 +569,38 @@ export function buildChartData(
 	climateNeutralityText: string | null = null,
 	infoTextPlaceholders: Record<string, string | number | boolean> = {},
 	isHorizontal: boolean = false,
-	singleYear: number | null = null
+	singleYear: number | null = null,
+	sortedCategoryOrder: string[] = []
 ): ChartData {
 	const unit = showPerCapita ? 't CO₂eq/Kopf' : useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 	// Exclude climate-target and nowcast (total category) from table/statistics data
 	const tableData = data.filter((d) => d.source !== 'climate-target' && d.category !== 'total');
 
 	// Get unique categories and years
-	const categories = [
+	// Sort categories by the chart's sort order (sortedCategoryOrder) for consistent table display
+	const allCategories = [
 		...new Set(tableData.map((d) => d.category_label).filter((c): c is string => !!c))
-	].sort();
+	];
+	// Build a map from category label to category code for sorting
+	const labelToCode = new Map(tableData.map((d) => [d.category_label, d.category]));
+	// Sort by the order in sortedCategoryOrder (biggest first = bottom of chart = top of table)
+	const categories = allCategories.sort((a, b) => {
+		const aCode = labelToCode.get(a) || '';
+		const bCode = labelToCode.get(b) || '';
+		const aIdx = sortedCategoryOrder.indexOf(aCode);
+		const bIdx = sortedCategoryOrder.indexOf(bCode);
+		// If both are in sortedCategoryOrder, sort by their position (reversed for table)
+		if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+		// If only one is in the order, prioritize it
+		if (aIdx !== -1) return -1;
+		if (bIdx !== -1) return 1;
+		// Otherwise sort alphabetically
+		return a.localeCompare(b);
+	});
 	const years = [...new Set(tableData.map((d) => d.year))].sort((a, b) => a - b);
+
+	// Check if we have sufficient data to display
+	const hasData = tableData.length > 0 && years.length > 0;
 
 	// Build wide format rows (years as rows, categories as columns)
 	const wideRows = years.map((year) => {
@@ -612,6 +633,7 @@ export function buildChartData(
 
 	return {
 		raw: data,
+		hasData,
 		table: {
 			columns: wideColumns,
 			rows: wideRows,

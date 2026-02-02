@@ -56,6 +56,7 @@
 	// Hover state
 	let hoveredYear: number | null = null;
 	let hoveredSector: string | null = null;
+	let hoveredProjection = false;
 	let hoverClientX = 0;
 	let hoverClientY = 0;
 
@@ -86,14 +87,20 @@
 	}
 
 	// Region candidates: prioritize region prop (from Card/RegionProvider, which handles URL params),
-	// fall back to page context
+	// fall back to page context, then default to country-level (AT for Austria, DE for Germany)
 	$: regionFromProp = region?.id;
 	$: regionParentsFromProp = region?.parents?.map((p: any) => p.id) || [];
 	$: currentId = regionFromProp || page.data?.page?.id;
 	$: parentIds = regionFromProp
 		? regionParentsFromProp
 		: page.data?.page?.parents?.map((p: any) => p.id) || [];
+	// Default region based on version (AT for Austria, DE for Germany)
+	$: defaultRegion = PUBLIC_VERSION === 'at' ? 'AT' : 'DE';
 	$: regionCandidates = [currentId, ...parentIds].filter(Boolean);
+	// If no region candidates found (e.g., standalone chart page), use default
+	$: if (regionCandidates.length === 0) {
+		regionCandidates = [defaultRegion];
+	}
 
 	// Fetch data when region candidates are available and region is done loading
 	$: if (regionCandidates.length > 0 && !dataFetched && !regionLoading) {
@@ -152,6 +159,8 @@
 				// Then convert to megatons for display if values are large (only when not per-capita)
 				const useMegatons = !showPerCapita && shouldUseMegatons(selectedResult.data);
 				const displayData = transformToDisplayUnit(perCapitaData, useMegatons);
+				// Get sorted category order for table column sorting
+				const categoryOrderForTable = sortCategoryOrderByFirstYear(displayData, selectedResult.categoryOrder);
 				const chartData = buildChartData(
 					displayData,
 					selectedResult,
@@ -161,7 +170,8 @@
 					climateNeutralityText,
 					infoTextPlaceholders,
 					horizontalMode,
-					yearForSingleYear
+					yearForSingleYear,
+					categoryOrderForTable
 				);
 				onChartData(chartData);
 			}
@@ -185,6 +195,11 @@
 		(!activeLayer || !filteredViews.find((v) => v.key === activeLayer))
 	) {
 		activeLayer = filteredViews[0]?.key ?? null;
+	}
+
+	// Reset to sectors overview when switching layers (regions)
+	$: if (activeLayer) {
+		activeCategory = 'all';
 	}
 
 	// Auto-enable per-capita for Bavaria
@@ -287,7 +302,8 @@
 	$: xScale = scaleLinear()
 		.domain([minYear, maxYear])
 		.range([barWidth / 2 + 8, innerWidth - barWidth / 2]);
-	$: yScale = scaleLinear().domain([0, visibleMax]).range([innerHeight, 0]);
+	// Use nice() to ensure clean tick values and that the top gridline is above max data
+	$: yScale = scaleLinear().domain([0, visibleMax]).nice().range([innerHeight, 0]);
 
 	// Horizontal chart scales
 	$: horizontalTotal = barData.reduce((sum, d) => sum + d.value, 0);
@@ -365,8 +381,51 @@
 				]
 			};
 		} else {
+			// Handle projection area hover
+			if (hoveredProjection && climateTargets.length >= 2) {
+				const baseTarget = climateTargets[0];
+				const goalTarget = climateTargets[climateTargets.length - 1];
+				return {
+					title: t(page.data.translations, 'domain.emissions.projectionPath') || 'Zielpfad',
+					items: [
+						{
+							label: `${baseTarget.year}`,
+							value: `${formatNumber(baseTarget.value)} ${unit}`,
+							color: '#6b7280'
+						},
+						{
+							label: `${goalTarget.year} (${t(page.data.translations, 'domain.emissions.target') || 'Ziel'})`,
+							value: goalTarget.value === 0
+								? t(page.data.translations, 'domain.emissions.climateNeutral') || 'Klimaneutral'
+								: `${formatNumber(goalTarget.value)} ${unit}`,
+							color: '#6b7280'
+						}
+					]
+				};
+			}
+
 			if (hoveredYear === null) return null;
+
+			// Check if hovering over a climate target year
+			const targetData = climateTargets.find((t) => t.year === hoveredYear);
 			const yearData = grouped.find((g) => g.year === hoveredYear);
+
+			// If it's only a climate target (no historic data for this year)
+			if (targetData && !yearData) {
+				return {
+					title: `${hoveredYear} (${t(page.data.translations, 'domain.emissions.target') || 'Ziel'})`,
+					items: [
+						{
+							label: t(page.data.translations, 'domain.emissions.targetValue') || 'Zielwert',
+							value: targetData.value === 0
+								? t(page.data.translations, 'domain.emissions.climateNeutral') || 'Klimaneutral'
+								: `${formatNumber(targetData.value)} ${unit}`,
+							color: '#6b7280'
+						}
+					]
+				};
+			}
+
 			if (!yearData) return null;
 
 			if (activeCategory === 'all') {
@@ -443,6 +502,14 @@
 	function handleMouseLeave() {
 		hoveredYear = null;
 		hoveredSector = null;
+		hoveredProjection = false;
+	}
+
+	function handleProjectionMouseMove(e: MouseEvent) {
+		hoveredProjection = true;
+		hoveredYear = null;
+		hoverClientX = e.clientX;
+		hoverClientY = e.clientY;
 	}
 
 	// Resize observer
@@ -565,7 +632,8 @@
 						{#each yScale.ticks() as tick, i}
 							{@const isLast = i === yScale.ticks().length - 1}
 							<g transform="translate(0, {yScale(tick)})" class="text-xs">
-								<line x1={margin.left} x2={width} class="stroke-current opacity-10" />
+								<!-- Top gridline starts after the unit label to avoid intersection -->
+								<line x1={isLast ? margin.left + 70 : margin.left} x2={width} class="stroke-current opacity-10" />
 								<text
 									x={margin.left - 4}
 									dominant-baseline="middle"
@@ -663,27 +731,54 @@
 
 					<!-- Climate targets -->
 					{#if climateTargets.length > 0 && activeCategory === 'all'}
-						<g transform="translate({margin.left},{margin.top})" pointer-events="none">
+						<g transform="translate({margin.left},{margin.top})">
 							{#each climateTargets as target}
+								<!-- Invisible full-height hover area -->
+								<rect
+									x={xScale(target.year) - barWidth / 2}
+									y={0}
+									width={barWidth}
+									height={innerHeight}
+									fill="transparent"
+									class="cursor-pointer"
+									on:mouseenter={(e) => handleMouseMove(e, target.year)}
+									on:mousemove={(e) => handleMouseMove(e, target.year)}
+									on:mouseleave={handleMouseLeave}
+								/>
+								<!-- Visible projection bar -->
 								<rect
 									x={xScale(target.year) - barWidth / 2}
 									y={yScale(target.value)}
 									width={barWidth}
 									height={Math.max(0, innerHeight - yScale(target.value))}
 									fill="currentColor"
-									opacity={0.1}
+									opacity={hoveredYear === null || hoveredYear === target.year ? 0.15 : 0.05}
+									class="transition-opacity pointer-events-none"
 								/>
 							{/each}
 							{#if climateTargets.length >= 2}
 								{@const baseTarget = climateTargets[0]}
 								{@const goalTarget = climateTargets[climateTargets.length - 1]}
+								<!-- Dashed projection line (hoverable on stroke only) -->
+								<path
+									d={`M ${xScale(baseTarget.year)},${yScale(baseTarget.value)} L ${xScale(goalTarget.year)},${yScale(goalTarget.value)}`}
+									fill="none"
+									stroke="currentColor"
+									stroke-width={8}
+									opacity={0}
+									class="cursor-pointer"
+									on:mouseenter={handleProjectionMouseMove}
+									on:mousemove={handleProjectionMouseMove}
+									on:mouseleave={handleMouseLeave}
+								/>
 								<path
 									d={`M ${xScale(baseTarget.year)},${yScale(baseTarget.value)} L ${xScale(goalTarget.year)},${yScale(goalTarget.value)}`}
 									fill="none"
 									stroke="currentColor"
 									stroke-width={2}
 									stroke-dasharray="4 4"
-									opacity={0.5}
+									opacity={hoveredProjection ? 0.7 : 0.5}
+									class="transition-opacity pointer-events-none"
 								/>
 							{/if}
 						</g>

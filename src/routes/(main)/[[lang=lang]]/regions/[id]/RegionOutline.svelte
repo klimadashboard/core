@@ -84,7 +84,14 @@
 			preserveAspectRatio="xMidYMid meet"
 			style="transform: scaleY(-1);"
 		>
-			<path d={pathData} fill="none" stroke="#fff" stroke-width="0.5%" stroke-opacity="0.5" />
+			<path
+				d={pathData}
+				fill="none"
+				stroke="#F7FFA5"
+				class="drop-shadow-2xl shadow-[#F7FFA5]"
+				stroke-width="0.5%"
+				stroke-opacity="0.5"
+			/>
 		</svg>
 	</div>
 {/if}
