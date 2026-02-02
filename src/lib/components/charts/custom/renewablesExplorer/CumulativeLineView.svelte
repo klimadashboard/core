@@ -592,19 +592,28 @@
 						forceTicks={ticksToForce}
 					/>
 
+					{@const currentYear = new Date().getFullYear()}
 					{#each chartData as series, i}
 						{@const seriesData = series.data.map((d) => ({
 							year: d.year,
 							value: d.value / divisor
 						}))}
 						{@const isMainSeries = i === 0 && series.color === colors.dark}
+						{@const hasCurrentYearData = !series.isGoal && seriesData.some((d) => d.year === currentYear)}
+						{@const solidData = hasCurrentYearData
+							? seriesData.filter((d) => d.year < currentYear)
+							: seriesData}
+						{@const dashedData = hasCurrentYearData
+							? seriesData.filter((d) => d.year >= currentYear - 1 && d.year <= currentYear)
+							: []}
 						<g
 							class="cursor-pointer"
 							on:mouseenter={() => (hoveredSeries = series.name)}
 							on:mouseleave={() => (hoveredSeries = null)}
 						>
+							<!-- Solid line for completed years -->
 							<Line
-								data={seriesData}
+								data={solidData}
 								x="year"
 								y="value"
 								{xScale}
@@ -616,6 +625,20 @@
 								fillOpacity={0.5}
 								{hover}
 							/>
+							<!-- Dashed line for current (incomplete) year -->
+							{#if dashedData.length > 1}
+								<Line
+									data={dashedData}
+									x="year"
+									y="value"
+									{xScale}
+									{yScale}
+									stroke={series.color}
+									strokeWidth={hoveredSeries === series.name || !hoveredSeries ? 2 : 1}
+									strokeDasharray="5,5"
+									{hover}
+								/>
+							{/if}
 						</g>
 					{/each}
 				</svelte:fragment>
