@@ -127,7 +127,7 @@
 	{@const pctValue = parseFloat(pctLabel) || 0}
 	<div class="">
 		<div class="flex items-baseline gap-1">
-			<span class="text-3xl font-light font-condensed">{formatNumber(value)}</span>
+			<span class="text-3xl font-condensed">{formatNumber(value)}</span>
 			<span class="text-sm font-medium">{unit}</span>
 		</div>
 		<div

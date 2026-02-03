@@ -1,7 +1,6 @@
 <script>
 	import { page } from '$app/state';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import domtoimage from 'dom-to-image';
 	import { t } from '$lib/utils/t';
 
 	let item = null;
@@ -22,48 +21,6 @@
 			'<iframe src="' + window.location.origin + '/embed/' + chart.id + '" width=1200 height=400>';
 		copyToClipboard(copyText);
 		alert('Der iFrame-Code wurde in die Zwischenablage kopiert.');
-	};
-
-	const exportImage = async () => {
-		domtoimage
-			.toBlob(item, {
-				filter: (e) => {
-					return Object.keys(e.dataset || {}).includes('shareIgnore') ? false : true;
-				},
-				width: item.clientWidth * 4,
-				height: item.clientHeight * 4,
-				style: {
-					transform: 'scale(4)',
-					transformOrigin: 'top left'
-				}
-			})
-			.then(async function (blob) {
-				const filesArray = [
-					new File([blob], 'share.png', {
-						type: blob.type,
-						lastModified: new Date().getTime()
-					})
-				];
-				const shareData = {
-					files: filesArray
-				};
-
-				try {
-					await navigator.share(shareData);
-				} catch (err) {
-					// console.log(`Cannot share data: ${err}, downloading instead.`);
-
-					// BACKUP: download image
-					await getChart().then((chart) => {
-						// console.log('downloading', chart.title);
-						let url = window.URL.createObjectURL(blob);
-						let a = document.createElement('a');
-						a.href = url;
-						a.download = `${chart.title}.png`;
-						a.click();
-					});
-				}
-			});
 	};
 
 	$: showNotices = false;
@@ -112,29 +69,7 @@
 					/></svg
 				>
 			</a>
-			<button
-				on:mousedown={() => exportImage()}
-				class="opacity-80 hover:opacity-100 transition cursor-pointer"
-				aria-label="Als Bild exportieren"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="icon icon-tabler icon-tabler-photo-share"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 8h.01" /><path
-						d="M12 21h-6a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v7"
-					/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l3 3" /><path
-						d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0"
-					/><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" /></svg
-				>
-			</button>
+
 			<button
 				on:mousedown={() => copyEmbedCode()}
 				class="opacity-80 hover:opacity-100 transition cursor-pointer"

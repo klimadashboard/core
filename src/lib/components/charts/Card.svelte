@@ -5,7 +5,7 @@
 	import { page } from '$app/state';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import dayjs from 'dayjs';
-	import domtoimage from 'dom-to-image';
+	import { snapdom, preCache } from '@zumer/snapdom';
 	import { Table } from '$lib/components/charts/primitives';
 	import { exportCSV, exportJSON } from '$lib/components/charts/utils/export';
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
@@ -187,30 +187,51 @@
 		showEmbedModal = true;
 	}
 
-	async function handleImage(e: MouseEvent) {
+	async function handleImage(e: MouseEvent, type: 'png' | 'svg' = 'png') {
 		e.stopPropagation();
 		if (!contentEl) return;
+
 		try {
-			const blob = await domtoimage.toBlob(contentEl, {
-				filter: (el: HTMLElement) => !el.dataset?.shareIgnore,
-				width: contentEl.clientWidth * 3,
-				height: contentEl.clientHeight * 3,
-				style: { transform: 'scale(3)', transformOrigin: 'top left' }
+			const base = window.location.origin;
+			const condensedFont = `${base}/fonts/barlow-condensed-v13-latin-regular.woff2`;
+			const condensedFontBold = `${base}/fonts/barlow-condensed-v13-latin-800.woff2`;
+
+			const localFonts = [
+				// Regular Barlow
+				{ family: 'Barlow', src: `${base}/fonts/barlow-v12-latin-regular.woff2`, weight: '400' },
+				{ family: 'Barlow', src: `${base}/fonts/barlow-v12-latin-200.woff2`, weight: '200' },
+				{ family: 'Barlow', src: `${base}/fonts/barlow-v12-latin-600.woff2`, weight: '600' },
+				// Condensed
+				{ family: 'Barlow Condensed', src: condensedFont, weight: '400' },
+				{ family: 'Barlow Condensed', src: condensedFont, weight: '500' },
+				{ family: 'Barlow Condensed', src: condensedFontBold, weight: '700' },
+				{ family: 'Barlow Condensed', src: condensedFontBold, weight: '800' }
+			];
+
+			// Pre-cache fonts before capture
+			await preCache(contentEl, { embedFonts: true, localFonts });
+
+			const result = await snapdom(contentEl, {
+				scale: 2,
+				embedFonts: true,
+				cache: 'full',
+				localFonts,
+				filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
 			});
-			const file = new File([blob], 'chart.png', { type: 'image/png' });
-			try {
-				await navigator.share({ files: [file] });
-			} catch {
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = `${chart.content?.title || 'chart'}.png`;
-				a.click();
-				URL.revokeObjectURL(url);
-			}
+
+			const filename = chart.content?.title || 'chart';
+			const blob = await result.toBlob({ type });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `${filename}.${type}`;
+			a.click();
+			URL.revokeObjectURL(url);
 		} catch (err) {
 			console.error('Export failed:', err);
 		}
+
+		showDownloadMenu = false;
 	}
 
 	function handleMap(e: MouseEvent) {
@@ -560,24 +581,61 @@
 								class="absolute bottom-full right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-20 min-w-[140px]"
 								transition:fade={{ duration: 100 }}
 							>
-								<button
-									on:click={handleExportCSV}
-									class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-								>
-									<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-										>CSV</span
+								<!-- Data exports -->
+								<div class="border-b border-gray-200 dark:border-gray-700">
+									<span
+										class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+										>{t(page.data.translations, 'ui.card.data') || 'Data'}</span
 									>
-									<span>{t(page.data.translations, 'ui.card.tabTable')}</span>
-								</button>
-								<button
-									on:click={handleExportJSON}
-									class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-								>
-									<span class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-										>JSON</span
+									<button
+										on:click={handleExportCSV}
+										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
 									>
-									<span>{t(page.data.translations, 'ui.card.rawData')}</span>
-								</button>
+										<span
+											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+											>CSV</span
+										>
+										<span>{t(page.data.translations, 'ui.card.tabTable')}</span>
+									</button>
+									<button
+										on:click={handleExportJSON}
+										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+									>
+										<span
+											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+											>JSON</span
+										>
+										<span>{t(page.data.translations, 'ui.card.rawData')}</span>
+									</button>
+								</div>
+
+								<!-- Image exports -->
+								<div>
+									<span
+										class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+										>{t(page.data.translations, 'ui.card.image') || 'Image'}</span
+									>
+									<button
+										on:click={(e) => handleImage(e, 'png')}
+										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+									>
+										<span
+											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+											>PNG</span
+										>
+										<span>{t(page.data.translations, 'ui.card.imageRaster') || 'Raster'}</span>
+									</button>
+									<button
+										on:click={(e) => handleImage(e, 'svg')}
+										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+									>
+										<span
+											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+											>SVG</span
+										>
+										<span>{t(page.data.translations, 'ui.card.imageVector') || 'Vector'}</span>
+									</button>
+								</div>
 							</div>
 						{/if}
 					</div>
@@ -605,30 +663,6 @@
 						/>
 					</svg>
 				</a>
-
-				<!-- Share as image -->
-				<button
-					on:click={handleImage}
-					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-					aria-label={t(page.data.translations, 'action.shareImage')}
-					title={t(page.data.translations, 'action.shareImage')}
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<rect x="3" y="3" width="18" height="18" rx="2" /><circle
-							cx="8.5"
-							cy="8.5"
-							r="1.5"
-						/><polyline points="21 15 16 10 5 21" />
-					</svg>
-				</button>
 
 				<!-- Embed button -->
 				<button
