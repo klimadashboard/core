@@ -51,14 +51,14 @@
 			/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-600.svg#Barlow') format('svg'); /* Legacy iOS */
 	}
 	@font-face {
-		font-family: 'Barlow Codensed';
+		font-family: 'Barlow Condensed';
 		font-style: normal;
 		font-weight: 500;
 		src: url('/fonts/barlow-condensed-v13-latin-regular.woff2') format('woff2');
 	}
 
 	@font-face {
-		font-family: 'Barlow Codensed';
+		font-family: 'Barlow Condensed';
 		font-style: normal;
 		font-weight: 800;
 		src: url('/fonts/barlow-condensed-v13-latin-800.woff2') format('woff2');
@@ -70,7 +70,7 @@ body {
 }
 
 .font-condensed {
-	font-family: 'Barlow Codensed', 'Barlow', sans-serif;
+	font-family: 'Barlow Condensed', 'Barlow', sans-serif;
 }
 
 html,
