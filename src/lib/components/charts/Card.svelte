@@ -93,6 +93,16 @@
 	$: methods = resolveText(chart.content?.methods, chartData?.placeholders);
 	$: title = resolveText(chart.content?.title, chartData?.placeholders);
 
+	// Check if text still contains unresolved placeholders like {{key}}
+	function hasUnresolvedPlaceholders(text: string | undefined): boolean {
+		if (!text) return false;
+		return /\{\{\w+\}\}/.test(text);
+	}
+
+	// Show skeleton until timer elapsed AND no unresolved placeholders remain
+	$: showSkeleton =
+		isLoading || hasUnresolvedPlaceholders(heading) || hasUnresolvedPlaceholders(title);
+
 	$: showTable = chartData?.table && chartData.table.rows.length > 0;
 	$: showText = !!text || !!methods;
 	$: allowDataDownload = chartData?.allowDataDownload !== false;
@@ -122,7 +132,7 @@
 				if (entries[0].isIntersecting && !isVisible) {
 					isVisible = true;
 					obs.unobserve(cardEl);
-					setTimeout(() => (isLoading = false), 600);
+					setTimeout(() => (isLoading = false), 100);
 				}
 			},
 			{ rootMargin: '100px', threshold: 0.01 }
@@ -258,7 +268,7 @@
 			in:fade={{ duration: 200 }}
 		>
 			<!-- Skeleton -->
-			{#if isLoading}
+			{#if showSkeleton}
 				<div
 					class="absolute inset-0 p-5 bg-white dark:bg-gray-900 z-10"
 					transition:fade={{ duration: 150 }}
@@ -272,7 +282,7 @@
 			<div
 				bind:this={headerEl}
 				class="flex justify-between items-start mb-3"
-				class:opacity-0={isLoading}
+				class:opacity-0={showSkeleton}
 			>
 				<h2
 					class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
@@ -328,7 +338,7 @@
 			</div>
 
 			<!-- Content -->
-			<div class:opacity-0={isLoading} class="transition-opacity">
+			<div class:opacity-0={showSkeleton} class="transition-opacity">
 				<!-- Chart Tab -->
 				<div
 					id="tabpanel-chart"
