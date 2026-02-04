@@ -3,6 +3,7 @@
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
+import { PUBLIC_VERSION } from '$env/static/public';
 import {
 	fetchData,
 	getLatestData,
@@ -112,6 +113,7 @@ export function buildChartData(
 			region: region ?? ({ name: regionData.name, id: regionData.code } as any),
 			note: hasPrivacySuppression ? privacyNote : undefined
 		},
-		hasData: totalCars > 0 && footballPitches >= 2
+		hasData: totalCars > 0 && footballPitches >= 2,
+		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
 }

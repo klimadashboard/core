@@ -652,6 +652,7 @@ export function buildChartData(
 			region,
 			note: hasPrivacySuppression ? privacyNote : undefined
 		},
-		embedOptions
+		embedOptions,
+		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
 }
