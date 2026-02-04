@@ -976,6 +976,7 @@ export function buildChartData(data: CarDensityData, region?: Region | null, pri
 			region: region ?? ({ name: regionData.name, id: regionData.code } as any),
 			note: hasPrivacySuppression ? privacyNote : undefined
 		},
-		hasData: tableRows.length > 0 && tableRows.some((row) => row.cars != null)
+		hasData: tableRows.length > 0 && tableRows.some((row) => row.cars != null),
+		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
 }

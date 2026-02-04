@@ -73,4 +73,9 @@ export interface ChartData {
 	 * These will be displayed in the embed modal as configurable parameters.
 	 */
 	embedOptions?: EmbedOption[];
+	/**
+	 * Whether to allow data download (CSV/JSON). Defaults to true.
+	 * Set to false to hide the data download options while still showing image exports.
+	 */
+	allowDataDownload?: boolean;
 }

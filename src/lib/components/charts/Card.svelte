@@ -95,6 +95,7 @@
 
 	$: showTable = chartData?.table && chartData.table.rows.length > 0;
 	$: showText = !!text || !!methods;
+	$: allowDataDownload = chartData?.allowDataDownload !== false;
 	// Check if chart has data - use explicit hasData flag if provided, otherwise check raw array
 	$: hasData = chartData?.hasData ?? (chartData?.raw && chartData.raw.length > 0);
 
@@ -582,32 +583,34 @@
 								transition:fade={{ duration: 100 }}
 							>
 								<!-- Data exports -->
-								<div class="border-b border-gray-200 dark:border-gray-700">
-									<span
-										class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-										>{t(page.data.translations, 'ui.card.data') || 'Data'}</span
-									>
-									<button
-										on:click={handleExportCSV}
-										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-									>
+								{#if allowDataDownload}
+									<div class="border-b border-gray-200 dark:border-gray-700">
 										<span
-											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-											>CSV</span
+											class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+											>{t(page.data.translations, 'ui.card.data') || 'Data'}</span
 										>
-										<span>{t(page.data.translations, 'ui.card.tabTable')}</span>
-									</button>
-									<button
-										on:click={handleExportJSON}
-										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-									>
-										<span
-											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-											>JSON</span
+										<button
+											on:click={handleExportCSV}
+											class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
 										>
-										<span>{t(page.data.translations, 'ui.card.rawData')}</span>
-									</button>
-								</div>
+											<span
+												class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+												>CSV</span
+											>
+											<span>{t(page.data.translations, 'ui.card.tabTable')}</span>
+										</button>
+										<button
+											on:click={handleExportJSON}
+											class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+										>
+											<span
+												class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+												>JSON</span
+											>
+											<span>{t(page.data.translations, 'ui.card.rawData')}</span>
+										</button>
+									</div>
+								{/if}
 
 								<!-- Image exports -->
 								<div>
