@@ -216,9 +216,18 @@
 		const centerArray: [string, string] = [String(center[0]), String(center[1])];
 
 		if (map) {
-			const lon = parseFloat(centerArray[0]);
-			const lat = parseFloat(centerArray[1]);
-			map.setCenter([isNaN(lon) ? 10.45 : lon, isNaN(lat) ? 51.16 : lat]);
+			// If we have a region outline, fit to it; otherwise just center
+			if (regionOutline) {
+				fitToRegionOutline();
+			} else {
+				const lon = parseFloat(centerArray[0]);
+				const lat = parseFloat(centerArray[1]);
+				map.setCenter([isNaN(lon) ? 10.45 : lon, isNaN(lat) ? 51.16 : lat]);
+			}
+			// Re-add turbines to update highlighting and potentially re-fit
+			if (turbines.length > 0) {
+				addTurbinesToMap();
+			}
 			return;
 		}
 
@@ -336,26 +345,9 @@
 		];
 	}
 
-	/** Fit map to show all highlighted turbines with padding */
-	function fitToHighlightedTurbines(highlightedList: TurbineData[]) {
-		if (!map || highlightedList.length === 0) return;
-
-		const bounds = calculateBounds(highlightedList);
-		if (!bounds) return;
-
-		// Add padding around the bounds
-		const padding = { top: 50, bottom: 50, left: 50, right: 50 };
-
-		map.fitBounds(bounds, {
-			padding,
-			maxZoom: 10,
-			duration: 1000
-		});
-	}
-
-	/** Fit map to region outline with padding */
-	function fitToRegionOutline() {
-		if (!map || !regionOutline) return;
+	/** Get bounds from region outline */
+	function getRegionOutlineBounds(): [[number, number], [number, number]] | null {
+		if (!regionOutline) return null;
 
 		try {
 			const outlineGeoJSON =
@@ -381,7 +373,7 @@
 
 			extractCoords(outlineGeoJSON);
 
-			if (coords.length === 0) return;
+			if (coords.length === 0) return null;
 
 			let minLon = Infinity,
 				maxLon = -Infinity,
@@ -395,19 +387,60 @@
 				if (lat > maxLat) maxLat = lat;
 			}
 
-			const bounds: [[number, number], [number, number]] = [
+			return [
 				[minLon, minLat],
 				[maxLon, maxLat]
 			];
-
-			map.fitBounds(bounds, {
-				padding: { top: 30, bottom: 30, left: 30, right: 30 },
-				maxZoom: 12,
-				duration: 1000
-			});
 		} catch (error) {
-			console.error('Failed to fit to region outline:', error);
+			console.error('Failed to get region outline bounds:', error);
+			return null;
 		}
+	}
+
+	/** Combine two bounding boxes into one that contains both */
+	function combineBounds(
+		bounds1: [[number, number], [number, number]] | null,
+		bounds2: [[number, number], [number, number]] | null
+	): [[number, number], [number, number]] | null {
+		if (!bounds1 && !bounds2) return null;
+		if (!bounds1) return bounds2;
+		if (!bounds2) return bounds1;
+
+		return [
+			[Math.min(bounds1[0][0], bounds2[0][0]), Math.min(bounds1[0][1], bounds2[0][1])],
+			[Math.max(bounds1[1][0], bounds2[1][0]), Math.max(bounds1[1][1], bounds2[1][1])]
+		];
+	}
+
+	/** Fit map to show highlighted turbines AND region outline */
+	function fitToHighlightedTurbines(highlightedList: TurbineData[]) {
+		if (!map) return;
+
+		const turbineBounds = highlightedList.length > 0 ? calculateBounds(highlightedList) : null;
+		const regionBounds = getRegionOutlineBounds();
+		const combinedBounds = combineBounds(turbineBounds, regionBounds);
+
+		if (!combinedBounds) return;
+
+		map.fitBounds(combinedBounds, {
+			padding: { top: 50, bottom: 50, left: 50, right: 50 },
+			maxZoom: 10,
+			duration: 1000
+		});
+	}
+
+	/** Fit map to region outline with padding */
+	function fitToRegionOutline() {
+		if (!map) return;
+
+		const bounds = getRegionOutlineBounds();
+		if (!bounds) return;
+
+		map.fitBounds(bounds, {
+			padding: { top: 30, bottom: 30, left: 30, right: 30 },
+			maxZoom: 12,
+			duration: 1000
+		});
 	}
 
 	function addTurbinesToMap() {
