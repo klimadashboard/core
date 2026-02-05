@@ -394,21 +394,20 @@ export async function fetchTurbines(
 // ============================================================================
 
 /** Get table columns */
-export function getTableColumns(params: RenewablesParams): TableColumn[] {
-	const { energy } = params;
+export function getTableColumns(_params: RenewablesParams): TableColumn[] {
 	return [
 		{ key: 'year', label: 'Jahr', align: 'left' },
 		{
 			key: 'net_power_kw',
-			label: 'Zubau',
+			label: 'Zubau (kWp)',
 			align: 'right',
-			format: (v) => formatPower(v, energy)
+			format: (v) => formatNumber(v)
 		},
 		{
 			key: 'cumulative_power_kw',
-			label: 'Kumuliert',
+			label: 'Kumulierte Leistung (kWp)',
 			align: 'right',
-			format: (v) => formatPower(v, energy)
+			format: (v) => formatNumber(v)
 		}
 	];
 }
