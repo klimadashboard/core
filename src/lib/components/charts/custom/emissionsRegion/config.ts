@@ -511,13 +511,20 @@ export function computeInfoTextPlaceholders(
 
 	// State name: either the region itself (if it's a state) or the parent state
 	const pageLayer = pageRegion?.layer ?? '';
-	const isState = pageLayer === 'state';
-	const parentState = pageRegion?.parents?.find(
-		(p) => p.layer === 'state' || p.layer_label === 'Bundesland'
+	const isState = pageLayer === 'state' || pageLayer === 'bundesland';
+
+	// Look up parent state - first try from pageRegion.parents, then from results
+	const parentStateFromParents = pageRegion?.parents?.find(
+		(p) => p.layer === 'state' || p.layer === 'bundesland' || p.layer_label === 'Bundesland'
 	);
+	// Also check results for state-level data (has full name)
+	const parentStateFromResults = results.find(
+		(r) => r.layer_label === 'Bundesland' || r.key === 'state' || r.key === 'bundesland'
+	);
+	// Use name from results if available (more reliable), otherwise from parents
 	const stateName = isState
 		? (pageRegion?.name ?? '')
-		: (parentState?.name ?? '');
+		: (parentStateFromResults?.name ?? parentStateFromParents?.name ?? '');
 
 	const isCity = pageLayer === 'municipality' || pageLayer === 'district';
 	const hasParentState = !!(stateName && !isState);
