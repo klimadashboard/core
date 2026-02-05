@@ -62,7 +62,15 @@
 	let switchingLayer = false;
 	let legendSteps: Array<{ color: string; label: string }> = [];
 	let idProp = 'AGS';
-	let hoveredRegion: { name: string; code: string; value: number } | null = null;
+	let hoveredRegion: {
+		name: string;
+		code: string;
+		value: number;
+		totalCars: number | null;
+		population: number | null;
+		privateShare: number | null;
+		companyShare: number | null;
+	} | null = null;
 	let tooltipX = 0;
 	let tooltipY = 0;
 	let hoverTimeout: number | null = null;
@@ -249,10 +257,19 @@
 		const hit = dataArr.find((row) => String(row.period) === String(selectedPeriod));
 		const value = hit?.value ?? 0;
 
+		// Get additional data for tooltip
+		const totalCarsHit = regionData.cars.find((row) => String(row.period) === String(selectedPeriod));
+		const privateShareHit = regionData.carsPrivateShare.find((row) => String(row.period) === String(selectedPeriod));
+		const companyShareHit = regionData.carsCompanyShare.find((row) => String(row.period) === String(selectedPeriod));
+
 		hoveredRegion = {
 			name: regionName,
 			code: regionCode,
-			value
+			value,
+			totalCars: totalCarsHit?.value ?? null,
+			population: regionData.population ?? null,
+			privateShare: privateShareHit?.value ?? null,
+			companyShare: companyShareHit?.value ?? null
 		};
 
 		tooltipX = e.point.x;
@@ -489,19 +506,66 @@
 <!-- Tooltip -->
 {#if hoveredRegion}
 	<div
-		class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 text-sm pointer-events-none"
+		class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 text-sm pointer-events-none min-w-48"
 		style="left: {tooltipX + 10}px; top: {tooltipY + 10}px;"
 	>
 		<div class="font-bold mb-2 text-base">{hoveredRegion.name}</div>
-		<div class="space-y-1">
-			<div class="flex justify-between gap-4">
-				<span class="text-gray-600 dark:text-gray-400">
-					{getViewLabel(views.find((v) => v.key === selectedView)!)}:
-				</span>
-				<span class="font-semibold">
-					{Math.round(hoveredRegion.value)}{selectedUnit ? ` ${selectedUnit}` : ''}
-				</span>
-			</div>
+		<div class="space-y-1.5">
+			{#if selectedView === 'pop'}
+				<!-- Cars per 1000 inhabitants view -->
+				<div class="flex justify-between gap-4">
+					<span class="text-gray-600 dark:text-gray-400">Pkw-Dichte:</span>
+					<span class="font-semibold">{Math.round(hoveredRegion.value)} pro 1.000 EW</span>
+				</div>
+				{#if hoveredRegion.totalCars != null}
+					<div class="flex justify-between gap-4">
+						<span class="text-gray-600 dark:text-gray-400">Pkw gesamt:</span>
+						<span class="font-semibold">{hoveredRegion.totalCars.toLocaleString('de-DE')}</span>
+					</div>
+				{/if}
+				{#if hoveredRegion.population != null}
+					<div class="flex justify-between gap-4">
+						<span class="text-gray-600 dark:text-gray-400">Einwohner:</span>
+						<span class="font-semibold">{hoveredRegion.population.toLocaleString('de-DE')}</span>
+					</div>
+				{/if}
+			{:else if selectedView === 'private'}
+				<!-- Private cars share view -->
+				<div class="flex justify-between gap-4">
+					<span class="text-gray-600 dark:text-gray-400">Anteil privat:</span>
+					<span class="font-semibold">{hoveredRegion.value.toFixed(1)} %</span>
+				</div>
+				{#if hoveredRegion.totalCars != null && hoveredRegion.privateShare != null}
+					<div class="flex justify-between gap-4">
+						<span class="text-gray-600 dark:text-gray-400">Private Pkw:</span>
+						<span class="font-semibold">{Math.round(hoveredRegion.totalCars * hoveredRegion.privateShare / 100).toLocaleString('de-DE')}</span>
+					</div>
+				{/if}
+				{#if hoveredRegion.totalCars != null}
+					<div class="flex justify-between gap-4">
+						<span class="text-gray-600 dark:text-gray-400">Pkw gesamt:</span>
+						<span class="font-semibold">{hoveredRegion.totalCars.toLocaleString('de-DE')}</span>
+					</div>
+				{/if}
+			{:else}
+				<!-- Company cars share view -->
+				<div class="flex justify-between gap-4">
+					<span class="text-gray-600 dark:text-gray-400">Anteil Firmen:</span>
+					<span class="font-semibold">{hoveredRegion.value.toFixed(1)} %</span>
+				</div>
+				{#if hoveredRegion.totalCars != null && hoveredRegion.companyShare != null}
+					<div class="flex justify-between gap-4">
+						<span class="text-gray-600 dark:text-gray-400">Firmenwagen:</span>
+						<span class="font-semibold">{Math.round(hoveredRegion.totalCars * hoveredRegion.companyShare / 100).toLocaleString('de-DE')}</span>
+					</div>
+				{/if}
+				{#if hoveredRegion.totalCars != null}
+					<div class="flex justify-between gap-4">
+						<span class="text-gray-600 dark:text-gray-400">Pkw gesamt:</span>
+						<span class="font-semibold">{hoveredRegion.totalCars.toLocaleString('de-DE')}</span>
+					</div>
+				{/if}
+			{/if}
 		</div>
 	</div>
 {/if}

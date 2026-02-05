@@ -447,9 +447,8 @@
 						color: s.color
 					}));
 
-				// Build items array with optional nowcast
+				// Build items array with total first, then sectors, then optional nowcast
 				const items = [
-					...sectorItems,
 					...(yearData.total > 0
 						? [
 								{
@@ -459,6 +458,7 @@
 								}
 							]
 						: []),
+					...sectorItems,
 					...(yearData.nowcast != null && yearData.nowcast > 0
 						? [
 								{
@@ -760,11 +760,10 @@
 								/>
 							{/each}
 							{#if climateTargets.length >= 2}
-								{@const baseTarget = climateTargets[0]}
-								{@const goalTarget = climateTargets[climateTargets.length - 1]}
+								{@const pathD = climateTargets.map((t, i) => `${i === 0 ? 'M' : 'L'} ${xScale(t.year)},${yScale(t.value)}`).join(' ')}
 								<!-- Dashed projection line (hoverable on stroke only) -->
 								<path
-									d={`M ${xScale(baseTarget.year)},${yScale(baseTarget.value)} L ${xScale(goalTarget.year)},${yScale(goalTarget.value)}`}
+									d={pathD}
 									fill="none"
 									stroke="currentColor"
 									stroke-width={8}
@@ -775,7 +774,7 @@
 									on:mouseleave={handleMouseLeave}
 								/>
 								<path
-									d={`M ${xScale(baseTarget.year)},${yScale(baseTarget.value)} L ${xScale(goalTarget.year)},${yScale(goalTarget.value)}`}
+									d={pathD}
 									fill="none"
 									stroke="currentColor"
 									stroke-width={2}

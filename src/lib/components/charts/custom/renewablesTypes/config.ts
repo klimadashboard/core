@@ -68,7 +68,7 @@ export function formatPercentage(part: number, total: number): string {
 
 /** Fetch solar types data from API */
 export async function fetchSolarTypesData(region: Region | null): Promise<SolarTypesResponse> {
-	const regionCode = region?.codeShort;
+	const regionCode = region?.codeShort || region?.code;
 
 	const url = regionCode
 		? `https://base.klimadashboard.org/get-renewables-growth?table=energy_solar_units&group=year&region=${regionCode}`
@@ -168,7 +168,10 @@ export function getPlaceholders(
 		totalUnits: formatNumber(totalUnits),
 		totalPower: formatNumber(totalPower),
 		totalPowerMW: formatNumber(Math.round(totalPower / 1000)),
-		totalPowerGW: (totalPower / 1_000_000).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+		totalPowerGW: (totalPower / 1_000_000).toLocaleString('de-DE', {
+			minimumFractionDigits: 1,
+			maximumFractionDigits: 1
+		}),
 		totalAddedUnitsThisYear: formatNumber(totalAddedUnitsThisYear),
 		totalAddedPowerThisYear: formatNumber(totalAddedPowerThisYear),
 		totalAddedPowerThisYearMW: formatNumber(Math.round(totalAddedPowerThisYear / 1000)),

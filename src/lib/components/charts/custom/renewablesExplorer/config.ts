@@ -131,7 +131,7 @@ export async function fetchGoal(
 	region: Region | null,
 	params: RenewablesParams
 ): Promise<RenewableGoal | null> {
-	const regionCode = region?.codeShort || region?.code_short;
+	const regionCode = region?.codeShort || region?.code;
 	if (!regionCode) return null;
 
 	const { energy } = params;
@@ -243,9 +243,13 @@ export function calculateRequiredYearlyAdditions(
 export async function fetchData(
 	region: Region | null,
 	params: RenewablesParams
-): Promise<{ data: RenewablesRawData[]; updateDate: string; gridOperatorCheckedRatio: number | null }> {
+): Promise<{
+	data: RenewablesRawData[];
+	updateDate: string;
+	gridOperatorCheckedRatio: number | null;
+}> {
 	const { energy } = params;
-	const regionCode = region?.codeShort;
+	const regionCode = region?.codeShort ? region?.codeShort : region?.code;
 
 	const url = regionCode
 		? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year&region=${regionCode}`
@@ -390,21 +394,20 @@ export async function fetchTurbines(
 // ============================================================================
 
 /** Get table columns */
-export function getTableColumns(params: RenewablesParams): TableColumn[] {
-	const { energy } = params;
+export function getTableColumns(_params: RenewablesParams): TableColumn[] {
 	return [
 		{ key: 'year', label: 'Jahr', align: 'left' },
 		{
 			key: 'net_power_kw',
-			label: 'Zubau',
+			label: 'Zubau (kWp)',
 			align: 'right',
-			format: (v) => formatPower(v, energy)
+			format: (v) => formatNumber(v)
 		},
 		{
 			key: 'cumulative_power_kw',
-			label: 'Kumuliert',
+			label: 'Kumulierte Leistung (kWp)',
 			align: 'right',
-			format: (v) => formatPower(v, energy)
+			format: (v) => formatNumber(v)
 		}
 	];
 }
@@ -473,7 +476,8 @@ export function getPlaceholders(
 	// Calculate unverified percentage from grid operator checked ratio
 	const unverifiedPercent =
 		gridOperatorCheckedRatio != null ? (100 - gridOperatorCheckedRatio).toFixed(1) : '';
-	const verifiedPercent = gridOperatorCheckedRatio != null ? gridOperatorCheckedRatio.toFixed(1) : '';
+	const verifiedPercent =
+		gridOperatorCheckedRatio != null ? gridOperatorCheckedRatio.toFixed(1) : '';
 
 	// Calculate dataYearEnd as last completed year (previous year) and dataYearStart as 10 years before
 	const lastCompletedYear = currentYear - 1;
@@ -547,6 +551,14 @@ export function getPlaceholders(
 		verifiedPercent,
 		// Wind-specific title placeholder
 		titleWind,
+		// Aliases for Directus template compatibility
+		capacityTenYearsAgo: formatPower(dataYearStartData?.cumulative_power_kw || 0, energy),
+		tenYearsAgoYear: dataYearStart,
+		capacityLatest: formatPower(dataYearEndData?.cumulative_power_kw || 0, energy),
+		latestYear: dataYearEnd,
+		peakYear: strongestYearData?.year || lastCompletedYear,
+		peakYearAddition: formatPower(strongestYearData?.net_power_kw || 0, energy),
+		unverifiedPercentage: unverifiedPercent,
 		...goalPlaceholders
 	};
 }
