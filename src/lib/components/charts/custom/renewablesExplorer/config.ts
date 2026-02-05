@@ -131,7 +131,7 @@ export async function fetchGoal(
 	region: Region | null,
 	params: RenewablesParams
 ): Promise<RenewableGoal | null> {
-	const regionCode = region?.codeShort || region?.code_short;
+	const regionCode = region?.codeShort || region?.code;
 	if (!regionCode) return null;
 
 	const { energy } = params;
@@ -243,9 +243,13 @@ export function calculateRequiredYearlyAdditions(
 export async function fetchData(
 	region: Region | null,
 	params: RenewablesParams
-): Promise<{ data: RenewablesRawData[]; updateDate: string; gridOperatorCheckedRatio: number | null }> {
+): Promise<{
+	data: RenewablesRawData[];
+	updateDate: string;
+	gridOperatorCheckedRatio: number | null;
+}> {
 	const { energy } = params;
-	const regionCode = region?.codeShort;
+	const regionCode = region?.codeShort ? region?.codeShort : region?.code;
 
 	const url = regionCode
 		? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year&region=${regionCode}`
@@ -473,7 +477,8 @@ export function getPlaceholders(
 	// Calculate unverified percentage from grid operator checked ratio
 	const unverifiedPercent =
 		gridOperatorCheckedRatio != null ? (100 - gridOperatorCheckedRatio).toFixed(1) : '';
-	const verifiedPercent = gridOperatorCheckedRatio != null ? gridOperatorCheckedRatio.toFixed(1) : '';
+	const verifiedPercent =
+		gridOperatorCheckedRatio != null ? gridOperatorCheckedRatio.toFixed(1) : '';
 
 	// Calculate dataYearEnd as last completed year (previous year) and dataYearStart as 10 years before
 	const lastCompletedYear = currentYear - 1;
