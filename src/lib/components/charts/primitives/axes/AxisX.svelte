@@ -34,7 +34,16 @@
 				baseTicks = Array.from(tickSet).sort((a, b) => Number(a) - Number(b));
 			}
 
-			return baseTicks;
+			// Filter out non-forced ticks that are too close to forced ticks
+			const minDist = 40;
+			const bandwidth = xScale.bandwidth?.() ?? 0;
+			const getX = (t: any) => (xScale(t) ?? 0) + bandwidth / 2;
+
+			return baseTicks.filter(
+				(t) =>
+					forceTicks.includes(t) ||
+					forceTicks.every((f) => Math.abs(getX(f) - getX(t)) >= minDist)
+			);
 		}
 
 		// For linear scales
