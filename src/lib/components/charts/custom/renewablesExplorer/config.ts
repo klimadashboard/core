@@ -551,6 +551,14 @@ export function getPlaceholders(
 		verifiedPercent,
 		// Wind-specific title placeholder
 		titleWind,
+		// Aliases for Directus template compatibility
+		capacityTenYearsAgo: formatPower(dataYearStartData?.cumulative_power_kw || 0, energy),
+		tenYearsAgoYear: dataYearStart,
+		capacityLatest: formatPower(dataYearEndData?.cumulative_power_kw || 0, energy),
+		latestYear: dataYearEnd,
+		peakYear: strongestYearData?.year || lastCompletedYear,
+		peakYearAddition: formatPower(strongestYearData?.net_power_kw || 0, energy),
+		unverifiedPercentage: unverifiedPercent,
 		...goalPlaceholders
 	};
 }
