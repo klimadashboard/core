@@ -29,11 +29,12 @@ export const categoryOrder = [
 	'public_transport',
 	'car_passenger',
 	'car_driver',
+	'car',
 	'motorbike'
 ];
 
 export const sustainableCategories = ['on_foot', 'bicycle', 'e_bike', 'public_transport'];
-export const motorizedCategories = ['motorbike', 'car_driver', 'car_passenger'];
+export const motorizedCategories = ['motorbike', 'car_driver', 'car_passenger', 'car'];
 
 /** Get category metadata with translated labels */
 export function getCategoryMeta(
@@ -74,6 +75,11 @@ export function getCategoryMeta(
 			label: t(translations, 'domain.transport.carPassenger'),
 			shortLabel: t(translations, 'domain.transport.carPassengerShort'),
 			sustainable: false
+		},
+		car: {
+			label: t(translations, 'domain.transport.car'),
+			shortLabel: t(translations, 'domain.transport.carShort'),
+			sustainable: false
 		}
 	};
 }
@@ -89,7 +95,8 @@ export const categoryColors: Record<string, { main: string; light: string; dark:
 	public_transport: { main: '#ca8a04', light: '#fef3c7', dark: '#a16207' }, // Yellow-600 - contrast 5.37:1
 	motorbike: { main: '#c2410c', light: '#ffedd5', dark: '#9a3412' }, // Orange-700 - contrast 5.93:1
 	car_driver: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' }, // Pink-700 - contrast 5.64:1
-	car_passenger: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' } // Violet-600 - contrast 4.75:1
+	car_passenger: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' }, // Violet-600 - contrast 4.75:1
+	car: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' } // Pink-700 - same as car_driver
 };
 
 // ============================================================================

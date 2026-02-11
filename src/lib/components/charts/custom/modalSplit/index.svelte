@@ -413,17 +413,19 @@
 	{:else if !ready || width === 0}
 		<div class="h-72 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else}
-		<!-- Historic toggle checkbox -->
-		<label
-			class="flex items-center gap-2 mb-4 cursor-pointer text-sm text-gray-600 dark:text-gray-400"
-		>
-			<input
-				type="checkbox"
-				bind:checked={showHistoric}
-				class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-			/>
-			<span>{t(page.data.translations, 'ui.renewable.showHistoric')}</span>
-		</label>
+		<!-- Historic toggle checkbox (only when historical data exists) -->
+		{#if historicYears.length > 1}
+			<label
+				class="flex items-center gap-2 mb-4 cursor-pointer text-sm text-gray-600 dark:text-gray-400"
+			>
+				<input
+					type="checkbox"
+					bind:checked={showHistoric}
+					class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+				/>
+				<span>{t(page.data.translations, 'ui.renewable.showHistoric')}</span>
+			</label>
+		{/if}
 
 		<div class="flex flex-col">
 			<!-- Historic years (small bars) -->
