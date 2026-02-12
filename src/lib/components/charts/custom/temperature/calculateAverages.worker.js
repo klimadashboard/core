@@ -119,7 +119,7 @@ onmessage = function (e) {
 		}
 
 		if (resolution.key !== 'months') {
-			recentPeriods = recentPeriods.slice(1, slice + 1);
+			recentPeriods = recentPeriods.slice(1).slice(-slice);
 		}
 
 		const recentData = recentPeriods.map((p) => {

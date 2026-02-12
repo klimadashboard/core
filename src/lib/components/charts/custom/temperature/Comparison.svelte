@@ -8,8 +8,7 @@
 	export let selectedStation;
 	let isLoading = false;
 
-	let slices = [200, 400, 600];
-	let slice = slices[0];
+	let slice = 400;
 
 	const availableResolutions = [
 		{ key: 'months', label: 'Monate' },
