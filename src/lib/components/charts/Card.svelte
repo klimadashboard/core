@@ -51,6 +51,7 @@
 	// Check if we're on an embed route and have a region parameter
 	$: isEmbedRoute = page.url.pathname.startsWith('/embed/');
 	$: urlRegionId = page.url.searchParams.get('region');
+	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';
 
 	// Logo link: on embed route with region param, link to regional dashboard; otherwise main site
 	$: logoHref =
@@ -278,7 +279,6 @@
 				</div>
 			{/if}
 
-			<!-- Header (always visible) -->
 			<div
 				bind:this={headerEl}
 				class="flex justify-between items-start mb-3"
@@ -346,7 +346,7 @@
 					aria-labelledby="tab-chart"
 					hidden={activeTab !== 'chart'}
 				>
-					{#if heading}
+					{#if heading && !embedHideTitle}
 						<h3 class="text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
 					{/if}
 

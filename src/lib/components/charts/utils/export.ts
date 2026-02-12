@@ -63,6 +63,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 export interface EmbedOptions {
 	region?: string;
 	view?: 'full' | 'simple';
+	hideTitle?: boolean;
 	/** Custom parameters from chart's embedOptions */
 	customParams?: Record<string, string>;
 }
@@ -72,6 +73,7 @@ export function generateEmbedCode(chartId: string, options: EmbedOptions = {}): 
 	const params = new URLSearchParams();
 	if (options.region) params.set('region', options.region);
 	if (options.view) params.set('view', options.view);
+	if (options.hideTitle) params.set('notitle', 'true');
 	// Add custom parameters
 	if (options.customParams) {
 		for (const [key, value] of Object.entries(options.customParams)) {
@@ -89,6 +91,7 @@ export function generateScriptEmbedCode(chartId: string, options: EmbedOptions =
 	let dataAttrs = '';
 	if (options.region) dataAttrs += ` data-region="${options.region}"`;
 	if (options.view) dataAttrs += ` data-view="${options.view}"`;
+	if (options.hideTitle) dataAttrs += ` data-notitle="true"`;
 	// Add custom parameters as data attributes
 	if (options.customParams) {
 		for (const [key, value] of Object.entries(options.customParams)) {
