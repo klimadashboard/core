@@ -94,11 +94,13 @@ const getCO2PriceData = async () => {
 
 	try {
 		const data = await directus
-			.request(readItems('carbon_prices', { sort: ['-date'] }))
+			.request(readItems('carbon_prices', { sort: ['-date'], limit: -1 }))
 			.catch(() => []);
 
-		const co2PriceNowEUEntry = data.find((d) => d.region === 'EU');
-		const co2PriceNowNationalEntry = data.find((d) => d.region === PUBLIC_VERSION);
+		const co2PriceNowEUEntry = data.find((d) => d.region === 'EU' && d.type === 'ETS');
+		const co2PriceNowNationalEntry = data.find(
+			(d) => d.region === PUBLIC_VERSION && d.type === 'CO2-Preis'
+		);
 
 		return {
 			co2PriceNowEU: co2PriceNowEUEntry?.value || 'N/A',
