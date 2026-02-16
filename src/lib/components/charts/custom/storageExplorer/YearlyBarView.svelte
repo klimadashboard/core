@@ -65,10 +65,13 @@
 
 	$: xDomain = data.map((d) => d.period);
 	$: yMax = Math.max(...stackedData.map((d) => d.total), 1);
-	$: unit = metricMode === 'power' ? getCapacityUnit(yMax) : '';
+	$: unitsDivisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 1_000 ? 1_000 : 1;
+	$: unit = metricMode === 'power'
+		? getCapacityUnit(yMax)
+		: unitsDivisor >= 1_000_000 ? 'Mio' : unitsDivisor >= 1_000 ? 'Tsd' : '';
 	$: yFormat = metricMode === 'power'
 		? (v: number) => formatNumber(convertCapacityUnit(v, yMax), 0)
-		: (v: number) => formatNumber(v, 0);
+		: (v: number) => formatNumber(v / unitsDivisor, 0);
 
 	$: lateRegistrationStart =
 		xDomain.length > LATE_REGISTRATION_MONTHS

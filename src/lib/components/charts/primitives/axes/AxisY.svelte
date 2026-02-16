@@ -34,8 +34,16 @@
 					{format(tick)}
 				</text>
 				{#if isLast && unit}
+					{@const unitText = unit}
+					<rect
+						x="-2"
+						y="-10"
+						width={unitText.length * 7 + 10}
+						height="20"
+						class="fill-white dark:fill-gray-900"
+					/>
 					<text x="2" dy="0.32em" class="text-xs fill-gray-500">
-						{unit}
+						{unitText}
 					</text>
 				{/if}
 			</g>

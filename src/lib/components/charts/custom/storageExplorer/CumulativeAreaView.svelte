@@ -73,8 +73,10 @@
 		return max;
 	})();
 
-	$: unit = metricMode === 'power' ? getCapacityUnit(yMax) : '';
 	$: divisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 1_000 ? 1_000 : 1;
+	$: unit = metricMode === 'power'
+		? getCapacityUnit(yMax)
+		: divisor >= 1_000_000 ? 'Mio' : divisor >= 1_000 ? 'Tsd' : '';
 	$: yFormat = (v: number) => formatNumber(v, 0);
 
 	$: lateRegistrationXNum =
