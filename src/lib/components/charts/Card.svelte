@@ -4,6 +4,7 @@
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/state';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import * as Fathom from 'fathom-client';
 	import dayjs from 'dayjs';
 	import { snapdom, preCache } from '@zumer/snapdom';
 	import { Table } from '$lib/components/charts/primitives';
@@ -155,6 +156,8 @@
 
 	function setTab(tab: TabId) {
 		activeTab = tab;
+		if (tab === 'table') Fathom.trackEvent('Chart Tab: Table');
+		else if (tab === 'text') Fathom.trackEvent('Chart Tab: Info');
 	}
 
 	function handleTabKeydown(e: KeyboardEvent, tab: TabId) {
@@ -175,6 +178,7 @@
 	function handleExportCSV(e: MouseEvent) {
 		e.stopPropagation();
 		if (chartData?.table) exportCSV(chartData.table, chartData.meta?.region?.codeShort);
+		Fathom.trackEvent('Chart Download: CSV');
 		showDownloadMenu = false;
 	}
 
@@ -186,6 +190,7 @@
 				chartData.table?.filename || 'data',
 				chartData.meta?.region?.codeShort
 			);
+		Fathom.trackEvent('Chart Download: JSON');
 		showDownloadMenu = false;
 	}
 
@@ -196,6 +201,7 @@
 
 	function openEmbedModal(e: MouseEvent) {
 		e.stopPropagation();
+		Fathom.trackEvent('Chart Embed: Opened');
 		showEmbedModal = true;
 	}
 
@@ -239,6 +245,7 @@
 			a.download = `${filename}.${type}`;
 			a.click();
 			URL.revokeObjectURL(url);
+			Fathom.trackEvent(`Chart Download: ${type.toUpperCase()}`);
 		} catch (err) {
 			console.error('Export failed:', err);
 		}
