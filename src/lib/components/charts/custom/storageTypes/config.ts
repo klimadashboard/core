@@ -14,6 +14,9 @@ export interface StorageTypeData {
 	power_kw: number;
 	capacity_kwh: number;
 	units: number;
+	added_power_kw_this_year: number;
+	added_capacity_kwh_this_year: number;
+	added_units_this_year: number;
 }
 
 export interface StorageTypesResponse {
@@ -90,7 +93,10 @@ function extractCurrentByCategory(
 		result[prefix] = {
 			power_kw: lastRow[`${prefix}_cumulative_power_kw`] || 0,
 			capacity_kwh: lastRow[`${prefix}_cumulative_capacity_kwh`] || 0,
-			units: lastRow[`${prefix}_cumulative_units`] || 0
+			units: lastRow[`${prefix}_cumulative_units`] || 0,
+			added_power_kw_this_year: thisYearRow?.[`${prefix}_added_power_kw`] || 0,
+			added_capacity_kwh_this_year: thisYearRow?.[`${prefix}_added_capacity_kwh`] || 0,
+			added_units_this_year: thisYearRow?.[`${prefix}_added_units`] || 0
 		};
 	}
 
