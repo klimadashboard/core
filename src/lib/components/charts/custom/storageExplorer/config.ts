@@ -130,7 +130,7 @@ export function getViewIcons(): Record<ViewMode, string> {
 
 export function getMetricLabels(): Record<MetricMode, string> {
 	return {
-		power: 'Leistung',
+		power: 'Kapazität',
 		units: 'Anlagen'
 	};
 }
@@ -145,7 +145,7 @@ export function getMetricIcons(): Record<MetricMode, string> {
 /** Get the data field suffix for a given view + metric combination */
 export function getMetricField(viewMode: ViewMode, metricMode: MetricMode): string {
 	const prefix = viewMode === 'yearly' ? 'added' : 'cumulative';
-	const suffix = metricMode === 'power' ? 'power_kw' : 'units';
+	const suffix = metricMode === 'power' ? 'capacity_kwh' : 'units';
 	return `${prefix}_${suffix}`;
 }
 
@@ -179,14 +179,14 @@ export function getTableColumns(activeCategories: StorageCategory[]): TableColum
 
 	for (const cat of activeCategories) {
 		cols.push({
-			key: `${cat.key}_added_power_kw`,
-			label: `${cat.label} Zubau (kW)`,
+			key: `${cat.key}_added_capacity_kwh`,
+			label: `${cat.label} Zubau (kWh)`,
 			align: 'right' as const,
 			format: (v: number) => formatNumber(v)
 		});
 		cols.push({
-			key: `${cat.key}_cumulative_power_kw`,
-			label: `${cat.label} Kumuliert (kW)`,
+			key: `${cat.key}_cumulative_capacity_kwh`,
+			label: `${cat.label} Kumuliert (kWh)`,
 			align: 'right' as const,
 			format: (v: number) => formatNumber(v)
 		});

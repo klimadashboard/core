@@ -19,7 +19,7 @@
 		type StoragePeriodData,
 		type StorageCategory
 	} from './config';
-	import { formatPower, getPowerUnit, convertPowerUnit } from '$lib/utils/formatters';
+	import { formatCapacity, getCapacityUnit } from '$lib/utils/formatters';
 
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
@@ -73,7 +73,7 @@
 		return max;
 	})();
 
-	$: unit = metricMode === 'power' ? getPowerUnit(yMax, 'solar') : '';
+	$: unit = metricMode === 'power' ? getCapacityUnit(yMax) : '';
 	$: divisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 1_000 ? 1_000 : 1;
 	$: yFormat = (v: number) => formatNumber(v, 0);
 
@@ -259,7 +259,7 @@
 									return {
 										label: cat.label,
 										value: metricMode === 'power'
-											? formatPower(value, 'solar')
+											? formatCapacity(value)
 											: formatNumber(value, 0),
 										color: cat.color
 									};
@@ -283,7 +283,7 @@
 							...items,
 							...(total > 0
 								? [{ label: 'Gesamt', value: metricMode === 'power'
-									? formatPower(total, 'solar')
+									? formatCapacity(total)
 									: formatNumber(total, 0) }]
 								: [])
 						]}

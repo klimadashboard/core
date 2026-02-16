@@ -49,6 +49,41 @@ export function convertPowerUnit(valueKw: number, maxKw: number): number {
 }
 
 /**
+ * Format capacity values (kWh input) to appropriate unit (kWh/MWh/GWh)
+ */
+export function formatCapacity(valueKwh: number): string {
+	if (valueKwh == null || isNaN(valueKwh)) return '–';
+
+	const sign = valueKwh < 0 ? '-' : '';
+	const abs = Math.abs(valueKwh);
+
+	if (abs >= 1_000_000)
+		return `${sign}${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2)}\u202FGWh`;
+	if (abs >= 1_000)
+		return `${sign}${(abs / 1_000).toFixed(abs >= 10_000 ? 1 : 2)}\u202FMWh`;
+	if (abs > 0) return `${sign}${abs.toFixed(abs >= 10 ? 0 : 1)}\u202FkWh`;
+	return `0\u202FkWh`;
+}
+
+/**
+ * Get capacity unit string based on max value
+ */
+export function getCapacityUnit(maxKwh: number): string {
+	if (maxKwh >= 1_000_000) return 'GWh';
+	if (maxKwh >= 1_000) return 'MWh';
+	return 'kWh';
+}
+
+/**
+ * Convert kWh to display unit
+ */
+export function convertCapacityUnit(valueKwh: number, maxKwh: number): number {
+	if (maxKwh >= 1_000_000) return valueKwh / 1_000_000;
+	if (maxKwh >= 1_000) return valueKwh / 1_000;
+	return valueKwh;
+}
+
+/**
  * Format percentage
  */
 export function formatPercent(value: number, decimals: number = 1): string {

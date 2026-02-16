@@ -20,7 +20,7 @@
 		type StoragePeriodData,
 		type StorageCategory
 	} from './config';
-	import { formatPower, getPowerUnit, convertPowerUnit } from '$lib/utils/formatters';
+	import { formatCapacity, getCapacityUnit, convertCapacityUnit } from '$lib/utils/formatters';
 
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
@@ -65,9 +65,9 @@
 
 	$: xDomain = data.map((d) => d.period);
 	$: yMax = Math.max(...stackedData.map((d) => d.total), 1);
-	$: unit = metricMode === 'power' ? getPowerUnit(yMax, 'solar') : '';
+	$: unit = metricMode === 'power' ? getCapacityUnit(yMax) : '';
 	$: yFormat = metricMode === 'power'
-		? (v: number) => formatNumber(convertPowerUnit(v, yMax), 0)
+		? (v: number) => formatNumber(convertCapacityUnit(v, yMax), 0)
 		: (v: number) => formatNumber(v, 0);
 
 	$: lateRegistrationStart =
@@ -181,7 +181,7 @@
 									.map((s) => ({
 										label: s.category.label,
 										value: metricMode === 'power'
-											? formatPower(s.value, 'solar')
+											? formatCapacity(s.value)
 											: formatNumber(s.value, 0),
 										color: s.category.color
 									})),
@@ -190,7 +190,7 @@
 											{
 												label: 'Gesamt',
 												value: metricMode === 'power'
-													? formatPower(periodData.total, 'solar')
+													? formatCapacity(periodData.total)
 													: formatNumber(periodData.total, 0)
 											}
 										]
