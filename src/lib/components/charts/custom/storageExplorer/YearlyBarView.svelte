@@ -12,7 +12,11 @@
 		buildChartData,
 		getActiveCategories,
 		getValue,
+		getMetricField,
+		LATE_REGISTRATION_MONTHS,
 		formatNumber,
+		formatPeriodLabel,
+		type MetricMode,
 		type StoragePeriodData,
 		type StorageCategory
 	} from './config';
@@ -24,12 +28,15 @@
 	export let data: StoragePeriodData[] = [];
 	export let updateDate: string | null = null;
 	export let dataLoading: boolean = true;
+	export let metricMode: MetricMode = 'power';
 
 	let containerEl: HTMLElement;
 
 	$: activeCategories = getActiveCategories(data);
 
-	// Build stacked data: for each year, compute y0 and y1 for each category
+	$: metricField = getMetricField('yearly', metricMode);
+
+	// Build stacked data: for each period, compute y0 and y1 for each category
 	$: stackedData = data.map((row) => {
 		let y0 = 0;
 		const stacks: Array<{
@@ -37,29 +44,36 @@
 			y0: number;
 			y1: number;
 			value: number;
-			year: number;
+			period: number | string;
 		}> = [];
 
 		for (const cat of activeCategories) {
-			const value = getValue(row, cat.key, 'added_power_kw');
+			const value = getValue(row, cat.key, metricField);
 			if (value > 0) {
 				stacks.push({
 					category: cat,
 					y0,
 					y1: y0 + value,
 					value,
-					year: row.period as number
+					period: row.period
 				});
 				y0 += value;
 			}
 		}
-		return { year: row.period as number, total: y0, stacks };
+		return { period: row.period, total: y0, stacks };
 	});
 
-	$: xDomain = data.map((d) => d.period as number);
+	$: xDomain = data.map((d) => d.period);
 	$: yMax = Math.max(...stackedData.map((d) => d.total), 1);
-	$: unit = getPowerUnit(yMax, 'solar');
-	$: yFormat = (v: number) => formatNumber(convertPowerUnit(v, yMax), 0);
+	$: unit = metricMode === 'power' ? getPowerUnit(yMax, 'solar') : '';
+	$: yFormat = metricMode === 'power'
+		? (v: number) => formatNumber(convertPowerUnit(v, yMax), 0)
+		: (v: number) => formatNumber(v, 0);
+
+	$: lateRegistrationStart =
+		xDomain.length > LATE_REGISTRATION_MONTHS
+			? xDomain[xDomain.length - LATE_REGISTRATION_MONTHS]
+			: undefined;
 
 	$: if (!dataLoading && data.length > 0) {
 		const chartData = buildChartData(data, region, activeCategories, updateDate, 'yearly');
@@ -77,13 +91,13 @@
 	{:else}
 		<Chart
 			data={stackedData}
-			x="year"
+			x="period"
 			y="total"
 			xType="band"
 			{xDomain}
 			{yMax}
 			height={280}
-			margin={{ top: 15, right: 15, bottom: 35, left: 32 }}
+			margin={{ top: 48, right: 15, bottom: 35, left: 32 }}
 		>
 			<svelte:fragment
 				slot="default"
@@ -95,24 +109,24 @@
 				let:hover
 			>
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
-				{@const lastYear = xDomain.length > 0 ? xDomain[xDomain.length - 1] : null}
+				{@const lastPeriod = xDomain.length > 0 ? xDomain[xDomain.length - 1] : null}
 				<AxisX
 					{xScale}
 					{xDomain}
 					{innerWidth}
 					{innerHeight}
-					format={String}
-					tickCount={Math.ceil(xDomain.length / 3)}
-					forceTicks={lastYear ? [lastYear] : []}
+					format={formatPeriodLabel}
+					tickCount={Math.ceil(xDomain.length / 6)}
+					forceTicks={lastPeriod ? [lastPeriod] : []}
 				/>
 				<RuleY y={0} {yScale} {innerWidth} />
 
 				<!-- Stacked bars -->
-				{#each stackedData as yearData}
-					{@const barX = xScale(yearData.year)}
+				{#each stackedData as periodData}
+					{@const barX = xScale(periodData.period)}
 					{@const barWidth = xScale.bandwidth ? xScale.bandwidth() : 20}
 					{#if barX !== undefined}
-						{#each yearData.stacks as stack}
+						{#each periodData.stacks as stack}
 							<rect
 								x={barX}
 								y={yScale(stack.y1)}
@@ -120,37 +134,64 @@
 								height={Math.abs(yScale(stack.y0) - yScale(stack.y1))}
 								fill={stack.category.color}
 								class="transition-opacity"
-								opacity={hover.x === yearData.year ? 1 : 0.85}
+								opacity={hover.x === periodData.period ? 1 : 0.85}
 							/>
 						{/each}
 					{/if}
 				{/each}
 
 				<RuleX {xScale} {innerHeight} {hover} />
+
+				<!-- Late registration overlay -->
+				{#if lateRegistrationStart !== undefined}
+					{@const overlayX = xScale(lateRegistrationStart) ?? 0}
+					<rect
+						x={overlayX}
+						y={-48}
+						width={innerWidth - overlayX}
+						height={innerHeight + 48}
+						fill="currentColor"
+						opacity="0.06"
+						class="pointer-events-none"
+					/>
+					<text
+						text-anchor="end"
+						class="fill-gray-400 dark:fill-gray-500 pointer-events-none"
+						font-size="10"
+					>
+						<tspan x={innerWidth - 4} y={-26}>Nach-</tspan>
+						<tspan x={innerWidth - 4} dy="12">meldungen</tspan>
+						<tspan x={innerWidth - 4} dy="12">erwartet</tspan>
+					</text>
+				{/if}
 			</svelte:fragment>
 
 			<svelte:fragment slot="tooltip" let:hover>
-				{@const yearData = stackedData.find((d) => d.year === hover.x)}
+				{@const periodData = stackedData.find((d) => d.period === hover.x)}
 				<Tooltip
 					visible={hover.x !== null}
 					x={hover.clientX}
 					y={hover.clientY}
-					title={hover.x !== null ? String(hover.x) : ''}
-					items={yearData
+					title={hover.x !== null ? formatPeriodLabel(hover.x) : ''}
+					items={periodData
 						? [
-								...yearData.stacks
+								...periodData.stacks
 									.filter((s) => s.value > 0)
 									.reverse()
 									.map((s) => ({
 										label: s.category.label,
-										value: formatPower(s.value, 'solar'),
+										value: metricMode === 'power'
+											? formatPower(s.value, 'solar')
+											: formatNumber(s.value, 0),
 										color: s.category.color
 									})),
-								...(yearData.total > 0
+								...(periodData.total > 0
 									? [
 											{
 												label: 'Gesamt',
-												value: formatPower(yearData.total, 'solar')
+												value: metricMode === 'power'
+													? formatPower(periodData.total, 'solar')
+													: formatNumber(periodData.total, 0)
 											}
 										]
 									: [])

@@ -9,7 +9,11 @@
 		fetchStorageData,
 		getViewLabels,
 		getViewIcons,
+		getMetricLabels,
+		getMetricIcons,
+		MONTHLY_START,
 		type ViewMode,
+		type MetricMode,
 		type StoragePeriodData
 	} from './config';
 
@@ -36,12 +40,22 @@
 		currentView = initialView;
 	}
 
+	let currentMetric: MetricMode = 'power';
+
 	$: viewLabels = getViewLabels();
 	$: viewIcons = getViewIcons();
 	$: switchViews = (['yearly', 'cumulative'] as ViewMode[]).map((view) => ({
 		key: view,
 		label: viewLabels[view],
 		icon: viewIcons[view]
+	}));
+
+	$: metricLabels = getMetricLabels();
+	$: metricIcons = getMetricIcons();
+	$: switchMetrics = (['power', 'units'] as MetricMode[]).map((metric) => ({
+		key: metric,
+		label: metricLabels[metric],
+		icon: metricIcons[metric]
 	}));
 
 	// Fetch data when region changes
@@ -52,8 +66,10 @@
 	async function loadData() {
 		dataLoading = true;
 		try {
-			const result = await fetchStorageData(region, 'year');
-			sharedData = result.by_period || [];
+			const result = await fetchStorageData(region, 'month');
+			sharedData = (result.by_period || []).filter(
+				(d) => String(d.period) >= MONTHLY_START
+			);
 			sharedUpdateDate = result.update_date;
 		} catch (e) {
 			console.error('[storageExplorer] Error loading data:', e);
@@ -67,12 +83,17 @@
 	function handleViewSwitch(event: CustomEvent) {
 		currentView = event.detail.key ?? event.detail;
 	}
+
+	function handleMetricSwitch(event: CustomEvent) {
+		currentMetric = event.detail.key ?? event.detail;
+	}
 </script>
 
 <div class="storage-explorer">
 	{#if showViewSwitcher}
-		<div class="mb-4">
+		<div class="mb-4 flex flex-wrap gap-2">
 			<Switch views={switchViews} activeView={currentView} on:itemClick={handleViewSwitch} />
+			<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
 		</div>
 	{/if}
 
@@ -85,6 +106,7 @@
 				data={sharedData}
 				updateDate={sharedUpdateDate}
 				{dataLoading}
+				metricMode={currentMetric}
 			/>
 		{:else if currentView === 'cumulative'}
 			<CumulativeAreaView
@@ -94,6 +116,7 @@
 				data={sharedData}
 				updateDate={sharedUpdateDate}
 				{dataLoading}
+				metricMode={currentMetric}
 			/>
 		{/if}
 	</div>

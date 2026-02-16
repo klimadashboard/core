@@ -9,6 +9,7 @@ import { formatNumber } from '$lib/utils/formatters';
 // ============================================================================
 
 export type ViewMode = 'yearly' | 'cumulative';
+export type MetricMode = 'power' | 'units';
 
 export interface StorageCategory {
 	key: string;
@@ -37,6 +38,28 @@ export const categoryConfigs: StorageCategory[] = [
 	{ key: 'gewerbespeicher', label: 'Gewerbespeicher', color: '#3b82f6' },
 	{ key: 'grossspeicher', label: 'Großspeicher', color: '#8b5cf6' }
 ];
+
+/** Earliest period to include for monthly data */
+export const MONTHLY_START = '2020-01';
+
+/** Number of recent months where late registrations are expected */
+export const LATE_REGISTRATION_MONTHS = 3;
+
+/** Format a period value for display: "2020-01" → "Jan '20", number → "2020" */
+export function formatPeriodLabel(period: number | string): string {
+	if (typeof period === 'number') return String(period);
+	const [year, month] = period.split('-');
+	if (!year || !month) return String(period);
+	const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+	return `${monthNames[parseInt(month, 10) - 1]} '${year.slice(2)}`;
+}
+
+/** Convert a period to a numeric value for linear scales: "2020-01" → timestamp */
+export function periodToNumber(period: number | string): number {
+	if (typeof period === 'number') return period;
+	const [year, month] = period.split('-').map(Number);
+	return new Date(year!, (month ?? 1) - 1, 1).getTime();
+}
 
 /** Map from API prefix to our config key */
 function normalizeKey(apiKey: string): string {
@@ -93,7 +116,7 @@ export function getValue(
 
 export function getViewLabels(): Record<ViewMode, string> {
 	return {
-		yearly: 'Jährlicher Zubau',
+		yearly: 'Monatlicher Zubau',
 		cumulative: 'Kumulierte Leistung'
 	};
 }
@@ -103,6 +126,27 @@ export function getViewIcons(): Record<ViewMode, string> {
 		yearly: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
 		cumulative: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`
 	};
+}
+
+export function getMetricLabels(): Record<MetricMode, string> {
+	return {
+		power: 'Leistung',
+		units: 'Anlagen'
+	};
+}
+
+export function getMetricIcons(): Record<MetricMode, string> {
+	return {
+		power: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+		units: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="6" height="10" rx="1"/><rect x="9" y="3" width="6" height="14" rx="1"/><rect x="16" y="5" width="6" height="12" rx="1"/></svg>`
+	};
+}
+
+/** Get the data field suffix for a given view + metric combination */
+export function getMetricField(viewMode: ViewMode, metricMode: MetricMode): string {
+	const prefix = viewMode === 'yearly' ? 'added' : 'cumulative';
+	const suffix = metricMode === 'power' ? 'power_kw' : 'units';
+	return `${prefix}_${suffix}`;
 }
 
 // ============================================================================
@@ -130,7 +174,7 @@ export async function fetchStorageData(
 
 export function getTableColumns(activeCategories: StorageCategory[]): TableColumn[] {
 	const cols: TableColumn[] = [
-		{ key: 'period', label: 'Jahr', align: 'left' as const }
+		{ key: 'period', label: 'Zeitraum', align: 'left' as const }
 	];
 
 	for (const cat of activeCategories) {
@@ -222,7 +266,7 @@ export function buildChartData(
 		table: {
 			columns: getTableColumns(activeCategories),
 			rows: data,
-			filename: `speicher-${viewMode === 'cumulative' ? 'kumuliert' : 'zubau-jaehrlich'}`
+			filename: `speicher-${viewMode === 'cumulative' ? 'kumuliert' : 'zubau-monatlich'}`
 		},
 		placeholders: getPlaceholders(data, region, activeCategories, updateDate),
 		meta: {
