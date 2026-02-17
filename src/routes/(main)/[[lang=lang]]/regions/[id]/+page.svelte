@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Scroller from '@sveltejs/svelte-scroller';
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import Intro from './Intro.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -9,6 +10,7 @@
 	import RelatedRegions from './RelatedRegions.svelte';
 	import Credits from './Credits.svelte';
 	import Chart from '$lib/components/charts/index.svelte';
+	import { serializeJsonLd } from '$lib/utils/jsonld';
 
 	export let data;
 
@@ -52,6 +54,87 @@
 			history.replaceState(null, '', url.toString());
 		}
 	}
+
+	// JSON-LD: Place schema for the region
+	$: langPrefix = $page.data.language?.code === 'de' ? '' : `/${$page.data.language?.code}`;
+	$: placeLD = {
+		'@context': 'https://schema.org',
+		'@type': 'Place',
+		name: data.page.name,
+		description: data.page.description || '',
+		url: $page.url.href,
+		...(data.page.center?.length === 2
+			? {
+					geo: {
+						'@type': 'GeoCoordinates',
+						latitude: parseFloat(data.page.center[1]),
+						longitude: parseFloat(data.page.center[0])
+					}
+				}
+			: {}),
+		...(data.page.parents?.length
+			? {
+					containedInPlace: {
+						'@type': 'Place',
+						name: data.page.parents[0].name
+					}
+				}
+			: {})
+	};
+
+	// JSON-LD: BreadcrumbList
+	$: breadcrumbLD = {
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{
+				'@type': 'ListItem',
+				position: 1,
+				name: 'Home',
+				item: $page.url.origin + (langPrefix || '/')
+			},
+			{
+				'@type': 'ListItem',
+				position: 2,
+				name: data.page.name
+			}
+		]
+	};
+
+	// JSON-LD: Dataset for each chart
+	$: allCharts = (data.regionConfig?.sections || []).flatMap((s) => s.charts || []);
+	$: datasetsLD =
+		allCharts.length > 0
+			? {
+					'@context': 'https://schema.org',
+					'@type': 'ItemList',
+					name: `Klimadaten ${data.page.name}`,
+					itemListElement: allCharts
+						.map((c, i) => {
+							const meta = data.chartsContent?.[c.id];
+							if (!meta?.title) return null;
+							return {
+								'@type': 'ListItem',
+								position: i + 1,
+								item: {
+									'@type': 'Dataset',
+									name: meta.title,
+									description: meta.heading
+										? meta.heading.replace(/<[^>]*>/g, '')
+										: meta.title,
+									url: `${$page.url.origin}${langPrefix}/charts/${c.id}?region=${data.page.id}`,
+									spatialCoverage: data.page.name,
+									creator: {
+										'@type': 'Organization',
+										name: 'Klimadashboard'
+									},
+									license: 'https://creativecommons.org/licenses/by/4.0/'
+								}
+							};
+						})
+						.filter(Boolean)
+				}
+			: null;
 </script>
 
 <svelte:head>
@@ -59,6 +142,11 @@
 	<meta name="description" content={data.page.description} />
 	<meta property="og:title" content="Klimadashboard {data.page.name}" />
 	<meta property="og:description" content={data.page.description} />
+	{@html serializeJsonLd(placeLD)}
+	{@html serializeJsonLd(breadcrumbLD)}
+	{#if datasetsLD}
+		{@html serializeJsonLd(datasetsLD)}
+	{/if}
 </svelte:head>
 
 <main class="">
@@ -104,6 +192,22 @@
 										{/if}
 									{/each}
 								</div>
+							{/if}
+
+							<!-- SSR-only: chart descriptions for crawlers and AI scrapers -->
+							{#if !browser}
+								{#each section.charts as chart}
+									{@const meta = data.chartsContent?.[chart.id]}
+									{#if meta?.title}
+										<article class="sr-only">
+											<h3>{meta.title}</h3>
+											{#if meta.heading}<p>{@html meta.heading}</p>{/if}
+											{#if meta.text}<div>{@html meta.text}</div>{/if}
+											{#if meta.methods}<div>{@html meta.methods}</div>{/if}
+											{#if meta.source}<p>{@html meta.source}</p>{/if}
+										</article>
+									{/if}
+								{/each}
 							{/if}
 						{/if}
 

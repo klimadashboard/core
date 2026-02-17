@@ -131,8 +131,15 @@
 	// Live region text for screen reader tab change announcements
 	let liveTabLabel = '';
 
-	// Intersection observer
+	// Intersection observer (skip for bots so crawlers see all chart content)
 	onMount(() => {
+		if (page.data?.isBot) {
+			isVisible = true;
+			isLoading = false;
+			document.addEventListener('click', handleClickOutside);
+			return () => document.removeEventListener('click', handleClickOutside);
+		}
+
 		const obs = new IntersectionObserver(
 			(entries) => {
 				if (entries[0].isIntersecting && !isVisible) {
