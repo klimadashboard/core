@@ -8,9 +8,30 @@
 	import * as Fathom from 'fathom-client';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { afterNavigate } from '$app/navigation';
+	import { serializeJsonLd } from '$lib/utils/jsonld';
 	import dayjs from 'dayjs';
 	import 'dayjs/locale/de';
 	import 'dayjs/locale/en';
+
+	const isEmbed = $derived(page.url.pathname.startsWith('/embed/'));
+
+	const organizationLD = $derived({
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'Klimadashboard',
+		url: page.url.origin,
+		logo: `${page.url.origin}/logo.svg`,
+		sameAs: ['https://twitter.com/klimadashboard']
+	});
+
+	const webSiteLD = $derived({
+		'@context': 'https://schema.org',
+		'@type': 'WebSite',
+		name: page.data.site?.translations?.[0]?.title || `Klimadashboard.${PUBLIC_VERSION}`,
+		url: page.url.origin,
+		inLanguage: page.data.language?.code || 'de',
+		publisher: { '@type': 'Organization', name: 'Klimadashboard' }
+	});
 
 	const fathom_ids = [
 		{ version: 'de', fathom: 'BKRABNNN' },
@@ -104,6 +125,15 @@
 	<meta name="twitter:title" content={title} />
 	<meta name="twitter:description" content={description} />
 	<meta name="twitter:image" content={image} />
+
+	<!-- Canonical URL -->
+	<link rel="canonical" href={page.url.origin + page.url.pathname} />
+
+	<!-- Structured Data -->
+	{#if !isEmbed}
+		{@html serializeJsonLd(organizationLD)}
+		{@html serializeJsonLd(webSiteLD)}
+	{/if}
 </svelte:head>
 
 <div>

@@ -1,4 +1,4 @@
-/** @type {import('./$types').PageLoad} */
+/** @type {import('./$types').PageServerLoad} */
 import { error } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem } from '@directus/sdk';
@@ -9,7 +9,16 @@ export async function load({ fetch, params }) {
 	try {
 		const page = await directus.request(
 			readItem('charts', params.id, {
-				fields: ['id', 'translations.title'],
+				fields: [
+					'id',
+					'date_updated',
+					'translations.title',
+					'translations.heading',
+					'translations.text',
+					'translations.source',
+					'translations.methods',
+					'translations.seo.*'
+				],
 				deep: {
 					translations: {
 						_filter: {
@@ -21,12 +30,20 @@ export async function load({ fetch, params }) {
 				}
 			})
 		);
+
+		const translation = page.translations[0];
+		const descriptionRaw = translation.text || translation.heading || '';
+		const description = descriptionRaw.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
 		return {
 			page: page,
 			content: {
-				title: page.translations[0].title
+				title: translation.title,
+				description,
+				seo: translation.seo || null
 			},
-			id: page.id
+			id: page.id,
+			date_updated: page.date_updated
 		};
 	} catch (err) {
 		error(404, 'Page not found');

@@ -14,6 +14,7 @@
 	export let options;
 	export let span;
 	export let hideWrapper = false;
+	export let expandContent = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -57,7 +58,7 @@
 	{#if hideWrapper || type == 'small'}
 		<svelte:component this={c.chartComponent} chart={c.chart} {type} {options} />
 	{:else if type == 'card'}
-		<Card chart={c.chart} {span} let:region let:regionLoading let:onChartData on:dataAvailable>
+		<Card chart={c.chart} {span} {expandContent} let:region let:regionLoading let:onChartData on:dataAvailable>
 			<svelte:component
 				this={c.chartComponent}
 				chart={c.chart}

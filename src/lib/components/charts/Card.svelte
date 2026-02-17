@@ -18,6 +18,7 @@
 	export let span = 12;
 	export let mapLayerId: string | null = null;
 	export let regionId: string | null = null;
+	export let expandContent: boolean = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -123,9 +124,12 @@
 	type TabId = 'chart' | 'table' | 'text';
 	$: tabs = [
 		{ id: 'chart' as TabId, label: t(page.data.translations, 'ui.card.tabChart'), show: true },
-		{ id: 'table' as TabId, label: t(page.data.translations, 'ui.card.tabTable'), show: showTable },
-		{ id: 'text' as TabId, label: t(page.data.translations, 'ui.card.tabInfo'), show: showText }
+		{ id: 'table' as TabId, label: t(page.data.translations, 'ui.card.tabTable'), show: showTable && !expandContent },
+		{ id: 'text' as TabId, label: t(page.data.translations, 'ui.card.tabInfo'), show: showText && !expandContent }
 	].filter((tab) => tab.show);
+
+	// Live region text for screen reader tab change announcements
+	let liveTabLabel = '';
 
 	// Intersection observer
 	onMount(() => {
@@ -156,6 +160,7 @@
 
 	function setTab(tab: TabId) {
 		activeTab = tab;
+		liveTabLabel = tabs.find((t) => t.id === tab)?.label || '';
 		if (tab === 'table') Fathom.trackEvent('Chart Tab: Table');
 		else if (tab === 'text') Fathom.trackEvent('Chart Tab: Info');
 	}
@@ -264,10 +269,6 @@
 	data-chart-id={chart.id}
 	class="chart-card group relative bg-white h-full dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all flex flex-col justify-between"
 	style="--span: {span};"
-	on:click={handleClick}
-	on:keydown={(e) => e.key === 'Enter' && handleClick(e)}
-	role="button"
-	tabindex="0"
 >
 	{#if isVisible}
 		<div
@@ -348,9 +349,9 @@
 			<div class:opacity-0={showSkeleton} class="transition-opacity">
 				<!-- Chart Tab -->
 				<div
-					id="tabpanel-chart"
+					id="tabpanel-{chart.id}-chart"
 					role="tabpanel"
-					aria-labelledby="tab-chart"
+					aria-labelledby="tab-{chart.id}-chart"
 					hidden={activeTab !== 'chart'}
 				>
 					{#if heading && !embedHideTitle}
@@ -420,9 +421,9 @@
 
 				<!-- Table Tab -->
 				<div
-					id="tabpanel-table"
+					id="tabpanel-{chart.id}-table"
 					role="tabpanel"
-					aria-labelledby="tab-table"
+					aria-labelledby="tab-{chart.id}-table"
 					hidden={activeTab !== 'table'}
 				>
 					{#if chartData?.table}
@@ -430,15 +431,16 @@
 							columns={chartData.table.columns}
 							rows={chartData.table.rows}
 							maxHeight="400px"
+							caption={title || chart.content?.title}
 						/>
 					{/if}
 				</div>
 
 				<!-- Text/Info Tab -->
 				<div
-					id="tabpanel-text"
+					id="tabpanel-{chart.id}-text"
 					role="tabpanel"
-					aria-labelledby="tab-text"
+					aria-labelledby="tab-{chart.id}-text"
 					hidden={activeTab !== 'text'}
 					class="overflow-y-auto"
 					style="max-height: {textPanelMaxHeight}px;"
@@ -477,6 +479,11 @@
 			{/if}
 		</div>
 
+		<!-- Live region for tab change announcements -->
+		<div class="sr-only" aria-live="polite" aria-atomic="true">
+			{liveTabLabel}
+		</div>
+
 		<!-- Bottom bar -->
 		<div
 			class="no-card-click bg-gray-100 dark:bg-gray-800 flex items-stretch justify-between flex-shrink-0 relative z-10"
@@ -485,10 +492,11 @@
 			<div class="flex items-stretch" role="tablist" aria-label="Chart views">
 				{#each tabs as tab}
 					<button
+						id="tab-{chart.id}-{tab.id}"
 						data-tab={tab.id}
 						role="tab"
 						aria-selected={activeTab === tab.id}
-						aria-controls="tabpanel-{tab.id}"
+						aria-controls="tabpanel-{chart.id}-{tab.id}"
 						tabindex={activeTab === tab.id ? 0 : -1}
 						class="relative px-4 py-2.5 transition-colors flex items-center gap-1.5
 							{activeTab === tab.id
@@ -710,6 +718,33 @@
 				</button>
 			</div>
 		</div>
+		<!-- Expanded content (table + info below card, for chart detail pages) -->
+		{#if expandContent}
+			{#if chartData?.table && chartData.table.rows.length > 0}
+				<div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+					<Table
+						columns={chartData.table.columns}
+						rows={chartData.table.rows}
+						maxHeight="600px"
+						caption={title || chart.content?.title}
+					/>
+				</div>
+			{/if}
+			{#if text || methods}
+				<div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+					{#if text}
+						<div class="text-base max-w-xl">
+							{@html text}
+						</div>
+					{/if}
+					{#if methods}
+						<div class="mt-4 text-base max-w-xl">
+							{@html methods}
+						</div>
+					{/if}
+				</div>
+			{/if}
+		{/if}
 	{:else}
 		<div class="min-h-[280px] bg-gray-50 dark:bg-gray-900"></div>
 	{/if}
@@ -739,7 +774,7 @@
 		}
 	}
 
-	:global(#tabpanel-text p) {
+	:global([id^='tabpanel-'][id$='-text'] p) {
 		@apply my-2;
 	}
 </style>

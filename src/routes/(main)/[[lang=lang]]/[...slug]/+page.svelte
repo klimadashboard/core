@@ -3,7 +3,15 @@
 	import Blocks from '$lib/components/blocks/index.svelte';
 
 	export let data;
+
+	$: hasToggleBlocks = data.page.blocks?.some((b) => b.collection === 'block_toggle');
 </script>
 
 <PageHeader />
-<Blocks data={data.page.blocks} />
+{#if hasToggleBlocks}
+	<div itemscope itemtype="https://schema.org/FAQPage">
+		<Blocks data={data.page.blocks} />
+	</div>
+{:else}
+	<Blocks data={data.page.blocks} />
+{/if}

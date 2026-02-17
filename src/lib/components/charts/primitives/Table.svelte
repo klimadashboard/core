@@ -7,6 +7,7 @@
 	export let columns: TableColumn[] = [];
 	export let rows: Record<string, any>[] = [];
 	export let maxHeight: string = '400px';
+	export let caption: string = '';
 
 	let sortKey: string | null = null;
 	let sortDir: 'asc' | 'desc' = 'asc';
@@ -17,6 +18,13 @@
 		} else {
 			sortKey = key;
 			sortDir = 'asc';
+		}
+	}
+
+	function handleHeaderKeydown(e: KeyboardEvent, key: string) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			sort(key);
 		}
 	}
 
@@ -41,17 +49,24 @@
 	style="max-height: {maxHeight};"
 >
 	<table class="w-full text-sm">
+		{#if caption}
+			<caption class="sr-only">{caption}</caption>
+		{/if}
 		<thead class="sticky top-0 bg-gray-50 dark:bg-gray-800">
 			<tr>
 				{#each columns as col}
 					<th
+						scope="col"
 						class="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
 						class:text-right={col.align === 'right'}
 						on:click={() => sort(col.key)}
+						on:keydown={(e) => handleHeaderKeydown(e, col.key)}
+						tabindex="0"
+						aria-sort={sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
 					>
 						{col.label}
 						{#if sortKey === col.key}
-							<span class="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+							<span class="ml-1" aria-hidden="true">{sortDir === 'asc' ? '↑' : '↓'}</span>
 						{/if}
 					</th>
 				{/each}
