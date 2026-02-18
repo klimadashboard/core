@@ -73,7 +73,7 @@
 				<a
 					class="button"
 					rel="me"
-					href="https://bsky.app/profile/klimadashboard.bsky.social"
+					href="https://bsky.app/profile/klimadashboard.org"
 					aria-label="Bluesky"
 				>
 					<svg
