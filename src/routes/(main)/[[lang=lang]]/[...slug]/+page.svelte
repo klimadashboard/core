@@ -10,8 +10,8 @@
 <PageHeader />
 {#if hasToggleBlocks}
 	<div itemscope itemtype="https://schema.org/FAQPage">
-		<Blocks data={data.page.blocks} />
+		<Blocks data={data.page.blocks} chartSnapshots={data.chartSnapshots} />
 	</div>
 {:else}
-	<Blocks data={data.page.blocks} />
+	<Blocks data={data.page.blocks} chartSnapshots={data.chartSnapshots} />
 {/if}

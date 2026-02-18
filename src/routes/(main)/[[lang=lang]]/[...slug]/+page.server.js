@@ -1,12 +1,28 @@
-/** @type {import('./$types').PageLoad} */
+/** @type {import('./$types').PageServerLoad} */
 import { error, redirect } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
+import { getChartSnapshots } from '$lib/utils/chartDataService';
 import dayjs from 'dayjs';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
+
+/** Extract chart IDs from a blocks array (handles nested block_grid) */
+function extractChartIds(blocks) {
+	const ids = [];
+	for (const block of blocks || []) {
+		if (block.collection === 'block_chart' && block.item?.charts) {
+			for (const c of block.item.charts) {
+				if (c.chart) ids.push(c.chart);
+			}
+		} else if (block.collection === 'block_grid' && block.item?.blocks) {
+			ids.push(...extractChartIds(block.item.blocks));
+		}
+	}
+	return ids;
+}
 
 function filterTranslations(data, language) {
 	// If data is an array, process each element.
@@ -175,6 +191,12 @@ export async function load({ fetch, params }) {
 
 		const blocks = content.blocks;
 
+		// SSR chart snapshots for any chart blocks on this page
+		const chartIds = extractChartIds(blocks);
+		const chartSnapshots = chartIds.length > 0
+			? await getChartSnapshots(chartIds, null, [], language, fetch)
+			: {};
+
 		return {
 			page: {
 				id: page.id,
@@ -182,7 +204,8 @@ export async function load({ fetch, params }) {
 				blocks: blocks,
 				slugs: slugs[0].translations
 			},
-			content
+			content,
+			chartSnapshots
 		};
 	} catch (err) {
 		if (err && 'location' in err) {

@@ -1,6 +1,6 @@
 // $lib/components/charts/custom/snow/config.ts
 
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems, readItem } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { PUBLIC_VERSION } from '$env/static/public';
@@ -228,3 +228,11 @@ export function buildChartData(
 
 /** Bar color for snow chart */
 export const SNOW_COLOR = '#11998E';
+
+/**
+ * Snow chart requires a station ID, not a region ID.
+ * For SSR, we skip this chart — it falls back to text-only snapshot.
+ */
+export async function fetchChartData(_params: ChartFetchParams): Promise<ChartData | null> {
+	return null;
+}

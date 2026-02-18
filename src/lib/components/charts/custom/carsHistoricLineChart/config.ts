@@ -1,6 +1,6 @@
-// $lib/components/charts/custom/vehicleRegistrations/config.ts
+// $lib/components/charts/custom/carsHistoricLineChart/config.ts
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
 
@@ -608,4 +608,33 @@ export function buildChartData(
 		embedOptions,
 		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	parentIds
+}: ChartFetchParams): Promise<ChartData | null> {
+	const candidates = regionId
+		? [
+				{ id: regionId, name: '', layer: 'unknown', layer_label: '' },
+				...parentIds.map((id) => ({ id, name: '', layer: 'unknown', layer_label: '' }))
+			]
+		: [];
+
+	const result = await fetchDataWithFallback(candidates, { mode: 'bestand' });
+	if (!result || result.data.length === 0) return null;
+
+	return buildChartData(
+		result.data,
+		result.categories,
+		result.updateDate,
+		null, // region (Card resolves this client-side)
+		'bestand',
+		true, // hasData
+		undefined, // availability
+		result.source,
+		undefined, // fallbackInfo
+		result.regionLayerLabel,
+		result.hasPrivacySuppression
+	);
 }

@@ -1,7 +1,7 @@
 // $lib/components/charts/custom/renewableShare/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { formatNumber, formatPercent, formatDate } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import dayjs from 'dayjs';
@@ -248,4 +248,14 @@ export function buildChartData(
 			source
 		}
 	};
+}
+
+export async function fetchChartData(_params: ChartFetchParams): Promise<ChartData | null> {
+	const category: CategoryType = 'day';
+	const { data, updateDate } = await fetchData(category);
+	if (data.length === 0) return null;
+
+	const processed = processData(data, category);
+	const yearlyStats = await fetchYearlyStats();
+	return buildChartData(processed, category, yearlyStats, updateDate);
 }

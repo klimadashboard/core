@@ -1,8 +1,10 @@
-// $lib/charts/custom/renewablesYearlyBar/config.ts
+// $lib/components/charts/custom/renewablesYearlyBarChart/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { formatPower, formatNumber, getPowerUnit } from '$lib/utils/formatters';
+import { readItem } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
 
 export interface RenewablesParams {
 	energy: 'solar' | 'wind';
@@ -106,4 +108,27 @@ export function buildChartData(
 			region
 		}
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	let region: Region | null = null;
+
+	if (regionId) {
+		const directus = getDirectusInstance(fetchFn);
+		const raw = await directus.request(
+			readItem('regions', regionId, {
+				fields: ['id', 'code', 'code_short', 'name', 'layer']
+			})
+		) as any;
+		region = { ...raw, codeShort: raw.code_short } as Region;
+	}
+
+	const params = { energy: 'solar' as const };
+	const { data, updateDate } = await fetchData(region, params);
+	if (!data || data.length === 0) return null;
+
+	return buildChartData(data, updateDate, region, params);
 }

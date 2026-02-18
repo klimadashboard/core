@@ -1,7 +1,9 @@
 // $lib/components/charts/custom/carsArea/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import { readItem } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
 import { formatNumber } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import {
@@ -116,4 +118,25 @@ export function buildChartData(
 		hasData: totalCars > 0 && footballPitches >= 2,
 		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	let region: Region | null = null;
+
+	if (regionId) {
+		const directus = getDirectusInstance(fetchFn);
+		region = (await directus.request(
+			readItem('regions', regionId, {
+				fields: ['id', 'code', 'name', 'layer', 'center', 'population']
+			})
+		)) as Region;
+	}
+
+	const data = await fetchData(fetchFn, region);
+	if (!data.region || data.region.cars.length === 0) return null;
+
+	return buildChartData(data, region);
 }

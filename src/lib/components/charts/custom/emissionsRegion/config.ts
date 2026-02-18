@@ -1,7 +1,7 @@
-// $lib/components/charts/custom/emissionsBySector/config.ts
+// $lib/components/charts/custom/emissionsRegion/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { t } from '$lib/utils/t';
@@ -668,4 +668,34 @@ export function buildChartData(
 			region: { name: region.name, id: region.id } as any
 		}
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	parentIds,
+	translations
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	const regionCandidates = [regionId, ...parentIds];
+	const { results } = await fetchEmissionsData(regionCandidates);
+	if (!results || results.length === 0) return null;
+
+	const region = results[0];
+	const useMegatons = shouldUseMegatons(region.data);
+	const sortedCategoryOrder = sortCategoryOrderByFirstYear(region.data, region.categoryOrder);
+	const infoTextPlaceholders = computeInfoTextPlaceholders([region], null);
+
+	return buildChartData(
+		region.data,
+		region,
+		false, // showPerCapita
+		useMegatons,
+		translations,
+		null, // climateNeutralityText
+		infoTextPlaceholders,
+		false, // isHorizontal
+		null, // singleYear
+		sortedCategoryOrder
+	);
 }

@@ -1,7 +1,9 @@
-// $lib/components/charts/custom/renewablesChart/config.ts
+// $lib/components/charts/custom/renewablesExplorer/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import { readItem } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
 import { formatPower, formatNumber, getPowerUnit, convertPowerUnit } from '$lib/utils/formatters';
 
 // ============================================================================
@@ -640,3 +642,28 @@ export function formatPowerValue(value: number): string {
 
 /** Re-export formatters for convenience */
 export { formatPower, formatNumber, getPowerUnit, convertPowerUnit };
+
+export async function fetchChartData({
+	regionId,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	let region: Region | null = null;
+
+	if (regionId) {
+		const directus = getDirectusInstance(fetchFn);
+		const raw = await directus.request(
+			readItem('regions', regionId, {
+				fields: ['id', 'code', 'code_short', 'name', 'layer']
+			})
+		) as any;
+		region = { ...raw, codeShort: raw.code_short } as Region;
+	}
+
+	const params = { energy: 'solar' as const };
+	const { data, updateDate, gridOperatorCheckedRatio } = await fetchData(region, params);
+	if (!data || data.length === 0) return null;
+
+	const goal = await fetchGoal(region, params);
+
+	return buildChartData(data, updateDate, region, params, 'yearly', goal, gridOperatorCheckedRatio);
+}

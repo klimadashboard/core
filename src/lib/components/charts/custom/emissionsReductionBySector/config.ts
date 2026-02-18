@@ -1,7 +1,7 @@
-// $lib/components/charts/custom/emissionsReductionProgress/config.ts
+// $lib/components/charts/custom/emissionsReductionBySector/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 
@@ -638,4 +638,33 @@ export function buildChartData(
 			region: { name: region.name, id: region.id } as any
 		}
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	parentIds,
+	lang
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	const regionCandidates = [regionId, ...parentIds];
+	const { results } = await fetchEmissionsData(regionCandidates);
+	if (!results || results.length === 0) return null;
+
+	const region = results[0];
+	const useMegatons = shouldUseMegatons(region.data);
+	const { sectors, summary } = calculateSectorProgress(region, useMegatons);
+	if (!summary) return null;
+
+	const infoTextPlaceholders = computeInfoTextPlaceholders([region], null);
+
+	return buildChartData(
+		region,
+		sectors,
+		summary,
+		useMegatons,
+		region.data[0]?.source || 'Emissions data',
+		lang || 'de',
+		infoTextPlaceholders
+	);
 }

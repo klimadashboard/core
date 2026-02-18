@@ -64,6 +64,6 @@
 			</ol>
 		</nav>
 
-		<Chart id={data.id} type="card" expandContent={true} />
+		<Chart id={data.id} type="card" expandContent={true} snapshot={data.chartSnapshot} />
 	</div>
 </div>

@@ -46,6 +46,15 @@ export interface EmbedOption {
 	currentValue: string;
 }
 
+/** Parameters for server-side chart data fetching */
+export interface ChartFetchParams {
+	regionId: string | null;
+	parentIds: string[];
+	lang: string;
+	fetch: typeof globalThis.fetch;
+	translations: Record<string, string>;
+}
+
 /** Chart data exposed to Card */
 export interface ChartData {
 	raw: DataPoint[];

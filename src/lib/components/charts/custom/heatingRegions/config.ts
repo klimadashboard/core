@@ -1,7 +1,7 @@
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import type { Region } from '$lib/utils/getRegion';
-import type { ChartData, TableColumn } from '$lib/components/charts/types';
+import type { ChartData, TableColumn, ChartFetchParams } from '$lib/components/charts/types';
 
 export interface HeatingCategory {
 	key: string;
@@ -327,4 +327,29 @@ export function buildChartData(
 			region: region as any
 		}
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	const directus = getDirectusInstance(fetchFn);
+
+	const allRegions = (await directus.request(
+		readItems('regions', {
+			fields: ['id', 'code', 'name', 'layer', 'center', 'population', 'parents.id'],
+			filter: { visible: { _eq: true } },
+			limit: -1
+		})
+	)) as RegionWithDistance[];
+
+	const region = allRegions.find((r) => r.id === regionId) as RegionWithDistance | undefined;
+	if (!region) return null;
+
+	const data = await fetchHeatingData(region, allRegions);
+	if (!data || data.length === 0) return null;
+
+	return buildChartData(data, region, allRegions);
 }

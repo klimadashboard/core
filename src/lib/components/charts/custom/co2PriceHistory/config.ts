@@ -1,5 +1,5 @@
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 
 export interface Co2PriceRawData {
 	date: Date;
@@ -101,4 +101,10 @@ export function buildChartData(
 			region
 		}
 	};
+}
+
+export async function fetchChartData({ fetch }: ChartFetchParams): Promise<ChartData | null> {
+	const { data, updateDate } = await fetchData();
+	if (data.length === 0) return null;
+	return buildChartData(data, updateDate, null);
 }

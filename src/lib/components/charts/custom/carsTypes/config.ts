@@ -1,6 +1,6 @@
-// $lib/components/charts/custom/vehicleRegistrations/config.ts
+// $lib/components/charts/custom/carsTypes/config.ts
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { filterCategoryValues } from '$lib/components/charts/utils/privacyFilter';
@@ -655,4 +655,36 @@ export function buildChartData(
 		embedOptions,
 		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	parentIds
+}: ChartFetchParams): Promise<ChartData | null> {
+	const candidates = regionId
+		? [
+				{ id: regionId, name: '', layer: 'unknown', layer_label: '' },
+				...parentIds.map((id) => ({ id, name: '', layer: 'unknown', layer_label: '' }))
+			]
+		: [];
+
+	const result = await fetchDataWithFallback(candidates, { mode: 'bestand' });
+	if (!result) return null;
+
+	const waffleData = buildWaffleData(result.data, result.categories);
+
+	return buildChartData(
+		result.data,
+		waffleData,
+		result.updateDate,
+		result.regionName || '',
+		null, // region
+		'bestand',
+		true, // hasData
+		undefined, // availability
+		result.source,
+		undefined, // fallbackInfo
+		result.regionLayerLabel,
+		result.hasPrivacySuppression
+	);
 }

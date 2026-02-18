@@ -1,7 +1,7 @@
 // $lib/components/charts/custom/powerProductionExternal/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 
 export interface PowerProductionParams {
 	regionId?: string;
@@ -258,4 +258,16 @@ export function buildChartData(
 		},
 		hasData: data.length > 0
 	};
+}
+
+export async function fetchChartData({
+	regionId
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	const region = { id: regionId, name: '' } as Region;
+	const { data, updateDate, source } = await fetchData(region, {});
+	if (!data || data.length === 0) return null;
+
+	return buildChartData(data, updateDate, region, source);
 }

@@ -1,7 +1,7 @@
-// $lib/components/charts/custom/mobilityModalSplitStreet/config.ts
+// $lib/components/charts/custom/modalSplit/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { t } from '$lib/utils/t';
@@ -689,4 +689,32 @@ export function buildChartData(
 			}
 		]
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	parentIds,
+	translations
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	const region = { id: regionId, name: '', layer: 'municipality', code: '', center: ['0', '0'] } as Region;
+	const regionCandidates = [regionId, ...parentIds];
+
+	const fetchResult = await fetchData(region, { regionId, regionCandidates });
+	if (!fetchResult.data || fetchResult.data.length === 0) return null;
+
+	const goal = await fetchGoal(region);
+	const goalConfig = resolveGoalConfig(goal, fetchResult.data);
+
+	return buildChartData(
+		fetchResult.data,
+		fetchResult.updateDate,
+		fetchResult.source,
+		region,
+		false, // showHistoric
+		translations,
+		goalConfig,
+		fetchResult.matchedRegionName
+	);
 }

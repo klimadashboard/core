@@ -111,7 +111,7 @@
 					name: `Klimadaten ${data.page.name}`,
 					itemListElement: allCharts
 						.map((c, i) => {
-							const meta = data.chartsContent?.[c.id];
+							const meta = data.chartSnapshots?.[c.id];
 							if (!meta?.title) return null;
 							return {
 								'@type': 'ListItem',
@@ -187,27 +187,12 @@
 												id={chart.id}
 												span={chart.span || 12}
 												type="card"
+												snapshot={data.chartSnapshots?.[chart.id]}
 												on:dataAvailable={(e) => handleDataAvailable(chart.id, e)}
 											/>
 										{/if}
 									{/each}
 								</div>
-							{/if}
-
-							<!-- SSR-only: chart descriptions for crawlers and AI scrapers -->
-							{#if !browser}
-								{#each section.charts as chart}
-									{@const meta = data.chartsContent?.[chart.id]}
-									{#if meta?.title}
-										<article class="sr-only">
-											<h3>{meta.title}</h3>
-											{#if meta.heading}<p>{@html meta.heading}</p>{/if}
-											{#if meta.text}<div>{@html meta.text}</div>{/if}
-											{#if meta.methods}<div>{@html meta.methods}</div>{/if}
-											{#if meta.source}<p>{@html meta.source}</p>{/if}
-										</article>
-									{/if}
-								{/each}
 							{/if}
 						{/if}
 
