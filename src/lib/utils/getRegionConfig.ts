@@ -73,6 +73,13 @@ export interface ResolvedRegionConfig {
 	source_region: string;
 }
 
+// ---------------------------------------------------------------------------
+// In-memory TTL cache for region configs.
+// Region configs rarely change and the hierarchy walk is expensive.
+// ---------------------------------------------------------------------------
+const configCache = new Map<string, { data: ResolvedRegionConfig | null; expires: number }>();
+const CONFIG_TTL = 30 * 60 * 1000; // 30 minutes
+
 /**
  * Get the region page config for a given region, walking up the hierarchy if needed
  */
@@ -81,6 +88,10 @@ export async function getRegionConfig(
 	lang: string = 'de',
 	fetch?: typeof globalThis.fetch
 ): Promise<ResolvedRegionConfig | null> {
+	const cacheKey = `${regionId}-${lang}`;
+	const cached = configCache.get(cacheKey);
+	if (cached && Date.now() < cached.expires) return cached.data;
+
 	const directus = getDirectusInstance(fetch);
 
 	// Country IDs for fallback (states don't have country in their parents array)
@@ -156,7 +167,7 @@ export async function getRegionConfig(
 				});
 
 				if (translation) {
-					return {
+					const result: ResolvedRegionConfig = {
 						intro_text: translation.intro_text || '',
 						explore_map_label: translation.explore_map_label || '',
 						scroll_for_more_label: translation.scroll_for_more_label || '',
@@ -165,6 +176,8 @@ export async function getRegionConfig(
 						sections: resolvedSections,
 						source_region: currentRegionId
 					};
+					configCache.set(cacheKey, { data: result, expires: Date.now() + CONFIG_TTL });
+					return result;
 				}
 			}
 
@@ -206,8 +219,9 @@ export async function getRegionConfig(
 		}
 	}
 
-	// No config found anywhere in hierarchy
+	// No config found anywhere in hierarchy — cache this too
 	console.log(`No config found in hierarchy, returning null`);
+	configCache.set(cacheKey, { data: null, expires: Date.now() + CONFIG_TTL });
 	return null;
 }
 

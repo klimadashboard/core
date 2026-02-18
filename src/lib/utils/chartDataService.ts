@@ -4,12 +4,14 @@
  * Auto-discovers config.ts modules from chart directories via import.meta.glob.
  * For each chart, calls its fetchChartData() to get full ChartData (table, placeholders, meta).
  * Builds serializable ChartSnapshot with pre-formatted table rows and fully resolved text.
- * Results are cached in an LRU cache (default 60 min TTL, max 5000 entries).
+ * Results are cached in an LRU cache (fresh 60 min, stale-servable 24h, max 10000 entries).
  *
  * Protections against Directus overload:
+ * - Stale-while-revalidate: expired snapshots served instantly for up to 24h
+ * - Global concurrency cap: max 4 data fetches system-wide; excess get text-only snapshots
+ * - HTTP response cache: Directus API responses cached for 4 hours (shared across all charts)
  * - In-flight deduplication: concurrent requests for the same snapshot share one promise
- * - Concurrency limiter: max 4 chart data fetches run in parallel
- * - LRU cache with 60min TTL avoids repeated fetches
+ * - Per-page concurrency limiter: max 2 chart data fetches per page load
  *
  * Pages call getChartSnapshots(chartIds, regionId, lang, fetch) — one line per page type.
  */
@@ -37,12 +39,13 @@ export interface ChartSnapshot {
 }
 
 // ---------------------------------------------------------------------------
-// LRU Cache
+// LRU Cache (snapshot level)
 // ---------------------------------------------------------------------------
 
 interface CacheValue {
 	snapshot: ChartSnapshot;
-	expires: number;
+	expires: number;     // Fresh until (60 min) — within this window, entry is fully valid
+	staleUntil: number;  // Usable until (24h) — past expires but within staleUntil, served as-is
 }
 
 class LRUCache {
@@ -52,7 +55,7 @@ class LRUCache {
 	get(key: string): CacheValue | undefined {
 		const entry = this.map.get(key);
 		if (!entry) return undefined;
-		if (Date.now() > entry.expires) {
+		if (Date.now() > entry.staleUntil) {
 			this.map.delete(key);
 			return undefined;
 		}
@@ -73,11 +76,110 @@ class LRUCache {
 	}
 }
 
-const cache = new LRUCache(5000);
+const cache = new LRUCache(10_000);
 const DEFAULT_TTL = 60 * 60 * 1000; // 60 minutes
+const STALE_TTL = 24 * 60 * 60 * 1000; // 24 hours — stale snapshots still served to avoid Directus load
 
 // ---------------------------------------------------------------------------
-// In-flight deduplication
+// HTTP Response Cache (Directus data level)
+//
+// Caches raw HTTP responses by URL for 4 hours. This is the key layer that
+// prevents Directus overload:
+// - Two chart types querying the same collection share one cached response
+// - Consecutive page loads reuse data without hitting Directus
+// - No changes needed to individual config.ts files — transparent via fetch wrapper
+// ---------------------------------------------------------------------------
+
+const httpCache = new Map<string, { body: string; expires: number }>();
+const HTTP_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
+const HTTP_CACHE_MAX = 2000;
+
+/** In-flight HTTP requests — prevents duplicate fetches for the same URL */
+const httpInflight = new Map<string, Promise<string>>();
+
+/**
+ * Wrap a fetch function with an HTTP response cache.
+ * Only caches GET requests to base.klimadashboard.org.
+ * Chart configs receive this transparently via ChartFetchParams.fetch.
+ */
+function createCachedFetch(baseFetch: typeof globalThis.fetch): typeof globalThis.fetch {
+	return (async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+		const method = (init?.method || 'GET').toUpperCase();
+		if (method !== 'GET') return baseFetch(input, init);
+
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.toString()
+					: input.url;
+
+		// Only cache calls to our Directus backend
+		if (!url.includes('base.klimadashboard.org')) {
+			return baseFetch(input, init);
+		}
+
+		// 1. Check memory cache
+		const cached = httpCache.get(url);
+		if (cached && Date.now() < cached.expires) {
+			return new Response(cached.body, {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
+		// 2. Check if there's already an in-flight request for this URL
+		const existing = httpInflight.get(url);
+		if (existing) {
+			try {
+				const body = await existing;
+				return new Response(body, {
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				});
+			} catch {
+				// In-flight request failed — fall through to make our own
+			}
+		}
+
+		// 3. Fetch, cache, and return
+		const bodyPromise = (async () => {
+			const response = await baseFetch(input, init);
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}`);
+			}
+			const body = await response.text();
+
+			// Store in cache
+			httpCache.set(url, { body, expires: Date.now() + HTTP_CACHE_TTL });
+
+			// LRU eviction
+			if (httpCache.size > HTTP_CACHE_MAX) {
+				const oldest = httpCache.keys().next().value;
+				if (oldest) httpCache.delete(oldest);
+			}
+
+			return body;
+		})();
+
+		httpInflight.set(url, bodyPromise);
+		bodyPromise.catch(() => {}).finally(() => httpInflight.delete(url));
+
+		try {
+			const body = await bodyPromise;
+			return new Response(body, {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		} catch {
+			// Cache miss and fetch failed — pass through to original fetch
+			return baseFetch(input, init);
+		}
+	}) as typeof globalThis.fetch;
+}
+
+// ---------------------------------------------------------------------------
+// In-flight deduplication (snapshot level)
 // ---------------------------------------------------------------------------
 
 /** Map of cacheKey → in-flight promise. Prevents thundering herd on cold cache. */
@@ -90,7 +192,19 @@ let translationsInflight: Promise<Record<string, string>> | null = null;
 // Concurrency limiter
 // ---------------------------------------------------------------------------
 
-const MAX_CONCURRENT_FETCHES = 4;
+const MAX_CONCURRENT_FETCHES = 2;
+
+// ---------------------------------------------------------------------------
+// Global concurrency cap (across ALL requests)
+//
+// Limits the total number of chart data fetches running simultaneously across
+// the entire process. When crawlers trigger many region pages at once, this
+// prevents a burst of Directus calls. Excess requests gracefully degrade to
+// text-only snapshots (no data fetch, no table — just CMS text).
+// ---------------------------------------------------------------------------
+
+let globalActiveFetches = 0;
+const MAX_GLOBAL_FETCHES = 4;
 
 async function runWithConcurrency<T>(
 	tasks: (() => Promise<T>)[],
@@ -201,6 +315,10 @@ export async function getChartSnapshots(
 ): Promise<Record<string, ChartSnapshot>> {
 	if (chartIds.length === 0) return {};
 
+	// Wrap fetch with HTTP response cache — all Directus calls share this cache.
+	// Chart configs receive this transparently via ChartFetchParams.fetch.
+	const cachedFetch = createCachedFetch(fetch);
+
 	// Check which charts are already cached or in-flight
 	const result: Record<string, ChartSnapshot> = {};
 	const uncachedIds: string[] = [];
@@ -232,10 +350,10 @@ export async function getChartSnapshots(
 	if (uncachedIds.length === 0) return result;
 
 	// Load translations for i18n resolution in chart data modules
-	const translations = await loadTranslations(lang, fetch);
+	const translations = await loadTranslations(lang, cachedFetch);
 
 	// Fetch chart configs from Directus for uncached charts (single batch request)
-	const directus = getDirectusInstance(fetch);
+	const directus = getDirectusInstance(cachedFetch);
 	let charts: any[] = [];
 	try {
 		charts = (await directus.request(
@@ -267,7 +385,7 @@ export async function getChartSnapshots(
 
 		return () => {
 			// Register in-flight promise so concurrent requests can piggy-back
-			const promise = generateChartSnapshot(chart, regionId, parentIds, lang, translations, fetch);
+			const promise = generateChartSnapshot(chart, regionId, parentIds, lang, translations, cachedFetch);
 			inflight.set(cacheKey, promise);
 			return promise.finally(() => inflight.delete(cacheKey));
 		};
@@ -309,15 +427,27 @@ async function generateChartSnapshot(
 			source: content.source || ''
 		})) as Record<string, string>;
 
-		// Step 2: Try server-side data fetch via config.ts
+		// Step 2: Try server-side data fetch via config.ts (respects global concurrency cap)
 		const chartType = chart.custom_sveltestring || chart.type;
-		const chartData = await fetchChartDataWithTimeout(chartType, {
-			regionId,
-			parentIds,
-			lang,
-			fetch,
-			translations
-		});
+		let chartData: ChartData | null = null;
+
+		// Global concurrency gate — only fetch data if under the system-wide limit.
+		// When crawlers hit many region pages simultaneously, excess requests
+		// gracefully degrade to text-only snapshots instead of overloading Directus.
+		if (globalActiveFetches < MAX_GLOBAL_FETCHES) {
+			globalActiveFetches++;
+			try {
+				chartData = await fetchChartDataWithTimeout(chartType, {
+					regionId,
+					parentIds,
+					lang,
+					fetch,
+					translations
+				});
+			} finally {
+				globalActiveFetches--;
+			}
+		}
 
 		let snapshot: ChartSnapshot;
 
@@ -353,7 +483,8 @@ async function generateChartSnapshot(
 		const cacheKey = `${chart.id}-${regionId || 'national'}-${lang}`;
 		cache.set(cacheKey, {
 			snapshot,
-			expires: Date.now() + ttl
+			expires: Date.now() + ttl,
+			staleUntil: Date.now() + STALE_TTL
 		});
 
 		return [chart.id, snapshot];

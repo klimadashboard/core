@@ -8,7 +8,29 @@ import formatNumber from '$lib/stores/formatNumber';
 
 dayjs.extend(relativeTime);
 
-const getSiteData = async () => {
+// ---------------------------------------------------------------------------
+// TTL cache — each data source is fetched at most once per TTL period.
+// Concurrent calls share one in-flight promise (deduplication).
+// ---------------------------------------------------------------------------
+const dataCache = new Map();
+const DATA_TTL = 5 * 60 * 1000; // 5 minutes
+
+function cachedFetch(key, fetcher) {
+	const entry = dataCache.get(key);
+	if (entry && Date.now() < entry.expires) return entry.promise;
+	const promise = fetcher().catch((err) => {
+		dataCache.delete(key); // Don't cache errors
+		throw err;
+	});
+	dataCache.set(key, { promise, expires: Date.now() + DATA_TTL });
+	return promise;
+}
+
+// ---------------------------------------------------------------------------
+// Raw data fetchers (called at most once per TTL period)
+// ---------------------------------------------------------------------------
+
+const _fetchSiteData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	const data = await directus
@@ -26,7 +48,7 @@ const getSiteData = async () => {
 	};
 };
 
-const getRenewableData = async function () {
+const _fetchRenewableData = async function () {
 	const directus = getDirectusInstance(fetch);
 
 	try {
@@ -89,7 +111,7 @@ const getRenewableData = async function () {
 	}
 };
 
-const getCO2PriceData = async () => {
+const _fetchCO2PriceData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
@@ -119,7 +141,7 @@ const getCO2PriceData = async () => {
 	}
 };
 
-const getGasUsageData = async () => {
+const _fetchGasUsageData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
@@ -167,7 +189,7 @@ const getGasUsageData = async () => {
 	}
 };
 
-const getBalkonStats = async () => {
+const _fetchBalkonStats = async () => {
 	try {
 		const res = await fetch('https://base.klimadashboard.org/get-balkonkraftwerke');
 		const json = await res.json();
@@ -210,6 +232,15 @@ const getBalkonStats = async () => {
 		};
 	}
 };
+
+// ---------------------------------------------------------------------------
+// Cached accessors — deduplicates calls and caches for 5 minutes
+// ---------------------------------------------------------------------------
+const getSiteData = () => cachedFetch('site', _fetchSiteData);
+const getRenewableData = () => cachedFetch('renewable', _fetchRenewableData);
+const getCO2PriceData = () => cachedFetch('co2price', _fetchCO2PriceData);
+const getGasUsageData = () => cachedFetch('gasusage', _fetchGasUsageData);
+const getBalkonStats = () => cachedFetch('balkon', _fetchBalkonStats);
 
 const placeholderHandlers = {
 	renewablePercentageNow: async () => (await getRenewableData()).renewablePercentageNow,
