@@ -116,13 +116,14 @@ export function getLayerPriority(layer: string): number {
 
 /** Fetch all emissions data for region candidates */
 export async function fetchEmissionsData(
-	regionCandidates: string[]
+	regionCandidates: string[],
+	fetchFn?: typeof globalThis.fetch
 ): Promise<{ results: RegionResult[] }> {
 	if (regionCandidates.length === 0) {
 		return { results: [] };
 	}
 
-	const directus = getDirectusInstance();
+	const directus = getDirectusInstance(fetchFn);
 
 	// Fetch emissions
 	const emissions = await directus.request(
@@ -643,12 +644,13 @@ export function buildChartData(
 export async function fetchChartData({
 	regionId,
 	parentIds,
-	lang
+	lang,
+	fetch: fetchFn
 }: ChartFetchParams): Promise<ChartData | null> {
 	if (!regionId) return null;
 
 	const regionCandidates = [regionId, ...parentIds];
-	const { results } = await fetchEmissionsData(regionCandidates);
+	const { results } = await fetchEmissionsData(regionCandidates, fetchFn);
 	if (!results || results.length === 0) return null;
 
 	const region = results[0];

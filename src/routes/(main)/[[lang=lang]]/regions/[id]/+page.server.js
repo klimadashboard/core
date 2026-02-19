@@ -44,7 +44,7 @@ export async function load({ fetch, params, url, parent }) {
 			.filter(Boolean);
 
 		const parentIds = (page.parents || []).map((p) => p.id).filter(Boolean);
-		const chartSnapshots = await getChartSnapshots(chartIds, params.id, parentIds, lang, fetch);
+		const chartSnapshots = await getChartSnapshots(chartIds, params.id, parentIds, lang, fetch, { textOnly: true });
 
 		return {
 			page,

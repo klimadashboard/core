@@ -98,13 +98,14 @@ export const customSectorOrder = [
 
 /** Fetch all emissions data for region candidates */
 export async function fetchEmissionsData(
-	regionCandidates: string[]
+	regionCandidates: string[],
+	fetchFn?: typeof globalThis.fetch
 ): Promise<{ results: RegionResult[]; populationByYear: Record<string, Record<number, number>> }> {
 	if (regionCandidates.length === 0) {
 		return { results: [], populationByYear: {} };
 	}
 
-	const directus = getDirectusInstance();
+	const directus = getDirectusInstance(fetchFn);
 
 	// Fetch emissions
 	const emissions = await directus.request(
@@ -673,12 +674,13 @@ export function buildChartData(
 export async function fetchChartData({
 	regionId,
 	parentIds,
-	translations
+	translations,
+	fetch: fetchFn
 }: ChartFetchParams): Promise<ChartData | null> {
 	if (!regionId) return null;
 
 	const regionCandidates = [regionId, ...parentIds];
-	const { results } = await fetchEmissionsData(regionCandidates);
+	const { results } = await fetchEmissionsData(regionCandidates, fetchFn);
 	if (!results || results.length === 0) return null;
 
 	const region = results[0];

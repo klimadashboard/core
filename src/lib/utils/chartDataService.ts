@@ -311,7 +311,8 @@ export async function getChartSnapshots(
 	regionId: string | null,
 	parentIds: string[],
 	lang: string,
-	fetch: typeof globalThis.fetch
+	fetch: typeof globalThis.fetch,
+	options?: { textOnly?: boolean }
 ): Promise<Record<string, ChartSnapshot>> {
 	if (chartIds.length === 0) return {};
 
@@ -380,12 +381,13 @@ export async function getChartSnapshots(
 	}
 
 	// Generate snapshots with concurrency limit and in-flight deduplication
+	const textOnly = options?.textOnly ?? false;
 	const tasks = charts.map((chart) => {
 		const cacheKey = `${chart.id}-${regionId || 'national'}-${lang}`;
 
 		return () => {
 			// Register in-flight promise so concurrent requests can piggy-back
-			const promise = generateChartSnapshot(chart, regionId, parentIds, lang, translations, cachedFetch);
+			const promise = generateChartSnapshot(chart, regionId, parentIds, lang, translations, cachedFetch, textOnly);
 			inflight.set(cacheKey, promise);
 			return promise.finally(() => inflight.delete(cacheKey));
 		};
@@ -412,7 +414,8 @@ async function generateChartSnapshot(
 	parentIds: string[],
 	lang: string,
 	translations: Record<string, string>,
-	fetch: typeof globalThis.fetch
+	fetch: typeof globalThis.fetch,
+	textOnly: boolean = false
 ): Promise<[string, ChartSnapshot] | null> {
 	const content = chart.translations?.[0];
 	if (!content) return null;
@@ -431,21 +434,23 @@ async function generateChartSnapshot(
 		const chartType = chart.custom_sveltestring || chart.type;
 		let chartData: ChartData | null = null;
 
-		// Global concurrency gate — only fetch data if under the system-wide limit.
-		// When crawlers hit many region pages simultaneously, excess requests
-		// gracefully degrade to text-only snapshots instead of overloading Directus.
-		if (globalActiveFetches < MAX_GLOBAL_FETCHES) {
-			globalActiveFetches++;
-			try {
-				chartData = await fetchChartDataWithTimeout(chartType, {
-					regionId,
-					parentIds,
-					lang,
-					fetch,
-					translations
-				});
-			} finally {
-				globalActiveFetches--;
+		if (!textOnly) {
+			// Global concurrency gate — only fetch data if under the system-wide limit.
+			// When crawlers hit many region pages simultaneously, excess requests
+			// gracefully degrade to text-only snapshots instead of overloading Directus.
+			if (globalActiveFetches < MAX_GLOBAL_FETCHES) {
+				globalActiveFetches++;
+				try {
+					chartData = await fetchChartDataWithTimeout(chartType, {
+						regionId,
+						parentIds,
+						lang,
+						fetch,
+						translations
+					});
+				} finally {
+					globalActiveFetches--;
+				}
 			}
 		}
 
