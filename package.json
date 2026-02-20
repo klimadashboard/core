@@ -59,7 +59,6 @@
 		"d3": "^7.6.1",
 		"dayjs": "^1.11.3",
 		"eslint-plugin-svelte": "^2.46.1",
-		"fathom-client": "^3.5.0",
 		"maplibre-gl": "^5.2.0",
 		"papaparse": "^5.3.2",
 		"playwright": "^1.49.1",

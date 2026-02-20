@@ -4,7 +4,6 @@
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/state';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import * as Fathom from 'fathom-client';
 	import dayjs from 'dayjs';
 	import { snapdom, preCache } from '@zumer/snapdom';
 	import { Table } from '$lib/components/charts/primitives';
@@ -171,8 +170,7 @@
 	function setTab(tab: TabId) {
 		activeTab = tab;
 		liveTabLabel = tabs.find((t) => t.id === tab)?.label || '';
-		if (tab === 'table') Fathom.trackEvent('Chart Tab: Table');
-		else if (tab === 'text') Fathom.trackEvent('Chart Tab: Info');
+		if (tab !== 'chart') window.rybbit?.event('Chart Tab', { tab, chart: chart.id });
 	}
 
 	function handleTabKeydown(e: KeyboardEvent, tab: TabId) {
@@ -193,7 +191,7 @@
 	function handleExportCSV(e: MouseEvent) {
 		e.stopPropagation();
 		if (chartData?.table) exportCSV(chartData.table, chartData.meta?.region?.codeShort);
-		Fathom.trackEvent('Chart Download: CSV');
+		window.rybbit?.event('Chart Download', { format: 'csv', chart: chart.id });
 		showDownloadMenu = false;
 	}
 
@@ -205,7 +203,7 @@
 				chartData.table?.filename || 'data',
 				chartData.meta?.region?.codeShort
 			);
-		Fathom.trackEvent('Chart Download: JSON');
+		window.rybbit?.event('Chart Download', { format: 'json', chart: chart.id });
 		showDownloadMenu = false;
 	}
 
@@ -216,7 +214,7 @@
 
 	function openEmbedModal(e: MouseEvent) {
 		e.stopPropagation();
-		Fathom.trackEvent('Chart Embed: Opened');
+		window.rybbit?.event('Chart Embed', { action: 'opened', chart: chart.id });
 		showEmbedModal = true;
 	}
 
@@ -257,7 +255,7 @@
 			a.download = `${filename}.${type}`;
 			a.click();
 			URL.revokeObjectURL(url);
-			Fathom.trackEvent(`Chart Download: ${type.toUpperCase()}`);
+			window.rybbit?.event('Chart Download', { format: type, chart: chart.id });
 		} catch (err) {
 			console.error('Export failed:', err);
 		}

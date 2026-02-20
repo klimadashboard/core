@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/state';
-	import * as Fathom from 'fathom-client';
 	import {
 		generateEmbedCode,
 		generateScriptEmbedCode,
@@ -75,7 +74,7 @@
 	let copied = false;
 	async function handleCopy() {
 		await copyToClipboard(embedCode);
-		Fathom.trackEvent('Chart Embed: Copied');
+		window.rybbit?.event('Chart Embed', { action: 'copied', chart: chartId });
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	}

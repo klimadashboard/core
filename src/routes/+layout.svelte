@@ -1,13 +1,10 @@
 <script>
 	import '$lib/app.css';
-	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import Glossary from '$lib/components/Glossary.svelte';
 	import { onMount } from 'svelte';
-	import * as Fathom from 'fathom-client';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { afterNavigate } from '$app/navigation';
 	import { serializeJsonLd } from '$lib/utils/jsonld';
 	import dayjs from 'dayjs';
 	import 'dayjs/locale/de';
@@ -33,11 +30,10 @@
 		publisher: { '@type': 'Organization', name: 'Klimadashboard' }
 	});
 
-	const fathom_ids = [
-		{ version: 'de', fathom: 'BKRABNNN' },
-		{ version: 'at', fathom: 'RDBKIXJL' },
-		{ version: 'org', fathom: 'TAJDDERD' }
-	];
+	const rybbitSiteIds = {
+		at: 'bef2508789da',
+		de: '80ab23225a7d'
+	};
 
 	let description = $state(
 		(
@@ -76,23 +72,21 @@
 
 		document.addEventListener('click', handleGlobalClick);
 
-		Fathom.load(fathom_ids.find((d) => d.version == PUBLIC_VERSION).fathom, {
-			url: 'https://cdn-eu.usefathom.com/script.js'
-		});
-
 		return () => {
 			document.removeEventListener('click', handleGlobalClick);
 		};
 	});
 
-	afterNavigate(() => {
-		if (browser) {
-			Fathom.trackPageview();
-		}
-	});
 </script>
 
 <svelte:head>
+	{#if rybbitSiteIds[PUBLIC_VERSION]}
+		<script
+			src="https://analytics.klimadashboard.org/api/script.js"
+			data-site-id={rybbitSiteIds[PUBLIC_VERSION]}
+			defer
+		></script>
+	{/if}
 	<title>{title}</title>
 	<meta name="description" content={description} />
 
