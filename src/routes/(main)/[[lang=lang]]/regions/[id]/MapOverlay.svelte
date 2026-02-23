@@ -31,7 +31,10 @@
 	let mapContainer;
 	let map;
 	let mapReady = false;
-	let selectedLayer = initialLayerId || 'car-density';
+	let selectedLayer =
+		initialLayerId && mapLayers.some((l) => l.id === initialLayerId)
+			? initialLayerId
+			: 'car-density';
 	let isDarkMode = false;
 
 	// Map layer registry - just metadata
@@ -54,24 +57,28 @@
 			relatedChartId: null,
 			component: MapCarTypes
 		},
-		{
-			id: 'solar-installations',
-			titleKey: 'ui.map.solarInstallations',
-			titleFallback: 'Photovoltaik-Anlagen',
-			category: 'energy',
-			icon: '☀️',
-			relatedChartId: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
-			component: MapSolar
-		},
-		{
-			id: 'wind-power',
-			titleKey: 'ui.map.windPower',
-			titleFallback: 'Windkraftanlagen',
-			category: 'energy',
-			icon: '💨',
-			relatedChartId: '1e135ce2-06d2-4eae-b8f8-fdb4cbae910c',
-			component: MapWind
-		}
+		...(PUBLIC_VERSION === 'de'
+			? [
+					{
+						id: 'solar-installations',
+						titleKey: 'ui.map.solarInstallations',
+						titleFallback: 'Photovoltaik-Anlagen',
+						category: 'energy',
+						icon: '☀️',
+						relatedChartId: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
+						component: MapSolar
+					},
+					{
+						id: 'wind-power',
+						titleKey: 'ui.map.windPower',
+						titleFallback: 'Windkraftanlagen',
+						category: 'energy',
+						icon: '💨',
+						relatedChartId: '1e135ce2-06d2-4eae-b8f8-fdb4cbae910c',
+						component: MapWind
+					}
+				]
+			: [])
 	];
 
 	const categories = {

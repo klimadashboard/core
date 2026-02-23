@@ -52,45 +52,31 @@
 	let hoverTimeout = null;
 	let currentRegionCode = null; // Code of the current page's region for highlighting
 
-	// Colors for the gradient (green for EV share)
-	function getColorRange() {
-		const driveType = driveTypes.find(d => d.key === selectedDriveType);
-		const baseColor = driveType?.color || '#10B981';
-		// Create a gradient from light to the base color
-		const lightColor = isDarkMode ? '#1F2937' : '#F3F4F6';
-		return [lightColor, baseColor];
-	}
-
 	function getInterpolatedColors(start, end, steps) {
 		const interp = interpolateRgb(start, end);
 		return Array.from({ length: steps }, (_, i) => interp(i / (steps - 1)));
 	}
 
-	function createColorScale(data) {
-		if (!data || data.size === 0) {
-			return { scale: () => '#F2F2F2', range: [], thresholds: [] };
-		}
+	// Fixed thresholds per drive type for a clear visual spread
+	const fixedScales = {
+		'Elektro':        { thresholds: [2, 5, 8, 12, 18, 25] },
+		'Plug-in-Hybrid': { thresholds: [1, 2, 4, 6, 8, 12] },
+		'Hybrid':         { thresholds: [2, 5, 8, 12, 16, 22] },
+		'Benzin':         { thresholds: [20, 28, 34, 40, 46, 52] },
+		'Diesel':         { thresholds: [15, 22, 28, 34, 40, 48] }
+	};
 
-		const values = Array.from(data.values())
-			.map(d => d[selectedDriveType] || 0)
-			.filter(v => v != null && v > 0);
+	function createColorScale(_data) {
+		const driveType = driveTypes.find(d => d.key === selectedDriveType);
+		const baseColor = driveType?.color || '#10B981';
+		const lightColor = isDarkMode ? '#1F2937' : '#F3F4F6';
 
-		if (!values.length) {
-			return { scale: () => '#F2F2F2', range: [], thresholds: [] };
-		}
+		const cfg = fixedScales[selectedDriveType] || { thresholds: [5, 10, 15, 20, 30, 50] };
+		const steps = cfg.thresholds.length + 1;
+		const colorRange = getInterpolatedColors(lightColor, baseColor, steps);
+		const scale = scaleThreshold().domain(cfg.thresholds).range(colorRange);
 
-		const sorted = [...values].sort((a, b) => a - b);
-		const steps = 7;
-		const thresholds = Array.from({ length: steps - 1 }, (_, i) => {
-			const p = (i + 1) / steps;
-			return sorted[Math.floor(p * sorted.length)];
-		});
-
-		const [startColor, endColor] = getColorRange();
-		const colorRange = getInterpolatedColors(startColor, endColor, steps);
-		const scale = scaleThreshold().domain(thresholds).range(colorRange);
-
-		return { scale, range: colorRange, thresholds };
+		return { scale, range: colorRange, thresholds: cfg.thresholds };
 	}
 
 	function tilesURLForLayer(layer) {
@@ -236,7 +222,6 @@
 
 		const feature = e.features[0];
 		const regionCode = String(feature.properties?.[idProp]);
-		const rName = feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
 
 		const data = regionData.get(regionCode);
 		if (!data) {
@@ -244,8 +229,11 @@
 			return;
 		}
 
+		// Prefer name from API data, fall back to tile properties
+		const rName = data.name || feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
+
 		hoveredRegion = {
-			name: data.name || rName,
+			name: rName,
 			code: regionCode,
 			...data
 		};
@@ -372,6 +360,8 @@
 		map.on('sourcedata', onData);
 	}
 
+	let installedLayer = null;
+
 	onMount(async () => {
 		// Set the current region's code for highlighting from props
 		if (regionCode || regionCodeShort) {
@@ -384,6 +374,7 @@
 		if (map && map.loaded()) {
 			installRegionSourceAndLayers();
 		}
+		installedLayer = selectedLayer;
 	});
 
 	onDestroy(() => {
@@ -392,12 +383,13 @@
 		}
 	});
 
-	// Reactivity
-	$: if (!loading && map && selectedLayer) {
+	// Only react to actual layer changes (not loading toggling)
+	$: if (map && selectedLayer && selectedLayer !== installedLayer && installedLayer !== null) {
 		removeRegionSourceAndLayers();
 		idProp = 'AGS';
 		installRegionSourceAndLayers();
 		loadData();
+		installedLayer = selectedLayer;
 	}
 
 	$: if (!loading && map && regionData && selectedDriveType) {
