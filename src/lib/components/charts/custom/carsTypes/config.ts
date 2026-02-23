@@ -98,34 +98,65 @@ async function fetchBestandData(
 	hasPrivacySuppression?: boolean;
 } | null> {
 	const country = getCountryCode();
+	const isCountryLevel = !region || region.layer === 'country';
 
-	// Use the custom endpoint that handles region lookup and aggregation
-	// The endpoint accepts region IDs (UUIDs) and looks them up internally
-	const regionKey = region?.id || (country === 'DE' ? 'DE' : country);
-	const url = `https://base.klimadashboard.org/get-mobility-cars?region=${encodeURIComponent(regionKey)}&country=${country}&includeMeta=true`;
+	let yearData: Record<string, Record<string, number>>;
+	let regionName: string;
+	let source: string;
 
-	const resp = await fetch(url);
+	if (isCountryLevel) {
+		// Country-level: fetch all districts and aggregate
+		const url = `https://base.klimadashboard.org/get-mobility-cars?layer=district&country=${country}&includeMeta=true`;
+		const resp = await fetch(url);
+		if (!resp.ok) return null;
 
-	if (!resp.ok) {
-		// 404 or 400 means no data for this region
-		if (resp.status === 404 || resp.status === 400) {
-			return null;
+		const districts = await resp.json();
+		if (!Array.isArray(districts) || districts.length === 0) return null;
+
+		yearData = {};
+		const allSourceParts = new Set<string>();
+
+		for (const district of districts) {
+			const dData = district.data || {};
+			if (district.source) {
+				for (const part of String(district.source).split(',')) {
+					const trimmed = part.trim();
+					if (trimmed) allSourceParts.add(trimmed);
+				}
+			}
+
+			for (const [year, categories] of Object.entries(dData)) {
+				if (!yearData[year]) yearData[year] = {};
+				for (const [cat, val] of Object.entries(categories as Record<string, number>)) {
+					yearData[year][cat] = (yearData[year][cat] || 0) + ((val as number) || 0);
+				}
+			}
 		}
-		throw new Error(`Endpoint error ${resp.status}`);
+
+		regionName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
+		// Compact sources: deduplicate by removing year suffixes
+		const baseSourceNames = new Set([...allSourceParts].map((s) => s.replace(/\s+\d{4}(-\d{2})?$/, '')));
+		source = [...baseSourceNames].join(', ');
+	} else {
+		// Single-region: use the region-specific endpoint
+		const regionKey = region?.id || (country === 'DE' ? 'DE' : country);
+		const url = `https://base.klimadashboard.org/get-mobility-cars?region=${encodeURIComponent(regionKey)}&country=${country}&includeMeta=true`;
+
+		const resp = await fetch(url);
+		if (!resp.ok) {
+			if (resp.status === 404 || resp.status === 400) return null;
+			throw new Error(`Endpoint error ${resp.status}`);
+		}
+
+		const result = await resp.json();
+		if (result.error) return null;
+
+		yearData = result.data || {};
+		regionName = result.region?.name || region?.name || (country === 'DE' ? 'Deutschland' : country);
+		source = result.source || result.meta?.source || '';
 	}
 
-	const result = await resp.json();
-
-	// Handle error responses from the endpoint
-	if (result.error) {
-		return null;
-	}
-
-	// The endpoint returns { region: {...}, data: { [year]: { [category]: value } } }
-	const yearData = result.data || {};
 	const periods = Object.keys(yearData).sort();
-	const regionName =
-		result.region?.name || region?.name || (country === 'DE' ? 'Deutschland' : country);
 
 	if (periods.length === 0) {
 		return null;
@@ -184,9 +215,6 @@ async function fetchBestandData(
 
 	const updateDate = new Date(latestYear, 0, 1).toISOString();
 
-	// Get source from API response, fallback to empty string
-	const source = result.source || result.meta?.source || '';
-
 	return { data, categories, updateDate, regionName, source, hasPrivacySuppression };
 }
 
@@ -202,12 +230,14 @@ async function fetchNeuzulassungenData(
 	hasPrivacySuppression?: boolean;
 } | null> {
 	const country = getCountryCode();
-	const regionCode = region?.id || country;
+	const isCountryLevel = !region || region.layer === 'country';
 	const defaultRegionName =
 		country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 
-	// Build Directus API URL with filters
-	const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${regionCode}&filter[country][_eq]=${country}&sort=-period&limit=-1`;
+	// Build Directus API URL - omit region filter for country-level aggregation
+	const url = isCountryLevel
+		? `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[country][_eq]=${country}&sort=-period&limit=-1`
+		: `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${region?.id || country}&filter[country][_eq]=${country}&sort=-period&limit=-1`;
 
 	const response = await fetch(url);
 	if (!response.ok) {
@@ -215,7 +245,7 @@ async function fetchNeuzulassungenData(
 	}
 
 	const result = await response.json();
-	const records = (result.data || []) as Array<{
+	let records = (result.data || []) as Array<{
 		region: string;
 		country: string;
 		period: string;
@@ -226,6 +256,27 @@ async function fetchNeuzulassungenData(
 
 	if (records.length === 0) {
 		return null;
+	}
+
+	// For country-level, aggregate records across all regions by period+category
+	if (isCountryLevel) {
+		const aggregated = new Map<string, Map<string, number>>();
+		for (const record of records) {
+			if (!aggregated.has(record.period)) aggregated.set(record.period, new Map());
+			const periodMap = aggregated.get(record.period)!;
+			periodMap.set(record.category, (periodMap.get(record.category) || 0) + record.value);
+		}
+		const firstSource = records[0]?.source;
+		records = [...aggregated.entries()].flatMap(([period, categories]) =>
+			[...categories.entries()].map(([category, value]) => ({
+				region: country,
+				country,
+				period,
+				category,
+				value,
+				source: firstSource
+			}))
+		);
 	}
 
 	// Get the latest period

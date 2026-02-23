@@ -68,7 +68,8 @@
 
 	// Build region candidates from current region + parents (for fallback)
 	// The API accepts region IDs directly, so we just pass the IDs
-	$: regionCandidates = region
+	// Only treat as region if it has a valid layer (page content items from RegionProvider don't)
+	$: regionCandidates = region?.layer
 		? [
 				{ id: region.id, name: region.name, layer: region.layer, layer_label: region.layer_label },
 				...(region.parents?.map((p: any) => ({
@@ -268,7 +269,7 @@
 			} as Region;
 
 			// Build fallback info if showing data from a different region
-			const fallbackInfo = region && result.regionName !== region.name
+			const fallbackInfo = region?.layer && result.regionName !== region.name
 				? {
 						originalRegionName: region.name,
 						dataRegionName: result.regionName,

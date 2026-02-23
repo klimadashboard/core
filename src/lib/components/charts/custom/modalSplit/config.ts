@@ -580,6 +580,15 @@ export function getTableRows(data: ModalSplitRawData[]): any[] {
 	});
 }
 
+/** Format a percentage: strip unnecessary decimals, use comma as decimal separator */
+function formatPercent(value: number): string {
+	const rounded = Math.round(value * 100) / 100; // max 2 decimal places
+	if (Number.isInteger(rounded)) {
+		return String(rounded);
+	}
+	return String(rounded).replace('.', ',');
+}
+
 /** Generate placeholders */
 export function getPlaceholders(
 	data: ModalSplitRawData[],
@@ -597,7 +606,7 @@ export function getPlaceholders(
 	const firstYearSustainable = firstYearData
 		.filter((d) => sustainableCategories.includes(d.category))
 		.reduce((sum, d) => sum + d.value, 0);
-	const firstYearEcoShare = firstYearTotal ? Math.round((firstYearSustainable / firstYearTotal) * 100) : 0;
+	const firstYearEcoShareRaw = firstYearTotal ? (firstYearSustainable / firstYearTotal) * 100 : 0;
 
 	// Calculate sustainable share for last year
 	const lastYearData = data.filter((d) => d.year === lastYear);
@@ -605,19 +614,19 @@ export function getPlaceholders(
 	const lastYearSustainable = lastYearData
 		.filter((d) => sustainableCategories.includes(d.category))
 		.reduce((sum, d) => sum + d.value, 0);
-	const lastYearEcoShare = lastYearTotal ? Math.round((lastYearSustainable / lastYearTotal) * 100) : 0;
+	const lastYearEcoShareRaw = lastYearTotal ? (lastYearSustainable / lastYearTotal) * 100 : 0;
 
-	// Calculate change in eco share
-	const ecoShareChange = lastYearEcoShare - firstYearEcoShare;
-	const ecoShareChangeDirection = ecoShareChange >= 0 ? 'Zuwachs' : 'Rückgang';
-	const ecoShareChangeAbs = Math.abs(ecoShareChange);
+	// Calculate change in eco share (rounded to 2 decimals for consistency)
+	const ecoShareChangeRaw = Math.round((lastYearEcoShareRaw - firstYearEcoShareRaw) * 100) / 100;
+	const ecoShareChangeDirection = ecoShareChangeRaw >= 0 ? 'Zuwachs' : 'Rückgang';
+	const ecoShareChangeAbs = Math.abs(ecoShareChangeRaw);
 	const yearSpan = lastYear - firstYear;
 
 	// Goal-related placeholders
 	const hasGoal = !!goalConfig;
 	const goalYear = goalConfig?.endYear || 0;
-	const goalEcoShare = goalConfig?.targetSustainablePercent || 0;
-	const goalChangeAbs = hasGoal ? Math.abs(goalEcoShare - lastYearEcoShare) : 0;
+	const goalEcoShareRaw = goalConfig?.targetSustainablePercent || 0;
+	const goalChangeAbs = hasGoal ? Math.round(Math.abs(goalEcoShareRaw - lastYearEcoShareRaw) * 100) / 100 : 0;
 	const goalYearSpan = hasGoal ? goalYear - lastYear : 0;
 
 	// Check if we have historical data (more than one year)
@@ -629,26 +638,26 @@ export function getPlaceholders(
 	return {
 		regionName: displayRegionName,
 		latestYear: lastYear,
-		sustainablePercent: lastYearEcoShare,
-		motorizedPercent: Math.round(100 - lastYearEcoShare),
+		sustainablePercent: formatPercent(lastYearEcoShareRaw),
+		motorizedPercent: formatPercent(Math.round((100 - lastYearEcoShareRaw) * 100) / 100),
 		targetYear: goalConfig?.endYear || '',
-		targetPercent: goalConfig?.targetSustainablePercent || '',
+		targetPercent: goalConfig?.targetSustainablePercent ? formatPercent(goalConfig.targetSustainablePercent) : '',
 		dataYearStart: firstYear || '',
 		dataYearEnd: lastYear || '',
 
 		// New placeholders for info text
 		firstYear,
 		lastYear,
-		firstYearEcoShare,
-		lastYearEcoShare,
+		firstYearEcoShare: formatPercent(firstYearEcoShareRaw),
+		lastYearEcoShare: formatPercent(lastYearEcoShareRaw),
 		ecoShareChangeDirection,
-		ecoShareChangeAbs,
+		ecoShareChangeAbs: formatPercent(ecoShareChangeAbs),
 		yearSpan,
 		hasHistoricalData,
 		hasGoal,
 		goalYear,
-		goalEcoShare,
-		goalChangeAbs,
+		goalEcoShare: formatPercent(goalEcoShareRaw),
+		goalChangeAbs: formatPercent(goalChangeAbs),
 		goalYearSpan
 	};
 }
