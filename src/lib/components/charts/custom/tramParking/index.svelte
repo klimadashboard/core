@@ -45,9 +45,15 @@
 			// Load all data in parallel
 			const [incidentsData, linesData, stopsData, districtsData] = await Promise.all([
 				fetchIncidents(),
-				fetch('/data/vienna/tram-lines.json').then((r) => r.json()),
-				fetch('/data/vienna/tram-stops.json').then((r) => r.json()),
-				fetch('/data/vienna/districts.json').then((r) => r.json())
+				fetch('https://base.klimadashboard.org/assets/a88d573b-a489-4f70-8d2b-dba1457b1329').then(
+					(r) => r.json()
+				),
+				fetch('https://base.klimadashboard.org/assets/9255ae4e-7496-4f05-bd8f-26a6394c3494').then(
+					(r) => r.json()
+				),
+				fetch('https://base.klimadashboard.org/assets/bffb703f-85ba-4c75-b471-833da8f4c3ac').then(
+					(r) => r.json()
+				)
 			]);
 
 			allIncidents = incidentsData;
