@@ -18,6 +18,8 @@
 	);
 
 	$: featuredCategories = categories.filter((c) => c.featured);
+
+	const OTHER_COLOR = '#9CA3AF';
 </script>
 
 {#snippet shareIcon(pct: number)}
@@ -65,12 +67,14 @@
 
 		{#await fetchHeatingData(region, allRegions)}
 			<div class="flex-1 flex flex-col gap-1.5">
-				{#each featuredCategories as _}
+				{#each [...featuredCategories, null] as _}
 					<div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
 				{/each}
 			</div>
 		{:then data}
 			{#if data.length > 0}
+				{@const featuredSum = featuredCategories.reduce((sum, cat) => sum + (data.find((d) => d.category === cat.key)?.percentage ?? 0), 0)}
+				{@const otherPct = Math.max(0, 100 - featuredSum)}
 				<div class="flex-1 flex flex-col gap-1">
 					{#each featuredCategories as category}
 						{@const datapoint = data.find((d) => d.category === category.key)}
@@ -95,6 +99,27 @@
 							</div>
 						</div>
 					{/each}
+					{#if otherPct > 0.5}
+						<div class="flex items-center gap-2">
+							<div class="w-20 flex-shrink-0">
+								<p class="text-[10px] leading-tight text-gray-600 dark:text-gray-400 truncate">
+									Andere
+								</p>
+							</div>
+							<div class="flex-1 h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+								<div
+									class="h-full rounded-full transition-all duration-500"
+									style="width: {otherPct}%; background-color: {OTHER_COLOR}"
+								></div>
+							</div>
+							<div
+								class="w-10 flex-shrink-0 text-right text-xs font-medium tabular-nums"
+								style="color: {OTHER_COLOR}"
+							>
+								{formatNumber(otherPct)}%
+							</div>
+						</div>
+					{/if}
 				</div>
 			{:else}
 				<p class="text-xs text-gray-500 dark:text-gray-400">Keine Daten.</p>
@@ -111,39 +136,32 @@
 			Vergleich mit anderen Regionen
 		</h3>
 
-		<!-- Desktop: Grid layout showing all 3 -->
-		<div class="hidden md:grid md:grid-cols-3 gap-3">
-			{#each comparisonRegions as region (region.code)}
-				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-					{@render regionCard(region)}
-				</div>
-			{/each}
-		</div>
-
-		<!-- Mobile: Splide slider -->
-		<div class="md:hidden">
-			<Splide
-				hasTrack={false}
-				options={{
-					perPage: 1,
-					gap: '0.75rem',
-					padding: { right: '2rem' },
-					pagination: true,
-					arrows: false
-				}}
-			>
-				<SplideTrack>
-					{#each comparisonRegions as region (region.code)}
-						<SplideSlide>
-							<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-								{@render regionCard(region)}
-							</div>
-						</SplideSlide>
-					{/each}
-				</SplideTrack>
-				<div class="splide__pagination mt-2"></div>
-			</Splide>
-		</div>
+		<Splide
+			hasTrack={false}
+			options={{
+				perPage: 3,
+				gap: '0.75rem',
+				pagination: true,
+				arrows: false,
+				breakpoints: {
+					768: {
+						perPage: 1,
+						padding: { right: '2rem' }
+					}
+				}
+			}}
+		>
+			<SplideTrack>
+				{#each comparisonRegions as region (region.code)}
+					<SplideSlide>
+						<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 h-full">
+							{@render regionCard(region)}
+						</div>
+					</SplideSlide>
+				{/each}
+			</SplideTrack>
+			<div class="splide__pagination mt-2"></div>
+		</Splide>
 	</div>
 {/if}
 

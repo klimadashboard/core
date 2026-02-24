@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { formatExchangeRate, formatNumber, TARGET_YEAR, type HeatingDataPoint } from './config';
+	import { formatExchangeRate, formatNumber, getTargetYear, type HeatingDataPoint } from './config';
 
 	export let data: HeatingDataPoint[];
 	export let layout: 'stacked' | 'grid' = 'stacked';
+	export let country: string | undefined = undefined;
+
+	$: targetYear = getTargetYear(country);
 
 	$: gasEntry = data.find((d) => d.category === 'gas');
 	$: oilEntry = data.find((d) => d.category === 'heating oil');
 
-	$: gasRate = formatExchangeRate(gasEntry?.value ?? 0);
-	$: oilRate = formatExchangeRate(oilEntry?.value ?? 0);
+	$: gasRate = formatExchangeRate(gasEntry?.value ?? 0, country);
+	$: oilRate = formatExchangeRate(oilEntry?.value ?? 0, country);
 
 	function getUnitLabel(unit: 'day' | 'month' | 'year'): string {
 		return page.data?.translations?.[unit] ?? unit;
@@ -81,7 +84,7 @@
 				<p class="mt-1 leading-snug">
 					<strong>{config.label}</strong> müssen pro
 					<strong>{getUnitLabel(config.rate.unit)}</strong>
-					getauscht werden, um bis {TARGET_YEAR} die Klimaziele einzuhalten.
+					getauscht werden, um bis {targetYear} die Klimaziele einzuhalten.
 				</p>
 			</div>
 		</div>

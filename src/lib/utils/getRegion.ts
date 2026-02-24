@@ -8,6 +8,7 @@ export interface Region {
 	name: string;
 	layer: 'country' | 'state' | 'district' | 'municipality';
 	layer_label?: string;
+	country?: string;
 	center: [string, string];
 	area_km2?: number;
 	population?: number;
@@ -90,6 +91,7 @@ export function getRegionFromPage(): Region | null {
 			name: pageRegion.name,
 			layer: pageRegion.layer,
 			layer_label: pageRegion.layer_label,
+			country: pageRegion.country,
 			center: pageRegion.center,
 			area_km2: pageRegion.area_km2,
 			population: pageRegion.population,
@@ -136,6 +138,7 @@ export async function fetchRegion(regionId: string): Promise<Region | null> {
 			name: data.name,
 			layer: data.layer,
 			layer_label: data.layer_label,
+			country: data.country,
 			center: data.center,
 			area_km2: data.area_km2,
 			population: data.population,

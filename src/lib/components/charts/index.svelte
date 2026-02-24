@@ -82,7 +82,7 @@
 		{#if hideWrapper || type == 'small'}
 			<svelte:component this={c.chartComponent} chart={c.chart} {type} {options} />
 		{:else if type == 'card'}
-			<Card chart={c.chart} {span} {expandContent} {snapshot} let:region let:regionLoading let:onChartData on:dataAvailable>
+			<Card chart={c.chart} {span} {expandContent} {snapshot} let:region let:regionLoading let:onChartData let:snapshotData on:dataAvailable>
 				<svelte:component
 					this={c.chartComponent}
 					chart={c.chart}
@@ -91,6 +91,7 @@
 					{region}
 					{regionLoading}
 					{onChartData}
+					{snapshotData}
 				/>
 			</Card>
 		{:else}

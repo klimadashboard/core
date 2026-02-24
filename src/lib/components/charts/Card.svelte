@@ -368,7 +368,7 @@
 							{@const onChartData = (data: ChartData | null) => {
 								chartData = data;
 							}}
-							<slot {region} regionLoading={loading} {onChartData} />
+							<slot {region} regionLoading={loading} {onChartData} snapshotData={snapshot} />
 						</RegionProvider>
 					</div>
 
