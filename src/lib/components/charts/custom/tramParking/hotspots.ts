@@ -89,13 +89,79 @@ interface AddressGroup {
 }
 
 /**
+ * Build a hotspot from a list of address groups that belong together.
+ */
+function buildHotspot(
+	cluster: AddressGroup[],
+	id: number
+): Hotspot | null {
+	const allIncidents = cluster.flatMap((g) => g.incidents);
+	const allCenter = centroid(allIncidents);
+	const houseNumbers = cluster
+		.map((g) => g.houseNumber)
+		.filter((n): n is number => n != null)
+		.sort((a, b) => a - b);
+
+	const allSameStreet = cluster.every((g) => g.streetName === cluster[0].streetName);
+
+	let label: string;
+	let type: 'street' | 'location';
+	let streetName: string | undefined;
+	let houseNumberRange: [number, number] | undefined;
+
+	if (allSameStreet && houseNumbers.length >= 2) {
+		type = 'street';
+		streetName = cluster[0].streetName;
+		houseNumberRange = [houseNumbers[0], houseNumbers[houseNumbers.length - 1]];
+		label = `${streetName} ${houseNumberRange[0]}–${houseNumberRange[1]}`;
+	} else if (allSameStreet) {
+		type = 'street';
+		streetName = cluster[0].streetName;
+		label = streetName;
+	} else {
+		type = 'location';
+		const addrCounts = new Map<string, number>();
+		for (const g of cluster) {
+			addrCounts.set(g.address, g.incidents.length);
+		}
+		label =
+			[...addrCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unbekannt';
+	}
+
+	// Compute radius: max distance from center to any incident, min 50m
+	let maxDist = 50;
+	for (const inc of allIncidents) {
+		if (inc.lat != null && inc.lon != null) {
+			const d = haversine(allCenter, [inc.lon, inc.lat]);
+			if (d > maxDist) maxDist = d;
+		}
+	}
+
+	return {
+		id: `hs-${id}`,
+		type,
+		label,
+		count: allIncidents.length,
+		center: allCenter,
+		radius: Math.min(maxDist, 500),
+		incidents: allIncidents,
+		topLines: topLines(allIncidents),
+		streetName,
+		houseNumberRange
+	};
+}
+
+/**
  * Detect hotspots from a list of geocoded, date-filtered incidents.
  *
  * Algorithm:
- * 1. Group incidents by address string
- * 2. For each group, compute centroid and extract street/house number
- * 3. Merge nearby groups (within 80m) that share the same street name → street-range hotspot
- * 4. Groups at intersections/stops that are close together → location hotspot
+ * 1. Group incidents by exact address string
+ * 2. Extract street name from each address group
+ * 3. STREET HOTSPOTS: merge ALL address groups that share the same street name
+ *    into one hotspot (no distance limit — "Kreuzgasse 28" and "Kreuzgasse 56"
+ *    always combine, as do "Währinger Straße 79-102" and "Währinger Straße 99-156")
+ * 4. LOCATION HOTSPOTS: for remaining ungrouped addresses (no street name match),
+ *    merge groups within 80m proximity → intersection/crossing hotspots
  * 5. Filter by minimum count, sort descending, return top 50
  */
 export function detectHotspots(incidents: Incident[], minCount = 3): Hotspot[] {
@@ -103,7 +169,7 @@ export function detectHotspots(incidents: Incident[], minCount = 3): Hotspot[] {
 	const geocoded = incidents.filter((i) => i.lat != null && i.lon != null);
 	if (geocoded.length === 0) return [];
 
-	// Step 1: Group by address
+	// Step 1: Group by exact address
 	const byAddress = new Map<string, Incident[]>();
 	for (const inc of geocoded) {
 		const addr = inc.address || 'Unbekannt';
@@ -123,98 +189,78 @@ export function detectHotspots(incidents: Incident[], minCount = 3): Hotspot[] {
 		});
 	}
 
-	// Step 3: Merge nearby groups into hotspots
-	const merged = new Set<number>();
+	// Step 3: Merge ALL groups with the same street name (no distance limit)
+	const byStreet = new Map<string, AddressGroup[]>();
+	const noStreetGroups: AddressGroup[] = [];
+
+	for (const group of groups) {
+		// If street name is the same as the full address (no house number extracted)
+		// AND it's a kreuzung/haltestelle type, treat it as a location, not a street
+		const isLocationType = group.address === group.streetName &&
+			group.incidents.some((i) =>
+				i.address_category === 'kreuzung' ||
+				i.address_category === 'kreuzung_2' ||
+				i.address_category === 'haltestelle' ||
+				i.address_category === 'platz'
+			);
+
+		if (isLocationType) {
+			noStreetGroups.push(group);
+		} else {
+			const key = group.streetName;
+			if (!byStreet.has(key)) byStreet.set(key, []);
+			byStreet.get(key)!.push(group);
+		}
+	}
+
 	const hotspots: Hotspot[] = [];
 	let hotspotId = 0;
 
-	// Sort groups by street name for efficient merging
-	groups.sort((a, b) => a.streetName.localeCompare(b.streetName));
+	// Build street hotspots — each street name becomes exactly one hotspot
+	for (const [, streetGroups] of byStreet) {
+		const totalCount = streetGroups.reduce((s, g) => s + g.incidents.length, 0);
+		if (totalCount < minCount) {
+			// Not enough incidents for a hotspot; put them back for location clustering
+			noStreetGroups.push(...streetGroups);
+			continue;
+		}
+		const hs = buildHotspot(streetGroups, hotspotId++);
+		if (hs) hotspots.push(hs);
+	}
 
-	for (let i = 0; i < groups.length; i++) {
-		if (merged.has(i)) continue;
+	// Step 4: Location hotspots — proximity-based clustering for remaining groups
+	// Use simple greedy clustering: pick a group, absorb all within 80m, repeat
+	const used = new Set<number>();
 
-		const cluster: AddressGroup[] = [groups[i]];
-		merged.add(i);
+	for (let i = 0; i < noStreetGroups.length; i++) {
+		if (used.has(i)) continue;
 
-		// Find all nearby groups with the same street name
-		for (let j = i + 1; j < groups.length; j++) {
-			if (merged.has(j)) continue;
+		const cluster: AddressGroup[] = [noStreetGroups[i]];
+		used.add(i);
 
-			const sameStreet = groups[i].streetName === groups[j].streetName;
-			const dist = haversine(groups[i].center, groups[j].center);
-
-			if (sameStreet && dist < 300) {
-				// Same street, within 300m → merge into street-range hotspot
-				cluster.push(groups[j]);
-				merged.add(j);
-			} else if (!sameStreet && dist < 80) {
-				// Different street but very close → intersection/location hotspot
-				cluster.push(groups[j]);
-				merged.add(j);
+		// Expand cluster: find all groups within 80m of ANY member (transitive)
+		let changed = true;
+		while (changed) {
+			changed = false;
+			for (let j = 0; j < noStreetGroups.length; j++) {
+				if (used.has(j)) continue;
+				// Check distance to any existing cluster member
+				const closeToCluster = cluster.some(
+					(member) => haversine(member.center, noStreetGroups[j].center) < 80
+				);
+				if (closeToCluster) {
+					cluster.push(noStreetGroups[j]);
+					used.add(j);
+					changed = true;
+				}
 			}
 		}
 
-		const allIncidents = cluster.flatMap((g) => g.incidents);
-		if (allIncidents.length < minCount) continue;
+		const totalCount = cluster.reduce((s, g) => s + g.incidents.length, 0);
+		if (totalCount < minCount) continue;
 
-		const allCenter = centroid(allIncidents);
-		const houseNumbers = cluster
-			.map((g) => g.houseNumber)
-			.filter((n): n is number => n != null)
-			.sort((a, b) => a - b);
-
-		const allSameStreet = cluster.every((g) => g.streetName === cluster[0].streetName);
-
-		let label: string;
-		let type: 'street' | 'location';
-		let streetName: string | undefined;
-		let houseNumberRange: [number, number] | undefined;
-
-		if (allSameStreet && houseNumbers.length >= 2) {
-			// Street-range hotspot
-			type = 'street';
-			streetName = cluster[0].streetName;
-			houseNumberRange = [houseNumbers[0], houseNumbers[houseNumbers.length - 1]];
-			label = `${streetName} ${houseNumberRange[0]}–${houseNumberRange[1]}`;
-		} else if (allSameStreet) {
-			// Single street location (no house numbers)
-			type = 'street';
-			streetName = cluster[0].streetName;
-			label = streetName;
-		} else {
-			// Location hotspot (intersection or area)
-			type = 'location';
-			// Use the most common address as label
-			const addrCounts = new Map<string, number>();
-			for (const g of cluster) {
-				addrCounts.set(g.address, g.incidents.length);
-			}
-			label =
-				[...addrCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unbekannt';
-		}
-
-		// Compute radius: max distance from center to any incident, min 50m
-		let maxDist = 50;
-		for (const inc of allIncidents) {
-			if (inc.lat != null && inc.lon != null) {
-				const d = haversine(allCenter, [inc.lon, inc.lat]);
-				if (d > maxDist) maxDist = d;
-			}
-		}
-
-		hotspots.push({
-			id: `hs-${hotspotId++}`,
-			type,
-			label,
-			count: allIncidents.length,
-			center: allCenter,
-			radius: Math.min(maxDist, 500),
-			incidents: allIncidents,
-			topLines: topLines(allIncidents),
-			streetName,
-			houseNumberRange
-		});
+		const hs = buildHotspot(cluster, hotspotId++);
+		if (hs) hotspots.push(hs);
 	}
 
 	// Sort by count descending, return top 50
