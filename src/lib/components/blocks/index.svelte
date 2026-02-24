@@ -11,10 +11,16 @@
 	import Items from './Items.svelte';
 	import Gallery from './Gallery.svelte';
 	import Panel from './Panel.svelte';
+	import Regions from './Regions.svelte';
 
 	export let data;
+	export let chartSnapshots = {};
 
 	const blocks = [
+		{
+			type: 'block_regions',
+			component: Regions
+		},
 		{
 			type: 'block_panel',
 			component: Panel
@@ -67,8 +73,12 @@
 </script>
 
 {#each data as block}
-	<svelte:component
-		this={blocks.find((d) => d.type == block.collection).component}
-		block={block.item}
-	/>
+	{@const component = blocks.find((d) => d.type == block.collection)?.component}
+	{#if component}
+		{#if block.collection === 'block_chart' || block.collection === 'block_grid'}
+			<svelte:component this={component} block={block.item} {chartSnapshots} />
+		{:else}
+			<svelte:component this={component} block={block.item} />
+		{/if}
+	{/if}
 {/each}

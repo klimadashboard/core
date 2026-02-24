@@ -85,36 +85,37 @@
 				year: e.year,
 				highlighted:
 					index > 3 && index < 6
-						? index == 5 && offset > 0.25 && selectedBudgetYear.year > e.year && e.year > 2015
+						? index == 5 && offset > 0.1 && selectedBudgetYear.year > e.year && e.year > 2015
 							? true
 							: false
 						: true,
 				overflow:
 					index == 5
-						? e.year == 2023 && selectedBudgetYear.year > 2023 && e.index > 0
+						? (e.year == 2022 && e.index > 7 && selectedBudgetYear.year > 2022) ||
+							(e.year > 2022 && selectedBudgetYear.year > 2022)
 							? true
 							: false
-						: false
+						: index == 6
+							? e.year > 2022
+								? true
+								: false
+							: false
 			};
 		})
 		.filter((d) => d.year <= currentYear);
 
 	const projections = [
 		{
-			index: 6,
-			key: '1.5_50'
-		},
-		{
-			index: 8,
-			key: '3860_nochange'
-		},
-		{
 			index: 9,
-			key: '3860_linear'
+			key: '2520_nochange'
 		},
 		{
 			index: 10,
-			key: '3860_percentage'
+			key: '2520_linear'
+		},
+		{
+			index: 11,
+			key: '2520_percentage'
 		}
 	];
 
@@ -177,7 +178,7 @@
 					<g
 						transform="translate({xScale(highlightedYear.year) - 1},{yScale(
 							historicalArray.findLast((d) => d.year == highlightedYear.year).index
-						) - (i == 1 ? 50 : 40)})"
+						) - (i == 1 ? 60 : 40)})"
 						class="text-industry"
 						transition:fade
 					>
@@ -207,7 +208,9 @@
 					cx={circle.x}
 					cy={circle.y}
 					class="{circle.highlighted ? 'opacity-100' : 'opacity-50'} {circle.overflow
-						? 'fill-energy'
+						? index == 5
+							? 'fill-energy'
+							: 'fill-[#A61E7E]'
 						: 'fill-industry'}"
 					in:fade
 					out:fly

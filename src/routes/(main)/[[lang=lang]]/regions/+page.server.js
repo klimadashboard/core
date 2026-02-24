@@ -4,19 +4,49 @@ import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 export async function load({ fetch, params }) {
-	const directus = getDirectusInstance(fetch);
-
 	try {
-		return {
-			regions: await directus.request(readItems('regions', {
-				fields: ['id', 'name', 'center'],
+		const directus = getDirectusInstance(fetch);
+		const regions = await directus.request(
+			readItems('regions', {
+				fields: [
+					'id',
+					'name',
+					'code',
+					'center',
+					'layer',
+					'layer_label',
+					'population',
+					'area',
+					'parents'
+				],
 				filter: {
-					country: {
-						_eq: PUBLIC_VERSION.toUpperCase()
-					}
+					_and: [
+						{
+							country: {
+								_eq: PUBLIC_VERSION.toUpperCase()
+							}
+						},
+						{
+							layer: {
+								_neq: 'country'
+							}
+						},
+						{
+							visible: {
+								_eq: true
+							}
+						}
+					]
 				},
 				limit: -1
-			}))
+			})
+		);
+
+		return {
+			content: {
+				title: 'Regionen'
+			},
+			regions
 		};
 	} catch (err) {
 		error(404, 'Page not found');

@@ -2,7 +2,7 @@
 	export let block;
 </script>
 
-<div class="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 py-10">
+<div class="bg-gray-100 dark:bg-gray-800 rounded-2xl p-3 py-10 h-full">
 	<h2 class="text-center text-3xl font-bold leading-tight">
 		{@html block.title}
 	</h2>

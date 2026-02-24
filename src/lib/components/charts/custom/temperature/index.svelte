@@ -18,11 +18,20 @@
 			const data = await directus.request(
 				readItems(tableName, {
 					filter: {
-						station: {
-							id: {
-								_eq: selectedStation.id
+						_and: [
+							{
+								station: {
+									id: {
+										_eq: selectedStation.id
+									}
+								}
+							},
+							{
+								date: {
+									_gte: '1900-01-01'
+								}
 							}
-						}
+						]
 					},
 					limit: -1,
 					sort: ['date']
@@ -43,6 +52,20 @@
 
 <div>
 	<StationPicker bind:selectedStation {chart} />
+
+	{#if !selectedStation}
+		<div class="opacity-70">
+			<p class="text-center max-w-2xl mx-auto mb-2">
+				Wähle ein Station aus, um mehr zur Temperaturentwicklung in deiner Region zu erfahren. Es
+				werden nur Stationen angezeigt, die seit zumindest 1990 durchgehend Daten aufzeichnen.
+			</p>
+			<div class="grid gap-2 grid-cols-3 animate-pulse">
+				<div class="bg-gray-100 dark:bg-gray-800 h-16 rounded-2xl"></div>
+				<div class="bg-gray-100 dark:bg-gray-800 h-16 rounded-2xl"></div>
+				<div class="bg-gray-100 dark:bg-gray-800 h-16 rounded-2xl"></div>
+			</div>
+		</div>
+	{/if}
 
 	{#await promise}
 		<Loader showText={true} />

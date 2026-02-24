@@ -25,4 +25,12 @@
 	:global(.text h2) {
 		@apply text-2xl font-bold mt-12;
 	}
+
+	:global(.text h3) {
+		@apply text-xl font-bold mt-8;
+	}
+
+	:global(.text h4) {
+		@apply font-bold mt-4;
+	}
 </style>

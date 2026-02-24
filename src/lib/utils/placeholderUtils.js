@@ -8,7 +8,29 @@ import formatNumber from '$lib/stores/formatNumber';
 
 dayjs.extend(relativeTime);
 
-const getSiteData = async () => {
+// ---------------------------------------------------------------------------
+// TTL cache — each data source is fetched at most once per TTL period.
+// Concurrent calls share one in-flight promise (deduplication).
+// ---------------------------------------------------------------------------
+const dataCache = new Map();
+const DATA_TTL = 5 * 60 * 1000; // 5 minutes
+
+function cachedFetch(key, fetcher) {
+	const entry = dataCache.get(key);
+	if (entry && Date.now() < entry.expires) return entry.promise;
+	const promise = fetcher().catch((err) => {
+		dataCache.delete(key); // Don't cache errors
+		throw err;
+	});
+	dataCache.set(key, { promise, expires: Date.now() + DATA_TTL });
+	return promise;
+}
+
+// ---------------------------------------------------------------------------
+// Raw data fetchers (called at most once per TTL period)
+// ---------------------------------------------------------------------------
+
+const _fetchSiteData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	const data = await directus
@@ -26,7 +48,7 @@ const getSiteData = async () => {
 	};
 };
 
-const getRenewableData = async function () {
+const _fetchRenewableData = async function () {
 	const directus = getDirectusInstance(fetch);
 
 	try {
@@ -89,16 +111,18 @@ const getRenewableData = async function () {
 	}
 };
 
-const getCO2PriceData = async () => {
+const _fetchCO2PriceData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
 		const data = await directus
-			.request(readItems('carbon_prices', { sort: ['-date'] }))
+			.request(readItems('carbon_prices', { sort: ['-date'], limit: -1 }))
 			.catch(() => []);
 
-		const co2PriceNowEUEntry = data.find((d) => d.region === 'EU');
-		const co2PriceNowNationalEntry = data.find((d) => d.region === PUBLIC_VERSION);
+		const co2PriceNowEUEntry = data.find((d) => d.region === 'EU' && d.type === 'ETS');
+		const co2PriceNowNationalEntry = data.find(
+			(d) => d.region === PUBLIC_VERSION && d.type === 'CO2-Preis'
+		);
 
 		return {
 			co2PriceNowEU: co2PriceNowEUEntry?.value || 'N/A',
@@ -117,7 +141,7 @@ const getCO2PriceData = async () => {
 	}
 };
 
-const getGasUsageData = async () => {
+const _fetchGasUsageData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
@@ -165,7 +189,7 @@ const getGasUsageData = async () => {
 	}
 };
 
-const getBalkonStats = async () => {
+const _fetchBalkonStats = async () => {
 	try {
 		const res = await fetch('https://base.klimadashboard.org/get-balkonkraftwerke');
 		const json = await res.json();
@@ -182,11 +206,16 @@ const getBalkonStats = async () => {
 		const lastYearStats = data.find((d) => Number(d.year) === lastYear);
 		const totalStats = data[data.length - 1];
 
+		const addedThisYear = thisYearStats?.added_units || 0;
+		const daysPassedThisYear = dayjs().diff(dayjs(`${currentYear}-01-01`), 'day');
+		const unitsPerDay = addedThisYear > 0 ? addedThisYear / daysPassedThisYear : 0;
+
 		return {
-			balkonkraftUnitsThisYear: thisYearStats?.added_units || 0,
+			balkonkraftUnitsThisYear: formatNumber(thisYearStats?.added_units || 0),
 			balkonkraftUnitsLastYear: formatNumber(lastYearStats?.added_units || 0),
 			balkonkraftUnitsTotal: formatNumber(totalStats?.cumulative_units || 0),
 			balkonkraftPowerTotal: formatNumber(Math.round((totalStats?.cumulative_kw || 0) * 10) / 10),
+			balkonkraftUnitsPerDayThisYear: Math.round(unitsPerDay),
 			balkonkraftDate: cacheCreated
 				? dayjs(cacheCreated).format('D.M.YYYY')
 				: dayjs().format('D.M.YYYY')
@@ -198,10 +227,20 @@ const getBalkonStats = async () => {
 			balkonkraftUnitsLastYear: 'N/A',
 			balkonkraftUnitsTotal: 'N/A',
 			balkonkraftPowerTotal: 'N/A',
-			balkonkraftDate: 'N/A'
+			balkonkraftDate: 'N/A',
+			balkonkraftUnitsPerDayThisYear: 'N/A'
 		};
 	}
 };
+
+// ---------------------------------------------------------------------------
+// Cached accessors — deduplicates calls and caches for 5 minutes
+// ---------------------------------------------------------------------------
+const getSiteData = () => cachedFetch('site', _fetchSiteData);
+const getRenewableData = () => cachedFetch('renewable', _fetchRenewableData);
+const getCO2PriceData = () => cachedFetch('co2price', _fetchCO2PriceData);
+const getGasUsageData = () => cachedFetch('gasusage', _fetchGasUsageData);
+const getBalkonStats = () => cachedFetch('balkon', _fetchBalkonStats);
 
 const placeholderHandlers = {
 	renewablePercentageNow: async () => (await getRenewableData()).renewablePercentageNow,
@@ -222,7 +261,9 @@ const placeholderHandlers = {
 	balkonkraftUnitsLastYear: async () => (await getBalkonStats()).balkonkraftUnitsLastYear,
 	balkonkraftUnitsTotal: async () => (await getBalkonStats()).balkonkraftUnitsTotal,
 	balkonkraftPowerTotal: async () => (await getBalkonStats()).balkonkraftPowerTotal,
-	balkonkraftDate: async () => (await getBalkonStats()).balkonkraftDate
+	balkonkraftDate: async () => (await getBalkonStats()).balkonkraftDate,
+	balkonkraftUnitsPerDayThisYear: async () =>
+		(await getBalkonStats()).balkonkraftUnitsPerDayThisYear
 };
 
 const parseTemplate = async (template) => {

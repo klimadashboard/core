@@ -1,5 +1,9 @@
 <script>
 	export let chart;
+	// Pass through props from Card slot
+	export let region = null;
+	export let regionLoading = false;
+	export let onChartData = undefined;
 
 	const chartComponents = import.meta.glob('./*/index.svelte', {
 		import: 'default',
@@ -28,7 +32,14 @@
 </script>
 
 {#await promise then}
-	<svelte:component {chart} this={ChartComponent} v={createVariables(chart.content.variables)} />
+	<svelte:component
+		this={ChartComponent}
+		{chart}
+		{region}
+		{regionLoading}
+		{onChartData}
+		v={createVariables(chart.content.variables)}
+	/>
 {:catch error}
 	{error}
 {/await}

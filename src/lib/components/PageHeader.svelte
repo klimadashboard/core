@@ -53,7 +53,7 @@
 		</div>
 
 		{#if $page.params.slug == ''}
-			<Search />
+			<Search showRegions={false} />
 			<PopularPages />
 		{/if}
 	</div>

@@ -1,12 +1,13 @@
 <script>
 	import Block from './index.svelte';
 	export let block;
+	export let chartSnapshots = {};
 </script>
 
 <div class="grid gap-1 grid-cols-2 lg:grid-cols-4 p-1">
 	{#each block.blocks as b}
 		<div class="{b.width} rounded-2xl overflow-hidden row-span-{b.height}">
-			<Block data={[b]} />
+			<Block data={[b]} {chartSnapshots} />
 		</div>
 	{/each}
 </div>

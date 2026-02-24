@@ -5,7 +5,7 @@ export default function formatNumber(number, unit, decimals) {
 	if (decimals == 0) {
 		var roundedValue = Math.round(value);
 	} else {
-		var roundedValue = Number(Math.round(value + 'e' + (decimals || 2)) + 'e-' + (decimals || 2));
+		var roundedValue = Number(Math.round(value + 'e' + (decimals || 1)) + 'e-' + (decimals || 1));
 	}
 
 	if (roundedValue == 0) {

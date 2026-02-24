@@ -1,64 +1,24 @@
 <script>
 	import { scaleLinear, scaleTime } from 'd3-scale';
-	import { area, line } from 'd3-shape';
-	import Papa from 'papaparse';
+	import { area } from 'd3-shape';
 	import formatNumber from '$lib/stores/formatNumber';
 	import dayjs from 'dayjs';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import getDirectusInstance from '$lib/utils/directus';
-	import { readItems } from '@directus/sdk';
 
 	export let type;
 	export let unifiedScaling;
 	export let maxX;
 	export let maxY;
 	export let dataGoals;
+	export let dataProduction;
 
-	let unit = PUBLIC_VERSION == 'de' ? 'GW' : ' TWh';
-	let title =
-		PUBLIC_VERSION == 'de' ? 'Installierte Leistung vs. Ziel' : 'Jahresproduktion vs. Ausbauziel';
+	const unit = PUBLIC_VERSION === 'de' ? 'GW' : ' TWh';
+	const title =
+		PUBLIC_VERSION === 'de' ? 'Installierte Leistung vs. Ziel' : 'Jahresproduktion vs. Ausbauziel';
 
-	$: maxValue = dataGoals
-		.filter((d) => d.energy_type == type.dataKey)
-		.sort((a, b) => b.value - a.value)[0].value;
+	$: maxValue = [...dataGoals].sort((a, b) => b.value - a.value)[0]?.value ?? 0;
 
-	let dataProduction;
-	const getProduction = async function () {
-		try{
-			const directus = getDirectusInstance(fetch);
-			const production = await directus.request(
-				readItems('ee_produktion', {
-					filter: {
-						_and: [
-							{ 
-								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								Jahresproduktion: { _nnull: true },
-								Type: {_eq: type.dataKey}
-							}
-						]
-					},
-					limit: -1
-					// fields: ['id', 'name', 'postcodes', 'country', 'layer'],
-					// sort: ['name']
-				})
-			);
-			dataProduction = production
-				.map((entry) => {
-					return {
-						x: new Date(entry.DateTime.slice(0, 10)),
-						y: entry.Jahresproduktion
-					};
-				});
-			
-		} catch (error) {
-			console.error('Error fetching suggestions:', error);
-		}
-	};
-
-	$: getProduction();
-
-	
 	let chartWidth;
 	let chartHeight;
 
@@ -66,8 +26,7 @@
 
 	$: innerChartHeight = chartHeight - margin.top - margin.bottom;
 
-	const keys = ['production', 'goal'];
-	const colors = [type.color];
+	const color = type.color;
 
 	$: xScale = scaleTime()
 		.range([0, chartWidth])
@@ -77,20 +36,17 @@
 		.range([innerChartHeight, 0])
 		.domain([0, unifiedScaling ? maxY : maxValue]);
 
-	$: generateArea = (key) => {
-		return area()
-			.x((d) => xScale(d.x))
-			.y((d) => yScale(d.y));
-	};
+	$: areaGenerator = area()
+		.x((d) => xScale(d.x))
+		.y((d) => yScale(d.y));
 
-	$: areas = [];
+	$: areaPath = dataProduction ? areaGenerator(dataProduction) : '';
 
-	$: if (dataProduction) {
-		areas = keys.map((key) => generateArea(key)(dataProduction));
-	}
-
-	$: selected = false;
-	$: dataGoalsForType = dataGoals.filter((d) => d.energy_type == type.dataKey);
+	// Find the EAG goal and the production value at its release date for the goal line
+	$: eagGoal = dataGoals.find((d) => d.scenario === 'eag');
+	$: goalLineStart = eagGoal && dataProduction
+		? dataProduction.find((e) => new Date(e.x) > new Date(eagGoal.release_date))
+		: null;
 </script>
 
 <div class="bg-gray-100 dark:bg-gray-900 rounded-2xl overflow-hidden">
@@ -141,55 +97,39 @@
 							{/each}
 						</g>
 
-						<line
-							x1={xScale(new Date(dataGoalsForType.find((d) => d.scenario == 'eag').release_date))}
-							y1={yScale(
-								dataProduction.find(
-									(e) =>
-										new Date(e.x) >
-										new Date(dataGoalsForType.find((d) => d.scenario == 'eag').release_date)
-								).y
-							)}
-							x2={xScale(
-								new Date(dataGoalsForType.find((d) => d.scenario == 'eag').year + '-01-01')
-							)}
-							y2={yScale(dataGoalsForType.find((d) => d.scenario == 'eag').value)}
-							class="stroke-2 stroke-current opacity-50"
-							stroke-dasharray="10 10"
+						{#if eagGoal && goalLineStart}
+							<line
+								x1={xScale(new Date(eagGoal.release_date))}
+								y1={yScale(goalLineStart.y)}
+								x2={xScale(new Date(eagGoal.year + '-01-01'))}
+								y2={yScale(eagGoal.value)}
+								class="stroke-2 stroke-current opacity-50"
+								stroke-dasharray="10 10"
+							/>
+						{/if}
+
+						<path
+							d={areaPath}
+							fill={color}
+							stroke={color}
+							stroke-width="3"
+							stroke-linecap="round"
+							class="chart-area"
 						/>
 
-						<g>
-							{#each [...areas] as area, i}
-								<g id="area-{i}">
-									<linearGradient id="grad-{i}" x1="0%" y1="0%" x2="0%" y2="100%">
-										<stop offset="0%" style="stop-color:#000;stop-opacity:1" />
-										<stop offset="100%" style="stop-color:#000;stop-opacity:0.6" />
-									</linearGradient>
-									<path
-										d={area}
-										fill={colors[i]}
-										stroke={colors[i]}
-										stroke-width="3"
-										stroke-linecap="round"
-										class="chart-area"
-									/>
-								</g>
-							{/each}
-						</g>
-
-						<g style="color: {colors[0]}" class="opacity-70">
-							{#each dataGoalsForType as goal, i}
+						<g style="color: {color}" class="opacity-70">
+							{#each dataGoals as goal, i}
 								<g transform="translate({xScale(new Date(goal.year, 1, 1))},{yScale(goal.value)})">
-									{#if !(i > 0 && dataGoalsForType.every((d) => d.value == dataGoalsForType[0].value))}
+									{#if !(i > 0 && dataGoals.every((d) => d.value == dataGoals[0].value))}
 										<circle r={4} class="fill-none stroke-current stroke-2" />
 										<text
-											style="color:{colors[0]}"
+											style="color:{color}"
 											class="text-sm font-semibold fill-current"
 											text-anchor="end"
 											x={-7}
 											y={-4}
 										>
-											{#if dataGoalsForType.every((d) => d.value == dataGoalsForType[0].value)}
+											{#if dataGoals.every((d) => d.value == dataGoals[0].value)}
 												NEKP, EAG und ÖNIP-Ziel: {formatNumber(goal.value)} {unit}
 											{:else}
 												{goal.scenario.toUpperCase()}-Ziel: {formatNumber(goal.value)} {unit}
@@ -204,11 +144,7 @@
 							transform="translate({xScale(dataProduction[dataProduction.length - 1].x)},{yScale(
 								dataProduction[dataProduction.length - 1].y
 							)})"
-							style="color: {colors[0]}"
-							on:mouseover={() => (selected = true)}
-							on:focus={() => (selected = true)}
-							on:mouseout={() => (selected = false)}
-							on:blur={() => (selected = false)}
+							style="color: {color}"
 						>
 							<circle r="5" class="fill-current" />
 							<circle r="5" class="fill-current">

@@ -1,12 +1,28 @@
-/** @type {import('./$types').PageLoad} */
+/** @type {import('./$types').PageServerLoad} */
 import { error, redirect } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
+import { getChartSnapshots } from '$lib/utils/chartDataService';
 import dayjs from 'dayjs';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
+
+/** Extract chart IDs from a blocks array (handles nested block_grid) */
+function extractChartIds(blocks) {
+	const ids = [];
+	for (const block of blocks || []) {
+		if (block.collection === 'block_chart' && block.item?.charts) {
+			for (const c of block.item.charts) {
+				if (c.chart) ids.push(c.chart);
+			}
+		} else if (block.collection === 'block_grid' && block.item?.blocks) {
+			ids.push(...extractChartIds(block.item.blocks));
+		}
+	}
+	return ids;
+}
 
 function filterTranslations(data, language) {
 	// If data is an array, process each element.
@@ -53,16 +69,6 @@ export async function load({ fetch, params }) {
 	dayjs.locale(language);
 
 	try {
-		const slugs = await directus.request(
-			readItems('pages', {
-				filter: {
-					site: { _eq: site },
-					translations: { slug: { _eq: slug } }
-				},
-				fields: ['translations.slug', 'translations.languages_code']
-			})
-		);
-
 		// ---------- Fetch the page + expansions ----------
 		const pages = await directus.request(
 			readItems('pages', {
@@ -85,7 +91,7 @@ export async function load({ fetch, params }) {
 					'id',
 					'date_updated',
 
-					// Page translations (only the current language via "deep")
+					// Page translations (all languages — used for hreflang)
 					'translations.*',
 
 					// Page->blocks pivot
@@ -139,14 +145,42 @@ export async function load({ fetch, params }) {
 		);
 
 		if (!pages || pages.length === 0) {
-			// add logic to check if the slug is available in other languages
+			// Page not found in current language — check if it exists in another language
+			const slugs = await directus.request(
+				readItems('pages', {
+					filter: {
+						site: { _eq: site },
+						translations: { slug: { _eq: slug } }
+					},
+					fields: ['translations.slug', 'translations.languages_code']
+				})
+			);
 
 			if (slugs.length > 0) {
-				const translatedPage = slugs[0].translations.find((t) => t.languages_code == language);
+				const translatedPage = slugs[0].translations.find(
+					(t) => t.languages_code == language
+				);
 				if (translatedPage) {
 					redirect(308, `/${translatedPage.languages_code}/${translatedPage.slug}`);
 				}
 			}
+
+			//Check if slug matches a region
+			const regionMatch = await directus.request(
+				readItems('regions', {
+					filter: {
+						slug: { _eq: slug }
+					},
+					fields: ['id'],
+					limit: 1
+				})
+			);
+
+			if (regionMatch && regionMatch.length > 0) {
+				const regionId = regionMatch[0].id;
+				redirect(308, `/regions/${regionId}`);
+			}
+
 			throw error(404, 'Page not found');
 		}
 
@@ -159,14 +193,26 @@ export async function load({ fetch, params }) {
 
 		const blocks = content.blocks;
 
+		// SSR chart snapshots for any chart blocks on this page
+		const chartIds = extractChartIds(blocks);
+		const chartSnapshots =
+			chartIds.length > 0
+				? await getChartSnapshots(chartIds, null, [], language, fetch)
+				: {};
+
 		return {
 			page: {
 				id: page.id,
 				date_updated: page.date_updated,
 				blocks: blocks,
-				slugs: slugs[0].translations
+				// Extract slugs from the already-fetched translations (all languages included)
+				slugs: page.translations.map((t) => ({
+					slug: t.slug,
+					languages_code: t.languages_code
+				}))
 			},
-			content
+			content,
+			chartSnapshots
 		};
 	} catch (err) {
 		if (err && 'location' in err) {

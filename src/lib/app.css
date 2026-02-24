@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @config '../../tailwind.config.cjs';
 
+@utility no-scrollbar {
+	@apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
 @utility container {
 	margin-inline: auto;
 	padding-inline: 1rem;
@@ -46,10 +50,27 @@
 			/* Modern Browsers */ url('/fonts/barlow-v12-latin-600.ttf') format('truetype'),
 			/* Safari, Android, iOS */ url('/fonts/barlow-v12-latin-600.svg#Barlow') format('svg'); /* Legacy iOS */
 	}
+	@font-face {
+		font-family: 'Barlow Condensed';
+		font-style: normal;
+		font-weight: 500;
+		src: url('/fonts/barlow-condensed-v13-latin-regular.woff2') format('woff2');
+	}
+
+	@font-face {
+		font-family: 'Barlow Condensed';
+		font-style: normal;
+		font-weight: 800;
+		src: url('/fonts/barlow-condensed-v13-latin-800.woff2') format('woff2');
+	}
 }
 
 body {
 	font-family: 'Barlow', sans-serif;
+}
+
+.font-condensed {
+	font-family: 'Barlow Condensed', 'Barlow', sans-serif;
 }
 
 html,
@@ -147,7 +168,7 @@ main {
 }
 
 .bg-gradient-green {
-	background: linear-gradient(90deg, rgba(121, 202, 148, 1) 0%, rgba(46, 156, 92, 1) 100%);
+	background: linear-gradient(90deg, #7ac68a 0%, #28a88a 100%);
 }
 
 .bg-at {
@@ -191,7 +212,7 @@ details a {
 	@apply text-xl mt-4 mb-1;
 }
 .co2b-background {
-	@apply h-screen;
+	@apply h-[calc(100dvh)];
 }
 
 .co2b-section-background {
@@ -310,7 +331,7 @@ sub {
 }
 
 .input {
-	@apply appearance-none px-3 py-1.5 rounded-full border border-current/20 hover:bg-current/10 transition bg-transparent;
+	@apply appearance-none px-3 py-1.5 rounded-3xl border border-current/20 hover:bg-current/10 transition bg-transparent;
 }
 
 @keyframes hero-gradient-animation {
@@ -435,7 +456,8 @@ sub {
 	--y-2: 89%;
 	--c-2: hsla(210, 51%, 60%, 1);
 	background-color: hsla(95, 55%, 63%, 1);
-	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1288 1288' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+	background-image:
+		url("data:image/svg+xml,%3Csvg viewBox='0 0 1288 1288' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
 		radial-gradient(
 			circle at var(--x-0) var(--y-0),
 			var(--c-0) var(--s-start-0),
