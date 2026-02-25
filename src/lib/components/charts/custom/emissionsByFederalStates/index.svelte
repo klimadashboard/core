@@ -6,6 +6,20 @@
 	import { pivot_multikey } from '$lib/utils/data';
 	import { getYearlyPopulationByRegionID } from '$lib/utils/directus.helper';
 
+	export let chart;
+	export let v;
+	export let onChartData = undefined;
+
+	const SECTORS = [
+		{ key: 'Energie', label: 'Energie' },
+		{ key: 'Industrie', label: 'Industrie' },
+		{ key: 'Verkehr', label: 'Verkehr' },
+		{ key: 'Gebäude', label: 'Gebäude' },
+		{ key: 'Landwirtschaft', label: 'Landwirtschaft' },
+		{ key: 'Müll', label: 'Abfallwirtschaft' },
+		{ key: 'F-Gase', label: 'Fluorierte Gase' }
+	];
+
 	let dataset = [];
 	let maxYear;
 
@@ -84,6 +98,59 @@
 			});
 
 			maxYear = [...dataset].sort((a, b) => b.year - a.year)[0].year;
+
+			// Pass table data to Card for CSV export / snapshots
+			if (onChartData) {
+				const regionNames = [...new Set(data.map((d) => d.region))].sort();
+				const latestData = data.filter((d) => d.year === maxYear);
+				const availableSectors = [...new Set(data.map((d) => d.sektor))];
+
+				const columns = [
+					{ key: 'region', label: 'Region', align: 'left' },
+					...SECTORS.filter((s) => availableSectors.includes(s.key)).map((s) => ({
+						key: s.key,
+						label: v?.[s.key] || s.label,
+						align: 'right',
+						format: (val) =>
+							typeof val === 'number' ? Math.round(val).toLocaleString('de-AT') : '–'
+					})),
+					{
+						key: 'total',
+						label: 'Gesamt',
+						align: 'right',
+						format: (val) =>
+							typeof val === 'number' ? Math.round(val).toLocaleString('de-AT') : '–'
+					}
+				];
+
+				const tableRows = regionNames.map((region) => {
+					const regionData = latestData.filter((d) => d.region === region);
+					const row = { region };
+					let total = 0;
+					for (const s of SECTORS) {
+						const val = regionData.find((d) => d.sektor === s.key)?.value ?? null;
+						row[s.key] = val;
+						if (val != null) total += val;
+					}
+					row.total = total > 0 ? total : null;
+					return row;
+				});
+
+				onChartData({
+					raw: data,
+					table: {
+						columns,
+						rows: tableRows,
+						filename: 'emissionen_bundeslaender'
+					},
+					placeholders: {
+						dataYear: String(maxYear)
+					},
+					meta: {
+						source: 'Bundesländer Inventur, Umweltbundesamt'
+					}
+				});
+			}
 		} catch (error) {
 			console.error('Error fetching emission data:', error);
 		}
