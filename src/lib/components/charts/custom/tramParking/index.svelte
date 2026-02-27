@@ -6,6 +6,8 @@
 	import Map from './Map.svelte';
 	import Inspector from './Inspector.svelte';
 	import DateRangeSlider from './DateRangeSlider.svelte';
+	import Select from '$lib/components/ui/Select.svelte';
+	import Checkbox from '$lib/components/ui/Checkbox.svelte';
 	import { detectHotspots } from './hotspots';
 
 	export let onChartData = undefined;
@@ -13,6 +15,10 @@
 	let allIncidents = [];
 	let tramLines = null;
 	let tramStops = null;
+	let busLines = null;
+	let busStops = null;
+	let nightbusLines = null;
+	let nightbusStops = null;
 	let districts = null;
 	let loading = true;
 	let error = null;
@@ -23,16 +29,70 @@
 	let selectedIncident = null;
 	let selectedHotspot = null;
 
-	let mapComponent;
+	// Line type filter: controls both map layers AND incident filtering
+	let showBim = true;
+	let showBus = true;
+	let showNachtbus = true;
 
-	// Filter incidents by date range and district
-	$: filteredIncidents = allIncidents.filter((i) => {
-		const date = i.date_start?.slice(0, 10);
-		if (!date) return false;
-		if (date < startDate || date > endDate) return false;
-		if (selectedDistrict != null && i.district !== selectedDistrict) return false;
-		return true;
-	});
+	/** Classify a transit line name as bim, bus, or nachtbus */
+	function classifyLine(line) {
+		const l = line.trim();
+		if (/^N\d/i.test(l)) return 'nachtbus';
+		if (/^\d+[A-Z]$/i.test(l)) return 'bus';
+		return 'bim';
+	}
+
+	/** Check if an incident has at least one line matching enabled types */
+	function incidentMatchesLineFilter(incident) {
+		if (!incident.lines) return true; // no line info → always show
+		const lines = incident.lines.split(',').map((l) => l.trim()).filter(Boolean);
+		if (lines.length === 0) return true;
+		return lines.some((l) => {
+			const type = classifyLine(l);
+			if (type === 'bim' && showBim) return true;
+			if (type === 'bus' && showBus) return true;
+			if (type === 'nachtbus' && showNachtbus) return true;
+			return false;
+		});
+	}
+
+	let mapComponent;
+	let mapWrapper;
+	let fullscreen = false;
+
+	function toggleFullscreen() {
+		if (!mapWrapper) return;
+		if (!document.fullscreenElement) {
+			mapWrapper.requestFullscreen().then(() => {
+				fullscreen = true;
+				setTimeout(() => mapComponent?.invalidateSize(), 100);
+			}).catch(() => {});
+		} else {
+			document.exitFullscreen().then(() => {
+				fullscreen = false;
+				setTimeout(() => mapComponent?.invalidateSize(), 100);
+			}).catch(() => {});
+		}
+	}
+
+	function handleFullscreenChange() {
+		fullscreen = !!document.fullscreenElement;
+		setTimeout(() => mapComponent?.invalidateSize(), 100);
+	}
+
+	// Filter incidents by date range, district, and line type
+	// Reference showBim/showBus/showNachtbus directly so Svelte tracks them
+	$: filteredIncidents = (() => {
+		const _bim = showBim, _bus = showBus, _nacht = showNachtbus;
+		return allIncidents.filter((i) => {
+			const date = i.date_start?.slice(0, 10);
+			if (!date) return false;
+			if (date < startDate || date > endDate) return false;
+			if (selectedDistrict != null && i.district !== selectedDistrict) return false;
+			if (!incidentMatchesLineFilter(i)) return false;
+			return true;
+		});
+	})();
 
 	// Only geocoded incidents for the map
 	$: mapIncidents = filteredIncidents.filter((i) => i.lat != null && i.lon != null);
@@ -42,27 +102,27 @@
 
 	onMount(async () => {
 		try {
-			// Load all data in parallel
-			const [incidentsData, linesData, stopsData, districtsData] = await Promise.all([
+			const [incidentsData, linesData, stopsData, districtsData, busLinesData, busStopsData, nightbusLinesData, nightbusStopsData] = await Promise.all([
 				fetchIncidents(),
-				fetch('https://base.klimadashboard.org/assets/a88d573b-a489-4f70-8d2b-dba1457b1329').then(
-					(r) => r.json()
-				),
-				fetch('https://base.klimadashboard.org/assets/9255ae4e-7496-4f05-bd8f-26a6394c3494').then(
-					(r) => r.json()
-				),
-				fetch('https://base.klimadashboard.org/assets/bffb703f-85ba-4c75-b471-833da8f4c3ac').then(
-					(r) => r.json()
-				)
+				fetch('https://base.klimadashboard.org/assets/a88d573b-a489-4f70-8d2b-dba1457b1329').then((r) => r.json()),
+				fetch('https://base.klimadashboard.org/assets/9255ae4e-7496-4f05-bd8f-26a6394c3494').then((r) => r.json()),
+				fetch('https://base.klimadashboard.org/assets/bffb703f-85ba-4c75-b471-833da8f4c3ac').then((r) => r.json()),
+				fetch('/data/vienna/bus-lines.json').then((r) => r.json()),
+				fetch('/data/vienna/bus-stops.json').then((r) => r.json()),
+				fetch('/data/vienna/nightbus-lines.json').then((r) => r.json()),
+				fetch('/data/vienna/nightbus-stops.json').then((r) => r.json())
 			]);
 
 			allIncidents = incidentsData;
 			tramLines = linesData;
 			tramStops = stopsData;
 			districts = districtsData;
+			busLines = busLinesData;
+			busStops = busStopsData;
+			nightbusLines = nightbusLinesData;
+			nightbusStops = nightbusStopsData;
 			loading = false;
 
-			// Send chart data to Card wrapper
 			if (onChartData) {
 				const total = allIncidents.length;
 				const geocoded = allIncidents.filter((i) => i.lat != null).length;
@@ -97,7 +157,6 @@
 	async function fetchIncidents() {
 		const directus = getDirectusInstance(fetch);
 
-		// Fetch in pages of 5000 (Directus has default limits)
 		let all = [];
 		let page = 1;
 		const limit = 5000;
@@ -167,13 +226,28 @@
 		selectedHotspot = null;
 	}
 
-	// District dropdown options
-	$: districtOptions = districts
-		? districts.features
-				.map((f) => ({ number: f.properties.number, label: f.properties.label }))
-				.sort((a, b) => a.number - b.number)
-		: [];
+	// District dropdown options for Select component
+	$: districtSelectOptions = districts
+		? [
+				{ value: '', label: 'Alle Bezirke' },
+				...districts.features
+					.map((f) => ({ value: String(f.properties.number), label: f.properties.label }))
+					.sort((a, b) => Number(a.value) - Number(b.value))
+			]
+		: [{ value: '', label: 'Alle Bezirke' }];
+
+	let districtSelectValue = '';
+
+	function handleDistrictSelect(e) {
+		const val = e.detail;
+		handleSelectDistrict({ detail: val ? parseInt(val) : null });
+	}
+
+	// Keep select value in sync with selectedDistrict
+	$: districtSelectValue = selectedDistrict != null ? String(selectedDistrict) : '';
 </script>
+
+<svelte:document on:fullscreenchange={handleFullscreenChange} />
 
 {#if loading}
 	<Loader />
@@ -187,38 +261,59 @@
 		<div class="flex flex-wrap items-center gap-3">
 			<DateRangeSlider {startDate} {endDate} on:change={handleDateChange} />
 
-			<div class="flex items-center gap-1.5 ml-auto">
-				<label class="text-sm font-medium opacity-70" for="district-select">Bezirk</label>
-				<select
-					id="district-select"
-					class="text-sm border border-current/15 rounded-lg px-2 py-1 bg-white dark:bg-gray-800"
-					value={selectedDistrict ?? ''}
-					on:change={(e) =>
-						handleSelectDistrict({ detail: e.target.value ? parseInt(e.target.value) : null })}
-				>
-					<option value="">Alle Bezirke</option>
-					{#each districtOptions as d}
-						<option value={d.number}>{d.label}</option>
-					{/each}
-				</select>
+			<div class="flex items-center gap-3">
+				<Checkbox label="Bim" bind:checked={showBim} />
+				<Checkbox label="Bus" bind:checked={showBus} />
+				<Checkbox label="Nachtbus" bind:checked={showNachtbus} />
+			</div>
+
+			<div class="ml-auto">
+				<Select
+					label="Bezirk"
+					hideLabel
+					bind:value={districtSelectValue}
+					options={districtSelectOptions}
+					on:change={handleDistrictSelect}
+					small
+				/>
 			</div>
 		</div>
 
 		<!-- Map -->
-		<div class="h-[40vh] rounded-xl overflow-hidden border border-current/10">
+		<div
+			bind:this={mapWrapper}
+			class="rounded-xl overflow-hidden border border-current/10 relative transition-all duration-300
+				{fullscreen ? 'h-screen bg-white dark:bg-gray-900' : 'h-[40vh]'}"
+		>
 			<Map
 				bind:this={mapComponent}
 				incidents={mapIncidents}
-				{hotspots}
 				{selectedDistrict}
 				{selectedHotspot}
-				{tramLines}
-				{tramStops}
+				tramLines={showBim ? tramLines : null}
+				tramStops={showBim ? tramStops : null}
+				busLines={showBus ? busLines : null}
+				busStops={showBus ? busStops : null}
+				nightbusLines={showNachtbus ? nightbusLines : null}
+				nightbusStops={showNachtbus ? nightbusStops : null}
 				{districts}
 				on:selectDistrict={handleSelectDistrict}
 				on:selectIncident={handleSelectIncident}
 				on:selectHotspot={handleSelectHotspot}
 			/>
+			<button
+				class="absolute top-2 right-2 z-50 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+				on:click={toggleFullscreen}
+				title={fullscreen ? 'Vollbild beenden' : 'Vollbild'}
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					{#if fullscreen}
+						<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+					{:else}
+						<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+					{/if}
+				</svg>
+			</button>
 		</div>
 
 		<!-- Inspector -->
@@ -229,6 +324,11 @@
 			{selectedIncident}
 			{selectedHotspot}
 			{districts}
+			{startDate}
+			{endDate}
+			{showBim}
+			{showBus}
+			{showNachtbus}
 			on:selectDistrict={handleSelectDistrict}
 			on:selectIncident={handleSelectIncident}
 			on:selectHotspot={handleSelectHotspot}

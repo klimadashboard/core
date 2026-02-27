@@ -4,11 +4,14 @@
 	import { browser } from '$app/environment';
 
 	export let incidents = [];
-	export let hotspots = [];
 	export let selectedDistrict = null;
 	export let selectedHotspot = null;
 	export let tramLines = null;
 	export let tramStops = null;
+	export let busLines = null;
+	export let busStops = null;
+	export let nightbusLines = null;
+	export let nightbusStops = null;
 	export let districts = null;
 
 	const dispatch = createEventDispatcher();
@@ -21,6 +24,11 @@
 
 	const VIENNA_CENTER = [16.37, 48.21];
 	const VIENNA_ZOOM = 11;
+
+	const LINE_COLOR_LIGHT = 'rgba(120,120,120,0.5)';
+	const LINE_COLOR_DARK = 'rgba(180,180,180,0.6)';
+	const STOP_COLOR_LIGHT = 'rgba(120,120,120,0.6)';
+	const STOP_COLOR_DARK = 'rgba(180,180,180,0.7)';
 
 	onMount(() => {
 		if (!browser) return;
@@ -35,7 +43,7 @@
 	}
 
 	function basemapTiles() {
-		const style = isDark() ? 'dark_all' : 'rastertiles/voyager';
+		const style = isDark() ? 'dark_all' : 'light_all';
 		return [
 			`https://a.basemaps.cartocdn.com/${style}/{z}/{x}/{y}.png`,
 			`https://b.basemaps.cartocdn.com/${style}/{z}/{x}/{y}.png`,
@@ -81,13 +89,10 @@
 			addLayers();
 		});
 
-		// Dark mode observer
 		const observer = new MutationObserver(() => {
 			if (!map) return;
 			const source = map.getSource('carto-basemap');
-			if (source) {
-				source.setTiles(basemapTiles());
-			}
+			if (source) source.setTiles(basemapTiles());
 		});
 		observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 	}
@@ -121,8 +126,9 @@
 				type: 'line',
 				source: 'districts',
 				paint: {
-					'line-color': isDark() ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
-					'line-width': ['case', ['==', ['get', 'number'], selectedDistrict || -1], 2.5, 1]
+					'line-color': isDark() ? 'rgba(96,165,250,0.5)' : 'rgba(37,99,235,0.4)',
+					'line-width': ['case', ['==', ['get', 'number'], selectedDistrict || -1], 2.5, 1],
+					'line-dasharray': [4, 3]
 				}
 			});
 
@@ -167,66 +173,112 @@
 			});
 		}
 
-		// Tram lines layer
-		if (tramLines) {
-			map.addSource('tram-lines', { type: 'geojson', data: tramLines });
-			map.addLayer({
-				id: 'tram-lines',
-				type: 'line',
-				source: 'tram-lines',
-				paint: {
-					'line-color': isDark() ? '#60a5fa' : '#2563eb',
-					'line-width': 2,
-					'line-opacity': 0.5
-				}
-			});
-		}
+		// Transit layers will be added/removed reactively
+		updateTransitLayers();
 
-		// Tram stops layer
-		if (tramStops) {
-			map.addSource('tram-stops', { type: 'geojson', data: tramStops });
-			map.addLayer({
-				id: 'tram-stops',
-				type: 'circle',
-				source: 'tram-stops',
-				paint: {
-					'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 1.5, 14, 4, 17, 7],
-					'circle-color': isDark() ? '#60a5fa' : '#2563eb',
-					'circle-stroke-width': 1,
-					'circle-stroke-color': isDark() ? '#1e293b' : 'white',
-					'circle-opacity': 0.7
-				}
-			});
-
-			map.on('mousemove', 'tram-stops', (e) => {
-				if (!e.features?.length) return;
-				tooltip = {
-					show: true,
-					x: e.point.x,
-					y: e.point.y,
-					text: `${e.features[0].properties.name} (${e.features[0].properties.lines})`
-				};
-			});
-			map.on('mouseleave', 'tram-stops', () => {
-				tooltip = { ...tooltip, show: false };
-			});
-		}
-
-		// Incidents layer (will be updated reactively)
+		// Incidents layer
 		updateIncidentsLayer();
+	}
 
-		// Hotspots layer
-		updateHotspotsLayer();
+	/** Add or remove a line+stop layer pair */
+	function setTransitLayer(lineId, stopId, lineData, stopData) {
+		if (!map || !mapLoaded) return;
+
+		// Lines
+		if (lineData) {
+			if (!map.getSource(lineId)) {
+				map.addSource(lineId, { type: 'geojson', data: lineData });
+				map.addLayer({
+					id: lineId,
+					type: 'line',
+					source: lineId,
+					paint: {
+						'line-color': isDark() ? LINE_COLOR_DARK : LINE_COLOR_LIGHT,
+						'line-width': 2,
+						'line-opacity': 0.7
+					}
+				}, 'incidents-heat'); // insert before heatmap
+			}
+		} else {
+			if (map.getLayer(lineId)) map.removeLayer(lineId);
+			if (map.getSource(lineId)) map.removeSource(lineId);
+		}
+
+		// Stops
+		if (stopData) {
+			if (!map.getSource(stopId)) {
+				map.addSource(stopId, { type: 'geojson', data: stopData });
+				map.addLayer({
+					id: stopId,
+					type: 'circle',
+					source: stopId,
+					paint: {
+						'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 1.5, 14, 4, 17, 7],
+						'circle-color': isDark() ? STOP_COLOR_DARK : STOP_COLOR_LIGHT,
+						'circle-stroke-width': 1,
+						'circle-stroke-color': isDark() ? '#1e293b' : 'white',
+						'circle-opacity': 0.7
+					}
+				}, 'incidents-heat');
+
+				map.on('mousemove', stopId, (e) => {
+					if (!e.features?.length) return;
+					const p = e.features[0].properties;
+					const name = p.name || 'Haltestelle';
+					tooltip = {
+						show: true,
+						x: e.point.x,
+						y: e.point.y,
+						text: `${name}${p.lines ? ` (${p.lines})` : ''}`
+					};
+				});
+				map.on('mouseleave', stopId, () => {
+					tooltip = { ...tooltip, show: false };
+				});
+			}
+		} else {
+			if (map.getLayer(stopId)) map.removeLayer(stopId);
+			if (map.getSource(stopId)) map.removeSource(stopId);
+		}
+	}
+
+	function updateTransitLayers() {
+		if (!map || !mapLoaded) return;
+		// Ensure incidents source exists first so we can insert transit layers before it
+		if (!map.getSource('incidents')) {
+			updateIncidentsLayer();
+		}
+		setTransitLayer('tram-lines', 'tram-stops', tramLines, tramStops);
+		setTransitLayer('bus-lines', 'bus-stops', busLines, busStops);
+		setTransitLayer('nightbus-lines', 'nightbus-stops', nightbusLines, nightbusStops);
+	}
+
+	/** Deterministic hash-based jitter so same incident always gets same offset */
+	function jitter(id, coord) {
+		const h = Math.abs(id * 2654435761 % 2147483647);
+		const angle = (h % 360) * Math.PI / 180;
+		const dist = ((h >> 8) % 100) / 100 * 0.0003;
+		return [coord[0] + Math.cos(angle) * dist, coord[1] + Math.sin(angle) * dist];
 	}
 
 	function incidentsToGeoJSON(incs) {
+		const coordCounts = new Map();
+		const geocoded = incs.filter((i) => i.lat != null && i.lon != null);
+		for (const i of geocoded) {
+			const key = `${i.lon},${i.lat}`;
+			coordCounts.set(key, (coordCounts.get(key) || 0) + 1);
+		}
+
 		return {
 			type: 'FeatureCollection',
-			features: incs
-				.filter((i) => i.lat != null && i.lon != null)
-				.map((i) => ({
+			features: geocoded.map((i) => {
+				const key = `${i.lon},${i.lat}`;
+				const coords = coordCounts.get(key) > 1
+					? jitter(i.id, [i.lon, i.lat])
+					: [i.lon, i.lat];
+				return {
 					type: 'Feature',
-					geometry: { type: 'Point', coordinates: [i.lon, i.lat] },
+					geometry: { type: 'Point', coordinates: coords },
 					properties: {
 						id: i.id,
 						address: i.address || '',
@@ -234,23 +286,8 @@
 						date: i.date_start?.slice(0, 10) || '',
 						district: i.district
 					}
-				}))
-		};
-	}
-
-	function hotspotsToGeoJSON(hs) {
-		return {
-			type: 'FeatureCollection',
-			features: hs.map((h) => ({
-				type: 'Feature',
-				geometry: { type: 'Point', coordinates: h.center },
-				properties: {
-					id: h.id,
-					label: h.label,
-					count: h.count,
-					type: h.type
-				}
-			}))
+				};
+			})
 		};
 	}
 
@@ -338,69 +375,6 @@
 		}
 	}
 
-	function updateHotspotsLayer() {
-		if (!map || !mapLoaded) return;
-
-		const geojson = hotspotsToGeoJSON(hotspots);
-
-		if (map.getSource('hotspots')) {
-			map.getSource('hotspots').setData(geojson);
-		} else {
-			map.addSource('hotspots', { type: 'geojson', data: geojson });
-
-			map.addLayer({
-				id: 'hotspots-circles',
-				type: 'circle',
-				source: 'hotspots',
-				paint: {
-					'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 3, 12, 20, 20, 100, 35],
-					'circle-color': [
-						'case',
-						['==', ['get', 'id'], selectedHotspot?.id || ''],
-						'rgba(234,179,8,0.5)',
-						'rgba(234,179,8,0.25)'
-					],
-					'circle-stroke-width': ['case', ['==', ['get', 'id'], selectedHotspot?.id || ''], 3, 1.5],
-					'circle-stroke-color': '#eab308'
-				},
-				minzoom: 11,
-				maxzoom: 15
-			});
-
-			map.addLayer({
-				id: 'hotspots-labels',
-				type: 'symbol',
-				source: 'hotspots',
-				layout: {
-					'text-field': ['get', 'count'],
-					'text-size': 11,
-					'text-font': ['Open Sans Bold'],
-					'text-allow-overlap': true
-				},
-				paint: {
-					'text-color': isDark() ? '#fbbf24' : '#92400e'
-				},
-				minzoom: 11,
-				maxzoom: 15
-			});
-
-			map.on('click', 'hotspots-circles', (e) => {
-				if (!e.features?.length) return;
-				const id = e.features[0].properties.id;
-				const hs = hotspots.find((h) => h.id === id);
-				if (hs) dispatch('selectHotspot', hs);
-			});
-
-			map.on('mouseenter', 'hotspots-circles', () => {
-				map.getCanvas().style.cursor = 'pointer';
-			});
-			map.on('mouseleave', 'hotspots-circles', () => {
-				map.getCanvas().style.cursor = '';
-			});
-		}
-	}
-
-	// Update district selection highlight
 	function updateDistrictHighlight() {
 		if (!map || !mapLoaded || !map.getLayer('districts-fill')) return;
 		map.setPaintProperty('districts-fill', 'fill-color', [
@@ -417,27 +391,10 @@
 		]);
 	}
 
-	function updateHotspotHighlight() {
-		if (!map || !mapLoaded || !map.getLayer('hotspots-circles')) return;
-		map.setPaintProperty('hotspots-circles', 'circle-color', [
-			'case',
-			['==', ['get', 'id'], selectedHotspot?.id || ''],
-			'rgba(234,179,8,0.5)',
-			'rgba(234,179,8,0.25)'
-		]);
-		map.setPaintProperty('hotspots-circles', 'circle-stroke-width', [
-			'case',
-			['==', ['get', 'id'], selectedHotspot?.id || ''],
-			3,
-			1.5
-		]);
-	}
-
 	// Reactivity
 	$: if (mapLoaded && incidents) updateIncidentsLayer();
-	$: if (mapLoaded && hotspots) updateHotspotsLayer();
 	$: if (mapLoaded) updateDistrictHighlight(selectedDistrict);
-	$: if (mapLoaded) updateHotspotHighlight(selectedHotspot);
+	$: if (mapLoaded) updateTransitLayers(tramLines, tramStops, busLines, busStops, nightbusLines, nightbusStops);
 
 	// Fly to hotspot when selected
 	$: if (mapLoaded && selectedHotspot && map) {
@@ -448,7 +405,6 @@
 		if (!map || !districts) return;
 		const feat = districts.features.find((f) => f.properties.number === districtNumber);
 		if (!feat) return;
-		// Compute bounds from polygon
 		const coords = feat.geometry.coordinates.flat(2);
 		const lons = coords.filter((_, i) => i % 2 === 0);
 		const lats = coords.filter((_, i) => i % 2 === 1);
@@ -462,6 +418,10 @@
 	export function resetView() {
 		if (!map) return;
 		map.flyTo({ center: VIENNA_CENTER, zoom: VIENNA_ZOOM, duration: 800 });
+	}
+
+	export function invalidateSize() {
+		if (map) map.resize();
 	}
 </script>
 

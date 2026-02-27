@@ -5,6 +5,10 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import Loader from '$lib/components/Loader.svelte';
 	import { page } from '$app/state';
+	import { Select, RangeSlider, Toggle } from '$lib/components/ui';
+
+	export let chart = undefined;
+	export let onChartData = undefined;
 
 	let dataset = null;
 	let explanations = null;
@@ -222,15 +226,95 @@
 		return icon;
 	};
 
+	const KSG_SECTOR_LABELS = {
+		industry: 'Industrie',
+		traffic: 'Mobilität',
+		energy: 'Energie',
+		buildings: 'Gebäude',
+		agriculture: 'Landwirtschaft',
+		waste: 'Abfall',
+		fluorinated: 'Fluorierte Gase'
+	};
+
 	const datasetPromise = fetch(
 		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
-		// `../data/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
 	)
-		// const datasetPromise = fetch('../data/at/emissions/emissions_crf_at.json')
-		// const datasetPromise = fetch('../data/de/emissions/emissions_crf_de.json')
 		.then((response) => response.json())
 		.then((responseData) => {
 			dataset = responseData;
+
+			// Derive maxYear dynamically from data
+			const thgData = responseData['THG'];
+			if (thgData?.length && thgData[0].absolute?.length) {
+				maxYear = 1990 + thgData[0].absolute.length - 1;
+				selectedYear = maxYear;
+				years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
+			}
+
+			// Provide table data to Card for table tab + CSV/JSON download
+			if (onChartData && thgData?.length) {
+				const sectorData = thgData.filter((s) => s.key !== 'memo' && KSG_SECTOR_LABELS[s.key]);
+				const sectorKeys = sectorData.map((s) => s.key);
+
+				const columns = [
+					{ key: 'year', label: 'Jahr', align: 'left' },
+					...sectorKeys.map((key) => ({
+						key,
+						label: KSG_SECTOR_LABELS[key],
+						align: 'right',
+						format: (v) =>
+							typeof v === 'number'
+								? v.toLocaleString('de-DE', {
+										minimumFractionDigits: 2,
+										maximumFractionDigits: 2
+									})
+								: '–'
+					})),
+					{
+						key: 'total',
+						label: 'Gesamt',
+						align: 'right',
+						format: (v) =>
+							typeof v === 'number'
+								? v.toLocaleString('de-DE', {
+										minimumFractionDigits: 2,
+										maximumFractionDigits: 2
+									})
+								: '–'
+					}
+				];
+
+				const yearCount = thgData[0].absolute.length;
+				const tableRows = [];
+				for (let yi = 0; yi < yearCount; yi++) {
+					const row = { year: 1990 + yi };
+					let total = 0;
+					for (const sector of sectorData) {
+						const val = sector.absolute[yi];
+						row[sector.key] = val;
+						if (typeof val === 'number') total += val;
+					}
+					row.total = total > 0 ? total : null;
+					tableRows.push(row);
+				}
+
+				const latestTotal = tableRows[tableRows.length - 1]?.total ?? 0;
+
+				onChartData({
+					raw: tableRows,
+					table: { columns, rows: tableRows, filename: 'emissionen_sektoren_detail' },
+					hasData: true,
+					placeholders: {
+						latestYear: String(maxYear),
+						totalEmissions: latestTotal.toLocaleString('de-DE', {
+							minimumFractionDigits: 1,
+							maximumFractionDigits: 1
+						})
+					},
+					meta: { source: 'Umweltbundesamt' }
+				});
+			}
+
 			return responseData;
 		});
 
@@ -363,83 +447,58 @@
 	let crfHover = null;
 	let extensiveList = false;
 
+	// Pre-filter: select a sector on load via chart.options.sector (e.g. "traffic")
+	// Uses sectorlyData (not sortedData) to avoid reactive cycle since sortedData depends on ksgSelection
+	let initialSelectionApplied = false;
+	$: if (sectorlyData && !initialSelectionApplied && chart?.options?.sector) {
+		const idx = sectorlyData.findIndex((s) => s.key === chart.options.sector);
+		if (idx >= 0) ksgSelection = idx;
+		initialSelectionApplied = true;
+	}
+
 	let useAbsoluteUnits = false;
 	let showFlightEmissions = false;
 </script>
 
 {#if sortedData}
 	<div class="flex flex-wrap gap-5 items-center sm:justify-center md:justify-start">
-		<div class="dropdown">
-			<select
-				bind:value={selectedGhGas}
-				class=""
-				id="emission-detail-ghg"
-				on:input={() => {
-					ksgSelection = null;
-					crfSelection = null;
-				}}
-				aria-label={page.data.translations.greenhouseGas}
-			>
-				{#each ghGas as ghg}
-					<option value={ghg.key}>{ghg.label}</option>
-				{/each}
-			</select>
+		<Select
+			label={page.data.translations?.greenhouseGas || 'Treibhausgas'}
+			hideLabel
+			bind:value={selectedGhGas}
+			options={ghGas.map((g) => ({ value: g.key, label: g.label }))}
+			small
+			on:change={() => {
+				ksgSelection = null;
+				crfSelection = null;
+			}}
+		/>
+
+		<div class="w-40">
+			<RangeSlider
+				label="Jahr"
+				hideLabel
+				bind:value={selectedYear}
+				min={1990}
+				max={maxYear}
+			/>
 		</div>
 
-		<label class="flex gap-1 text-sm items-center">
-			<input
-				type="range"
-				min="1990"
-				max={maxYear}
-				bind:value={selectedYear}
-				class="cursor-pointer"
-			/><span>{selectedYear}</span>
-		</label>
-
 		{#if memoAvailable}
-			<label
-				class="flex gap-1 text-sm items-center cursor-pointer {showFlightEmissions
-					? 'opacity-100'
-					: 'opacity-70'}"
-				style=""
-				><svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="w-5 h-5"
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					stroke-width="2"
-					stroke="currentColor"
-					fill="none"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-					<path d="M3.6 9h16.8" />
-					<path d="M3.6 15h16.8" />
-					<path d="M11.5 3a17 17 0 0 0 0 18" />
-					<path d="M12.5 3a17 17 0 0 1 0 18" />
-				</svg>
-				<span class="-translate-y-0.5"
-					>int. Flug- & Schiffverkehr <button
-						class="glossary-label"
-						aria-label="?"
-						on:mousedown={() => glossaryItem.set('memo')}
-					></button></span
-				> <input type="checkbox" bind:checked={showFlightEmissions} /></label
-			>
+			<div class="flex items-center gap-1">
+				<Toggle
+					label="int. Flug- & Schiffverkehr"
+					bind:checked={showFlightEmissions}
+				/>
+				<button
+					class="glossary-label"
+					aria-label="?"
+					on:mousedown={() => glossaryItem.set('memo')}
+				></button>
+			</div>
 		{/if}
 
-		<label
-			class="flex gap-1 text-sm items-center cursor-pointer {useAbsoluteUnits
-				? 'opacity-100'
-				: 'opacity-70'}"
-			style=""
-		>
-			<span>Absolute Werte</span>
-			<input type="checkbox" bind:checked={useAbsoluteUnits} /></label
-		>
+		<Toggle label="Absolute Werte" bind:checked={useAbsoluteUnits} />
 	</div>
 
 	<div class="relative overflow-hidden mt-6 py-1 border-b sm:text-lg">

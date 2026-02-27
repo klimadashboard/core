@@ -25,6 +25,7 @@ export interface Hotspot {
 	radius: number; // meters, for map highlight
 	incidents: Incident[];
 	topLines: string[];
+	district: number | null;
 	streetName?: string;
 	houseNumberRange?: [number, number];
 }
@@ -137,6 +138,17 @@ function buildHotspot(
 		}
 	}
 
+	// Determine primary district (most common among incidents)
+	const districtCounts = new Map<number, number>();
+	for (const inc of allIncidents) {
+		if (inc.district != null) {
+			districtCounts.set(inc.district, (districtCounts.get(inc.district) || 0) + 1);
+		}
+	}
+	const district = districtCounts.size > 0
+		? [...districtCounts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+		: null;
+
 	return {
 		id: `hs-${id}`,
 		type,
@@ -146,6 +158,7 @@ function buildHotspot(
 		radius: Math.min(maxDist, 500),
 		incidents: allIncidents,
 		topLines: topLines(allIncidents),
+		district,
 		streetName,
 		houseNumberRange
 	};

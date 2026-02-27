@@ -12,10 +12,11 @@
 		fetchHeatingData,
 		buildChartData,
 		buildRegionLabel,
+		getDataRegion,
 		categories,
 		formatExchangeRate,
 		formatNumber,
-		TARGET_YEAR,
+		getTargetYear,
 		type RegionWithDistance,
 		type HeatingDataPoint
 	} from './config';
@@ -25,6 +26,7 @@
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 	export let view: 'full' | 'simple' = 'full';
+	export let snapshotData: any = null;
 
 	// Check URL for view parameter (for embeds)
 	$: urlView = page.url?.searchParams?.get('view');
@@ -35,12 +37,15 @@
 	let data: HeatingDataPoint[] = [];
 	let loading = true;
 	let regionsLoaded = false;
+	let usedSnapshot = false;
 
-	// Load all regions on mount
+	// Load all regions on mount (DE + AT)
 	async function loadRegions() {
 		const regions = await getRegions();
 		allRegions = regions.filter(
-			(r: any) => r.country === 'DE' && (r.layer === 'municipality' || r.layer === 'district')
+			(r: any) =>
+				(r.country === 'DE' || r.country === 'AT') &&
+				(r.layer === 'municipality' || r.layer === 'district' || r.layer === 'state')
 		) as RegionWithDistance[];
 		regionsLoaded = true;
 	}
@@ -53,9 +58,30 @@
 	// Use region prop directly as selectedRegion (cast to RegionWithDistance)
 	$: selectedRegion = region as RegionWithDistance | null;
 
-	// Load heating data when region changes
+	// Use SSR snapshot for initial data if available and matching current region
+	$: snapshotRegionId = snapshotData?.meta?.region?.id;
+	$: snapshotMatchesRegion = snapshotData?.raw && selectedRegion && snapshotRegionId === selectedRegion.id;
+
+	$: if (snapshotMatchesRegion && !usedSnapshot) {
+		useSnapshotData();
+	}
+
+	// Load heating data when region changes (skip if snapshot was used for initial load)
 	$: if (selectedRegion && regionsLoaded && !regionLoading) {
-		loadData();
+		if (!usedSnapshot) {
+			loadData();
+		} else {
+			// Snapshot was used for initial data; reset flag so future region changes re-fetch
+			usedSnapshot = false;
+		}
+	}
+
+	function useSnapshotData() {
+		data = snapshotData.raw;
+		loading = false;
+		usedSnapshot = true;
+		// Report snapshot data to Card (for placeholders, table, etc.)
+		onChartData?.(snapshotData);
 	}
 
 	async function loadData() {
@@ -80,12 +106,16 @@
 	}
 
 	$: regionLabel = buildRegionLabel(selectedRegion, allRegions);
+	$: dataRegion = regionsLoaded ? getDataRegion(selectedRegion, allRegions) : null;
+	$: showDataMismatchBanner = dataRegion && selectedRegion && dataRegion.id !== selectedRegion.id;
+	$: isAT = selectedRegion?.country === 'AT';
+	$: targetYear = getTargetYear(selectedRegion?.country);
 
 	// Exchange rate cards config
 	$: gasEntry = data.find((d) => d.category === 'gas');
 	$: oilEntry = data.find((d) => d.category === 'heating oil');
-	$: gasRate = formatExchangeRate(gasEntry?.value ?? 0);
-	$: oilRate = formatExchangeRate(oilEntry?.value ?? 0);
+	$: gasRate = formatExchangeRate(gasEntry?.value ?? 0, selectedRegion?.country);
+	$: oilRate = formatExchangeRate(oilEntry?.value ?? 0, selectedRegion?.country);
 
 	interface CardConfig {
 		color: string;
@@ -157,7 +187,7 @@
 				<p class="text-sm text-gray-700 dark:text-gray-300 mt-1 leading-snug">
 					<strong>{config.label}</strong> müssen pro
 					<strong>{getUnitLabel(config.rate.unit)}</strong>
-					getauscht werden, um bis {TARGET_YEAR} die Klimaziele einzuhalten.
+					getauscht werden, um bis {targetYear} die Klimaziele einzuhalten.
 				</p>
 			</div>
 		</div>
@@ -177,6 +207,11 @@
 			</div>
 		</div>
 	{:else if selectedRegion}
+		{#if showDataMismatchBanner}
+			<div class="mb-4 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
+				Da keine Daten für {selectedRegion.name} verfügbar sind, werden Daten für {dataRegion?.name} angezeigt.
+			</div>
+		{/if}
 		{#if data.length > 0}
 			{#if effectiveView === 'simple'}
 				<!-- Simple view: Full-width chart only -->
@@ -191,9 +226,13 @@
 						<HeatingChart {data} {categories} />
 					</div>
 					<div class="lg:col-span-1">
-						<ExchangeRateCards {data} layout="stacked" />
+						<ExchangeRateCards {data} country={selectedRegion?.country} layout="stacked" />
 						<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-							Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {TARGET_YEAR}.
+							{#if isAT}
+								Berechnung basierend auf Mikrozensus-Daten bis zum Zieljahr {targetYear}.
+							{:else}
+								Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {targetYear}.
+							{/if}
 						</p>
 					</div>
 				</div>
@@ -224,7 +263,11 @@
 							<div class="splide__pagination mt-2"></div>
 						</Splide>
 						<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-							Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {TARGET_YEAR}.
+							{#if isAT}
+								Berechnung basierend auf Mikrozensus-Daten bis zum Zieljahr {targetYear}.
+							{:else}
+								Berechnung basierend auf Zensus-Daten vom Mai 2022 bis zum Zieljahr {targetYear}.
+							{/if}
 						</p>
 					</div>
 				</div>
