@@ -140,7 +140,7 @@
 					},
 					placeholders: { total, geocoded },
 					meta: {
-						source: 'Wiener Linien Störungsmeldungen / Florian Stancke'
+						source: 'Wiener Linien Störungsmeldungen, f59.at'
 					},
 					hasData: true,
 					allowDataDownload: true

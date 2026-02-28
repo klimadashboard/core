@@ -295,19 +295,22 @@
 			>
 				&larr; Zurück zur Übersicht
 			</button>
-			<div class="flex items-start gap-2 mb-2 flex-wrap">
-				<h3 class="text-xl font-bold">{selectedIncident.address || 'Unbekannte Adresse'}</h3>
-				<div class="flex gap-2 text-xs mt-1 shrink-0">
-					{#if selectedIncident.lat && selectedIncident.lon}
-						<a href={googleMapsUrl(selectedIncident.lat, selectedIncident.lon)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline" title="Google Maps">Google</a>
-						<a href={appleMapsUrl(selectedIncident.lat, selectedIncident.lon)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline" title="Apple Maps">Apple</a>
-						<a href={osmUrl(selectedIncident.lat, selectedIncident.lon)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline" title="OpenStreetMap">OSM</a>
-					{:else if selectedIncident.address}
-						<a href={googleMapsSearchUrl(selectedIncident.address)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline" title="Google Maps">Google</a>
-						<a href={appleMapsSearchUrl(selectedIncident.address)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline" title="Apple Maps">Apple</a>
-						<a href={osmSearchUrl(selectedIncident.address)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline" title="OpenStreetMap">OSM</a>
-					{/if}
-				</div>
+			<h3 class="text-xl font-bold mb-1">{selectedIncident.address || 'Unbekannte Adresse'}</h3>
+			<div class="flex gap-1.5 text-xs mb-3 items-center">
+				<span class="opacity-60">Ort in Maps öffnen:</span>
+				{#if selectedIncident.lat && selectedIncident.lon}
+					<a href={googleMapsUrl(selectedIncident.lat, selectedIncident.lon)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Google Maps</a>
+					<span class="opacity-40">|</span>
+					<a href={appleMapsUrl(selectedIncident.lat, selectedIncident.lon)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Apple Maps</a>
+					<span class="opacity-40">|</span>
+					<a href={osmUrl(selectedIncident.lat, selectedIncident.lon)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">OSM</a>
+				{:else if selectedIncident.address}
+					<a href={googleMapsSearchUrl(selectedIncident.address)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Google Maps</a>
+					<span class="opacity-40">|</span>
+					<a href={appleMapsSearchUrl(selectedIncident.address)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Apple Maps</a>
+					<span class="opacity-40">|</span>
+					<a href={osmSearchUrl(selectedIncident.address)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">OSM</a>
+				{/if}
 			</div>
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
 				<div>
@@ -368,7 +371,7 @@
 			>
 				&larr; Zurück zur Übersicht
 			</button>
-			<div class="flex items-start gap-3 mb-4 flex-wrap">
+			<div class="flex items-center gap-2 mb-1 flex-wrap">
 				<h3 class="text-xl font-bold">{selectedHotspot.label}</h3>
 				<span
 					class="text-xs px-2 py-0.5 rounded-full {selectedHotspot.type === 'street'
@@ -377,11 +380,14 @@
 				>
 					{selectedHotspot.type === 'street' ? 'Straße' : 'Ort'}
 				</span>
-				<div class="flex gap-2 text-xs mt-1">
-					<a href={googleMapsSearchUrl(selectedHotspot.label)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Google</a>
-					<a href={appleMapsSearchUrl(selectedHotspot.label)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Apple</a>
-					<a href={osmSearchUrl(selectedHotspot.label)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">OSM</a>
-				</div>
+			</div>
+			<div class="flex gap-1.5 text-xs mb-4 items-center">
+				<span class="opacity-60">Ort in Maps öffnen:</span>
+				<a href={googleMapsSearchUrl(selectedHotspot.label)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Google Maps</a>
+				<span class="opacity-40">|</span>
+				<a href={appleMapsSearchUrl(selectedHotspot.label)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Apple Maps</a>
+				<span class="opacity-40">|</span>
+				<a href={osmSearchUrl(selectedHotspot.label)} target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">OSM</a>
 			</div>
 			<div class="grid grid-cols-3 gap-3 text-sm mb-4">
 				<div>
@@ -479,7 +485,7 @@
 								<col class="w-8" />
 								<col />
 								<col class="w-10" />
-								<col class="w-28" />
+								<col class="w-32" />
 								<col class="w-28" />
 								<col class="w-20" />
 							</colgroup>
@@ -514,6 +520,7 @@
 										<td class="py-1.5 pr-1 overflow-hidden">
 											<div class="flex items-center gap-1">
 												<span class="font-bold w-8 text-right text-xs shrink-0">{hs.count}</span>
+												<span class="text-[10px] w-6 text-right opacity-50 shrink-0">{geocodedCount > 0 ? Math.round((hs.count / geocodedCount) * 100) : 0}%</span>
 												<div class="flex-1 min-w-0 h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
 													<div
 														class="h-full bg-red-500 dark:bg-red-400 rounded-full"

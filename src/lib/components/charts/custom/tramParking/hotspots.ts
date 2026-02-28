@@ -115,6 +115,10 @@ function buildHotspot(
 		streetName = cluster[0].streetName;
 		houseNumberRange = [houseNumbers[0], houseNumbers[houseNumbers.length - 1]];
 		label = `${streetName} ${houseNumberRange[0]}–${houseNumberRange[1]}`;
+	} else if (allSameStreet && houseNumbers.length === 1) {
+		type = 'street';
+		streetName = cluster[0].streetName;
+		label = `${streetName} ${houseNumbers[0]}`;
 	} else if (allSameStreet) {
 		type = 'street';
 		streetName = cluster[0].streetName;
