@@ -107,10 +107,10 @@
 				fetch('https://base.klimadashboard.org/assets/a88d573b-a489-4f70-8d2b-dba1457b1329').then((r) => r.json()),
 				fetch('https://base.klimadashboard.org/assets/9255ae4e-7496-4f05-bd8f-26a6394c3494').then((r) => r.json()),
 				fetch('https://base.klimadashboard.org/assets/bffb703f-85ba-4c75-b471-833da8f4c3ac').then((r) => r.json()),
-				fetch('/data/vienna/bus-lines.json').then((r) => r.json()),
-				fetch('/data/vienna/bus-stops.json').then((r) => r.json()),
-				fetch('/data/vienna/nightbus-lines.json').then((r) => r.json()),
-				fetch('/data/vienna/nightbus-stops.json').then((r) => r.json())
+				fetch('https://base.klimadashboard.org/assets/50a46351-765e-407f-b0f4-7e4caf557e84').then((r) => r.json()),
+				fetch('https://base.klimadashboard.org/assets/252d6371-cd2a-468d-9933-6a59d555232a').then((r) => r.json()),
+				fetch('https://base.klimadashboard.org/assets/a9eec122-84d1-4e90-b366-055d8d0da93c').then((r) => r.json()),
+				fetch('https://base.klimadashboard.org/assets/415f6188-01fd-4e08-b0c1-29759ce0e14e').then((r) => r.json())
 			]);
 
 			allIncidents = incidentsData;
