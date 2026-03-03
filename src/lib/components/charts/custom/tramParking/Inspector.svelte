@@ -213,8 +213,8 @@
 			return `${h} Std. ${m} Min.`;
 		}
 		const days = mins / 1440;
-		if (days >= 10) return `${Math.round(days)} Tage`;
-		return `${days.toFixed(1)} Tage`;
+		if (days >= 10) return `${Math.round(days)} Tagen`;
+		return `${days.toFixed(1)} Tagen`;
 	}
 
 	/** Compact duration for table cells: rounded hour or minutes */
@@ -416,8 +416,8 @@
 			<h4 class="font-semibold text-sm mb-2">
 				Letzte Vorfälle an diesem Hotspot
 			</h4>
-			<div class="max-h-60 overflow-y-auto">
-				<table class="w-full text-sm">
+			<div class="max-h-60 overflow-y-auto overflow-x-auto">
+				<table class="w-full text-sm min-w-[480px]">
 					<thead>
 						<tr class="text-left opacity-60">
 							<th class="pb-1 pr-3">Datum</th>
@@ -479,8 +479,8 @@
 
 			{#if tableView === 'hotspots'}
 				{#if hotspots.length > 0}
-					<div class="max-h-80 overflow-y-auto">
-						<table class="w-full text-sm table-fixed">
+					<div class="max-h-80 overflow-y-auto overflow-x-auto">
+						<table class="w-full text-sm table-fixed min-w-[540px]">
 							<colgroup>
 								<col class="w-8" />
 								<col />
