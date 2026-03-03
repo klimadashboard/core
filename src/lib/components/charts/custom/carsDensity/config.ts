@@ -134,9 +134,13 @@ export async function fetchData(
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
 
-	// Get periods from data
+	// Get periods from data (use 'Insgesamt' as primary, fall back to any category)
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// If we have a specific region, we can build the data directly
@@ -242,9 +246,13 @@ async function fetchAggregatedFromChildren(
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
 
-	// Get all periods
+	// Get all periods (use 'Insgesamt' as primary, fall back to any category)
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// Group data by municipality code
@@ -459,7 +467,11 @@ async function fetchNationalAggregate(
 	);
 
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// Load region shapes
@@ -707,7 +719,11 @@ export async function fetchAllRegions(fetchFn: typeof fetch): Promise<AllRegions
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// Load region shapes
@@ -893,12 +909,18 @@ export function getPlaceholders(
 	const formatNumber = (n: number) => n.toLocaleString('de-DE');
 	const formatPercent = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-	const regionName = region?.name ?? regionData.name;
+	const baseName = region?.name ?? regionData.name;
+	const layerLabel = (region as any)?.layer_label || '';
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const regionName = layerLabel && region?.layer !== 'country'
+		? `${baseName} (${layerLabel})`
+		: baseName;
 	const countryName = data.country?.name ?? (PUBLIC_VERSION === 'at' ? 'Österreich' : 'Deutschland');
 	const nationalCarsPerTen = (nationalLatest.carsPer1000 ?? 0) / 100;
 
 	return {
 		regionName,
+		layerLabel,
 		population: regionData.population,
 		totalPopulation: formatNumber(regionData.population),
 		latestPeriod: latest.period,
@@ -992,7 +1014,7 @@ export async function fetchChartData({
 		const directus = getDirectusInstance(fetchFn);
 		region = (await directus.request(
 			readItem('regions', regionId, {
-				fields: ['id', 'code', 'name', 'layer', 'center', 'population']
+				fields: ['id', 'code', 'name', 'layer', 'layer_label', 'center', 'population']
 			})
 		)) as Region;
 	}

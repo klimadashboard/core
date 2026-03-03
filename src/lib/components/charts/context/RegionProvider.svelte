@@ -50,6 +50,7 @@
 						codeShort: pageRegion.codeShort || pageRegion.code_short,
 						name: pageRegion.name,
 						layer: pageRegion.layer,
+						layer_label: pageRegion.layer_label,
 						country: pageRegion.country,
 						center: pageRegion.center,
 						area_km2: pageRegion.area_km2,

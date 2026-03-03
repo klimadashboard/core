@@ -271,6 +271,8 @@ export interface ModalSplitFetchResult {
 	matchedRegionName: string | null;
 	/** The layer of the matched region */
 	matchedRegionLayer: string | null;
+	/** The human-readable layer label (e.g., "Bundesland", "Gemeinde") */
+	matchedRegionLayerLabel: string | null;
 	/** Whether a fallback to parent region was used */
 	usedFallback: boolean;
 }
@@ -300,6 +302,7 @@ export async function fetchData(
 			matchedRegionId: null,
 			matchedRegionName: null,
 			matchedRegionLayer: null,
+			matchedRegionLayerLabel: null,
 			usedFallback: false
 		};
 	}
@@ -328,7 +331,7 @@ export async function fetchData(
 	const primaryRegionId = regionCandidates[0];
 	if (dataByRegion.has(primaryRegionId) && dataByRegion.get(primaryRegionId)!.length > 0) {
 		const regionRecords = dataByRegion.get(primaryRegionId)!;
-		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, false);
+		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, (region as any)?.layer_label || null, false);
 	}
 
 	// Otherwise, need to find the best fallback from parents
@@ -345,6 +348,7 @@ export async function fetchData(
 			matchedRegionId: null,
 			matchedRegionName: null,
 			matchedRegionLayer: null,
+			matchedRegionLayerLabel: null,
 			usedFallback: false
 		};
 	}
@@ -353,10 +357,10 @@ export async function fetchData(
 	const regionsMetadata = await directus.request(
 		readItems('regions', {
 			filter: { id: { _in: candidatesWithData } },
-			fields: ['id', 'name', 'layer'],
+			fields: ['id', 'name', 'layer', 'layer_label'],
 			limit: -1
 		})
-	) as Array<{ id: string; name: string; layer: string }>;
+	) as Array<{ id: string; name: string; layer: string; layer_label?: string }>;
 
 	// Sort by layer priority (most local first) and by order in regionCandidates (closer parent first)
 	const sortedCandidates = candidatesWithData
@@ -366,6 +370,7 @@ export async function fetchData(
 				id,
 				name: meta?.name || null,
 				layer: meta?.layer || null,
+				layer_label: meta?.layer_label || null,
 				layerPriority: meta?.layer ? getLayerPriority(meta.layer) : 999,
 				candidateIndex: regionCandidates.indexOf(id)
 			};
@@ -388,6 +393,7 @@ export async function fetchData(
 		bestCandidate.id,
 		bestCandidate.name,
 		bestCandidate.layer,
+		bestCandidate.layer_label,
 		true // Used fallback since primary region had no data
 	);
 }
@@ -398,6 +404,7 @@ function buildFetchResult(
 	regionId: string,
 	regionName: string | null,
 	regionLayer: string | null,
+	regionLayerLabel: string | null,
 	usedFallback: boolean
 ): ModalSplitFetchResult {
 	const data = rawRecords
@@ -427,6 +434,7 @@ function buildFetchResult(
 		matchedRegionId: regionId,
 		matchedRegionName: regionName,
 		matchedRegionLayer: regionLayer,
+		matchedRegionLayerLabel: regionLayerLabel,
 		usedFallback
 	};
 }
@@ -594,7 +602,8 @@ export function getPlaceholders(
 	data: ModalSplitRawData[],
 	region: Region | null,
 	goalConfig: ResolvedGoalConfig | null,
-	matchedRegionName?: string | null
+	matchedRegionName?: string | null,
+	matchedRegionLayerLabel?: string | null
 ): Record<string, string | number | boolean> {
 	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
 	const firstYear = years[0];
@@ -633,10 +642,16 @@ export function getPlaceholders(
 	const hasHistoricalData = years.length > 1;
 
 	// Use matched region name if fallback was used, otherwise use the region prop
-	const displayRegionName = matchedRegionName || region?.name || 'Region';
+	const baseName = matchedRegionName || region?.name || 'Region';
+	const layerLabel = matchedRegionLayerLabel || (region as any)?.layer_label || '';
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const displayRegionName = layerLabel && region?.layer !== 'country'
+		? `${baseName} (${layerLabel})`
+		: baseName;
 
 	return {
 		regionName: displayRegionName,
+		layerLabel,
 		latestYear: lastYear,
 		sustainablePercent: formatPercent(lastYearEcoShareRaw),
 		motorizedPercent: formatPercent(Math.round((100 - lastYearEcoShareRaw) * 100) / 100),
@@ -671,7 +686,8 @@ export function buildChartData(
 	showHistoric: boolean = false,
 	translations: Translations,
 	goalConfig: ResolvedGoalConfig | null = null,
-	matchedRegionName?: string | null
+	matchedRegionName?: string | null,
+	matchedRegionLayerLabel?: string | null
 ): ChartData {
 	return {
 		raw: data,
@@ -680,7 +696,7 @@ export function buildChartData(
 			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
-		placeholders: getPlaceholders(data, region, goalConfig, matchedRegionName),
+		placeholders: getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel),
 		meta: {
 			updateDate,
 			source,
@@ -703,11 +719,31 @@ export function buildChartData(
 export async function fetchChartData({
 	regionId,
 	parentIds,
-	translations
+	translations,
+	fetch: fetchFn
 }: ChartFetchParams): Promise<ChartData | null> {
 	if (!regionId) return null;
 
-	const region = { id: regionId, name: '', layer: 'municipality', code: '', center: ['0', '0'] } as Region;
+	// Fetch region metadata including layer_label for disambiguation
+	const directus = getDirectusInstance(fetchFn);
+	const regionsData = await directus.request(
+		readItems('regions', {
+			filter: { id: { _eq: regionId } },
+			fields: ['id', 'name', 'layer', 'layer_label'],
+			limit: 1
+		})
+	) as Array<{ id: string; name: string; layer: string; layer_label?: string }>;
+
+	const regionMeta = regionsData[0];
+	const region = {
+		id: regionId,
+		name: regionMeta?.name || '',
+		layer: regionMeta?.layer || 'municipality',
+		layer_label: regionMeta?.layer_label || '',
+		code: '',
+		center: ['0', '0']
+	} as Region & { layer_label: string };
+
 	const regionCandidates = [regionId, ...parentIds];
 
 	const fetchResult = await fetchData(region, { regionId, regionCandidates });
@@ -724,6 +760,7 @@ export async function fetchChartData({
 		false, // showHistoric
 		translations,
 		goalConfig,
-		fetchResult.matchedRegionName
+		fetchResult.matchedRegionName,
+		fetchResult.matchedRegionLayerLabel
 	);
 }

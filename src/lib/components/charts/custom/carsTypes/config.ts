@@ -4,6 +4,8 @@ import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/c
 import { formatNumber } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { filterCategoryValues } from '$lib/components/charts/utils/privacyFilter';
+import { readItems } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
 
 export type DataMode = 'bestand' | 'neuzulassungen';
 
@@ -27,6 +29,24 @@ const layerHierarchy = [
 	'country',
 	'land'
 ];
+
+/** Readable German labels for layer values (used as fallback when layer_label is empty) */
+const layerLabels: Record<string, string> = {
+	municipality: 'Gemeinde',
+	gemeinde: 'Gemeinde',
+	district: 'Bezirk',
+	bezirk: 'Bezirk',
+	kreis: 'Kreis',
+	landkreis: 'Landkreis',
+	city: 'Stadt',
+	stadt: 'Stadt',
+	region: 'Region',
+	regierungsbezirk: 'Regierungsbezirk',
+	bundesland: 'Bundesland',
+	state: 'Bundesland',
+	country: 'Land',
+	land: 'Land'
+};
 
 /** Get priority for a layer (lower = more local = preferred) */
 function getLayerPriority(layer: string): number {
@@ -134,9 +154,8 @@ async function fetchBestandData(
 		}
 
 		regionName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
-		// Compact sources: deduplicate by removing year suffixes
-		const baseSourceNames = new Set([...allSourceParts].map((s) => s.replace(/\s+\d{4}(-\d{2})?$/, '')));
-		source = [...baseSourceNames].join(', ');
+		// Keep raw source parts — will be filtered by displayed year later
+		source = [...allSourceParts].join(', ');
 	} else {
 		// Single-region: use the region-specific endpoint
 		const regionKey = region?.id || (country === 'DE' ? 'DE' : country);
@@ -170,6 +189,16 @@ async function fetchBestandData(
 
 	const latestYear = years[0];
 	const latestYearData = yearData[String(latestYear)] || {};
+
+	// Filter source to only show entries relevant to the displayed year
+	if (source.includes(',')) {
+		const sourceParts = source.split(',').map((s) => s.trim()).filter(Boolean);
+		const yearStr = String(latestYear);
+		const matching = sourceParts.filter((p) => p.includes(yearStr));
+		const partsToDedup = matching.length > 0 ? matching : sourceParts;
+		const baseNames = new Set(partsToDedup.map((s) => s.replace(/\s+\d{4}(-\d{2})?$/, '')));
+		source = [...baseNames].join(', ');
+	}
 
 	// Get all categories (excluding 'Insgesamt', 'Privat', 'Firmen' which are ownership types, not drive types)
 	const excludedCategories = ['Insgesamt', 'Privat', 'Firmen'];
@@ -371,7 +400,7 @@ export async function fetchDataWithFallback(
 						layerPriority: getLayerPriority(candidate.layer || 'unknown')
 					} as FetchResult;
 				}
-			} catch {
+			} catch (err) {
 				// Ignore errors, try next candidate
 			}
 			return null;
@@ -579,13 +608,15 @@ export function getPlaceholders(
 	waffleData: VehicleShareData[],
 	regionName: string,
 	mode: DataMode = 'bestand',
-	source?: string
+	source?: string,
+	layerLabel?: string
 ): Record<string, string | number> {
 	const placeholders: Record<string, string | number> = {
 		year: data.year,
 		total: formatNumber(data.total, 0),
 		totalRaw: data.total,
 		regionName,
+		layerLabel: layerLabel || '',
 		source: source || '',
 		title: generateTitle(waffleData, regionName, mode)
 	};
@@ -637,6 +668,8 @@ export function buildChartData(
 		dataRegionName: string;
 		originalLayerLabel?: string;
 		dataLayerLabel?: string;
+		originalLayer?: string;
+		dataLayer?: string;
 	},
 	regionLayerLabel?: string,
 	hasPrivacySuppression?: boolean,
@@ -669,22 +702,26 @@ export function buildChartData(
 
 	// Build source string, including fallback disclaimer if showing parent region data
 	let sourceText = source || '';
-	if (fallbackInfo && fallbackInfo.originalRegionName !== fallbackInfo.dataRegionName) {
-		// Include layer labels in the disclaimer (e.g., "Landkreis Meißen" instead of just "Meißen")
-		const dataRegionDisplay = fallbackInfo.dataLayerLabel
-			? `${fallbackInfo.dataLayerLabel} ${fallbackInfo.dataRegionName}`
+	if (fallbackInfo) {
+		// Always include layer labels to distinguish regions with the same name (e.g., "Wien (Bundesland)" vs "Wien (Gemeinde)")
+		// Fall back to layerLabels map when CMS layer_label is empty
+		const dataLabel = fallbackInfo.dataLayerLabel || (fallbackInfo.dataLayer && layerLabels[fallbackInfo.dataLayer]) || '';
+		const originalLabel = fallbackInfo.originalLayerLabel || (fallbackInfo.originalLayer && layerLabels[fallbackInfo.originalLayer]) || '';
+		const dataRegionDisplay = dataLabel
+			? `${fallbackInfo.dataRegionName} (${dataLabel})`
 			: fallbackInfo.dataRegionName;
-		const originalRegionDisplay = fallbackInfo.originalLayerLabel
-			? `${fallbackInfo.originalLayerLabel} ${fallbackInfo.originalRegionName}`
+		const originalRegionDisplay = originalLabel
+			? `${fallbackInfo.originalRegionName} (${originalLabel})`
 			: fallbackInfo.originalRegionName;
 		const disclaimer = `Daten für ${dataRegionDisplay} (nicht verfügbar für ${originalRegionDisplay})`;
 		sourceText = sourceText ? `${sourceText} · ${disclaimer}` : disclaimer;
 	}
 
-	// Build regionName with layer_label prefix if available (e.g., "Landkreis Meißen")
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Meißen (Landkreis)")
+	const effectiveLayerLabel = fallbackInfo?.dataLayerLabel || regionLayerLabel || '';
 	const displayRegionName =
-		(fallbackInfo?.dataLayerLabel || regionLayerLabel) && regionName
-			? `${fallbackInfo?.dataLayerLabel || regionLayerLabel} ${regionName}`
+		effectiveLayerLabel && regionName
+			? `${regionName} (${effectiveLayerLabel})`
 			: regionName;
 
 	return {
@@ -696,7 +733,7 @@ export function buildChartData(
 			rows: tableRows,
 			filename: `kfz-${modeLabel}-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
 		},
-		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode, source),
+		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode, source, effectiveLayerLabel),
 		meta: {
 			updateDate,
 			source: sourceText,
@@ -710,26 +747,53 @@ export function buildChartData(
 
 export async function fetchChartData({
 	regionId,
-	parentIds
+	parentIds,
+	fetch: fetchFn
 }: ChartFetchParams): Promise<ChartData | null> {
-	const candidates = regionId
-		? [
-				{ id: regionId, name: '', layer: 'unknown', layer_label: '' },
-				...parentIds.map((id) => ({ id, name: '', layer: 'unknown', layer_label: '' }))
-			]
-		: [];
+	if (!regionId) return null;
+
+	// Fetch region metadata including layer_label for disambiguation
+	const allIds = [regionId, ...parentIds];
+	const directus = getDirectusInstance(fetchFn);
+	const regionsData = await directus.request(
+		readItems('regions', {
+			filter: { id: { _in: allIds } },
+			fields: ['id', 'name', 'layer', 'layer_label'],
+			limit: allIds.length
+		})
+	) as Array<{ id: string; name: string; layer: string; layer_label?: string }>;
+
+	const regionMap = new Map(regionsData.map((r) => [r.id, r]));
+
+	const candidates = allIds.map((id) => {
+		const meta = regionMap.get(id);
+		return {
+			id,
+			name: meta?.name || '',
+			layer: meta?.layer || 'unknown',
+			layer_label: meta?.layer_label || ''
+		};
+	});
 
 	const result = await fetchDataWithFallback(candidates, { mode: 'bestand' });
 	if (!result) return null;
 
 	const waffleData = buildWaffleData(result.data, result.categories);
 
+	// Build a minimal region object for placeholder resolution
+	const matchedCandidate = candidates.find((c) => c.id === result.regionId) || candidates[0];
+	const ssrRegion = {
+		id: result.regionId || regionId,
+		name: result.regionName || matchedCandidate?.name || '',
+		layer: matchedCandidate?.layer || 'unknown'
+	} as Region;
+
 	return buildChartData(
 		result.data,
 		waffleData,
 		result.updateDate,
 		result.regionName || '',
-		null, // region
+		ssrRegion,
 		'bestand',
 		true, // hasData
 		undefined, // availability

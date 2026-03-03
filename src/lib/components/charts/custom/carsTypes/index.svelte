@@ -218,18 +218,22 @@
 			waffleData = buildWaffleData(result.data, result.categories);
 
 			// Create a region object for the data source (may be a parent region)
+			const matchedCandidate = regionCandidates.find((c) => c.id === result.regionId);
 			const dataRegion: Region = {
 				id: result.regionId,
-				name: result.regionName
+				name: result.regionName,
+				layer: matchedCandidate?.layer || 'unknown'
 			} as Region;
 
-			// Build fallback info if showing data from a different region
-			const fallbackInfo = region?.layer && result.regionName !== region.name
+			// Build fallback info if showing data from a different region (compare IDs, not names)
+			const fallbackInfo = region?.layer && result.regionId !== region.id
 				? {
 						originalRegionName: region.name,
 						dataRegionName: result.regionName,
 						originalLayerLabel: region.layer_label || '',
-						dataLayerLabel: result.regionLayerLabel || ''
+						dataLayerLabel: result.regionLayerLabel || '',
+						originalLayer: region.layer,
+						dataLayer: regionCandidates.find((c) => c.id === result.regionId)?.layer || ''
 					}
 				: undefined;
 

@@ -42,10 +42,16 @@ export function getPlaceholders(
 	const parkingAreaSqm = totalCars * SQM_PER_CAR;
 	const footballPitches = parkingAreaSqm / PITCH_AREA_SQM;
 
-	const regionName = region?.name ?? regionData.name;
+	const baseName = region?.name ?? regionData.name;
+	const layerLabel = (region as any)?.layer_label || '';
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const regionName = layerLabel && region?.layer !== 'country'
+		? `${baseName} (${layerLabel})`
+		: baseName;
 
 	return {
 		regionName,
+		layerLabel,
 		totalCars: formatNumber(totalCars),
 		totalCarsRaw: totalCars,
 		totalArea: formatNumber(parkingAreaSqm),
@@ -130,7 +136,7 @@ export async function fetchChartData({
 		const directus = getDirectusInstance(fetchFn);
 		region = (await directus.request(
 			readItem('regions', regionId, {
-				fields: ['id', 'code', 'name', 'layer', 'center', 'population']
+				fields: ['id', 'code', 'name', 'layer', 'layer_label', 'center', 'population']
 			})
 		)) as Region;
 	}

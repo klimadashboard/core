@@ -131,6 +131,32 @@ export async function fetchRegion(regionId: string): Promise<Region | null> {
 			return null;
 		}
 
+		// Enrich parent regions with name and layer_label
+		// (parents is a JSON field storing only {id, layer})
+		let enrichedParents = data.parents;
+		if (Array.isArray(data.parents) && data.parents.length > 0) {
+			try {
+				const parentIds = data.parents.map((p: any) => p.id).filter(Boolean);
+				const parentsUrl = `https://base.klimadashboard.org/items/regions?filter[id][_in]=${parentIds.join(',')}&fields=id,name,layer,layer_label`;
+				const parentsResponse = await fetch(parentsUrl);
+				if (parentsResponse.ok) {
+					const parentsResult = await parentsResponse.json();
+					const parentDetails = parentsResult.data || [];
+					enrichedParents = data.parents.map((p: any) => {
+						const details = parentDetails.find((d: any) => d.id === p.id);
+						return {
+							...p,
+							name: details?.name || p.name,
+							layer_label: details?.layer_label || p.layer_label
+						};
+					});
+				}
+			} catch (e) {
+				// Non-critical: continue with original parents
+				console.error('[getRegion] Failed to enrich parent regions:', e);
+			}
+		}
+
 		const region: Region = {
 			id: data.id,
 			code: data.code,
@@ -142,7 +168,7 @@ export async function fetchRegion(regionId: string): Promise<Region | null> {
 			center: data.center,
 			area_km2: data.area_km2,
 			population: data.population,
-			parents: data.parents
+			parents: enrichedParents
 		};
 
 		console.log('[getRegion] Returning region:', region.name, region.codeShort);

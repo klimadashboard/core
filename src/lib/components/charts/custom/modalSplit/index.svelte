@@ -55,6 +55,7 @@
 	let latestDataYear: number = 0;
 	let goalConfig: ResolvedGoalConfig | null = null;
 	let matchedRegionName: string | null = null;
+	let matchedRegionLayerLabel: string | null = null;
 	let usedFallback: boolean = false;
 
 	// Computed dimensions - label width scales with container
@@ -165,6 +166,7 @@
 			updateDate = result.updateDate;
 			source = result.source;
 			matchedRegionName = result.matchedRegionName;
+			matchedRegionLayerLabel = result.matchedRegionLayerLabel;
 			usedFallback = result.usedFallback;
 
 			// Fetch goal for the matched region (not the original region) if fallback was used
@@ -188,7 +190,8 @@
 				showHistoric,
 				page.data.translations,
 				goalConfig,
-				matchedRegionName
+				matchedRegionName,
+				matchedRegionLayerLabel
 			);
 			onChartData?.(chartData);
 		} catch (e) {
@@ -210,7 +213,8 @@
 			showHistoric,
 			page.data.translations,
 			goalConfig,
-			matchedRegionName
+			matchedRegionName,
+			matchedRegionLayerLabel
 		);
 		onChartData?.(chartData);
 	}

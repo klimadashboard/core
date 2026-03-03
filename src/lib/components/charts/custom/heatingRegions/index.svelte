@@ -209,7 +209,7 @@
 	{:else if selectedRegion}
 		{#if showDataMismatchBanner}
 			<div class="mb-4 px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-800 dark:text-amber-200">
-				Da keine Daten für {selectedRegion.name} verfügbar sind, werden Daten für {dataRegion?.name} angezeigt.
+				Da keine Daten für {selectedRegion.name}{selectedRegion.layer_label && selectedRegion.layer !== 'country' ? ` (${selectedRegion.layer_label})` : ''} verfügbar sind, werden Daten für {dataRegion?.name}{dataRegion?.layer_label && dataRegion?.layer !== 'country' ? ` (${dataRegion.layer_label})` : ''} angezeigt.
 			</div>
 		{/if}
 		{#if data.length > 0}

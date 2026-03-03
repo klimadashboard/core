@@ -29,6 +29,9 @@ export interface SolarTypesResponse {
 export interface Region {
 	name: string;
 	codeShort?: string;
+	code?: string;
+	layer?: string;
+	layer_label?: string;
 }
 
 // Map API type keys to display labels and images
@@ -157,9 +160,16 @@ export function getPlaceholders(
 	const groundMounted = getTypeStats('852');
 	const balcony = getTypeStats('2961');
 
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const layerLabel = region?.layer_label || '';
+	const regionName = layerLabel && region?.layer !== 'country'
+		? `${region?.name || 'Deutschland'} (${layerLabel})`
+		: region?.name || 'Deutschland';
+
 	return {
 		// Region
-		regionName: region?.name || 'Deutschland',
+		regionName,
+		layerLabel,
 
 		// Time
 		currentYear,
@@ -300,7 +310,7 @@ export async function fetchChartData({
 		const directus = getDirectusInstance(fetchFn);
 		const raw = await directus.request(
 			readItem('regions', regionId, {
-				fields: ['id', 'code', 'code_short', 'name', 'layer']
+				fields: ['id', 'code', 'code_short', 'name', 'layer', 'layer_label']
 			})
 		) as any;
 		region = { ...raw, codeShort: raw.code_short } as Region;

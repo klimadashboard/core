@@ -3,6 +3,8 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
+import { readItems } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
 
 export type DataMode = 'neuzulassungen' | 'bestand';
 
@@ -26,6 +28,24 @@ const layerHierarchy = [
 	'country',
 	'land'
 ];
+
+/** Readable German labels for layer values (used as fallback when layer_label is empty) */
+const layerLabels: Record<string, string> = {
+	municipality: 'Gemeinde',
+	gemeinde: 'Gemeinde',
+	district: 'Bezirk',
+	bezirk: 'Bezirk',
+	kreis: 'Kreis',
+	landkreis: 'Landkreis',
+	city: 'Stadt',
+	stadt: 'Stadt',
+	region: 'Region',
+	regierungsbezirk: 'Regierungsbezirk',
+	bundesland: 'Bundesland',
+	state: 'Bundesland',
+	country: 'Land',
+	land: 'Land'
+};
 
 /** Get priority for a layer (lower = more local = preferred) */
 function getLayerPriority(layer: string): number {
@@ -543,9 +563,9 @@ export function getPlaceholders(
 	// Mode label
 	const modeLabel = mode === 'bestand' ? 'im Bestand' : 'bei den Neuzulassungen';
 
-	// Build regionName with layer_label prefix if available (e.g., "Landkreis Meißen")
-	const regionName = regionLayerLabel && region?.name
-		? `${regionLayerLabel} ${region.name}`
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Meißen (Landkreis)")
+	const regionName = regionLayerLabel && region?.name && region?.layer !== 'country'
+		? `${region.name} (${regionLayerLabel})`
 		: region?.name ?? '';
 
 	// Calculate first and last year for data range
@@ -556,6 +576,7 @@ export function getPlaceholders(
 
 	return {
 		regionName,
+		layerLabel: regionLayerLabel || '',
 		currentYear,
 		lastUpdateDate: lastRow?.date instanceof Date ? lastRow.date.toLocaleDateString('de-DE') : '',
 		categoryCount: categories.length,
@@ -605,7 +626,7 @@ export function buildChartData(
 	hasData: boolean = true,
 	availability?: { hasBestand: boolean; hasNeuzulassungen: boolean },
 	source?: string,
-	fallbackInfo?: { originalRegionName: string; dataRegionName: string; originalLayerLabel?: string; dataLayerLabel?: string },
+	fallbackInfo?: { originalRegionName: string; dataRegionName: string; originalLayerLabel?: string; dataLayerLabel?: string; originalLayer?: string; dataLayer?: string },
 	regionLayerLabel?: string,
 	hasPrivacySuppression?: boolean,
 	privacyNote?: string
@@ -639,13 +660,16 @@ export function buildChartData(
 
 	// Build source string, including fallback disclaimer if showing parent region data
 	let sourceText = source || '';
-	if (fallbackInfo && fallbackInfo.originalRegionName !== fallbackInfo.dataRegionName) {
-		// Include layer labels in the disclaimer (e.g., "Landkreis Meißen" instead of just "Meißen")
-		const dataRegionDisplay = fallbackInfo.dataLayerLabel
-			? `${fallbackInfo.dataLayerLabel} ${fallbackInfo.dataRegionName}`
+	if (fallbackInfo) {
+		// Always include layer labels to distinguish regions with the same name (e.g., "Wien (Bundesland)" vs "Wien (Gemeinde)")
+		// Fall back to layerLabels map when CMS layer_label is empty
+		const dataLabel = fallbackInfo.dataLayerLabel || (fallbackInfo.dataLayer && layerLabels[fallbackInfo.dataLayer]) || '';
+		const originalLabel = fallbackInfo.originalLayerLabel || (fallbackInfo.originalLayer && layerLabels[fallbackInfo.originalLayer]) || '';
+		const dataRegionDisplay = dataLabel
+			? `${fallbackInfo.dataRegionName} (${dataLabel})`
 			: fallbackInfo.dataRegionName;
-		const originalRegionDisplay = fallbackInfo.originalLayerLabel
-			? `${fallbackInfo.originalLayerLabel} ${fallbackInfo.originalRegionName}`
+		const originalRegionDisplay = originalLabel
+			? `${fallbackInfo.originalRegionName} (${originalLabel})`
 			: fallbackInfo.originalRegionName;
 		const disclaimer = `Daten für ${dataRegionDisplay} (nicht verfügbar für ${originalRegionDisplay})`;
 		sourceText = sourceText ? `${sourceText} · ${disclaimer}` : disclaimer;
@@ -673,23 +697,50 @@ export function buildChartData(
 
 export async function fetchChartData({
 	regionId,
-	parentIds
+	parentIds,
+	fetch: fetchFn
 }: ChartFetchParams): Promise<ChartData | null> {
-	const candidates = regionId
-		? [
-				{ id: regionId, name: '', layer: 'unknown', layer_label: '' },
-				...parentIds.map((id) => ({ id, name: '', layer: 'unknown', layer_label: '' }))
-			]
-		: [];
+	if (!regionId) return null;
+
+	// Fetch region metadata including layer_label for disambiguation
+	const allIds = [regionId, ...parentIds];
+	const directus = getDirectusInstance(fetchFn);
+	const regionsData = await directus.request(
+		readItems('regions', {
+			filter: { id: { _in: allIds } },
+			fields: ['id', 'name', 'layer', 'layer_label'],
+			limit: allIds.length
+		})
+	) as Array<{ id: string; name: string; layer: string; layer_label?: string }>;
+
+	const regionMap = new Map(regionsData.map((r) => [r.id, r]));
+
+	const candidates = allIds.map((id) => {
+		const meta = regionMap.get(id);
+		return {
+			id,
+			name: meta?.name || '',
+			layer: meta?.layer || 'unknown',
+			layer_label: meta?.layer_label || ''
+		};
+	});
 
 	const result = await fetchDataWithFallback(candidates, { mode: 'bestand' });
 	if (!result || result.data.length === 0) return null;
+
+	// Build a minimal region object for placeholder resolution
+	const matchedCandidate = candidates.find((c) => c.id === result.regionId) || candidates[0];
+	const ssrRegion = {
+		id: result.regionId || regionId,
+		name: result.regionName || matchedCandidate?.name || '',
+		layer: matchedCandidate?.layer || 'unknown'
+	} as Region;
 
 	return buildChartData(
 		result.data,
 		result.categories,
 		result.updateDate,
-		null, // region (Card resolves this client-side)
+		ssrRegion,
 		'bestand',
 		true, // hasData
 		undefined, // availability

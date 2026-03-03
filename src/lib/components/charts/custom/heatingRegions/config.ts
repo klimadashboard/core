@@ -445,6 +445,7 @@ export function getPlaceholders(
 
 	// Use the actual data region name (e.g. Steiermark, not Graz)
 	const dataRegion = getDataRegion(region, allRegions);
+	const layerLabel = (dataRegion as any)?.layer_label || (region as any)?.layer_label || '';
 
 	const isAT = country === 'AT';
 	const isDE = country === 'DE' || !country;
@@ -456,8 +457,15 @@ export function getPlaceholders(
 	const fossilPct =
 		(gasEntry?.percentage ?? 0) + (oilEntry?.percentage ?? 0);
 
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const baseName = dataRegion?.name || region?.name || '';
+	const regionNameDisplay = layerLabel && region?.layer !== 'country'
+		? `${baseName} (${layerLabel})`
+		: baseName;
+
 	return {
-		regionName: dataRegion?.name || region?.name || '',
+		regionName: regionNameDisplay,
+		layerLabel,
 		regionLabel: buildRegionLabel(region, allRegions),
 		total: processed.total,
 		gasCount: gasEntry?.value ?? 0,
@@ -517,11 +525,11 @@ export async function fetchChartData({
 
 	const allRegions = (await directus.request(
 		readItems('regions', {
-			fields: ['id', 'code', 'name', 'layer', 'country', 'center', 'population', 'parents'],
+			fields: ['id', 'code', 'name', 'layer', 'layer_label', 'country', 'center', 'population', 'parents'],
 			filter: { visible: { _eq: true } },
 			limit: -1
 		})
-	)) as RegionWithDistance[];
+	)) as (RegionWithDistance & { layer_label?: string })[];
 
 	const region = allRegions.find((r) => r.id === regionId) as RegionWithDistance | undefined;
 	if (!region) return null;

@@ -1,7 +1,7 @@
 /** @type {import('./$types').PageServerLoad} */
 import { error, redirect } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
-import { readItem } from '@directus/sdk';
+import { readItem, readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { getRegionConfigWithFallback } from '$lib/utils/getRegionConfig';
 import { getChartSnapshots } from '$lib/utils/chartDataService';
@@ -30,6 +30,31 @@ export async function load({ fetch, params, url, parent }) {
 			throw error(404, 'Page not found');
 		}
 
+		// Enrich parent regions with name and layer_label
+		// (parents is a JSON field storing only {id, layer}, so we fetch full details)
+		const parentIds = (page.parents || []).map((p) => p.id).filter(Boolean);
+		if (parentIds.length > 0) {
+			try {
+				const parentDetails = await directus.request(
+					readItems('regions', {
+						filter: { id: { _in: parentIds } },
+						fields: ['id', 'name', 'layer', 'layer_label']
+					})
+				);
+				page.parents = page.parents.map((p) => {
+					const details = parentDetails.find((d) => d.id === p.id);
+					return {
+						...p,
+						name: details?.name || p.name,
+						layer_label: details?.layer_label || p.layer_label
+					};
+				});
+			} catch (e) {
+				// Non-critical: continue with original parents if enrichment fails
+				console.error('Failed to enrich parent regions:', e);
+			}
+		}
+
 		// Get language from parent layout
 		const parentData = await parent();
 		const lang = parentData.language?.code || 'de';
@@ -43,8 +68,8 @@ export async function load({ fetch, params, url, parent }) {
 			.map((c) => c.id)
 			.filter(Boolean);
 
-		const parentIds = (page.parents || []).map((p) => p.id).filter(Boolean);
-		const chartSnapshots = await getChartSnapshots(chartIds, params.id, parentIds, lang, fetch, { textOnly: true });
+		const snapshotParentIds = (page.parents || []).map((p) => p.id).filter(Boolean);
+		const chartSnapshots = await getChartSnapshots(chartIds, params.id, snapshotParentIds, lang, fetch, { textOnly: true });
 
 		return {
 			page,

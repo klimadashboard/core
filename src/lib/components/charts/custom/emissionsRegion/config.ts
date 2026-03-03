@@ -639,6 +639,11 @@ export function buildChartData(
 	// Calculate change statistics
 	const changeStats = calculateChangeStats(tableData, translations);
 
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const regionName = region.layer_label && region.key !== 'country'
+		? `${region.name} (${region.layer_label})`
+		: region.name;
+
 	return {
 		raw: data,
 		hasData,
@@ -648,7 +653,7 @@ export function buildChartData(
 			filename: 'emissions_by_sector'
 		},
 		placeholders: {
-			regionName: region.name,
+			regionName,
 			layerLabel: region.layer_label,
 			unit,
 			changeVerb: changeStats.changeVerb,
