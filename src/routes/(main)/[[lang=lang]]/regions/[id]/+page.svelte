@@ -38,9 +38,12 @@
 	let index, offset, progress;
 
 	// Get sections from regionConfig, apply {regionName} placeholder
+	$: regionDisplayName = data.page.layer_label
+		? `${data.page.name} (${data.page.layer_label})`
+		: data.page.name;
 	$: sections = (data.regionConfig?.sections || []).map((section, i) => ({
 		...section,
-		description: section.description?.replace('{regionName}', data.page.name) || '',
+		description: section.description?.replace('{regionName}', regionDisplayName) || '',
 		active: i === index
 	}));
 

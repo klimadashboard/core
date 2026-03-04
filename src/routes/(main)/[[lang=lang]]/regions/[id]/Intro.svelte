@@ -14,7 +14,10 @@
 	export let data;
 
 	$: regionConfig = data.regionConfig;
-	$: introText = regionConfig.intro_text.replace('{regionName}', data.page.name);
+	$: displayName = data.page.layer_label
+		? `${data.page.name} (${data.page.layer_label})`
+		: data.page.name;
+	$: introText = regionConfig.intro_text.replace('{regionName}', displayName);
 
 	let panels = [];
 	let illustrationsSlider;
