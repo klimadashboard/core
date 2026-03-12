@@ -20,7 +20,14 @@
 	let map;
 	let mapLoaded = false;
 	let hoveredDistrict = null;
-	let tooltip = { show: false, x: 0, y: 0, text: '' };
+	let tooltip = { show: false, x: 0, y: 0, type: '', data: {} };
+
+	function formatTooltipDate(dateStr) {
+		if (!dateStr) return null;
+		// dateStr is YYYY-MM-DD
+		const [y, m, d] = dateStr.split('-');
+		return `${d}.${m}.${y}`;
+	}
 	let clickedIncident = false;
 
 	const VIENNA_CENTER = [16.37, 48.21];
@@ -41,8 +48,7 @@
 		const dLon = toRad(b[0] - a[0]);
 		const lat1 = toRad(a[1]);
 		const lat2 = toRad(b[1]);
-		const s =
-			Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+		const s = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 		return 2 * R * Math.asin(Math.sqrt(s));
 	}
 
@@ -100,8 +106,7 @@
 		const features = [];
 		for (const feat of lineGeoJSON.features) {
 			const geom = feat.geometry;
-			const lineArrays =
-				geom.type === 'MultiLineString' ? geom.coordinates : [geom.coordinates];
+			const lineArrays = geom.type === 'MultiLineString' ? geom.coordinates : [geom.coordinates];
 			for (const coords of lineArrays) {
 				const segments = segmentLineCoords(coords, SEGMENT_LEN);
 				for (const segCoords of segments) {
@@ -262,12 +267,7 @@
 				source: 'districts',
 				paint: {
 					'line-color': isDark() ? 'rgba(96,165,250,0.5)' : 'rgba(37,99,235,0.4)',
-					'line-width': [
-						'case',
-						['==', ['get', 'number'], selectedDistrict || -1],
-						2.5,
-						1
-					],
+					'line-width': ['case', ['==', ['get', 'number'], selectedDistrict || -1], 2.5, 1],
 					'line-dasharray': [4, 3]
 				}
 			});
@@ -302,7 +302,8 @@
 					show: true,
 					x: e.point.x,
 					y: e.point.y,
-					text: e.features[0].properties.label
+					type: 'district',
+					data: { label: e.features[0].properties.label }
 				};
 			});
 
@@ -360,15 +361,7 @@
 						minzoom: 14,
 						layout: {
 							'icon-image': 'diamond',
-							'icon-size': [
-								'interpolate',
-								['linear'],
-								['zoom'],
-								14,
-								0.35,
-								17,
-								0.8
-							],
+							'icon-size': ['interpolate', ['linear'], ['zoom'], 14, 0.35, 17, 0.8],
 							'icon-allow-overlap': true
 						},
 						paint: {
@@ -382,12 +375,12 @@
 				map.on('mousemove', stopId, (e) => {
 					if (!e.features?.length) return;
 					const p = e.features[0].properties;
-					const name = p.name || 'Haltestelle';
 					tooltip = {
 						show: true,
 						x: e.point.x,
 						y: e.point.y,
-						text: `${name}${p.lines ? ` (${p.lines})` : ''}`
+						type: 'stop',
+						data: { name: p.name || null, lines: p.lines || null }
 					};
 				});
 				map.on('mouseleave', stopId, () => {
@@ -538,7 +531,8 @@
 					show: true,
 					x: e.point.x,
 					y: e.point.y,
-					text: `${p.address} | ${p.lines} | ${p.date}`
+					type: 'incident',
+					data: { address: p.address || null, lines: p.lines || null, date: p.date || null }
 				};
 			});
 			map.on('mouseleave', 'incidents-points', () => {
@@ -611,12 +605,58 @@
 
 	{#if tooltip.show}
 		<div
-			class="absolute z-50 pointer-events-none bg-white dark:bg-gray-800 shadow-lg rounded-lg px-3 py-1.5 text-sm max-w-xs"
+			class="absolute z-50 pointer-events-none bg-white dark:bg-gray-800 shadow-lg rounded-lg px-3 py-2 text-xs max-w-xs leading-snug"
 			style="left: {tooltip.x + 12}px; top: {tooltip.y - 10}px;"
 		>
-			{tooltip.text}
+			{#if tooltip.type === 'incident'}
+				<div class="font-semibold text-red-600 dark:text-red-400 mb-1">Falschparker-Vorfall</div>
+				{#if tooltip.data.address}
+					<div class="font-medium">{tooltip.data.address}</div>
+				{/if}
+				{#if tooltip.data.date}
+					<div class="opacity-60 mt-0.5">{formatTooltipDate(tooltip.data.date)}</div>
+				{/if}
+				{#if tooltip.data.lines}
+					<div class="mt-0.5"><span class="opacity-60">Linien: </span>{tooltip.data.lines}</div>
+				{/if}
+			{:else if tooltip.type === 'stop'}
+				<div class="font-semibold mb-1">Haltestelle</div>
+				{#if tooltip.data.name}
+					<div class="font-medium">{tooltip.data.name}</div>
+				{/if}
+				{#if tooltip.data.lines}
+					<div class="opacity-60 mt-0.5">{tooltip.data.lines}</div>
+				{/if}
+			{:else if tooltip.type === 'district'}
+				<div class="font-medium">{tooltip.data.label}</div>
+			{/if}
 		</div>
 	{/if}
+
+	<!-- Legend -->
+	<div
+		class="absolute bottom-8 left-2 z-40 pointer-events-none bg-white/90 dark:bg-gray-800/90 shadow rounded-lg px-2.5 py-2 text-xs space-y-1.5"
+	>
+		<div class="flex items-center gap-1.5">
+			<svg width="12" height="12" viewBox="0 0 12 12"
+				><circle cx="6" cy="6" r="5" fill="#e11d48" stroke="white" stroke-width="1.5" /></svg
+			>
+			<span>Falschparker-Vorfall</span>
+		</div>
+		<div class="flex items-center gap-1.5">
+			<svg width="12" height="12" viewBox="0 0 12 12"
+				><polygon points="6,0 12,6 6,12 0,6" fill="rgba(140,140,140,0.8)" /></svg
+			>
+			<span>Haltestelle</span>
+		</div>
+		<div class="flex items-center gap-1.5">
+			<div
+				class="w-8 h-1.5 rounded"
+				style="background: linear-gradient(to right, #c0c4cc, #f97316, #dc2626, #7f1d1d)"
+			></div>
+			<span>Hotspots</span>
+		</div>
+	</div>
 </div>
 
 <style>

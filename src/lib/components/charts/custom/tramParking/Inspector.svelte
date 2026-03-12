@@ -225,6 +225,12 @@
 		return `${Math.round(mins / 60)}h`;
 	}
 
+	function formatPercent(count, total) {
+		if (total === 0) return '0%';
+		const pct = (count / total) * 100;
+		return pct < 1 ? pct.toFixed(1) + '%' : Math.round(pct) + '%';
+	}
+
 	function googleMapsUrl(lat, lon) {
 		return `https://www.google.com/maps?q=${lat},${lon}`;
 	}
@@ -520,7 +526,7 @@
 										<td class="py-1.5 pr-1 overflow-hidden">
 											<div class="flex items-center gap-1">
 												<span class="font-bold w-8 text-right text-xs shrink-0">{hs.count}</span>
-												<span class="text-[10px] w-6 text-right opacity-50 shrink-0">{geocodedCount > 0 ? Math.round((hs.count / geocodedCount) * 100) : 0}%</span>
+												<span class="text-[10px] w-6 text-right opacity-50 shrink-0">{formatPercent(hs.count, geocodedCount)}</span>
 												<div class="flex-1 min-w-0 h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
 													<div
 														class="h-full bg-red-500 dark:bg-red-400 rounded-full"
