@@ -598,6 +598,116 @@
 	export function invalidateSize() {
 		if (map) map.resize();
 	}
+
+	export function exportSVG() {
+		// Geographic bounds covering Vienna
+		const minLon = 16.17, maxLon = 16.60, minLat = 48.09, maxLat = 48.36;
+
+		// Mercator-corrected aspect ratio
+		const SVG_W = 1600;
+		const centerLat = (minLat + maxLat) / 2;
+		const adjustedAspect =
+			((maxLon - minLon) * Math.cos((centerLat * Math.PI) / 180)) / (maxLat - minLat);
+		const SVG_H = Math.round(SVG_W / adjustedAspect);
+
+		function proj(lon, lat) {
+			const x = ((lon - minLon) / (maxLon - minLon)) * SVG_W;
+			const y = ((maxLat - lat) / (maxLat - minLat)) * SVG_H;
+			return [x, y];
+		}
+
+		function coordsToD(coords) {
+			if (!coords || coords.length < 2) return '';
+			const pts = coords.map(([lon, lat]) => proj(lon, lat));
+			return 'M ' + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L ');
+		}
+
+		function geomToD(geom) {
+			const lineArrays =
+				geom.type === 'MultiLineString' ? geom.coordinates : [geom.coordinates];
+			return lineArrays
+				.map((c) => coordsToD(c))
+				.filter(Boolean)
+				.join(' ');
+		}
+
+		function densityToRgb(density) {
+			const stops = [
+				[0, [192, 196, 204]],
+				[1, [251, 146, 60]],
+				[3, [249, 115, 22]],
+				[6, [234, 88, 12]],
+				[10, [220, 38, 38]],
+				[20, [185, 28, 28]],
+				[35, [127, 29, 29]]
+			];
+			if (density <= 0) return stops[0][1];
+			for (let i = 1; i < stops.length; i++) {
+				if (density <= stops[i][0]) {
+					const t = (density - stops[i - 1][0]) / (stops[i][0] - stops[i - 1][0]);
+					return stops[i - 1][1].map((c, j) => Math.round(c + (stops[i][1][j] - c) * t));
+				}
+			}
+			return stops[stops.length - 1][1];
+		}
+
+		const parts = [];
+		parts.push(
+			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SVG_W} ${SVG_H}" width="${SVG_W}" height="${SVG_H}">`
+		);
+
+		// Layer 1: Raw transit network (base)
+		parts.push('<g id="layer-lines" fill="none" stroke="#c0c4cc" stroke-width="1.2" opacity="0.7">');
+		for (const lineData of [tramLines, busLines, nightbusLines]) {
+			if (!lineData?.features) continue;
+			for (const feat of lineData.features) {
+				const d = geomToD(feat.geometry);
+				if (d) parts.push(`<path d="${d}"/>`);
+			}
+		}
+		parts.push('</g>');
+
+		// Layer 2: Density-colored hotspot segments (only where density > 0)
+		const grid = buildSpatialGrid(incidents);
+		parts.push('<g id="layer-hotspot-segments" fill="none" stroke-linecap="round" stroke-linejoin="round">');
+		for (const lineData of [tramLines, busLines, nightbusLines]) {
+			if (!lineData?.features) continue;
+			const features = buildDensityGeoJSON(lineData, grid);
+			if (!features) continue;
+			for (const feat of features) {
+				if (feat.properties.density === 0) continue;
+				const d = coordsToD(feat.geometry.coordinates);
+				if (!d) continue;
+				const [r, g, b] = densityToRgb(feat.properties.density);
+				const w = (1.5 + (Math.min(feat.properties.density, 35) / 35) * 3).toFixed(1);
+				parts.push(
+					`<path d="${d}" stroke="rgb(${r},${g},${b})" stroke-width="${w}"/>`
+				);
+			}
+		}
+		parts.push('</g>');
+
+		// Layer 3: Individual incident circles
+		parts.push(
+			'<g id="layer-incidents" fill="#e11d48" fill-opacity="0.75" stroke="white" stroke-width="0.75">'
+		);
+		for (const inc of incidents) {
+			if (inc.lat == null || inc.lon == null) continue;
+			const [x, y] = proj(inc.lon, inc.lat);
+			parts.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2"/>`);
+		}
+		parts.push('</g>');
+
+		parts.push('</svg>');
+
+		const blob = new Blob([parts.join('\n')], { type: 'image/svg+xml' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'falschparker-wien.svg';
+		a.click();
+		URL.revokeObjectURL(url);
+	}
 </script>
 
 <div class="relative w-full h-full">

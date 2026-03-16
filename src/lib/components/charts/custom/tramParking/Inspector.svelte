@@ -36,10 +36,10 @@
 	/** Get valid durations in minutes (only when start < end) */
 	function getValidDurations(incs) {
 		return incs
-			.filter((i) => i.date_start && i.date_end)
+			.filter((i) => i.date_start && i.date_fix)
 			.map((i) => {
 				const start = new Date(i.date_start).getTime();
-				const end = new Date(i.date_end).getTime();
+				const end = new Date(i.date_fix).getTime();
 				return (end - start) / 60000;
 			})
 			.filter((d) => d > 0 && d < 1440);
@@ -100,8 +100,8 @@
 			const s = stats.get(inc.district);
 			if (!s) continue;
 			s.count++;
-			if (inc.date_start && inc.date_end) {
-				const mins = (new Date(inc.date_end).getTime() - new Date(inc.date_start).getTime()) / 60000;
+			if (inc.date_start && inc.date_fix) {
+				const mins = (new Date(inc.date_fix).getTime() - new Date(inc.date_start).getTime()) / 60000;
 				if (mins > 0 && mins < 1440) s.totalMinutes += mins;
 			}
 		}
@@ -119,8 +119,8 @@
 				if (!stats.has(l)) stats.set(l, { line: l, count: 0, totalMinutes: 0 });
 				const s = stats.get(l);
 				s.count++;
-				if (inc.date_start && inc.date_end) {
-					const mins = (new Date(inc.date_end).getTime() - new Date(inc.date_start).getTime()) / 60000;
+				if (inc.date_start && inc.date_fix) {
+					const mins = (new Date(inc.date_fix).getTime() - new Date(inc.date_start).getTime()) / 60000;
 					if (mins > 0 && mins < 1440) s.totalMinutes += mins;
 				}
 			}
@@ -330,14 +330,14 @@
 				<div>
 					<span class="opacity-60">Verkehrsunterbrechung</span>
 					<p class="font-semibold">
-						{formatDuration(selectedIncident.date_start, selectedIncident.date_end)}
+						{formatDuration(selectedIncident.date_start, selectedIncident.date_fix)}
 					</p>
 				</div>
 				<div>
 					<span class="opacity-60">Verkehrsaufnahme</span>
 					<p class="font-semibold">
-						{#if selectedIncident.date_end}
-							{formatTime(selectedIncident.date_end)}
+						{#if selectedIncident.date_fix}
+							{formatTime(selectedIncident.date_fix)}
 						{:else}
 							–
 						{/if}
@@ -441,7 +441,7 @@
 								<td class="py-1 pr-3">{formatDate(inc.date_start)}</td>
 								<td class="py-1 pr-3">{inc.address || '–'}</td>
 								<td class="py-1 pr-3">{inc.lines || '–'}</td>
-								<td class="py-1">{formatDuration(inc.date_start, inc.date_end)}</td>
+								<td class="py-1">{formatDuration(inc.date_start, inc.date_fix)}</td>
 							</tr>
 						{/each}
 					</tbody>
