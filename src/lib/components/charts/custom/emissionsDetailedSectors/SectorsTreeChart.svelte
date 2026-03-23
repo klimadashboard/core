@@ -2,6 +2,7 @@
 	// import { fade, scale } from 'svelte/transition';
 	import { tweened } from 'svelte/motion';
 	import { cubicInOut } from 'svelte/easing';
+	import { IconX } from '@tabler/icons-svelte-runes';
 
 	export let sortedData;
 
@@ -115,7 +116,7 @@
 							(ksgSector.relative * HEIGHT) / 2 -
 							10})"
 					>
-						{@html colorForKey(ksgSector.key).icon(1)}
+						<svelte:component this={colorForKey(ksgSector.key).iconComponent} size={30} color="white" />
 					</g>
 				{/if}
 
@@ -159,7 +160,7 @@
 										>
 											{#if ksgSelection == null}
 												<span style="display: inline-block; margin-right: {fontSize / 6}px"
-													>{@html colorForKey(ksgSector.key).icon(fontSize / 20)}</span
+													><svelte:component this={colorForKey(ksgSector.key).iconComponent} size={Math.round(fontSize * 1.5)} color="white" /></span
 												>
 												<strong
 													class="{ksgSector.h < 100
@@ -210,11 +211,7 @@
 										{#if ksgSelection != null}
 											<strong class="flex items-center"
 												><span class="mr-4">
-													{@html iconForCRFCode({
-														crfCode: crfSector.code,
-														ksgKey: ksgSector.key,
-														size: fontSizeCRF / 30
-													})}
+													<svelte:component this={iconForCRFCode({ crfCode: crfSector.code, ksgKey: ksgSector.key })} size={fontSizeCRF} color="white" />
 												</span>
 												{crfSector.label}
 												<!-- {crfSector.code} -->
@@ -275,11 +272,7 @@
 					>
 						<strong class="basis-[125px] flex items-center">
 							<span class="mr-8"
-								>{@html iconForCRFCode({
-									crfCode: detailSector.code,
-									ksgKey: sectorlyData[ksgSelection].key,
-									size: 50 / 30
-								})}</span
+								><svelte:component this={iconForCRFCode({ crfCode: detailSector.code, ksgKey: sectorlyData[ksgSelection].key })} size={50} color="white" /></span
 							>
 							{detailSector.label}
 						</strong>
@@ -323,24 +316,9 @@
 					on:click={() => {
 						extensiveList = false;
 					}}
-					><svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="icon icon-tabler icon-tabler-x"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke="currentColor"
-						fill="none"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><line
-							x1="18"
-							y1="6"
-							x2="6"
-							y2="18"
-						/><line x1="6" y1="6" x2="18" y2="18" /></svg
-					></button
+					>
+					<IconX size={24} />
+				</button
 				>
 			</div>
 			<ul class="divide-y">
@@ -364,11 +342,7 @@
 						>
 							<strong class="flex items-center"
 								><span class="mr-4">
-									{@html iconForCRFCode({
-										crfCode: crfSector.code,
-										ksgKey: sortedData[ksgSelection].key,
-										size: 25 / 30
-									})}
+									<svelte:component this={iconForCRFCode({ crfCode: crfSector.code, ksgKey: sortedData[ksgSelection].key })} size={25} color="white" />
 								</span>{crfSector.label}
 								<!-- {crfSector.code} -->
 							</strong>
