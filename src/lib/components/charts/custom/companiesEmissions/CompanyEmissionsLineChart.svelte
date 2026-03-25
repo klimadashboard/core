@@ -42,6 +42,15 @@
 	let keys: number[] | string[];
 	let labels: string[];
 	let colors: string[];
+
+	$: maxDataValue =
+		dataset.length > 0 && keys.length > 0
+			? Math.max(
+					...dataset.flatMap((d) =>
+						(keys as string[]).map((k) => (typeof d[k] === 'number' ? d[k] : 0))
+					)
+				)
+			: 0;
 	$: {
 		if (emissions && selectedCompanies && selectedScopes) {
 			if (isSingleCompanySelected) {
@@ -85,6 +94,8 @@
 			showDots={true}
 			visualisation={'non-stacked'}
 			marginLeft={50}
+			marginTop={15}
+			maxValue={maxDataValue > 0 ? maxDataValue * 1.1 : undefined}
 			xTicksInterval={1}
 			unit={'t'}
 			invalidX={isScopeThreeSelected && 6}
