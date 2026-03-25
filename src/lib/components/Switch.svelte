@@ -131,11 +131,15 @@
 					? 'text-black dark:text-white'
 					: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}"
 			>
-				{#if view.icon}
-					<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">
-						{@html view.icon}
-					</span>
-				{/if}
+				{#if view.iconComponent}
+				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">
+					<svelte:component this={view.iconComponent} size={24} />
+				</span>
+			{:else if view.icon}
+				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">
+					{@html view.icon}
+				</span>
+			{/if}
 				<span>{view.label}</span>
 			</button>
 		{/each}
