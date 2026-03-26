@@ -219,7 +219,7 @@
 			</button>
 		{/each}
 	</div>
-	<div class="flex md:justify-between items-center mb-1 flex-wrap">
+	<div class="flex md:justify-between items-center mb-4 flex-wrap">
 		<!-- Scopes -->
 		<div class="flex flex-wrap mb-2 items-center">
 			<p class="font-semibold text-sm mr-4">
