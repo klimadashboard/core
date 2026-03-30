@@ -120,27 +120,69 @@
 			const json = await res.json();
 			const records = json.data || [];
 
-			// Get region shapes to map region IDs to codes
+			// Get ALL region shapes (not just selected layer) to resolve any region ID
 			const allRegions = await getRegions();
-			const regionsOfLayer = allRegions.filter(r => r.country === country && r.layer === layerFilter);
+			const countryRegions = allRegions.filter(r => r.country === country);
 
-			// Create a map from region ID to region code (code_short for DE, code for AT)
-			const regionIdToCode = new Map();
-			const regionIdToName = new Map();
-			for (const r of regionsOfLayer) {
-				const code = PUBLIC_VERSION === 'at' ? r.code : (r.code_short || r.code);
-				regionIdToCode.set(r.id, code);
-				regionIdToName.set(r.id, r.name);
+			// Map region ID → region object (for all layers)
+			const regionById = new Map();
+			for (const r of countryRegions) {
+				regionById.set(r.id, r);
 			}
 
-			// Group records by region and period, then get latest period per region
+			// Map region ID → tile code for the selected layer
+			const tileCodeForLayer = (r) =>
+				PUBLIC_VERSION === 'at' ? r.code : (r.code_short || r.code);
+
+			// For district view: map municipality ID → parent district tile code
+			const muniToDistrictCode = new Map();
+			const districtNames = new Map();
+			if (layerFilter === 'district') {
+				const districts = countryRegions.filter(r => r.layer === 'district');
+				for (const d of districts) {
+					const code = tileCodeForLayer(d);
+					districtNames.set(code, d.name);
+				}
+				const municipalities = countryRegions.filter(r => r.layer === 'municipality');
+				for (const m of municipalities) {
+					if (Array.isArray(m.parents)) {
+						const districtParent = m.parents.find(p => p.layer === 'district');
+						if (districtParent) {
+							const parentRegion = regionById.get(districtParent.id);
+							if (parentRegion) {
+								muniToDistrictCode.set(m.id, tileCodeForLayer(parentRegion));
+							}
+						}
+					}
+				}
+			}
+
+			// Resolve each record's region to a tile code for the selected layer
+			function resolveRegionCode(regionId) {
+				const r = regionById.get(regionId);
+				if (!r) return null;
+
+				// Record matches selected layer directly
+				if (r.layer === layerFilter) return tileCodeForLayer(r);
+
+				// Municipality record on district view → aggregate to parent district
+				if (layerFilter === 'district' && r.layer === 'municipality') {
+					return muniToDistrictCode.get(regionId) || null;
+				}
+
+				return null;
+			}
+
+			// Group records by resolved tile code and period
 			const regionPeriods = new Map();
 			for (const row of records) {
-				const regionCode = regionIdToCode.get(row.region) || row.region;
-				if (!regionPeriods.has(regionCode)) {
-					regionPeriods.set(regionCode, new Map());
+				const code = resolveRegionCode(row.region);
+				if (!code) continue; // Skip unresolved records
+
+				if (!regionPeriods.has(code)) {
+					regionPeriods.set(code, new Map());
 				}
-				const periods = regionPeriods.get(regionCode);
+				const periods = regionPeriods.get(code);
 				if (!periods.has(row.period)) {
 					periods.set(row.period, []);
 				}
@@ -149,13 +191,13 @@
 
 			// Process into regionData with shares
 			regionData = new Map();
-			for (const [regionCode, periods] of regionPeriods.entries()) {
+			for (const [code, periods] of regionPeriods.entries()) {
 				// Get the latest period
 				const sortedPeriods = Array.from(periods.keys()).sort();
 				const latestPeriod = sortedPeriods[sortedPeriods.length - 1];
 				const latestRecords = periods.get(latestPeriod);
 
-				// Calculate total and shares
+				// Calculate total and shares (aggregated if district view)
 				const categoryTotals = {};
 				let total = 0;
 				for (const row of latestRecords) {
@@ -169,17 +211,22 @@
 					shares[cat] = total > 0 ? (val / total) * 100 : 0;
 				}
 
-				// Find region name
-				let name = regionCode;
-				for (const [id, code] of regionIdToCode.entries()) {
-					if (code === regionCode) {
-						name = regionIdToName.get(id) || regionCode;
-						break;
+				// Region name: look up from the layer's regions
+				let name = code;
+				if (layerFilter === 'district') {
+					name = districtNames.get(code) || code;
+				} else {
+					// Find municipality name
+					for (const r of countryRegions) {
+						if (r.layer === 'municipality' && tileCodeForLayer(r) === code) {
+							name = r.name;
+							break;
+						}
 					}
 				}
 
 				shares.name = name;
-				regionData.set(regionCode, shares);
+				regionData.set(code, shares);
 			}
 
 			loading = false;
