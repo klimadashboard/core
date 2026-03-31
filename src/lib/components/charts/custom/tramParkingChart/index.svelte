@@ -112,7 +112,7 @@
 			? (v) => v + '.'
 			: view === 'hotspots'
 				? (v) => (v.length > 18 ? v.slice(0, 18) + '…' : v)
-				: (v) => v;
+				: (v) => `Linie ${v}`;
 
 	onMount(async () => {
 		try {
