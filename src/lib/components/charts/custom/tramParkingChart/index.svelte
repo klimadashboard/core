@@ -1,20 +1,26 @@
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
-	import { scaleLinear } from 'd3-scale';
+	import { scaleBand, scaleLinear } from 'd3-scale';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
-	import { Chart, AxisY, BarY, Legend, Tooltip } from '$lib/components/charts/primitives';
+	import { Tooltip } from '$lib/components/charts/primitives';
 	import { RadioGroup } from '$lib/components/ui';
 	import { detectHotspots } from '../tramParking/hotspots';
+	import type { Incident } from '../tramParking/hotspots';
 	import dayjs from 'dayjs';
 
 	export let region = null;
-	export let onChartData = undefined;
+	export let onChartData: ((data: unknown) => void) | undefined = undefined;
 
 	let loading = true;
-	let error = null;
-	let incidents = [];
+	let error: string | null = null;
+	let incidents: Incident[] = [];
 	let view = 'lines';
+	let containerWidth = 0;
+	let containerEl: HTMLDivElement;
+	let hoverLabel: string | null = null;
+	let hoverClientX = 0;
+	let hoverClientY = 0;
 
 	const VIEW_OPTIONS = [
 		{ value: 'lines', label: 'Linien' },
@@ -22,19 +28,25 @@
 		{ value: 'districts', label: 'Bezirke' }
 	];
 
-	// Rose-600 faded to 70% to sit comfortably alongside the orange line
+	const VIEW_NOTES: Record<string, string> = {
+		lines: 'Für jeden Vorfall wird die betroffene Linie dokumentiert. Diese Auswertung umfasst daher alle verfügbaren Daten – ohne Datenverlust durch fehlende Adressen.',
+		districts:
+			'Nur bei 56\u202f% der Vorfälle (2025) konnte ein Bezirk ermittelt werden – 2016 waren es noch 88\u202f%. Die übrigen Fälle fehlen in dieser Auswertung.',
+		hotspots:
+			'Nur bei 48\u202f% der Vorfälle (2025) wurde eine vollständige Adresse mit Hausnummer erfasst. Die Auswertung zeigt, welche Straßen besonders häufig betroffen sind. Längere Straßen haben naturgemäß mehr Haltestellen und können daher mehr Vorfälle aufweisen.'
+	};
+
 	const COUNT_COLOR = '#e11d48';
-	const COUNT_OPACITY = 1;
 	const WAIT_COLOR = '#f97316';
 
-	function incidentWaitingHours(inc) {
+	function incidentWaitingHours(inc: Incident) {
 		const end = inc.date_fix ?? inc.date_end;
 		if (!end || !inc.date_start) return null;
 		const diff = dayjs(end).diff(dayjs(inc.date_start), 'minute');
 		return diff > 0 ? diff / 60 : null;
 	}
 
-	function tooltipTitle(label) {
+	function tooltipTitle(label: string) {
 		if (view === 'districts') return `${label}. Bezirk`;
 		if (view === 'lines') return `Linie ${label}`;
 		return label;
@@ -43,11 +55,10 @@
 	$: aggregated = (() => {
 		if (!incidents.length) return [];
 
-		// Hotspots: use the same clustering algorithm as the map
 		if (view === 'hotspots') {
 			const geocoded = incidents.filter((i) => i.lat != null && i.lon != null);
 			const hotspots = detectHotspots(geocoded);
-			return hotspots.slice(0, 15).map((hs) => ({
+			return hotspots.slice(0, 10).map((hs) => ({
 				label: hs.label,
 				count: hs.count,
 				waitingHours: hs.incidents.reduce((sum, inc) => {
@@ -69,7 +80,6 @@
 							.filter(Boolean)
 					: ['Unbekannt'];
 			} else {
-				// districts
 				if (inc.district == null) continue;
 				keys = [String(inc.district)];
 			}
@@ -95,7 +105,7 @@
 			rows.sort((a, b) => Number(a.label) - Number(b.label));
 		} else {
 			rows.sort((a, b) => b.count - a.count);
-			rows = rows.slice(0, 20);
+			rows = rows.slice(0, 10);
 		}
 
 		return rows.map((r) => ({
@@ -105,19 +115,116 @@
 		}));
 	})();
 
-	$: bottomMargin = view === 'hotspots' ? 105 : 55;
-	$: xRotate = view === 'hotspots' ? -40 : -35;
-	$: xLabelFormat =
+	// Reset hover when view changes
+	$: if (view) hoverLabel = null;
+
+	// Layout
+	$: leftMargin = view === 'hotspots' ? 215 : 170;
+	$: margin = { top: 28, right: 15, bottom: 28, left: leftMargin };
+	$: innerWidth = Math.max(0, containerWidth - margin.left - margin.right);
+	$: bandStep = view === 'districts' ? 52 : 62;
+	$: innerHeight = aggregated.length > 0 ? aggregated.length * bandStep : 0;
+	$: chartHeight = innerHeight + margin.top + margin.bottom;
+
+	$: yScale =
+		aggregated.length > 0 && innerHeight > 0
+			? scaleBand()
+					.domain(aggregated.map((d) => d.label))
+					.range([0, innerHeight])
+					.padding(0.22)
+			: null;
+
+	$: maxCount = Math.max(1, ...aggregated.map((d) => d.count));
+	$: xScale =
+		innerWidth > 0 ? scaleLinear().domain([0, maxCount]).range([0, innerWidth]).nice() : null;
+
+	$: maxWaiting = Math.max(1, ...aggregated.map((d) => d.waitingHours));
+	$: xScaleWait =
+		innerWidth > 0 ? scaleLinear().domain([0, maxWaiting]).range([0, innerWidth]).nice() : null;
+
+	$: yLabelFormat =
 		view === 'districts'
-			? (v) => v + '.'
-			: view === 'hotspots'
-				? (v) => (v.length > 18 ? v.slice(0, 18) + '…' : v)
-				: (v) => `Linie ${v}`;
+			? (v: string) => `${v}.`
+			: view === 'lines'
+				? (v: string) => `Linie ${v}`
+				: (v: string) => v;
+
+	function fmtWait(h: number): string {
+		if (h <= 0) return '–';
+		if (h < 1) return `${Math.round(h * 60)} Minuten Wartezeit`;
+		return `${Math.round(h)} Stunden Wartezeit`;
+	}
+
+	$: hoveredItem = hoverLabel ? (aggregated.find((d) => d.label === hoverLabel) ?? null) : null;
+
+	// Dot + bar layout derived from bandwidth
+	$: bw = yScale ? yScale.bandwidth() : 0;
+	$: dotAreaH = Math.floor(bw * 0.65);
+	$: barH = Math.max(4, Math.floor(bw * 0.25));
+	$: dotBarGap = 4;
+	$: rowH = dotAreaH / 3;
+	$: dotR = Math.max(1.5, rowH * 0.4);
+	$: dotStep = Math.max(5, rowH);
+
+	// Pre-compute dot positions; remainder column may have 1 or 2 dots
+	$: dotRows = (xScale && xScaleWait && yScale)
+		? aggregated.map((d) => {
+				const filledW = xScale!(d.count) ?? 0;
+				const totalDots = Math.round((filledW / dotStep) * 3);
+				const numFullCols = Math.floor(totalDots / 3);
+				const remainder = totalDots % 3;
+				const dots: { cx: number; cy: number }[] = [];
+				for (let col = 0; col < numFullCols; col++) {
+					for (let row = 0; row < 3; row++) {
+						dots.push({ cx: col * dotStep + dotStep / 2, cy: row * rowH + rowH / 2 });
+					}
+				}
+				if (remainder > 0) {
+					for (let row = 0; row < remainder; row++) {
+						dots.push({
+							cx: numFullCols * dotStep + dotStep / 2,
+							cy: row * rowH + rowH / 2
+						});
+					}
+				}
+				return {
+					label: d.label,
+					bandY: yScale!(d.label) ?? 0,
+					dots,
+					countLabel: `${d.count} Vorfälle`,
+					barWidth: xScaleWait!(d.waitingHours) ?? 0,
+					waitLabel: fmtWait(d.waitingHours)
+				};
+			})
+		: [];
+
+	function handleMouseMove(e: MouseEvent) {
+		if (!containerEl || !yScale) return;
+		const rect = containerEl.getBoundingClientRect();
+		const mouseY = e.clientY - rect.top - margin.top;
+
+		let found = null;
+		for (const d of aggregated) {
+			const y0 = yScale(d.label) ?? 0;
+			const y1 = y0 + yScale.bandwidth();
+			if (mouseY >= y0 - 3 && mouseY <= y1 + 3) {
+				found = d.label;
+				break;
+			}
+		}
+		hoverLabel = found;
+		hoverClientX = e.clientX;
+		hoverClientY = e.clientY;
+	}
+
+	function handleMouseLeave() {
+		hoverLabel = null;
+	}
 
 	onMount(async () => {
 		try {
 			const directus = getDirectusInstance(fetch);
-			let all = [];
+			let all: Incident[] = [];
 			let page = 1;
 			while (true) {
 				const items = await directus.request(
@@ -145,7 +252,7 @@
 						sort: ['-date_start']
 					})
 				);
-				all = all.concat(items);
+				all = all.concat(items as Incident[]);
 				if (items.length < 5000) break;
 				page++;
 			}
@@ -162,7 +269,7 @@
 			}
 		} catch (e) {
 			console.error('tramParkingChart error:', e);
-			error = e.message;
+			error = e instanceof Error ? e.message : String(e);
 			loading = false;
 			if (onChartData) onChartData(null);
 		}
@@ -178,120 +285,115 @@
 {:else}
 	<div class="flex flex-wrap justify-between items-center gap-2 mb-3">
 		<RadioGroup label="Ansicht" bind:value={view} options={VIEW_OPTIONS} inline hideLabel />
-		<Legend
-			items={[
-				{ key: 'count', label: 'Anzahl Vorfälle', color: COUNT_COLOR },
-				{ key: 'waiting', label: 'Wartezeit gesamt (h)', color: WAIT_COLOR, dashed: true }
-			]}
-		/>
+		<div class="flex gap-4 text-xs">
+			<span style="color:{COUNT_COLOR}">● Vorfälle</span>
+			<span style="color:{WAIT_COLOR}">— Wartezeit</span>
+		</div>
 	</div>
 
-	<Chart
-		data={aggregated}
-		x="label"
-		y="count"
-		xType="band"
-		yMin={0}
-		height={350}
-		margin={{ top: 20, right: 65, bottom: bottomMargin, left: 55 }}
-		let:xScale
-		let:yScale
-		let:innerWidth
-		let:innerHeight
-		let:bandwidth
-		let:hover
-	>
-		{@const maxWaiting = Math.max(1, ...aggregated.map((d) => d.waitingHours))}
-		{@const yScale2 = scaleLinear().domain([0, maxWaiting]).range([innerHeight, 0]).nice()}
+	<div bind:clientWidth={containerWidth} bind:this={containerEl}>
+		{#if containerWidth > 0 && yScale && xScale && xScaleWait}
+			<svg width={containerWidth} height={chartHeight} class="overflow-visible">
+				<g transform="translate({margin.left},{margin.top})">
+					<!-- Dots for count (3 rows, remainder column may have 1–2 dots) -->
+					{#each dotRows as dp}
+						{#each dp.dots as dot}
+							<circle
+								cx={dot.cx}
+								cy={dp.bandY + dot.cy}
+								r={dotR}
+								fill={COUNT_COLOR}
+								opacity={hoverLabel === dp.label ? 1 : 0.8}
+							/>
+						{/each}
+					{/each}
 
-		<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
+					<!-- Average wait bar (pill-shaped: rounded right end) -->
+					{#each dotRows as dp}
+						{@const by = dp.bandY + dotAreaH + dotBarGap}
+						{@const bw2 = dp.barWidth}
+						{@const r2 = barH / 2}
+						{#if bw2 > 0}
+							<path
+								d="M 0,{by} H {Math.max(0, bw2 - r2)} A {r2},{r2} 0 0 1 {bw2},{by + r2} V {by + barH - r2} A {r2},{r2} 0 0 1 {Math.max(0, bw2 - r2)},{by + barH} H 0 Z"
+								fill={WAIT_COLOR}
+								opacity={hoverLabel === dp.label ? 0.9 : 0.65}
+							/>
+						{/if}
+					{/each}
 
-		<BarY
-			data={aggregated}
-			x="label"
-			y="count"
-			{xScale}
-			{yScale}
-			color={COUNT_COLOR}
-			opacity={COUNT_OPACITY}
-			{hover}
-		/>
+					<!-- Left labels: name (bold) + count + wait, tightly grouped, right-aligned -->
+					{#each dotRows as dp}
+						{@const mid = dp.bandY + Math.round(bw / 2)}
+						<text
+							x={-8}
+							y={mid - 12}
+							text-anchor="end"
+							font-size="13"
+							font-weight="bold"
+							class="fill-gray-800 dark:fill-gray-100"
+						>{yLabelFormat(dp.label)}</text>
+						<text
+							x={-8}
+							y={mid + 1}
+							text-anchor="end"
+							font-size="11"
+							fill={COUNT_COLOR}
+						>{dp.countLabel}</text>
+						<text
+							x={-8}
+							y={mid + 13}
+							text-anchor="end"
+							font-size="11"
+							fill={WAIT_COLOR}
+						>{dp.waitLabel}</text>
+					{/each}
 
-		<!-- Waiting time line + dots (secondary scale) -->
-		<g>
-			{#each aggregated as d, i}
-				{@const cx = (xScale(d.label) ?? 0) + bandwidth / 2}
-				{@const cy = yScale2(d.waitingHours)}
-				{#if i > 0}
-					{@const prev = aggregated[i - 1]}
-					{@const px = (xScale(prev.label) ?? 0) + bandwidth / 2}
-					{@const py = yScale2(prev.waitingHours)}
-					<line x1={px} y1={py} x2={cx} y2={cy} stroke={WAIT_COLOR} stroke-width="2" />
-				{/if}
-				<circle {cx} {cy} r="3.5" fill={WAIT_COLOR} stroke="white" stroke-width="1.5" />
-			{/each}
-		</g>
+					<!-- Baseline -->
+					<line
+						x1="0"
+						x2={innerWidth}
+						y1={innerHeight}
+						y2={innerHeight}
+						stroke="currentColor"
+						class="text-gray-200 dark:text-gray-700"
+					/>
 
-		<!-- Left axis: count labels -->
-		<AxisY
-			mode="labels"
-			{yScale}
-			{innerWidth}
-			{innerHeight}
-			format={(v) => String(Math.round(v))}
-		/>
-
-		<!-- Right axis: waiting time -->
-		<g>
-			{#each yScale2.ticks(5) as tick}
-				<g transform="translate({innerWidth},{yScale2(tick)})">
-					<line x1="0" x2="4" y1="0" y2="0" stroke={WAIT_COLOR} stroke-opacity="0.5" />
-					<text x="8" dy="0.32em" font-size="11" fill={WAIT_COLOR}
-						>{tick % 1 === 0 ? tick : tick.toFixed(1)} h</text
-					>
+					<!-- Hover overlay -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<rect
+						width={innerWidth}
+						height={innerHeight}
+						fill="transparent"
+						on:mousemove={handleMouseMove}
+						on:mouseleave={handleMouseLeave}
+						style="cursor: crosshair;"
+					/>
 				</g>
-			{/each}
-		</g>
+			</svg>
+		{/if}
+	</div>
 
-		<!-- Manual x-axis: show every bar label -->
-		<g transform="translate(0,{innerHeight})">
-			<line x1="0" x2={innerWidth} y1="0" y2="0" stroke="currentColor" class="text-gray-300" />
-			{#each aggregated as d}
-				{@const bx = (xScale(d.label) ?? 0) + bandwidth / 2}
-				<g transform="translate({bx},0)">
-					<line y1="0" y2="4" stroke="currentColor" class="text-gray-300" />
-					<text
-						y="8"
-						text-anchor="end"
-						transform="rotate({xRotate}, 0, 8)"
-						font-size="11"
-						class="fill-gray-500 dark:fill-gray-400">{xLabelFormat(d.label)}</text
-					>
-				</g>
-			{/each}
-		</g>
+	{#if VIEW_NOTES[view]}
+		<p class="mt-3 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+			{VIEW_NOTES[view]}
+		</p>
+	{/if}
 
-		<svelte:fragment slot="tooltip" let:hover let:data>
-			{@const hovered = data.find((d) => d.label === hover.x)}
-			<Tooltip
-				visible={hover.x !== null && !!hovered}
-				x={hover.clientX}
-				y={hover.clientY}
-				title={hovered ? tooltipTitle(hovered.label) : ''}
-				items={hovered
-					? [
-							{ label: 'Vorfälle', value: String(hovered.count), color: COUNT_COLOR },
-							{
-								label: 'Wartezeit',
-								value:
-									hovered.waitingHours > 0
-										? `${Math.round(hovered.waitingHours)} h`
-										: 'keine Daten',
-								color: WAIT_COLOR
-							}
-						]
-					: []}
-			/>
-		</svelte:fragment>
-	</Chart>
+	<Tooltip
+		visible={hoverLabel !== null && !!hoveredItem}
+		x={hoverClientX}
+		y={hoverClientY}
+		title={hoveredItem ? tooltipTitle(hoveredItem.label) : ''}
+		items={hoveredItem
+			? [
+					{ label: 'Vorfälle', value: String(hoveredItem.count), color: COUNT_COLOR },
+					{
+						label: 'Wartezeit',
+						value: fmtWait(hoveredItem.waitingHours),
+						color: WAIT_COLOR
+					}
+				]
+			: []}
+	/>
 {/if}
