@@ -10,7 +10,13 @@ export async function fetchChartData({
 		const items = await directus.request(
 			readItems('mobility_tram_parking', {
 				limit: -1,
-				fields: ['id', 'date_start', 'lines', 'address', 'district']
+				fields: ['id', 'date_start', 'lines', 'address', 'district'],
+				filter: {
+					date_start: {
+						_gte: '2025-01-01',
+						_lt: '2026-01-01'
+					}
+				}
 			})
 		);
 
