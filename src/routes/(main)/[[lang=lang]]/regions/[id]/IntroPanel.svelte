@@ -9,8 +9,9 @@
 >
 	<h3 class="font-bold relative z-10">{data.title}</h3>
 
-	<p class="text-6xl font-light mt-auto relative z-10">
-		{formatNumber(parseFloat(data.number))} <span class="text-2xl font-normal">{data.unit}</span>
+	<p class="mt-auto relative z-10 leading-none">
+		<span class="text-6xl font-light">{formatNumber(parseFloat(data.number))}</span>
+		<span class="text-lg font-normal leading-0">{data.unit}</span>
 	</p>
 	<p class="text-lg relative z-10 leading-tight">{data.subtitle.replace('(undefined)', '')}</p>
 	<ul class="mt-2 relative z-10">
