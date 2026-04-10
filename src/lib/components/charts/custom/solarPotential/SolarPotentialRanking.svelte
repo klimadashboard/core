@@ -100,7 +100,7 @@
 			<!-- Search Input -->
 			<div class="relative flex-1 lg:w-80">
 				<div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-					<IconSearch class="h-5 w-5 text-gray-400" />
+					<IconSearch class="size-5 text-gray-400" />
 				</div>
 				<input
 					type="text"
@@ -133,7 +133,7 @@
 					class="rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					aria-label="Previous page"
 				>
-					<IconChevronLeft class="h-4 w-4" />
+					<IconChevronLeft class="size-4" />
 				</button>
 				<button
 					on:click={() => (currentPage = Math.min(totalPages, currentPage + 1))}
@@ -141,7 +141,7 @@
 					class="rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					aria-label="Next page"
 				>
-					<IconChevronRight class="h-4 w-4" />
+					<IconChevronRight class="size-4" />
 				</button>
 			</div>
 		</div>
@@ -162,7 +162,15 @@
 				<div class="text-gray-500">Keine Gemeinden gefunden</div>
 			</div>
 		{:else}
-			<table class="w-full">
+			<table class="w-full table-fixed">
+				<colgroup>
+					<col class="w-[5%]" />
+					<col class="w-[25%]" />
+					<col class="w-[20%]" />
+					<col class="w-[20%]" />
+					<col class="w-[17%]" />
+					<col class="w-[13%]" />
+				</colgroup>
 				<thead class="border-b border-gray-200 bg-gray-50">
 					<tr>
 						<th class="px-6 py-3 text-left text-xs font-semibold text-gray-700">Rang</th>
@@ -174,12 +182,12 @@
 								Gemeinde
 								{#if sortColumn === 'GEN'}
 									{#if sortDirection === 'desc'}
-										<IconSortDescending class="h-3 w-3 text-blue-600" />
+										<IconSortDescending class="size-3 text-blue-600" />
 									{:else}
-										<IconSortAscending class="h-3 w-3 text-blue-600" />
+										<IconSortAscending class="size-3 text-blue-600" />
 									{/if}
 								{:else}
-									<IconArrowsSort class="h-3 w-3 text-gray-400" />
+									<IconArrowsSort class="size-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
@@ -191,12 +199,12 @@
 								Genutztes Potential (%)
 								{#if sortColumn === 'netPotentialShare'}
 									{#if sortDirection === 'desc'}
-										<IconSortDescending class="h-3 w-3 text-blue-600" />
+										<IconSortDescending class="size-3 text-blue-600" />
 									{:else}
-										<IconSortAscending class="h-3 w-3 text-blue-600" />
+										<IconSortAscending class="size-3 text-blue-600" />
 									{/if}
 								{:else}
-									<IconArrowsSort class="h-3 w-3 text-gray-400" />
+									<IconArrowsSort class="size-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
@@ -208,12 +216,12 @@
 								Dächer mit Photovoltaik (%)
 								{#if sortColumn === 'buildingsWithPVShare'}
 									{#if sortDirection === 'desc'}
-										<IconSortDescending class="h-3 w-3 text-blue-600" />
+										<IconSortDescending class="size-3 text-blue-600" />
 									{:else}
-										<IconSortAscending class="h-3 w-3 text-blue-600" />
+										<IconSortAscending class="size-3 text-blue-600" />
 									{/if}
 								{:else}
-									<IconArrowsSort class="h-3 w-3 text-gray-400" />
+									<IconArrowsSort class="size-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
@@ -225,12 +233,12 @@
 								Installierte Leistung (MWp)
 								{#if sortColumn === 'MStRInstalledNetPower'}
 									{#if sortDirection === 'desc'}
-										<IconSortDescending class="h-3 w-3 text-blue-600" />
+										<IconSortDescending class="size-3 text-blue-600" />
 									{:else}
-										<IconSortAscending class="h-3 w-3 text-blue-600" />
+										<IconSortAscending class="size-3 text-blue-600" />
 									{/if}
 								{:else}
-									<IconArrowsSort class="h-3 w-3 text-gray-400" />
+									<IconArrowsSort class="size-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
@@ -245,19 +253,19 @@
 							<td class="px-6 py-4 text-sm font-bold text-gray-900">
 								{globallySortedMunicipalities.indexOf(municipality) + 1}
 							</td>
-							<td class="px-6 py-4">
-								<div class="flex items-center gap-2">
+							<td class="px-6 py-4 overflow-hidden">
+								<div class="flex items-center gap-2 min-w-0">
 									<span class="text-sm font-medium text-gray-900">{municipality.GEN}</span>
 									{#if municipality.BEZ}
 										<span
-											class="inline-block rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600"
+											class="inline-block shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600"
 										>
 											{municipality.BEZ === 'Stadt' ? 'Stadt' : 'Gemeinde'}
 										</span>
 									{/if}
 								</div>
 							</td>
-							<td class="px-6 py-4">
+							<td class="px-6 py-4 overflow-hidden">
 								<div class="space-y-1">
 									<div class="text-sm font-bold text-gray-900">
 										{formatPercentage(municipality.netPotentialShare)}
@@ -270,7 +278,7 @@
 									</div>
 								</div>
 							</td>
-							<td class="px-6 py-4">
+							<td class="px-6 py-4 overflow-hidden">
 								<div class="space-y-1">
 									<div class="text-sm font-bold text-gray-900">
 										{formatPercentage(municipality.buildingsWithPVShare)}
@@ -283,7 +291,7 @@
 									</div>
 								</div>
 							</td>
-							<td class="px-6 py-4 text-sm text-gray-900">
+							<td class="px-6 py-4 overflow-hidden text-sm text-gray-900">
 								<div class="flex items-center gap-2">
 									<span class="font-semibold"
 										>{formatPower(municipality.MStRInstalledNetPower)}</span
@@ -299,10 +307,3 @@
 		{/if}
 	</div>
 </div>
-
-<style>
-	:global(body) {
-		font-family:
-			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-	}
-</style>
