@@ -2,7 +2,15 @@
 	import { onMount } from 'svelte';
 	import { AsyncGetSolarPotentialDe } from './__generated__/getData.generated';
 	import type { Solar_Potential_De } from '../../../../../types';
-	import { formatLabel } from '$lib/utils/format';
+	import { formatPercentage, formatPower, applyFiltersAndSort } from './utils';
+	import {
+		IconSearch,
+		IconChevronLeft,
+		IconChevronRight,
+		IconSortAscending,
+		IconSortDescending,
+		IconArrowsSort
+	} from '@tabler/icons-svelte-runes';
 
 	let municipalities: Solar_Potential_De[] = [];
 	let filteredMunicipalities: Solar_Potential_De[] = [];
@@ -34,7 +42,7 @@
 				console.error('GraphQL Error:', queryError);
 			} else if (data?.solar_potential_de) {
 				municipalities = data.solar_potential_de.filter((m) => m !== null) as Solar_Potential_De[];
-				applyFiltersAndSort();
+				runFiltersAndSort();
 			}
 		} catch (err) {
 			error = 'Fehler beim Laden der Daten';
@@ -44,64 +52,10 @@
 		}
 	});
 
-	function applyFiltersAndSort() {
-		// First, create the globally sorted list by netPotentialShare descending
-		let globalSorted = [...municipalities];
-		globalSorted.sort((a, b) => {
-			const valueA = a.netPotentialShare;
-			const valueB = b.netPotentialShare;
-
-			if (valueA == null && valueB == null) return 0;
-			if (valueA == null) return 1;
-			if (valueB == null) return -1;
-
-			return valueB - valueA;
-		});
-		globallySortedMunicipalities = globalSorted;
-
-		// Then apply filters and user-selected sorting for display
-		let filtered = [...municipalities];
-
-		// Filter by search term
-		if (searchTerm.trim()) {
-			const term = searchTerm.toLowerCase();
-			filtered = filtered.filter((m) => {
-				const name = m.GEN?.toLowerCase() || '';
-				const bez = m.BEZ?.toLowerCase() || '';
-				return name.includes(term) || bez.includes(term);
-			});
-		}
-
-		// Filter by municipality type
-		if (selectedRegion !== 'Gemeinden') {
-			filtered = filtered.filter((m) => m.BEZ === selectedRegion);
-		}
-
-		// Sort by user-selected column
-		if (sortColumn) {
-			filtered.sort((a, b) => {
-				const valueA = a[sortColumn as keyof Solar_Potential_De];
-				const valueB = b[sortColumn as keyof Solar_Potential_De];
-
-				if (valueA == null && valueB == null) return 0;
-				if (valueA == null) return 1;
-				if (valueB == null) return -1;
-
-				if (typeof valueA === 'number' && typeof valueB === 'number') {
-					return sortDirection === 'desc' ? valueB - valueA : valueA - valueB;
-				}
-
-				if (typeof valueA === 'string' && typeof valueB === 'string') {
-					return sortDirection === 'desc'
-						? valueB.localeCompare(valueA)
-						: valueA.localeCompare(valueB);
-				}
-
-				return 0;
-			});
-		}
-
-		filteredMunicipalities = filtered;
+	function runFiltersAndSort() {
+		const result = applyFiltersAndSort(municipalities, searchTerm, selectedRegion, sortColumn, sortDirection);
+		globallySortedMunicipalities = result.globallySorted;
+		filteredMunicipalities = result.filtered;
 		currentPage = 1;
 	}
 
@@ -112,17 +66,17 @@
 			sortColumn = column;
 			sortDirection = 'desc';
 		}
-		applyFiltersAndSort();
+		runFiltersAndSort();
 	}
 
 	function handleSearchChange(e: Event) {
 		searchTerm = (e.target as HTMLInputElement).value;
-		applyFiltersAndSort();
+		runFiltersAndSort();
 	}
 
 	function handleRegionChange(e: Event) {
 		selectedRegion = (e.target as HTMLSelectElement).value;
-		applyFiltersAndSort();
+		runFiltersAndSort();
 	}
 
 	$: paginatedMunicipalities = filteredMunicipalities.slice(
@@ -137,15 +91,6 @@
 		filteredMunicipalities.length
 	)} von ${filteredMunicipalities.length}`;
 
-	function formatPercentage(value: number | null | undefined): string {
-		if (value == null) return '-';
-		return `${formatLabel(value, 1)}%`;
-	}
-
-	function formatPower(value: number | null | undefined): string {
-		if (value == null) return '-';
-		return `${formatLabel(value, 1)} MWp`;
-	}
 </script>
 
 <div class="space-y-6">
@@ -155,18 +100,7 @@
 			<!-- Search Input -->
 			<div class="relative flex-1 lg:w-80">
 				<div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-					<svg
-						class="h-5 w-5 text-gray-400"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-							clip-rule="evenodd"
-						/>
-					</svg>
+					<IconSearch class="h-5 w-5 text-gray-400" />
 				</div>
 				<input
 					type="text"
@@ -199,18 +133,7 @@
 					class="rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					aria-label="Previous page"
 				>
-					<svg
-						class="h-4 w-4"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-							clip-rule="evenodd"
-						/>
-					</svg>
+					<IconChevronLeft class="h-4 w-4" />
 				</button>
 				<button
 					on:click={() => (currentPage = Math.min(totalPages, currentPage + 1))}
@@ -218,18 +141,7 @@
 					class="rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
 					aria-label="Next page"
 				>
-					<svg
-						class="h-4 w-4"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-							clip-rule="evenodd"
-						/>
-					</svg>
+					<IconChevronRight class="h-4 w-4" />
 				</button>
 			</div>
 		</div>
@@ -262,39 +174,12 @@
 								Gemeinde
 								{#if sortColumn === 'GEN'}
 									{#if sortDirection === 'desc'}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-											/>
-										</svg>
+										<IconSortDescending class="h-3 w-3 text-blue-600" />
 									{:else}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 17a1 1 0 000-2h11a1 1 0 100 2H3zM3 13a1 1 0 000 2h5a1 1 0 000-2H3zM3 9a1 1 0 100 2h4a1 1 0 100-2H3zM15 4a1 1 0 102 0v5.586l1.293-1.293a1 1 0 001.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L15 9.586V4z"
-											/>
-										</svg>
+										<IconSortAscending class="h-3 w-3 text-blue-600" />
 									{/if}
 								{:else}
-									<svg
-										class="h-3 w-3 text-gray-400"
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-										/>
-									</svg>
+									<IconArrowsSort class="h-3 w-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
@@ -306,39 +191,12 @@
 								Genutztes Potential (%)
 								{#if sortColumn === 'netPotentialShare'}
 									{#if sortDirection === 'desc'}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-											/>
-										</svg>
+										<IconSortDescending class="h-3 w-3 text-blue-600" />
 									{:else}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 17a1 1 0 000-2h11a1 1 0 100 2H3zM3 13a1 1 0 000 2h5a1 1 0 000-2H3zM3 9a1 1 0 100 2h4a1 1 0 100-2H3zM15 4a1 1 0 102 0v5.586l1.293-1.293a1 1 0 001.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L15 9.586V4z"
-											/>
-										</svg>
+										<IconSortAscending class="h-3 w-3 text-blue-600" />
 									{/if}
 								{:else}
-									<svg
-										class="h-3 w-3 text-gray-400"
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-										/>
-									</svg>
+									<IconArrowsSort class="h-3 w-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
@@ -350,39 +208,12 @@
 								Dächer mit Photovoltaik (%)
 								{#if sortColumn === 'buildingsWithPVShare'}
 									{#if sortDirection === 'desc'}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-											/>
-										</svg>
+										<IconSortDescending class="h-3 w-3 text-blue-600" />
 									{:else}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 17a1 1 0 000-2h11a1 1 0 100 2H3zM3 13a1 1 0 000 2h5a1 1 0 000-2H3zM3 9a1 1 0 100 2h4a1 1 0 100-2H3zM15 4a1 1 0 102 0v5.586l1.293-1.293a1 1 0 001.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L15 9.586V4z"
-											/>
-										</svg>
+										<IconSortAscending class="h-3 w-3 text-blue-600" />
 									{/if}
 								{:else}
-									<svg
-										class="h-3 w-3 text-gray-400"
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-										/>
-									</svg>
+									<IconArrowsSort class="h-3 w-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
@@ -394,39 +225,12 @@
 								Installierte Leistung (MWp)
 								{#if sortColumn === 'MStRInstalledNetPower'}
 									{#if sortDirection === 'desc'}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-											/>
-										</svg>
+										<IconSortDescending class="h-3 w-3 text-blue-600" />
 									{:else}
-										<svg
-											class="h-3 w-3 text-blue-600"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M3 17a1 1 0 000-2h11a1 1 0 100 2H3zM3 13a1 1 0 000 2h5a1 1 0 000-2H3zM3 9a1 1 0 100 2h4a1 1 0 100-2H3zM15 4a1 1 0 102 0v5.586l1.293-1.293a1 1 0 001.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L15 9.586V4z"
-											/>
-										</svg>
+										<IconSortAscending class="h-3 w-3 text-blue-600" />
 									{/if}
 								{:else}
-									<svg
-										class="h-3 w-3 text-gray-400"
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 20 20"
-										fill="currentColor"
-									>
-										<path
-											d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"
-										/>
-									</svg>
+									<IconArrowsSort class="h-3 w-3 text-gray-400" />
 								{/if}
 							</div>
 						</th>
