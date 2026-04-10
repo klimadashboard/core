@@ -229,8 +229,6 @@
 		in der Klimawende
 	</h1>
 
-	<DonationStatusBar />
-
 	<p class="text-lg mt-4">
 		Fundierte Klimapolitik braucht klare Fakten. Mit deiner Spende stärkst du den Verein
 		Klimadashboard, sicherst unsere Arbeit langfristig, ermöglichst neue Datenvisualisierungen,

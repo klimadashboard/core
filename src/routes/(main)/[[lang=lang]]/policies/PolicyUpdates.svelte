@@ -1,30 +1,25 @@
 <script>
 	import dayjs from 'dayjs';
-	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
-	import '@splidejs/svelte-splide/css/core';
-
-	dayjs.locale('de');
 
 	export let updates;
+
+	$: sorted = [...updates].sort((a, b) => dayjs(b.date).diff(dayjs(a.date)));
 </script>
 
-<Splide
-	class="mb-4"
-	options={{
-		autoWidth: true,
-		autoHeight: true,
-		trimSpace: true,
-		omitEnd: true,
-		arrows: false
-	}}
->
-	{#each updates.sort((a, b) => dayjs(a.date).diff(dayjs(b.date))) as update}
-		<SplideSlide>
-			<div class="border-t-2 w-[80vh] max-w-sm pt-2 pr-4">
-				<p class="text-sm opacity-80 font-bold">{dayjs(update.date).format('DD.MM.YYYY')}</p>
-				<h2 class="text-2xl">{update.title}</h2>
-				<div class="text-lg text">{@html update.text}</div>
-			</div>
-		</SplideSlide>
-	{/each}
-</Splide>
+<section class="mb-8">
+	<h2 class="text-xl font-bold mb-4">Updates</h2>
+	<ol class="relative border-l border-current/20 space-y-6 ml-2 max-w-2xl">
+		{#each sorted as update}
+			<li class="pl-4">
+				<span class="absolute -left-[3px] mt-1.5 h-1.5 w-1.5 rounded-full bg-current"></span>
+				<p class="text-sm opacity-60 font-medium mb-0.5">
+					{dayjs(update.date).format('DD.MM.YYYY')}
+				</p>
+				<h3 class="text-lg font-bold leading-snug">{update.title}</h3>
+				{#if update.text}
+					<div class="text mt-1 opacity-80">{@html update.text}</div>
+				{/if}
+			</li>
+		{/each}
+	</ol>
+</section>
