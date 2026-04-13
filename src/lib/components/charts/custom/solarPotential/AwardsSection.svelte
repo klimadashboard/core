@@ -2,6 +2,7 @@
 	import type { Award } from './data';
 
 	export let awards: Award[];
+	export let gemeineName: string = '';
 
 	$: unlocked = awards.filter((a) => a.unlocked).length;
 
@@ -23,6 +24,22 @@
 		blue:   'bg-blue-600 hover:bg-blue-700',
 		purple: 'bg-purple-600 hover:bg-purple-700'
 	};
+
+	let copiedAward: string | null = null;
+
+	async function share(award: Award) {
+		const title = `${award.icon} ${award.name}`;
+		const text = `${gemeineName ? gemeineName + ' hat den Award erreicht: ' : ''}${award.desc}`;
+		const url = typeof window !== 'undefined' ? window.location.href : '';
+
+		if (typeof navigator !== 'undefined' && navigator.share) {
+			await navigator.share({ title, text, url });
+		} else {
+			await navigator.clipboard.writeText(`${title}\n${text}\n${url}`);
+			copiedAward = award.name;
+			setTimeout(() => (copiedAward = null), 2000);
+		}
+	}
 </script>
 
 <div class="mb-3.5 rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
@@ -56,11 +73,6 @@
 					{award.name}
 				</p>
 
-				<!-- Date (unlocked) -->
-				{#if award.unlocked && award.date}
-					<p class="mb-1.5 text-xs text-gray-400">{award.date}</p>
-				{/if}
-
 				<!-- Description -->
 				<p class="mb-3 flex-1 text-xs leading-snug text-gray-500 dark:text-gray-400">
 					{award.desc}
@@ -69,9 +81,10 @@
 				<!-- CTA -->
 				{#if award.unlocked}
 					<button
+						on:click={() => share(award)}
 						class="rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors {SHARE_COLORS[award.color]}"
 					>
-						Teilen
+						{copiedAward === award.name ? '✓ Kopiert' : 'Teilen'}
 					</button>
 				{:else if award.remaining}
 					<p class="text-[10px] text-gray-400">{award.remaining}</p>
