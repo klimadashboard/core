@@ -19,7 +19,7 @@ export interface SolarTypesResponse {
 	current_by_type: Record<string, SolarTypeData> | null;
 	by_year: Array<{
 		year: number;
-		cumulative_power_kw: number;
+		cumulative_net_capacity_kw: number;
 		cumulative_units: number;
 	}>;
 	update_date: string;
