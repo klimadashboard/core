@@ -477,9 +477,9 @@ export function getPlaceholders(
 
 	// Calculate unverified percentage from grid operator checked ratio
 	const unverifiedPercent =
-		gridOperatorCheckedRatio != null ? (100 - gridOperatorCheckedRatio).toFixed(1) : '';
+		gridOperatorCheckedRatio != null ? ((1 - gridOperatorCheckedRatio) * 100).toFixed(1) : '';
 	const verifiedPercent =
-		gridOperatorCheckedRatio != null ? gridOperatorCheckedRatio.toFixed(1) : '';
+		gridOperatorCheckedRatio != null ? (gridOperatorCheckedRatio * 100).toFixed(1) : '';
 
 	// Calculate dataYearEnd as last completed year (previous year) and dataYearStart as 10 years before
 	const lastCompletedYear = currentYear - 1;
