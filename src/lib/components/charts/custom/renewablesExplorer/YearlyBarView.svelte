@@ -49,7 +49,7 @@
 
 		const currentYear = new Date().getFullYear();
 		const lastEntry = data[data.length - 1];
-		const currentCumulative = lastEntry?.cumulative_net_capacity_kw || 0;
+		const currentCumulative = lastEntry?.cumulative_power_kw || 0;
 
 		// Calculate remaining capacity
 		const remainingKw = goal.target_power_kw - currentCumulative;
@@ -117,8 +117,8 @@
 
 		const result: Array<{
 			year: number;
-			delta_net_capacity_kw: number;
-			cumulative_net_capacity_kw: number;
+			net_power_kw: number;
+			cumulative_power_kw: number;
 			isGoalYear: boolean;
 			goalRequired: number;
 		}> = [];
@@ -149,8 +149,8 @@
 				if (goalRequired > 0 || !goalInfo.hasCustomPath) {
 					result.push({
 						year,
-						delta_net_capacity_kw: 0,
-						cumulative_net_capacity_kw: 0,
+						net_power_kw: 0,
+						cumulative_power_kw: 0,
 						isGoalYear: true,
 						goalRequired
 					});
@@ -175,13 +175,13 @@
 
 	// Max value considers both actual data and goal
 	$: maxAbs = Math.max(
-		...combinedData.map((d) => Math.abs(d.delta_net_capacity_kw)),
+		...combinedData.map((d) => Math.abs(d.net_power_kw)),
 		maxGoalRequired,
 		1
 	);
 
 	// Y-axis max needs to include goal bars
-	$: yMax = Math.max(...combinedData.map((d) => d.delta_net_capacity_kw), maxGoalRequired, 1);
+	$: yMax = Math.max(...combinedData.map((d) => d.net_power_kw), maxGoalRequired, 1);
 
 	$: unit = getPowerUnit(maxAbs, selectedEnergy);
 	$: yFormat = (v: number) => formatNumber(convertPowerUnit(v, maxAbs), 0);
@@ -204,7 +204,7 @@
 		<Chart
 			data={combinedData}
 			x="year"
-			y="delta_net_capacity_kw"
+			y="net_power_kw"
 			xType="band"
 			{xDomain}
 			{yMax}
@@ -269,10 +269,10 @@
 
 				<!-- Actual data bars -->
 				{#each combinedData as d}
-					{#if d.delta_net_capacity_kw !== 0}
+					{#if d.net_power_kw !== 0}
 						{@const barX = xScale(d.year)}
 						{@const barWidth = xScale.bandwidth ? xScale.bandwidth() : 20}
-						{@const value = d.delta_net_capacity_kw}
+						{@const value = d.net_power_kw}
 						{@const barY = value >= 0 ? yScale(value) : yScale(0)}
 						{@const zeroY = yScale(0)}
 						{@const barHeight = Math.abs(zeroY - yScale(value))}
@@ -302,20 +302,20 @@
 					title={hover.x !== null ? String(hover.x) : ''}
 					items={point
 						? [
-								...(point.delta_net_capacity_kw !== 0
+								...(point.net_power_kw !== 0
 									? [
 											{
 												label: 'Zubau',
-												value: formatPower(point.delta_net_capacity_kw, selectedEnergy),
+												value: formatPower(point.net_power_kw, selectedEnergy),
 												color
 											}
 										]
 									: []),
-								...(point.cumulative_net_capacity_kw > 0
+								...(point.cumulative_power_kw > 0
 									? [
 											{
 												label: 'Kumuliert',
-												value: formatPower(point.cumulative_net_capacity_kw, selectedEnergy)
+												value: formatPower(point.cumulative_power_kw, selectedEnergy)
 											}
 										]
 									: []),

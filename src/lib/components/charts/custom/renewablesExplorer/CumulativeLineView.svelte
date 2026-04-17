@@ -131,8 +131,8 @@
 					year: point.year,
 					value:
 						unit === 'perArea' && regionArea
-							? point.cumulative_net_capacity_kw / regionArea
-							: point.cumulative_net_capacity_kw
+							? point.cumulative_power_kw / regionArea
+							: point.cumulative_power_kw
 				}))
 			});
 		}
@@ -141,7 +141,7 @@
 		if (goalData && main.length > 0 && unit === 'absolute' && shouldShowGoal) {
 			const currentYear = new Date().getFullYear();
 			const lastDataYear = main[main.length - 1]?.year || currentYear;
-			const lastCumulative = main[main.length - 1]?.cumulative_net_capacity_kw || 0;
+			const lastCumulative = main[main.length - 1]?.cumulative_power_kw || 0;
 
 			// Create goal line - use goal_path if available, otherwise straight line
 			const goalLineData: Array<{ year: number; value: number }> = [];
@@ -151,7 +151,7 @@
 				// This shows the goal value even for years that have actual data
 				for (const point of goalData.goal_path) {
 					if (point.year >= lastDataYear) {
-						goalLineData.push({ year: point.year, value: point.cumulative_net_capacity_kw });
+						goalLineData.push({ year: point.year, value: point.cumulative_power_kw });
 					}
 				}
 

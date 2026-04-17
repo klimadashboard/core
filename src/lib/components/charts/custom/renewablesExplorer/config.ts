@@ -19,8 +19,8 @@ export interface RenewablesParams {
 
 export interface RenewablesRawData {
 	year: number;
-	delta_net_capacity_kw: number;
-	cumulative_net_capacity_kw: number;
+	net_power_kw: number;
+	cumulative_power_kw: number;
 	added_units?: number;
 	net_units?: number;
 	cumulative_units?: number;
@@ -400,14 +400,14 @@ export function getTableColumns(_params: RenewablesParams): TableColumn[] {
 	return [
 		{ key: 'year', label: 'Jahr', align: 'left' },
 		{
-			key: 'delta_net_capacity_kw',
-			label: 'Zubau (kW netto)',
+			key: 'net_power_kw',
+			label: 'Zubau (kWp)',
 			align: 'right',
 			format: (v) => formatNumber(v)
 		},
 		{
-			key: 'cumulative_net_capacity_kw',
-			label: 'Kumulierte Leistung (kW netto)',
+			key: 'cumulative_power_kw',
+			label: 'Kumulierte Leistung (kWp)',
 			align: 'right',
 			format: (v) => formatNumber(v)
 		}
@@ -426,16 +426,16 @@ export function getPlaceholders(
 	const { energy } = params;
 	const currentYear = new Date().getFullYear();
 	const currentYearData = data.find((d) => d.year === currentYear);
-	const lastPositive = [...data].reverse().find((d) => d.delta_net_capacity_kw > 0);
+	const lastPositive = [...data].reverse().find((d) => d.net_power_kw > 0);
 	const lastEntry = data[data.length - 1];
 	const prevYearData = data.find((d) => d.year === currentYear - 1);
 
 	// Calculate growth percentage
 	const growthPercent =
-		prevYearData && prevYearData.cumulative_net_capacity_kw > 0
+		prevYearData && prevYearData.cumulative_power_kw > 0
 			? (
-					((lastEntry?.cumulative_net_capacity_kw - prevYearData.cumulative_net_capacity_kw) /
-						prevYearData.cumulative_net_capacity_kw) *
+					((lastEntry?.cumulative_power_kw - prevYearData.cumulative_power_kw) /
+						prevYearData.cumulative_power_kw) *
 					100
 				).toFixed(1)
 			: '0';
@@ -443,7 +443,7 @@ export function getPlaceholders(
 	// Goal-related placeholders
 	const goalPlaceholders: Record<string, string | number> = {};
 	if (goal) {
-		const currentCumulative = lastEntry?.cumulative_net_capacity_kw || 0;
+		const currentCumulative = lastEntry?.cumulative_power_kw || 0;
 		const remaining = goal.target_power_kw - currentCumulative;
 		const yearsRemaining = goal.target_year - currentYear;
 		const yearlyRequired = yearsRemaining > 0 ? remaining / yearsRemaining : 0;
@@ -486,10 +486,10 @@ export function getPlaceholders(
 	const dataYearEnd = lastCompletedYear;
 	const dataYearStart = lastCompletedYear - 10;
 
-	// Find the strongest year (year with highest delta_net_capacity_kw) - only consider completed years
+	// Find the strongest year (year with highest net_power_kw) - only consider completed years
 	const completedYearsData = data.filter((d) => d.year <= lastCompletedYear);
 	const strongestYearData = completedYearsData.reduce(
-		(max, d) => (d.delta_net_capacity_kw > (max?.delta_net_capacity_kw || 0) ? d : max),
+		(max, d) => (d.net_power_kw > (max?.net_power_kw || 0) ? d : max),
 		null as RenewablesRawData | null
 	);
 
@@ -527,11 +527,11 @@ export function getPlaceholders(
 		regionName,
 		layerLabel,
 		currentYear,
-		currentYearPower: formatPower(currentYearData?.delta_net_capacity_kw || 0, energy),
-		currentYearPowerRaw: currentYearData?.delta_net_capacity_kw || 0,
-		totalInstalled: formatPower(lastEntry?.cumulative_net_capacity_kw || 0, energy),
-		totalInstalledRaw: lastEntry?.cumulative_net_capacity_kw || 0,
-		currentYearAddition: formatPower(currentYearData?.delta_net_capacity_kw || 0, energy),
+		currentYearPower: formatPower(currentYearData?.net_power_kw || 0, energy),
+		currentYearPowerRaw: currentYearData?.net_power_kw || 0,
+		totalInstalled: formatPower(lastEntry?.cumulative_power_kw || 0, energy),
+		totalInstalledRaw: lastEntry?.cumulative_power_kw || 0,
+		currentYearAddition: formatPower(currentYearData?.net_power_kw || 0, energy),
 		lastYearWithData: lastPositive?.year || currentYear,
 		growthPercent,
 		energyType: energy,
@@ -539,14 +539,14 @@ export function getPlaceholders(
 		dataYearStart,
 		dataYearEnd,
 		// Cumulative values at dataYearStart and dataYearEnd
-		dataYearStartPower: formatPower(dataYearStartData?.cumulative_net_capacity_kw || 0, energy),
-		dataYearStartPowerRaw: dataYearStartData?.cumulative_net_capacity_kw || 0,
-		dataYearEndPower: formatPower(dataYearEndData?.cumulative_net_capacity_kw || 0, energy),
-		dataYearEndPowerRaw: dataYearEndData?.cumulative_net_capacity_kw || 0,
+		dataYearStartPower: formatPower(dataYearStartData?.cumulative_power_kw || 0, energy),
+		dataYearStartPowerRaw: dataYearStartData?.cumulative_power_kw || 0,
+		dataYearEndPower: formatPower(dataYearEndData?.cumulative_power_kw || 0, energy),
+		dataYearEndPowerRaw: dataYearEndData?.cumulative_power_kw || 0,
 		// Strongest year placeholders
 		strongestYear: strongestYearData?.year || lastCompletedYear,
-		strongestYearPower: formatPower(strongestYearData?.delta_net_capacity_kw || 0, energy),
-		strongestYearPowerRaw: strongestYearData?.delta_net_capacity_kw || 0,
+		strongestYearPower: formatPower(strongestYearData?.net_power_kw || 0, energy),
+		strongestYearPowerRaw: strongestYearData?.net_power_kw || 0,
 		// New placeholders for installation counts
 		currentYearUnits: formatNumber(currentYearData?.added_units || 0),
 		currentYearUnitsRaw: currentYearData?.added_units || 0,
@@ -560,12 +560,12 @@ export function getPlaceholders(
 		// Wind-specific title placeholder
 		titleWind,
 		// Aliases for Directus template compatibility
-		capacityTenYearsAgo: formatPower(dataYearStartData?.cumulative_net_capacity_kw || 0, energy),
+		capacityTenYearsAgo: formatPower(dataYearStartData?.cumulative_power_kw || 0, energy),
 		tenYearsAgoYear: dataYearStart,
-		capacityLatest: formatPower(dataYearEndData?.cumulative_net_capacity_kw || 0, energy),
+		capacityLatest: formatPower(dataYearEndData?.cumulative_power_kw || 0, energy),
 		latestYear: dataYearEnd,
 		peakYear: strongestYearData?.year || lastCompletedYear,
-		peakYearAddition: formatPower(strongestYearData?.delta_net_capacity_kw || 0, energy),
+		peakYearAddition: formatPower(strongestYearData?.net_power_kw || 0, energy),
 		unverifiedPercentage: unverifiedPercent,
 		...goalPlaceholders
 	};
