@@ -114,7 +114,7 @@ export function getPlaceholders(
 	// Calculate unverified percentage from grid operator checked ratio
 	const gridOperatorCheckedRatio = data?.grid_operator_checked_ratio;
 	const unverifiedPercentage =
-		gridOperatorCheckedRatio != null ? ((1 - gridOperatorCheckedRatio) * 100).toFixed(1) : '';
+		gridOperatorCheckedRatio != null ? (100 - gridOperatorCheckedRatio).toFixed(1) : '';
 
 	// Format update date for display
 	const updateDateFormatted = formatUpdateDate(data?.update_date);
