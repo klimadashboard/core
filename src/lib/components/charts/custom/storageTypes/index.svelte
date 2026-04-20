@@ -136,12 +136,14 @@
 			<span class="text-3xl font-condensed">{value}</span>
 			{#if unit}<span class="text-sm font-medium">{unit}</span>{/if}
 		</div>
-		<div
-			class="max-w-full inline-flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
-		>
-			{@render shareIcon(pctValue)}
-			<span class="truncate">{pctLabel}% Anteil an Gesamt</span>
-		</div>
+		{#if pctValue > 0}
+			<div
+				class="max-w-full inline-flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
+			>
+				{@render shareIcon(pctValue)}
+				<span class="truncate">{pctLabel}% Anteil an Gesamt</span>
+			</div>
+		{/if}
 		{#if addedText}
 			<div
 				class="max-w-full inline-flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"

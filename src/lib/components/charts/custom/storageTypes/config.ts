@@ -43,7 +43,8 @@ export const storageTypeConfigs: StorageTypeConfig[] = [
 	{
 		key: 'grossspeicher',
 		label: 'Großspeicher',
-		image: '059d5d5e-eb70-46fb-bffb-b922362651d7'
+		image: '059d5d5e-eb70-46fb-bffb-b922362651d7',
+		alwaysShow: true
 	}
 ];
 
