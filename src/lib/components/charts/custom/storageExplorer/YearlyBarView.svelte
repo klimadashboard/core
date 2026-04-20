@@ -34,6 +34,31 @@
 
 	$: activeCategories = getActiveCategories(data);
 
+	let hiddenCategories = new Set<string>();
+	let _prevData: StoragePeriodData[] = [];
+	$: if (data !== _prevData) { _prevData = data; hiddenCategories = new Set(); }
+
+	$: displayCategories = activeCategories.filter((c) => !hiddenCategories.has(c.key));
+
+	function handleLegendClick(catKey: string) {
+		const allKeys = activeCategories.map((c) => c.key);
+		const visibleKeys = allKeys.filter((k) => !hiddenCategories.has(k));
+		if (visibleKeys.length === allKeys.length) {
+			hiddenCategories = new Set(allKeys.filter((k) => k !== catKey));
+		} else if (visibleKeys.length === 1 && visibleKeys[0] === catKey) {
+			hiddenCategories = new Set();
+		} else {
+			const next = new Set(hiddenCategories);
+			if (next.has(catKey)) {
+				next.delete(catKey);
+			} else {
+				if (visibleKeys.filter((k) => k !== catKey).length === 0) { hiddenCategories = new Set(); return; }
+				next.add(catKey);
+			}
+			hiddenCategories = next;
+		}
+	}
+
 	$: metricField = getMetricField('yearly', metricMode);
 
 	// Build stacked data: for each period, compute y0 and y1 for each category
@@ -47,7 +72,7 @@
 			period: number | string;
 		}> = [];
 
-		for (const cat of activeCategories) {
+		for (const cat of displayCategories) {
 			const value = getValue(row, cat.key, metricField);
 			if (value > 0) {
 				stacks.push({
@@ -113,14 +138,26 @@
 			>
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
 				{@const lastPeriod = xDomain.length > 0 ? xDomain[xDomain.length - 1] : null}
+				{@const smallScreen = innerWidth < 500}
+				{@const janEvenYears = xDomain.filter((p) => {
+					const parts = String(p).split('-');
+					return parts[1] === '01' && parseInt(parts[0]!) % 2 === 0;
+				})}
+				{@const janAny = xDomain.filter((p) => String(p).split('-')[1] === '01')}
+				{@const smallScreenTicks = janEvenYears.length > 0 ? janEvenYears : janAny}
 				<AxisX
 					{xScale}
 					{xDomain}
 					{innerWidth}
 					{innerHeight}
-					format={formatPeriodLabel}
-					tickCount={Math.ceil(xDomain.length / 6)}
-					forceTicks={lastPeriod ? [lastPeriod] : []}
+					format={smallScreen
+						? (v) => {
+								const parts = String(v).split('-');
+								return parts[1] === '01' ? parts[0]! : '';
+							}
+						: formatPeriodLabel}
+					tickCount={smallScreen ? 1 : Math.ceil(xDomain.length / 6)}
+					forceTicks={smallScreen ? smallScreenTicks : (lastPeriod ? [lastPeriod] : [])}
 				/>
 				<RuleY y={0} {yScale} {innerWidth} />
 
@@ -206,12 +243,16 @@
 		</Chart>
 
 		<!-- Legend -->
-		<div class="flex flex-wrap gap-4 mt-4 text-sm">
+		<div class="flex flex-wrap gap-1 mt-4 text-sm">
 			{#each activeCategories as cat}
-				<div class="flex items-center gap-2">
-					<div class="w-4 h-3 rounded-sm" style="background: {cat.color}"></div>
+				{@const isHidden = hiddenCategories.has(cat.key)}
+				<button
+					class="flex items-center gap-2 px-2 py-1 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 {isHidden ? 'opacity-40' : ''}"
+					onclick={() => handleLegendClick(cat.key)}
+				>
+					<div class="w-4 h-3 rounded-sm flex-shrink-0" style="background: {cat.color}"></div>
 					<span>{cat.label}</span>
-				</div>
+				</button>
 			{/each}
 		</div>
 	{/if}

@@ -32,6 +32,32 @@
 	let containerEl: HTMLElement;
 
 	$: activeCategories = getActiveCategories(data);
+
+	let hiddenCategories = new Set<string>();
+	let _prevData: StoragePeriodData[] = [];
+	$: if (data !== _prevData) { _prevData = data; hiddenCategories = new Set(); }
+
+	$: displayCategories = activeCategories.filter((c) => !hiddenCategories.has(c.key));
+
+	function handleLegendClick(catKey: string) {
+		const allKeys = activeCategories.map((c) => c.key);
+		const visibleKeys = allKeys.filter((k) => !hiddenCategories.has(k));
+		if (visibleKeys.length === allKeys.length) {
+			hiddenCategories = new Set(allKeys.filter((k) => k !== catKey));
+		} else if (visibleKeys.length === 1 && visibleKeys[0] === catKey) {
+			hiddenCategories = new Set();
+		} else {
+			const next = new Set(hiddenCategories);
+			if (next.has(catKey)) {
+				next.delete(catKey);
+			} else {
+				if (visibleKeys.filter((k) => k !== catKey).length === 0) { hiddenCategories = new Set(); return; }
+				next.add(catKey);
+			}
+			hiddenCategories = next;
+		}
+	}
+
 	$: metricField = getMetricField('cumulative', metricMode);
 
 	// Build stacked area data with numeric x values for linear scale
@@ -39,13 +65,13 @@
 		const series: Array<{
 			category: StorageCategory;
 			points: Array<{ xNum: number; period: number | string; y0: number; y1: number; value: number }>;
-		}> = activeCategories.map((cat) => ({ category: cat, points: [] }));
+		}> = displayCategories.map((cat) => ({ category: cat, points: [] }));
 
 		for (const row of data) {
 			let y0 = 0;
 			const xNum = periodToNumber(row.period);
-			for (let i = 0; i < activeCategories.length; i++) {
-				const cat = activeCategories[i]!;
+			for (let i = 0; i < displayCategories.length; i++) {
+				const cat = displayCategories[i]!;
 				const value = getValue(row, cat.key, metricField);
 				series[i]!.points.push({
 					xNum,
@@ -65,7 +91,7 @@
 		let max = 1;
 		for (const row of data) {
 			let total = 0;
-			for (const cat of activeCategories) {
+			for (const cat of displayCategories) {
 				total += getValue(row, cat.key, metricField);
 			}
 			if (total > max) max = total;
@@ -141,6 +167,7 @@
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
 				{@const lastXNum =
 					data.length > 0 ? periodToNumber(data[data.length - 1]?.period) : null}
+				{@const smallScreen = innerWidth < 500}
 				<AxisX
 					{xScale}
 					xDomain={[]}
@@ -148,15 +175,18 @@
 					{innerHeight}
 					format={(v) => {
 						const d = new Date(v);
-						const monthNames = ['Jan', 'Apr', 'Jul', 'Okt'];
 						const m = d.getMonth();
-						if (m === 0) return String(d.getFullYear());
-						if (monthNames[Math.floor(m / 3)] && m % 3 === 0)
-							return monthNames[Math.floor(m / 3)];
+						const year = d.getFullYear();
+						if (smallScreen) {
+							return m === 0 && year % 2 === 0 ? String(year) : '';
+						}
+						const monthNames = ['Jan', 'Apr', 'Jul', 'Okt'];
+						if (m === 0) return String(year);
+						if (m % 3 === 0) return monthNames[m / 3] ?? '';
 						return '';
 					}}
-					tickCount={10}
-					forceTicks={lastXNum ? [lastXNum] : []}
+					tickCount={smallScreen ? 3 : 10}
+					forceTicks={!smallScreen && lastXNum ? [lastXNum] : []}
 				/>
 
 				<!-- Stacked areas (render bottom-up, so first category is at bottom) -->
@@ -254,7 +284,7 @@
 						{ row: data[0], dist: Infinity }
 					).row}
 					{@const items = closestRow
-						? activeCategories
+						? displayCategories
 								.map((cat) => {
 									const value = getValue(closestRow, cat.key, metricField);
 									if (value === 0) return null;
@@ -270,7 +300,7 @@
 								.reverse()
 						: []}
 					{@const total = closestRow
-						? activeCategories.reduce(
+						? displayCategories.reduce(
 								(sum, cat) =>
 									sum + getValue(closestRow, cat.key, metricField),
 								0
@@ -296,12 +326,16 @@
 		</Chart>
 
 		<!-- Legend -->
-		<div class="flex flex-wrap gap-4 mt-4 text-sm">
+		<div class="flex flex-wrap gap-1 mt-4 text-sm">
 			{#each activeCategories as cat}
-				<div class="flex items-center gap-2">
-					<div class="w-4 h-3 rounded-sm" style="background: {cat.color}"></div>
+				{@const isHidden = hiddenCategories.has(cat.key)}
+				<button
+					class="flex items-center gap-2 px-2 py-1 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 {isHidden ? 'opacity-40' : ''}"
+					onclick={() => handleLegendClick(cat.key)}
+				>
+					<div class="w-4 h-3 rounded-sm flex-shrink-0" style="background: {cat.color}"></div>
 					<span>{cat.label}</span>
-				</div>
+				</button>
 			{/each}
 		</div>
 	{/if}

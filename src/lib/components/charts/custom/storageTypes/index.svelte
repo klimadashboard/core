@@ -129,55 +129,25 @@
 	</svg>
 {/snippet}
 
-{#snippet statCard(
-	value: number,
-	unit: string,
-	pctLabel: string,
-	added: number,
-	growthPct: number | null
-)}
+{#snippet metricCard(value: string, unit: string, pctLabel: string, addedText: string)}
 	{@const pctValue = parseFloat(pctLabel) || 0}
-	<div>
+	<div class="min-w-0">
 		<div class="flex items-baseline gap-1">
-			<span class="text-3xl font-condensed">{formatNumber(value)}</span>
-			<span class="text-sm font-medium">{unit}</span>
+			<span class="text-3xl font-condensed">{value}</span>
+			{#if unit}<span class="text-sm font-medium">{unit}</span>{/if}
 		</div>
 		<div
-			class="w-max flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
+			class="max-w-full inline-flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
 		>
 			{@render shareIcon(pctValue)}
-			{pctLabel}% Anteil an Gesamt
+			<span class="truncate">{pctLabel}% Anteil an Gesamt</span>
 		</div>
-		{#if added > 0}
+		{#if addedText}
 			<div
-				class="w-max flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"
+				class="max-w-full inline-flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"
 			>
 				{@render trendIcon()}
-				+{formatNumber(added)}
-				{unit} in {currentYear}
-			</div>
-		{/if}
-	</div>
-{/snippet}
-
-{#snippet capacityCard(kwh: number, pctLabel: string, addedKwh: number, growthPct: number | null)}
-	{@const pctValue = parseFloat(pctLabel) || 0}
-	<div>
-		<div class="flex items-baseline gap-1">
-			<span class="text-3xl font-condensed">{formatCapacity(kwh)}</span>
-		</div>
-		<div
-			class="w-max flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
-		>
-			{@render shareIcon(pctValue)}
-			{pctLabel}% Anteil an Gesamt
-		</div>
-		{#if addedKwh > 0}
-			<div
-				class="w-max flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-green-200 dark:bg-green-400/40 text-emerald-600 dark:text-emerald-400 mt-2"
-			>
-				{@render trendIcon()}
-				+{formatCapacity(addedKwh)} in {currentYear}
+				<span class="truncate">{addedText}</span>
 			</div>
 		{/if}
 	</div>
@@ -212,7 +182,7 @@
 				<div class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
 					<div class="flex flex-col md:flex-row">
 						{#if type.image}
-							<div class="h-32 md:h-auto md:w-36 flex-shrink-0">
+							<div class="h-32 md:h-auto md:w-36 flex-shrink-0 m-2 rounded-l-lg overflow-hidden">
 								<img
 									src={getImageUrl(type.image)}
 									alt={type.label}
@@ -225,18 +195,17 @@
 							<h3 class="text-lg leading-none font-semibold">{type.label}</h3>
 
 							<div class="grid grid-cols-2 gap-3 mt-2">
-								{@render statCard(
-									type.units,
+								{@render metricCard(
+									formatNumber(type.units),
 									'Anlagen',
 									type.unit_pct,
-									type.added_units,
-									type.unit_growth_pct
+									type.added_units > 0 ? `+${formatNumber(type.added_units)} Anlagen in ${currentYear}` : ''
 								)}
-								{@render capacityCard(
-									type.capacity_kwh,
+								{@render metricCard(
+									formatCapacity(type.capacity_kwh),
+									'',
 									type.capacity_pct,
-									type.added_capacity_kwh,
-									type.capacity_growth_pct
+									type.added_capacity_kwh > 0 ? `+${formatCapacity(type.added_capacity_kwh)} in ${currentYear}` : ''
 								)}
 							</div>
 						</div>

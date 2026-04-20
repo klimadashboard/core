@@ -32,18 +32,18 @@ export const storageTypeConfigs: StorageTypeConfig[] = [
 	{
 		key: 'heimspeicher',
 		label: 'Heimspeicher',
-		image: '', // TODO: add Directus asset ID
+		image: '18b7ed4c-769e-4c86-b7b1-4e38cf9a27dd',
 		alwaysShow: true
 	},
 	{
 		key: 'gewerbespeicher',
 		label: 'Gewerbespeicher',
-		image: '' // TODO: add Directus asset ID
+		image: '19666d00-43b8-495c-90bc-64de72770f5f'
 	},
 	{
 		key: 'grossspeicher',
 		label: 'Großspeicher',
-		image: '' // TODO: add Directus asset ID
+		image: '059d5d5e-eb70-46fb-bffb-b922362651d7'
 	}
 ];
 
