@@ -48,7 +48,12 @@
 				: scaleLinear().domain(xDomain).range([0, innerWidth])
 			: null;
 
-	$: yScale = innerHeight > 0 ? scaleLinear().domain(yDomain).range([innerHeight, 0]).nice() : null;
+	$: yScale =
+		innerHeight > 0
+			? yMin !== null && yMax !== null
+				? scaleLinear().domain(yDomain).range([innerHeight, 0])
+				: scaleLinear().domain(yDomain).range([innerHeight, 0]).nice()
+			: null;
 
 	$: bandwidth =
 		xScale && xType === 'band'

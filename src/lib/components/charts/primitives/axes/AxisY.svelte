@@ -5,6 +5,7 @@
 	export let innerHeight: number;
 	export let format: (v: any) => string = String;
 	export let tickCount: number = 5;
+	export let tickValues: number[] | null = null;
 	export let label: string = '';
 	export let unit: string = '';
 	export let gridLines: boolean = true;
@@ -16,7 +17,7 @@
 	 */
 	export let mode: 'all' | 'grid' | 'labels' = 'all';
 
-	$: ticks = yScale?.ticks?.(tickCount) ?? [];
+	$: ticks = tickValues !== null ? tickValues : (yScale?.ticks?.(tickCount) ?? []);
 	$: showGrid = mode === 'all' || mode === 'grid';
 	$: showLabels = mode === 'all' || mode === 'labels';
 </script>
