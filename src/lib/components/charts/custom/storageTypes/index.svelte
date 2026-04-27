@@ -133,7 +133,7 @@
 {/snippet}
 
 {#snippet metricCard(value: string, unit: string, pctLabel: string, addedText: string)}
-	{@const pctValue = pctLabel === '<1' ? 0.5 : (parseFloat(pctLabel) || 0)}
+	{@const pctValue = pctLabel === '<1' ? 0.5 : parseFloat(pctLabel) || 0}
 	<div class="min-w-0">
 		<div class="flex items-baseline gap-1">
 			<span class="text-3xl font-condensed">{value}</span>
@@ -191,34 +191,38 @@
 								<img
 									src={getImageUrl(type.image)}
 									alt={type.label}
-									class="w-full h-full object-cover"
+									class="w-full h-full object-contain"
 								/>
 							</div>
 						{/if}
 
 						<div class="flex-1 p-4">
 							<h3 class="text-lg leading-none font-semibold flex items-center gap-2">
-							{#if categoryColorMap[type.key]}
-								<span
-									class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
-									style="background-color: {categoryColorMap[type.key]}"
-								></span>
-							{/if}
-							{type.label}
-						</h3>
+								{#if categoryColorMap[type.key]}
+									<span
+										class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+										style="background-color: {categoryColorMap[type.key]}"
+									></span>
+								{/if}
+								{type.label}
+							</h3>
 
 							<div class="grid grid-cols-2 gap-3 mt-2">
 								{@render metricCard(
 									formatNumber(type.units),
 									'Anlagen',
 									type.unit_pct,
-									type.added_units > 0 ? `+${formatNumber(type.added_units)} Anlagen in ${currentYear}` : ''
+									type.added_units > 0
+										? `+${formatNumber(type.added_units)} Anlagen in ${currentYear}`
+										: ''
 								)}
 								{@render metricCard(
 									formatCapacity(type.capacity_kwh),
 									'',
 									type.capacity_pct,
-									type.added_capacity_kwh > 0 ? `+${formatCapacity(type.added_capacity_kwh)} in ${currentYear}` : ''
+									type.added_capacity_kwh > 0
+										? `+${formatCapacity(type.added_capacity_kwh)} in ${currentYear}`
+										: ''
 								)}
 							</div>
 						</div>
