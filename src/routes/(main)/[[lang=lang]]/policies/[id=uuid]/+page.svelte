@@ -14,7 +14,7 @@
 		displayedStatus = page.data.status.filter((d) => d.key.includes('goal'));
 	} else {
 		displayedStatus = page.data.status.filter(
-			(d) => d.key == 'notStarted' || d.key == 'implemented'
+			(d) => d.key == 'notStarted' || d.key == 'inProgress' || d.key == 'implemented'
 		);
 	}
 </script>
@@ -39,6 +39,10 @@
 			</div>
 		{/each}
 	</div>
+
+	{#if data.policy.updates.length}
+		<PolicyUpdates updates={data.policy.updates} />
+	{/if}
 
 	<div class="grid md:grid-cols-3 max-w-[90vw] gap-8">
 		<div class="md:col-span-2">
@@ -166,10 +170,6 @@
 			</ul>
 		</div>
 	</div>
-
-	{#if data.policy.updates.length}
-		<PolicyUpdates updates={data.policy.updates} />
-	{/if}
 
 	<div>
 		<p class="my-8 opacity-80 text max-w-xl">

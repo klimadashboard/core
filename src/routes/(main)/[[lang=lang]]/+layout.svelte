@@ -4,9 +4,7 @@
 	export let data;
 </script>
 
-{#if data.site?.id !== 'org'}
-	<Header />
-{/if}
+<Header />
 <slot />
 
 <Footer />

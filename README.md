@@ -26,25 +26,68 @@ We’d love to expand Klimadashboard to further regions, but we need data resear
 
 The [main] branch of this repository is automatically deployed into production on our core server. Preview deployments can be created manually.
 
+## Prerequisites
+
+- **Node.js >= 20** (check with `node -v`)
+- npm (comes with Node.js)
+
 ## Development & Build
 
-Run the Application in development mode:
+### 1. Install dependencies
 
-```
+```bash
 npm install
+```
+
+### 2. Configure environment
+
+Copy `.env.example` to `.env` and configure the required variables:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PUBLIC_VERSION` | Yes | Set to `at` (Austria), `de` (Germany), or `org` (klimadashboard.org) |
+| `API_URL` | No | Defaults to `https://base.klimadashboard.org` |
+| `DIRECTUS_TOKEN` | No | For authenticated API access (write operations, extended read access) |
+
+**For klimadashboard.org only** (donation features):
+| Variable | Description |
+|----------|-------------|
+| `STRIPE_SECRET_KEY` | Stripe API key for payment processing |
+| `CAMP_API_KEY` | Campai API key for accounting |
+| `CAMP_ORG_ID` | Campai organization ID |
+| `CAMP_MANDATE_ID` | Campai mandate ID |
+
+### 3. Run in development mode
+
+```bash
 npm run dev
 ```
 
-To make sure the correct content is being loaded from our database, rename .env.example to .env and set the PUBLIC_VERSION.
+### 4. Build for production
 
-```
-PUBLIC_VERSION=at
-```
-
-Build the Application:
-
-```
+```bash
 npm run build
+npm start  # Run the built application
 ```
 
-Find details to [get started with SvelteKit](https://kit.svelte.dev/). We’re using [Tailwind CSS](https://tailwindcss.com/) for our CSS classes.
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Check code with Prettier and ESLint |
+| `npm run format` | Auto-format code |
+| `npm run codegen` | Generate GraphQL types from schema |
+
+## Tech Stack
+
+- [SvelteKit](https://kit.svelte.dev/) - Full-stack framework
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+- [Directus](https://directus.io/) - Headless CMS (backend)
+- [MapLibre GL](https://maplibre.org/) - Map visualizations
