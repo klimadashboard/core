@@ -209,6 +209,12 @@ function formatUpdateDate(updateDate: string | null): string {
 	}
 }
 
+/** Extract the year from either a numeric period (2020) or a monthly string ("2020-01") */
+function periodYear(period: number | string): number {
+	if (typeof period === 'number') return period;
+	return parseInt(period.split('-')[0]!, 10);
+}
+
 export function getPlaceholders(
 	data: StoragePeriodData[],
 	region: Region | null,
@@ -222,17 +228,54 @@ export function getPlaceholders(
 	let totalCumulativePower = 0;
 	let totalCumulativeCapacity = 0;
 	let totalCumulativeUnits = 0;
-	let totalAddedPowerThisYear = 0;
-	let totalAddedUnitsThisYear = 0;
-
-	const thisYearRow = data.find((d) => d.period === currentYear);
 
 	for (const cat of activeCategories) {
 		totalCumulativePower += getValue(lastRow || {}, cat.key, 'cumulative_power_kw');
 		totalCumulativeCapacity += getValue(lastRow || {}, cat.key, 'cumulative_capacity_kwh');
 		totalCumulativeUnits += getValue(lastRow || {}, cat.key, 'cumulative_units');
-		totalAddedPowerThisYear += getValue(thisYearRow || {}, cat.key, 'added_power_kw');
-		totalAddedUnitsThisYear += getValue(thisYearRow || {}, cat.key, 'added_units');
+	}
+
+	// This-year totals and best-year: aggregate monthly rows by year
+	let totalAddedPowerThisYear = 0;
+	let totalAddedCapacityThisYear = 0;
+	let totalAddedUnitsThisYear = 0;
+	const addedCapacityByYear: Record<number, number> = {};
+
+	for (const row of data) {
+		const year = periodYear(row.period);
+		if (!addedCapacityByYear[year]) addedCapacityByYear[year] = 0;
+		for (const cat of activeCategories) {
+			const cap = getValue(row, cat.key, 'added_capacity_kwh');
+			addedCapacityByYear[year] += cap;
+			if (year === currentYear) {
+				totalAddedPowerThisYear += getValue(row, cat.key, 'added_power_kw');
+				totalAddedCapacityThisYear += cap;
+				totalAddedUnitsThisYear += getValue(row, cat.key, 'added_units');
+			}
+		}
+	}
+
+	// Capacity at start of 2020: find the first row of 2020 and subtract its added value
+	const first2020Row = data.find((d) => periodYear(d.period) === 2020);
+	let startCapacity = 0;
+	if (first2020Row) {
+		for (const cat of activeCategories) {
+			startCapacity +=
+				getValue(first2020Row, cat.key, 'cumulative_capacity_kwh') -
+				getValue(first2020Row, cat.key, 'added_capacity_kwh');
+		}
+	}
+
+	// Best year: highest added capacity, excluding current (incomplete) year
+	let bestYear = 0;
+	let bestYearCapacity = 0;
+	for (const [year, capacity] of Object.entries(addedCapacityByYear)) {
+		const y = parseInt(year, 10);
+		if (y === currentYear) continue;
+		if (capacity > bestYearCapacity) {
+			bestYearCapacity = capacity;
+			bestYear = y;
+		}
 	}
 
 	return {
@@ -244,7 +287,11 @@ export function getPlaceholders(
 		totalCumulativeCapacityMWh: formatNumber(Math.round(totalCumulativeCapacity / 1000)),
 		totalCumulativeUnits: formatNumber(totalCumulativeUnits),
 		totalAddedPowerThisYearKw: Math.round(totalAddedPowerThisYear),
+		totalAddedCapacityThisYearMWh: formatNumber(Math.round(totalAddedCapacityThisYear / 1000)),
 		totalAddedUnitsThisYear: formatNumber(totalAddedUnitsThisYear),
+		startCapacityMWh: formatNumber(Math.round(startCapacity / 1000)),
+		bestYear,
+		bestYearCapacityMWh: formatNumber(Math.round(bestYearCapacity / 1000)),
 		updateDate: formatUpdateDate(updateDate)
 	};
 }
@@ -256,11 +303,6 @@ export function buildChartData(
 	updateDate: string | null,
 	viewMode: ViewMode = 'yearly'
 ): ChartData {
-	const formattedDate = formatUpdateDate(updateDate);
-	const source = formattedDate
-		? `Marktstammdatenregister der Bundesnetzagentur (Stand: ${formattedDate})`
-		: 'Marktstammdatenregister der Bundesnetzagentur';
-
 	return {
 		raw: data,
 		table: {
@@ -271,7 +313,6 @@ export function buildChartData(
 		placeholders: getPlaceholders(data, region, activeCategories, updateDate),
 		meta: {
 			updateDate: updateDate || '',
-			source,
 			region
 		}
 	};

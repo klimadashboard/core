@@ -161,11 +161,6 @@ export function buildChartData(
 	region: Region | null,
 	updateDate: string | null
 ) {
-	const formattedDate = formatUpdateDate(updateDate);
-	const source = formattedDate
-		? `Marktstammdatenregister der Bundesnetzagentur (Stand: ${formattedDate})`
-		: 'Marktstammdatenregister der Bundesnetzagentur';
-
 	const rows = storageTypeConfigs
 		.filter((c) => currentByCategory[c.key])
 		.map((c) => ({
@@ -205,7 +200,6 @@ export function buildChartData(
 		placeholders: getPlaceholders(currentByCategory, region, updateDate),
 		meta: {
 			updateDate: updateDate || '',
-			source,
 			region
 		}
 	};

@@ -4,7 +4,7 @@
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/state';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import dayjs from 'dayjs';
+
 	import { snapdom, preCache } from '@zumer/snapdom';
 	import { Table } from '$lib/components/charts/primitives';
 	import { exportCSV, exportJSON } from '$lib/components/charts/utils/export';
@@ -113,8 +113,8 @@
 	$: if (chartData !== null) {
 		dispatch('dataAvailable', { hasData });
 	}
-	$: source = chartData?.meta?.source || chart.content?.source;
-	$: updateDate = chartData?.meta?.updateDate;
+	$: source = resolveText((chartData?.meta?.source || chart.content?.source || '').replace(/^<p>([\s\S]*?)<\/p>\s*$/m, '$1'), chartData?.placeholders) || undefined;
+
 	$: note = chartData?.meta?.note;
 
 	// Tab configuration
@@ -366,13 +366,6 @@
 									<p>
 										{page.data.translations?.source}:
 										{@html source}
-										{#if updateDate}
-											<span class="ml-1">
-												| {page.data.translations?.dataDate}: {dayjs(updateDate).format(
-													'DD.MM.YYYY'
-												)}
-											</span>
-										{/if}
 									</p>
 								{/if}
 								{#if note}
