@@ -10,6 +10,9 @@
 		type StorageTypeData,
 		type Region
 	} from './config';
+	import { categoryConfigs } from '../storageExplorer/config';
+
+	const categoryColorMap = Object.fromEntries(categoryConfigs.map((c) => [c.key, c.color]));
 
 	export let region: Region;
 	export let onChartData: (data: ReturnType<typeof buildChartData> | null) => void = () => {};
@@ -130,13 +133,13 @@
 {/snippet}
 
 {#snippet metricCard(value: string, unit: string, pctLabel: string, addedText: string)}
-	{@const pctValue = parseFloat(pctLabel) || 0}
+	{@const pctValue = pctLabel === '<1' ? 0.5 : (parseFloat(pctLabel) || 0)}
 	<div class="min-w-0">
 		<div class="flex items-baseline gap-1">
 			<span class="text-3xl font-condensed">{value}</span>
 			{#if unit}<span class="text-sm font-medium">{unit}</span>{/if}
 		</div>
-		{#if pctValue > 0}
+		{#if pctLabel && pctLabel !== '0'}
 			<div
 				class="max-w-full inline-flex items-center gap-1 text-sm font-medium px-2 py-1 rounded-full bg-gray-200 dark:bg-gray-500/40 text-emerald-600 dark:text-emerald-400 mt-2"
 			>
@@ -194,7 +197,15 @@
 						{/if}
 
 						<div class="flex-1 p-4">
-							<h3 class="text-lg leading-none font-semibold">{type.label}</h3>
+							<h3 class="text-lg leading-none font-semibold flex items-center gap-2">
+							{#if categoryColorMap[type.key]}
+								<span
+									class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+									style="background-color: {categoryColorMap[type.key]}"
+								></span>
+							{/if}
+							{type.label}
+						</h3>
 
 							<div class="grid grid-cols-2 gap-3 mt-2">
 								{@render metricCard(

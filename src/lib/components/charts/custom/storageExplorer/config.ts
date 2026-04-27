@@ -36,7 +36,7 @@ export interface StorageApiResponse {
 export const categoryConfigs: StorageCategory[] = [
 	{ key: 'heimspeicher', label: 'Heimspeicher', color: '#22c55e' },
 	{ key: 'gewerbespeicher', label: 'Gewerbespeicher', color: '#3b82f6' },
-	{ key: 'grossspeicher', label: 'Großspeicher', color: '#8b5cf6' }
+	{ key: 'grossspeicher', label: 'Großspeicher', color: '#f97316' }
 ];
 
 /** Earliest period to include for monthly data */
