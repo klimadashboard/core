@@ -58,7 +58,6 @@
 	$: enrichedTypes = storageTypeConfigs
 		.map((config) => {
 			const entry = currentByCategory[config.key];
-			if (!entry && !config.alwaysShow) return null;
 			const units = entry?.units || 0;
 			const power_kw = entry?.power_kw || 0;
 			const capacity_kwh = entry?.capacity_kwh || 0;
@@ -83,8 +82,6 @@
 					prevCapacity > 0 ? Math.round((added_capacity_kwh / prevCapacity) * 100) : null
 			};
 		})
-		.filter(Boolean)
-		.filter((t) => t!.units > 0 || t!.alwaysShow)
 		.sort((a, b) => b!.units - a!.units);
 </script>
 
@@ -183,52 +180,50 @@
 {:else}
 	<div class="flex flex-col gap-3">
 		{#each enrichedTypes as type}
-			{#if type}
-				<div class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
-					<div class="flex flex-col md:flex-row">
-						{#if type.image}
-							<div class="h-32 md:h-auto md:w-36 flex-shrink-0 m-2 rounded-l-lg overflow-hidden">
-								<img
-									src={getImageUrl(type.image)}
-									alt={type.label}
-									class="w-full h-full object-contain"
-								/>
-							</div>
-						{/if}
+			<div class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+				<div class="flex flex-col md:flex-row">
+					{#if type.image}
+						<div class="h-32 md:h-auto md:w-36 flex-shrink-0 m-2 rounded-l-lg overflow-hidden">
+							<img
+								src={getImageUrl(type.image)}
+								alt={type.label}
+								class="w-full h-full object-contain"
+							/>
+						</div>
+					{/if}
 
-						<div class="flex-1 p-4">
-							<h3 class="text-lg leading-none font-semibold flex items-center gap-2">
-								{#if categoryColorMap[type.key]}
-									<span
-										class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
-										style="background-color: {categoryColorMap[type.key]}"
-									></span>
-								{/if}
-								{type.label}
-							</h3>
+					<div class="flex-1 p-4">
+						<h3 class="text-lg leading-none font-semibold flex items-center gap-2">
+							{#if categoryColorMap[type.key]}
+								<span
+									class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+									style="background-color: {categoryColorMap[type.key]}"
+								></span>
+							{/if}
+							{type.label}
+						</h3>
 
-							<div class="grid grid-cols-2 gap-3 mt-2">
-								{@render metricCard(
-									formatNumber(type.units),
-									'Anlagen',
-									type.unit_pct,
-									type.added_units > 0
-										? `+${formatNumber(type.added_units)} Anlagen in ${currentYear}`
-										: ''
-								)}
-								{@render metricCard(
-									formatCapacity(type.capacity_kwh),
-									'',
-									type.capacity_pct,
-									type.added_capacity_kwh > 0
-										? `+${formatCapacity(type.added_capacity_kwh)} in ${currentYear}`
-										: ''
-								)}
-							</div>
+						<div class="grid grid-cols-2 gap-3 mt-2">
+							{@render metricCard(
+								formatNumber(type.units),
+								'Anlagen',
+								type.unit_pct,
+								type.added_units > 0
+									? `+${formatNumber(type.added_units)} Anlagen in ${currentYear}`
+									: ''
+							)}
+							{@render metricCard(
+								formatCapacity(type.capacity_kwh),
+								'',
+								type.capacity_pct,
+								type.added_capacity_kwh > 0
+									? `+${formatCapacity(type.added_capacity_kwh)} in ${currentYear}`
+									: ''
+							)}
 						</div>
 					</div>
 				</div>
-			{/if}
+			</div>
 		{/each}
 	</div>
 {/if}

@@ -140,9 +140,13 @@ export function getPlaceholders(
 	region: Region | null,
 	updateDate: string | null
 ): Record<string, string | number> {
-	const totalUnits = Object.values(currentByCategory).reduce((s, d) => s + d.units, 0);
-	const totalPower = Object.values(currentByCategory).reduce((s, d) => s + d.power_kw, 0);
-	const totalCapacity = Object.values(currentByCategory).reduce((s, d) => s + d.capacity_kwh, 0);
+	const knownKeys = new Set(storageTypeConfigs.map((c) => c.key));
+	const knownValues = Object.entries(currentByCategory)
+		.filter(([k]) => knownKeys.has(k))
+		.map(([, d]) => d);
+	const totalUnits = knownValues.reduce((s, d) => s + d.units, 0);
+	const totalPower = knownValues.reduce((s, d) => s + d.power_kw, 0);
+	const totalCapacity = knownValues.reduce((s, d) => s + d.capacity_kwh, 0);
 
 	return {
 		regionName: region?.name || 'Deutschland',

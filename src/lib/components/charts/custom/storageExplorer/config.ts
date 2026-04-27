@@ -50,7 +50,20 @@ export function formatPeriodLabel(period: number | string): string {
 	if (typeof period === 'number') return String(period);
 	const [year, month] = period.split('-');
 	if (!year || !month) return String(period);
-	const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+	const monthNames = [
+		'Jan',
+		'Feb',
+		'Mär',
+		'Apr',
+		'Mai',
+		'Jun',
+		'Jul',
+		'Aug',
+		'Sep',
+		'Okt',
+		'Nov',
+		'Dez'
+	];
 	return `${monthNames[parseInt(month, 10) - 1]} '${year.slice(2)}`;
 }
 
@@ -63,11 +76,7 @@ export function periodToNumber(period: number | string): number {
 
 /** Map from API prefix to our config key */
 function normalizeKey(apiKey: string): string {
-	return apiKey
-		.toLowerCase()
-		.replace(/ä/g, 'ae')
-		.replace(/ö/g, 'oe')
-		.replace(/ü/g, 'ue');
+	return apiKey.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue');
 }
 
 /** Get category config by normalized API key */
@@ -86,10 +95,7 @@ export function getActiveCategories(data: StoragePeriodData[]): StorageCategory[
 		for (const key of Object.keys(row)) {
 			if (key === 'period') continue;
 			// Extract prefix: e.g. "heimspeicher_added_power_kw" → "heimspeicher"
-			const prefix = key.replace(
-				/_(added|cumulative|removed)_(power_kw|capacity_kwh|units)$/,
-				''
-			);
+			const prefix = key.replace(/_(added|cumulative|removed)_(power_kw|capacity_kwh|units)$/, '');
 			if (prefix !== key) {
 				activePrefixes.add(prefix);
 			}
@@ -100,11 +106,7 @@ export function getActiveCategories(data: StoragePeriodData[]): StorageCategory[
 }
 
 /** Get value for a category from a row */
-export function getValue(
-	row: StoragePeriodData,
-	categoryKey: string,
-	metric: string
-): number {
+export function getValue(row: StoragePeriodData, categoryKey: string, metric: string): number {
 	const key = `${categoryKey}_${metric}`;
 	const val = row[key];
 	return typeof val === 'number' ? val : 0;
@@ -117,7 +119,7 @@ export function getValue(
 export function getViewLabels(): Record<ViewMode, string> {
 	return {
 		yearly: 'Monatlicher Zubau',
-		cumulative: 'Kumulierte Leistung'
+		cumulative: 'Kumulativ'
 	};
 }
 
@@ -131,7 +133,7 @@ export function getViewIcons(): Record<ViewMode, string> {
 export function getMetricLabels(): Record<MetricMode, string> {
 	return {
 		power: 'Kapazität',
-		units: 'Anlagen'
+		units: 'Anzahl Anlagen'
 	};
 }
 
@@ -173,9 +175,7 @@ export async function fetchStorageData(
 // ============================================================================
 
 export function getTableColumns(activeCategories: StorageCategory[]): TableColumn[] {
-	const cols: TableColumn[] = [
-		{ key: 'period', label: 'Zeitraum', align: 'left' as const }
-	];
+	const cols: TableColumn[] = [{ key: 'period', label: 'Zeitraum', align: 'left' as const }];
 
 	for (const cat of activeCategories) {
 		cols.push({
@@ -193,6 +193,12 @@ export function getTableColumns(activeCategories: StorageCategory[]): TableColum
 	}
 
 	return cols;
+}
+
+/** Returns a human-readable capacity string, auto-selecting kWh or MWh */
+function formatCapacity(kwh: number): string {
+	if (kwh >= 5000) return `${formatNumber(Math.round(kwh / 1000))} MWh`;
+	return `${formatNumber(Math.round(kwh))} kWh`;
 }
 
 function formatUpdateDate(updateDate: string | null): string {
@@ -283,15 +289,17 @@ export function getPlaceholders(
 		currentYear,
 		totalCumulativePowerKw: Math.round(totalCumulativePower),
 		totalCumulativePowerMW: formatNumber(Math.round(totalCumulativePower / 1000)),
-		totalCumulativeCapacityKwh: Math.round(totalCumulativeCapacity),
-		totalCumulativeCapacityMWh: formatNumber(Math.round(totalCumulativeCapacity / 1000)),
+		totalCumulativeCapacity: formatCapacity(totalCumulativeCapacity),
 		totalCumulativeUnits: formatNumber(totalCumulativeUnits),
 		totalAddedPowerThisYearKw: Math.round(totalAddedPowerThisYear),
-		totalAddedCapacityThisYearMWh: formatNumber(Math.round(totalAddedCapacityThisYear / 1000)),
+		totalAddedCapacityThisYear: formatCapacity(totalAddedCapacityThisYear),
 		totalAddedUnitsThisYear: formatNumber(totalAddedUnitsThisYear),
-		startCapacityMWh: formatNumber(Math.round(startCapacity / 1000)),
+		noUnitsThisYear: totalAddedUnitsThisYear === 0 ? 1 : 0,
+		singleUnitThisYear: totalAddedUnitsThisYear === 1 ? 1 : 0,
+		multipleUnitsThisYear: totalAddedUnitsThisYear > 1 ? 1 : 0,
+		startCapacity: formatCapacity(startCapacity),
 		bestYear,
-		bestYearCapacityMWh: formatNumber(Math.round(bestYearCapacity / 1000)),
+		bestYearCapacity: formatCapacity(bestYearCapacity),
 		updateDate: formatUpdateDate(updateDate)
 	};
 }

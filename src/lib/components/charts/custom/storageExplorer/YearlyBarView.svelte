@@ -20,7 +20,7 @@
 		type StoragePeriodData,
 		type StorageCategory
 	} from './config';
-	import { formatCapacity, getCapacityUnit, convertCapacityUnit } from '$lib/utils/formatters';
+	import { formatCapacity } from '$lib/utils/formatters';
 
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
@@ -63,7 +63,8 @@
 
 	// Build stacked data: for each period, compute y0 and y1 for each category
 	$: stackedData = data.map((row) => {
-		let y0 = 0;
+		let y0Pos = 0;
+		let y0Neg = 0;
 		const stacks: Array<{
 			category: StorageCategory;
 			y0: number;
@@ -75,28 +76,27 @@
 		for (const cat of displayCategories) {
 			const value = getValue(row, cat.key, metricField);
 			if (value > 0) {
-				stacks.push({
-					category: cat,
-					y0,
-					y1: y0 + value,
-					value,
-					period: row.period
-				});
-				y0 += value;
+				stacks.push({ category: cat, y0: y0Pos, y1: y0Pos + value, value, period: row.period });
+				y0Pos += value;
+			} else if (value < 0) {
+				stacks.push({ category: cat, y0: y0Neg + value, y1: y0Neg, value, period: row.period });
+				y0Neg += value;
 			}
 		}
-		return { period: row.period, total: y0, stacks };
+		return { period: row.period, total: y0Pos, totalNeg: y0Neg, stacks };
 	});
 
 	$: xDomain = data.map((d) => d.period);
 	$: yMax = Math.max(...stackedData.map((d) => d.total), 1);
+	$: yMin = Math.min(...stackedData.map((d) => d.totalNeg), 0);
 	$: unitsDivisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 1_000 ? 1_000 : 1;
+	$: capacityDivisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 5_000 ? 1_000 : 1;
 	$: unit = metricMode === 'power'
-		? getCapacityUnit(yMax)
+		? (yMax >= 1_000_000 ? 'GWh' : yMax >= 5_000 ? 'MWh' : 'kWh')
 		: unitsDivisor >= 1_000_000 ? 'Mio' : unitsDivisor >= 1_000 ? 'Tsd' : '';
 	$: yFormat = metricMode === 'power'
-		? (v: number) => formatNumber(convertCapacityUnit(v, yMax), 0)
-		: (v: number) => formatNumber(v / unitsDivisor, 0);
+		? (v: number) => { const scaled = v / capacityDivisor; return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0); }
+		: (v: number) => { const scaled = v / unitsDivisor; return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0); };
 
 	$: lateRegistrationStart =
 		xDomain.length > LATE_REGISTRATION_MONTHS
@@ -123,6 +123,7 @@
 			y="total"
 			xType="band"
 			{xDomain}
+			{yMin}
 			{yMax}
 			height={280}
 			margin={{ top: 48, right: 15, bottom: 35, left: 32 }}

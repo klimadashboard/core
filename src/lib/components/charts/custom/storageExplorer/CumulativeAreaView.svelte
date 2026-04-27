@@ -19,7 +19,7 @@
 		type StoragePeriodData,
 		type StorageCategory
 	} from './config';
-	import { formatCapacity, getCapacityUnit } from '$lib/utils/formatters';
+	import { formatCapacity } from '$lib/utils/formatters';
 
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
@@ -99,16 +99,38 @@
 		return max;
 	})();
 
-	$: divisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 1_000 ? 1_000 : 1;
+	$: divisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 5_000 ? 1_000 : 1;
 	$: unit = metricMode === 'power'
-		? getCapacityUnit(yMax)
+		? (yMax >= 1_000_000 ? 'GWh' : yMax >= 5_000 ? 'MWh' : 'kWh')
 		: divisor >= 1_000_000 ? 'Mio' : divisor >= 1_000 ? 'Tsd' : '';
-	$: yFormat = (v: number) => formatNumber(v, 0);
+	$: yFormat = (v: number) => formatNumber(v, v % 1 !== 0 ? 1 : 0);
 
 	$: lateRegistrationXNum =
 		data.length > LATE_REGISTRATION_MONTHS
 			? periodToNumber(data[data.length - LATE_REGISTRATION_MONTHS].period)
 			: null;
+
+	// Explicit year-boundary ticks derived from the actual data, so they always
+	// land on January 1st regardless of how the linear scale spaces its auto-ticks.
+	$: xAxisTicks = (() => {
+		const januaries = data
+			.filter((row) => new Date(periodToNumber(row.period)).getMonth() === 0)
+			.map((row) => periodToNumber(row.period));
+		// Thin to every other year when there are many (avoids overlap on mobile)
+		const thinned = januaries.length > 8
+			? januaries.filter((_, i) => i % 2 === 0)
+			: januaries;
+		// Include last data point only when its year isn't already represented by a January tick
+		// (avoids overlap on mobile when last point is a few months after the most recent Jan tick)
+		const lastRow = data[data.length - 1];
+		if (lastRow) {
+			const lastXNum = periodToNumber(lastRow.period);
+			const lastYear = new Date(lastXNum).getFullYear();
+			const lastJanInSameYear = januaries.find((x) => new Date(x).getFullYear() === lastYear);
+			if (!lastJanInSameYear) thinned.push(lastXNum);
+		}
+		return thinned;
+	})();
 
 	// Generate area path from stacked points
 	function areaPath(
@@ -165,9 +187,6 @@
 				let:hover
 			>
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
-				{@const lastXNum =
-					data.length > 0 ? periodToNumber(data[data.length - 1]?.period) : null}
-				{@const smallScreen = innerWidth < 500}
 				<AxisX
 					{xScale}
 					xDomain={[]}
@@ -177,16 +196,12 @@
 						const d = new Date(v);
 						const m = d.getMonth();
 						const year = d.getFullYear();
-						if (smallScreen) {
-							return m === 0 && year % 2 === 0 ? String(year) : '';
-						}
-						const monthNames = ['Jan', 'Apr', 'Jul', 'Okt'];
 						if (m === 0) return String(year);
-						if (m % 3 === 0) return monthNames[m / 3] ?? '';
-						return '';
+						const names = ['','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+						return `${names[m]} '${String(year).slice(2)}`;
 					}}
-					tickCount={smallScreen ? 3 : 10}
-					forceTicks={!smallScreen && lastXNum ? [lastXNum] : []}
+					tickCount={0}
+					forceTicks={xAxisTicks}
 				/>
 
 				<!-- Stacked areas (render bottom-up, so first category is at bottom) -->
