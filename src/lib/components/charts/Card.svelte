@@ -113,7 +113,14 @@
 	$: if (chartData !== null) {
 		dispatch('dataAvailable', { hasData });
 	}
-	$: source = resolveText((chartData?.meta?.source || chart.content?.source || '').replace(/^<p>([\s\S]*?)<\/p>\s*$/m, '$1'), chartData?.placeholders) || undefined;
+	$: source =
+		resolveText(
+			(chartData?.meta?.source || chart.content?.source || '').replace(
+				/^<p>([\s\S]*?)<\/p>\s*$/m,
+				'$1'
+			),
+			chartData?.placeholders
+		) || undefined;
 
 	$: note = chartData?.meta?.note;
 
@@ -436,6 +443,7 @@
 					{/if}
 					{#if methods}
 						<div class="mt-4 text-base max-w-xl">
+							<h3 class="font-bold">{t(page.data.translations, 'method')}</h3>
 							{@html methods}
 						</div>
 					{/if}
