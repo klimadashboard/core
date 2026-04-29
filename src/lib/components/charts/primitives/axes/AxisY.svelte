@@ -48,36 +48,22 @@
 				{@const labelText = format(tick)}
 				{@const textW = labelText.length * 7 + 2}
 
-				<text x="-4" dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
+				<text x="-4" {y} dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
 					{format(tick)}
 				</text>
 				{#if isLast && unit}
 					{@const unitText = unit}
 					<rect
 						x="-2"
-						y="-10"
+						{y}
 						width={unitText.length * 7 + 10}
 						height="20"
+						transform="translate(0, -10)"
 						class="fill-white dark:fill-gray-900"
 					/>
-					<text x="2" dy="0.32em" class="text-xs fill-gray-500">
-						{unitText}
+					<text x="2" {y} dy="0.32em" class="text-xs fill-gray-500">
+						{unit}
 					</text>
-					{#if isLast && unit}
-						{@const unitW = unit.length * 7 + 2}
-						{#if mode === 'labels'}
-							<rect
-								x="-1"
-								y="-7"
-								width={unitW + 4}
-								height="14"
-								class="fill-white dark:fill-gray-900"
-							/>
-						{/if}
-						<text x="2" dy="0.32em" class="text-xs fill-gray-500">
-							{unit}
-						</text>
-					{/if}
 				{/if}
 			{/each}
 

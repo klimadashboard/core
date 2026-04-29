@@ -250,6 +250,124 @@
 		showEmbedModal = true;
 	}
 
+	function buildVectorSvg(): Blob | null {
+		// Find the D3 chart SVG (inside .chart-container, not the logo or other SVGs)
+		const chartContainer = contentEl.querySelector('.chart-container');
+		const chartSvg = chartContainer?.querySelector('svg') as SVGElement | null;
+		if (!chartSvg) return null;
+
+		// Walk original + clone in parallel, inlining computed presentation styles
+		function walkStyles(src: Element, dst: Element) {
+			if (src instanceof SVGElement) {
+				const cs = window.getComputedStyle(src);
+				const color = cs.getPropertyValue('color');
+				const props = [
+					'fill', 'fill-opacity', 'fill-rule',
+					'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-opacity',
+					'stroke-linecap', 'stroke-linejoin',
+					'opacity',
+					'font-family', 'font-size', 'font-weight', 'font-style',
+					'text-anchor', 'dominant-baseline', 'shape-rendering'
+				];
+				const styles: string[] = [];
+				for (const p of props) {
+					let v = cs.getPropertyValue(p);
+					if (v === 'currentColor') v = color;
+					if (v) styles.push(`${p}:${v}`);
+				}
+				if (styles.length) (dst as SVGElement).setAttribute('style', styles.join(';'));
+			}
+			const sc = Array.from(src.children);
+			const dc = Array.from(dst.children);
+			for (let i = 0; i < sc.length; i++) if (dc[i]) walkStyles(sc[i], dc[i]);
+		}
+
+		const cloned = chartSvg.cloneNode(true) as SVGElement;
+		walkStyles(chartSvg, cloned);
+		cloned.querySelectorAll('[data-share-ignore]').forEach((el) => el.remove());
+
+		const escXml = (s: string) =>
+			s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		const stripTags = (s: string) => s.replace(/<[^>]+>/g, '');
+
+		const cw = parseInt(cloned.getAttribute('width') || '0');
+		const ch = parseInt(cloned.getAttribute('height') || '0');
+		if (!cw || !ch) return null;
+
+		const PADDING = 20;
+		const svgWidth = cw + PADDING * 2;
+		let yOffset = PADDING;
+		const parts: string[] = [];
+
+		const titleText = title || chart.content?.title;
+		if (titleText) {
+			parts.push(
+				`<text x="${PADDING}" y="${yOffset + 16}" font-family="Barlow, sans-serif" font-size="16" font-weight="bold" fill="#111827">${escXml(titleText)}</text>`
+			);
+			yOffset += 32;
+		}
+
+		if (heading) {
+			const headingText = stripTags(heading).trim();
+			if (headingText) {
+				// Word-wrap: SVG <text> has no native wrapping, split into <tspan> lines
+				const headingFontSize = 20;
+				const maxLineWidth = svgWidth - PADDING * 2;
+				const avgCharWidth = headingFontSize * 0.52;
+				const words = headingText.split(' ');
+				const lines: string[] = [];
+				let line = '';
+				for (const word of words) {
+					const candidate = line ? `${line} ${word}` : word;
+					if (candidate.length * avgCharWidth > maxLineWidth && line) {
+						lines.push(line);
+						line = word;
+					} else {
+						line = candidate;
+					}
+				}
+				if (line) lines.push(line);
+
+				const lineHeight = headingFontSize * 1.3;
+				const tspans = lines
+					.map(
+						(l, i) =>
+							`<tspan x="${PADDING}" dy="${i === 0 ? 0 : lineHeight}">${escXml(l)}</tspan>`
+					)
+					.join('');
+				parts.push(
+					`<text x="${PADDING}" y="${yOffset + headingFontSize}" font-family="Barlow, sans-serif" font-size="${headingFontSize}" fill="#111827">${tspans}</text>`
+				);
+				yOffset += lines.length * lineHeight + 10;
+			}
+		}
+
+		// Embed the cloned chart SVG as a nested <svg> element
+		cloned.setAttribute('x', String(PADDING));
+		cloned.setAttribute('y', String(yOffset));
+		parts.push(new XMLSerializer().serializeToString(cloned));
+		yOffset += ch + 12;
+
+		if (source) {
+			const sourceText = stripTags(source).trim();
+			if (sourceText) {
+				parts.push(
+					`<text x="${PADDING}" y="${yOffset + 12}" font-family="Barlow, sans-serif" font-size="11" fill="#6b7280">${escXml(sourceText)}</text>`
+				);
+				yOffset += 20;
+			}
+		}
+
+		const svgHeight = yOffset + PADDING;
+		const doc = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
+  <rect width="${svgWidth}" height="${svgHeight}" fill="white"/>
+  ${parts.join('\n  ')}
+</svg>`;
+
+		return new Blob([doc], { type: 'image/svg+xml' });
+	}
+
 	async function handleImage(e: MouseEvent, type: 'png' | 'svg' = 'png') {
 		e.stopPropagation();
 		if (!contentEl) return;
@@ -269,18 +387,41 @@
 				{ family: 'Barlow Condensed', src: condensedFontBold, weight: '800' }
 			];
 
-			await preCache(contentEl, { embedFonts: true, localFonts });
-
-			const result = await snapdom(contentEl, {
-				scale: 2,
-				embedFonts: true,
-				cache: 'full',
-				localFonts,
-				filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
-			});
-
 			const filename = chart.content?.title || 'chart';
-			const blob = await result.toBlob({ type });
+			let blob: Blob;
+
+			if (type === 'svg') {
+				// Try to build a true vector SVG from the D3 chart elements.
+				// Fall back to a canvas-embedded SVG for non-SVG charts (stat cards etc.).
+				const vectorBlob = buildVectorSvg();
+				if (vectorBlob) {
+					blob = vectorBlob;
+				} else {
+					await preCache(contentEl, { embedFonts: true, localFonts });
+					const result = await snapdom(contentEl, {
+						scale: 2, embedFonts: true, cache: 'full', localFonts,
+						filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
+					});
+					const canvas = await result.toCanvas();
+					const png = canvas.toDataURL('image/png');
+					const w = canvas.width, h = canvas.height;
+					blob = new Blob(
+						[`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><image href="${png}" width="${w}" height="${h}"/></svg>`],
+						{ type: 'image/svg+xml' }
+					);
+				}
+			} else {
+				await preCache(contentEl, { embedFonts: true, localFonts });
+				const result = await snapdom(contentEl, {
+					scale: 2,
+					embedFonts: true,
+					cache: 'full',
+					localFonts,
+					filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
+				});
+				blob = await result.toBlob({ type });
+			}
+
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
@@ -329,11 +470,13 @@
 				class="flex justify-between items-start mb-3"
 				class:opacity-0={showSkeleton}
 			>
-				<h2
-					class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
-				>
-					{title || chart.content?.title}
-				</h2>
+				{#if !embedHideTitle}
+					<h2
+						class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
+					>
+						{title || chart.content?.title}
+					</h2>
+				{/if}
 				<a
 					href={logoHref}
 					target="_blank"
