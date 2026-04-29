@@ -48,20 +48,20 @@
 				{@const labelText = format(tick)}
 				{@const textW = labelText.length * 7 + 2}
 
-				<g transform="translate(0,{y})">
-					{#if mode === 'labels'}
-						<!-- Opaque background so grid lines & content don't show through -->
-						<rect
-							x={-textW - 6}
-							y="-7"
-							width={textW + 4}
-							height="14"
-							class="fill-white dark:fill-gray-900"
-						/>
-					{/if}
-
-					<text x="-4" dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
-						{labelText}
+				<text x="-4" dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
+					{format(tick)}
+				</text>
+				{#if isLast && unit}
+					{@const unitText = unit}
+					<rect
+						x="-2"
+						y="-10"
+						width={unitText.length * 7 + 10}
+						height="20"
+						class="fill-white dark:fill-gray-900"
+					/>
+					<text x="2" dy="0.32em" class="text-xs fill-gray-500">
+						{unitText}
 					</text>
 
 					{#if isLast && unit}

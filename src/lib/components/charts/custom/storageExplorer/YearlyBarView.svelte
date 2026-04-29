@@ -1,0 +1,260 @@
+<!-- $lib/components/charts/custom/storageExplorer/YearlyBarView.svelte -->
+<script lang="ts">
+	import type { ChartData } from '$lib/components/charts/types';
+	import type { Region } from '$lib/utils/getRegion';
+	import Chart from '$lib/components/charts/primitives/Chart.svelte';
+	import AxisX from '$lib/components/charts/primitives/axes/AxisX.svelte';
+	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
+	import RuleX from '$lib/components/charts/primitives/marks/RuleX.svelte';
+	import RuleY from '$lib/components/charts/primitives/marks/RuleY.svelte';
+	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import {
+		buildChartData,
+		getActiveCategories,
+		getValue,
+		getMetricField,
+		LATE_REGISTRATION_MONTHS,
+		formatNumber,
+		formatPeriodLabel,
+		type MetricMode,
+		type StoragePeriodData,
+		type StorageCategory
+	} from './config';
+	import { formatCapacity } from '$lib/utils/formatters';
+
+	export let region: Region | null = null;
+	export let regionLoading: boolean = false;
+	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
+	export let data: StoragePeriodData[] = [];
+	export let updateDate: string | null = null;
+	export let dataLoading: boolean = true;
+	export let metricMode: MetricMode = 'power';
+
+	let containerEl: HTMLElement;
+
+	$: activeCategories = getActiveCategories(data);
+
+	let hiddenCategories = new Set<string>();
+	let _prevData: StoragePeriodData[] = [];
+	$: if (data !== _prevData) { _prevData = data; hiddenCategories = new Set(); }
+
+	$: displayCategories = activeCategories.filter((c) => !hiddenCategories.has(c.key));
+
+	function handleLegendClick(catKey: string) {
+		const allKeys = activeCategories.map((c) => c.key);
+		const visibleKeys = allKeys.filter((k) => !hiddenCategories.has(k));
+		if (visibleKeys.length === allKeys.length) {
+			hiddenCategories = new Set(allKeys.filter((k) => k !== catKey));
+		} else if (visibleKeys.length === 1 && visibleKeys[0] === catKey) {
+			hiddenCategories = new Set();
+		} else {
+			const next = new Set(hiddenCategories);
+			if (next.has(catKey)) {
+				next.delete(catKey);
+			} else {
+				if (visibleKeys.filter((k) => k !== catKey).length === 0) { hiddenCategories = new Set(); return; }
+				next.add(catKey);
+			}
+			hiddenCategories = next;
+		}
+	}
+
+	$: metricField = getMetricField('yearly', metricMode);
+
+	// Build stacked data: for each period, compute y0 and y1 for each category
+	$: stackedData = data.map((row) => {
+		let y0Pos = 0;
+		let y0Neg = 0;
+		const stacks: Array<{
+			category: StorageCategory;
+			y0: number;
+			y1: number;
+			value: number;
+			period: number | string;
+		}> = [];
+
+		for (const cat of displayCategories) {
+			const value = getValue(row, cat.key, metricField);
+			if (value > 0) {
+				stacks.push({ category: cat, y0: y0Pos, y1: y0Pos + value, value, period: row.period });
+				y0Pos += value;
+			} else if (value < 0) {
+				stacks.push({ category: cat, y0: y0Neg + value, y1: y0Neg, value, period: row.period });
+				y0Neg += value;
+			}
+		}
+		return { period: row.period, total: y0Pos, totalNeg: y0Neg, stacks };
+	});
+
+	$: xDomain = data.map((d) => d.period);
+	$: yMax = Math.max(...stackedData.map((d) => d.total), 1);
+	$: yMin = Math.min(...stackedData.map((d) => d.totalNeg), 0);
+	$: unitsDivisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 1_000 ? 1_000 : 1;
+	$: capacityDivisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 5_000 ? 1_000 : 1;
+	$: unit = metricMode === 'power'
+		? (yMax >= 1_000_000 ? 'GWh' : yMax >= 5_000 ? 'MWh' : 'kWh')
+		: unitsDivisor >= 1_000_000 ? 'Mio' : unitsDivisor >= 1_000 ? 'Tsd' : '';
+	$: yFormat = metricMode === 'power'
+		? (v: number) => { const scaled = v / capacityDivisor; return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0); }
+		: (v: number) => { const scaled = v / unitsDivisor; return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0); };
+
+	$: lateRegistrationStart =
+		xDomain.length > LATE_REGISTRATION_MONTHS
+			? xDomain[xDomain.length - LATE_REGISTRATION_MONTHS]
+			: undefined;
+
+	$: if (!dataLoading && data.length > 0) {
+		const chartData = buildChartData(data, region, activeCategories, updateDate, 'yearly');
+		onChartData?.(chartData);
+	} else if (!dataLoading && data.length === 0) {
+		onChartData?.(null);
+	}
+</script>
+
+<div bind:this={containerEl} class="yearly-bar-view">
+	{#if dataLoading || regionLoading}
+		<div class="h-72 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+	{:else if data.length === 0}
+		<div class="h-72 flex items-center justify-center text-gray-500">Keine Daten verfügbar</div>
+	{:else}
+		<Chart
+			data={stackedData}
+			x="period"
+			y="total"
+			xType="band"
+			{xDomain}
+			{yMin}
+			{yMax}
+			height={280}
+			margin={{ top: 48, right: 15, bottom: 35, left: 32 }}
+		>
+			<svelte:fragment
+				slot="default"
+				let:xScale
+				let:yScale
+				let:xDomain
+				let:innerWidth
+				let:innerHeight
+				let:hover
+			>
+				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
+				{@const lastPeriod = xDomain.length > 0 ? xDomain[xDomain.length - 1] : null}
+				{@const smallScreen = innerWidth < 500}
+				{@const janEvenYears = xDomain.filter((p) => {
+					const parts = String(p).split('-');
+					return parts[1] === '01' && parseInt(parts[0]!) % 2 === 0;
+				})}
+				{@const janAny = xDomain.filter((p) => String(p).split('-')[1] === '01')}
+				{@const smallScreenTicks = janEvenYears.length > 0 ? janEvenYears : janAny}
+				<AxisX
+					{xScale}
+					{xDomain}
+					{innerWidth}
+					{innerHeight}
+					format={smallScreen
+						? (v) => {
+								const parts = String(v).split('-');
+								return parts[1] === '01' ? parts[0]! : '';
+							}
+						: formatPeriodLabel}
+					tickCount={smallScreen ? 1 : Math.ceil(xDomain.length / 6)}
+					forceTicks={smallScreen ? smallScreenTicks : (lastPeriod ? [lastPeriod] : [])}
+				/>
+				<RuleY y={0} {yScale} {innerWidth} />
+
+				<!-- Stacked bars -->
+				{#each stackedData as periodData}
+					{@const barX = xScale(periodData.period)}
+					{@const barWidth = xScale.bandwidth ? xScale.bandwidth() : 20}
+					{#if barX !== undefined}
+						{#each periodData.stacks as stack}
+							<rect
+								x={barX}
+								y={yScale(stack.y1)}
+								width={barWidth}
+								height={Math.abs(yScale(stack.y0) - yScale(stack.y1))}
+								fill={stack.category.color}
+								class="transition-opacity"
+								opacity={hover.x === periodData.period ? 1 : 0.85}
+							/>
+						{/each}
+					{/if}
+				{/each}
+
+				<RuleX {xScale} {innerHeight} {hover} />
+
+				<!-- Late registration overlay -->
+				{#if lateRegistrationStart !== undefined}
+					{@const overlayX = xScale(lateRegistrationStart) ?? 0}
+					<rect
+						x={overlayX}
+						y={-48}
+						width={innerWidth - overlayX}
+						height={innerHeight + 48}
+						fill="currentColor"
+						opacity="0.06"
+						class="pointer-events-none"
+					/>
+					<text
+						text-anchor="end"
+						class="fill-gray-400 dark:fill-gray-500 pointer-events-none"
+						font-size="10"
+					>
+						<tspan x={innerWidth - 4} y={-26}>Nach-</tspan>
+						<tspan x={innerWidth - 4} dy="12">meldungen</tspan>
+						<tspan x={innerWidth - 4} dy="12">erwartet</tspan>
+					</text>
+				{/if}
+			</svelte:fragment>
+
+			<svelte:fragment slot="tooltip" let:hover>
+				{@const periodData = stackedData.find((d) => d.period === hover.x)}
+				<Tooltip
+					visible={hover.x !== null}
+					x={hover.clientX}
+					y={hover.clientY}
+					title={hover.x !== null ? formatPeriodLabel(hover.x) : ''}
+					items={periodData
+						? [
+								...periodData.stacks
+									.filter((s) => s.value > 0)
+									.reverse()
+									.map((s) => ({
+										label: s.category.label,
+										value: metricMode === 'power'
+											? formatCapacity(s.value)
+											: formatNumber(s.value, 0),
+										color: s.category.color
+									})),
+								...(periodData.total > 0
+									? [
+											{
+												label: 'Gesamt',
+												value: metricMode === 'power'
+													? formatCapacity(periodData.total)
+													: formatNumber(periodData.total, 0)
+											}
+										]
+									: [])
+							]
+						: []}
+					container={containerEl}
+				/>
+			</svelte:fragment>
+		</Chart>
+
+		<!-- Legend -->
+		<div class="flex flex-wrap gap-1 mt-4 text-sm">
+			{#each activeCategories as cat}
+				{@const isHidden = hiddenCategories.has(cat.key)}
+				<button
+					class="flex items-center gap-2 px-2 py-1 rounded transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 {isHidden ? 'opacity-40' : ''}"
+					onclick={() => handleLegendClick(cat.key)}
+				>
+					<div class="w-4 h-3 rounded-sm flex-shrink-0" style="background: {cat.color}"></div>
+					<span>{cat.label}</span>
+				</button>
+			{/each}
+		</div>
+	{/if}
+</div>
