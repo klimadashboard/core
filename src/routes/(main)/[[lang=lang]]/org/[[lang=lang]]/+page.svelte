@@ -8,7 +8,7 @@
 	export let data;
 
 	/* ─── i18n ─────────────────────────────────────────────── */
-	const tr: Record<string, string> = {
+	const trDE: Record<string, string> = {
 		'org.kicker': 'Klimadashboard.org',
 		'org.hero.title1': 'Wir machen die Klimawende',
 		'org.hero.title2': 'mit Daten greifbar.',
@@ -52,9 +52,59 @@
 		'org.cta.text':
 			'Als gemeinnütziger Verein sind wir auf Spenden und Förderungen angewiesen. Mit deinem Beitrag ermöglichst du neue Datenprojekte, die die Klimawende beschleunigen.',
 		'org.cta.donate': 'Jetzt spenden',
-		'org.cta.contact': 'Kontakt aufnehmen',
-		...(data.translations ?? {})
+		'org.cta.contact': 'Kontakt aufnehmen'
 	};
+
+	const trEN: Record<string, string> = {
+		'org.kicker': 'Klimadashboard.org',
+		'org.hero.title1': 'We make the climate transition',
+		'org.hero.title2': 'tangible with data.',
+		'org.hero.subtitle':
+			'Our interactive dashboards show the challenges, impacts, and solutions of the climate crisis — up to date, regional, and accessible to everyone.',
+		'org.hero.cta.projects': 'Our Projects',
+		'org.hero.cta.support': 'Support us',
+		'org.projects.title': 'Our Projects',
+		'org.projects.subtitle':
+			'We build data visualisations for Austria, Germany, and the entire European Union.',
+		'org.projects.status.featured': 'Project',
+		'org.projects.status.active': 'Active',
+		'org.projects.status.done': 'Completed',
+		'org.projects.status.planned': 'Planned',
+		'org.events.title': 'Events',
+		'org.events.subtitle':
+			'We run workshops, organise exhibitions, and regularly appear at conferences.',
+		'org.team.title': 'Our Team',
+		'org.team.subtitle':
+			'We bring together expertise from science, design, engineering, and communications in our international team.',
+		'org.open.title': 'Open by default',
+		'org.open.subtitle':
+			'Klimadashboard makes climate data accessible to everyone. Our own work is transparent too.',
+		'org.open.tag': 'Principle',
+		'org.open.source.title': 'Open Source',
+		'org.open.source.text': 'Our software is open to all — to inspect, copy, and improve.',
+		'org.open.data.title': 'Open Data',
+		'org.open.data.text': 'We make datasets accessible — traceable, verifiable, and reusable.',
+		'org.open.finance.title': 'Open Finance',
+		'org.open.finance.text': 'We publish our budgets, expenses, and income.',
+		'org.open.finance.income': 'Income',
+		'org.open.finance.expenses': 'Expenses',
+		'org.open.finance.balance': 'Balance',
+		'org.open.finance.report': 'Full Report',
+		'org.media.title': 'In the Media',
+		'org.media.subtitle':
+			'Our data & visualisations are regularly picked up in media coverage.',
+		'org.media.contact': 'Press enquiries:',
+		'org.cta.title': 'Support our work.',
+		'org.cta.text':
+			'As a non-profit, we depend on donations and grants. Your contribution enables new data projects that accelerate the climate transition.',
+		'org.cta.donate': 'Donate now',
+		'org.cta.contact': 'Get in touch'
+	};
+
+	$: tr = {
+		...(data.language?.code === 'en' ? trEN : trDE),
+		...(data.translations ?? {})
+	} as Record<string, string>;
 
 	/* ─── Data ─────────────────────────────────────────────── */
 	const team: any[] = data.team ?? [];

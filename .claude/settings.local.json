@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:base.klimadashboard.org)",
+      "WebFetch(domain:tablericons.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -s \"https://base.klimadashboard.org/assets/f5e3ead2-c97f-4981-a442-aa0445d119a9\")",
+      "WebFetch(domain:claude.ai)",
+      "Bash(npx svelte-check *)"
+    ]
+  }
+}
