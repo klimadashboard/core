@@ -205,6 +205,20 @@
 		};
 	}
 
+	// Approximate bounding box for Germany
+	const GERMANY_BOUNDS: [[number, number], [number, number]] = [
+		[5.87, 47.27],
+		[15.04, 55.06]
+	];
+
+	function fitToGermany() {
+		if (!map) return;
+		map.fitBounds(GERMANY_BOUNDS, {
+			padding: { top: 30, bottom: 30, left: 30, right: 30 },
+			duration: 1000
+		});
+	}
+
 	function initializeMap(center: [string, string] | string[]) {
 		if (!mapContainer) {
 			console.error('Map container not found');
@@ -216,9 +230,11 @@
 		const centerArray: [string, string] = [String(center[0]), String(center[1])];
 
 		if (map) {
-			// If we have a region outline, fit to it; otherwise just center
+			// If we have a region outline, fit to it; otherwise fit to Germany
 			if (regionOutline) {
 				fitToRegionOutline();
+			} else if (!region && !urlRegionId) {
+				fitToGermany();
 			} else {
 				const lon = parseFloat(centerArray[0]);
 				const lat = parseFloat(centerArray[1]);
@@ -239,12 +255,15 @@
 			container: mapContainer,
 			style: getBasemapStyle(isDarkMode),
 			center: centerCoords,
-			zoom: 8
+			zoom: region || urlRegionId ? 8 : 5
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
+			if (!region && !urlRegionId) {
+				fitToGermany();
+			}
 			loadTurbines();
 		});
 
@@ -537,6 +556,9 @@
 		} else if (regionOutline) {
 			// No highlighted turbines - zoom to region boundary
 			fitToRegionOutline();
+		} else {
+			// No region or region outline - zoom to show all of Germany
+			fitToGermany();
 		}
 	}
 
