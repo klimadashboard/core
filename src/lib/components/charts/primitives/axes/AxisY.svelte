@@ -63,7 +63,6 @@
 					<text x="2" dy="0.32em" class="text-xs fill-gray-500">
 						{unitText}
 					</text>
-
 					{#if isLast && unit}
 						{@const unitW = unit.length * 7 + 2}
 						{#if mode === 'labels'}
@@ -79,7 +78,7 @@
 							{unit}
 						</text>
 					{/if}
-				</g>
+				{/if}
 			{/each}
 
 			{#if label}

@@ -131,6 +131,7 @@ export async function load({ fetch, params }) {
 					// Non-translated block types inside grid
 					'blocks.item:block_grid.blocks.item:block_news.*',
 					'blocks.item:block_grid.blocks.item:block_chart.*',
+					'blocks.item:block_grid.blocks.item:block_chart.charts.chart',
 					'blocks.item:block_grid.blocks.item:block_quiz.*',
 					'blocks.item:block_grid.blocks.item:block_grid.*'
 					// ^ if you allow nested grids, you'd keep going or do recursion.
