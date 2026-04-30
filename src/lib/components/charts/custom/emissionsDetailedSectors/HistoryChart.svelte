@@ -156,7 +156,10 @@
 					{innerWidth}
 					{innerHeight}
 					unit="Mt CO₂eq"
-					format={(v) => String(Math.round(v))}
+					format={(v) => {
+						const r = Math.round(v * 10) / 10;
+						return Number.isInteger(r) ? String(r) : r.toFixed(1).replace('.', ',');
+					}}
 				/>
 				<AxisX
 					{xScale}
