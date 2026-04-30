@@ -1,51 +1,105 @@
 import type { ChartFetchParams, ChartData, TableColumn } from '../../types';
+import { readItems } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
 import { PUBLIC_VERSION } from '$env/static/public';
+import mappingAt from './mapping.at.json';
+import mappingDe from './mapping.de.json';
+const mapping = PUBLIC_VERSION === 'de' ? mappingDe : mappingAt;
 
-const KSG_SECTORS = [
-	{ key: 'industry', label: 'Industrie' },
-	{ key: 'traffic', label: 'Mobilität' },
-	{ key: 'energy', label: 'Energie' },
-	{ key: 'buildings', label: 'Gebäude' },
-	{ key: 'agriculture', label: 'Landwirtschaft' },
-	{ key: 'waste', label: 'Abfall' },
-	{ key: 'fluorinated', label: 'Fluorierte Gase' }
-];
+const FLU_GASES = ['HFC', 'PFC', 'SF6', 'NF3'];
+const ALL_GASES = ['THG', 'CO2', 'CH4', 'N2O', ...FLU_GASES];
+const ALL_CODES = mapping.sectors.flatMap((s) => s.subsectors.map((sub) => sub.code));
 
-const START_YEAR = 1990;
+export async function loadDataset(fetchFn?: typeof globalThis.fetch) {
+	const directus = getDirectusInstance(fetchFn);
+
+	const rows = (await directus.request(
+		readItems('emissions_data', {
+			filter: {
+				_and: [
+					{ country: { _eq: PUBLIC_VERSION.toUpperCase() } },
+					{ category: { _in: ALL_CODES } },
+					{ gas: { _in: ALL_GASES } }
+				]
+			},
+			fields: ['category', 'year', 'value', 'value_weighted', 'gas'],
+			sort: ['year'],
+			limit: -1
+		})
+	)) as Array<{ category: string; year: number; value: number; value_weighted?: number; gas: string }>;
+
+	if (!rows.length) return null;
+
+	const rowMap = new Map<string, number>();
+	const rowMapWeighted = new Map<string, number>();
+	for (const row of rows) {
+		const key = `${row.category}|${row.year}|${row.gas}`;
+		rowMap.set(key, row.value);
+		if (row.value_weighted != null) rowMapWeighted.set(key, row.value_weighted);
+	}
+
+	const dbYears = [...new Set(rows.map((r) => r.year))].sort((a, b) => a - b);
+	const maxYear = dbYears[dbYears.length - 1];
+	const years = Array.from({ length: maxYear - 1990 + 1 }, (_, i) => 1990 + i);
+
+	const toMt = (tons: number) => tons / 1_000_000;
+
+	function getVal(code: string, year: number, gasKey: string): number {
+		if (gasKey === 'FLU') {
+			return FLU_GASES.reduce((sum, g) => {
+				const key = `${code}|${year}|${g}`;
+				return sum + (rowMapWeighted.get(key) ?? rowMap.get(key) ?? 0);
+			}, 0);
+		}
+		const key = `${code}|${year}|${gasKey}`;
+		return rowMapWeighted.get(key) ?? rowMap.get(key) ?? 0;
+	}
+
+	function buildGasDataset(gasKey: string) {
+		return mapping.sectors.map((sector) => {
+			const subsectors = sector.subsectors.map((sub) => ({
+				code: sub.code,
+				key: sector.key,
+				label: sub.label,
+				absolute: years.map((year) => toMt(getVal(sub.code, year, gasKey)))
+			}));
+			return {
+				key: sector.key,
+				label: sector.label,
+				ksgSector: sector.label,
+				absolute: years.map((_, yi) => subsectors.reduce((sum, sub) => sum + sub.absolute[yi], 0)),
+				sectors: subsectors
+			};
+		});
+	}
+
+	return {
+		THG: buildGasDataset('THG'),
+		CO2: buildGasDataset('CO2'),
+		CH4: buildGasDataset('CH4'),
+		N2O: buildGasDataset('N2O'),
+		FLU: buildGasDataset('FLU')
+	};
+}
 
 export async function fetchChartData({
 	fetch: fetchFn
 }: ChartFetchParams): Promise<ChartData | null> {
-	const version = PUBLIC_VERSION;
-	const url = `https://data.klimadashboard.org/${version}/emissions/emissions_crf_${version}.json`;
+	const data = await loadDataset(fetchFn);
+	if (!data) return null;
 
-	let response: Response;
-	try {
-		response = await fetchFn(url);
-	} catch {
-		return null;
-	}
-	if (!response.ok) return null;
+	const thgSectors = data.THG.filter((s) => s.key !== 'memo');
+	const yearCount = thgSectors[0]?.absolute.length ?? 0;
+	if (!yearCount) return null;
 
-	const dataset = await response.json();
-	const thgData = dataset['THG'];
-	if (!thgData?.length) return null;
+	const years = Array.from({ length: yearCount }, (_, i) => 1990 + i);
+	const maxYear = years[years.length - 1];
 
-	// Determine maxYear dynamically from the data
-	const yearCount = thgData[0].absolute.length;
-	const maxYear = START_YEAR + yearCount - 1;
-
-	// Build sector lookup (exclude Memo)
-	const sectorData = thgData.filter(
-		(s: any) => s.key !== 'memo' && KSG_SECTORS.some((ks) => ks.key === s.key)
-	);
-
-	// Table: one row per year, columns per KSG sector (values in Mt CO₂eq)
 	const columns: TableColumn[] = [
 		{ key: 'year', label: 'Jahr', align: 'left' },
-		...KSG_SECTORS.filter((ks) => sectorData.some((s: any) => s.key === ks.key)).map((ks) => ({
-			key: ks.key,
-			label: ks.label,
+		...thgSectors.map((s) => ({
+			key: s.key,
+			label: s.label,
 			align: 'right' as const,
 			format: (v: any) =>
 				typeof v === 'number'
@@ -63,22 +117,19 @@ export async function fetchChartData({
 		}
 	];
 
-	const tableRows = [];
-	for (let yi = 0; yi < yearCount; yi++) {
-		const row: Record<string, any> = { year: START_YEAR + yi };
+	const tableRows = years.map((year, yi) => {
+		const row: Record<string, any> = { year };
 		let total = 0;
-		for (const sector of sectorData) {
-			const val = sector.absolute[yi];
-			row[sector.key] = val;
-			if (typeof val === 'number') total += val;
+		for (const s of thgSectors) {
+			const val = s.absolute[yi];
+			row[s.key] = val;
+			total += val;
 		}
 		row.total = total > 0 ? total : null;
-		tableRows.push(row);
-	}
+		return row;
+	});
 
-	// Placeholders
-	const latestRow = tableRows[tableRows.length - 1];
-	const totalEmissions = latestRow?.total ?? 0;
+	const totalEmissions = tableRows[tableRows.length - 1]?.total ?? 0;
 
 	return {
 		raw: tableRows,
@@ -91,8 +142,6 @@ export async function fetchChartData({
 				maximumFractionDigits: 1
 			})
 		},
-		meta: {
-			source: 'Umweltbundesamt'
-		}
+		meta: { source: 'Umweltbundesamt' }
 	};
 }

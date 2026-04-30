@@ -6,6 +6,7 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { page } from '$app/state';
 	import { Select, RangeSlider, Toggle } from '$lib/components/ui';
+	import { loadDataset } from './config';
 	import {
 		IconBuildingFactory2,
 		IconCar,
@@ -182,97 +183,65 @@
 		return colorForKey(ksgKey)?.iconComponent;
 	};
 
-	const KSG_SECTOR_LABELS = {
-		industry: 'Industrie',
-		traffic: 'Mobilität',
-		energy: 'Energie',
-		buildings: 'Gebäude',
-		agriculture: 'Landwirtschaft',
-		waste: 'Abfall',
-		fluorinated: 'Fluorierte Gase'
-	};
-
-	const datasetPromise = fetch(
-		`https://data.klimadashboard.org/${PUBLIC_VERSION}/emissions/emissions_crf_${PUBLIC_VERSION}.json`
-	)
-		.then((response) => response.json())
-		.then((responseData) => {
-			dataset = responseData;
-
-			// Derive maxYear dynamically from data
-			const thgData = responseData['THG'];
-			if (thgData?.length && thgData[0].absolute?.length) {
-				maxYear = 1990 + thgData[0].absolute.length - 1;
-				selectedYear = maxYear;
-				years = Array.from({ length: maxYear - 1990 + 1 }).map((_, i) => 1990 + i);
-			}
-
-			// Provide table data to Card for table tab + CSV/JSON download
-			if (onChartData && thgData?.length) {
-				const sectorData = thgData.filter((s) => s.key !== 'memo' && KSG_SECTOR_LABELS[s.key]);
-				const sectorKeys = sectorData.map((s) => s.key);
-
-				const columns = [
-					{ key: 'year', label: 'Jahr', align: 'left' },
-					...sectorKeys.map((key) => ({
-						key,
-						label: KSG_SECTOR_LABELS[key],
-						align: 'right',
-						format: (v) =>
-							typeof v === 'number'
-								? v.toLocaleString('de-DE', {
-										minimumFractionDigits: 2,
-										maximumFractionDigits: 2
-									})
-								: '–'
-					})),
-					{
-						key: 'total',
-						label: 'Gesamt',
-						align: 'right',
-						format: (v) =>
-							typeof v === 'number'
-								? v.toLocaleString('de-DE', {
-										minimumFractionDigits: 2,
-										maximumFractionDigits: 2
-									})
-								: '–'
-					}
-				];
-
-				const yearCount = thgData[0].absolute.length;
-				const tableRows = [];
-				for (let yi = 0; yi < yearCount; yi++) {
-					const row = { year: 1990 + yi };
-					let total = 0;
-					for (const sector of sectorData) {
-						const val = sector.absolute[yi];
-						row[sector.key] = val;
-						if (typeof val === 'number') total += val;
-					}
-					row.total = total > 0 ? total : null;
-					tableRows.push(row);
+	const datasetPromise = loadDataset().then((result) => {
+		if (!result) return null;
+		dataset = result;
+		const yearCount = result.THG[0]?.absolute.length ?? 0;
+		if (yearCount) {
+			maxYear = 1990 + yearCount - 1;
+			selectedYear = maxYear;
+			years = Array.from({ length: yearCount }, (_, i) => 1990 + i);
+		}
+		if (onChartData) {
+			const thgSectors = result.THG.filter((s) => s.key !== 'memo');
+			const columns = [
+				{ key: 'year', label: 'Jahr', align: 'left' },
+				...thgSectors.map((s) => ({
+					key: s.key,
+					label: s.label,
+					align: 'right',
+					format: (v) =>
+						typeof v === 'number'
+							? v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+							: '–'
+				})),
+				{
+					key: 'total',
+					label: 'Gesamt',
+					align: 'right',
+					format: (v) =>
+						typeof v === 'number'
+							? v.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+							: '–'
 				}
-
-				const latestTotal = tableRows[tableRows.length - 1]?.total ?? 0;
-
-				onChartData({
-					raw: tableRows,
-					table: { columns, rows: tableRows, filename: 'emissionen_sektoren_detail' },
-					hasData: true,
-					placeholders: {
-						latestYear: String(maxYear),
-						totalEmissions: latestTotal.toLocaleString('de-DE', {
-							minimumFractionDigits: 1,
-							maximumFractionDigits: 1
-						})
-					},
-					meta: { source: 'Umweltbundesamt' }
-				});
-			}
-
-			return responseData;
-		});
+			];
+			const tableRows = years.map((year, yi) => {
+				const row = { year };
+				let total = 0;
+				for (const s of thgSectors) {
+					const val = s.absolute[yi];
+					row[s.key] = val;
+					total += val;
+				}
+				row.total = total > 0 ? total : null;
+				return row;
+			});
+			onChartData({
+				raw: tableRows,
+				table: { columns, rows: tableRows, filename: 'emissionen_sektoren_detail' },
+				hasData: true,
+				placeholders: {
+					latestYear: String(maxYear),
+					totalEmissions: (tableRows[tableRows.length - 1]?.total ?? 0).toLocaleString('de-DE', {
+						minimumFractionDigits: 1,
+						maximumFractionDigits: 1
+					})
+				},
+				meta: { source: 'Umweltbundesamt' }
+			});
+		}
+		return result;
+	});
 
 	$: data = dataset?.[selectedGhGas].sort(
 		(a, b) => b.absolute[maxYear - 1990] - a.absolute[maxYear - 1990]
@@ -325,7 +294,7 @@
 			sectorlyData.slice(row.start, s).reduce((sum, entry) => sum + entry.absolute[_y], 0) /
 			totalSelectedYear;
 
-		const selected = ksgSelection == s;
+		const selected = ksgSelection == ksg.key;
 		const w = selected ? 1000 : (1000 * percentSector) / percentRow;
 		const h = selected ? 1000 : percentRow * 1000;
 		const x = selected ? 0 : (percentUpToKSGIndex / percentRow) * 1000;
@@ -391,6 +360,13 @@
 		sectorlyData?.reduce((sum, entry) => sum + entry.absolute[year - 1990], 0);
 	$: totalSelectedYear = totalForYear(selectedYear);
 
+	function formatAbsMt(valueMt) {
+		if (valueMt >= 1) {
+			return valueMt.toFixed(2).replace('.', ',') + ' Mt CO₂eq';
+		}
+		return (valueMt * 1_000_000).toLocaleString('de-AT', { maximumFractionDigits: 0 }) + ' t CO₂eq';
+	}
+
 	// dynamic variables
 	let selectedYear = maxYear;
 	let selectedGhGas = 'THG';
@@ -407,8 +383,8 @@
 	// Uses sectorlyData (not sortedData) to avoid reactive cycle since sortedData depends on ksgSelection
 	let initialSelectionApplied = false;
 	$: if (sectorlyData && !initialSelectionApplied && chart?.options?.sector) {
-		const idx = sectorlyData.findIndex((s) => s.key === chart.options.sector);
-		if (idx >= 0) ksgSelection = idx;
+		const found = sectorlyData.find((s) => s.key === chart.options.sector);
+		if (found) ksgSelection = found.key;
 		initialSelectionApplied = true;
 	}
 
@@ -484,10 +460,11 @@
 				</span>
 			</button>
 			{#if ksgSelection != null}
+				{@const selectedKsg = sortedData.find((s) => s.key === ksgSelection)}
 				<IconChevronRight size={24} />
 				<button
 					class="group overflow"
-					style="color: {colorForKey(sortedData[ksgSelection].color)};"
+					style="color: {colorForKey(selectedKsg?.key)?.colorCode};"
 					on:mousedown={() => {
 						crfSelection = null;
 						extensiveList = false;
@@ -495,11 +472,11 @@
 					disabled={crfSelection == null && !extensiveList}
 				>
 					<span class="group-hover:underline group-disabled:no-underline underline-offset-2"
-						>{@html sortedData[ksgSelection].label}</span
+						>{@html selectedKsg?.label}</span
 					>
 					<span class="text-sm max-sm:hidden opacity-70 pb-[2px]"
-						>{sortedData[ksgSelection].absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(
-							(sortedData[ksgSelection].absolute[_y] / totalSelectedYear) *
+						>{selectedKsg?.absolute[_y].toFixed(2).replace('.', ',')} Mt CO₂eq ({(
+							((selectedKsg?.absolute[_y] ?? 0) / totalSelectedYear) *
 							100
 						)
 							.toFixed(2)
@@ -508,23 +485,19 @@
 				</button>
 			{/if}
 			{#if ksgSelection != null && crfSelection != null}
+				{@const selectedKsg = sortedData.find((s) => s.key === ksgSelection)}
+				{@const selectedCrf = selectedKsg?.sectors.find((sector) => sector.code === crfSelection)}
 				<IconChevronRight size={24} />
 				<span>
 					<span>
-						{@html sortedData[ksgSelection].sectors.find((sector) => sector.code === crfSelection)
-							?.label}
+						{@html selectedCrf?.label}
 					</span>
 					<span class="text-sm max-sm:hidden opacity-70 pb-[2px] ml-1"
-						>{sortedData[ksgSelection].sectors
-							.find((sector) => sector.code === crfSelection)
-							?.absolute[_y].toLocaleString('de-AT', {
-								minimumFractionDigits: 1,
-								maximumFractionDigits: 1
-							})} kt ({Math.round(
-							(sortedData[ksgSelection].sectors.find((sector) => sector.code === crfSelection)
-								?.absolute[_y] /
-								totalSelectedYear) *
-								10000
+						>{(selectedCrf?.absolute[_y] ?? 0).toLocaleString('de-AT', {
+							minimumFractionDigits: 1,
+							maximumFractionDigits: 1
+						})} kt ({Math.round(
+							((selectedCrf?.absolute[_y] ?? 0) / totalSelectedYear) * 10000
 						) / 100}%)</span
 					>
 				</span>
