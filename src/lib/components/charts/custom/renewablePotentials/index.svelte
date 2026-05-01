@@ -186,7 +186,8 @@
 					filter: {
 						_and: [
 							{
-								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								source_category: { _eq: "Bundesländerziel" }
 							}
 						]
 					},
