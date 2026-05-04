@@ -240,7 +240,7 @@
 							>{MEDALS[row.origRank - 1]}</span
 						>{/if}
 					<span
-						class="font-mono text-lg font-bold leading-none {row.origRank <= 3
+						class="text-lg font-bold leading-none {row.origRank <= 3
 							? 'text-amber-500'
 							: 'text-[#19191c] dark:text-gray-400'}">{row.origRank}</span
 					>
@@ -265,7 +265,7 @@
 		</div>
 		<div role="cell" aria-label="Genutztes Potential: {row.potential.toFixed(1)} Prozent">
 			<div class="space-y-1">
-				<div class="font-mono text-base font-bold text-[#19191c] dark:text-gray-100">
+				<div class="text-base font-bold text-[#19191c] dark:text-gray-100">
 					{row.potential.toFixed(1)}
 				</div>
 				<div class="h-1 w-full rounded bg-gray-100">
@@ -315,7 +315,7 @@
 		</div>
 		<div role="cell" aria-label="Dächer mit PV: {row.daecher.toFixed(1)} Prozent">
 			<div class="space-y-1">
-				<div class="font-mono text-base text-[#19191c] dark:text-gray-300">
+				<div class="text-base text-[#19191c] dark:text-gray-300">
 					{row.daecher.toFixed(1)}
 				</div>
 				<div class="h-1 w-full rounded bg-gray-100">
@@ -327,7 +327,7 @@
 			</div>
 		</div>
 		<div role="cell" aria-label="Installierte Leistung: {row.mwp.toFixed(1)} MWp">
-			<span class="font-mono text-base text-[#19191c] dark:text-gray-300">{row.mwp.toFixed(1)}</span
+			<span class="text-base text-[#19191c] dark:text-gray-300">{row.mwp.toFixed(1)}</span
 			>
 		</div>
 	</div>
