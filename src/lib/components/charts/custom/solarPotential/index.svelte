@@ -14,7 +14,7 @@
 		type SolarAverages,
 		type SolarNeighbourEntry
 	} from './config';
-	import GemeindeKPIs from './GemeindeKPIs.svelte';
+	import MunicipalityKPIs from './MunicipalityKPIs.svelte';
 	import AwardsSection from './AwardsSection.svelte';
 	import RankingTable from './RankingTable.svelte';
 
@@ -192,7 +192,7 @@
 	<!-- rendered once data arrives; Card.svelte skeleton covers the loading state -->
 	<!-- ══ KPI CARDS ════════════════════════════════════════════════ -->
 	<section>
-		<GemeindeKPIs {stats} {averages} />
+		<MunicipalityKPIs {stats} {averages} />
 	</section>
 
 	<!-- ══ AWARDS ═══════════════════════════════════════════════════ -->
