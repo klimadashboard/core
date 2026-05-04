@@ -21,7 +21,7 @@
 	};
 	const SHARE_COLORS: Record<Award['color'], string> = {
 		gold: 'bg-amber-500 hover:bg-amber-600',
-		green: 'bg-emerald-600 hover:bg-emerald-700',
+		green: 'bg-green-600 hover:bg-green-700',
 		blue: 'bg-blue-600 hover:bg-blue-700',
 		purple: 'bg-purple-600 hover:bg-purple-700'
 	};
@@ -45,7 +45,7 @@
 
 <div class="mb-4 flex items-center justify-between">
 	<h2 class="text-base font-bold text-gray-900 dark:text-gray-100">🏆 Awards</h2>
-	<span class="text-xs text-gray-500">{unlocked} von {awards.length} freigeschaltet</span>
+	<span class="text-sm text-gray-500">{unlocked} von {awards.length} freigeschaltet</span>
 </div>
 
 <Splide
