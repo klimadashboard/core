@@ -86,26 +86,34 @@
 		} catch (error) {
 			console.error('Error fetching emissions data:', error);
 			results = [];
-			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
+			onChartData?.({
+				raw: [],
+				hasData: false,
+				table: { columns: [], rows: [], filename: '' },
+				placeholders: {},
+				meta: {}
+			});
 		} finally {
 			loading = false;
 		}
 	}
 
 	// Page region context for info text placeholders (stable, based on page region prop)
-	$: pageRegionContext = (region
-		? {
-				name: region.name,
-				layer: region.layer,
-				parents: region.parents
-			}
-		: page.data?.page
+	$: pageRegionContext = (
+		region
 			? {
-					name: page.data.page.name,
-					layer: page.data.page.layer,
-					parents: page.data.page.parents
+					name: region.name,
+					layer: region.layer,
+					parents: region.parents
 				}
-			: null) as PageRegionContext | null;
+			: page.data?.page
+				? {
+						name: page.data.page.name,
+						layer: page.data.page.layer,
+						parents: page.data.page.parents
+					}
+				: null
+	) as PageRegionContext | null;
 
 	function updateChartData() {
 		const selectedRegion = results.find((r) => r.key === activeLayer);
@@ -113,7 +121,13 @@
 			sectorProgress = [];
 			summaryStats = null;
 			hasNegativeProgress = false;
-			onChartData?.({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
+			onChartData?.({
+				raw: [],
+				hasData: false,
+				table: { columns: [], rows: [], filename: '' },
+				placeholders: {},
+				meta: {}
+			});
 			return;
 		}
 
@@ -132,7 +146,13 @@
 		if (onChartData) {
 			// Signal no data if sectors are empty (no climate target)
 			if (sectors.length === 0) {
-				onChartData({ raw: [], hasData: false, table: { columns: [], rows: [], filename: '' }, placeholders: {}, meta: {} });
+				onChartData({
+					raw: [],
+					hasData: false,
+					table: { columns: [], rows: [], filename: '' },
+					placeholders: {},
+					meta: {}
+				});
 				return;
 			}
 			// Get source from actual data
@@ -140,7 +160,15 @@
 				selectedRegion.data.find((d) => d.source !== 'climate-target')?.source || 'Emissions data';
 			// Compute info text placeholders from page region context
 			const infoTextPlaceholders = computeInfoTextPlaceholders(results, pageRegionContext);
-			const chartData = buildChartData(selectedRegion, sectors, summary, useMegatons, dataSource, PUBLIC_VERSION, infoTextPlaceholders);
+			const chartData = buildChartData(
+				selectedRegion,
+				sectors,
+				summary,
+				useMegatons,
+				dataSource,
+				PUBLIC_VERSION,
+				infoTextPlaceholders
+			);
 			onChartData(chartData);
 		}
 	}
@@ -166,7 +194,6 @@
 
 	// Determine if we should display in megatons based on data magnitude
 	$: useMegatons = selectedRegion ? shouldUseMegatons(selectedRegion.data) : false;
-
 
 	// Trigger animation when data is ready and component is visible
 	$: if (width > 0 && sectorProgress.length > 0 && !hasAnimated) {
@@ -357,7 +384,9 @@
 							<!-- Percentage label inside bar -->
 							<span
 								class="absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold whitespace-nowrap"
-								style="left: {isNegative ? '6px' : `calc(${animatedProgress}% + 6px)`}; color: {isNegative
+								style="left: {isNegative
+									? '6px'
+									: `calc(${animatedProgress}% + 6px)`}; color: {isNegative
 									? '#ef4444'
 									: sector.color};"
 							>
@@ -397,7 +426,9 @@
 	<div class="flex flex-wrap gap-x-6 gap-y-2 mt-6 text-xs">
 		<div class="flex items-center gap-2">
 			<div class="w-6 h-2 bg-current/70 rounded-full"></div>
-			<span class="opacity-70">Ziel: Klimaneutralität bis {summaryStats.targetYear}</span>
+			<span class="opacity-70"
+				>Ziel in {selectedRegion.label}: Klimaneutralität bis {summaryStats.targetYear}</span
+			>
 		</div>
 	</div>
 
