@@ -247,9 +247,9 @@
 				</div>
 				{#if row.rc != null && row.rc !== 0}
 					<span
-						class="text-[9px] font-bold leading-none {row.rc > 0 ? 'text-green-500' : 'text-red-500'}"
+						class="text-xs pt-0.5 font-bold leading-none {row.rc > 0 ? 'text-green-500' : 'text-red-500'}"
 					>
-						{row.rc > 0 ? '▲' : '▼'}{Math.abs(row.rc)}
+						{row.rc > 0 ? '▲' : '▼'}{' '}{Math.abs(row.rc)}
 					</span>
 				{/if}
 			{/if}
