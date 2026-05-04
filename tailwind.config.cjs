@@ -59,6 +59,7 @@ module.exports = {
 			yellow: colors.yellow,
 			orange: colors.orange,
 			amber: colors.amber,
+			emerald: colors.emerald,
 			budgetLight: '#FADEA5',
 			budgetDefault: '#F56860',
 			budgetDark: '#9E0669',
