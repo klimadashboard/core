@@ -86,18 +86,20 @@
 					{award.desc}
 				</p>
 
-				{#if award.unlocked}
-					<button
-						on:click={() => share(award)}
-						class="rounded-lg px-3 py-2 text-xs font-semibold text-white transition-colors {SHARE_COLORS[
-							award.color
-						]}"
-					>
-						{copiedAward === award.name ? '✓ Kopiert' : 'Teilen'}
-					</button>
-				{:else if award.remaining}
-					<p class="text-xs text-gray-400">{award.remaining}</p>
-				{/if}
+				<div class="flex h-8 items-center justify-center">
+					{#if award.unlocked}
+						<button
+							on:click={() => share(award)}
+							class="rounded-lg px-3 py-2 text-xs font-semibold text-white transition-colors {SHARE_COLORS[
+								award.color
+							]}"
+						>
+							{copiedAward === award.name ? '✓ Kopiert' : 'Teilen'}
+						</button>
+					{:else if award.remaining}
+						<p class="text-xs text-gray-400">{award.remaining}</p>
+					{/if}
+				</div>
 			</article>
 		</SplideSlide>
 	{/each}
