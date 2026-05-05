@@ -133,7 +133,7 @@
 			>
 				{#if view.iconComponent}
 				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">
-					<svelte:component this={view.iconComponent} size={24} />
+					<svelte:component this={view.iconComponent} size={view.iconSize ?? 24} />
 				</span>
 			{:else if view.icon}
 				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">

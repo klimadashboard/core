@@ -1,6 +1,17 @@
 <script lang="ts">
 	import type { SolarRankEntry, SolarNeighbourEntry } from './config';
 	import Switch from '$lib/components/Switch.svelte';
+	import {
+		IconBuildingCommunity,
+		IconSearch,
+		IconChevronLeft,
+		IconChevronRight,
+		IconSortAscending,
+		IconSortDescending,
+		IconArrowsSort,
+		IconTrendingUp,
+		IconTrendingDown
+	} from '@tabler/icons-svelte-runes';
 
 	export let allDEweit: SolarRankEntry[] = [];
 	export let byLand: SolarRankEntry[] = [];
@@ -44,8 +55,6 @@
 	let pageLand = rankLand > 0 ? Math.ceil(rankLand / PER_PAGE) : 1;
 	const MEDALS = ['🥇', '🥈', '🥉'];
 
-	const buildingIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l5 5v7h-5v-4m0 4h-5v-7l5 -5m1 1v-6a1 1 0 0 1 1 -1h10a1 1 0 0 1 1 1v17h-8" /><path d="M13 7l0 .01" /><path d="M17 7l0 .01" /><path d="M17 11l0 .01" /><path d="M17 15l0 .01" /></svg>`;
-
 	$: tabViews = [
 		...(showDETab
 			? [
@@ -55,7 +64,8 @@
 							rankDE > 0
 								? `${deTabLabel}  #${rankDE} / ${rankDEGesamt.toLocaleString('de-DE')}`
 								: deTabLabel,
-						icon: buildingIcon
+						iconComponent: 	IconBuildingCommunity,
+						iconSize: 16
 					}
 				]
 			: []),
@@ -159,51 +169,12 @@
 			{#if sortable}
 				{#if active}
 					{#if sortDir === 'desc'}
-						<svg
-							class="mt-0.5 h-4 w-4 shrink-0 text-blue-600"
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path d="M4 6l9 0" /><path d="M4 12l7 0" /><path d="M4 18l7 0" /><path
-								d="M15 15l3 3l3 -3"
-							/><path d="M18 6l0 12" />
-						</svg>
+						<IconSortDescending class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
 					{:else}
-						<svg
-							class="mt-0.5 h-4 w-4 shrink-0 text-blue-600"
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path d="M4 6l7 0" /><path d="M4 12l7 0" /><path d="M4 18l9 0" /><path
-								d="M15 9l3 -3l3 3"
-							/><path d="M18 6l0 12" />
-						</svg>
+						<IconSortAscending class="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
 					{/if}
 				{:else}
-					<svg
-						class="mt-0.5 h-4 w-4 shrink-0 text-gray-300"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<path d="M4 6l9 0" /><path d="M4 12l7 0" /><path d="M4 18l7 0" /><path
-							d="M15 15l3 3l3 -3"
-						/><path d="M18 6l0 12" />
-					</svg>
+					<IconArrowsSort class="mt-0.5 h-4 w-4 shrink-0 text-gray-300" />
 				{/if}
 			{/if}
 		</div>
@@ -286,27 +257,11 @@
 							? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
 							: 'bg-gray-100 text-gray-500 dark:bg-gray-800'}"
 				>
-					<svg
-						aria-hidden="true"
-						width="10"
-						height="10"
-						viewBox="0 0 12 12"
-						fill="none"
-						class={row.trend < 0 ? '-scale-y-100' : ''}
-					>
-						<path
-							d="M11.5 3L6.75 7.75L4.25 5.25L0.5 9"
-							stroke="currentColor"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-						<path
-							d="M8.5 3H11.5V6"
-							stroke="currentColor"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg>
+					{#if row.trend >= 0}
+						<IconTrendingUp aria-hidden="true" size={12} />
+					{:else}
+						<IconTrendingDown aria-hidden="true" size={12} />
+					{/if}
 					{row.trend > 0 ? '+' : ''}{row.trend.toFixed(2)}
 				</span>
 			{:else}
@@ -358,18 +313,10 @@
 })}
 	<div class="mb-3 flex flex-wrap items-center gap-3">
 		<div class="relative min-w-[180px] flex-1">
-			<svg
+			<IconSearch
 				aria-hidden="true"
 				class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-			</svg>
+			/>
 			<input
 				type="text"
 				{value}
@@ -392,18 +339,7 @@
 					aria-label="Vorherige Seite"
 					class="rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
 				>
-					<svg
-						class="h-4 w-4"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-							clip-rule="evenodd"
-						/>
-					</svg>
+					<IconChevronLeft class="size-4" />
 				</button>
 				<button
 					on:click={() => setPage(Math.min(totalPages, page + 1))}
@@ -411,18 +347,7 @@
 					aria-label="Nächste Seite"
 					class="rounded-lg border border-gray-200 bg-white p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
 				>
-					<svg
-						class="h-4 w-4"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-							clip-rule="evenodd"
-						/>
-					</svg>
+					<IconChevronRight class="size-4" />
 				</button>
 			</div>
 		{/if}
