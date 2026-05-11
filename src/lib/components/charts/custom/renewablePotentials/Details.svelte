@@ -22,72 +22,49 @@
 	let unit = 'TWh';
 	const grey = '#A3A3A3';
 	const green = '#4FB365';
+	const goalLabelXOffset = 10;
+	const labelOverlapThreshold = 25;
+	const leftGoalLabelYear = 2030;
 
-	const getGoalCategoryStyle = (goalCategory, categoryIndex) => {
-		if (goalCategory === 'Bundesländer') {
-			return { dasharray: '', labelPrefix: 'Bundesländer' };
-		}
+	/** @typedef {{ id: string; baseY: number }} LabelEntry */
 
-		if (goalCategory === 'EABG') {
-			return { dasharray: '5,5', labelPrefix: 'EABG' };
-		}
+	/** @param {LabelEntry[]} labels */
+	const calculateLabelOffsets = (labels) => {
+		const offsets = Object.fromEntries(labels.map((label) => [label.id, 0]));
+		const sortedLabels = [...labels].sort((left, right) => left.baseY - right.baseY);
 
-		return {
-			dasharray: categoryIndex % 2 === 0 ? '' : '5,5',
-			labelPrefix: goalCategory
-		};
-	};
+		for (let index = 0; index < sortedLabels.length; index += 1) {
+			for (let compareIndex = index + 1; compareIndex < sortedLabels.length; compareIndex += 1) {
+				const currentLabel = sortedLabels[index];
+				const compareLabel = sortedLabels[compareIndex];
+				const distance =
+					compareLabel.baseY + offsets[compareLabel.id] - (currentLabel.baseY + offsets[currentLabel.id]);
 
-	const getLabelAnchor = (labelValue, productionValue) => {
-		return labelValue > productionValue ? 'end' : 'start';
-	};
-
-	const getLabelLayout = (goalEntries, innerHeight) => {
-		const minGap = 18;
-		const topPadding = 12;
-		const bottomLimit = Math.max(topPadding, innerHeight - 6);
-		const groups = { start: [], end: [] };
-
-		for (const entry of goalEntries) {
-			groups[entry.anchor].push(entry);
-		}
-
-		for (const anchor of ['start', 'end']) {
-			const items = groups[anchor].sort((left, right) => left.pointY - right.pointY);
-			let previousY = topPadding - minGap;
-			let nextMaxY = bottomLimit;
-
-			for (const item of items) {
-				const preferredY = item.pointY - 10;
-				item.labelY = Math.max(preferredY, previousY + minGap, topPadding);
-				previousY = item.labelY;
-			}
-
-			for (let index = items.length - 1; index >= 0; index -= 1) {
-				const item = items[index];
-				if (item.labelY <= nextMaxY) {
-					continue;
+				if (distance >= labelOverlapThreshold) {
+					break;
 				}
 
-				item.labelY = nextMaxY;
-				nextMaxY = item.labelY - minGap;
+				const adjustment = Math.ceil((labelOverlapThreshold - distance) / 2);
+				offsets[currentLabel.id] -= adjustment;
+				offsets[compareLabel.id] += adjustment;
 			}
 		}
 
-		return goalEntries;
+		return offsets;
 	};
 
 	$: normalizedGoals = [];
 	$: {
 		const nextGoals = [];
 
-		for (const goal of goals ?? []) {
+		for (const [goalIndex, goal] of (goals ?? []).entries()) {
 			const normalizedGoal = {
 				...goal,
 				goalAmount: +goal.goal_amount,
 				goalYear: +goal.goal_year,
 				sourceYear: +goal.source_year,
-				goalCategory: goal.source_category ?? 'Weiteres Ziel'
+				goalCategory: goal.source_category ?? 'Weiteres Ziel',
+				labelId: `goal-${goal.source_category ?? 'Weiteres Ziel'}-${goal.goal_year}-${goal.goal_amount}-${goalIndex}`
 			};
 
 			if (!isNaN(normalizedGoal.goalAmount) && !isNaN(normalizedGoal.goalYear)) {
@@ -126,8 +103,9 @@
 	}
 
 	$: has_goals = normalizedGoals.length > 0;
+	$: productionValue = dataset?.length ? +dataset[dataset.length - 1].value : null;
 
-	$: maxYear = Math.max(2030, ...normalizedGoals.map((goal) => goal.goalYear), 0);
+	$: maxYear = Math.max(2040, ...normalizedGoals.map((goal) => goal.goalYear), 0);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxValue = predefinedMaxValue
 		? predefinedMaxValue
@@ -155,40 +133,38 @@
 		.line()
 		.x((d) => xScale(new Date(d.year, 1, 1)))
 		.y((d) => yScale(d.value));
-
-	$: goalRenderEntries = [];
+	/** @type {Record<string, number>} */
+	let labelOffsets = {};
 	$: {
-		const entries = [];
+		/** @type {LabelEntry[]} */
+		const nextLabelOffsets = [];
 
-		if (xScale && yScale) {
-			const productionValue = dataset[dataset.length - 1].value;
-
-			for (const [goalCategory, categoryGoals] of Object.entries(goalsByCategory)) {
-				const categoryIndex = Object.keys(goalsByCategory).indexOf(goalCategory);
-				const categoryStyle = getGoalCategoryStyle(goalCategory, categoryIndex);
-
-				for (const goal of categoryGoals) {
-					const pointX = xScale(new Date(goal.goalYear, 1, 1));
-					const pointY = yScale(goal.goalAmount);
-					const anchor = getLabelAnchor(goal.goalAmount, productionValue);
-
-					entries.push({
-						goal,
-						goalCategory,
-						categoryStyle,
-						pointX,
-						pointY,
-						anchor,
-						labelX: pointX,
-						labelY: pointY,
-						labelDx: anchor === 'end' ? -14 : 14
-					});
-				}
+		if (yScale) {
+			for (const goal of normalizedGoals) {
+				nextLabelOffsets.push({
+					id: goal.labelId,
+					baseY: yScale(goal.goalAmount)
+				});
 			}
 
-			goalRenderEntries = getLabelLayout(entries, innerChartHeight);
+			if (potential_2030 != null && potential_2030 > 0) {
+				nextLabelOffsets.push({
+					id: 'potential-2030',
+					baseY: yScale(potential_2030)
+				});
+			}
+
+			if (productionValue != null && !isNaN(productionValue)) {
+				nextLabelOffsets.push({
+					id: 'production',
+					baseY: yScale(productionValue) + 5
+				});
+			}
 		}
+
+		labelOffsets = calculateLabelOffsets(nextLabelOffsets);
 	}
+
 </script>
 
 <div class="bg-gray-100 rounded-sm overflow-hidden">
@@ -206,28 +182,6 @@
 		<div class="relative w-full h-56" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				{@const last_datapoint = dataset[dataset.length - 1]}
-				{@const firstGoal = normalizedGoals[0]}
-				{@const delta_values = has_goals
-					? yScale(firstGoal.goalAmount) - yScale(+last_datapoint.value)
-					: 0}
-				{@const text_production_x_offset = has_goals
-					? Math.abs(delta_values) <= 8.1 && firstGoal.goalYear > 2000
-						? delta_values < 0
-							? 10
-							: -10
-						: 0
-					: 0}
-
-				{@const delta_goal_potential_2030 = has_goals
-					? yScale(firstGoal.goalAmount) - yScale(potential_2030)
-					: 0}
-				{@const text_potential_2030_y_offset = has_goals
-					? Math.abs(delta_goal_potential_2030) < 25
-						? delta_goal_potential_2030 > -18
-							? -14
-							: +16
-						: -14
-					: -14}
 
 				<svg width={'100%'} height={'100%'}>
 					<g transform="translate({margin.left},{margin.top})">
@@ -248,7 +202,7 @@
 									>
 								</g>
 							{/each}
-									<g style="color: {type.color}" class="opacity-70">
+									<g style="color: {type.color}">
 						<g>
 							{#each yScale.ticks(3) as tick, index}
 								<g transform={`translate(${-margin.left}, ${yScale(tick)})`} class="text-gray-400">
@@ -272,22 +226,15 @@
 									y1="0"
 									y2="0"
 									stroke-width="2"
-									class="stroke-gray-400 opacity-50"
+									class="stroke-gray-400 opacity-70"
 								/>
 							</g>
 						</g>
 						{#if has_goals}
-							<g>
+							<g class="opacity-70">
 								{#each Object.entries(goalsByCategory) as [goalCategory, categoryGoals], categoryIndex}
-									{@const categoryStyle = getGoalCategoryStyle(goalCategory, categoryIndex)}
 									{#each categoryGoals as goal, index}
-										{@const renderEntry = goalRenderEntries.find(
-											(entry) =>
-												entry.goalCategory === goalCategory &&
-												entry.goal.goalYear === goal.goalYear &&
-												entry.goal.goalAmount === goal.goalAmount
-										)}
-										{@const shouldDrawLine = goalCategory === 'Bundesländer'}
+										{@const shouldDrawLine = goalCategory === 'Bundesland'}
 										{@const previousGoal = shouldDrawLine && index > 0 ? categoryGoals[index - 1] : null}
 										{@const sourceYear = previousGoal ? previousGoal.goalYear : goal.sourceYear}
 										{@const sourceAmount = previousGoal
@@ -318,7 +265,7 @@
 														y1={yScale(closestDatapoint.value)}
 														x2={xScale(new Date(goal.goalYear, 1, 1))}
 														y2={yScale(goal.goalAmount)}
-														class="stroke-2 stroke-current opacity-50"
+														class="stroke-2 stroke-current opacity-70"
 														stroke-dasharray="10 10"
 													/>
 												{/if}
@@ -327,18 +274,20 @@
 										<g transform="translate({xScale(new Date(goal.goalYear, 1, 1))},{yScale(goal.goalAmount)})">
 											<circle r={4} class="fill-none stroke-current stroke-2" />
 										</g>
-										{#if renderEntry}
-											<text
-												text-anchor={renderEntry.anchor}
-												class="text-sm font-semibold fill-current bg-white chart-text"
-												style="color: {type.color};"
-												x={renderEntry.labelX}
-												y={renderEntry.labelY}
-												dx={renderEntry.labelDx}
-											>
-												{categoryStyle.labelPrefix}-Ziel: {formatNumber(goal.goalAmount, unit, 2)}
-											</text>
-										{/if}
+										{@const goalLabelOnLeft = goal.goalYear > leftGoalLabelYear}
+										<text
+											text-anchor={goalLabelOnLeft ? 'end' : 'start'}
+											dominant-baseline="middle"
+											class="text-sm font-semibold fill-current bg-white chart-text"
+											style="color: {type.color};"
+											x={xScale(new Date(goal.goalYear, 1, 1)) + (goalLabelOnLeft ? -goalLabelXOffset : goalLabelXOffset)}
+											y={yScale(goal.goalAmount)}
+											dy={labelOffsets[goal.labelId] ?? 0}
+										>
+											{goalCategory}: {goal.goalAmount >= 0.01
+												? formatNumber(goal.goalAmount, unit, 2)
+												: goal.goalAmount + " " + unit}
+										</text>
 									{/each}
 								{/each}
 							</g>
@@ -356,18 +305,18 @@
 							</g> -->
 						{/if}
 						{#if potential_2030 != null && potential_2030 > 0}
-							{@const potential2030OnLeft = potential_2030 > last_datapoint.value}
 							<g
 								transform="translate({xScale(new Date(2030, 1, 1))},{yScale(potential_2030)})"
-								class="text-green-600"
+								class="text-green-600 opacity-70"
 							>
 								<text
-									text-anchor={potential2030OnLeft ? 'end' : 'start'}
-									x={potential2030OnLeft ? -12 : 12}
+									text-anchor="start"
+									x={12}
 									dominant-baseline="middle"
+									dy={labelOffsets['potential-2030'] ?? 0}
 									class="text-sm font-semibold fill-current bg-white chart-text"
 									>{formatNumber(potential_2030, unit, 2)}
-									Potential 2030
+									Potential
 								</text>
 								<!--
 							<text
@@ -402,35 +351,32 @@
 							</g>
 						{/if}
 						{#if potential_techn != null && showTechn}
-							{@const potentialTechnOnLeft = potential_techn > last_datapoint.value}
-							<line
-								x1={xScale(new Date(minYear, 1, 1))}
-								y1={yScale(potential_techn)}
-								x2={xScale(new Date(maxYear + 5, 1, 1))}
-								y2={yScale(potential_techn)}
-								stroke-dasharray="5,5"
-								style="stroke:{grey}; stroke-width:1"
-							/>
+							<g class="opacity-70">
+								<line
+									x1={xScale(new Date(minYear, 1, 1))}
+									y1={yScale(potential_techn)}
+									x2={xScale(new Date(maxYear + 5, 1, 1))}
+									y2={yScale(potential_techn)}
+									stroke-dasharray="5,5"
+									style="stroke:{grey}; stroke-width:1"
+								/>
 							<!-- <line x1={xScale(new Date(2030, 1, 1))} y1={yScale(minValue)} x2={xScale(new Date(2030, 1, 1))} y2={yScale(potential_techn*1.12)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" /> -->
 
-							<text
-								text-anchor={potentialTechnOnLeft ? 'end' : 'start'}
-								style="fill:{grey};"
-								class="text-sm bg-white font-semibold chart-text"
-								x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
-								y={yScale(potential_techn)}
-								dx={potentialTechnOnLeft ? -12 : 12}
-								dy={-3}
-								>{formatNumber(potential_techn, unit, 2)}
-								Technisch möglich
-							</text>
+								<text
+									text-anchor="start"
+									style="fill:{grey};"
+									class="text-sm bg-white font-semibold chart-text"
+									x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
+									y={yScale(potential_techn)}
+									dx={12}
+									dy={-3}
+									>{formatNumber(potential_techn, unit, 2)}
+									Technisch möglich
+								</text>
+							</g>
 						{/if}
 
-						<g>
-							<linearGradient x1="0%" y1="0%" x2="0%" y2="100%">
-								<stop offset="0%" style="stop-color:#000;stop-opacity:1" />
-								<stop offset="100%" style="stop-color:#000;stop-opacity:0.6" />
-							</linearGradient>
+						<g class="opacity-100">
 							<path
 								d={line(dataset)}
 								fill="none"
@@ -445,6 +391,7 @@
 								new Date(dataset[dataset.length - 1].year, 1, 1)
 							)},{yScale(dataset[dataset.length - 1].value)})"
 							style="color: {type.color}"
+							class="opacity-100"
 						>
 							<circle r="5" class="fill-current" />
 							<circle r="5" class="fill-current">
@@ -470,10 +417,10 @@
 								x={12}
 								y={5}
 								transition:fade
-								dy={text_production_x_offset}
-								>{last_datapoint.value > 0.01
+								dy={labelOffsets.production ?? 0}
+								>{last_datapoint.value >= 0.01
 									? formatNumber(last_datapoint.value, unit, 2)
-									: last_datapoint.value.toString().replace('.', ',') + unit}
+									: "< 0.01" + " " + unit}
 								Produktion
 								<!-- im Zeitraum
                                 <tspan x="16" y="16"

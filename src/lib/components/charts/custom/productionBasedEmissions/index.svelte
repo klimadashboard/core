@@ -130,6 +130,7 @@
 		(activeView === 'sector_overview' || activeView === 'KSG') &&
 		!showPerCapita &&
 		selectedClassification === 'Gesamt' &&
+		selectedRegion === 'Österreich' &&
 		intl_flights != null;
 
 	// Region list and select options
@@ -214,9 +215,11 @@
 					} else if (pops) {
 						// AT: divide by population
 						const regionId = entry.region_id;
-						const pop = pops[regionId]?.find(
-							(p) => year === new Date(p.period).getFullYear()
-						);
+						const regionPops = pops[regionId];
+					const pop =
+						regionPops?.find(
+							(p) => year === parseInt(String(p.period).slice(0, 4), 10)
+						) ?? regionPops?.at(-1);
 						if (pop?.value) value /= pop.value;
 					}
 				}

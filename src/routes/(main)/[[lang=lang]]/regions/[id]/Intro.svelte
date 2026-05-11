@@ -301,10 +301,12 @@
 	@media (min-width: 1024px) {
 		:global(.reg-card),
 		:global(.reg-card-half) {
-			@apply w-full max-w-full h-[60vh];
+			@apply w-full max-w-full;
+			height: max(60vh, 600px);
 		}
 		:global(.reg-card-quarter) {
-			@apply w-full max-w-full h-[calc(30vh-0.125rem)];
+			@apply w-full max-w-full;
+			height: max(calc(30vh - 0.125rem), calc(300px - 0.125rem));
 		}
 	}
 

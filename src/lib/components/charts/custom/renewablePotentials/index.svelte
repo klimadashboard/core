@@ -186,8 +186,7 @@
 					filter: {
 						_and: [
 							{
-								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source_category: { _eq: "Bundesland" }
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
 							}
 						]
 					},
@@ -205,7 +204,7 @@
 	};
 
 	$: getDataGoals();
-	$: selectedStartYear = 2013; //minYear;
+	$: selectedStartYear = 2009; //minYear;
 </script>
 
 <div class="flex gap-4 items-center">

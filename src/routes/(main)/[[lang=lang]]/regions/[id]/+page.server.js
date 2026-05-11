@@ -26,9 +26,6 @@ export async function load({ fetch, params, url, parent }) {
 			})
 		);
 
-		if (!page.visible) {
-			throw error(404, 'Page not found');
-		}
 
 		// Enrich parent regions with name and layer_label
 		// (parents is a JSON field storing only {id, layer}, so we fetch full details)

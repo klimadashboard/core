@@ -14,6 +14,8 @@
 
 	export let data;
 
+	let stagingBannerDismissed = false;
+
 	// Map block names to components
 	const blockComponents = {
 		policies: Policies
@@ -141,6 +143,9 @@
 </script>
 
 <svelte:head>
+	{#if !data.page.visible}
+		<meta name="robots" content="noindex, nofollow" />
+	{/if}
 	<title>Klimadashboard {data.page.name} | Klimadashboard.{PUBLIC_VERSION}</title>
 	<meta name="description" content={data.page.description} />
 	<meta property="og:title" content="Klimadashboard {data.page.name}" />
@@ -153,6 +158,12 @@
 </svelte:head>
 
 <main class="">
+	{#if !data.page.visible && !stagingBannerDismissed}
+		<div class="sticky top-0 z-50 bg-yellow-400 dark:bg-yellow-500 text-black text-sm font-medium text-center py-2 px-4 flex items-center justify-center gap-3">
+			<span>Staging-Link: Seite in Arbeit!</span>
+			<button onclick={() => stagingBannerDismissed = true} class="leading-none opacity-60 hover:opacity-100" aria-label="Banner schließen">✕</button>
+		</div>
+	{/if}
 	<Scroller bind:index bind:offset bind:progress>
 		<div slot="background" />
 		<div slot="foreground">
