@@ -91,8 +91,7 @@
 		'org.open.finance.balance': 'Balance',
 		'org.open.finance.report': 'Full Report',
 		'org.media.title': 'In the Media',
-		'org.media.subtitle':
-			'Our data & visualisations are regularly picked up in media coverage.',
+		'org.media.subtitle': 'Our data & visualisations are regularly picked up in media coverage.',
 		'org.media.contact': 'Press enquiries:',
 		'org.cta.title': 'Support our work.',
 		'org.cta.text':
@@ -170,10 +169,10 @@
 	class="flex flex-col items-center justify-center overflow-hidden bg-white py-10 text-center dark:bg-gray-950 md:py-14"
 >
 	<div class="max-w-4xl px-6">
-		<h1 class="text-4xl font-bold leading-[1.05] md:text-5xl lg:text-6xl text-balance">
+		<h1 class="text-4xl font-bold md:text-5xl lg:text-6xl text-balance">
 			{t(tr, 'org.hero.title1')}<br />{t(tr, 'org.hero.title2')}
 		</h1>
-		<p class="mt-4 mx-auto max-w-2xl text-lg leading-snug text-balance opacity-80">
+		<p class="mt-4 mx-auto max-w-2xl text-xl leading-snug text-balance opacity-80">
 			{t(tr, 'org.hero.subtitle')}
 		</p>
 		<div class="mt-7 flex flex-wrap justify-center gap-3">
@@ -467,18 +466,18 @@
 								<img
 									src="https://base.klimadashboard.org/assets/{item.medium.logo}"
 									alt={item.medium.name ?? ''}
-									class="max-h-5 max-w-[90px] object-contain brightness-0 invert"
+									class="max-h-5 max-w-[90px] object-contain"
 								/>
 							{:else if item.medium?.name}
-								<span class="text-sm font-bold opacity-50">{item.medium.name}</span>
+								<span class="text-sm font-bold opacity-70">{item.medium.name}</span>
 							{/if}
 						</div>
 						<div class="mt-auto">
-							<h4 class="font-condensed text-2xl font-bold leading-tight hyphens-auto">
+							<h4 class="text-2xl font-bold leading-tight hyphens-auto">
 								{item.title}
 							</h4>
 							{#if item.date}
-								<p class="mt-1.5 text-sm opacity-30">
+								<p class="mt-1.5 text-sm opacity-70">
 									{dayjs(item.date).format('DD.MM.YYYY')}
 								</p>
 							{/if}
@@ -525,7 +524,7 @@
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- FOOTER CTA                                                   -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<section class="bg-black py-20 text-white">
+<section class="">
 	<div class="mx-auto max-w-3xl px-4 text-center">
 		<h2 class="text-balance text-4xl font-bold md:text-5xl">{t(tr, 'org.cta.title')}</h2>
 		<p class="mt-4 text-base opacity-50 md:text-lg">{t(tr, 'org.cta.text')}</p>
