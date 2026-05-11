@@ -38,8 +38,8 @@
 		};
 	};
 
-	const getLabelAnchor = (goalYear) => {
-		return goalYear >= 2040 ? 'end' : 'start';
+	const getLabelAnchor = (labelValue, productionValue) => {
+		return labelValue > productionValue ? 'end' : 'start';
 	};
 
 	const getLabelLayout = (goalEntries, innerHeight) => {
@@ -127,7 +127,7 @@
 
 	$: has_goals = normalizedGoals.length > 0;
 
-	$: maxYear = Math.max(2060, ...normalizedGoals.map((goal) => goal.goalYear), 0);
+	$: maxYear = Math.max(2030, ...normalizedGoals.map((goal) => goal.goalYear), 0);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxValue = predefinedMaxValue
 		? predefinedMaxValue
@@ -161,6 +161,8 @@
 		const entries = [];
 
 		if (xScale && yScale) {
+			const productionValue = dataset[dataset.length - 1].value;
+
 			for (const [goalCategory, categoryGoals] of Object.entries(goalsByCategory)) {
 				const categoryIndex = Object.keys(goalsByCategory).indexOf(goalCategory);
 				const categoryStyle = getGoalCategoryStyle(goalCategory, categoryIndex);
@@ -168,7 +170,7 @@
 				for (const goal of categoryGoals) {
 					const pointX = xScale(new Date(goal.goalYear, 1, 1));
 					const pointY = yScale(goal.goalAmount);
-					const anchor = getLabelAnchor(goal.goalYear);
+					const anchor = getLabelAnchor(goal.goalAmount, productionValue);
 
 					entries.push({
 						goal,
@@ -354,12 +356,14 @@
 							</g> -->
 						{/if}
 						{#if potential_2030 != null && potential_2030 > 0}
+							{@const potential2030OnLeft = potential_2030 > last_datapoint.value}
 							<g
 								transform="translate({xScale(new Date(2030, 1, 1))},{yScale(potential_2030)})"
 								class="text-green-600"
 							>
 								<text
-									x={12}
+									text-anchor={potential2030OnLeft ? 'end' : 'start'}
+									x={potential2030OnLeft ? -12 : 12}
 									dominant-baseline="middle"
 									class="text-sm font-semibold fill-current bg-white chart-text"
 									>{formatNumber(potential_2030, unit, 2)}
@@ -398,6 +402,7 @@
 							</g>
 						{/if}
 						{#if potential_techn != null && showTechn}
+							{@const potentialTechnOnLeft = potential_techn > last_datapoint.value}
 							<line
 								x1={xScale(new Date(minYear, 1, 1))}
 								y1={yScale(potential_techn)}
@@ -409,11 +414,12 @@
 							<!-- <line x1={xScale(new Date(2030, 1, 1))} y1={yScale(minValue)} x2={xScale(new Date(2030, 1, 1))} y2={yScale(potential_techn*1.12)} stroke-dasharray="5,5" style="stroke:grey; stroke-width:1" /> -->
 
 							<text
-								text-anchor="middle"
+								text-anchor={potentialTechnOnLeft ? 'end' : 'start'}
 								style="fill:{grey};"
 								class="text-sm bg-white font-semibold chart-text"
 								x={xScale(new Date(maxYear - (maxYear - minYear) / 2, 1, 1))}
 								y={yScale(potential_techn)}
+								dx={potentialTechnOnLeft ? -12 : 12}
 								dy={-3}
 								>{formatNumber(potential_techn, unit, 2)}
 								Technisch möglich
@@ -467,7 +473,7 @@
 								dy={text_production_x_offset}
 								>{last_datapoint.value > 0.01
 									? formatNumber(last_datapoint.value, unit, 2)
-									: last_datapoint.value.toString().replace('.', ',')}
+									: last_datapoint.value.toString().replace('.', ',') + unit}
 								Produktion
 								<!-- im Zeitraum
                                 <tspan x="16" y="16"

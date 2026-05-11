@@ -204,7 +204,7 @@
 	};
 
 	$: getDataGoals();
-	$: selectedStartYear = minYear;
+	$: selectedStartYear = 2013; //minYear;
 </script>
 
 <div class="flex gap-4 items-center">
