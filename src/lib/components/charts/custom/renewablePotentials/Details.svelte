@@ -14,26 +14,127 @@
 	export let goals;
 	export let selectedStartYear;
 	export let showTechn;
-	export let predefinedMaxValue;
+	export let predefinedMaxValue = undefined;
 
 	const margin = { top: 15, right: 15, left: 15, bottom: 25 };
-	let chartWidth;
-	let chartHeight;
+	let chartWidth = 0;
+	let chartHeight = 0;
 	let unit = 'TWh';
 	const grey = '#A3A3A3';
 	const green = '#4FB365';
 
+	const getGoalCategoryStyle = (goalCategory, categoryIndex) => {
+		if (goalCategory === 'Bundesländer') {
+			return { dasharray: '', labelPrefix: 'Bundesländer' };
+		}
 
-	$: has_goals = goals != null && goals.length > 0;
+		if (goalCategory === 'EABG') {
+			return { dasharray: '5,5', labelPrefix: 'EABG' };
+		}
 
-	$: maxYear = Math.max(Math.max(...goals.map((g) => +g.goal_year).filter((x) => !isNaN(x))), 2060);
+		return {
+			dasharray: categoryIndex % 2 === 0 ? '' : '5,5',
+			labelPrefix: goalCategory
+		};
+	};
+
+	const getLabelAnchor = (goalYear) => {
+		return goalYear >= 2040 ? 'end' : 'start';
+	};
+
+	const getLabelLayout = (goalEntries, innerHeight) => {
+		const minGap = 18;
+		const topPadding = 12;
+		const bottomLimit = Math.max(topPadding, innerHeight - 6);
+		const groups = { start: [], end: [] };
+
+		for (const entry of goalEntries) {
+			groups[entry.anchor].push(entry);
+		}
+
+		for (const anchor of ['start', 'end']) {
+			const items = groups[anchor].sort((left, right) => left.pointY - right.pointY);
+			let previousY = topPadding - minGap;
+			let nextMaxY = bottomLimit;
+
+			for (const item of items) {
+				const preferredY = item.pointY - 10;
+				item.labelY = Math.max(preferredY, previousY + minGap, topPadding);
+				previousY = item.labelY;
+			}
+
+			for (let index = items.length - 1; index >= 0; index -= 1) {
+				const item = items[index];
+				if (item.labelY <= nextMaxY) {
+					continue;
+				}
+
+				item.labelY = nextMaxY;
+				nextMaxY = item.labelY - minGap;
+			}
+		}
+
+		return goalEntries;
+	};
+
+	$: normalizedGoals = [];
+	$: {
+		const nextGoals = [];
+
+		for (const goal of goals ?? []) {
+			const normalizedGoal = {
+				...goal,
+				goalAmount: +goal.goal_amount,
+				goalYear: +goal.goal_year,
+				sourceYear: +goal.source_year,
+				goalCategory: goal.source_category ?? 'Weiteres Ziel'
+			};
+
+			if (!isNaN(normalizedGoal.goalAmount) && !isNaN(normalizedGoal.goalYear)) {
+				nextGoals.push(normalizedGoal);
+			}
+		}
+
+		nextGoals.sort((left, right) => {
+			if (left.goalCategory !== right.goalCategory) {
+				return left.goalCategory.localeCompare(right.goalCategory);
+			}
+
+			if (left.goalYear !== right.goalYear) {
+				return left.goalYear - right.goalYear;
+			}
+
+			return left.goalAmount - right.goalAmount;
+		});
+
+		normalizedGoals = nextGoals;
+	}
+
+	$: goalsByCategory = {};
+	$: {
+		const nextGroups = {};
+
+		for (const goal of normalizedGoals) {
+			if (!nextGroups[goal.goalCategory]) {
+				nextGroups[goal.goalCategory] = [];
+			}
+
+			nextGroups[goal.goalCategory].push(goal);
+		}
+
+		goalsByCategory = nextGroups;
+	}
+
+	$: has_goals = normalizedGoals.length > 0;
+
+	$: maxYear = Math.max(2060, ...normalizedGoals.map((goal) => goal.goalYear), 0);
 	$: minYear = Math.max(dataset[0].year, selectedStartYear);
 	$: maxValue = predefinedMaxValue
 		? predefinedMaxValue
 		: (showTechn
 				? potential_techn
 				: Math.max(
-						Math.max(...goals.map((g) => +g.goal_amount).filter((x) => !isNaN(x))),
+						Math.max(...normalizedGoals.map((goal) => goal.goalAmount), 0),
 						potential_2030,
 						Math.max(...dataset.map((g) => +g.value))
 				  )) * 1.1;
@@ -54,6 +155,38 @@
 		.line()
 		.x((d) => xScale(new Date(d.year, 1, 1)))
 		.y((d) => yScale(d.value));
+
+	$: goalRenderEntries = [];
+	$: {
+		const entries = [];
+
+		if (xScale && yScale) {
+			for (const [goalCategory, categoryGoals] of Object.entries(goalsByCategory)) {
+				const categoryIndex = Object.keys(goalsByCategory).indexOf(goalCategory);
+				const categoryStyle = getGoalCategoryStyle(goalCategory, categoryIndex);
+
+				for (const goal of categoryGoals) {
+					const pointX = xScale(new Date(goal.goalYear, 1, 1));
+					const pointY = yScale(goal.goalAmount);
+					const anchor = getLabelAnchor(goal.goalYear);
+
+					entries.push({
+						goal,
+						goalCategory,
+						categoryStyle,
+						pointX,
+						pointY,
+						anchor,
+						labelX: pointX,
+						labelY: pointY,
+						labelDx: anchor === 'end' ? -14 : 14
+					});
+				}
+			}
+
+			goalRenderEntries = getLabelLayout(entries, innerChartHeight);
+		}
+	}
 </script>
 
 <div class="bg-gray-100 rounded-sm overflow-hidden">
@@ -71,18 +204,21 @@
 		<div class="relative w-full h-56" bind:clientWidth={chartWidth} bind:clientHeight={chartHeight}>
 			{#if chartWidth && chartHeight && dataset != null && type != null && potential_techn != null}
 				{@const last_datapoint = dataset[dataset.length - 1]}
+				{@const firstGoal = normalizedGoals[0]}
 				{@const delta_values = has_goals
-					? yScale(+goals[0].goal_amount) - yScale(+last_datapoint.value)
+					? yScale(firstGoal.goalAmount) - yScale(+last_datapoint.value)
 					: 0}
 				{@const text_production_x_offset = has_goals
-					? Math.abs(delta_values) <= 8.1 && +goals[0].goal_year > 2000
+					? Math.abs(delta_values) <= 8.1 && firstGoal.goalYear > 2000
 						? delta_values < 0
 							? 10
 							: -10
 						: 0
 					: 0}
 
-				{@const delta_goal_potential_2030 = yScale(+goals[0]?.goal_amount) - yScale(potential_2030)}
+				{@const delta_goal_potential_2030 = has_goals
+					? yScale(firstGoal.goalAmount) - yScale(potential_2030)
+					: 0}
 				{@const text_potential_2030_y_offset = has_goals
 					? Math.abs(delta_goal_potential_2030) < 25
 						? delta_goal_potential_2030 > -18
@@ -110,7 +246,7 @@
 									>
 								</g>
 							{/each}
-						</g>
+									<g style="color: {type.color}" class="opacity-70">
 						<g>
 							{#each yScale.ticks(3) as tick, index}
 								<g transform={`translate(${-margin.left}, ${yScale(tick)})`} class="text-gray-400">
@@ -140,69 +276,68 @@
 						</g>
 						{#if has_goals}
 							<g>
-								{#each goals as goal, index}
-									{@const sourceYear = index > 0 ? +goals[index - 1].goal_year : +goal.source_year}
-									<!--take last goal's year and value if there are several goals defined-->
-									{@const sourceAmount =
-										index > 0
-											? +goals[index - 1].goal_amount
+								{#each Object.entries(goalsByCategory) as [goalCategory, categoryGoals], categoryIndex}
+									{@const categoryStyle = getGoalCategoryStyle(goalCategory, categoryIndex)}
+									{#each categoryGoals as goal, index}
+										{@const renderEntry = goalRenderEntries.find(
+											(entry) =>
+												entry.goalCategory === goalCategory &&
+												entry.goal.goalYear === goal.goalYear &&
+												entry.goal.goalAmount === goal.goalAmount
+										)}
+										{@const shouldDrawLine = goalCategory === 'Bundesländer'}
+										{@const previousGoal = shouldDrawLine && index > 0 ? categoryGoals[index - 1] : null}
+										{@const sourceYear = previousGoal ? previousGoal.goalYear : goal.sourceYear}
+										{@const sourceAmount = previousGoal
+											? previousGoal.goalAmount
 											: +dataset.find((d) => +d.year === sourceYear)?.value}
-									{@const goalYear = +goal.goal_year}
-									{@const goalAmount = +goal.goal_amount}
-									{#if !isNaN(goalYear) && !isNaN(goalAmount)}
-										{#if !isNaN(sourceYear) && !isNaN(sourceAmount)}
-											<line
-												x1={xScale(new Date(sourceYear, 1, 1))}
-												y1={yScale(sourceAmount)}
-												x2={xScale(new Date(goalYear, 1, 1))}
-												y2={yScale(goalAmount)}
-												style="stroke:{grey}; stroke-width:2"
-											/>
-										{:else}
-											{@const approxSourceAmount = +dataset
-												.map((d) => {
-													return {
-														sort: +Math.abs(+d.year - sourceYear),
-														value: d.value,
-														year: d.year
-													};
-												})
-												.sort((a, b) => a.sort - b.sort)[0].value}
-											<line
-												x1={xScale(new Date(sourceYear, 1, 1))}
-												y1={yScale(approxSourceAmount)}
-												x2={xScale(new Date(goalYear, 1, 1))}
-												y2={yScale(goalAmount)}
-												style="stroke:{grey}; stroke-width:2; stroke-dasharray: 5,5"
-											/>
+										{#if shouldDrawLine}
+											{#if !isNaN(sourceYear) && !isNaN(sourceAmount)}
+												<line
+													x1={xScale(new Date(sourceYear, 1, 1))}
+													y1={yScale(sourceAmount)}
+													x2={xScale(new Date(goal.goalYear, 1, 1))}
+													y2={yScale(goal.goalAmount)}
+													class="stroke-2 stroke-current opacity-50"
+													stroke-dasharray="10 10"
+												/>
+											{:else}
+												{@const closestDatapoint = dataset
+													.map((d) => {
+														return {
+															distance: Math.abs(+d.year - sourceYear),
+															value: d.value
+														};
+													})
+													.sort((a, b) => a.distance - b.distance)[0]}
+												{#if closestDatapoint}
+													<line
+														x1={xScale(new Date(sourceYear, 1, 1))}
+														y1={yScale(closestDatapoint.value)}
+														x2={xScale(new Date(goal.goalYear, 1, 1))}
+														y2={yScale(goal.goalAmount)}
+														class="stroke-2 stroke-current opacity-50"
+														stroke-dasharray="10 10"
+													/>
+												{/if}
+											{/if}
 										{/if}
-										<!-- {@const delta_values_potential = yScale(potential_2030) - yScale(goalAmount)} -->
-										<!-- {@const text_potential_x_offset =
-											showTechn && Math.abs(delta_values_potential) <= 7 ? 10 : 0} -->
-										{@const text_potential_x_offset = 0}
-										<circle
-											cx={xScale(new Date(goalYear, 1, 1))}
-											cy={yScale(goalAmount)}
-											r="5"
-											style="fill: {grey};"
-										/>
-										{@const anchor = goalYear >= 2040 ? 'end' : 'start'}
-										<text
-											text-anchor={anchor}
-											class="text-sm font-semibold fill-current bg-white chart-text"
-											style="fill: {grey};"
-											x={xScale(new Date(goalYear, 1, 1))}
-											y={yScale(goalAmount) + 5}
-											dx={anchor == 'end' ? -12 : 12}
-											dy={text_potential_x_offset}
-											>{formatNumber(goalAmount, unit, 2)}
-											Ziel bis {goalYear}
-											<!-- im Zeitraum
-											<tspan x="16" y="16"
-												>{dataset[0].year} - {dataset[dataset.length - 1].year}</tspan
-											> -->
-										</text>
-									{/if}
+										<g transform="translate({xScale(new Date(goal.goalYear, 1, 1))},{yScale(goal.goalAmount)})">
+											<circle r={4} class="fill-none stroke-current stroke-2" />
+										</g>
+										{#if renderEntry}
+											<text
+												text-anchor={renderEntry.anchor}
+												class="text-sm font-semibold fill-current bg-white chart-text"
+												style="color: {type.color};"
+												x={renderEntry.labelX}
+												y={renderEntry.labelY}
+												dx={renderEntry.labelDx}
+											>
+												{categoryStyle.labelPrefix}-Ziel: {formatNumber(goal.goalAmount, unit, 2)}
+											</text>
+										{/if}
+									{/each}
 								{/each}
 							</g>
 							<!-- {:else}

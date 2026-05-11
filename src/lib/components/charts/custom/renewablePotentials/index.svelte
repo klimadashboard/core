@@ -9,8 +9,6 @@
 	import { readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
-	const goalCategories = ["Bundesländerziel", "EABG"]
-
 	const energyTypes = [
 		{
 			key: 'Wind',
@@ -180,26 +178,24 @@
 
 	$: getDataHistoric();
 
-	const getDataGoals = async function (goal_category) {
+	const getDataGoals = async function () {
 		try {
-			console.log("getgoals: ", goal_category)
 			const directus = getDirectusInstance(fetch);
-			dataset = await directus.request(
+			const goalDataset = await directus.request(
 				readItems('ee_goals', {
 					filter: {
 						_and: [
 							{
-								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source_category: { _eq: goal_category }
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
 							}
 						]
 					},
 					limit: -1,
-					fields: ['Type', 'goal_amount', 'goal_year', 'source_year', 'region.name']
+					fields: ['Type', 'goal_amount', 'goal_year', 'source_year', 'source_category', 'region.name']
 				})
 			);
 
-			goals = dataset.map((row) => {
+			goals = goalDataset.map((row) => {
 				return { ...row, region: row?.region?.name, Type: row?.Type[0] };
 			});
 		} catch (error) {
@@ -207,26 +203,11 @@
 		}
 	};
 
-	$: selectedScenarioCategory = goalCategories[0];
-	$: getDataGoals(selectedScenarioCategory);
+	$: getDataGoals();
 	$: selectedStartYear = minYear;
 </script>
 
 <div class="flex gap-4 items-center">
-	<div class="flex flex-wrap gap-2 items-center">
-		Wähle das Ausbauziel:
-		{#each goalCategories as goalSourceCategory}
-			<button
-				class="button {selectedScenarioCategory === goalSourceCategory ? '' : 'opacity-50'}"
-				on:click={() => {
-					selectedScenarioCategory = goalSourceCategory;
-				}}
-				on:keydown={() => {
-					selectedScenarioCategory = goalSourceCategory;
-				}}>{goalSourceCategory}</button
-			>
-		{/each}
-	</div>
 	<div>
 		<label class="flex gap-1 items-center cursor-pointer {showTechn ? '' : ''}">
 			<span>Technisch mögliche Potentiale</span>
