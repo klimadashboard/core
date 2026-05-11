@@ -187,7 +187,7 @@
 						_and: [
 							{
 								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source_category: { _eq: "Bundesländer" }
+								source_category: { _eq: "Bundesland" }
 							}
 						]
 					},
