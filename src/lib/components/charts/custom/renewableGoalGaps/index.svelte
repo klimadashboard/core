@@ -53,7 +53,7 @@
 						_and: [
 							{
 								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source_category: { _eq: "Bundesländerziel" }
+								source_category: { _eq: "Bundesländer" }
 							}
 						]
 					},
