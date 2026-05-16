@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SolarRankEntry, SolarNeighbourEntry, RegionCase } from './config';
+	import type { SolarRankEntry, SolarNeighbourEntry, RegionCase } from './types';
 	import Switch from '$lib/components/Switch.svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';

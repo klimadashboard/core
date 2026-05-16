@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { cubicOut } from 'svelte/easing';
 	import type { Snippet } from 'svelte';
-	import type { SolarStats, SolarAverages } from './config';
+	import type { SolarStats, SolarAverages } from './types';
 
 	export let stats: SolarStats;
 	export let averages: SolarAverages | null = null;

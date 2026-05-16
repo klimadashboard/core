@@ -2,18 +2,8 @@
 	import { onDestroy } from 'svelte';
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
-	import {
-		fetchRegionData,
-		fetchRankings,
-		buildChartData,
-		haversineKm,
-		type RegionCase,
-		type SolarStats,
-		type SolarRankEntry,
-		type HistEntry,
-		type SolarAverages,
-		type SolarNeighbourEntry
-	} from './config';
+	import { fetchRegionData, fetchRankings, buildChartData, haversineKm } from './data';
+	import type { RegionCase, SolarStats, SolarRankEntry, HistEntry, SolarAverages, SolarNeighbourEntry } from './types';
 	import { computeAwards } from './awards';
 	import MunicipalityKPIs from './MunicipalityKPIs.svelte';
 	import AwardsSection from './AwardsSection.svelte';

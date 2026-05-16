@@ -1,4 +1,4 @@
-import type { HistEntry, RegionCase } from './config';
+import type { HistEntry, RegionCase } from './types';
 
 export interface Award {
 	icon: string;
