@@ -6,7 +6,6 @@
 		fetchRegionData,
 		fetchRankings,
 		buildChartData,
-		computeAwards,
 		haversineKm,
 		type RegionCase,
 		type SolarStats,
@@ -15,6 +14,7 @@
 		type SolarAverages,
 		type SolarNeighbourEntry
 	} from './config';
+	import { computeAwards } from './awards';
 	import MunicipalityKPIs from './MunicipalityKPIs.svelte';
 	import AwardsSection from './AwardsSection.svelte';
 	import RankingTable from './RankingTable.svelte';
@@ -153,7 +153,7 @@
 	$: rankLandGesamt = byLand.length;
 	$: rankAll = allRegions.findIndex((r) => r.region.id === region?.id) + 1 || 0;
 
-	$: awards = computeAwards(history);
+	$: awards = computeAwards(history, regionCase);
 
 	$: myLat = region?.center ? parseFloat(region.center[1]) : null;
 	$: myLon = region?.center ? parseFloat(region.center[0]) : null;

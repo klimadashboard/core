@@ -2,16 +2,6 @@ import type { ChartFetchParams, ChartData, TableColumn } from '$lib/components/c
 
 export type RegionCase = 'grossstadt' | 'mittelstadt' | 'kleinstadt' | 'kreis' | 'bundesland';
 
-export interface Award {
-	icon: string;
-	name: string;
-	desc: string;
-	date?: string;
-	remaining?: string;
-	color: 'blue' | 'green' | 'gold' | 'purple';
-	unlocked: boolean;
-}
-
 export interface HistEntry {
 	net_potential_share: number;
 	roofs_solar_share: number;
@@ -98,105 +88,6 @@ export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: numb
 	return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-interface AwardDef {
-	icon: string;
-	name: string;
-	desc: string;
-	color: Award['color'];
-	crossed: (e: HistEntry) => boolean;
-	remaining: (latest: HistEntry) => string;
-}
-
-const AWARD_DEFS: AwardDef[] = [
-	{
-		icon: '☀',
-		name: '5-Prozent-Klub',
-		desc: '5 % des Solarpotentials wird genutzt',
-		color: 'blue',
-		crossed: (e) => e.net_potential_share >= 5,
-		remaining: (l) => `Noch ${(5 - l.net_potential_share).toFixed(1).replace('.', ',')} %P`
-	},
-	{
-		icon: '🏠',
-		name: 'Jedes 10. Dach',
-		desc: '10 % aller Gebäude haben eine PV-Anlage',
-		color: 'green',
-		crossed: (e) => e.roofs_solar_share >= 10,
-		remaining: (l) => `Noch ${(10 - l.roofs_solar_share).toFixed(1).replace('.', ',')} %P`
-	},
-	{
-		icon: '⚡',
-		name: '500 Dächer',
-		desc: '500 PV-Anlagen auf Dächern',
-		color: 'gold',
-		crossed: (e) => e.units_count >= 500,
-		remaining: (l) => `Noch ${(500 - l.units_count).toLocaleString('de-DE')} Anlagen`
-	},
-	{
-		icon: '🔋',
-		name: '5-Megawatt-Stadt',
-		desc: '5 MWp installierte Dach-Leistung',
-		color: 'green',
-		crossed: (e) => e.net_power_kw >= 5000,
-		remaining: (l) => `Noch ${(Math.max(0, 5000 - l.net_power_kw) / 1000).toFixed(1).replace('.', ',')} MWp`
-	},
-	{
-		icon: '⚡',
-		name: '1.000 Dächer',
-		desc: '1.000 PV-Anlagen auf Dächern',
-		color: 'gold',
-		crossed: (e) => e.units_count >= 1000,
-		remaining: (l) => `Noch ${(1000 - l.units_count).toLocaleString('de-DE')} Anlagen`
-	},
-	{
-		icon: '🔋',
-		name: '10-Megawatt-Stadt',
-		desc: '10 MWp installierte Dach-Leistung',
-		color: 'green',
-		crossed: (e) => e.net_power_kw >= 10000,
-		remaining: (l) => `Noch ${(Math.max(0, 10000 - l.net_power_kw) / 1000).toFixed(1).replace('.', ',')} MWp`
-	},
-	{
-		icon: '☀',
-		name: '10-Prozent-Klub',
-		desc: '10 % des Solarpotentials genutzt',
-		color: 'blue',
-		crossed: (e) => e.net_potential_share >= 10,
-		remaining: (l) => `Noch ${(10 - l.net_potential_share).toFixed(1).replace('.', ',')} %P`
-	}
-];
-
-const MONTH_NAMES_DE = [
-	'Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun',
-	'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'
-];
-
-export function computeAwards(history: HistEntry[]): Award[] {
-	if (!history.length) return [];
-	const latest = history[history.length - 1];
-	return AWARD_DEFS.map((def) => {
-		const firstEntry = history.find((e) => def.crossed(e));
-		if (firstEntry) {
-			const [y, m] = firstEntry.date.split('-');
-			return {
-				icon: def.icon,
-				name: def.name,
-				desc: def.desc,
-				date: `${MONTH_NAMES_DE[parseInt(m, 10) - 1]} ${y}`,
-				color: def.color,
-				unlocked: true
-			};
-		}
-		return {
-			icon: def.icon,
-			name: def.name,
-			desc: def.desc,
-			remaining: def.remaining(latest),
-			color: def.color,
-			unlocked: false
-		};
-	});
-}
 
 const LATEST_FIELDS =
 	`&fields[]=region.id&fields[]=region.name&fields[]=region.population` +

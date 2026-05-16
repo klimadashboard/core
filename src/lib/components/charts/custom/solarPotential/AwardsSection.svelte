@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Award } from './config';
+	import type { Award } from './awards';
 	import { Splide, SplideSlide } from '@splidejs/svelte-splide';
 
 	export let awards: Award[];
