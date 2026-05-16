@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { SolarRankEntry, SolarNeighbourEntry, RegionCase } from './config';
 	import Switch from '$lib/components/Switch.svelte';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import {
 		IconBuildingCommunity,
 		IconSearch,
@@ -28,6 +31,7 @@
 	export let rankLandGesamt: number = 0;
 	export let rankAll: number = 0;
 	export let loading: boolean = false;
+	export let clickable: boolean = false;
 
 	type Tab = 'de' | 'land' | 'nachbar';
 	type SortCol = 'potential' | 'trend' | 'daecher' | 'mwp' | null;
@@ -171,6 +175,45 @@
 	$: landPage = landSorted.slice((pageLand - 1) * PER_PAGE, pageLand * PER_PAGE);
 	$: landTotalPages = Math.ceil(landFiltered.length / PER_PAGE);
 
+	// ── Global search fallback ───────────────────────────────────
+	let globalSuggestions: Array<{ id: string; title: string; subtitle: string; source: string }> = [];
+	let globalLoading = false;
+	let globalDebounce: ReturnType<typeof setTimeout>;
+
+	$: {
+		const q = activeTab === 'de' ? mittelQuery : activeTab === 'land' ? landQuery : '';
+		const filtered = activeTab === 'de' ? mittelFiltered : activeTab === 'land' ? landFiltered : [];
+		if (q.length >= 2 && filtered.length === 0) {
+			scheduleGlobalSearch(q);
+		} else {
+			clearTimeout(globalDebounce);
+			globalSuggestions = [];
+			globalLoading = false;
+		}
+	}
+
+	async function scheduleGlobalSearch(query: string) {
+		clearTimeout(globalDebounce);
+		globalDebounce = setTimeout(async () => {
+			globalLoading = true;
+			try {
+				const lang = $page.data.language?.code ?? 'de';
+				const res = await fetch(
+					`https://base.klimadashboard.org/get-search-results?q=${encodeURIComponent(query)}&lang=${lang}&site=${PUBLIC_VERSION}&country=${PUBLIC_VERSION.toUpperCase()}`
+				);
+				const results: Array<{ id: string; title: string; subtitle: string; source: string }> =
+					await res.json();
+				globalSuggestions = results.filter((r) =>
+					['municipality', 'district', 'region'].includes(r.source)
+				);
+			} catch {
+				globalSuggestions = [];
+			} finally {
+				globalLoading = false;
+			}
+		}, 200);
+	}
+
 	// ── Tab 3: Nachbargemeinden ───────────────────────────────────
 	$: neighboursWithRank = neighbours
 		.map((n): ExtEntry => {
@@ -234,6 +277,7 @@
 {/snippet}
 
 {#snippet rankRow(row: ExtEntry, isSelf: boolean)}
+	{@const isClickable = clickable && !isSelf}
 	<div
 		role="row"
 		aria-label="{row.region.name}, Rang {row.origRank}"
@@ -264,7 +308,14 @@
 			{/if}
 		</div>
 		<div role="cell">
-			<div class="text-sm font-semibold text-[#19191c] dark:text-gray-100">{row.region.name}</div>
+			{#if isClickable}
+				<button
+					on:click={() => goto(`/charts/4aeb0e15-91a3-4ef9-a975-c2b0ee19f459?region=${row.region.id}`)}
+					class="text-sm font-semibold text-[#19191c] dark:text-gray-100 hover:underline text-left"
+				>{row.region.name}</button>
+			{:else}
+				<div class="text-sm font-semibold text-[#19191c] dark:text-gray-100">{row.region.name}</div>
+			{/if}
 			<div class="text-xs text-gray-400">
 				{#if row.distKm != null}{row.distKm.toFixed(0)} km ·{/if}
 				{#if row.region.population}{formatEW(row.region.population)}{/if}
@@ -392,6 +443,31 @@
 	</div>
 {/snippet}
 
+{#snippet globalFallback(searchTerm: string)}
+	<div class="py-6 text-center">
+		<p class="text-gray-500 mb-3">„{searchTerm}" nicht in dieser Ansicht gefunden.</p>
+		{#if globalLoading}
+			<p class="text-sm text-gray-400">Suche in allen Regionen…</p>
+		{:else if globalSuggestions.length > 0}
+			<p class="text-sm text-gray-500 mb-2">Andere Regionen mit diesem Namen:</p>
+			<ul class="inline-flex flex-col gap-1 text-left">
+				{#each globalSuggestions as s}
+					<li>
+						<button
+							on:click={() => goto(`/charts/4aeb0e15-91a3-4ef9-a975-c2b0ee19f459?region=${s.id}`)}
+							class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 w-full text-left"
+						>
+							<span class="font-semibold text-[#19191c] dark:text-gray-100">{s.title}</span>
+							{#if s.subtitle}<span class="text-xs text-gray-400">{s.subtitle}</span>{/if}
+							<IconChevronRight class="ml-auto size-4 text-gray-400" />
+						</button>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
+{/snippet}
+
 {#snippet skeletonRows()}
 	{#each Array(5) as _}
 		<div
@@ -453,16 +529,17 @@
 			placeholder: 'Stadt oder Gemeinde suchen…',
 			ariaLabel: 'Gemeinde suchen'
 		})}
-		<div class="overflow-x-auto">
-			<div class="min-w-[1060px]" role="table" aria-label="Ranking {deTabLabel}">
-				{@render tableHeader()}
-				{#each mittelPage as row (row.region.id)}
-					{@render rankRow(row, row.region.id === regionId)}
-				{/each}
+		{#if mittelPage.length > 0}
+			<div class="overflow-x-auto">
+				<div class="min-w-[1060px]" role="table" aria-label="Ranking {deTabLabel}">
+					{@render tableHeader()}
+					{#each mittelPage as row (row.region.id)}
+						{@render rankRow(row, row.region.id === regionId)}
+					{/each}
+				</div>
 			</div>
-		</div>
-		{#if isSearchingMittel && mittelPage.length === 0}
-			<p class="py-8 text-center text-sm text-gray-400">„{searchMittel}" nicht gefunden.</p>
+		{:else if isSearchingMittel}
+			{@render globalFallback(searchMittel)}
 		{/if}
 	{/if}
 
@@ -499,16 +576,17 @@
 			placeholder: 'Gemeinde suchen…',
 			ariaLabel: 'Gemeinde suchen'
 		})}
-		<div class="overflow-x-auto">
-			<div class="min-w-[1060px]" role="table" aria-label="Ranking Gemeinden {stateName}">
-				{@render tableHeader()}
-				{#each landPage as row (row.region.id)}
-					{@render rankRow(row, row.region.id === regionId)}
-				{/each}
+		{#if landPage.length > 0}
+			<div class="overflow-x-auto">
+				<div class="min-w-[1060px]" role="table" aria-label="Ranking Gemeinden {stateName}">
+					{@render tableHeader()}
+					{#each landPage as row (row.region.id)}
+						{@render rankRow(row, row.region.id === regionId)}
+					{/each}
+				</div>
 			</div>
-		</div>
-		{#if isSearchingLand && landPage.length === 0}
-			<p class="py-8 text-center text-sm text-gray-400">„{searchLand}" nicht gefunden.</p>
+		{:else if isSearchingLand}
+			{@render globalFallback(searchLand)}
 		{/if}
 	{/if}
 

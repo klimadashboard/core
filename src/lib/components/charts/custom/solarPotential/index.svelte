@@ -237,6 +237,7 @@
 				{rankLandGesamt}
 				{rankAll}
 				loading={rankingLoading}
+				clickable
 			/>
 		{/key}
 	</section>
