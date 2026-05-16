@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SolarRankEntry, SolarNeighbourEntry } from './config';
+	import type { SolarRankEntry, SolarNeighbourEntry, RegionCase } from './config';
 	import Switch from '$lib/components/Switch.svelte';
 	import {
 		IconBuildingCommunity,
@@ -19,7 +19,9 @@
 	export let regionId: string = '';
 	export let regionName: string = '';
 	export let stateName: string = 'Bundesland';
-	export let regionCase: 'grossstadt' | 'mittelstadt' | 'kleinstadt' = 'mittelstadt';
+	export let regionCase: RegionCase = 'mittelstadt';
+	export let isStadtstaat: boolean = false;
+	export let population: number | undefined = undefined;
 	export let rankDE: number = 0;
 	export let rankDEGesamt: number = 0;
 	export let rankLand: number = 0;
@@ -31,19 +33,45 @@
 	type SortCol = 'potential' | 'trend' | 'daecher' | 'mwp' | null;
 
 	$: showDETab = regionCase !== 'kleinstadt';
-	$: deTabLabel = regionCase === 'grossstadt' ? 'Großstädte DE' : 'Mittelstädte DE';
+	$: showLandTab = regionCase !== 'bundesland' && !isStadtstaat;
+	$: showNachbarTab = neighbours.length > 0 && regionCase !== 'bundesland';
+
+	$: deTabLabel =
+		regionCase === 'grossstadt' ? 'Großstädte DE' :
+		regionCase === 'mittelstadt' ? 'Mittelstädte DE' :
+		regionCase === 'kreis' ? 'Kreise DE' :
+		regionCase === 'bundesland' ? 'Bundesländer' :
+		'Alle Gemeinden DE';
+
 	$: deTabDescription =
 		regionCase === 'grossstadt'
 			? 'Städte in Deutschland mit 100.000 oder mehr Einwohnern, sortiert nach genutztem Solarpotential.'
-			: 'Städte und Gemeinden in Deutschland mit 20.000–99.999 Einwohnern, sortiert nach genutztem Solarpotential.';
+			: regionCase === 'mittelstadt'
+				? 'Städte und Gemeinden in Deutschland mit 20.000–99.999 Einwohnern, sortiert nach genutztem Solarpotential.'
+				: regionCase === 'kreis'
+					? 'Alle Landkreise und kreisfreien Städte in Deutschland, sortiert nach genutztem Solarpotential.'
+					: regionCase === 'bundesland'
+						? 'Alle Bundesländer in Deutschland, sortiert nach genutztem Solarpotential.'
+						: 'Alle Gemeinden und Städte in Deutschland, sortiert nach genutztem Solarpotential.';
+
 	$: neighbourDescription =
 		regionCase === 'kleinstadt'
 			? 'Die nächstgelegenen Gemeinden nach Luftlinie.'
 			: regionCase === 'grossstadt'
 				? 'Die nächstgelegenen Großstädte (≥100.000 EW) nach Luftlinie, sortiert nach Rang.'
-				: 'Die nächstgelegenen Mittelstädte (20.000–99.999 EW) nach Luftlinie, sortiert nach Rang.';
+				: regionCase === 'kreis'
+					? 'Die nächstgelegenen Landkreise und kreisfreien Städte nach Luftlinie, sortiert nach Rang.'
+					: 'Die nächstgelegenen Mittelstädte (20.000–99.999 EW) nach Luftlinie, sortiert nach Rang.';
 
-	let activeTab: Tab = regionCase === 'kleinstadt' ? 'land' : 'de';
+	function getDefaultTab(): Tab {
+		if (regionCase === 'kleinstadt') return 'land';
+		if (regionCase === 'bundesland') return 'de';
+		// ≥500k cities: neighbours tab pre-selected per spec
+		if (regionCase === 'grossstadt' && (population ?? 0) >= 500_000) return 'nachbar';
+		return 'de';
+	}
+
+	let activeTab: Tab = getDefaultTab();
 	let sortCol: SortCol = null;
 	let sortDir: 'asc' | 'desc' = 'desc';
 
@@ -55,6 +83,12 @@
 	let pageLand = rankLand > 0 ? Math.ceil(rankLand / PER_PAGE) : 1;
 	const MEDALS = ['🥇', '🥈', '🥉'];
 
+	$: nachbarLabel =
+		regionCase === 'kreis' ? 'Nachbarkreise' :
+		regionCase === 'kleinstadt' ? 'Nachbargemeinden' :
+		regionCase === 'grossstadt' ? 'Nachbarstädte' :
+		'Nachbargemeinden';
+
 	$: tabViews = [
 		...(showDETab
 			? [
@@ -64,19 +98,23 @@
 							rankDE > 0
 								? `${deTabLabel}  #${rankDE} / ${rankDEGesamt.toLocaleString('de-DE')}`
 								: deTabLabel,
-						iconComponent: 	IconBuildingCommunity,
+						iconComponent: IconBuildingCommunity,
 						iconSize: 16
 					}
 				]
 			: []),
-		{
-			key: 'land',
-			label:
-				rankLand > 0
-					? `${stateName}  #${rankLand} / ${rankLandGesamt.toLocaleString('de-DE')}`
-					: stateName
-		},
-		...(neighbours.length > 0 ? [{ key: 'nachbar', label: 'Nachbargemeinden' }] : [])
+		...(showLandTab
+			? [
+					{
+						key: 'land',
+						label:
+							rankLand > 0
+								? `${stateName}  #${rankLand} / ${rankLandGesamt.toLocaleString('de-DE')}`
+								: stateName
+					}
+				]
+			: []),
+		...(showNachbarTab ? [{ key: 'nachbar', label: nachbarLabel }] : [])
 	];
 
 	type ExtEntry = SolarRankEntry & { origRank: number; trend: number; distKm?: number };

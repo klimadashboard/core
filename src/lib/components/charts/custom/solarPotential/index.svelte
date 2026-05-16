@@ -8,6 +8,7 @@
 		buildChartData,
 		computeAwards,
 		haversineKm,
+		type RegionCase,
 		type SolarStats,
 		type SolarRankEntry,
 		type HistEntry,
@@ -102,16 +103,22 @@
 	$: stateId = region?.parents?.find((p) => p.layer === 'state')?.id;
 	$: stateName = region?.parents?.find((p) => p.layer === 'state')?.name ?? 'Bundesland';
 
-	type RegionCase = 'grossstadt' | 'mittelstadt' | 'kleinstadt';
-
-	function getRegionCase(pop: number | undefined): RegionCase {
+	function getRegionCase(r: typeof region): RegionCase {
+		if (!r) return 'mittelstadt';
+		const { layer, population: pop } = r;
+		if (layer === 'state') return 'bundesland';
+		// Kreisfreie Städte are layer==='district' but "Großstadt schlägt kreisfreie Stadt"
+		if (layer === 'district') return (pop ?? 0) >= 100_000 ? 'grossstadt' : 'kreis';
+		// municipality — population-based
 		if (pop == null) return 'mittelstadt';
 		if (pop >= 100_000) return 'grossstadt';
 		if (pop >= 20_000) return 'mittelstadt';
 		return 'kleinstadt';
 	}
 
-	$: regionCase = getRegionCase(region?.population);
+	$: regionCase = getRegionCase(region);
+	// Stadtstaaten: city IS the state, so no separate state parent exists
+	$: isStadtstaat = regionCase === 'grossstadt' && !stateId;
 
 	$: allDEweit =
 		regionCase === 'grossstadt'
@@ -123,13 +130,22 @@
 							r.region.population >= 20_000 &&
 							r.region.population < 100_000
 					)
-				: [];
+				: regionCase === 'kreis'
+					? allRegions.filter((r) => r.region.layer === 'district')
+					: regionCase === 'bundesland'
+						? allRegions.filter((r) => r.region.layer === 'state')
+						: []; // kleinstadt — DE-weit not loaded per spec
 
-	$: byLand = stateId
-		? allRegions.filter((r) =>
-				r.region.parents?.some((p) => p.layer === 'state' && p.id === stateId)
-			)
-		: [];
+	$: byLand =
+		stateId && regionCase !== 'bundesland'
+			? allRegions.filter(
+					(r) =>
+						r.region.parents?.some((p) => p.layer === 'state' && p.id === stateId) &&
+						(regionCase === 'kreis'
+							? r.region.layer === 'district'
+							: r.region.layer !== 'district' && r.region.layer !== 'state')
+				)
+			: [];
 
 	$: rankDE = allDEweit.findIndex((r) => r.region.id === region?.id) + 1 || 0;
 	$: rankDEGesamt = allDEweit.length;
@@ -141,18 +157,20 @@
 
 	$: myLat = region?.center ? parseFloat(region.center[1]) : null;
 	$: myLon = region?.center ? parseFloat(region.center[0]) : null;
-	$: neighbours = computeNeighbours(allDEweit, allRegions, regionCase, region?.id, myLat, myLon);
+	$: kreisPool = allRegions.filter((r) => r.region.layer === 'district');
+	$: neighbours = computeNeighbours(allDEweit, allRegions, kreisPool, regionCase, region?.id, myLat, myLon);
 
 	function computeNeighbours(
 		dePool: SolarRankEntry[],
 		all: SolarRankEntry[],
+		kreisPool: SolarRankEntry[],
 		kase: RegionCase,
 		selfId: string | undefined,
 		lat: number | null,
 		lon: number | null
 	): SolarNeighbourEntry[] {
-		if (lat == null || lon == null) return [];
-		const pool = kase === 'kleinstadt' ? all : dePool;
+		if (lat == null || lon == null || kase === 'bundesland') return [];
+		const pool = kase === 'kleinstadt' ? all : kase === 'kreis' ? kreisPool : dePool;
 		const nearby = pool
 			.filter((r) => r.region.id !== selfId && r.region.center != null)
 			.map((r) => ({
@@ -211,6 +229,8 @@
 				regionName={region?.name ?? ''}
 				{stateName}
 				{regionCase}
+				{isStadtstaat}
+				population={region?.population}
 				{rankDE}
 				{rankDEGesamt}
 				{rankLand}

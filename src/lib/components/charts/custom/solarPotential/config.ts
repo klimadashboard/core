@@ -1,5 +1,7 @@
 import type { ChartFetchParams, ChartData, TableColumn } from '$lib/components/charts/types';
 
+export type RegionCase = 'grossstadt' | 'mittelstadt' | 'kleinstadt' | 'kreis' | 'bundesland';
+
 export interface Award {
 	icon: string;
 	name: string;
@@ -24,6 +26,7 @@ export interface SolarRegion {
 	id: string;
 	name: string;
 	population?: number;
+	layer?: string;       // 'municipality' | 'district' | 'state' | 'country'
 	layer_label?: string;
 	parents?: Array<{ id: string; layer: string }>;
 	center?: [string, string]; // [lon, lat]
@@ -74,6 +77,7 @@ function parseRegion(raw: unknown): SolarRegion {
 			id: String(r.id ?? ''),
 			name: String(r.name ?? ''),
 			population: typeof r.population === 'number' ? r.population : undefined,
+			layer: typeof r.layer === 'string' ? r.layer : undefined,
 			layer_label: typeof r.layer_label === 'string' ? r.layer_label : undefined,
 			parents: Array.isArray(r.parents) ? r.parents : [],
 			center
@@ -196,7 +200,7 @@ export function computeAwards(history: HistEntry[]): Award[] {
 
 const LATEST_FIELDS =
 	`&fields[]=region.id&fields[]=region.name&fields[]=region.population` +
-	`&fields[]=region.layer_label&fields[]=region.parents&fields[]=region.center` +
+	`&fields[]=region.layer&fields[]=region.layer_label&fields[]=region.parents&fields[]=region.center` +
 	`&fields[]=net_potential_share&fields[]=roofs_solar_share&fields[]=net_power_kw&fields[]=units_count`;
 
 // Prev-period: only rank position and trend delta are needed — skip all display fields.
