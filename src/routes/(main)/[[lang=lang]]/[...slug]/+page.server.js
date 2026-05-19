@@ -219,6 +219,18 @@ export async function load({ fetch, params }) {
 		if (err && 'location' in err) {
 			throw err;
 		}
-		throw error(404, 'Page not found');
+		if (err?.status && err.status < 500) {
+			// Re-throw SvelteKit errors (genuine 404s thrown above) as-is
+			throw err;
+		}
+		const status = err?.response?.status ?? err?.status;
+		if (status === 429) {
+			throw error(503, 'Too many requests to data backend — please try again shortly');
+		}
+		if (status >= 500) {
+			throw error(503, 'Data backend unavailable — please try again shortly');
+		}
+		console.error('[page load]', err);
+		throw error(503, 'Unexpected error loading page');
 	}
 }

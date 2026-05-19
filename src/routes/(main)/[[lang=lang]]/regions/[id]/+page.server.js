@@ -77,6 +77,12 @@ export async function load({ fetch, params, url, parent }) {
 			}
 		};
 	} catch (err) {
+		if (err && 'location' in err) throw err;
+		if (err?.status && err.status < 500) throw err;
+		const status = err?.response?.status ?? err?.status;
+		if (status === 429) throw error(503, 'Too many requests to data backend — please try again shortly');
+		if (status >= 500) throw error(503, 'Data backend unavailable — please try again shortly');
+		console.error('[regions load]', err);
 		throw error(404, 'Page not found');
 	}
 }

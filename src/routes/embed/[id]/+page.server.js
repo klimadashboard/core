@@ -20,16 +20,24 @@ export async function load({ fetch, params, url }) {
 			chartSnapshot: snapshots[params.id] || null
 		};
 	} catch (err) {
-		// If not found, check for an entry where old_id matches
-		const oldChart = await directus.request(
-			readItems('charts', {
-				filter: { id_old: { _eq: params.id } },
-				limit: 1
-			})
-		);
+		// On rate-limit or backend error, don't attempt a second Directus request
+		const status = err?.response?.status ?? err?.status;
+		if (status === 429) throw error(503, 'Too many requests to data backend — please try again shortly');
+		if (status >= 500) throw error(503, 'Data backend unavailable — please try again shortly');
 
-		if (oldChart.length > 0) {
-			throw redirect(308, `/embed/${oldChart[0].id}`);
+		// If not found, check for an entry where old_id matches
+		try {
+			const oldChart = await directus.request(
+				readItems('charts', {
+					filter: { id_old: { _eq: params.id } },
+					limit: 1
+				})
+			);
+			if (oldChart.length > 0) {
+				throw redirect(308, `/embed/${oldChart[0].id}`);
+			}
+		} catch (innerErr) {
+			if (innerErr && 'location' in innerErr) throw innerErr;
 		}
 	}
 
