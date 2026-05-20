@@ -18,6 +18,11 @@ export interface EmissionsRawData {
 	source: string;
 	region?: string;
 	update?: string;
+	type?: string; // 'none' for nowcast data, 'net-zero' for non-zero targets that still represent climate neutrality (e.g. without LULUCF)
+}
+
+export function isNetZeroTarget(entry: EmissionsRawData): boolean {
+	return entry.value === 0 || entry.type === 'net-zero';
 }
 
 export interface RegionResult {
@@ -51,6 +56,7 @@ export interface ReductionSummary {
 	lastYearTotal: number;
 	baseYearTotal: number;
 	targetValue: number;
+	isNetZero: boolean;
 	totalReductionNeeded: number;
 	totalReductionAchieved: number;
 	overallProgress: number;
@@ -386,6 +392,7 @@ export function calculateSectorProgress(
 		lastYearTotal: convert(lastYearTotalRaw),
 		baseYearTotal: convert(baseYearTotalRaw),
 		targetValue: convert(targetValueRaw),
+		isNetZero: isNetZeroTarget(futureTarget),
 		totalReductionNeeded: convert(totalReductionNeededRaw),
 		totalReductionAchieved: convert(totalReductionAchievedRaw),
 		overallProgress
@@ -586,7 +593,7 @@ export function getPlaceholders(
 		lastYearTotal: summary.lastYearTotal.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		baseYearTotal: summary.baseYearTotal.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		targetValue:
-			summary.targetValue === 0
+			summary.isNetZero
 				? 'Klimaneutralität'
 				: summary.targetValue.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		totalReductionNeeded: summary.totalReductionNeeded.toLocaleString('de-DE', {

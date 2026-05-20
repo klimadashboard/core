@@ -21,6 +21,7 @@
 		getClimateTargets,
 		getDisplayedCategories,
 		sortCategoryOrderByFirstYear,
+		isNetZeroTarget,
 		type RegionResult,
 		type YearGroup,
 		type PageRegionContext
@@ -347,7 +348,7 @@
 	// Climate neutrality text for dynamic heading placeholder
 	$: climateNeutrality =
 		lastTarget && activeCategory === 'all' && !isHorizontal && selectedRegion
-			? `Bis ${lastTarget.year} möchte ${selectedRegion.name} ${lastTarget.value === 0 ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreichen.`
+			? `Bis ${lastTarget.year} möchte ${selectedRegion.name} ${isNetZeroTarget(lastTarget) ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreichen.`
 			: null;
 
 	// Update chart data when selection, climateNeutrality, or chart mode changes

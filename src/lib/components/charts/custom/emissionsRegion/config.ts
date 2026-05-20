@@ -17,7 +17,11 @@ export interface EmissionsRawData {
 	source: string;
 	region?: string;
 	update?: string;
-	type?: string; // 'none' for nowcast data
+	type?: string; // 'none' for nowcast data, 'net-zero' for non-zero targets that still represent climate neutrality (e.g. without LULUCF)
+}
+
+export function isNetZeroTarget(entry: EmissionsRawData): boolean {
+	return entry.value === 0 || entry.type === 'net-zero';
 }
 
 export interface RegionResult {
@@ -538,7 +542,7 @@ export function computeInfoTextPlaceholders(
 	const hasClimateTargetStatic = !!lastTarget;
 	const climateTargetYear = lastTarget?.year?.toString() ?? '';
 	const climateTargetValue = lastTarget
-		? lastTarget.value === 0
+		? isNetZeroTarget(lastTarget)
 			? 'Klimaneutralität'
 			: `${fmt(lastTarget.value)} Millionen Tonnen CO₂-Äquivalente`
 		: '';
