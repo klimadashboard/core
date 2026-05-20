@@ -181,14 +181,10 @@ async function fetchBestandData(
 		return null;
 	}
 
-	// Get the latest year
-	const years = periods
-		.map((y) => parseInt(y))
-		.filter((y) => Number.isFinite(y))
-		.sort((a, b) => b - a);
-
-	const latestYear = years[0];
-	const latestYearData = yearData[String(latestYear)] || {};
+	// Get the latest period (date string like "2026-04-30" or legacy year string)
+	const latestPeriod = periods[periods.length - 1];
+	const latestYear = new Date(latestPeriod).getFullYear();
+	const latestYearData = yearData[latestPeriod] || {};
 
 	// Filter source to only show entries relevant to the displayed year
 	if (source.includes(',')) {
@@ -242,7 +238,7 @@ async function fetchBestandData(
 		shares: sharesData
 	};
 
-	const updateDate = new Date(latestYear, 0, 1).toISOString();
+	const updateDate = new Date(latestPeriod).toISOString();
 
 	return { data, categories, updateDate, regionName, source, hasPrivacySuppression };
 }
@@ -775,7 +771,9 @@ export async function fetchChartData({
 		};
 	});
 
-	const result = await fetchDataWithFallback(candidates, { mode: 'bestand' });
+	const neuzulassungenResult = await fetchDataWithFallback(candidates, { mode: 'neuzulassungen' });
+	const activeMode: DataMode = neuzulassungenResult ? 'neuzulassungen' : 'bestand';
+	const result = neuzulassungenResult ?? (await fetchDataWithFallback(candidates, { mode: 'bestand' }));
 	if (!result) return null;
 
 	const waffleData = buildWaffleData(result.data, result.categories);
@@ -794,7 +792,7 @@ export async function fetchChartData({
 		result.updateDate,
 		result.regionName || '',
 		ssrRegion,
-		'bestand',
+		activeMode,
 		true, // hasData
 		undefined, // availability
 		result.source,

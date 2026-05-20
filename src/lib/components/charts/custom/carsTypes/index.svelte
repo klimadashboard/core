@@ -165,15 +165,15 @@
 				return;
 			}
 
-			// Set mode: use initialMode if specified and available, otherwise prefer Bestand
+			// Set mode: use initialMode if specified and available, otherwise prefer Neuzulassungen
 			if (initialMode === 'neuzulassungen' && hasNeuzulassungen) {
 				activeMode = 'neuzulassungen';
 			} else if (initialMode === 'bestand' && hasBestand) {
 				activeMode = 'bestand';
-			} else if (hasBestand) {
-				activeMode = 'bestand';
-			} else {
+			} else if (hasNeuzulassungen) {
 				activeMode = 'neuzulassungen';
+			} else {
+				activeMode = 'bestand';
 			}
 
 			// Note: loadData() will be triggered by the reactive statement when availabilityChecked becomes true

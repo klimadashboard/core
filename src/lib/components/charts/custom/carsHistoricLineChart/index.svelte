@@ -115,6 +115,22 @@
 	$: xMin = data.length > 0 ? Math.min(...data.map((d) => d.date.getTime())) : Date.now();
 	$: xMax = data.length > 0 ? Math.max(...data.map((d) => d.date.getTime())) : Date.now();
 
+	// Monthly resolution if any data point falls outside January
+	$: isMonthlyData = data.some((d) => d.date.getMonth() !== 0);
+
+	// One tick per year for Bestand (first data point of each calendar year)
+	$: yearTicks = (() => {
+		const seen = new Set<number>();
+		return chartData
+			.filter((d) => {
+				const year = new Date(d.timestamp).getFullYear();
+				if (seen.has(year)) return false;
+				seen.add(year);
+				return true;
+			})
+			.map((d) => d.timestamp);
+	})();
+
 	// End labels data with values (only for visible series)
 	$: labelData =
 		data.length > 0
@@ -367,7 +383,7 @@
 					{innerHeight}
 					format={formatDate}
 					tickCount={activeMode === 'bestand' ? 0 : 6}
-					forceTicks={activeMode === 'bestand' ? chartData.map((d) => d.timestamp) : []}
+					forceTicks={activeMode === 'bestand' ? yearTicks : []}
 				/>
 
 				<!-- Lines for each category (non-highlighted first, then highlighted on top) -->
@@ -476,9 +492,9 @@
 						visible={true}
 						x={hover.clientX}
 						y={hover.clientY}
-						title={activeMode === 'bestand'
-							? date.getFullYear().toString()
-							: date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+						title={isMonthlyData
+							? date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+							: date.getFullYear().toString()}
 						{items}
 						container={containerEl}
 					/>

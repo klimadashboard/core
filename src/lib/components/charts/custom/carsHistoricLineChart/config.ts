@@ -257,7 +257,7 @@ export async function fetchBestandData(
 		const total = Object.values(filteredValues).reduce((sum, val) => sum + val, 0);
 
 		const row: VehicleRawData = {
-			date: new Date(parseInt(period), 0, 1) // January 1st of the year
+			date: new Date(period)
 		};
 
 		// Store both absolute values and shares
