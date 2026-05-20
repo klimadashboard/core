@@ -46,7 +46,7 @@
 	$: hasViewOption =
 		chart.custom_sveltestring && chartsWithViewOption.includes(chart.custom_sveltestring);
 
-	$: currentRegionId = chartData?.meta?.region?.id || page.data.page?.id || null;
+	$: currentRegionId = page.data.page?.id || chartData?.meta?.region?.id || null;
 	$: isEmbedRoute = page.url.pathname.startsWith('/embed/');
 	$: urlRegionId = page.url.searchParams.get('region');
 	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';

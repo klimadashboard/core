@@ -27,9 +27,9 @@
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 	export let mode: DataMode | undefined = undefined;
 
-	// Check URL for mode parameter (for embeds)
-	$: urlMode = page.url?.searchParams?.get('mode') as DataMode | null;
-	$: initialMode = urlMode || mode;
+	// Preset from URL (data-mode embed attribute) or prop — only affects initial selection,
+	// never hides available modes from the switch.
+	$: presetMode = (page.url?.searchParams?.get('mode') as DataMode | null) ?? mode ?? null;
 
 	// State
 	let data: VehicleRawData[] = [];
@@ -87,8 +87,8 @@
 		...(hasBestand ? [{ key: 'bestand', label: 'Bestand' }] : [])
 	];
 
-	// Show switch if at least one mode is available
-	$: showSwitch = hasBestand || hasNeuzulassungen;
+	// Only show switch when both modes are available — single-item switch is meaningless
+	$: showSwitch = hasBestand && hasNeuzulassungen;
 
 	// Derived
 	$: params = { mode: activeMode };
@@ -228,10 +228,11 @@
 				return;
 			}
 
-			// Set mode: use initialMode if specified and available, otherwise prefer Neuzulassungen
-			if (initialMode === 'bestand' && hasBestand) {
+			// Apply preset if that mode has data; otherwise default to Neuzulassungen.
+			// presetMode is a hint only — modeViews always shows all available modes.
+			if (presetMode === 'bestand' && hasBestand) {
 				activeMode = 'bestand';
-			} else if (initialMode === 'neuzulassungen' && hasNeuzulassungen) {
+			} else if (presetMode === 'neuzulassungen' && hasNeuzulassungen) {
 				activeMode = 'neuzulassungen';
 			} else if (hasNeuzulassungen) {
 				activeMode = 'neuzulassungen';
