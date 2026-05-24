@@ -35,11 +35,16 @@
 
 	const views: Array<{ labelKey: string; labelFallback: string; key: ViewKey; unit: string }> = [
 		{ labelKey: 'ui.map.total', labelFallback: 'Gesamt', key: 'pop', unit: '' },
-		{ labelKey: 'domain.transport.privateCars', labelFallback: 'Privat', key: 'private', unit: '%' },
+		{
+			labelKey: 'domain.transport.privateCars',
+			labelFallback: 'Privat',
+			key: 'private',
+			unit: '%'
+		},
 		{ labelKey: 'domain.transport.companyCars', labelFallback: 'Firmen', key: 'company', unit: '%' }
 	];
 
-	function getViewLabel(view: typeof views[0]): string {
+	function getViewLabel(view: (typeof views)[0]): string {
 		const translated = t(translations, view.labelKey);
 		return translated !== view.labelKey ? translated : view.labelFallback;
 	}
@@ -80,10 +85,14 @@
 	onMount(async () => {
 		// Set the current region's code for highlighting from props FIRST
 		if (regionCode || regionCodeShort) {
-			currentRegionCode = PUBLIC_VERSION === 'at'
-				? String(regionCode)
-				: String(regionCodeShort ?? regionCode);
-			console.log('[MapCarsDensity] Current region code set to:', currentRegionCode, 'from props:', { regionCode, regionCodeShort });
+			currentRegionCode =
+				PUBLIC_VERSION === 'at' ? String(regionCode) : String(regionCodeShort ?? regionCode);
+			console.log(
+				'[MapCarsDensity] Current region code set to:',
+				currentRegionCode,
+				'from props:',
+				{ regionCode, regionCodeShort }
+			);
 		}
 
 		try {
@@ -119,7 +128,10 @@
 	}
 
 	// Fixed thresholds and color ranges per view for a clear visual spread
-	const fixedScales: Record<ViewKey, { thresholds: number[]; startColor: string; endColor: string }> = {
+	const fixedScales: Record<
+		ViewKey,
+		{ thresholds: number[]; startColor: string; endColor: string }
+	> = {
 		pop: {
 			thresholds: [300, 400, 450, 500, 550, 600],
 			startColor: isDarkMode ? '#3d0a14' : '#fde8ed',
@@ -251,7 +263,12 @@
 		}
 
 		// Prefer name from API data, fall back to tile properties
-		const regionName = regionData.name || feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
+		const regionName =
+			regionData.name ||
+			feature.properties?.GEN ||
+			feature.properties?.name ||
+			feature.properties?.NAME ||
+			regionCode;
 
 		const dataArr =
 			selectedView === 'pop'
@@ -264,9 +281,15 @@
 		const value = hit?.value ?? 0;
 
 		// Get additional data for tooltip
-		const totalCarsHit = regionData.cars.find((row) => String(row.period) === String(selectedPeriod));
-		const privateShareHit = regionData.carsPrivateShare.find((row) => String(row.period) === String(selectedPeriod));
-		const companyShareHit = regionData.carsCompanyShare.find((row) => String(row.period) === String(selectedPeriod));
+		const totalCarsHit = regionData.cars.find(
+			(row) => String(row.period) === String(selectedPeriod)
+		);
+		const privateShareHit = regionData.carsPrivateShare.find(
+			(row) => String(row.period) === String(selectedPeriod)
+		);
+		const companyShareHit = regionData.carsCompanyShare.find(
+			(row) => String(row.period) === String(selectedPeriod)
+		);
 
 		hoveredRegion = {
 			name: regionName,
@@ -409,7 +432,12 @@
 
 				// Update the current region highlight filter with the correct idProp
 				if (currentRegionCode && map.getLayer('cars-current-region-outline')) {
-					console.log('[MapCarsDensity] Setting filter with idProp:', idProp, 'currentRegionCode:', currentRegionCode);
+					console.log(
+						'[MapCarsDensity] Setting filter with idProp:',
+						idProp,
+						'currentRegionCode:',
+						currentRegionCode
+					);
 					map.setFilter('cars-current-region-outline', ['==', idProp, currentRegionCode]);
 				}
 			}
@@ -437,20 +465,33 @@
 </script>
 
 <!-- Controls positioned absolutely over map - top left -->
-<div class="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto max-w-[calc(100%-120px)]">
+<div
+	class="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto max-w-[calc(100%-120px)]"
+>
 	<!-- Layer Selector -->
-	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1.5 px-2 border border-gray-200 dark:border-gray-700">
-		<select bind:value={selectedLayer} class="appearance-none text-sm bg-transparent cursor-pointer">
+	<div
+		class="bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1.5 px-2 border border-gray-200 dark:border-gray-700"
+	>
+		<select
+			bind:value={selectedLayer}
+			class="appearance-none text-sm bg-transparent cursor-pointer w-full"
+		>
 			{#each layers as layer}
 				<option value={layer.key}>
-					{t(translations, layer.key) !== layer.key ? t(translations, layer.key) : (layer.key === 'municipalities' ? 'Gemeinden' : 'Kreise')}
+					{t(translations, layer.key) !== layer.key
+						? t(translations, layer.key)
+						: layer.key === 'municipalities'
+							? 'Gemeinden'
+							: 'Kreise'}
 				</option>
 			{/each}
 		</select>
 	</div>
 
 	<!-- View Switcher -->
-	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+	<div
+		class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
+	>
 		<div class="flex gap-1 flex-wrap">
 			{#each views as view}
 				<button
@@ -467,7 +508,9 @@
 
 	<!-- Period Slider (Austria only) -->
 	{#if PUBLIC_VERSION === 'at' && availablePeriods.length > 1}
-		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+		<div
+			class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
+		>
 			<div class="flex gap-2 items-center">
 				<input
 					type="range"
@@ -503,7 +546,9 @@
 
 	<!-- Loading Indicator -->
 	{#if loading || switchingLayer}
-		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+		<div
+			class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
+		>
 			<Loader />
 		</div>
 	{/if}
@@ -544,7 +589,11 @@
 				{#if hoveredRegion.totalCars != null && hoveredRegion.privateShare != null}
 					<div class="flex justify-between gap-4">
 						<span class="text-gray-600 dark:text-gray-400">Private Pkw:</span>
-						<span class="font-semibold">{Math.round(hoveredRegion.totalCars * hoveredRegion.privateShare / 100).toLocaleString('de-DE')}</span>
+						<span class="font-semibold"
+							>{Math.round(
+								(hoveredRegion.totalCars * hoveredRegion.privateShare) / 100
+							).toLocaleString('de-DE')}</span
+						>
 					</div>
 				{/if}
 				{#if hoveredRegion.totalCars != null}
@@ -562,7 +611,11 @@
 				{#if hoveredRegion.totalCars != null && hoveredRegion.companyShare != null}
 					<div class="flex justify-between gap-4">
 						<span class="text-gray-600 dark:text-gray-400">Firmenwagen:</span>
-						<span class="font-semibold">{Math.round(hoveredRegion.totalCars * hoveredRegion.companyShare / 100).toLocaleString('de-DE')}</span>
+						<span class="font-semibold"
+							>{Math.round(
+								(hoveredRegion.totalCars * hoveredRegion.companyShare) / 100
+							).toLocaleString('de-DE')}</span
+						>
 					</div>
 				{/if}
 				{#if hoveredRegion.totalCars != null}

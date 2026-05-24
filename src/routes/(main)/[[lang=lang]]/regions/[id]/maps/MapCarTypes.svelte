@@ -27,8 +27,18 @@
 
 	// Drive types to visualize (matching categoryConfig from carsTypes/config.ts)
 	const driveTypes = [
-		{ key: 'Elektro', labelKey: 'domain.fuel.electric', labelFallback: 'Elektro', color: '#10B981' },
-		{ key: 'Plug-in-Hybrid', labelKey: 'domain.fuel.pluginHybrid', labelFallback: 'Plug-in-Hybrid', color: '#8B5CF6' },
+		{
+			key: 'Elektro',
+			labelKey: 'domain.fuel.electric',
+			labelFallback: 'Elektro',
+			color: '#10B981'
+		},
+		{
+			key: 'Plug-in-Hybrid',
+			labelKey: 'domain.fuel.pluginHybrid',
+			labelFallback: 'Plug-in-Hybrid',
+			color: '#8B5CF6'
+		},
 		{ key: 'Hybrid', labelKey: 'domain.fuel.hybrid', labelFallback: 'Hybrid', color: '#38BDF8' },
 		{ key: 'Benzin', labelKey: 'domain.fuel.petrol', labelFallback: 'Benzin', color: '#F59E0B' },
 		{ key: 'Diesel', labelKey: 'domain.fuel.diesel', labelFallback: 'Diesel', color: '#DB2777' }
@@ -59,15 +69,15 @@
 
 	// Fixed thresholds per drive type for a clear visual spread
 	const fixedScales = {
-		'Elektro':        { thresholds: [2, 5, 8, 12, 18, 25] },
+		Elektro: { thresholds: [2, 5, 8, 12, 18, 25] },
 		'Plug-in-Hybrid': { thresholds: [1, 2, 4, 6, 8, 12] },
-		'Hybrid':         { thresholds: [2, 5, 8, 12, 16, 22] },
-		'Benzin':         { thresholds: [20, 28, 34, 40, 46, 52] },
-		'Diesel':         { thresholds: [15, 22, 28, 34, 40, 48] }
+		Hybrid: { thresholds: [2, 5, 8, 12, 16, 22] },
+		Benzin: { thresholds: [20, 28, 34, 40, 46, 52] },
+		Diesel: { thresholds: [15, 22, 28, 34, 40, 48] }
 	};
 
 	function createColorScale(_data) {
-		const driveType = driveTypes.find(d => d.key === selectedDriveType);
+		const driveType = driveTypes.find((d) => d.key === selectedDriveType);
 		const baseColor = driveType?.color || '#10B981';
 		const lightColor = isDarkMode ? '#1F2937' : '#F3F4F6';
 
@@ -112,41 +122,45 @@
 			const country = PUBLIC_VERSION.toUpperCase();
 			const layerFilter = selectedLayer === 'districts' ? 'district' : 'municipality';
 
-			// Fetch registrations data from Directus (contains drive type categories)
-			const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[country][_eq]=${country}&limit=-1`;
+			// Both AT and DE drive-type data lives in mobility_cars.
+			// AT uses 5-digit municipality codes; DE uses 5-digit district codes in row.region.
+			const url = `https://base.klimadashboard.org/items/mobility_cars?filter[country][_eq]=${country}&limit=-1`;
 			const res = await fetch(url);
 			if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 
 			const json = await res.json();
-			const records = json.data || [];
+			// Exclude aggregate categories so percentages are computed from drive-type totals only.
+			const excludedCategories = ['Insgesamt', 'Privat', 'Firmen'];
+			const records = (json.data || []).filter((r) => !excludedCategories.includes(r.category));
 
 			// Get ALL region shapes (not just selected layer) to resolve any region ID
 			const allRegions = await getRegions();
-			const countryRegions = allRegions.filter(r => r.country === country);
+			const countryRegions = allRegions.filter((r) => r.country === country);
 
-			// Map region ID → region object (for all layers)
+			// Both UUID and code lookups kept for safety; mobility_cars uses codes for both countries
 			const regionById = new Map();
+			const regionByCode = new Map();
 			for (const r of countryRegions) {
 				regionById.set(r.id, r);
+				if (r.code) regionByCode.set(String(r.code), r);
 			}
 
 			// Map region ID → tile code for the selected layer
-			const tileCodeForLayer = (r) =>
-				PUBLIC_VERSION === 'at' ? r.code : (r.code_short || r.code);
+			const tileCodeForLayer = (r) => (PUBLIC_VERSION === 'at' ? r.code : r.code_short || r.code);
 
-			// For district view: map municipality ID → parent district tile code
+			// For district view: map municipality UUID → parent district tile code
 			const muniToDistrictCode = new Map();
 			const districtNames = new Map();
 			if (layerFilter === 'district') {
-				const districts = countryRegions.filter(r => r.layer === 'district');
+				const districts = countryRegions.filter((r) => r.layer === 'district');
 				for (const d of districts) {
 					const code = tileCodeForLayer(d);
 					districtNames.set(code, d.name);
 				}
-				const municipalities = countryRegions.filter(r => r.layer === 'municipality');
+				const municipalities = countryRegions.filter((r) => r.layer === 'municipality');
 				for (const m of municipalities) {
 					if (Array.isArray(m.parents)) {
-						const districtParent = m.parents.find(p => p.layer === 'district');
+						const districtParent = m.parents.find((p) => p.layer === 'district');
 						if (districtParent) {
 							const parentRegion = regionById.get(districtParent.id);
 							if (parentRegion) {
@@ -157,9 +171,10 @@
 				}
 			}
 
-			// Resolve each record's region to a tile code for the selected layer
-			function resolveRegionCode(regionId) {
-				const r = regionById.get(regionId);
+			// Resolve each record's region code to a tile code for the selected layer.
+			function resolveRegionCode(rowRegion) {
+				let r = regionById.get(rowRegion);
+				if (!r) r = regionByCode.get(String(rowRegion));
 				if (!r) return null;
 
 				// Record matches selected layer directly
@@ -167,7 +182,7 @@
 
 				// Municipality record on district view → aggregate to parent district
 				if (layerFilter === 'district' && r.layer === 'municipality') {
-					return muniToDistrictCode.get(regionId) || null;
+					return muniToDistrictCode.get(r.id) || null;
 				}
 
 				return null;
@@ -257,9 +272,8 @@
 		legendSteps = range.map((color, i) => {
 			const lower = i === 0 ? 0 : thresholds[i - 1];
 			const upper = thresholds[i];
-			const label = upper !== undefined
-				? `${lower.toFixed(1)}–${upper.toFixed(1)}%`
-				: `> ${lower.toFixed(1)}%`;
+			const label =
+				upper !== undefined ? `${lower.toFixed(1)}–${upper.toFixed(1)}%` : `> ${lower.toFixed(1)}%`;
 			return { color, label };
 		});
 	}
@@ -277,7 +291,12 @@
 		}
 
 		// Prefer name from API data, fall back to tile properties
-		const rName = data.name || feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
+		const rName =
+			data.name ||
+			feature.properties?.GEN ||
+			feature.properties?.name ||
+			feature.properties?.NAME ||
+			regionCode;
 
 		hoveredRegion = {
 			name: rName,
@@ -308,14 +327,15 @@
 	}
 
 	function removeRegionSourceAndLayers() {
-		(['municipalities', 'districts']).forEach((lyr) => {
+		['municipalities', 'districts'].forEach((lyr) => {
 			const f = fillLayerId(lyr);
 			const o = outlineLayerId(lyr);
 			if (map.getLayer(f)) map.removeLayer(f);
 			if (map.getLayer(o)) map.removeLayer(o);
 		});
 		if (map.getLayer('car-types-highlight-outline')) map.removeLayer('car-types-highlight-outline');
-		if (map.getLayer('car-types-current-region-outline')) map.removeLayer('car-types-current-region-outline');
+		if (map.getLayer('car-types-current-region-outline'))
+			map.removeLayer('car-types-current-region-outline');
 		if (map.getSource('car-types-regions')) map.removeSource('car-types-regions');
 	}
 
@@ -388,7 +408,11 @@
 
 		map.on('mousemove', fillLayerId(selectedLayer), handleMouseMove);
 		map.on('mouseleave', fillLayerId(selectedLayer), handleMouseLeave);
-		map.on('mouseenter', fillLayerId(selectedLayer), () => (map.getCanvas().style.cursor = 'pointer'));
+		map.on(
+			'mouseenter',
+			fillLayerId(selectedLayer),
+			() => (map.getCanvas().style.cursor = 'pointer')
+		);
 		map.on('mouseleave', fillLayerId(selectedLayer), () => (map.getCanvas().style.cursor = ''));
 
 		const onData = (ev) => {
@@ -412,9 +436,8 @@
 	onMount(async () => {
 		// Set the current region's code for highlighting from props
 		if (regionCode || regionCodeShort) {
-			currentRegionCode = PUBLIC_VERSION === 'at'
-				? String(regionCode)
-				: String(regionCodeShort ?? regionCode);
+			currentRegionCode =
+				PUBLIC_VERSION === 'at' ? String(regionCode) : String(regionCodeShort ?? regionCode);
 		}
 
 		await loadData();
@@ -454,18 +477,29 @@
 
 	function getLayerLabel(key) {
 		const labels = {
-			municipalities: t(translations, 'municipalities') !== 'municipalities' ? t(translations, 'municipalities') : 'Gemeinden',
-			districts: t(translations, 'districts') !== 'districts' ? t(translations, 'districts') : 'Kreise'
+			municipalities:
+				t(translations, 'municipalities') !== 'municipalities'
+					? t(translations, 'municipalities')
+					: 'Gemeinden',
+			districts:
+				t(translations, 'districts') !== 'districts' ? t(translations, 'districts') : 'Kreise'
 		};
 		return labels[key] || key;
 	}
 </script>
 
 <!-- Controls positioned absolutely over map - top left -->
-<div class="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto max-w-[calc(100%-120px)]">
+<div
+	class="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto max-w-[calc(100%-120px)]"
+>
 	<!-- Layer Selector -->
-	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1.5 px-2 border border-gray-200 dark:border-gray-700">
-		<select bind:value={selectedLayer} class="appearance-none text-sm bg-transparent cursor-pointer">
+	<div
+		class="bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1.5 px-2 border border-gray-200 dark:border-gray-700"
+	>
+		<select
+			bind:value={selectedLayer}
+			class="appearance-none text-sm bg-transparent cursor-pointer w-full"
+		>
 			{#each layers as layer}
 				<option value={layer.key}>{getLayerLabel(layer.key)}</option>
 			{/each}
@@ -473,14 +507,19 @@
 	</div>
 
 	<!-- Drive Type Switcher -->
-	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+	<div
+		class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
+	>
 		<div class="text-xs font-semibold mb-2 text-gray-600 dark:text-gray-400">
-			{t(translations, 'ui.map.driveType') !== 'ui.map.driveType' ? t(translations, 'ui.map.driveType') : 'Antriebsart'}
+			{t(translations, 'ui.map.driveType') !== 'ui.map.driveType'
+				? t(translations, 'ui.map.driveType')
+				: 'Antriebsart'}
 		</div>
 		<div class="flex gap-1 flex-wrap">
 			{#each driveTypes as driveType}
 				<button
-					class="px-2 py-1 text-xs rounded transition-colors flex items-center gap-1 {selectedDriveType === driveType.key
+					class="px-2 py-1 text-xs rounded transition-colors flex items-center gap-1 {selectedDriveType ===
+					driveType.key
 						? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
 						: 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'}"
 					on:click={() => (selectedDriveType = driveType.key)}
@@ -499,7 +538,12 @@
 			transition:fade
 		>
 			<div class="font-semibold mb-2">
-				{getDriveTypeLabel(driveTypes.find(d => d.key === selectedDriveType))} ({t(translations, 'table.share') !== 'table.share' ? t(translations, 'table.share') : 'Anteil'})
+				{getDriveTypeLabel(driveTypes.find((d) => d.key === selectedDriveType))} ({t(
+					translations,
+					'table.share'
+				) !== 'table.share'
+					? t(translations, 'table.share')
+					: 'Anteil'})
 			</div>
 			{#each legendSteps as step}
 				<div class="flex items-center gap-2 mb-1">
@@ -512,7 +556,9 @@
 
 	<!-- Loading Indicator -->
 	{#if loading || switchingLayer}
-		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+		<div
+			class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700"
+		>
 			<Loader />
 		</div>
 	{/if}
@@ -529,7 +575,11 @@
 			{#each driveTypes as driveType}
 				{@const value = hoveredRegion[driveType.key]}
 				{#if value !== undefined}
-					<div class="flex justify-between gap-4 {selectedDriveType === driveType.key ? 'font-semibold' : ''}">
+					<div
+						class="flex justify-between gap-4 {selectedDriveType === driveType.key
+							? 'font-semibold'
+							: ''}"
+					>
 						<span class="flex items-center gap-1">
 							<span class="w-2 h-2 rounded-full" style="background-color: {driveType.color}"></span>
 							{getDriveTypeLabel(driveType)}:
