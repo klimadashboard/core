@@ -5,8 +5,14 @@
 	export let chartSnapshots = {};
 </script>
 
-<div class="my-4 space-y-4 container">
+{#if block.hidewrapper}
 	{#each block.charts as chart}
-		<Chart id={chart.chart} type="card" snapshot={chartSnapshots[chart.chart]} />
+		<Chart id={chart.chart} type="card" snapshot={chartSnapshots[chart.chart]} hideWrapper={true} />
 	{/each}
-</div>
+{:else}
+	<div class="my-4 space-y-4 container">
+		{#each block.charts as chart}
+			<Chart id={chart.chart} type="card" snapshot={chartSnapshots[chart.chart]} />
+		{/each}
+	</div>
+{/if}
