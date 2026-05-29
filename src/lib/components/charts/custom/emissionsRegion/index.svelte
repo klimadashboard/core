@@ -863,4 +863,9 @@
 			</p>
 		{/if}
 	</div>
+
+	{@const noteText = selectedRegion ? v?.[`note.${selectedRegion.id}`] : undefined}
+	{#if noteText}
+		<p class="text-sm mt-3 text-gray-600 dark:text-gray-400">{@html noteText}</p>
+	{/if}
 {/if}
