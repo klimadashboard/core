@@ -189,6 +189,23 @@ const _fetchGasUsageData = async () => {
 	}
 };
 
+const _fetchCO2ConcentrationData = async () => {
+	const directus = getDirectusInstance(fetch);
+
+	try {
+		const data = await directus
+			.request(readItems('global_co2_concentration', { sort: ['-year'], limit: 1 }))
+			.catch(() => []);
+
+		return {
+			co2ConcentrationCurrent: data[0]?.mean != null ? formatNumber(Math.round(data[0].mean)) : 'N/A'
+		};
+	} catch (error) {
+		console.error('Error fetching CO2 concentration data:', error);
+		return { co2ConcentrationCurrent: 'N/A' };
+	}
+};
+
 const _fetchBalkonStats = async () => {
 	try {
 		const res = await fetch('https://base.klimadashboard.org/get-balkonkraftwerke');
@@ -240,6 +257,7 @@ const getSiteData = () => cachedFetch('site', _fetchSiteData);
 const getRenewableData = () => cachedFetch('renewable', _fetchRenewableData);
 const getCO2PriceData = () => cachedFetch('co2price', _fetchCO2PriceData);
 const getGasUsageData = () => cachedFetch('gasusage', _fetchGasUsageData);
+const getCO2ConcentrationData = () => cachedFetch('co2concentration', _fetchCO2ConcentrationData);
 const getBalkonStats = () => cachedFetch('balkon', _fetchBalkonStats);
 
 const placeholderHandlers = {
@@ -256,6 +274,7 @@ const placeholderHandlers = {
 	gasUsageCurrentDate: async () => (await getGasUsageData()).gasUsageCurrentDate,
 	gasUsageLastYear: async () => (await getGasUsageData()).gasUsageLastYear,
 	gasUsageLastYearDate: async () => (await getGasUsageData()).gasUsageLastYearDate,
+	co2ConcentrationCurrent: async () => (await getCO2ConcentrationData()).co2ConcentrationCurrent,
 	currentCountry: async () => (await getSiteData()).region,
 	balkonkraftUnitsThisYear: async () => (await getBalkonStats()).balkonkraftUnitsThisYear,
 	balkonkraftUnitsLastYear: async () => (await getBalkonStats()).balkonkraftUnitsLastYear,
