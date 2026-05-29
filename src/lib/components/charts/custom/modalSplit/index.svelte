@@ -244,6 +244,32 @@
 		return `${Math.round(value)}%`;
 	}
 
+	// Merge bicycle + e_bike into one segment for the large bar (same color, combined value is more readable)
+	function mergeSegmentsForLargeBar(
+		segments: ReturnType<typeof processYearData>
+	): Array<{ category: string; value: number; x0: number; x1: number; merged?: boolean }> {
+		const result: Array<{
+			category: string;
+			value: number;
+			x0: number;
+			x1: number;
+			merged?: boolean;
+		}> = [];
+		let i = 0;
+		while (i < segments.length) {
+			const seg = segments[i];
+			const next = segments[i + 1];
+			if (seg.category === 'bicycle' && next?.category === 'e_bike') {
+				result.push({ category: 'bicycle', value: seg.value + next.value, x0: seg.x0, x1: next.x1, merged: true });
+				i += 2;
+			} else {
+				result.push(seg);
+				i++;
+			}
+		}
+		return result;
+	}
+
 	// Hover state for tooltip
 	let hoveredYear: number | null = null;
 	let hoverClientX = 0;
@@ -326,7 +352,7 @@
 {/snippet}
 
 <!-- Snippet: Large bar segments with icons -->
-{#snippet largeBarSegments(segments: ReturnType<typeof processYearData>, year: number)}
+{#snippet largeBarSegments(segments: ReturnType<typeof mergeSegmentsForLargeBar>, year: number)}
 	{#each segments as segment}
 		{@const segmentWidth = xScale(segment.value)}
 		{@const segmentX = xScale(segment.x0)}
@@ -351,9 +377,10 @@
 					{/if}
 				{/if}
 			</div>
-			{#if segmentWidth > 35}
-				<div class="absolute bottom-1.5 left-2 text-white opacity-80">
-					<TransportIcons category={segment.category} size={20} />
+			{#if segmentWidth > 14}
+				{@const iconSize = segmentWidth > 35 ? 20 : 14}
+				<div class="absolute bottom-1.5 text-white opacity-80" style="left: {Math.min(8, (segmentWidth - iconSize) / 2)}px;">
+					<TransportIcons category={segment.category} size={iconSize} />
 				</div>
 			{/if}
 		</div>
@@ -489,7 +516,7 @@
 						<span class="text-sm">Modal Split aktuell</span>
 					</div>
 					<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-						{@render largeBarSegments(currentYearData, latestDataYear)}
+						{@render largeBarSegments(mergeSegmentsForLargeBar(currentYearData), latestDataYear)}
 					</div>
 				</div>
 			</div>

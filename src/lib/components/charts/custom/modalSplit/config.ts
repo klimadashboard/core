@@ -99,7 +99,7 @@ export const categoryColors: Record<string, { main: string; light: string; dark:
 	bicycle: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - contrast 4.51:1
 	e_bike: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - same as bicycle
 	public_transport: { main: '#ca8a04', light: '#fef3c7', dark: '#a16207' }, // Yellow-600 - contrast 5.37:1
-	motorbike: { main: '#c2410c', light: '#ffedd5', dark: '#9a3412' }, // Orange-700 - contrast 5.93:1
+	motorbike: { main: '#92400e', light: '#fef3c7', dark: '#78350f' }, // Amber-800 - contrast 7.8:1
 	car_driver: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' }, // Pink-700 - contrast 5.64:1
 	car_passenger: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' }, // Violet-600 - contrast 4.75:1
 	car: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' }, // Pink-700 - same as car_driver
