@@ -165,7 +165,7 @@
 		</div>
 	{/if}
 	<Scroller bind:index bind:offset bind:progress>
-		<div slot="background" />
+		<div slot="background"></div>
 		<div slot="foreground">
 			<Intro {data} />
 

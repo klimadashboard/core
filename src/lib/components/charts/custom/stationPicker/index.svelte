@@ -8,7 +8,7 @@
 	import { page } from '$app/state';
 
 	export let selectedStation;
-	export let chart;
+	export const chart = undefined;
 	export let snowCoverageMinimum = 0;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_stations' : 'at_geosphere_stations';

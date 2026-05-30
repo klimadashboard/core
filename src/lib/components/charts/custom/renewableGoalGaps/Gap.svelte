@@ -98,7 +98,8 @@
 					{#each federalStates as state}
 						<g
 							transform="translate({getOffset(state, federalStates)},0)"
-							on:mouseover={() => (selectedState = state)}
+							role="presentation"
+							on:mouseover={()=> (selectedState = state)}
 							on:mouseout={() => (selectedState = null)}
 						>
 							<rect

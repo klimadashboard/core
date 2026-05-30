@@ -5,7 +5,7 @@
 	import Papa from 'papaparse';
 	import { Chart, AxisX, AxisY, Tooltip, Legend } from '$lib/components/charts/primitives';
 
-	export let chart;
+	export const chart = undefined;
 	export let v;
 	export let onChartData = undefined;
 

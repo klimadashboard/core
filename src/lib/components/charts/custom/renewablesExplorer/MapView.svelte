@@ -31,9 +31,9 @@
 		added_units?: number;
 		cumulative_units?: number;
 	}> = [];
-	export let goal: any = null;
-	export let updateDate: string = '';
-	export let gridOperatorCheckedRatio: number | null = null;
+	export const goal: any = null;
+	export const updateDate: string = '';
+	export const gridOperatorCheckedRatio: number | null = null;
 	export let dataLoading: boolean = true;
 
 	const dispatch = createEventDispatcher();

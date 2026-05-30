@@ -73,6 +73,7 @@
 	{#if sortedData}
 		<svg
 			viewBox="-150 -20 1150 1020"
+			role="presentation"
 			on:mouseleave={() => {
 				ksgHover = null;
 				crfHover = null;
@@ -92,6 +93,7 @@
 					style="transition: fill 0.3s ease;"
 					opacity={ksgSelection != null && ksgSector.key != ksgSelection ? 0.2 : 1}
 					class="cursor-pointer"
+					role="presentation"
 					on:mousedown|stopPropagation={() => {
 						ksgSelection = ksgSector.key;
 						ksgHover = null;
@@ -116,6 +118,7 @@
 
 				{#if ksgSelection == null || ksgSector.key == ksgSelection}
 					<g
+						role="presentation"
 						on:mousemove|stopPropagation={(e) => {
 							if (ksgSelection != null) return;
 							mouse = { x: e.layerX, y: e.layerY };
@@ -175,6 +178,7 @@
 								width={crfSector.w2}
 								x={crfSector.x2}
 								y={crfSector.y2}
+								role="presentation"
 								on:mousemove={(e) => {
 									if (ksgSelection == null) return;
 									else e.stopPropagation();
@@ -225,6 +229,7 @@
 								x={0}
 								y={-20}
 								style="transition: fill 0.3s ease"
+								role="presentation"
 								on:pointerdown|stopPropagation={() => {
 									extensiveList = true;
 								}}
@@ -299,6 +304,7 @@
 			<div
 				class="text-white p-4 flex justify-between items-start"
 				style="background-color: rgba(255,255,255,0.2)"
+				role="presentation"
 				on:mousemove={(e) => {
 					e.stopPropagation();
 					crfHover = null;

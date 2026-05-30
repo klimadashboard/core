@@ -4,7 +4,7 @@
 	import { Chart, AxisX, AxisY, Line, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { Select } from '$lib/components/ui';
 
-	export let chart;
+	export const chart = undefined;
 	export let v;
 	export let onChartData = undefined;
 

@@ -9,7 +9,7 @@
 	import type { CompanyMetaData, CompanyMetaDataArray } from './types';
 
 	export let companiesMetaData: CompanyMetaDataArray = [];
-	export let chart;
+	export const chart = undefined;
 
 	const scopes = [1, 2, 3];
 	let selectedScopes: number[] = [1];

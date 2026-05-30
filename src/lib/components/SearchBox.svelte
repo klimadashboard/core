@@ -127,21 +127,20 @@
 	{#if matchingItems !== null && !selectedItem && displayItems}
 		<div style="z-index: 10000" class="absolute shadow-md bg-white left-0 right-0">
 			{#each displayedItems as { key, title, subtitle }, index (key)}
-				<li class="list-none" on:click={selectItem(key)}>
-					<a
+				<li class="list-none">
+					<button
 						bind:this={itemRefs[index]}
 						id={`search-box-item-${index}`}
 						data-index={index}
-						href="javascript:void(0)"
-						class="flex flex-col px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
-						role="button"
-						tabindex="0"
+						type="button"
+						class="flex flex-col w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
+						on:click={() => selectItem(key)}
 					>
 						<span class="text-sm"> {title}</span>
 						{#if subtitle}
 							<span class="text-coldGray-300 text-xs"> {subtitle}</span>
 						{/if}
-					</a>
+					</button>
 				</li>
 			{/each}
 			{#if remainingItems}

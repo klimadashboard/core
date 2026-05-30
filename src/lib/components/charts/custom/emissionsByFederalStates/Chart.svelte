@@ -316,7 +316,10 @@
 						x="20"
 						dominant-baseline="hanging"
 						fill="currentColor"
-						on:mousedown={() => (sortKey = 'emissions')}
+						role="presentation"
+								on:mousedown={() =>
+								role="presentation"
+							> (sortKey = 'emissions')}
 						on:mousedown={() => (sortAscending = !sortAscending)}
 					>
 						Treibhausgas-Emissionen pro Kopf
@@ -330,7 +333,10 @@
 						dominant-baseline="hanging"
 						fill="currentColor"
 						x="-19"
-						on:mousedown={() => (sortKey = 'population')}
+						role="presentation"
+								on:mousedown={() =>
+								role="presentation"
+							> (sortKey = 'population')}
 						on:mousedown={() => (sortAscending = !sortAscending)}
 					>
 						{#if sortKey == 'population'}
@@ -407,7 +413,10 @@
 											width={dimensions.width}
 											height={dimensions.height}
 											fill="transparent"
-											on:mouseover={() => (activeState = state)}
+											role="presentation"
+								on:mouseover={() =>
+								role="presentation"
+							> (activeState = state)}
 											on:focus={() => (activeState = state)}
 											on:mouseout={() => (activeState = '')}
 											on:blur={() => (activeState = '')}
@@ -477,7 +486,10 @@
 				<g
 					transform="translate({chartWidth - 24 || 0}, 0)"
 					class="cursor-pointer"
-					on:mousedown={() => (openMap = !openMap)}
+					role="presentation"
+								on:mousedown={() =>
+								role="presentation"
+							> (openMap = !openMap)}
 				>
 					<IconMap size={24} />
 				</g>
@@ -500,7 +512,10 @@
 										: 'opacity-100'}"
 									stroke="#FFFFFF"
 									strokeWidth="1"
-									on:mouseup={() => handleMouseOver(feature)}
+									role="presentation"
+								on:mouseup={() =>
+								role="presentation"
+							> handleMouseOver(feature)}
 									on:touchstart={() => handleMouseOver(feature)}
 									on:mouseover={() => (activeState = feature.properties.name)}
 									on:focus={() => (activeState = feature.properties.name)}

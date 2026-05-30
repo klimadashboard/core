@@ -86,9 +86,11 @@
 			{#each filtered as r}
 				<div
 					role="option"
+					tabindex="0"
 					aria-selected={isSelected(r)}
 					class="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
 					on:click={() => toggle(r)}
+					on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && toggle(r)}
 				>
 					<input type="checkbox" checked={isSelected(r)} readonly class="mr-2" />
 					<span class="flex-1">

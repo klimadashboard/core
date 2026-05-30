@@ -305,7 +305,9 @@
 							<g
 								transform="translate(0, {index * 40})"
 								style="color: {selectedCategory.color}"
-								on:mouseover={() => (selectedSubCategory = child)}
+								on:mouseover={() =>
+								role="presentation"
+							> (selectedSubCategory = child)}
 								on:focus={() => (selectedSubCategory = child)}
 								on:mouseout={() => (selectedSubCategory = null)}
 								on:blur={() => (selectedSubCategory = null)}

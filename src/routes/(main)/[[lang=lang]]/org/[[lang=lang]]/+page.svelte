@@ -3,6 +3,7 @@
 	import '@splidejs/svelte-splide/css/core';
 	import { browser } from '$app/environment';
 	import { t } from '$lib/utils/t';
+	import { Button } from '$lib/components/ui';
 	import dayjs from 'dayjs';
 
 	export let data;
@@ -23,6 +24,7 @@
 		'org.projects.status.active': 'Laufend',
 		'org.projects.status.done': 'Abgeschlossen',
 		'org.projects.status.planned': 'Geplant',
+		'org.projects.visit': 'Zum Projekt',
 		'org.events.title': 'Events',
 		'org.events.subtitle':
 			'Wir geben Workshops, organisieren Ausstellungen und sind regelmäßig auf Konferenzen anzutreffen.',
@@ -70,6 +72,7 @@
 		'org.projects.status.active': 'Active',
 		'org.projects.status.done': 'Completed',
 		'org.projects.status.planned': 'Planned',
+		'org.projects.visit': 'Visit project',
 		'org.events.title': 'Events',
 		'org.events.subtitle':
 			'We run workshops, organise exhibitions, and regularly appear at conferences.',
@@ -113,14 +116,6 @@
 	const events: any[] = data.events ?? [];
 	const financeSummary = data.financeSummary ?? null;
 
-	/* ─── Projects: featured → active → done → planned ─────── */
-	const sortedProjects = [
-		...rawProjects.filter((p) => p.featured),
-		...rawProjects.filter((p) => !p.featured && p.status !== 'active' && p.status !== 'planned'),
-		...rawProjects.filter((p) => !p.featured && p.status === 'done'),
-		...rawProjects.filter((p) => !p.featured && p.status === 'active')
-	];
-
 	function projectStatus(p: any): string {
 		if (p.featured) return t(tr, 'org.projects.status.featured');
 		if (p.status === 'done') return t(tr, 'org.projects.status.done');
@@ -140,26 +135,26 @@
 		}).format(n);
 	}
 
-	/* ─── Bio modal ──────────────────────────────────────────── */
-	let bioDialog: HTMLDialogElement;
-	let selectedMember: any = null;
-	function openBio(m: any) {
-		selectedMember = m;
-		if (browser) bioDialog?.showModal();
-	}
-	function closeBio() {
-		bioDialog?.close();
-		selectedMember = null;
-	}
+	/* ─── Projects: featured → active → done → planned ─────── */
+	const sortedProjects = [
+		...rawProjects.filter((p) => p.featured),
+		...rawProjects.filter((p) => !p.featured && p.status === 'active'),
+		...rawProjects.filter((p) => !p.featured && p.status === 'done'),
+		...rawProjects.filter((p) => !p.featured && p.status === 'planned'),
+		...rawProjects.filter((p) => !p.featured && !['active', 'done', 'planned'].includes(p.status))
+	];
 
-	/* ─── Splide options – portrait story format ─────────────── */
-	const storyOptions = {
-		type: 'loop',
-		fixedWidth: 176,
-		gap: '0.25rem',
-		padding: { left: '1rem', right: '2rem' },
-		pagination: false
-	};
+	/* ─── Project popup ──────────────────────────────────────── */
+	let projectDialog: HTMLDialogElement;
+	let selectedProject: any = null;
+	function openProject(p: any) {
+		selectedProject = p;
+		if (browser) projectDialog?.showModal();
+	}
+	function closeProject() {
+		projectDialog?.close();
+		selectedProject = null;
+	}
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -176,18 +171,8 @@
 			{t(tr, 'org.hero.subtitle')}
 		</p>
 		<div class="mt-7 flex flex-wrap justify-center gap-3">
-			<a
-				href="#projekte"
-				class="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-			>
-				{t(tr, 'org.hero.cta.projects')}
-			</a>
-			<a
-				href="/donate"
-				class="rounded-full border border-current px-6 py-2.5 text-sm font-semibold opacity-60 transition hover:opacity-100"
-			>
-				{t(tr, 'org.hero.cta.support')}
-			</a>
+			<Button variant="primary" size="lg" href="#projekte">{t(tr, 'org.hero.cta.projects')}</Button>
+			<Button variant="secondary" size="lg" href="/donate">{t(tr, 'org.hero.cta.support')}</Button>
 		</div>
 	</div>
 </section>
@@ -221,7 +206,7 @@
 {/if}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- 2. PROJEKTE                                                  -->
+<!-- 2. PROJEKTE – bento grid                                     -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <section id="projekte" class="pt-16">
 	<div class="mb-4 px-4 text-center">
@@ -230,127 +215,76 @@
 			{t(tr, 'org.projects.subtitle')}
 		</p>
 	</div>
-	{#if sortedProjects.length > 5}
-		<Splide
-			class="m-1"
-			options={{
-				gap: '0.25rem',
-				type: 'loop',
-				fixedWidth: '20rem',
-				arrows: false
-			}}
+
+	{#if sortedProjects.length}
+		<div
+			class="grid grid-cols-2 md:grid-cols-6 auto-rows-[11rem] md:auto-rows-[13rem] gap-1 px-1 max-w-7xl mx-auto"
 		>
 			{#each sortedProjects as project}
-				<SplideSlide>
-					<a
-						href={project.link || '#'}
-						target={project.link?.startsWith('http') ? '_blank' : undefined}
-						rel="noopener noreferrer"
-						class="flex h-full min-h-[290px] max-w-sm w-full flex-col rounded-xl p-4 transition {project.featured
+				<button
+					on:click={() => openProject(project)}
+					class="relative rounded-xl overflow-hidden group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-current cursor-pointer
+					       {project.featured ? 'col-span-2 row-span-1 md:row-span-2' : 'col-span-1 row-span-1'}
+					       {!project.image?.id
+						? project.featured
 							? 'bg-gradient-green text-white'
-							: 'border border-current/10 bg-current/5 hover:bg-current/10'}"
-					>
-						<span
-							class="inline-block self-start rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest {project.featured
-								? 'bg-black/10'
-								: 'bg-current/10'}"
+							: 'bg-current/5 border border-current/10'
+						: 'bg-gray-800 text-white'}
+					       "
+				>
+					{#if project.image?.id}
+						<img
+							src="https://base.klimadashboard.org/assets/{project.image.id}?key=medium"
+							alt=""
+							class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+						/>
+					{/if}
+					<div
+						class="absolute inset-0 bg-gradient-to-t {project.image?.id
+							? 'from-black/80 via-black/20 to-transparent'
+							: project.featured
+								? 'from-black/20 to-transparent'
+								: 'from-transparent to-transparent'}"
+					></div>
+					<div class="absolute inset-x-0 bottom-0 p-3 md:p-4">
+						<h3
+							class="font-bold leading-tight
+							       {project.featured ? 'text-xl md:text-2xl' : 'text-sm md:text-base'}
+							       {project.image?.id || project.featured ? 'text-white' : ''}"
 						>
-							{projectStatus(project)}
-						</span>
-						<div class="mt-auto pt-4">
-							<h3 class="text-xl font-bold leading-tight">{project.title}</h3>
-							{#if project.summary}
-								<p class="mt-1 line-clamp-4 leading-tight text-balance">
-									{project.summary}
-								</p>
-							{/if}
-						</div>
-					</a>
-				</SplideSlide>
-			{/each}
-		</Splide>
-	{/if}
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- 3. TEAM                                                      -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<section id="team" class="pt-16">
-	<div class="mb-4 text-center">
-		<h2 class="text-4xl font-bold">{t(tr, 'org.team.title')}</h2>
-		<p class="mt-1 mx-auto max-w-2xl text-lg leading-snug text-balance opacity-80">
-			{t(tr, 'org.team.subtitle')}
-		</p>
-	</div>
-
-	{#if team.length}
-		<Splide
-			class="m-1"
-			options={{
-				gap: '0.25rem',
-				type: 'loop',
-				fixedWidth: '16rem',
-				fixedHeight: '20rem',
-				arrows: false,
-				autoplay: true
-			}}
-		>
-			{#each team as member}
-				<SplideSlide>
-					<button
-						on:click={() => openBio(member)}
-						class="group relative w-full h-full overflow-hidden rounded-xl bg-gray-800 transition hover:scale-[1.02]"
-					>
-						{#if member.avatar}
-							<img
-								src="https://base.klimadashboard.org/assets/{member.avatar}?key=small"
-								alt=""
-								class="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
-							/>
-						{:else}
-							<div
-								class="absolute inset-0 flex items-center justify-center text-2xl font-bold opacity-20"
-							>
-								{(member.first_name ?? '?')[0]}{(member.last_name ?? '')[0]}
-							</div>
-						{/if}
-						<div
-							class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pb-2 pt-6"
-						>
-							<p class="text-xl font-semibold leading-tight text-white">
-								{member.first_name}
-								{member.last_name}
+							{project.title}
+						</h3>
+						{#if project.summary && project.featured}
+							<p class="mt-0.5 text-sm text-white/80 line-clamp-2 leading-snug">
+								{project.summary}
 							</p>
-							{#if member.title}
-								<p class="text-sm opacity-50 text-white">{member.title}</p>
-							{/if}
-						</div>
-					</button>
-				</SplideSlide>
+						{/if}
+					</div>
+				</button>
 			{/each}
-		</Splide>
+		</div>
 	{/if}
 </section>
 
-<!-- Bio dialog -->
+<!-- Project popup -->
 <dialog
-	bind:this={bioDialog}
-	on:click|self={closeBio}
-	class="m-auto w-full max-w-md rounded-2xl bg-white p-0 backdrop:bg-black/60 dark:bg-gray-900 dark:text-white"
+	bind:this={projectDialog}
+	on:click|self={closeProject}
+	class="m-auto w-full max-w-lg rounded-2xl bg-white p-0 backdrop:bg-black/60 dark:bg-gray-900 dark:text-white"
 >
-	{#if selectedMember}
+	{#if selectedProject}
 		<div class="relative">
-			{#if selectedMember.avatar}
-				<div class="h-80 overflow-hidden rounded-t-2xl">
+			{#if selectedProject.image?.id}
+				<div class="h-56 overflow-hidden rounded-t-2xl">
 					<img
-						src="https://base.klimadashboard.org/assets/{selectedMember.avatar}?key=medium"
+						src="https://base.klimadashboard.org/assets/{selectedProject.image.id}?key=medium"
 						alt=""
 						class="h-full w-full object-cover"
 					/>
 				</div>
 			{/if}
 			<button
-				on:click={closeBio}
+				on:click={closeProject}
 				class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white transition hover:bg-black/60"
 				aria-label="Schließen"
 			>
@@ -366,21 +300,145 @@
 				</svg>
 			</button>
 			<div class="p-5">
-				{#if selectedMember.title}
-					<p class="mb-1 text-xs font-bold uppercase tracking-widest opacity-80">
-						{selectedMember.title}
-					</p>
+				<span
+					class="inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest bg-current/10 mb-3"
+				>
+					{projectStatus(selectedProject)}
+				</span>
+				<h2 class="text-2xl font-bold leading-tight">{selectedProject.title}</h2>
+				{#if selectedProject.description}
+					<p class="mt-3 text-sm leading-relaxed opacity-75">{selectedProject.description}</p>
+				{:else if selectedProject.summary}
+					<p class="mt-3 text-sm leading-relaxed opacity-75">{selectedProject.summary}</p>
 				{/if}
-				<h3 class="text-xl font-bold">{selectedMember.first_name} {selectedMember.last_name}</h3>
-				{#if selectedMember.description}
-					<p class="mt-3 text-sm leading-relaxed opacity-80">{selectedMember.description}</p>
-				{:else}
-					<p class="mt-3 text-sm opacity-80">{selectedMember.title}</p>
+				{#if selectedProject.link}
+					<Button
+						variant="primary"
+						size="lg"
+						href={selectedProject.link}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="mt-5"
+					>
+						{t(tr, 'org.projects.visit')}
+						<svg
+							width="12"
+							height="12"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.5"
+						>
+							<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
+						</svg>
+					</Button>
 				{/if}
 			</div>
 		</div>
 	{/if}
 </dialog>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 3. TEAM – slider on mobile, grid on desktop                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section id="team" class="pt-16">
+	<div class="mb-4 text-center">
+		<h2 class="text-4xl font-bold">{t(tr, 'org.team.title')}</h2>
+		<p class="mt-1 mx-auto max-w-2xl text-lg leading-snug text-balance opacity-80">
+			{t(tr, 'org.team.subtitle')}
+		</p>
+	</div>
+
+	{#if team.length}
+		<!-- Mobile: Splide carousel -->
+		<div class="md:hidden">
+			<Splide
+				class="m-1 pb-8"
+				options={{
+					gap: '0.25rem',
+					type: 'loop',
+					fixedWidth: '10rem',
+					fixedHeight: '13rem',
+					padding: { left: '1rem', right: '2rem' },
+					arrows: false,
+					pagination: true,
+					autoplay: true
+				}}
+			>
+				{#each team as member}
+					<SplideSlide>
+						<a
+							href="team/{member.id}"
+							class="group relative block h-full w-full overflow-hidden rounded-xl bg-gray-800"
+						>
+							{#if member.avatar}
+								<img
+									src="https://base.klimadashboard.org/assets/{member.avatar}?key=small"
+									alt=""
+									class="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+								/>
+							{:else}
+								<div
+									class="absolute inset-0 flex items-center justify-center text-xl font-bold text-white opacity-30"
+								>
+									{(member.first_name ?? '?')[0]}{(member.last_name ?? '')[0]}
+								</div>
+							{/if}
+							<div
+								class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 pb-2 pt-6"
+							>
+								<p class="text-sm font-semibold leading-tight text-white">
+									{member.first_name}
+									{member.last_name}
+								</p>
+								{#if member.title}
+									<p class="text-xs text-white/50">{member.title}</p>
+								{/if}
+							</div>
+						</a>
+					</SplideSlide>
+				{/each}
+			</Splide>
+		</div>
+
+		<!-- Desktop: full grid -->
+		<div
+			class="hidden md:grid md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1 px-1 max-w-7xl mx-auto"
+		>
+			{#each team as member}
+				<a
+					href="team/{member.id}"
+					class="group relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-800"
+				>
+					{#if member.avatar}
+						<img
+							src="https://base.klimadashboard.org/assets/{member.avatar}?key=small"
+							alt=""
+							class="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+						/>
+					{:else}
+						<div
+							class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-white opacity-30"
+						>
+							{(member.first_name ?? '?')[0]}{(member.last_name ?? '')[0]}
+						</div>
+					{/if}
+					<div
+						class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-10 transition duration-200 opacity-80 group-hover:opacity-100"
+					>
+						<p class="font-semibold leading-tight text-white">
+							{member.first_name}
+							{member.last_name}
+						</p>
+						{#if member.title}
+							<p class="text-sm text-white/70">{member.title}</p>
+						{/if}
+					</div>
+				</a>
+			{/each}
+		</div>
+	{/if}
+</section>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 4. OFFENE GRUNDSÄTZE                                        -->
@@ -391,14 +449,16 @@
 		<h2 class="text-2xl font-bold">{title}</h2>
 		<p class="leading-tight mt-1 mb-2">{text}</p>
 		{#each links as link}
-			<a
+			<Button
+				variant="secondary"
+				size="sm"
 				href={link.url}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="m-1 inline-flex items-center gap-1.5 rounded-full border border-current/25 px-3 py-1.5 text-xs font-semibold transition hover:border-current/50 hover:bg-current/10"
+				class="m-1"
 			>
 				{link.label}
-			</a>
+			</Button>
 		{/each}
 	</div>
 {/snippet}
@@ -444,13 +504,14 @@
 		</div>
 
 		<Splide
-			class="m-1 mt-4"
+			class="m-1 mt-4 pb-8"
 			options={{
 				gap: '0.25rem',
 				type: 'loop',
 				fixedWidth: '16rem',
 				fixedHeight: '20rem',
-				arrows: false
+				arrows: true,
+				pagination: true
 			}}
 		>
 			{#each mediaReports as item}
@@ -529,18 +590,10 @@
 		<h2 class="text-balance text-4xl font-bold md:text-5xl">{t(tr, 'org.cta.title')}</h2>
 		<p class="mt-4 text-base opacity-50 md:text-lg">{t(tr, 'org.cta.text')}</p>
 		<div class="mt-10 flex flex-wrap justify-center gap-1">
-			<a
-				href="/donate"
-				class="rounded-full bg-amber-400 px-8 py-3 text-sm font-bold text-black transition hover:bg-amber-300"
+			<Button variant="accent" size="xl" href="/donate">{t(tr, 'org.cta.donate')}</Button>
+			<Button variant="secondary" size="xl" href="mailto:team@klimadashboard.org"
+				>{t(tr, 'org.cta.contact')}</Button
 			>
-				{t(tr, 'org.cta.donate')}
-			</a>
-			<a
-				href="mailto:team@klimadashboard.org"
-				class="rounded-full border border-white/20 px-8 py-3 text-sm font-semibold transition hover:border-white/40"
-			>
-				{t(tr, 'org.cta.contact')}
-			</a>
 		</div>
 	</div>
 </section>
@@ -562,7 +615,7 @@
 		animation-play-state: paused;
 	}
 
-	/* ── Bio dialog ── */
+	/* ── Dialogs ── */
 	dialog::backdrop {
 		background: rgba(0, 0, 0, 0.6);
 		backdrop-filter: blur(4px);
@@ -584,5 +637,71 @@
 	/* ── Splide: show slides before JS initializes ── */
 	:global(.splide:not(.is-initialized) .splide__slide) {
 		visibility: visible;
+	}
+
+	/* ── Splide arrows ── */
+	:global(.splide__arrow) {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 50%;
+		background: rgba(0, 0, 0, 0.65);
+		border: 1.5px solid rgba(255, 255, 255, 0.25);
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+	:global(.splide__arrow--prev) {
+		left: 0.5rem;
+	}
+	:global(.splide__arrow--next) {
+		right: 0.5rem;
+	}
+	:global(.splide__arrow:hover:not(:disabled)) {
+		background: rgba(0, 0, 0, 0.88);
+	}
+	:global(.splide__arrow:disabled) {
+		opacity: 0.3;
+		cursor: default;
+	}
+	:global(.splide__arrow svg) {
+		fill: white;
+		width: 1.1rem;
+		height: 1.1rem;
+		flex-shrink: 0;
+	}
+
+	/* ── Splide pagination dots ── */
+	:global(.splide__pagination) {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.5rem 0 0;
+		list-style: none;
+		margin: 0;
+	}
+	:global(.splide__pagination__page) {
+		display: block;
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 50%;
+		background: currentColor;
+		opacity: 0.25;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		transition:
+			opacity 0.2s,
+			transform 0.2s;
+	}
+	:global(.splide__pagination__page.is-active) {
+		opacity: 0.75;
+		transform: scale(1.4);
 	}
 </style>

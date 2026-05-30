@@ -50,13 +50,12 @@
 			class="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform
 				transition-transform duration-200 ease-in-out
 				{checked ? 'translate-x-4' : 'translate-x-0'}"
-		/>
+		></span>
 	</button>
 	<label
 		for={id}
 		class="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none"
 		class:cursor-not-allowed={disabled}
-		on:click={handleClick}
 	>
 		{label}
 	</label>

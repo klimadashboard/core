@@ -129,7 +129,10 @@
 	<!-- Statistics Slider Top -->
 	<div
 		class="reg-card-quarter rounded-xl overflow-hidden relative cursor-pointer"
+		role="button"
+		tabindex="0"
 		on:click={(e) => handleSliderClick(e, statisticsSliderTop)}
+		on:keydown={(e) => e.key === 'Enter' && handleSliderClick(e, statisticsSliderTop)}
 	>
 		{#if panels.slice(0, Math.ceil(panels.length / 2)).length > 0}
 			<Splide
@@ -184,7 +187,10 @@
 	<!-- Statistics Slider Bottom -->
 	<div
 		class="reg-card-quarter rounded-xl overflow-hidden relative cursor-pointer"
+		role="button"
+		tabindex="0"
 		on:click={(e) => handleSliderClick(e, statisticsSliderBottom)}
+		on:keydown={(e) => e.key === 'Enter' && handleSliderClick(e, statisticsSliderBottom)}
 	>
 		{#if panels.slice(Math.ceil(panels.length / 2)).length > 0}
 			<Splide

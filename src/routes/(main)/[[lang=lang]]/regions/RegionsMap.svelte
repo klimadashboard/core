@@ -212,11 +212,11 @@
 </script>
 
 <div class="relative">
-	<div id="map" class="" />
+	<div id="map" class=""></div>
 	<div
 		id="tooltip"
 		class="absolute z-10 hidden p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-2xl leading-tight"
-	/>
+	></div>
 </div>
 
 <style>

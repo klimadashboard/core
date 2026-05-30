@@ -71,9 +71,12 @@
 		class="flex gap-2 items-end h-64 mt-2 relative"
 		bind:clientHeight={chartHeight}
 		bind:clientWidth={chartWidth}
+		role="presentation"
 		on:mousemove={onMouseMove}
 		on:mouseleave={onMouseLeave}
 	>
+								role="presentation"
+							>
 		<svg width="100%" height="100%">
 			<!-- x-axis -->
 			<g>

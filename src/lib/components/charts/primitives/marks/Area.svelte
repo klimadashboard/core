@@ -25,7 +25,7 @@
 	export let stroke: string | null = null;
 	export let strokeWidth: number = 1.5;
 	export let curve: 'linear' | 'monotone' = 'monotone';
-	export let hover: HoverState = { x: null, clientX: 0, clientY: 0 };
+	export const hover: HoverState = { x: null, clientX: 0, clientY: 0 };
 
 	function getX(d: any): number {
 		if (!xScale) return 0;

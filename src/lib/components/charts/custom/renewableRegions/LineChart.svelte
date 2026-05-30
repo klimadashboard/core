@@ -79,9 +79,12 @@
 	class="h-60 relative"
 	bind:clientWidth={chartWidth}
 	bind:clientHeight={chartHeight}
+	role="presentation"
 	on:mousemove={onMouseMove}
 	on:mouseleave={onMouseLeave}
 >
+								role="presentation"
+							>
 	<svg width={'100%'} height={'100%'} class="">
 		<!-- X-Axis -->
 		<g transform="translate({margin.left},0)">

@@ -34,6 +34,7 @@
 	/* no global styles available here, so everything coded by hand */
 	@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;700&display=swap');
 
+	:global {
 	html,
 	body,
 	div,
@@ -140,6 +141,7 @@
 	body {
 		line-height: 1;
 	}
+	} /* end :global */
 
 	.social-wrapper {
 		width: 1200px;

@@ -9,7 +9,7 @@
 	import type { Incident } from '../tramParking/hotspots';
 	import dayjs from 'dayjs';
 
-	export let region = null;
+	export const region = null;
 	export let onChartData: ((data: unknown) => void) | undefined = undefined;
 
 	let loading = true;

@@ -225,7 +225,7 @@
 		href="https://klimadashboard.de"
 		target="_blank"
 	>
-		<img src="/logo.svg" class="w-5 h-5 rounded" />
+		<img src="/logo.svg" alt="" class="w-5 h-5 rounded" />
 		<span class=" opacity-70 group-hover:opacity-100">Klimadashboard.de</span>
 	</a>
 </div>

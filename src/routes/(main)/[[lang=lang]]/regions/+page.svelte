@@ -166,13 +166,6 @@
 </div>
 
 <style>
-	#map {
-		width: 100%;
-		height: 70vh;
-		max-height: 400px;
-		margin-bottom: 2rem;
-	}
-
 	.text a {
 		@apply opacity-80 hover:opacity-100 underline transition-all duration-200;
 	}

@@ -15,8 +15,8 @@
 	} from '$lib/components/charts/custom/carsDensity/config';
 
 	export let map: any; // MapLibre GL map instance from parent
-	export let regionId: string | undefined = undefined;
-	export let regionName: string | undefined = undefined;
+	export const regionId: string | undefined = undefined;
+	export const regionName: string | undefined = undefined;
 	export let regionCode: string | null = null;
 	export let regionCodeShort: string | null = null;
 	export let regionLayer: string | null = null; // 'municipality', 'district', etc.

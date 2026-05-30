@@ -2,7 +2,7 @@
 	import Loader from '$lib/components/Loader.svelte';
 	import { scaleApproval } from '$lib/utils/scales';
 
-	export let selectedFeature;
+	export const selectedFeature = undefined;
 	export let data;
 	export let stateWideAverage;
 </script>
@@ -31,7 +31,7 @@
 			</tbody>
 			<tfoot>
 				<tr>
-					<td />
+					<td></td>
 					<td>{stateWideAverage}%</td>
 					<td>Bundesdurchschnitt</td>
 				</tr>

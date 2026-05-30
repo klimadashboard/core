@@ -6,7 +6,7 @@
 	import { readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
-	export let v;
+	export const v = undefined;
 
 	const goalScenarios = {
 		eag: 'EAG',

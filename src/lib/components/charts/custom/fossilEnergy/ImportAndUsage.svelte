@@ -777,7 +777,7 @@
 <div class="container">
 	<article class="mt-20 pb-16">
 		<div class=" relative">
-			<div class="absolute top-10 left-0 right-0 border-t-2 border-gray-300" />
+			<div class="absolute top-10 left-0 right-0 border-t-2 border-gray-300"></div>
 			<h2
 				class="px-2 mx-auto text-center text-3xl bg-white dark:bg-gray-800 relative z-10 inline-block left-1/2 -translate-x-1/2 translate-y-5"
 			>

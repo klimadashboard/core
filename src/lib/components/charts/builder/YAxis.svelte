@@ -5,7 +5,7 @@
 	export let chartWidth;
 	export let chartHeight;
 	export let data;
-	export let layer;
+	export const layer = undefined;
 	export let options;
 
 	// console.log(data);

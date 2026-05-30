@@ -24,7 +24,7 @@
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
-	export let v: Record<string, string> = {}; // Variables from Directus
+	export const v: Record<string, string> = {}; // Variables from Directus
 
 	// Optional: regions list for comparison feature in cumulative view
 	export let regions: Array<{

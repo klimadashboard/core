@@ -390,6 +390,7 @@
 									fill="transparent"
 									on:mousemove={handleLineHover}
 									on:mouseleave={handleLineLeave}
+									role="presentation"
 								/>
 
 								<!-- Data points -->

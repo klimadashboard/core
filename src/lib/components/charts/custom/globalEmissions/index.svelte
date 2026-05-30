@@ -66,7 +66,7 @@
 		<Chart bind:selectedCountries bind:data {worldAverage} />
 
 		<div class="left-4 absolute bottom-4 flex items-center space-x-2">
-			<button on:mousedown={addToSelectedCountries(selectedCountry)}>
+			<button aria-label="Add country" on:mousedown={addToSelectedCountries(selectedCountry)}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="icon icon-tabler icon-tabler-circle-plus"

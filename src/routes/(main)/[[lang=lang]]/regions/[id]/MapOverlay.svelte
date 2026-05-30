@@ -17,7 +17,7 @@
 	export let regionCodeShort = null;
 	export let regionLayer = null; // 'municipality', 'district', 'state', etc.
 	export let initialLayerId = null;
-	export let embed = false;
+	export const embed = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -335,6 +335,7 @@
 	class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
 	transition:fade={{ duration: 200 }}
 	on:click={handleClose}
+	on:keydown={(e) => e.key === 'Escape' && handleClose()}
 	role="button"
 	tabindex="-1"
 	aria-label={t(translations, 'action.close') !== 'action.close'
@@ -345,7 +346,9 @@
 		class="absolute inset-x-0 bottom-0 top-16 lg:left-4 lg:right-4 lg:bottom-4 bg-white dark:bg-gray-900 rounded-t-2xl lg:rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row"
 		transition:fly={{ y: '100%', duration: 400, easing: cubicOut }}
 		on:click={(e) => e.stopPropagation()}
+		on:keydown={(e) => e.stopPropagation()}
 		role="dialog"
+		tabindex="-1"
 		aria-modal="true"
 		aria-labelledby="map-title"
 	>
@@ -398,100 +401,100 @@
 						</h3>
 						<div class="space-y-1">
 							{#each mapLayers.filter((l) => l.category === categoryId) as layer}
-								<div class="relative">
-									<button
-										class="w-full text-left p-3 rounded-lg transition-colors {selectedLayer ===
-										layer.id
-											? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-500'
-											: 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}"
-										on:click={() => handleLayerSelect(layer.id)}
-									>
-										<div class="flex items-center gap-3">
-											<span class="text-2xl">{layer.icon}</span>
-											<div class="flex-1">
-												<div class="font-medium text-sm">{getLayerTitle(layer)}</div>
-												{#if !layer.component}
-													<div class="text-xs text-gray-500 dark:text-gray-400">
-														{t(translations, 'ui.map.comingSoon') !== 'ui.map.comingSoon'
-															? t(translations, 'ui.map.comingSoon')
-															: 'Bald verfügbar'}
-													</div>
-												{/if}
-											</div>
-											<div class="flex items-center gap-2">
-												{#if selectedLayer === layer.id}
-													<!-- Embed button -->
-													<button
-														on:click|stopPropagation={openEmbedModal}
-														class="p-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md transition-colors"
-														title={t(translations, 'action.embed') !== 'action.embed'
-															? t(translations, 'action.embed')
-															: 'Einbetten'}
-													>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															width="16"
-															height="16"
-															viewBox="0 0 24 24"
-															fill="none"
-															stroke="currentColor"
-															stroke-width="2"
-															stroke-linecap="round"
-															stroke-linejoin="round"
-														>
-															<polyline points="7 8 3 12 7 16" />
-															<polyline points="17 8 21 12 17 16" />
-															<line x1="14" y1="4" x2="10" y2="20" />
-														</svg>
-													</button>
-													{#if layer.relatedChartId}
-														<button
-															on:click|stopPropagation={() =>
-																handleRelatedChartClick(layer.relatedChartId)}
-															class="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-															title={t(translations, 'ui.map.goToChart') !== 'ui.map.goToChart'
-																? t(translations, 'ui.map.goToChart')
-																: 'Zur Datenvisualisierung'}
-														>
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																width="16"
-																height="16"
-																viewBox="0 0 24 24"
-																fill="none"
-																stroke="currentColor"
-																stroke-width="2"
-																stroke-linecap="round"
-																stroke-linejoin="round"
-															>
-																<path d="M3 3v18h18" />
-																<path d="M18 17V9" />
-																<path d="M13 17V5" />
-																<path d="M8 17v-3" />
-															</svg>
-														</button>
-													{/if}
-												{/if}
-												{#if selectedLayer === layer.id}
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="20"
-														height="20"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														stroke-width="2"
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														class="text-blue-600"
-													>
-														<polyline points="20 6 9 17 4 12" />
-													</svg>
-												{/if}
-											</div>
+							<div
+								class="flex items-stretch rounded-lg transition-colors {selectedLayer ===
+								layer.id
+									? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-500'
+									: 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}"
+							>
+								<button
+									class="flex-1 text-left p-3"
+									on:click={() => handleLayerSelect(layer.id)}
+								>
+									<div class="flex items-center gap-3">
+										<span class="text-2xl">{layer.icon}</span>
+										<div class="flex-1">
+											<div class="font-medium text-sm">{getLayerTitle(layer)}</div>
+											{#if !layer.component}
+												<div class="text-xs text-gray-500 dark:text-gray-400">
+													{t(translations, 'ui.map.comingSoon') !== 'ui.map.comingSoon'
+														? t(translations, 'ui.map.comingSoon')
+														: 'Bald verfügbar'}
+												</div>
+											{/if}
 										</div>
-									</button>
-								</div>
+										{#if selectedLayer === layer.id}
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="20"
+												height="20"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="text-blue-600"
+											>
+												<polyline points="20 6 9 17 4 12" />
+											</svg>
+										{/if}
+									</div>
+								</button>
+								{#if selectedLayer === layer.id}
+									<div class="flex items-center gap-1 pr-2">
+										<button
+											on:click={openEmbedModal}
+											class="p-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md transition-colors"
+											title={t(translations, 'action.embed') !== 'action.embed'
+												? t(translations, 'action.embed')
+												: 'Einbetten'}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="16"
+												height="16"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<polyline points="7 8 3 12 7 16" />
+												<polyline points="17 8 21 12 17 16" />
+												<line x1="14" y1="4" x2="10" y2="20" />
+											</svg>
+										</button>
+										{#if layer.relatedChartId}
+											<button
+												on:click={() => handleRelatedChartClick(layer.relatedChartId)}
+												class="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+												title={t(translations, 'ui.map.goToChart') !== 'ui.map.goToChart'
+													? t(translations, 'ui.map.goToChart')
+													: 'Zur Datenvisualisierung'}
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+												>
+													<path d="M3 3v18h18" />
+													<path d="M18 17V9" />
+													<path d="M13 17V5" />
+													<path d="M8 17v-3" />
+												</svg>
+											</button>
+										{/if}
+									</div>
+								{/if}
+							</div>
 							{/each}
 						</div>
 					</div>
@@ -534,13 +537,16 @@
 		class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
 		transition:fade={{ duration: 150 }}
 		on:click={closeEmbedModal}
+		on:keydown={(e) => e.key === 'Escape' && closeEmbedModal()}
 		role="button"
 		tabindex="-1"
 	>
 		<div
 			class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6"
 			on:click|stopPropagation
+			on:keydown|stopPropagation
 			role="dialog"
+			tabindex="-1"
 			aria-modal="true"
 			aria-labelledby="embed-title"
 		>
@@ -552,6 +558,7 @@
 				</h3>
 				<button
 					on:click={closeEmbedModal}
+					aria-label="Schließen"
 					class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
 				>
 					<svg

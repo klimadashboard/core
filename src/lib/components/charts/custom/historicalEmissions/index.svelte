@@ -3,7 +3,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { Chart, AxisX, AxisY, Tooltip, Legend, Area } from '$lib/components/charts/primitives';
 
-	export let chart;
+	export const chart = undefined;
 	export let v;
 	export let onChartData = undefined;
 

@@ -57,6 +57,7 @@
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<svg
 			class="w-full h-full"
+			role="presentation"
 			on:mouseleave={() => {
 				ksgHover = null;
 				crfHover = null;
@@ -86,6 +87,7 @@
 									: colorForKey(ksgSector.key).colorCode}
 								stroke="white"
 								stroke-width="2"
+								role="presentation"
 								on:mousemove={() => {
 									if (ksgSelection != null) return;
 									ksgHover = ksgSector.key;
@@ -124,6 +126,7 @@
 										: 'transparent'}
 									stroke-width="1"
 									class="{ksgSelection == null ? 'pointer-events-none' : ''} cursor-pointer"
+									role="presentation"
 									on:mousemove={() => {
 										if (crfSelection != null) return;
 										crfHover = crfSector.code;

@@ -722,10 +722,7 @@
 	.button {
 		@apply rounded-full;
 	}
-	summary {
-		@apply font-bold mt-2;
-	}
-	:global(button.selected) {
+:global(button.selected) {
 		@apply bg-green-600 text-white;
 	}
 </style>

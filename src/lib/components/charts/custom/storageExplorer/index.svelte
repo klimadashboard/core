@@ -22,7 +22,7 @@
 	export let region: Region | null = null;
 	export let regionLoading: boolean = false;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
-	export let v: Record<string, string> = {};
+	export const v: Record<string, string> = {};
 
 	// Shared state
 	let sharedData: StoragePeriodData[] = [];

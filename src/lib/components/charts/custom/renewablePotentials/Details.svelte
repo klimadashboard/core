@@ -6,7 +6,7 @@
 	import { fade } from 'svelte/transition';
 	import Papa from 'papaparse';
 
-	export let bundesland;
+	export const bundesland = undefined;
 	export let type;
 	export let dataset;
 	export let potential_2030;

@@ -148,9 +148,9 @@
 		<div class="p-4 space-y-4">
 			<!-- Embed type selection -->
 			<div>
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+				<p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 					{t(page.data.translations, 'ui.embed.type')}
-				</label>
+				</p>
 				<div class="flex gap-2">
 					<button
 						on:click={() => (embedType = 'script')}
@@ -178,9 +178,9 @@
 			<!-- Options -->
 			{#if hasOptions}
 				<div class="space-y-3">
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+					<p class="block text-sm font-medium text-gray-700 dark:text-gray-300">
 						{t(page.data.translations, 'ui.embed.options')}
-					</label>
+					</p>
 
 					{#if currentRegionId}
 						<label class="flex items-center gap-3 cursor-pointer">
@@ -259,9 +259,9 @@
 
 			<!-- Code preview -->
 			<div>
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+				<p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 					{t(page.data.translations, 'ui.embed.code')}
-				</label>
+				</p>
 				<div class="relative">
 					<pre
 						class="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 text-xs font-mono text-gray-800 dark:text-gray-200 overflow-x-auto whitespace-pre-wrap break-all">{embedCode}</pre>

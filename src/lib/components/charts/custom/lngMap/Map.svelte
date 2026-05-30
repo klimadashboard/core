@@ -156,7 +156,7 @@
 </script>
 
 <div class="grid md:grid-cols-3 map-wrapper mb-16">
-	<div id="map-lng" bind:this={mapElement} class="col-span-2 h-full rounded-l-lg" />
+	<div id="map-lng" bind:this={mapElement} class="col-span-2 h-full rounded-l-lg"></div>
 
 	<div class="overflow-y-auto h-full bg-gray-50 dark:bg-gray-900 rounded-r-lg">
 		<ul class="divide-y divide-gray-200 dark:divide-gray-700">

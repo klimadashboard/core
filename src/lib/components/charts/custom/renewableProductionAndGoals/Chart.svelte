@@ -154,14 +154,15 @@
 						<g>
 							{#each yScale.ticks(6) as tick, index}
 								<g transform={`translate(0, ${yScale(tick)})`} class="text-gray-400">
-									<line
+									<svelte:element
+										this="line"
 										x1="0"
 										x2={chartWidth}
 										y1="0"
 										y2="0"
 										stroke-width="1"
 										class="stroke-gray-200 opacity-50"
-									/>
+									></svelte:element>
 									<text class="text-sm text-gray-600 fill-current bg-white" x="10" y="-4"
 										>{tick} {index == yScale.ticks(6).length - 1 ? ' ' + unit : ''}</text
 									>
@@ -193,7 +194,9 @@
 								dataProduction[dataProduction.length - 1].y
 							)})"
 							style="color: {colors[1]}"
-							on:mouseover={() => (selected = true)}
+							on:mouseover={() =>
+								role="presentation"
+							> (selected = true)}
 							on:focus={() => (selected = true)}
 							on:mouseout={() => (selected = false)}
 							on:blur={() => (selected = false)}

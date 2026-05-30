@@ -143,7 +143,8 @@
 					on:mousemove={handleMouseMove}
 					on:mouseleave={handleMouseLeave}
 					style="cursor: crosshair;"
-				/>
+									role="presentation"
+								/>
 			</g>
 		</svg>
 

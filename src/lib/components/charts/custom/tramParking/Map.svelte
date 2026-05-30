@@ -711,7 +711,7 @@
 </script>
 
 <div class="relative w-full h-full">
-	<div bind:this={mapContainer} class="w-full h-full rounded-xl" />
+	<div bind:this={mapContainer} class="w-full h-full rounded-xl"></div>
 
 	{#if tooltip.show}
 		<div

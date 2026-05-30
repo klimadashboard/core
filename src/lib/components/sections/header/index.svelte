@@ -5,6 +5,7 @@
 	import LightSwitch from './LightSwitch.svelte';
 	import ProgressIndicator from './ProgressIndicator.svelte';
 	import Breadcrumb from './Breadcrumb.svelte';
+	import { Button } from '$lib/components/ui';
 	import { page } from '$app/state';
 	import { clickOutside } from '$lib/utils/clickOutside';
 	let showNavigation = false;
@@ -28,14 +29,10 @@
 			</a>
 			{#if page.data.site.translations[0].navigation_primary.length == 1}
 				{#each page.data.site.translations[0].navigation_primary[0].links as l}
-					<a href={l.link} class="button">{l.label}</a>
+					<Button href={l.link}>{l.label}</Button>
 				{/each}
 			{:else}
-				<button
-					class="button"
-					aria-label={page.data.translations.navigation}
-					on:mousedown={() => (showNavigation = !showNavigation)}
-				>
+				<Button aria-label={page.data.translations.navigation} on:mousedown={() => (showNavigation = !showNavigation)}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="24"
@@ -46,22 +43,21 @@
 						stroke-width="2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"
 						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6l16 0" /><path
 							d="M4 12l16 0"
 						/><path d="M4 18l16 0" /></svg
 					>
 					<span class="hidden sm:block">{page.data.translations.navigation}</span>
-				</button>
+				</Button>
 			{/if}
 
 			<Breadcrumb />
 
 			<span class="ml-auto"></span>
-			<a
+			<Button
 				href="https://klimadashboard.org/donate"
-				class=" button !bg-green-400 dark:!bg-green-600 hover:!bg-green-500 dark:hover:!bg-green-500 !hidden md:!block text-base"
 				target="_blank"
+				class="!bg-green-400 dark:!bg-green-600 hover:!bg-green-500 dark:hover:!bg-green-500 hidden md:inline-flex"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +69,6 @@
 					stroke-width="2"
 					stroke-linecap="round"
 					stroke-linejoin="round"
-					class="inline"
 					><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path
 						d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"
 					/><path
@@ -81,7 +76,7 @@
 					/><path d="M12.5 15.5l2 2" /><path d="M15 13l2 2" /></svg
 				>
 				Spenden
-			</a>
+			</Button>
 			<LocaleSwitcher />
 
 			<LightSwitch />
@@ -104,4 +99,4 @@
 	<ProgressIndicator />
 </header>
 
-<div class="h-14" />
+<div class="h-14"></div>

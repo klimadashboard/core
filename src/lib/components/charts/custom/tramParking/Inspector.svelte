@@ -531,7 +531,7 @@
 													<div
 														class="h-full bg-red-500 dark:bg-red-400 rounded-full"
 														style="width: {(hs.count / maxHotspotCount) * 100}%"
-													/>
+													></div>
 												</div>
 											</div>
 										</td>
@@ -542,7 +542,7 @@
 													<div
 														class="h-full bg-amber-500 dark:bg-amber-400 rounded-full"
 														style="width: {(hs.totalMinutes / maxHotspotMinutes) * 100}%"
-													/>
+													></div>
 												</div>
 											</div>
 										</td>
@@ -601,7 +601,7 @@
 													<div
 														class="h-full bg-red-500 dark:bg-red-400 rounded-full"
 														style="width: {(ds.count / maxDistrictCount) * 100}%"
-													/>
+													></div>
 												</div>
 											</div>
 										</td>
@@ -612,7 +612,7 @@
 													<div
 														class="h-full bg-amber-500 dark:bg-amber-400 rounded-full"
 														style="width: {(ds.totalMinutes / maxDistrictMinutes) * 100}%"
-													/>
+													></div>
 												</div>
 											</div>
 										</td>
@@ -664,7 +664,7 @@
 													<div
 														class="h-full bg-red-500 dark:bg-red-400 rounded-full"
 														style="width: {(ls.count / maxLineCount) * 100}%"
-													/>
+													></div>
 												</div>
 											</div>
 										</td>
@@ -675,7 +675,7 @@
 													<div
 														class="h-full bg-amber-500 dark:bg-amber-400 rounded-full"
 														style="width: {(ls.totalMinutes / maxLineMinutes) * 100}%"
-													/>
+													></div>
 												</div>
 											</div>
 										</td>

@@ -71,16 +71,51 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		}
 	}
 
-	const [team, media, moments, projects, events, financeSummary] = await Promise.all([
-		tryFetch(
-			directus.request(
-				readUsers({
-					fields: ['first_name', 'last_name', 'title', 'avatar', 'description'],
-					sort: ['last_name'] as any
+	// Fetch projects with optional rich fields (description, image) that may not exist yet.
+	// Falls back to basic fields so the section always renders even before schema is updated.
+	async function fetchProjects(): Promise<any[]> {
+		const sort = ['-featured', 'title'] as any;
+		try {
+			return (await directus.request(
+				readItems('org_projects', {
+					fields: ['id', 'title', 'summary', 'description', 'link', 'featured', 'status', { image: ['id'] }],
+					sort
 				})
-			) as Promise<any[]>,
-			[]
-		),
+			)) as any[];
+		} catch {
+			try {
+				return (await directus.request(
+					readItems('org_projects', {
+						fields: ['id', 'title', 'summary', 'link', 'featured', 'status'],
+						sort
+					})
+				)) as any[];
+			} catch {
+				return [];
+			}
+		}
+	}
+
+	// Fetch team with IDs for subpage links; fall back without ID if the field is restricted.
+	async function fetchTeam(): Promise<any[]> {
+		const sort = ['last_name'] as any;
+		try {
+			return (await directus.request(
+				readUsers({ fields: ['id', 'first_name', 'last_name', 'title', 'avatar', 'description'], sort })
+			)) as any[];
+		} catch {
+			try {
+				return (await directus.request(
+					readUsers({ fields: ['first_name', 'last_name', 'title', 'avatar', 'description'], sort })
+				)) as any[];
+			} catch {
+				return [];
+			}
+		}
+	}
+
+	const [team, media, moments, projects, events, financeSummary] = await Promise.all([
+		fetchTeam(),
 		tryFetch(
 			directus.request(
 				readItems('org_press_reports', {
@@ -101,15 +136,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 			) as Promise<any[]>,
 			[]
 		),
-		tryFetch(
-			directus.request(
-				readItems('org_projects', {
-					fields: ['id', 'title', 'summary', 'link', 'featured', 'status'],
-					sort: ['-featured', 'title'] as any
-				})
-			) as Promise<any[]>,
-			[]
-		),
+		fetchProjects(),
 		tryFetch(
 			directus.request(
 				readItems('org_events' as any, {

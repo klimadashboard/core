@@ -13,16 +13,18 @@
 				{/each}
 			</tr>
 		</thead>
-		{#each data as d}
-			<tr class="odd:bg-gray-100 dark:odd:bg-gray-800">
-				<td class="tabular-nums">
-					{formatLabel(d.x)}
-				</td>
-				{#each d.layers as l}
-					<td>{formatLabel(l.y)}{l.unit}</td>
-				{/each}
-			</tr>
-		{/each}
+		<tbody>
+			{#each data as d}
+				<tr class="odd:bg-gray-100 dark:odd:bg-gray-800">
+					<td class="tabular-nums">
+						{formatLabel(d.x)}
+					</td>
+					{#each d.layers as l}
+						<td>{formatLabel(l.y)}{l.unit}</td>
+					{/each}
+				</tr>
+			{/each}
+		</tbody>
 	</table>
 </div>
 

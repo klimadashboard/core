@@ -118,9 +118,9 @@
 					{#each quizQuestions as q}
 						<div
 							class="h-1 w-full bg-gray-100
-							{q.correct === true ? 'bg-green-500' : ''} 
+							{q.correct === true ? 'bg-green-500' : ''}
 							{q.correct === false ? 'bg-red-500' : ''}"
-						/>
+						></div>
 					{/each}
 				</div>
 
@@ -150,10 +150,10 @@
 										<!-- Colored bar -->
 										<div
 											class="absolute bottom-0 left-0 top-0
-											{answer.is_true ? 'bg-green-400' : 'bg-red-400'} 
+											{answer.is_true ? 'bg-green-400' : 'bg-red-400'}
 											transition-[width]"
 											style="width: {selectedAnswerId !== null ? answer.percentage : 0}%"
-										/>
+										></div>
 										<div class="relative">
 											{answer.label}
 										</div>
