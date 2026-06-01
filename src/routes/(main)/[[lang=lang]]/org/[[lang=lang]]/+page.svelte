@@ -178,44 +178,9 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MOMENTS STRIP                                                -->
+<!-- 2. PROJEKTE – bento grid (directly below hero, no heading)   -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-{#if momentsStrip.length}
-	<div class="overflow-hidden border-b border-t border-current/10 bg-black py-1" aria-hidden="true">
-		<div class="moments-strip flex gap-1">
-			{#each momentsStrip as moment}
-				{#if moment.image?.id}
-					<div class="group relative h-52 shrink-0">
-						<img
-							src="https://base.klimadashboard.org/assets/{moment.image.id}?key=small"
-							alt=""
-							class="h-full w-auto object-cover"
-						/>
-						{#if moment.title}
-							<div
-								class="pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								<p class="text-xs font-medium leading-tight text-white">{moment.title}</p>
-							</div>
-						{/if}
-					</div>
-				{/if}
-			{/each}
-		</div>
-	</div>
-{/if}
-
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- 2. PROJEKTE – bento grid                                     -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<section id="projekte" class="pt-16">
-	<div class="mb-4 px-4 text-center">
-		<h2 class="text-4xl font-bold">{t(tr, 'org.projects.title')}</h2>
-		<p class="mt-1 mx-auto max-w-2xl text-lg leading-snug text-balance opacity-80">
-			{t(tr, 'org.projects.subtitle')}
-		</p>
-	</div>
-
+<section id="projekte" class="pt-2">
 	{#if sortedProjects.length}
 		<div
 			class="grid grid-cols-2 md:grid-cols-6 auto-rows-[11rem] md:auto-rows-[13rem] gap-1 px-1 max-w-7xl mx-auto"
@@ -337,6 +302,34 @@
 		</div>
 	{/if}
 </dialog>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MOMENTS STRIP                                                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{#if momentsStrip.length}
+	<div class="overflow-hidden border-b border-t border-current/10 bg-black py-1 mt-16" aria-hidden="true">
+		<div class="moments-strip flex gap-1">
+			{#each momentsStrip as moment}
+				{#if moment.image?.id}
+					<div class="group relative h-52 shrink-0">
+						<img
+							src="https://base.klimadashboard.org/assets/{moment.image.id}?key=small"
+							alt=""
+							class="h-full w-auto object-cover"
+						/>
+						{#if moment.title}
+							<div
+								class="pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								<p class="text-xs font-medium leading-tight text-white">{moment.title}</p>
+							</div>
+						{/if}
+					</div>
+				{/if}
+			{/each}
+		</div>
+	</div>
+{/if}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 3. TEAM – slider on mobile, grid on desktop                  -->
@@ -495,57 +488,70 @@
 <!-- 5. IN DEN MEDIEN                                             -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 {#if mediaReports.length}
-	<section id="presse" class="pt-16 dark:bg-gray-900/40">
-		<div class="">
-			<h2 class="text-4xl font-bold text-center">{t(tr, 'org.media.title')}</h2>
-			<p class="mt-1 mx-auto max-w-2xl text-lg leading-snug text-balance text-center opacity-80">
-				{t(tr, 'org.media.subtitle')}
-			</p>
-		</div>
-
+	<section id="presse" class="pt-16 max-w-7xl mx-auto px-1">
 		<Splide
-			class="m-1 mt-4 pb-8"
+			hasTrack={false}
 			options={{
 				gap: '0.25rem',
 				type: 'loop',
 				fixedWidth: '16rem',
 				fixedHeight: '20rem',
-				arrows: true,
 				pagination: true
 			}}
 		>
-			{#each mediaReports as item}
-				<SplideSlide>
-					<a
-						href={item.link}
-						target="_blank"
-						rel="noopener noreferrer"
-						class="flex h-full flex-col rounded-xl bg-gray-900 p-4 text-white transition hover:bg-gray-800"
-					>
-						<div class="mb-auto flex h-7 items-center">
-							{#if item.medium?.logo}
-								<img
-									src="https://base.klimadashboard.org/assets/{item.medium.logo}"
-									alt={item.medium.name ?? ''}
-									class="max-h-5 max-w-[90px] object-contain"
-								/>
-							{:else if item.medium?.name}
-								<span class="text-sm font-bold opacity-70">{item.medium.name}</span>
-							{/if}
-						</div>
-						<div class="mt-auto">
-							<h4 class="text-2xl font-bold leading-tight hyphens-auto">
-								{item.title}
-							</h4>
-							{#if item.date}
-								<p class="mt-1.5 text-sm opacity-70">
-									{dayjs(item.date).format('DD.MM.YYYY')}
-								</p>
-							{/if}
-						</div>
-					</a>
-				</SplideSlide>
-			{/each}
+			<!-- Title row with arrows on the right, Gallery.svelte style -->
+			<div class="flex items-end border-b border-current/10 pb-2 mb-3 px-1">
+				<div>
+					<h2 class="text-2xl font-bold">{t(tr, 'org.media.title')}</h2>
+					<p class="text-sm opacity-60">{t(tr, 'org.media.subtitle')}</p>
+				</div>
+				<div class="ml-auto flex gap-1 splide__arrows">
+					<button class="splide__arrow splide__arrow--prev" aria-label="Zurück">
+						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" />
+						</svg>
+					</button>
+					<button class="splide__arrow splide__arrow--next" aria-label="Weiter">
+						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" />
+						</svg>
+					</button>
+				</div>
+			</div>
+			<SplideTrack>
+				{#each mediaReports as item}
+					<SplideSlide>
+						<a
+							href={item.link}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="flex h-full flex-col rounded-xl bg-gray-900 p-4 text-white transition hover:bg-gray-800"
+						>
+							<div class="mb-auto flex h-7 items-center">
+								{#if item.medium?.logo}
+									<img
+										src="https://base.klimadashboard.org/assets/{item.medium.logo}"
+										alt={item.medium.name ?? ''}
+										class="max-h-5 max-w-[90px] object-contain"
+									/>
+								{:else if item.medium?.name}
+									<span class="text-sm font-bold opacity-70">{item.medium.name}</span>
+								{/if}
+							</div>
+							<div class="mt-auto">
+								<h4 class="text-2xl font-bold leading-tight hyphens-auto">
+									{item.title}
+								</h4>
+								{#if item.date}
+									<p class="mt-1.5 text-sm opacity-70">
+										{dayjs(item.date).format('DD.MM.YYYY')}
+									</p>
+								{/if}
+							</div>
+						</a>
+					</SplideSlide>
+				{/each}
+			</SplideTrack>
 		</Splide>
 	</section>
 {/if}
@@ -639,58 +645,49 @@
 		visibility: visible;
 	}
 
-	/* ── Splide arrows ── */
+	/* ── Splide arrows – inline, Gallery.svelte style ── */
 	:global(.splide__arrow) {
-		position: absolute;
-		top: 50%;
-		transform: translateY(-50%);
-		z-index: 1;
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2.5rem;
-		height: 2.5rem;
+		width: 2rem;
+		height: 2rem;
 		border-radius: 50%;
-		background: rgba(0, 0, 0, 0.65);
-		border: 1.5px solid rgba(255, 255, 255, 0.25);
+		background: transparent;
+		border: none;
+		padding: 0;
 		cursor: pointer;
-		transition: background 0.15s;
-	}
-	:global(.splide__arrow--prev) {
-		left: 0.5rem;
-	}
-	:global(.splide__arrow--next) {
-		right: 0.5rem;
+		opacity: 0.55;
+		transition: opacity 0.15s;
+		flex-shrink: 0;
 	}
 	:global(.splide__arrow:hover:not(:disabled)) {
-		background: rgba(0, 0, 0, 0.88);
+		opacity: 1;
 	}
 	:global(.splide__arrow:disabled) {
-		opacity: 0.3;
+		opacity: 0.2;
 		cursor: default;
 	}
 	:global(.splide__arrow svg) {
-		fill: white;
-		width: 1.1rem;
-		height: 1.1rem;
-		flex-shrink: 0;
+		width: 1.375rem;
+		height: 1.375rem;
 	}
 
-	/* ── Splide pagination dots ── */
+	/* ── Splide pagination dots – pill style ── */
 	:global(.splide__pagination) {
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		gap: 0.35rem;
-		padding: 0.5rem 0 0;
+		gap: 0.3rem;
+		padding: 0.65rem 0 0;
 		list-style: none;
 		margin: 0;
 	}
 	:global(.splide__pagination__page) {
 		display: block;
-		width: 0.45rem;
-		height: 0.45rem;
-		border-radius: 50%;
+		width: 0.4rem;
+		height: 0.4rem;
+		border-radius: 9999px;
 		background: currentColor;
 		opacity: 0.25;
 		border: none;
@@ -698,10 +695,10 @@
 		cursor: pointer;
 		transition:
 			opacity 0.2s,
-			transform 0.2s;
+			width 0.25s ease;
 	}
 	:global(.splide__pagination__page.is-active) {
-		opacity: 0.75;
-		transform: scale(1.4);
+		opacity: 0.7;
+		width: 1.5rem;
 	}
 </style>
