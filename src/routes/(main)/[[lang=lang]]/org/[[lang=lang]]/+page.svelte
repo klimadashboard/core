@@ -2,6 +2,8 @@
 	import { Splide, SplideSlide, SplideTrack } from '@splidejs/svelte-splide';
 	import '@splidejs/svelte-splide/css/core';
 	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
+
 	import { t } from '$lib/utils/t';
 	import { Button } from '$lib/components/ui';
 	import dayjs from 'dayjs';
@@ -54,7 +56,29 @@
 		'org.cta.text':
 			'Als gemeinnütziger Verein sind wir auf Spenden und Förderungen angewiesen. Mit deinem Beitrag ermöglichst du neue Datenprojekte, die die Klimawende beschleunigen.',
 		'org.cta.donate': 'Jetzt spenden',
-		'org.cta.contact': 'Kontakt aufnehmen'
+		'org.cta.contact': 'Kontakt aufnehmen',
+		'org.wwd.title': 'Wie wir arbeiten',
+		'org.wwd.1.title': 'Klimawissenschaft übersetzen',
+		'org.wwd.1.text':
+			'Die Daten & Fakten von anerkannten Institutionen bereiten wir leicht verständlich für alle auf. So ermöglichen wir datenbasierten Diskurs und Entscheidungen.',
+		'org.wwd.2.title': 'Open Source, Data, Finance',
+		'org.wwd.2.text':
+			'Wir legen unseren Code, unsere Daten und unsere Finanzen offen. Die Transparenz, die wir von anderen fordern, leben wir selbst. Und wir freuen uns, wenn wir kopiert werden.',
+		'org.wwd.3.title': 'Bewusstsein durch Aufmerksamkeit',
+		'org.wwd.3.text':
+			'ZiB1, Falter, APA, DPA, CORRECTIV – viele Medien, aber auch Schulen, Universitäten und Behörden arbeiten mit unseren Visualisierungen.',
+		'org.wwd.4.title': 'Unabhängig und gemeinnützig',
+		'org.wwd.4.text':
+			'Als gemeinnütziger Verein in Österreich sind wir unabhängig von kommerziellen und politischen Interessen. Wir verpflichten uns dem Pariser Klimaabkommen und wissenschaftlichen Standards.',
+		'org.wwd.5.title': 'Vor Ort & up-to-date',
+		'org.wwd.5.text':
+			'Mit mehr als 13.000 regionalen Klimadashboards beschleunigen wir die Klimawende bei dir vor Ort – stets aktuell, teils täglich aktualisiert.',
+		'org.wwd.6.title': 'Gemeinsam für die Klimawende',
+		'org.wwd.6.text':
+			'Wir arbeiten eng mit Wissenschaft, Behörden, Medien und Zivilgesellschaft zusammen, damit auf Daten auch Taten folgen.',
+		'org.financing.title': '',
+		'org.financing.text':
+			'Hier kannst du Text einfügen – wie die Projekte bisher finanziert wurden und warum ihr Unterstützung braucht.'
 	};
 
 	const trEN: Record<string, string> = {
@@ -100,7 +124,29 @@
 		'org.cta.text':
 			'As a non-profit, we depend on donations and grants. Your contribution enables new data projects that accelerate the climate transition.',
 		'org.cta.donate': 'Donate now',
-		'org.cta.contact': 'Get in touch'
+		'org.cta.contact': 'Get in touch',
+		'org.wwd.title': 'What we do',
+		'org.wwd.1.title': 'Translating climate science',
+		'org.wwd.1.text':
+			'We translate data & facts from recognised institutions into easy-to-understand formats for everyone — enabling data-driven discourse and decisions.',
+		'org.wwd.2.title': 'Open Source, Data, Finance',
+		'org.wwd.2.text':
+			'We publish our code, data, and finances openly. We practise the transparency we demand from others. And we are happy to be copied.',
+		'org.wwd.3.title': 'Awareness through attention',
+		'org.wwd.3.text':
+			'ZiB2, Falter, APA, DPA, CORRECTIV — many media outlets, as well as schools, universities, and authorities, use our visualisations.',
+		'org.wwd.4.title': 'Independent & non-profit',
+		'org.wwd.4.text':
+			'As a non-profit association in Austria, we are independent of commercial and political interests. We are committed to the Paris Agreement and scientific standards.',
+		'org.wwd.5.title': 'Local & up to date',
+		'org.wwd.5.text':
+			'With more than 13,000 regional climate dashboards, we accelerate the climate transition in your area — always current, sometimes updated daily.',
+		'org.wwd.6.title': 'Together for the climate transition',
+		'org.wwd.6.text':
+			'We work closely with science, authorities, media, and civil society to ensure that data leads to action.',
+		'org.financing.title': 'How is this financed?',
+		'org.financing.text':
+			'Add your text here — how these projects have been financed so far and why you need support.'
 	};
 
 	$: tr = {
@@ -123,8 +169,11 @@
 		return t(tr, 'org.projects.status.active');
 	}
 
-	/* ─── Moments strip (doubled for seamless loop) ──────────── */
-	$: momentsStrip = moments.length ? [...moments, ...moments] : [];
+	/* ─── Moments strips: shuffle once, split 50/50, no repeats ── */
+	const shuffledMoments = [...moments].sort(() => Math.random() - 0.5);
+	const mid = Math.ceil(shuffledMoments.length / 2);
+	const momentsStrip1 = shuffledMoments.slice(0, mid);
+	const momentsStrip2 = shuffledMoments.slice(mid);
 
 	/* ─── Finance ─────────────────────────────────────────────── */
 	function formatEUR(n: number) {
@@ -155,13 +204,61 @@
 		projectDialog?.close();
 		selectedProject = null;
 	}
+
+	/* ─── Scroll-linked photo strips + letter parallax ─────── */
+	let strip1El: HTMLElement | null = null;
+	let strip2El: HTMLElement | null = null;
+	let strip1X = 0;
+	let strip2X = 0;
+	let letterEl: HTMLElement | null = null;
+	let letterY = 0;
+
+	function handleScroll() {
+		if (strip1El) {
+			const rect = strip1El.getBoundingClientRect();
+			strip1X = -(rect.top + rect.height / 2 - window.innerHeight / 2) * 0.1;
+		}
+		if (strip2El) {
+			const rect = strip2El.getBoundingClientRect();
+			strip2X = (rect.top + rect.height / 2 - window.innerHeight / 2) * 0.1;
+		}
+		if (letterEl) {
+			const rect = letterEl.getBoundingClientRect();
+			letterY = -(rect.top + rect.height / 2 - window.innerHeight / 2) * 0.06;
+		}
+	}
+
+	onMount(() => handleScroll());
+
+	const defaultSplideOptions = {
+		gap: '0.25rem',
+		type: 'slide' as const,
+		perPage: 3,
+		perMove: 3,
+		pagination: false,
+		breakpoints: {
+			640: { perPage: 1, perMove: 1 },
+			960: { perPage: 2, perMove: 2 }
+		}
+	};
 </script>
+
+<svelte:window on:scroll={handleScroll} />
+
+<svelte:head>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap"
+		rel="stylesheet"
+	/>
+</svelte:head>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 1. HERO                                                      -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <section
-	class="flex flex-col items-center justify-center overflow-hidden bg-white py-10 text-center dark:bg-gray-950 md:py-14"
+	class="flex flex-col items-center justify-center overflow-hidden bg-white text-center dark:bg-gray-950 pt-10 pb-4"
 >
 	<div class="max-w-4xl px-6">
 		<h1 class="text-4xl font-bold md:text-5xl lg:text-6xl text-balance">
@@ -178,12 +275,27 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
+<!-- BEKANNT AUS                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="dark:hidden flex flex-col items-center p-4">
+	<p class="text-xs font-bold uppercase tracking-widest opacity-60 text-center text-black">
+		Bekannt aus
+	</p>
+
+	<img
+		src="https://base.klimadashboard.org/assets/b5e9bf34-6190-481e-8656-a79caf828f14"
+		alt="Medien, in denen Klimadashboard vertreten ist"
+		class="max-w-sm w-full saturate-0 hover:saturate-100 transition -mt-2"
+	/>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 2. PROJEKTE – bento grid (directly below hero, no heading)   -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <section id="projekte" class="pt-2">
 	{#if sortedProjects.length}
 		<div
-			class="grid grid-cols-2 md:grid-cols-6 auto-rows-[11rem] md:auto-rows-[13rem] gap-1 px-1 max-w-7xl mx-auto"
+			class="grid grid-cols-2 md:grid-cols-6 auto-rows-[9rem] md:auto-rows-[9rem] gap-1 px-1 max-w-7xl mx-auto"
 		>
 			{#each sortedProjects as project}
 				<button
@@ -272,7 +384,7 @@
 				</span>
 				<h2 class="text-2xl font-bold leading-tight">{selectedProject.title}</h2>
 				{#if selectedProject.description}
-					<p class="mt-3 text-sm leading-relaxed opacity-75">{selectedProject.description}</p>
+					<p class="mt-3 text-sm leading-relaxed opacity-75">{@html selectedProject.description}</p>
 				{:else if selectedProject.summary}
 					<p class="mt-3 text-sm leading-relaxed opacity-75">{selectedProject.summary}</p>
 				{/if}
@@ -304,29 +416,247 @@
 </dialog>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- MOMENTS STRIP                                                -->
+<!-- LETTER – team message                                        -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-{#if momentsStrip.length}
-	<div class="overflow-hidden border-b border-t border-current/10 bg-black py-1 mt-16" aria-hidden="true">
-		<div class="moments-strip flex gap-1">
-			{#each momentsStrip as moment}
-				{#if moment.image?.id}
-					<div class="group relative h-52 shrink-0">
-						<img
-							src="https://base.klimadashboard.org/assets/{moment.image.id}?key=small"
-							alt=""
-							class="h-full w-auto object-cover"
-						/>
-						{#if moment.title}
+<section class="relative z-10 -my-6 px-4 py-12 flex justify-center">
+	<div
+		class="letter-wrapper max-w-xl w-full"
+		bind:this={letterEl}
+		style="transform: rotate(-1.5deg) translateY({letterY}px);"
+	>
+		<div class="letter-paper handwriting relative rounded p-8 pb-4">
+			{#if team.length}
+				<div class="flex flex-row flex-wrap gap-1 mb-5">
+					{#each team as member}
+						{#if member.avatar}
+							<img
+								src="https://base.klimadashboard.org/assets/{member.avatar}?key=small"
+								alt={member.first_name}
+								class="w-9 h-9 rounded-full object-cover ring-2 ring-[#fef9e4] shrink-0"
+							/>
+						{:else}
 							<div
-								class="pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100"
+								class="w-9 h-9 rounded-full bg-amber-200 flex items-center justify-center text-xs font-bold text-amber-900 ring-2 ring-[#fef9e4] shrink-0"
 							>
-								<p class="text-xs font-medium leading-tight text-white">{moment.title}</p>
+								{(member.first_name ?? '?')[0]}
 							</div>
 						{/if}
+					{/each}
+				</div>
+			{/if}
+			<h2 class="text-2xl md:text-3xl font-bold leading-[28px] mb-1">
+				Hi, wir sind das Team Klimadashboard!
+			</h2>
+
+			<div class="letter-lined-area">
+				<p class="letter-text mb-[28px]">
+					In den letzten fünf Jahren haben wir nicht nur über 13.000 Klimadashboards entwickelt,
+					sondern auch Workshops gegeben, Behörden und Medien beraten, Ausstellungen organisiert und
+					einen gemeinnützigen Verein aufgebaut.
+				</p>
+				<p class="letter-text mb-[28px]">
+					Weil wir finden, dass <strong>Fakten für alle</strong> zugänglich sein müssen, sind unsere
+					Dashboards kostenlos und werbefrei. Das war uns immer wichtig und wird so bleiben. Unsere
+					Arbeit wird – neben ehrenamtlichem Einsatz – durch
+					<strong>Förderungen und Spenden</strong> ermöglicht.
+				</p>
+				<p class="letter-text">
+					Wir merken, dass wir <strong>einen Unterschied machen</strong>. Und wollen jetzt den
+					nächsten Schritt gehen, unser Team ausbauen und noch mehr
+					<strong>Datenprojekte in ganz Europa</strong> umsetzen. Wenn du uns dabei unterstützen
+					magst,
+					<a href="mailto:team@klimadashboard.org" class="underline decoration-1 underline-offset-2"
+						>schreib uns</a
+					>
+					oder
+					<a
+						href="https://klimadashboard.org/donate"
+						class="underline decoration-1 underline-offset-2">spende an das Klimadashboard</a
+					>. Danke für deine Unterstützung!
+				</p>
+			</div>
+
+			{#if team.length}
+				<p class="text-sm mt-8 opacity-80 leading-snug">
+					{team.map((m) => m.first_name).join(', ')}
+				</p>
+			{/if}
+		</div>
+	</div>
+</section>
+
+{#snippet splideArrows()}
+	<button class="splide__arrow splide__arrow--prev" aria-label="Zurück">
+		<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
+	</button>
+	<button class="splide__arrow splide__arrow--next" aria-label="Weiter">
+		<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg>
+	</button>
+{/snippet}
+
+{#snippet splideSection(id: string, title: string, subtitle: string, arrowsClass: string, slides: any)}
+	<section {id} class="pt-16 max-w-7xl mx-auto px-1">
+		<Splide hasTrack={false} options={defaultSplideOptions}>
+			<div class="flex items-end border-b border-current/10 pb-2 mb-3 px-1">
+				<div>
+					<h2 class="text-2xl font-bold">{title}</h2>
+					<p class="text-sm opacity-60">{subtitle}</p>
+				</div>
+				<div class="ml-auto flex gap-1 splide__arrows {arrowsClass}">
+					{@render splideArrows()}
+				</div>
+			</div>
+			<SplideTrack>
+				{@render slides()}
+			</SplideTrack>
+		</Splide>
+	</section>
+{/snippet}
+
+{#snippet mediaSlides()}
+	{#each mediaReports as item}
+		<SplideSlide class="h-52">
+			<a
+				href={item.link}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="flex h-full flex-col rounded-xl bg-gray-900 p-4 text-white transition hover:bg-gray-800"
+			>
+				<div class="mb-auto flex h-7 items-center">
+					{#if item.medium?.logo}
+						<img
+							src="https://base.klimadashboard.org/assets/{item.medium.logo}"
+							alt={item.medium.name ?? ''}
+							class="max-h-5 max-w-[90px] object-contain"
+						/>
+					{:else if item.medium?.name}
+						<span class="text-sm font-bold opacity-70">{item.medium.name}</span>
+					{/if}
+				</div>
+				<div class="mt-auto">
+					<h4 class="text-xl font-bold leading-tight hyphens-auto">{item.title}</h4>
+					{#if item.date}
+						<p class="mt-1.5 text-sm opacity-70">{dayjs(item.date).format('DD.MM.YYYY')}</p>
+					{/if}
+				</div>
+			</a>
+		</SplideSlide>
+	{/each}
+{/snippet}
+
+{#snippet eventSlides()}
+	{#each events as event}
+		<SplideSlide class="h-32">
+			<div class="flex h-full flex-col rounded-xl border border-current/10 bg-current/5 p-4">
+				{#if event.date}
+					<p class="mb-1 text-xs font-bold uppercase tracking-widest opacity-40">
+						{dayjs(event.date).format('DD. MMMM YYYY')}
+					</p>
+				{/if}
+				<h3 class="text-base font-bold leading-tight">{event.title}</h3>
+				{#if event.location}
+					<p class="mt-0.5 text-sm opacity-50">{event.location}</p>
+				{/if}
+			</div>
+		</SplideSlide>
+	{/each}
+{/snippet}
+
+{#snippet openSlides()}
+	<SplideSlide class="h-32">
+		<div class="flex h-full flex-col rounded-xl border border-current/10 bg-current/5 p-4">
+			<h3 class="text-base font-bold">{t(tr, 'org.open.source.title')}</h3>
+			<p class="mt-1 text-sm leading-snug opacity-70">{t(tr, 'org.open.source.text')}</p>
+			<div class="mt-auto flex flex-wrap gap-1 pt-2">
+				<Button variant="secondary" size="sm" href="https://github.com/klimadashboard" target="_blank" rel="noopener noreferrer">GitHub</Button>
+			</div>
+		</div>
+	</SplideSlide>
+	<SplideSlide class="h-32">
+		<div class="flex h-full flex-col rounded-xl border border-current/10 bg-current/5 p-4">
+			<h3 class="text-base font-bold">{t(tr, 'org.open.data.title')}</h3>
+			<p class="mt-1 text-sm leading-snug opacity-70">{t(tr, 'org.open.data.text')}</p>
+			<div class="mt-auto flex flex-wrap gap-1 pt-2">
+				<Button variant="secondary" size="sm" href="https://github.com/klimadashboard" target="_blank" rel="noopener noreferrer">GitHub</Button>
+				<Button variant="secondary" size="sm" href="https://api.klimadashboard.org" target="_blank" rel="noopener noreferrer">API (Beta)</Button>
+			</div>
+		</div>
+	</SplideSlide>
+	<SplideSlide class="h-32">
+		<div class="flex h-full flex-col rounded-xl border border-current/10 bg-current/5 p-4">
+			<h3 class="text-base font-bold">{t(tr, 'org.open.finance.title')}</h3>
+			<p class="mt-1 text-sm leading-snug opacity-70">{t(tr, 'org.open.finance.text')}</p>
+			<div class="mt-auto flex flex-wrap gap-1 pt-2">
+				<Button variant="secondary" size="sm" href="/finance">Open Finance</Button>
+			</div>
+		</div>
+	</SplideSlide>
+{/snippet}
+
+{#snippet stripImages(arr: any[])}
+	{#each arr as moment}
+		{#if moment.image?.id}
+			<div class="strip-card relative shrink-0 h-full overflow-hidden rounded-2xl shadow-lg">
+				<img
+					src="https://base.klimadashboard.org/assets/{moment.image.id}?key=small"
+					alt=""
+					class="h-full w-auto object-cover"
+				/>
+				{#if moment.title}
+					<div
+						class="strip-overlay pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity"
+					>
+						<p class="text-xs font-medium leading-tight text-white">{moment.title}</p>
 					</div>
 				{/if}
-			{/each}
+			</div>
+		{/if}
+	{/each}
+{/snippet}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PHOTO STRIP 1 – left-to-right (before What we do)           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{#if momentsStrip1.length}
+	<div class="overflow-hidden" aria-hidden="true" bind:this={strip1El}>
+		<div
+			class="flex justify-center gap-1 h-36"
+			style="transform: translateX({strip1X}px); will-change: transform;"
+		>
+			{@render stripImages(momentsStrip1)}
+		</div>
+	</div>
+{/if}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- WHAT WE DO                                                   -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<section class="mt-10 px-1 max-w-7xl mx-auto">
+	<div class="flex items-end border-b border-current/10 pb-2 mb-3 px-1">
+		<h2 class="text-2xl font-bold">{t(tr, 'org.wwd.title')}</h2>
+	</div>
+	<div class="grid md:grid-cols-2 gap-4 px-1">
+		{#each [1, 2, 3, 4, 5, 6] as n}
+			<div>
+				<h3 class="font-semibold text-base leading-snug">
+					{t(tr, `org.wwd.${n}.title`)}
+				</h3>
+				<p class="opacity-60 text-sm leading-snug mt-0.5">{t(tr, `org.wwd.${n}.text`)}</p>
+			</div>
+		{/each}
+	</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PHOTO STRIP 2 – right-to-left (after What we do)            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{#if momentsStrip2.length}
+	<div class="mt-10 overflow-hidden" aria-hidden="true" bind:this={strip2El}>
+		<div
+			class="flex justify-center gap-1 h-36"
+			style="transform: translateX({strip2X}px); will-change: transform;"
+		>
+			{@render stripImages(momentsStrip2)}
 		</div>
 	</div>
 {/if}
@@ -335,11 +665,11 @@
 <!-- 3. TEAM – slider on mobile, grid on desktop                  -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <section id="team" class="pt-16">
-	<div class="mb-4 text-center">
-		<h2 class="text-4xl font-bold">{t(tr, 'org.team.title')}</h2>
-		<p class="mt-1 mx-auto max-w-2xl text-lg leading-snug text-balance opacity-80">
-			{t(tr, 'org.team.subtitle')}
-		</p>
+	<div class="flex items-end border-b border-current/10 pb-2 mb-3 px-1 max-w-7xl mx-auto">
+		<div>
+			<h2 class="text-2xl font-bold">{t(tr, 'org.team.title')}</h2>
+			<p class="text-sm opacity-60">{t(tr, 'org.team.subtitle')}</p>
+		</div>
 	</div>
 
 	{#if team.length}
@@ -434,164 +764,29 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- 4. OFFENE GRUNDSÄTZE                                        -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-
-{#snippet openCard(title, text, links)}
-	<div class="text-center">
-		<h2 class="text-2xl font-bold">{title}</h2>
-		<p class="leading-tight mt-1 mb-2">{text}</p>
-		{#each links as link}
-			<Button
-				variant="secondary"
-				size="sm"
-				href={link.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				class="m-1"
-			>
-				{link.label}
-			</Button>
-		{/each}
-	</div>
-{/snippet}
-
-<section
-	id="grundsaetze"
-	class="bg-current/5 p-6 rounded-2xl mt-16 grid max-w-7xl mx-auto md:grid-cols-3 gap-10"
->
-	{@render openCard(t(tr, 'org.open.source.title'), t(tr, 'org.open.source.text'), [
-		{
-			url: 'https://github.com/klimadashboard',
-			label: 'GitHub'
-		}
-	])}
-	{@render openCard(t(tr, 'org.open.data.title'), t(tr, 'org.open.data.text'), [
-		{
-			url: 'https://github.com/klimadashboard',
-			label: 'GitHub'
-		},
-		{
-			url: 'https://api.klimadashboard.org',
-			label: 'API (Beta)'
-		}
-	])}
-	{@render openCard(t(tr, 'org.open.finance.title'), t(tr, 'org.open.finance.text'), [
-		{
-			url: '/finance',
-			label: 'Open Finance'
-		}
-	])}
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- 5. IN DEN MEDIEN                                             -->
+<!-- 4. IN DEN MEDIEN                                             -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 {#if mediaReports.length}
-	<section id="presse" class="pt-16 max-w-7xl mx-auto px-1">
-		<Splide
-			hasTrack={false}
-			options={{
-				gap: '0.25rem',
-				type: 'loop',
-				fixedWidth: '16rem',
-				fixedHeight: '20rem',
-				pagination: true
-			}}
-		>
-			<!-- Title row with arrows on the right, Gallery.svelte style -->
-			<div class="flex items-end border-b border-current/10 pb-2 mb-3 px-1">
-				<div>
-					<h2 class="text-2xl font-bold">{t(tr, 'org.media.title')}</h2>
-					<p class="text-sm opacity-60">{t(tr, 'org.media.subtitle')}</p>
-				</div>
-				<div class="ml-auto flex gap-1 splide__arrows">
-					<button class="splide__arrow splide__arrow--prev" aria-label="Zurück">
-						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" />
-						</svg>
-					</button>
-					<button class="splide__arrow splide__arrow--next" aria-label="Weiter">
-						<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" />
-						</svg>
-					</button>
-				</div>
-			</div>
-			<SplideTrack>
-				{#each mediaReports as item}
-					<SplideSlide>
-						<a
-							href={item.link}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="flex h-full flex-col rounded-xl bg-gray-900 p-4 text-white transition hover:bg-gray-800"
-						>
-							<div class="mb-auto flex h-7 items-center">
-								{#if item.medium?.logo}
-									<img
-										src="https://base.klimadashboard.org/assets/{item.medium.logo}"
-										alt={item.medium.name ?? ''}
-										class="max-h-5 max-w-[90px] object-contain"
-									/>
-								{:else if item.medium?.name}
-									<span class="text-sm font-bold opacity-70">{item.medium.name}</span>
-								{/if}
-							</div>
-							<div class="mt-auto">
-								<h4 class="text-2xl font-bold leading-tight hyphens-auto">
-									{item.title}
-								</h4>
-								{#if item.date}
-									<p class="mt-1.5 text-sm opacity-70">
-										{dayjs(item.date).format('DD.MM.YYYY')}
-									</p>
-								{/if}
-							</div>
-						</a>
-					</SplideSlide>
-				{/each}
-			</SplideTrack>
-		</Splide>
-	</section>
+	{@render splideSection('presse', t(tr, 'org.media.title'), t(tr, 'org.media.subtitle'), '', mediaSlides)}
 {/if}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- 6. EVENTS                                                    -->
+<!-- 5. EVENTS                                                    -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 {#if events.length}
-	<section id="events" class="py-16">
-		<div class="mx-auto max-w-7xl px-4">
-			<h2 class="mb-1 text-4xl font-bold text-center">{t(tr, 'org.events.title')}</h2>
-			<p class="mt-1 mx-auto max-w-2xl text-lg leading-snug text-balance opacity-80 text-center">
-				{t(tr, 'org.events.subtitle')}
-			</p>
-			<div class="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-				{#each events as event}
-					<div class="flex flex-col rounded-xl border border-current/10 bg-current/5 p-5">
-						{#if event.date}
-							<p class="mb-2 text-xs font-bold uppercase tracking-widest opacity-40">
-								{dayjs(event.date).format('DD. MMMM YYYY')}
-							</p>
-						{/if}
-						<h3 class="text-xl font-bold leading-tight">{event.title}</h3>
-						{#if event.location}
-							<p class="mt-1 text-sm opacity-50">{event.location}</p>
-						{/if}
-						{#if event.description}
-							<p class="mt-3 line-clamp-3 text-sm leading-snug opacity-60">{event.description}</p>
-						{/if}
-					</div>
-				{/each}
-			</div>
-		</div>
-	</section>
+	{@render splideSection('events', t(tr, 'org.events.title'), t(tr, 'org.events.subtitle'), events.length <= 3 ? 'invisible' : '', eventSlides)}
 {/if}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 6. OPEN BY DEFAULT                                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{@render splideSection('grundsaetze', t(tr, 'org.open.title'), t(tr, 'org.open.subtitle'), 'md:invisible', openSlides)}
+
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- FOOTER CTA                                                   -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<section class="">
+<section class="pt-16">
 	<div class="mx-auto max-w-3xl px-4 text-center">
 		<h2 class="text-balance text-4xl font-bold md:text-5xl">{t(tr, 'org.cta.title')}</h2>
 		<p class="mt-4 text-base opacity-50 md:text-lg">{t(tr, 'org.cta.text')}</p>
@@ -605,20 +800,44 @@
 </section>
 
 <style>
-	/* ── Moments strip ── */
-	@keyframes moments-scroll {
-		from {
-			transform: translateX(0);
-		}
-		to {
-			transform: translateX(-50%);
-		}
+	/* ── Handwriting font ── */
+	.handwriting {
+		font-family: 'Caveat', cursive;
 	}
-	.moments-strip {
-		animation: moments-scroll 50s linear infinite;
+
+	/* ── Letter paper ── */
+	.letter-wrapper {
+		/* rotation + parallax translateY applied via inline style */
+		filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.06))
+			drop-shadow(6px 12px 28px rgba(0, 0, 0, 0.18));
 	}
-	.moments-strip:hover {
-		animation-play-state: paused;
+	.letter-paper {
+		background-color: #fef9e4;
+		/* Lines span the full paper; text baseline sits on each line.
+		   With pt-10 (40px) and ~28px heading, body text starts ~68px in.
+		   background-position-y: 5px offsets tiles so baseline ≈ 68px lands on a line. */
+		background-image: linear-gradient(
+			to bottom,
+			transparent 21px,
+			rgba(160, 130, 55, 0.28) 21px,
+			rgba(160, 130, 55, 0.28) 22px,
+			transparent 22px
+		);
+		background-size: 100% 28px;
+		background-position: 0 5px;
+		color: #1c1609;
+	}
+	.letter-lined-area {
+		/* lines now on .letter-paper — this is a structural wrapper only */
+	}
+	.letter-text {
+		font-size: 20px;
+		line-height: 28px;
+	}
+
+	/* ── Photo strip hover overlays ── */
+	.strip-card:hover .strip-overlay {
+		opacity: 1;
 	}
 
 	/* ── Dialogs ── */
