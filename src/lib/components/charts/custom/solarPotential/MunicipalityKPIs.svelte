@@ -78,7 +78,7 @@
 
 {#snippet potentialList()}
 	<li>
-		{stats.trend >= 0 ? '↑' : '↓'} Letzte 6 Monate: {stats.trend >= 0
+		{stats.trend >= 0 ? '↑' : '↓'} Letzter Monat: {stats.trend >= 0
 			? '+'
 			: ''}{stats.trend.toFixed(2)} %P
 	</li>
@@ -92,9 +92,9 @@
 
 {#snippet daecherList()}
 	<li>
-		{stats.neuAnlagenMonat >= 0 ? '↑' : '↓'} Letzte 6 Monate: {stats.neuAnlagenMonat >= 0
+		{stats.neuAnlagenMonat >= 0 ? '↑' : '↓'} Letzter Monat: {stats.neuAnlagenMonat >= 0
 			? '+'
-			: ''}{stats.neuAnlagenMonat} Anlagen/Monat
+			: ''}{stats.neuAnlagenMonat} Anlagen
 	</li>
 	{#if averages}
 		<li>Ø Deutschland: {averages.avgDaecherDE.toFixed(1).replace('.', ',')} %</li>
@@ -106,9 +106,9 @@
 
 {#snippet leistungList()}
 	<li>
-		{stats.neuLeistungMonat >= 0 ? '↑' : '↓'} Letzte 6 Monate: {stats.neuLeistungMonat >= 0
+		{stats.neuLeistungMonat >= 0 ? '↑' : '↓'} Letzter Monat: {stats.neuLeistungMonat >= 0
 			? '+'
-			: ''}{(stats.neuLeistungMonat / 1000).toFixed(1)} MWp/Monat
+			: ''}{(stats.neuLeistungMonat / 1000).toFixed(1)} MWp
 	</li>
 {/snippet}
 

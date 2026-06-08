@@ -24,8 +24,9 @@ export interface SolarRankEntry {
 	daecher: number;      // roofs_solar_share (%)
 	mwp: number;          // net_power_kw / 1000
 	unitCount: number;    // units_count
-	trend: number | null; // 6-month delta in pp, null if no prev data
-	rc: number | null;    // rank change vs 6 months ago (positive = improved)
+	trend: number | null;        // 1-month delta in pp, null if no prev data
+	prevPotential: number | null; // net_potential_share 1 month ago, for peer-group rc
+	rc: number | null;           // rank change vs 1 month ago within peer group (positive = improved)
 }
 
 export type SolarNeighbourEntry = SolarRankEntry & { distKm: number };

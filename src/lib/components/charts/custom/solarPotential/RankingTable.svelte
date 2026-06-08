@@ -270,7 +270,7 @@
 		{@render colHeader(null, 'Rang')}
 		{@render colHeader(null, 'Gemeinde')}
 		{@render colHeader('potential', 'Genutztes Potential (%)')}
-		{@render colHeader('trend', 'Veränderung letzte 6 Monate (%P)')}
+		{@render colHeader('trend', 'Veränderung letzter Monat (%P)')}
 		{@render colHeader('daecher', 'Dächer mit Photovoltaik (%)')}
 		{@render colHeader('mwp', 'Installierte Leistung (MWp)')}
 	</div>

@@ -143,12 +143,27 @@
 	$: rankLandGesamt = byLand.length;
 	$: rankAll = allRegions.findIndex((r) => r.region.id === region?.id) + 1 || 0;
 
+	function withPeerRc(entries: SolarRankEntry[]): SolarRankEntry[] {
+		const prevRankById: Record<string, number> = {};
+		[...entries]
+			.filter((e) => e.prevPotential != null)
+			.sort((a, b) => (b.prevPotential ?? 0) - (a.prevPotential ?? 0))
+			.forEach((e, i) => { prevRankById[e.region.id] = i + 1; });
+		return entries.map((e, i) => ({
+			...e,
+			rc: prevRankById[e.region.id] != null ? prevRankById[e.region.id] - (i + 1) : null
+		}));
+	}
+
+	$: allDEweitRanked = withPeerRc(allDEweit);
+	$: byLandRanked = withPeerRc(byLand);
+
 	$: awards = computeAwards(history, regionCase);
 
 	$: myLat = region?.center ? parseFloat(region.center[1]) : null;
 	$: myLon = region?.center ? parseFloat(region.center[0]) : null;
 	$: kreisPool = allRegions.filter((r) => r.region.layer === 'district');
-	$: neighbours = computeNeighbours(allDEweit, allRegions, kreisPool, regionCase, region?.id, myLat, myLon);
+	$: neighbours = computeNeighbours(allDEweitRanked, allRegions, kreisPool, regionCase, region?.id, myLat, myLon);
 
 	function computeNeighbours(
 		dePool: SolarRankEntry[],
@@ -212,8 +227,8 @@
 	<section class="mt-8">
 		{#key region?.id}
 			<RankingTable
-				{allDEweit}
-				{byLand}
+				allDEweit={allDEweitRanked}
+				byLand={byLandRanked}
 				{neighbours}
 				regionId={region?.id ?? ''}
 				regionName={region?.name ?? ''}

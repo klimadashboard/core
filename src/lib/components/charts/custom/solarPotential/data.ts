@@ -65,9 +65,8 @@ export async function fetchRegionData(
 	if (!history.length) return null;
 
 	const latest = history[history.length - 1];
-	const sixMonthsAgoIdx = Math.max(0, history.length - 7);
-	const prev = history[sixMonthsAgoIdx];
-	const monthCount = Math.max(history.length - 1 - sixMonthsAgoIdx, 1);
+	const prevIdx = Math.max(0, history.length - 2);
+	const prev = history[prevIdx];
 
 	const stats: SolarStats = {
 		potential: latest.net_potential_share,
@@ -75,8 +74,8 @@ export async function fetchRegionData(
 		dachPV: +(latest.net_power_kw / 1000).toFixed(3),
 		unitCount: latest.units_count,
 		trend: +(latest.net_potential_share - prev.net_potential_share).toFixed(4),
-		neuAnlagenMonat: Math.round((latest.units_count - prev.units_count) / monthCount),
-		neuLeistungMonat: Math.round((latest.net_power_kw - prev.net_power_kw) / monthCount),
+		neuAnlagenMonat: latest.units_count - prev.units_count,
+		neuLeistungMonat: Math.round(latest.net_power_kw - prev.net_power_kw),
 		updateDate: latest.date,
 		avgDE: 0,
 		avgDaecherDE: 0
@@ -136,7 +135,8 @@ export async function fetchRankings(
 				mwp: +((r.net_power_kw as number) / 1000).toFixed(3),
 				unitCount: r.units_count as number,
 				trend: prevData != null ? +(((r.net_potential_share as number) - prevData.potential).toFixed(4)) : null,
-				rc: prevData != null ? prevData.rank - currentRank : null
+				prevPotential: prevData?.potential ?? null,
+				rc: null // computed client-side after peer-group filtering
 			};
 		});
 
