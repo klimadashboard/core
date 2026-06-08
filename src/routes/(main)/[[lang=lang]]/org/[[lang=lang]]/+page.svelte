@@ -78,7 +78,19 @@
 			'Wir arbeiten eng mit Wissenschaft, Behörden, Medien und Zivilgesellschaft zusammen, damit auf Daten auch Taten folgen.',
 		'org.financing.title': '',
 		'org.financing.text':
-			'Hier kannst du Text einfügen – wie die Projekte bisher finanziert wurden und warum ihr Unterstützung braucht.'
+			'Hier kannst du Text einfügen – wie die Projekte bisher finanziert wurden und warum ihr Unterstützung braucht.',
+		'org.featured.label': 'Bekannt aus',
+		'org.featured.alt': 'Medien, in denen Klimadashboard vertreten ist',
+		'org.dialog.close': 'Schließen',
+		'org.carousel.prev': 'Zurück',
+		'org.carousel.next': 'Weiter',
+		'org.letter.title': 'Hi, wir sind das Team Klimadashboard!',
+		'org.letter.p1':
+			'In den letzten fünf Jahren haben wir nicht nur über 13.000 Klimadashboards entwickelt, sondern auch Workshops gegeben, Behörden und Medien beraten, Ausstellungen organisiert und einen gemeinnützigen Verein aufgebaut.',
+		'org.letter.p2':
+			'Weil wir finden, dass <strong>Fakten für alle</strong> zugänglich sein müssen, sind unsere Dashboards kostenlos und werbefrei. Das war uns immer wichtig und wird so bleiben. Unsere Arbeit wird – neben ehrenamtlichem Einsatz – durch <strong>Förderungen und Spenden</strong> ermöglicht.',
+		'org.letter.p3':
+			'Wir merken, dass wir <strong>einen Unterschied machen</strong>. Und wollen jetzt den nächsten Schritt gehen, unser Team ausbauen und noch mehr <strong>Datenprojekte in ganz Europa</strong> umsetzen. Wenn du uns dabei unterstützen magst, <a href="mailto:team@klimadashboard.org" class="underline decoration-1 underline-offset-2">schreib uns</a> oder <a href="https://klimadashboard.org/donate" class="underline decoration-1 underline-offset-2">spende an das Klimadashboard</a>. Danke für deine Unterstützung!'
 	};
 
 	const trEN: Record<string, string> = {
@@ -146,7 +158,19 @@
 			'We work closely with science, authorities, media, and civil society to ensure that data leads to action.',
 		'org.financing.title': 'How is this financed?',
 		'org.financing.text':
-			'Add your text here — how these projects have been financed so far and why you need support.'
+			'Add your text here — how these projects have been financed so far and why you need support.',
+		'org.featured.label': 'Featured in',
+		'org.featured.alt': 'Media outlets that have featured Klimadashboard',
+		'org.dialog.close': 'Close',
+		'org.carousel.prev': 'Previous',
+		'org.carousel.next': 'Next',
+		'org.letter.title': 'Hi, we are the Klimadashboard team!',
+		'org.letter.p1':
+			'Over the past five years, we have not only built more than 13,000 climate dashboards, but also run workshops, advised authorities and media, organised exhibitions, and established a non-profit association.',
+		'org.letter.p2':
+			'Because we believe that <strong>facts must be accessible to everyone</strong>, our dashboards are free of charge and ad-free. This has always mattered to us and will remain so. Our work is made possible — alongside volunteer effort — through <strong>grants and donations</strong>.',
+		'org.letter.p3':
+			'We can see that we <strong>are making a difference</strong>. And we now want to take the next step, grow our team, and realise even more <strong>data projects across Europe</strong>. If you\'d like to support us, <a href="mailto:team@klimadashboard.org" class="underline decoration-1 underline-offset-2">write to us</a> or <a href="https://klimadashboard.org/donate" class="underline decoration-1 underline-offset-2">donate to Klimadashboard</a>. Thank you for your support!'
 	};
 
 	$: tr = {
@@ -277,17 +301,21 @@
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- BEKANNT AUS                                                   -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<div class="dark:hidden flex flex-col items-center p-4">
-	<p class="text-xs font-bold uppercase tracking-widest opacity-60 text-center text-black">
-		Bekannt aus
-	</p>
+<a class=" flex flex-col items-center p-4" href="#presse">
+	<p class="text-xs font-bold uppercase tracking-widest opacity-60 text-center">{t(tr, 'org.featured.label')}</p>
 
 	<img
 		src="https://base.klimadashboard.org/assets/b5e9bf34-6190-481e-8656-a79caf828f14"
-		alt="Medien, in denen Klimadashboard vertreten ist"
-		class="max-w-sm w-full saturate-0 hover:saturate-100 transition -mt-2"
+		alt={t(tr, 'org.featured.alt')}
+		class="max-w-sm w-full saturate-0 hover:saturate-100 transition -mt-2 dark:hidden"
 	/>
-</div>
+
+	<img
+		src="https://base.klimadashboard.org/assets/90a6898e-88a2-4820-9361-1adca0345eb4"
+		alt={t(tr, 'org.featured.alt')}
+		class="max-w-sm w-full saturate-0 hover:saturate-100 transition -mt-2 not-dark:hidden"
+	/>
+</a>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 2. PROJEKTE – bento grid (directly below hero, no heading)   -->
@@ -363,7 +391,7 @@
 			<button
 				on:click={closeProject}
 				class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white transition hover:bg-black/60"
-				aria-label="Schließen"
+				aria-label={t(tr, 'org.dialog.close')}
 			>
 				<svg
 					width="14"
@@ -445,34 +473,18 @@
 				</div>
 			{/if}
 			<h2 class="text-2xl md:text-3xl font-bold leading-[28px] mb-1">
-				Hi, wir sind das Team Klimadashboard!
+				{t(tr, 'org.letter.title')}
 			</h2>
 
 			<div class="letter-lined-area">
 				<p class="letter-text mb-[28px]">
-					In den letzten fünf Jahren haben wir nicht nur über 13.000 Klimadashboards entwickelt,
-					sondern auch Workshops gegeben, Behörden und Medien beraten, Ausstellungen organisiert und
-					einen gemeinnützigen Verein aufgebaut.
+					{t(tr, 'org.letter.p1')}
 				</p>
 				<p class="letter-text mb-[28px]">
-					Weil wir finden, dass <strong>Fakten für alle</strong> zugänglich sein müssen, sind unsere
-					Dashboards kostenlos und werbefrei. Das war uns immer wichtig und wird so bleiben. Unsere
-					Arbeit wird – neben ehrenamtlichem Einsatz – durch
-					<strong>Förderungen und Spenden</strong> ermöglicht.
+					{@html t(tr, 'org.letter.p2')}
 				</p>
 				<p class="letter-text">
-					Wir merken, dass wir <strong>einen Unterschied machen</strong>. Und wollen jetzt den
-					nächsten Schritt gehen, unser Team ausbauen und noch mehr
-					<strong>Datenprojekte in ganz Europa</strong> umsetzen. Wenn du uns dabei unterstützen
-					magst,
-					<a href="mailto:team@klimadashboard.org" class="underline decoration-1 underline-offset-2"
-						>schreib uns</a
-					>
-					oder
-					<a
-						href="https://klimadashboard.org/donate"
-						class="underline decoration-1 underline-offset-2">spende an das Klimadashboard</a
-					>. Danke für deine Unterstützung!
+					{@html t(tr, 'org.letter.p3')}
 				</p>
 			</div>
 
@@ -486,15 +498,43 @@
 </section>
 
 {#snippet splideArrows()}
-	<button class="splide__arrow splide__arrow--prev" aria-label="Zurück">
-		<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
+	<button class="splide__arrow splide__arrow--prev" aria-label={t(tr, 'org.carousel.prev')}>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="22"
+			height="22"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg
+		>
 	</button>
-	<button class="splide__arrow splide__arrow--next" aria-label="Weiter">
-		<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg>
+	<button class="splide__arrow splide__arrow--next" aria-label={t(tr, 'org.carousel.next')}>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="22"
+			height="22"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg
+		>
 	</button>
 {/snippet}
 
-{#snippet splideSection(id: string, title: string, subtitle: string, arrowsClass: string, slides: any)}
+{#snippet splideSection(
+	id: string,
+	title: string,
+	subtitle: string,
+	arrowsClass: string,
+	slides: any
+)}
 	<section {id} class="pt-16 max-w-7xl mx-auto px-1">
 		<Splide hasTrack={false} options={defaultSplideOptions}>
 			<div class="flex items-end border-b border-current/10 pb-2 mb-3 px-1">
@@ -520,7 +560,8 @@
 				href={item.link}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="flex h-full flex-col rounded-xl bg-gray-900 p-4 text-white transition hover:bg-gray-800"
+				style="background: linear-gradient(to top right, #093637, #44a08d);"
+				class="flex h-full flex-col rounded-xl p-4 text-white transition"
 			>
 				<div class="mb-auto flex h-7 items-center">
 					{#if item.medium?.logo}
@@ -534,7 +575,9 @@
 					{/if}
 				</div>
 				<div class="mt-auto">
-					<h4 class="text-xl font-bold leading-tight hyphens-auto">{item.title}</h4>
+					<h4 class="text-2xl font-light leading-tight hyphens-auto text-balance">
+						{item.title}
+					</h4>
 					{#if item.date}
 						<p class="mt-1.5 text-sm opacity-70">{dayjs(item.date).format('DD.MM.YYYY')}</p>
 					{/if}
@@ -568,7 +611,13 @@
 			<h3 class="text-base font-bold">{t(tr, 'org.open.source.title')}</h3>
 			<p class="mt-1 text-sm leading-snug opacity-70">{t(tr, 'org.open.source.text')}</p>
 			<div class="mt-auto flex flex-wrap gap-1 pt-2">
-				<Button variant="secondary" size="sm" href="https://github.com/klimadashboard" target="_blank" rel="noopener noreferrer">GitHub</Button>
+				<Button
+					variant="secondary"
+					size="sm"
+					href="https://github.com/klimadashboard"
+					target="_blank"
+					rel="noopener noreferrer">GitHub</Button
+				>
 			</div>
 		</div>
 	</SplideSlide>
@@ -577,8 +626,20 @@
 			<h3 class="text-base font-bold">{t(tr, 'org.open.data.title')}</h3>
 			<p class="mt-1 text-sm leading-snug opacity-70">{t(tr, 'org.open.data.text')}</p>
 			<div class="mt-auto flex flex-wrap gap-1 pt-2">
-				<Button variant="secondary" size="sm" href="https://github.com/klimadashboard" target="_blank" rel="noopener noreferrer">GitHub</Button>
-				<Button variant="secondary" size="sm" href="https://api.klimadashboard.org" target="_blank" rel="noopener noreferrer">API (Beta)</Button>
+				<Button
+					variant="secondary"
+					size="sm"
+					href="https://github.com/klimadashboard"
+					target="_blank"
+					rel="noopener noreferrer">GitHub</Button
+				>
+				<Button
+					variant="secondary"
+					size="sm"
+					href="https://api.klimadashboard.org"
+					target="_blank"
+					rel="noopener noreferrer">API (Beta)</Button
+				>
 			</div>
 		</div>
 	</SplideSlide>
@@ -767,21 +828,38 @@
 <!-- 4. IN DEN MEDIEN                                             -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 {#if mediaReports.length}
-	{@render splideSection('presse', t(tr, 'org.media.title'), t(tr, 'org.media.subtitle'), '', mediaSlides)}
+	{@render splideSection(
+		'presse',
+		t(tr, 'org.media.title'),
+		t(tr, 'org.media.subtitle'),
+		'',
+		mediaSlides
+	)}
 {/if}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 5. EVENTS                                                    -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 {#if events.length}
-	{@render splideSection('events', t(tr, 'org.events.title'), t(tr, 'org.events.subtitle'), events.length <= 3 ? 'invisible' : '', eventSlides)}
+	{@render splideSection(
+		'events',
+		t(tr, 'org.events.title'),
+		t(tr, 'org.events.subtitle'),
+		events.length <= 3 ? 'invisible' : '',
+		eventSlides
+	)}
 {/if}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 6. OPEN BY DEFAULT                                           -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-{@render splideSection('grundsaetze', t(tr, 'org.open.title'), t(tr, 'org.open.subtitle'), 'md:invisible', openSlides)}
-
+{@render splideSection(
+	'grundsaetze',
+	t(tr, 'org.open.title'),
+	t(tr, 'org.open.subtitle'),
+	'md:invisible',
+	openSlides
+)}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- FOOTER CTA                                                   -->
