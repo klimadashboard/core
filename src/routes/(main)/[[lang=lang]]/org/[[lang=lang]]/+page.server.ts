@@ -114,7 +114,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		}
 	}
 
-	const [team, media, moments, projects, events, financeSummary] = await Promise.all([
+	const [team, media, moments, projects, events, pastEvents, financeSummary] = await Promise.all([
 		fetchTeam(),
 		tryFetch(
 			directus.request(
@@ -148,6 +148,17 @@ export const load: PageServerLoad = async ({ fetch }) => {
 			) as Promise<any[]>,
 			[]
 		),
+		tryFetch(
+			directus.request(
+				readItems('org_events' as any, {
+					fields: ['id', 'title', 'date', 'location'],
+					filter: { date: { _lt: new Date().toISOString() } } as any,
+					sort: ['-date'] as any,
+					limit: 30
+				})
+			) as Promise<any[]>,
+			[]
+		),
 		fetchFinanceSummary(fetch)
 	]);
 
@@ -157,6 +168,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		moments,
 		projects,
 		events,
+		pastEvents,
 		financeSummary,
 		content: { title: 'Über uns' }
 	};

@@ -81,6 +81,9 @@
 			'Hier kannst du Text einfügen – wie die Projekte bisher finanziert wurden und warum ihr Unterstützung braucht.',
 		'org.featured.label': 'Bekannt aus',
 		'org.featured.alt': 'Medien, in denen Klimadashboard vertreten ist',
+		'org.funded.label': 'Gefördert von',
+		'org.funded.alt': 'Förderinnen und Förderer des Klimadashboards',
+		'org.events.past': 'Vergangene Events',
 		'org.dialog.close': 'Schließen',
 		'org.carousel.prev': 'Zurück',
 		'org.carousel.next': 'Weiter',
@@ -161,6 +164,9 @@
 			'Add your text here — how these projects have been financed so far and why you need support.',
 		'org.featured.label': 'Featured in',
 		'org.featured.alt': 'Media outlets that have featured Klimadashboard',
+		'org.funded.label': 'Funded by',
+		'org.funded.alt': 'Funders of Klimadashboard',
+		'org.events.past': 'Past Events',
 		'org.dialog.close': 'Close',
 		'org.carousel.prev': 'Previous',
 		'org.carousel.next': 'Next',
@@ -184,6 +190,7 @@
 	const moments: any[] = data.moments ?? [];
 	const rawProjects: any[] = data.projects ?? [];
 	const events: any[] = data.events ?? [];
+	const pastEvents: any[] = data.pastEvents ?? [];
 	const financeSummary = data.financeSummary ?? null;
 
 	function projectStatus(p: any): string {
@@ -302,7 +309,9 @@
 <!-- BEKANNT AUS                                                   -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <a class=" flex flex-col items-center p-4" href="#presse">
-	<p class="text-xs font-bold uppercase tracking-widest opacity-60 text-center">{t(tr, 'org.featured.label')}</p>
+	<p class="text-xs font-bold uppercase tracking-widest opacity-60 text-center">
+		{t(tr, 'org.featured.label')}
+	</p>
 
 	<img
 		src="https://base.klimadashboard.org/assets/b5e9bf34-6190-481e-8656-a79caf828f14"
@@ -723,9 +732,30 @@
 {/if}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
+<!-- GEFÖRDERT VON                                                 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="flex flex-col items-center p-4 mt-10">
+	<p class="text-xs font-bold uppercase tracking-widest opacity-60 text-center mb-2">
+		{t(tr, 'org.funded.label')}
+	</p>
+
+	<img
+		src="https://base.klimadashboard.org/assets/87e66587-ed85-44fa-bb04-d7a7d04999c3"
+		alt={t(tr, 'org.funded.alt')}
+		class="max-w-md w-full dark:hidden"
+	/>
+
+	<img
+		src="https://base.klimadashboard.org/assets/5207074c-2620-49dc-9700-e3fddcfd069d"
+		alt={t(tr, 'org.funded.alt')}
+		class="max-w-md w-full not-dark:hidden"
+	/>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
 <!-- 3. TEAM – slider on mobile, grid on desktop                  -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<section id="team" class="pt-16">
+<section id="team" class="pt-10">
 	<div class="flex items-end border-b border-current/10 pb-2 mb-3 px-1 max-w-7xl mx-auto">
 		<div>
 			<h2 class="text-2xl font-bold">{t(tr, 'org.team.title')}</h2>
@@ -848,6 +878,34 @@
 		events.length <= 3 ? 'invisible' : '',
 		eventSlides
 	)}
+{/if}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- 5b. PAST EVENTS                                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{#if pastEvents.length}
+	<section class="pt-6 max-w-7xl mx-auto px-1">
+		<p class="text-xs font-bold uppercase tracking-widest opacity-40 px-1 mb-2">
+			{t(tr, 'org.events.past')}
+		</p>
+		<div class="flex flex-wrap gap-1">
+			{#each pastEvents as event}
+				<div
+					class="flex flex-col rounded-xl border border-current/10 bg-current/5 px-3 py-2 min-w-[10rem]"
+				>
+					{#if event.date}
+						<p class="text-[10px] font-bold uppercase tracking-widest opacity-40">
+							{dayjs(event.date).format('DD. MMM YYYY')}
+						</p>
+					{/if}
+					<p class="text-sm font-semibold leading-snug">{event.title}</p>
+					{#if event.location}
+						<p class="text-xs opacity-50 mt-0.5">{event.location}</p>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	</section>
 {/if}
 
 <!-- ═══════════════════════════════════════════════════════════ -->
