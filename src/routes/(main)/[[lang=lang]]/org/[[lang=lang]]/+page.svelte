@@ -200,11 +200,10 @@
 		return t(tr, 'org.projects.status.active');
 	}
 
-	/* ─── Moments strips: shuffle once, split 50/50, no repeats ── */
-	const shuffledMoments = [...moments].sort(() => Math.random() - 0.5);
-	const mid = Math.ceil(shuffledMoments.length / 2);
-	const momentsStrip1 = shuffledMoments.slice(0, mid);
-	const momentsStrip2 = shuffledMoments.slice(mid);
+	/* ─── Moments strips: split 50/50, shuffle on client only to avoid hydration mismatch ── */
+	const _mid = Math.ceil(moments.length / 2);
+	let momentsStrip1: any[] = moments.slice(0, _mid);
+	let momentsStrip2: any[] = moments.slice(_mid);
 
 	/* ─── Finance ─────────────────────────────────────────────── */
 	function formatEUR(n: number) {
@@ -259,7 +258,13 @@
 		}
 	}
 
-	onMount(() => handleScroll());
+	onMount(() => {
+		handleScroll();
+		const shuffled = [...moments].sort(() => Math.random() - 0.5);
+		const mid = Math.ceil(shuffled.length / 2);
+		momentsStrip1 = shuffled.slice(0, mid);
+		momentsStrip2 = shuffled.slice(mid);
+	});
 
 	const defaultSplideOptions = {
 		gap: '0.25rem',
