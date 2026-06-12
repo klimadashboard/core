@@ -1,10 +1,8 @@
 <script>
 	import Chart from './Chart.svelte';
-	import Papa from 'papaparse';
-	// Removed: import _ from 'lodash';
 	import Details from './Details.svelte';
 	import { onMount } from 'svelte';
-	import Switch from '$lib/components/Switch.svelte';
+	import { Toggle, Select, RangeSlider } from '$lib/components/ui';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -181,63 +179,56 @@
 	const getDataGoals = async function () {
 		try {
 			const directus = getDirectusInstance(fetch);
-			dataset = await directus.request(
+			const goalDataset = await directus.request(
 				readItems('ee_goals', {
 					filter: {
 						_and: [
 							{
-								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
-								source_category: { _eq: "Bundesland" }
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
 							}
 						]
 					},
 					limit: -1,
-					fields: ['Type', 'goal_amount', 'goal_year', 'source_year', 'region.name']
+					fields: ['Type', 'goal_amount', 'goal_year', 'source_year', 'source_category', 'region.name']
 				})
 			);
 
-			goals = dataset.map((row) => {
+			goals = goalDataset.map((row) => {
 				return { ...row, region: row?.region?.name, Type: row?.Type[0] };
 			});
 		} catch (error) {
-			console.error('Error fetching suggestions:', error);
+			console.error('Error fetching goals:', error);
 		}
 	};
 
 	$: getDataGoals();
-
-	$: selectedStartYear = minYear;
+	$: selectedStartYear = 2009; //minYear;
 </script>
 
-<div class="flex gap-4 items-center">
-	<div>
-		<label class="flex gap-1 items-center cursor-pointer {showTechn ? '' : ''}">
-			<span>Technisch mögliche Potentiale</span>
-			<input type="checkbox" bind:checked={showTechn} />
-		</label>
-	</div>
-	<div class="flex items-center gap-2">
-		<span>Startjahr auswählen</span>
-		<input type="number" min={minYear} max={maxYear} bind:value={selectedStartYear} class="input" />
-	</div>
+<div class="flex flex-wrap gap-4 items-center">
+	{#if energyByBundesland}
+		<Select
+			label="Bundesland"
+			bind:value={selectedBundesland}
+			options={Object.keys(energyByBundesland).map((b) => ({ value: b, label: b }))}
+			hideLabel
+		/>
+	{/if}
+	{#if minYear && maxYear}
+		<RangeSlider
+			label="Startjahr"
+			bind:value={selectedStartYear}
+			min={minYear}
+			max={maxYear}
+			format={(v) => String(v)}
+		/>
+	{/if}
+	<Toggle label="Technisch mögliche Potentiale" bind:checked={showTechn} />
 </div>
 
 <div class="mt-4">
 	{#if energyTypes && potentiale_2030 && potentiale_techn && energyByBundesland && selectedBundesland && dataset && goals}
-		<div class="flex flex-wrap gap-2 items-center">
-			{#each Object.keys(energyByBundesland) as bundesland}
-				<button
-					class="button {selectedBundesland === bundesland ? '' : 'opacity-50'}"
-					on:click={() => {
-						selectedBundesland = bundesland;
-					}}
-					on:keydown={() => {
-						selectedBundesland = bundesland;
-					}}>{bundesland}</button
-				>
-			{/each}
-		</div>
-		<div class="grid gap-4 md:grid-cols-3 mt-4">
+		<div class="grid gap-4 md:grid-cols-2 mt-4">
 			{#each energyTypes as type}
 				{@const cur_goals = goals.filter(
 					(row) =>
