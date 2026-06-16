@@ -66,7 +66,7 @@
 		'@context': 'https://schema.org',
 		'@type': 'Place',
 		name: data.page.name,
-		description: data.page.description || '',
+		description: data.content?.description || data.page.description || '',
 		url: $page.url.href,
 		...(data.page.center?.length === 2
 			? {
@@ -129,6 +129,8 @@
 										: meta.title,
 									url: `${$page.url.origin}${langPrefix}/charts/${c.id}?region=${data.page.id}`,
 									spatialCoverage: data.page.name,
+									isAccessibleForFree: true,
+									inLanguage: $page.data.language?.code || 'de',
 									creator: {
 										'@type': 'Organization',
 										name: 'Klimadashboard'
@@ -146,10 +148,10 @@
 	{#if !data.page.visible}
 		<meta name="robots" content="noindex, nofollow" />
 	{/if}
-	<title>Klimadashboard {data.page.name} | Klimadashboard.{PUBLIC_VERSION}</title>
-	<meta name="description" content={data.page.description} />
-	<meta property="og:title" content="Klimadashboard {data.page.name}" />
-	<meta property="og:description" content={data.page.description} />
+	<title>{data.content?.metaTitle || `Klimadashboard ${data.page.name}`} | Klimadashboard.{PUBLIC_VERSION}</title>
+	<meta name="description" content={data.content?.description || data.page.description} />
+	<meta property="og:title" content={data.content?.metaTitle || `Klimadashboard ${data.page.name}`} />
+	<meta property="og:description" content={data.content?.description || data.page.description} />
 	{@html serializeJsonLd(placeLD)}
 	{@html serializeJsonLd(breadcrumbLD)}
 	{#if datasetsLD}
@@ -168,6 +170,12 @@
 		<div slot="background"></div>
 		<div slot="foreground">
 			<Intro {data} />
+
+			{#if data.content?.seoIntro}
+				<p class="text-lg text-center max-w-2xl mx-auto mt-4 px-4 leading-snug text-balance text-gray-700 dark:text-gray-300">
+					{data.content.seoIntro}
+				</p>
+			{/if}
 
 			<Navigation {sections} />
 

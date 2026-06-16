@@ -5,6 +5,17 @@ import { readItem, readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { getRegionConfigWithFallback } from '$lib/utils/getRegionConfig';
 import { getChartSnapshots } from '$lib/utils/chartDataService';
+import { buildRegionDescription, buildRegionIntro, buildRegionTitle } from '$lib/utils/regionSeo';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const REGION_FIELDS = ['*', 'parents.id', 'parents.name', 'parents.layer', 'parents.layer_label'];
+
+/** First (canonical) token of a comma-separated slug field. */
+function canonicalSlug(slug) {
+	if (!slug) return null;
+	const first = String(slug).split(',')[0].trim();
+	return first || null;
+}
 
 export async function load({ fetch, params, url, parent }) {
 	const directus = getDirectusInstance(fetch);
@@ -19,13 +30,52 @@ export async function load({ fetch, params, url, parent }) {
 		throw redirect(301, url.toString());
 	}
 
-	try {
-		const page = await directus.request(
-			readItem('regions', params.id, {
-				fields: ['*', 'parents.id', 'parents.name', 'parents.layer', 'parents.layer_label']
-			})
-		);
+	// Language prefix for canonical redirects (default language `de` has no prefix).
+	const parentData = await parent();
+	const lang = parentData.language?.code || 'de';
+	const langPrefix = lang === 'de' ? '' : `/${lang}`;
 
+	try {
+		const idParam = params.id;
+		let page;
+
+		if (UUID_RE.test(idParam)) {
+			// Legacy UUID URL — load, then 301 to the readable slug if one exists.
+			page = await directus.request(readItem('regions', idParam, { fields: REGION_FIELDS }));
+			const slug = canonicalSlug(page?.slug);
+			if (slug) throw redirect(301, `${langPrefix}/regions/${slug}`);
+		} else {
+			// Slug URL — exact match first (covers the single-value slugs),
+			// then fall back to comma-separated aliases.
+			const exact = await directus.request(
+				readItems('regions', { filter: { slug: { _eq: idParam } }, fields: REGION_FIELDS, limit: 1 })
+			);
+			page = exact?.[0];
+			if (!page) {
+				const candidates = await directus.request(
+					readItems('regions', {
+						filter: { slug: { _contains: idParam } },
+						fields: REGION_FIELDS,
+						limit: 25
+					})
+				);
+				page = (candidates || []).find((r) =>
+					String(r.slug || '')
+						.split(',')
+						.map((s) => s.trim())
+						.includes(idParam)
+				);
+			}
+			if (!page) throw error(404, 'Page not found');
+
+			// Hit an alias rather than the canonical slug → 301 to canonical.
+			const canonical = canonicalSlug(page.slug);
+			if (canonical && canonical !== idParam) {
+				throw redirect(301, `${langPrefix}/regions/${canonical}`);
+			}
+		}
+
+		const regionId = page.id;
 
 		// Enrich parent regions with name and layer_label
 		// (parents is a JSON field storing only {id, layer}, so we fetch full details)
@@ -52,12 +102,8 @@ export async function load({ fetch, params, url, parent }) {
 			}
 		}
 
-		// Get language from parent layout
-		const parentData = await parent();
-		const lang = parentData.language?.code || 'de';
-
 		// Load region-specific config (walks up hierarchy to find config)
-		const regionConfig = await getRegionConfigWithFallback(params.id, lang, fetch);
+		const regionConfig = await getRegionConfigWithFallback(regionId, lang, fetch);
 
 		// Get cached chart snapshots (resolved titles, descriptions, text)
 		const chartIds = (regionConfig.sections || [])
@@ -66,14 +112,24 @@ export async function load({ fetch, params, url, parent }) {
 			.filter(Boolean);
 
 		const snapshotParentIds = (page.parents || []).map((p) => p.id).filter(Boolean);
-		const chartSnapshots = await getChartSnapshots(chartIds, params.id, snapshotParentIds, lang, fetch, { textOnly: true });
+		const chartSnapshots = await getChartSnapshots(chartIds, regionId, snapshotParentIds, lang, fetch, { textOnly: true });
+
+		// Per-region SEO text (unique title / meta description / intro paragraph),
+		// composed from region fields + available data categories — no extra fetch.
+		const sections = regionConfig.sections || [];
+		const metaDescription = buildRegionDescription(page, sections, lang);
+		const metaTitle = buildRegionTitle(page, lang);
+		const seoIntro = buildRegionIntro(page, sections, lang);
 
 		return {
 			page,
 			regionConfig,
 			chartSnapshots,
 			content: {
-				title: page.name
+				title: page.name,
+				metaTitle,
+				description: metaDescription,
+				seoIntro
 			}
 		};
 	} catch (err) {

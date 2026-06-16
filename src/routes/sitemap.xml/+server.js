@@ -75,7 +75,7 @@ export const GET = async ({ url }) => {
 							]
 						},
 						limit: -1,
-						fields: ['id']
+						fields: ['id', 'slug']
 					})
 				)
 				.catch(() => [])
@@ -160,7 +160,8 @@ export const GET = async ({ url }) => {
 				lastmod: formatDate(attr.date_updated)
 			})),
 			...regions.map((region) => ({
-				loc: `${currentUrl}/regions/${region.id}`,
+				// Prefer the readable slug (canonical); fall back to UUID if unset.
+				loc: `${currentUrl}/regions/${(region.slug && region.slug.split(',')[0].trim()) || region.id}`,
 				priority: '0.5',
 				changefreq: 'monthly',
 				lastmod: null

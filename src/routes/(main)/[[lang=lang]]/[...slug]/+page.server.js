@@ -166,20 +166,20 @@ export async function load({ fetch, params }) {
 				}
 			}
 
-			//Check if slug matches a region
+			//Check if slug matches a region → send to the canonical /regions/<slug> URL
 			const regionMatch = await directus.request(
 				readItems('regions', {
 					filter: {
 						slug: { _eq: slug }
 					},
-					fields: ['id'],
+					fields: ['id', 'slug'],
 					limit: 1
 				})
 			);
 
 			if (regionMatch && regionMatch.length > 0) {
-				const regionId = regionMatch[0].id;
-				redirect(308, `/regions/${regionId}`);
+				const canonical = String(regionMatch[0].slug || '').split(',')[0].trim();
+				redirect(308, `/regions/${canonical || regionMatch[0].id}`);
 			}
 
 			throw error(404, 'Page not found');
