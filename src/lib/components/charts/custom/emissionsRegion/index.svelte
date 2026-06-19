@@ -639,8 +639,7 @@
 						{#each yScale.ticks() as tick, i}
 							{@const isLast = i === yScale.ticks().length - 1}
 							<g transform="translate(0, {yScale(tick)})" class="text-xs">
-								<!-- Top gridline starts after the unit label to avoid intersection -->
-								<line x1={isLast ? margin.left + 70 : margin.left} x2={width} class="stroke-current opacity-10" />
+								<line x1={margin.left} x2={width} class="stroke-current opacity-10" />
 								<text
 									x={margin.left - 4}
 									dominant-baseline="middle"
@@ -652,8 +651,10 @@
 								</text>
 								{#if isLast}
 									<text
-										x={margin.left + 2}
+										x={margin.left - 4}
+										y={-14}
 										dominant-baseline="middle"
+										text-anchor="end"
 										fill="currentColor"
 										class="opacity-70"
 									>
