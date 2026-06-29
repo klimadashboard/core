@@ -68,8 +68,9 @@
 		placeholders: Record<string, any> | undefined
 	): string {
 		if (!raw || !placeholders) return raw || '';
+		// Match both straight quotes and HTML-encoded &quot; (rich text editors encode quotes)
 		let result = raw.replace(
-			/\{\{#if\s+(?:(not\s+)?(\w+)|(\w+)\s*==\s*"([^"]*)")\}\}([\s\S]*?)\{\{\/if\}\}/g,
+			/\{\{#if\s+(?:(not\s+)?(\w+)|(\w+)\s*==\s*(?:"|&quot;)(.*?)(?:"|&quot;))\}\}([\s\S]*?)\{\{\/if\}\}/g,
 			(
 				_: string,
 				negation: string | undefined,

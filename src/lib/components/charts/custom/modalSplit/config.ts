@@ -699,7 +699,7 @@ export function buildChartData(
 			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
-		placeholders: getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel, updateDate),
+		placeholders: { ...getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel, updateDate), source },
 		meta: {
 			updateDate,
 			source,

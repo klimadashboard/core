@@ -4,6 +4,7 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { formatPeriodDate } from '$lib/utils/formatters';
 
 // ============================================================================
 // TYPES
@@ -626,8 +627,11 @@ export function buildChartData(
 ): ChartData {
 	const unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 
-	// Get update date from region data (use first entry's update field)
-	const updateDate = region.data[0]?.update || new Date().toISOString();
+	// Get update date and source from the latest non-climate-target year
+	const nonTargetData = region.data.filter((d) => d.source !== 'climate-target');
+	const latestYear = nonTargetData.reduce((max, d) => Math.max(max, d.year), 0);
+	const latestYearData = nonTargetData.filter((d) => d.year === latestYear);
+	const updateDate = latestYearData[0]?.update || nonTargetData[0]?.update || new Date().toISOString();
 
 	return {
 		raw: sectors,
@@ -638,6 +642,8 @@ export function buildChartData(
 		},
 		placeholders: {
 			...getPlaceholders(region, sectors, summary, useMegatons, locale),
+			source: dataSource,
+			lastUpdateDate: formatPeriodDate(updateDate),
 			...infoTextPlaceholders
 		},
 		meta: {
