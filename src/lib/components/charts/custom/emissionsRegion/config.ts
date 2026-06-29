@@ -5,6 +5,7 @@ import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/c
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { t } from '$lib/utils/t';
+import { formatPeriodDate } from '$lib/utils/formatters';
 
 export type Translations = Record<string, string>;
 
@@ -674,6 +675,7 @@ export function buildChartData(
 			isSingleYear: isHorizontal,
 			singleYear: singleYear?.toString() ?? '',
 			source: dataSource,
+			lastUpdateDate: formatPeriodDate(updateDate),
 			...infoTextPlaceholders
 		},
 		meta: {
