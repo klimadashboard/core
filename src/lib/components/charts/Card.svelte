@@ -94,7 +94,7 @@
 		return result;
 	}
 
-	$: resolvedPlaceholders = { ...chartData?.placeholders, regionId: regionId ?? '' };
+	$: resolvedPlaceholders = { ...chartData?.placeholders, regionId: currentRegionId ?? regionId ?? '' };
 	$: heading = resolveText(chart.content?.heading, resolvedPlaceholders);
 	$: text = resolveText(chart.content?.text, resolvedPlaceholders);
 	$: methods = resolveText(chart.content?.methods, resolvedPlaceholders);
