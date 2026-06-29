@@ -62,16 +62,26 @@
 		}
 	}
 
-	// Replace {{#if key}}, {{#if not key}}, and {{placeholder}} in text
+	// Replace {{#if key}}, {{#if not key}}, {{#if key == "value"}}, and {{placeholder}} in text
 	function resolveText(
 		raw: string | undefined,
 		placeholders: Record<string, any> | undefined
 	): string {
 		if (!raw || !placeholders) return raw || '';
 		let result = raw.replace(
-			/\{\{#if\s+(not\s+)?(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
-			(_: string, negation: string | undefined, key: string, content: string) => {
-				const value = placeholders[key];
+			/\{\{#if\s+(?:(not\s+)?(\w+)|(\w+)\s*==\s*"([^"]*)")\}\}([\s\S]*?)\{\{\/if\}\}/g,
+			(
+				_: string,
+				negation: string | undefined,
+				key: string | undefined,
+				eqKey: string | undefined,
+				eqVal: string | undefined,
+				content: string
+			) => {
+				if (eqKey !== undefined) {
+					return String(placeholders[eqKey] ?? '') === eqVal ? content : '';
+				}
+				const value = placeholders[key!];
 				const show = negation ? !value : !!value;
 				return show ? content : '';
 			}
@@ -83,10 +93,11 @@
 		return result;
 	}
 
-	$: heading = resolveText(chart.content?.heading, chartData?.placeholders);
-	$: text = resolveText(chart.content?.text, chartData?.placeholders);
-	$: methods = resolveText(chart.content?.methods, chartData?.placeholders);
-	$: title = resolveText(chart.content?.title, chartData?.placeholders);
+	$: resolvedPlaceholders = { ...chartData?.placeholders, regionId: regionId ?? '' };
+	$: heading = resolveText(chart.content?.heading, resolvedPlaceholders);
+	$: text = resolveText(chart.content?.text, resolvedPlaceholders);
+	$: methods = resolveText(chart.content?.methods, resolvedPlaceholders);
+	$: title = resolveText(chart.content?.title, resolvedPlaceholders);
 
 	// Check if text still contains unresolved placeholders like {{key}}
 	function hasUnresolvedPlaceholders(text: string | undefined): boolean {
@@ -108,11 +119,11 @@
 	}
 	$: source =
 		resolveText(
-			(chartData?.meta?.source || chart.content?.source || '').replace(
+			(chart.content?.source || chartData?.meta?.source || '').replace(
 				/^<p>([\s\S]*?)<\/p>\s*$/m,
 				'$1'
 			),
-			chartData?.placeholders
+			resolvedPlaceholders
 		) || undefined;
 
 	$: note = chartData?.meta?.note;

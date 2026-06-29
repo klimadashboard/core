@@ -1,7 +1,7 @@
 // $lib/components/charts/custom/carsTypes/config.ts
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
-import { formatNumber } from '$lib/utils/formatters';
+import { formatNumber, formatPeriodDate } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { filterCategoryValues } from '$lib/components/charts/utils/privacyFilter';
 import { readItems } from '@directus/sdk';
@@ -531,11 +531,19 @@ function formatPercent(value: number): string {
 	);
 }
 
+/** Format an ISO date string as a period label depending on mode */
+function formatPeriodLabel(updateDate: string, mode: DataMode): string {
+	if (mode === 'neuzulassungen') {
+		return formatPeriodDate(updateDate);
+	}
+	return String(new Date(updateDate).getUTCFullYear());
+}
+
 /** Get table columns */
-export function getTableColumns(year?: number): TableColumn[] {
+export function getTableColumns(periodLabel?: string): TableColumn[] {
 	return [
 		{ key: 'label', label: 'Antriebsart', align: 'left' },
-		{ key: 'absolute', label: `Anzahl${year ? ` (${year})` : ''}`, align: 'right', format: (v: number) => formatNumber(v, 0) },
+		{ key: 'absolute', label: periodLabel ? `Anzahl (${periodLabel})` : 'Anzahl', align: 'right', format: (v: number) => formatNumber(v, 0) },
 		{
 			key: 'share',
 			label: 'Anteil (%)',
@@ -605,8 +613,10 @@ export function getPlaceholders(
 	regionName: string,
 	mode: DataMode = 'bestand',
 	source?: string,
-	layerLabel?: string
+	layerLabel?: string,
+	updateDate?: string
 ): Record<string, string | number> {
+	const lastUpdateDate = updateDate ? formatPeriodDate(updateDate) : '';
 	const placeholders: Record<string, string | number> = {
 		year: data.year,
 		total: formatNumber(data.total, 0),
@@ -614,6 +624,7 @@ export function getPlaceholders(
 		regionName,
 		layerLabel: layerLabel || '',
 		source: source || '',
+		lastUpdateDate,
 		title: generateTitle(waffleData, regionName, mode)
 	};
 
@@ -725,11 +736,11 @@ export function buildChartData(
 		// Wrap in array so Card.svelte's `hasData` check works (chartData.raw.length > 0)
 		raw: [data],
 		table: {
-			columns: getTableColumns(data.year),
+			columns: getTableColumns(formatPeriodLabel(updateDate, mode)),
 			rows: tableRows,
 			filename: `kfz-${modeLabel}-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
 		},
-		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode, source, effectiveLayerLabel),
+		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode, source, effectiveLayerLabel, updateDate),
 		meta: {
 			updateDate,
 			source: sourceText,

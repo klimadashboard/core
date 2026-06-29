@@ -1,6 +1,7 @@
 // $lib/components/charts/custom/carsHistoricLineChart/config.ts
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import { formatPeriodDate } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
 import { readItems } from '@directus/sdk';
@@ -578,13 +579,16 @@ export function getPlaceholders(
 		regionName,
 		layerLabel: regionLayerLabel || '',
 		currentYear,
-		lastUpdateDate: lastRow?.date instanceof Date ? lastRow.date.toLocaleDateString('de-DE') : '',
+		lastUpdateDate: lastRow?.date instanceof Date
+			? formatPeriodDate(lastRow.date)
+			: '',
 		categoryCount: categories.length,
 		dataPointCount: data.length,
 		elektroShareStart,
 		elektroShareEnd,
 		changeVerb,
 		modeLabel,
+		targetYear,
 		dataYearStart,
 		dataYearEnd,
 		source: source || '',

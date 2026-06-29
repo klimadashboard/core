@@ -132,6 +132,20 @@ export function formatYear(value: number | string): string {
 }
 
 /**
+ * Format a date as "month year" (e.g. "Mai 2026"), but fall back to just the year
+ * when the date was constructed from a year-only period string (e.g. new Date("2024")
+ * = Jan 1 UTC midnight). This avoids showing "Januar 2024" for annual data.
+ */
+export function formatPeriodDate(date: Date | string): string {
+	const d = typeof date === 'string' ? new Date(date) : date;
+	if (isNaN(d.getTime())) return '–';
+	if (d.getUTCMonth() === 0 && d.getUTCDate() === 1) {
+		return String(d.getUTCFullYear());
+	}
+	return d.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+}
+
+/**
  * Format area
  */
 export function formatArea(km2: number): string {

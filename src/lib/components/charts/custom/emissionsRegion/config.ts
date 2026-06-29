@@ -636,9 +636,12 @@ export function buildChartData(
 		}))
 	];
 
-	// Get source and update date from data (use first non-climate-target entry)
-	const dataSource = tableData[0]?.source || 'Emissions data';
-	const updateDate = tableData[0]?.update || new Date().toISOString();
+	// Get source and update date from data (use latest non-climate-target year)
+	const latestYearData = years.length > 0
+		? tableData.filter((d) => d.year === years[years.length - 1])
+		: tableData;
+	const dataSource = latestYearData[0]?.source || tableData[0]?.source || 'Emissions data';
+	const updateDate = latestYearData[0]?.update || tableData[0]?.update || new Date().toISOString();
 
 	// Calculate change statistics
 	const changeStats = calculateChangeStats(tableData, translations);
@@ -670,6 +673,7 @@ export function buildChartData(
 			isHorizontal,
 			isSingleYear: isHorizontal,
 			singleYear: singleYear?.toString() ?? '',
+			source: dataSource,
 			...infoTextPlaceholders
 		},
 		meta: {

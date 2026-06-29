@@ -5,6 +5,7 @@ import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/c
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { t } from '$lib/utils/t';
+import { formatPeriodDate } from '$lib/utils/formatters';
 
 export type Translations = Record<string, string>;
 
@@ -603,7 +604,8 @@ export function getPlaceholders(
 	region: Region | null,
 	goalConfig: ResolvedGoalConfig | null,
 	matchedRegionName?: string | null,
-	matchedRegionLayerLabel?: string | null
+	matchedRegionLayerLabel?: string | null,
+	updateDate?: string
 ): Record<string, string | number | boolean> {
 	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
 	const firstYear = years[0];
@@ -673,7 +675,8 @@ export function getPlaceholders(
 		goalYear,
 		goalEcoShare: formatPercent(goalEcoShareRaw),
 		goalChangeAbs: formatPercent(goalChangeAbs),
-		goalYearSpan
+		goalYearSpan,
+		lastUpdateDate: updateDate ? formatPeriodDate(updateDate) : ''
 	};
 }
 
@@ -696,7 +699,7 @@ export function buildChartData(
 			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
-		placeholders: getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel),
+		placeholders: getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel, updateDate),
 		meta: {
 			updateDate,
 			source,

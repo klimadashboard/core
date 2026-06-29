@@ -214,7 +214,8 @@ export function getPlaceholders(
 		dominantSourceValue: formatGWh(dominantSourceValue),
 		dominantSourceValueRaw: dominantSourceValue,
 		dataYearStart: years[0],
-		dataYearEnd: latestYear
+		dataYearEnd: latestYear,
+		lastUpdateDate: String(latestYear)
 	};
 }
 
@@ -250,10 +251,10 @@ export function buildChartData(
 			rows: dataGWh,
 			filename: 'power_production_external'
 		},
-		placeholders: getPlaceholders(data, region),
+		placeholders: { ...getPlaceholders(data, region), source: source || 'Stadtwerke Stuttgart' },
 		meta: {
 			updateDate,
-			source: source || 'Stadtwerke',
+			source: source || 'Stadtwerke Stuttgart',
 			region
 		},
 		hasData: data.length > 0
