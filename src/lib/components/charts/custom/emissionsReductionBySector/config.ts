@@ -19,7 +19,7 @@ export interface EmissionsRawData {
 	source: string;
 	region?: string;
 	update?: string;
-	type?: string; // 'none' for nowcast data, 'net-zero' for non-zero targets that still represent climate neutrality (e.g. without LULUCF)
+	type?: string; // 'none' for nowcast data, 'net-zero' for non-zero targets that still represent climate neutrality (e.g. without LULUCF), 'base-year' to mark a climate-target row as the region's declared reference year
 }
 
 export function isNetZeroTarget(entry: EmissionsRawData): boolean {
@@ -259,20 +259,24 @@ function buildCategoryOrder(
 // DATA PROCESSING
 // ============================================================================
 
-/** Get climate targets from data (returns past and future targets) */
+/** Get climate targets from data (returns the base-year reference and the final/net-zero goal) */
 export function getClimateTargets(data: EmissionsRawData[]): {
-	pastTarget: EmissionsRawData | null;
+	baseYearTarget: EmissionsRawData | null;
 	futureTarget: EmissionsRawData | null;
 } {
 	const currentYear = new Date().getFullYear();
 	const targets = data.filter((d) => d.source === 'climate-target').sort((a, b) => a.year - b.year);
 
-	// Find the most recent past target (base year) and the earliest future target
-	const pastTargets = targets.filter((t) => t.year <= currentYear);
+	// The base year is only ever an entry explicitly tagged `type: 'base-year'` — it must not be
+	// inferred from "any past-dated target", since interim milestones (e.g. a "-30% by 2025" goal)
+	// also become past-dated once their year elapses and would otherwise be mistaken for the base
+	// year. Regions without an explicit base-year entry fall back to the first year of actual data
+	// (handled by the caller).
+	const baseYearTarget = targets.find((t) => t.type === 'base-year') ?? null;
 	const futureTargets = targets.filter((t) => t.year > currentYear);
 
 	return {
-		pastTarget: pastTargets.length > 0 ? pastTargets[0] : null, // First (earliest) past target as base year
+		baseYearTarget,
 		futureTarget: futureTargets.length > 0 ? futureTargets[futureTargets.length - 1] : null // Last (latest) future target
 	};
 }
@@ -303,15 +307,17 @@ export function calculateSectorProgress(
 
 	const firstYear = years[0];
 	const lastYear = years[years.length - 1];
-	const { pastTarget, futureTarget } = getClimateTargets(region.data);
+	const { baseYearTarget, futureTarget } = getClimateTargets(region.data);
 
 	// Require a future climate target to show the chart
 	if (!futureTarget) {
 		return { sectors: [], summary: null, hasNegativeProgress: false };
 	}
 
-	// Base year: use past climate target year if available, otherwise first data year
-	const baseYear = pastTarget?.year ?? firstYear;
+	// Base year: defaults to the first year of actual historical data. A region can override this
+	// with an explicit `climate-target` row tagged `type: 'base-year'` (e.g. Stuttgart declares
+	// 2019 as its reference year even though its historical series starts in 2012).
+	const baseYear = baseYearTarget?.year ?? firstYear;
 
 	// Helper to convert value if needed
 	const convert = (value: number) => (useMegatons ? toMegatons(value) : value);
@@ -321,10 +327,13 @@ export function calculateSectorProgress(
 		.filter((d) => d.year === firstYear)
 		.reduce((sum, d) => sum + d.value, 0);
 
-	// Base year total: if base year differs from first year, try to get that year's data
+	// Base year total: prefer the explicit base-year target's own value (the authoritative figure
+	// a region declares for its reference year, which may not match the sum of our sector-level
+	// series for that year). Otherwise sum actual data for that year, falling back to firstYearTotal.
 	const baseYearTotalRaw =
-		barData.filter((d) => d.year === baseYear).reduce((sum, d) => sum + d.value, 0) ||
-		firstYearTotalRaw;
+		baseYearTarget?.value ??
+		(barData.filter((d) => d.year === baseYear).reduce((sum, d) => sum + d.value, 0) ||
+			firstYearTotalRaw);
 
 	const lastYearTotalRaw = barData
 		.filter((d) => d.year === lastYear)
