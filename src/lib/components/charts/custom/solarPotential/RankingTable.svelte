@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SolarRankEntry, SolarNeighbourEntry, RegionCase } from './types';
 	import Switch from '$lib/components/Switch.svelte';
+	import { Toggle } from '$lib/components/ui';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -30,22 +31,23 @@
 	export let rankLand: number = 0;
 	export let rankLandGesamt: number = 0;
 	export let rankAll: number = 0;
+	export let peerRankById: Map<string, number> = new Map();
 	export let loading: boolean = false;
 	export let clickable: boolean = false;
 
 	type Tab = 'de' | 'land' | 'nachbar';
 	type SortCol = 'potential' | 'trend' | 'daecher' | 'mwp' | null;
 
-	$: showDETab = regionCase !== 'kleinstadt';
+	$: showDETab = true;
 	$: showLandTab = regionCase !== 'bundesland' && !isStadtstaat;
-	$: showNachbarTab = neighbours.length > 0 && regionCase !== 'bundesland';
+	$: showNachbarTab = neighbours.length > 0 && regionCase !== 'bundesland' && regionCase !== 'grossstadt' && regionCase !== 'mittelstadt' && regionCase !== 'kleinstadt' && regionCase !== 'kreis' && !isStadtstaat;
 
 	$: deTabLabel =
-		regionCase === 'grossstadt' ? 'Großstädte DE' :
-		regionCase === 'mittelstadt' ? 'Mittelstädte DE' :
-		regionCase === 'kreis' ? 'Kreise DE' :
-		regionCase === 'bundesland' ? 'Bundesländer' :
-		'Alle Gemeinden DE';
+		regionCase === 'grossstadt'  ? 'Großstädte' :
+		regionCase === 'mittelstadt' ? 'Mittelstädte' :
+		regionCase === 'kreis'       ? 'Kreise in Deutschland' :
+		regionCase === 'bundesland'  ? 'Bundesländer' :
+		'Dörfer und Kleinstädte';
 
 	$: deTabDescription =
 		regionCase === 'grossstadt'
@@ -56,7 +58,7 @@
 					? 'Alle Landkreise und kreisfreien Städte in Deutschland, sortiert nach genutztem Solarpotential.'
 					: regionCase === 'bundesland'
 						? 'Alle Bundesländer in Deutschland, sortiert nach genutztem Solarpotential.'
-						: 'Alle Gemeinden und Städte in Deutschland, sortiert nach genutztem Solarpotential.';
+						: 'Alle Gemeinden und Dörfer in Deutschland mit weniger als 20.000 Einwohnern, sortiert nach genutztem Solarpotential.';
 
 	$: neighbourDescription =
 		regionCase === 'kleinstadt'
@@ -64,15 +66,13 @@
 			: regionCase === 'grossstadt'
 				? 'Die nächstgelegenen Großstädte (≥100.000 EW) nach Luftlinie, sortiert nach Rang.'
 				: regionCase === 'kreis'
-					? 'Die nächstgelegenen Landkreise und kreisfreien Städte nach Luftlinie, sortiert nach Rang.'
-					: 'Die nächstgelegenen Mittelstädte (20.000–99.999 EW) nach Luftlinie, sortiert nach Rang.';
+					? 'Die nächstgelegenen Landkreise und kreisfreien Städte nach Luftlinie.'
+					: 'Die nächstgelegenen Gemeinden nach Luftlinie.';
 
 	function getDefaultTab(): Tab {
-		if (regionCase === 'kleinstadt') return 'land';
 		if (regionCase === 'bundesland') return 'de';
-		// ≥500k cities: neighbours tab pre-selected per spec
-		if (regionCase === 'grossstadt' && (population ?? 0) >= 500_000) return 'nachbar';
-		return 'de';
+		if (regionCase === 'grossstadt') return 'de';
+		return 'land'; // mittelstadt, kleinstadt, kreis
 	}
 
 	let activeTab: Tab = getDefaultTab();
@@ -82,10 +82,19 @@
 	const PER_PAGE = 10;
 
 	let searchMittel = '';
-	let pageMittel = rankDE > 0 ? Math.ceil(rankDE / PER_PAGE) : 1;
+	let pageMittel = 1;
+	let pageMittelUserSet = false;
 	let searchLand = '';
-	let pageLand = rankLand > 0 ? Math.ceil(rankLand / PER_PAGE) : 1;
+	let pageLand = 1;
+	let pageLandUserSet = false;
+
+	$: rankDEFiltered = (mittelBaseFiltered?.findIndex((r) => r.region.id === regionId) ?? -1) + 1 || 0;
+	$: if (rankDEFiltered > 0 && !pageMittelUserSet) pageMittel = Math.ceil(rankDEFiltered / PER_PAGE);
+	$: if (rankDE > 0 && !rankDEFiltered && !pageMittelUserSet) pageMittel = Math.ceil(rankDE / PER_PAGE);
+	$: if (rankLand > 0 && !pageLandUserSet) pageLand = Math.ceil(rankLand / PER_PAGE);
 	const MEDALS = ['🥇', '🥈', '🥉'];
+
+	$: landTabLabel = regionCase === 'kreis' ? `Kreise in ${stateName}` : stateName;
 
 	$: nachbarLabel =
 		regionCase === 'kreis' ? 'Nachbarkreise' :
@@ -93,33 +102,29 @@
 		regionCase === 'grossstadt' ? 'Nachbarstädte' :
 		'Nachbargemeinden';
 
-	$: tabViews = [
-		...(showDETab
-			? [
-					{
-						key: 'de',
-						label:
-							rankDE > 0
-								? `${deTabLabel}  #${rankDE} / ${rankDEGesamt.toLocaleString('de-DE')}`
-								: deTabLabel,
-						iconComponent: IconBuildingCommunity,
-						iconSize: 16
-					}
-				]
-			: []),
-		...(showLandTab
-			? [
-					{
-						key: 'land',
-						label:
-							rankLand > 0
-								? `${stateName}  #${rankLand} / ${rankLandGesamt.toLocaleString('de-DE')}`
-								: stateName
-					}
-				]
-			: []),
-		...(showNachbarTab ? [{ key: 'nachbar', label: nachbarLabel }] : [])
-	];
+	$: tabViews = (() => {
+		const deEntry = showDETab
+			? [{
+					key: 'de',
+					label: rankDE > 0
+						? `${deTabLabel}: #${rankDE} / ${rankDEGesamt.toLocaleString('de-DE')}`
+						: deTabLabel,
+					iconComponent: IconBuildingCommunity,
+					iconSize: 16
+				}]
+			: [];
+		const landEntry = showLandTab
+			? [{
+					key: 'land',
+					label: rankLand > 0
+						? `${landTabLabel}: #${rankLand} / ${rankLandGesamt.toLocaleString('de-DE')}`
+						: landTabLabel
+				}]
+			: [];
+		const nachbarEntry = showNachbarTab ? [{ key: 'nachbar', label: nachbarLabel }] : [];
+		if (regionCase === 'mittelstadt' || regionCase === 'kleinstadt' || regionCase === 'kreis') return [...landEntry, ...deEntry];
+		return [...deEntry, ...landEntry, ...nachbarEntry];
+	})();
 
 	type ExtEntry = SolarRankEntry & { origRank: number; trend: number; distKm?: number };
 
@@ -142,20 +147,36 @@
 
 	function formatEW(ew: number | undefined): string {
 		if (!ew) return '';
-		return ew >= 100_000 ? `${(ew / 1000).toFixed(0)}k EW` : `${ew.toLocaleString('de-DE')} EW`;
+		if (ew >= 1_000_000) return `${(ew / 1_000_000).toFixed(1)} Mio. EW`;
+		if (ew >= 100_000) return `${(ew / 1000).toFixed(0)}k EW`;
+		return `${ew.toLocaleString('fr-FR')} EW`;
 	}
 
-	// ── Tab 1: Mittelstädte DE ────────────────────────────────────
+	// ── Nachbar-Toggle (Mittelstadt, Kleinstadt, Kreis — im Land-Tab) ───────
+	$: showNachbarToggle = (regionCase === 'mittelstadt' || regionCase === 'kleinstadt' || regionCase === 'kreis') && neighbours.length > 0;
+	let showNachbarInLand = true;
+	$: if (showNachbarInLand !== undefined) { searchLand = ''; }
+
+	// ── ≥500k-Toggle (nur für Großstädte) ────────────────────────
+	$: showBigFilter = regionCase === 'grossstadt' && ((population ?? 0) >= 500_000 || isStadtstaat);
+	let showOnlyBig = (population ?? 0) >= 500_000 || isStadtstaat;
+	$: if (!showBigFilter) showOnlyBig = false;
+	$: if (showOnlyBig !== undefined) { pageMittelUserSet = false; }
+
+	// ── Tab 1: DE-weit ───────────────────────────────────────────
 	$: mittelQuery = searchMittel.toLowerCase().trim();
 	$: isSearchingMittel = mittelQuery.length >= 2;
-	$: if (searchMittel) pageMittel = 1;
+	$: if (searchMittel) { pageMittel = 1; pageMittelUserSet = false; }
 
 	$: mittelWithRank = allDEweit.map(
 		(r, i): ExtEntry => ({ ...r, origRank: i + 1, trend: r.trend ?? 0 })
 	);
-	$: mittelFiltered = isSearchingMittel
-		? mittelWithRank.filter((r) => r.region.name.toLowerCase().includes(mittelQuery))
+	$: mittelBaseFiltered = showOnlyBig
+		? mittelWithRank.filter((r) => (r.region.population ?? 0) >= 500_000)
 		: mittelWithRank;
+	$: mittelFiltered = isSearchingMittel
+		? mittelBaseFiltered.filter((r) => r.region.name.toLowerCase().includes(mittelQuery))
+		: mittelBaseFiltered;
 	$: mittelSorted = sortEntries(mittelFiltered, sortCol, sortDir);
 	$: mittelPage = mittelSorted.slice((pageMittel - 1) * PER_PAGE, pageMittel * PER_PAGE);
 	$: mittelTotalPages = Math.ceil(mittelFiltered.length / PER_PAGE);
@@ -163,7 +184,7 @@
 	// ── Tab 2: Bundesland ─────────────────────────────────────────
 	$: landQuery = searchLand.toLowerCase().trim();
 	$: isSearchingLand = landQuery.length >= 2;
-	$: if (searchLand) pageLand = 1;
+	$: if (searchLand) { pageLand = 1; pageLandUserSet = false; }
 
 	$: landWithRank = byLand.map(
 		(r, i): ExtEntry => ({ ...r, origRank: i + 1, trend: r.trend ?? 0 })
@@ -215,15 +236,24 @@
 	}
 
 	// ── Tab 3: Nachbargemeinden ───────────────────────────────────
+	$: landRankById = new Map(landWithRank.map((r) => [r.region.id, r.origRank]));
+	$: landRcById = new Map(landWithRank.map((r) => [r.region.id, r.rc]));
 	$: neighboursWithRank = neighbours
 		.map((n): ExtEntry => {
 			const isSelf = n.region.id === regionId;
+			const useLandRank = regionCase === 'mittelstadt' || regionCase === 'kleinstadt' || regionCase === 'kreis';
 			const origRank = isSelf
-				? rankDE || rankAll
-				: allDEweit.findIndex((r) => r.region.id === n.region.id) + 1 || 0;
-			return { ...n, origRank, trend: n.trend ?? 0, distKm: n.distKm };
+				? (useLandRank ? rankLand : rankDE) || rankAll
+				: useLandRank
+					? landRankById.get(n.region.id) ?? 0
+					: peerRankById.get(n.region.id) ?? 0;
+			const rc = useLandRank
+				? (landRcById.get(n.region.id) ?? null)
+				: n.rc;
+			return { ...n, origRank, rc, trend: n.trend ?? 0, distKm: n.distKm };
 		})
 		.sort((a, b) => {
+			if (regionCase === 'mittelstadt' || regionCase === 'kleinstadt' || regionCase === 'kreis') return b.potential - a.potential;
 			if (a.origRank > 0 && b.origRank > 0) return a.origRank - b.origRank;
 			return (a.distKm ?? 0) - (b.distKm ?? 0);
 		});
@@ -317,7 +347,7 @@
 				<div class="text-sm font-semibold text-[#19191c] dark:text-gray-100">{row.region.name}</div>
 			{/if}
 			<div class="text-xs text-gray-400">
-				{#if row.distKm != null}{row.distKm.toFixed(0)} km ·{/if}
+				{#if row.distKm != null && row.distKm > 0}{row.distKm.toFixed(0)} km ·{/if}
 				{#if row.region.population}{formatEW(row.region.population)}{/if}
 				{#if row.region.layer_label}
 					· {row.region.layer_label}{/if}
@@ -486,17 +516,23 @@
 <!-- ════════════════ WRAPPER ════════════════ -->
 
 <!-- Tab switcher -->
+{#if tabViews.length > 1}
 <div class="mb-4">
 	<Switch
 		views={tabViews}
 		activeView={activeTab}
 		label="Ranking-Kategorien"
 		on:itemClick={(e) => {
-			activeTab = e.detail as Tab;
+			const next = e.detail as Tab;
+			if (next === 'de')   { const r = rankDEFiltered > 0 ? rankDEFiltered : rankDE; pageMittel = r > 0 ? Math.ceil(r / PER_PAGE) : 1; pageMittelUserSet = false; }
+			if (next === 'land') { pageLand   = rankLand  > 0 ? Math.ceil(rankLand / PER_PAGE) : 1; pageLandUserSet   = false; }
+			activeTab = next;
 			sortCol = null;
+			sortDir = 'desc';
 		}}
 	/>
 </div>
+{/if}
 
 <!-- ══ TAB 1: DE-WEIT ══ -->
 {#if activeTab === 'de'}
@@ -506,6 +542,12 @@
 		</h3>
 	{/if}
 	<p class="mb-3 text-sm text-gray-500">{deTabDescription}</p>
+
+	{#if showBigFilter}
+		<div class="mb-3">
+			<Toggle label="Großstädte ≥ 500.000 EW" bind:checked={showOnlyBig} />
+		</div>
+	{/if}
 
 	{#if loading && allDEweit.length === 0}
 		<div class="overflow-x-auto">
@@ -522,7 +564,7 @@
 			onChange: (v) => (searchMittel = v),
 			isSearching: isSearchingMittel,
 			page: pageMittel,
-			setPage: (p) => (pageMittel = p),
+			setPage: (p) => { pageMittel = p; pageMittelUserSet = true; },
 			totalPages: mittelTotalPages,
 			filteredCount: mittelFiltered.length,
 			totalCount: rankDEGesamt,
@@ -551,10 +593,32 @@
 		</h3>
 	{/if}
 	<p class="mb-3 text-sm text-gray-500">
-		Alle Gemeinden in {stateName}, sortiert nach genutztem Solarpotential.
+		{regionCase === 'kreis'
+			? `Alle Landkreise und kreisfreien Städte in ${stateName}, sortiert nach genutztem Solarpotential.`
+			: `Alle Gemeinden in ${stateName}, sortiert nach genutztem Solarpotential.`}
 	</p>
 
-	{#if loading && byLand.length === 0}
+	{#if showNachbarToggle}
+		<div class="mb-3">
+			<Toggle label="Nachbar-Ranking" bind:checked={showNachbarInLand} />
+		</div>
+	{/if}
+
+	{#if showNachbarInLand && showNachbarToggle}
+		<!-- Nachbar-Ansicht -->
+		<p class="mb-3 text-sm text-gray-500">{neighbourDescription}</p>
+		<div class="overflow-x-auto">
+			<div class="min-w-[1060px]" role="table" aria-label="Nachbargemeinden">
+				{@render tableHeader()}
+				{#each neighboursSorted as row (row.region.id)}
+					{@render rankRow(row, row.region.id === regionId)}
+				{/each}
+			</div>
+		</div>
+		{#if neighboursSorted.length === 0}
+			<p class="py-8 text-center text-sm text-gray-400">Keine Standortdaten verfügbar.</p>
+		{/if}
+	{:else if loading && byLand.length === 0}
 		<div class="overflow-x-auto">
 			<div class="min-w-[1060px]" role="table" aria-label="Ranking Gemeinden {stateName}">
 				{@render tableHeader()}
@@ -569,7 +633,7 @@
 			onChange: (v) => (searchLand = v),
 			isSearching: isSearchingLand,
 			page: pageLand,
-			setPage: (p) => (pageLand = p),
+			setPage: (p) => { pageLand = p; pageLandUserSet = true; },
 			totalPages: landTotalPages,
 			filteredCount: landFiltered.length,
 			totalCount: rankLandGesamt,

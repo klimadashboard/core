@@ -95,10 +95,13 @@
 
 	function getRegionCase(r: typeof region): RegionCase {
 		if (!r) return 'mittelstadt';
-		const { layer, population: pop } = r;
+		const { layer, population: pop, layer_label } = r;
 		if (layer === 'state') return 'bundesland';
-		// Kreisfreie Städte are layer==='district' but "Großstadt schlägt kreisfreie Stadt"
-		if (layer === 'district') return (pop ?? 0) >= 100_000 ? 'grossstadt' : 'kreis';
+		if (layer === 'district') {
+			const isKreisfreieStadt = layer_label === 'Kreisfreie Stadt' || layer_label === 'Stadtkreis';
+			if (isKreisfreieStadt) return (pop ?? 0) >= 100_000 ? 'grossstadt' : 'kreis';
+			return 'kreis';
+		}
 		// municipality — population-based
 		if (pop == null) return 'mittelstadt';
 		if (pop >= 100_000) return 'grossstadt';
@@ -108,14 +111,19 @@
 
 	$: regionCase = getRegionCase(region);
 	// Stadtstaaten: city IS the state, so no separate state parent exists
-	$: isStadtstaat = regionCase === 'grossstadt' && !stateId;
+	$: isStadtstaat = regionCase === 'grossstadt' && (!stateId || region?.name === stateName);
 
 	$: allDEweit =
 		regionCase === 'grossstadt'
-			? allRegions.filter((r) => (r.region.population ?? 0) >= 100_000)
+			? allRegions.filter(
+					(r) =>
+						r.region.layer === 'municipality' &&
+						(r.region.population ?? 0) >= 100_000
+				)
 			: regionCase === 'mittelstadt'
 				? allRegions.filter(
 						(r) =>
+							r.region.layer === 'municipality' &&
 							r.region.population != null &&
 							r.region.population >= 20_000 &&
 							r.region.population < 100_000
@@ -124,7 +132,9 @@
 					? allRegions.filter((r) => r.region.layer === 'district')
 					: regionCase === 'bundesland'
 						? allRegions.filter((r) => r.region.layer === 'state')
-						: []; // kleinstadt — DE-weit not loaded per spec
+						: allRegions.filter(
+								(r) => r.region.layer === 'municipality' && (r.region.population ?? 0) < 20_000
+							);
 
 	$: byLand =
 		stateId && regionCase !== 'bundesland'
@@ -133,7 +143,7 @@
 						r.region.parents?.some((p) => p.layer === 'state' && p.id === stateId) &&
 						(regionCase === 'kreis'
 							? r.region.layer === 'district'
-							: r.region.layer !== 'district' && r.region.layer !== 'state')
+							: r.region.layer === 'municipality')
 				)
 			: [];
 
@@ -158,6 +168,17 @@
 	$: allDEweitRanked = withPeerRc(allDEweit);
 	$: byLandRanked = withPeerRc(byLand);
 
+	// Map: region.id → peer-group rank (used in neighbour table for cross-peer lookup)
+	$: peerRankById = (() => {
+		const map = new Map<string, number>();
+		allDEweit.forEach((r, i) => map.set(r.region.id, i + 1));
+		kreisPool.forEach((r, i) => map.set(r.region.id, i + 1));
+		allRegions
+			.filter((r) => r.region.layer === 'municipality' && (r.region.population ?? 0) < 20_000)
+			.forEach((r, i) => map.set(r.region.id, i + 1));
+		return map;
+	})();
+
 	$: awards = computeAwards(history, regionCase);
 
 	$: myLat = region?.center ? parseFloat(region.center[1]) : null;
@@ -175,7 +196,8 @@
 		lon: number | null
 	): SolarNeighbourEntry[] {
 		if (lat == null || lon == null || kase === 'bundesland') return [];
-		const pool = kase === 'kleinstadt' ? all : kase === 'kreis' ? kreisPool : dePool;
+		const municipalPool = all.filter((r) => r.region.layer === 'municipality');
+		const pool = kase === 'kleinstadt' || kase === 'mittelstadt' ? municipalPool : kase === 'kreis' ? kreisPool : dePool;
 		const nearby = pool
 			.filter((r) => r.region.id !== selfId && r.region.center != null)
 			.map((r) => ({
@@ -230,6 +252,7 @@
 				allDEweit={allDEweitRanked}
 				byLand={byLandRanked}
 				{neighbours}
+				{peerRankById}
 				regionId={region?.id ?? ''}
 				regionName={region?.name ?? ''}
 				{stateName}

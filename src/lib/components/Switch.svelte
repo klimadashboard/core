@@ -70,20 +70,15 @@
 		const btn = container.querySelector(`[data-key="${activeView}"]`);
 		if (!btn) return;
 
-		const btnRect = btn.getBoundingClientRect();
-		const parentRect = container.getBoundingClientRect();
-		const x = btnRect.left - parentRect.left + container.scrollLeft;
-		const w = btnRect.width;
-
 		indicatorStyle = `
-			transform: translateX(${x}px);
-			width: ${w}px;
+			transform: translateX(${btn.offsetLeft}px);
+			width: ${btn.offsetWidth}px;
 		`;
 
 		updateScrollIndicators();
 	}
 
-	$: activeView, updateIndicator();
+	$: activeView, views, updateIndicator();
 
 	onMount(() => {
 		updateIndicator();
@@ -124,12 +119,12 @@
 				role="tab"
 				aria-selected={isActive}
 				tabindex={isActive ? 0 : -1}
-				class="relative z-10 flex items-center gap-2 rounded-full px-2 py-1 text-sm font-medium
+				class="relative z-10 flex items-center gap-2 rounded-full px-3 py-1 text-sm
 					transition-colors duration-200 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed
 					focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
 					{isActive
-					? 'text-black dark:text-white'
-					: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}"
+					? 'font-semibold text-black dark:text-white'
+					: 'font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}"
 			>
 				{#if view.iconComponent}
 				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">
