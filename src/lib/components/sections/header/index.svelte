@@ -1,5 +1,4 @@
 <script>
-	import { PUBLIC_VERSION } from '$env/static/public';
 	import LocaleSwitcher from './LocaleSwitcher.svelte';
 	import Navigation from './Navigation.svelte';
 	import LightSwitch from './LightSwitch.svelte';
@@ -10,6 +9,8 @@
 	import { clickOutside } from '$lib/utils/clickOutside';
 	let showNavigation = false;
 	let showSearch = false;
+
+	$: navigationPrimary = page.data.site?.translations?.[0]?.navigation_primary ?? [];
 
 	// Function to handle closing the navigation menu
 	function closeNavigation() {
@@ -25,13 +26,13 @@
 		<div class="flex items-center gap-2 pr-2">
 			<a href={page.data.language.code === 'de' ? '/' : `/${page.data.language.code}`} class="flex items-center gap-2">
 				<img src="/logo.svg" alt="Klimadashboard" class="h-13 w-13" />
-				<div class="font-bold">Klimadashboard.{PUBLIC_VERSION}</div>
+				<div class="font-bold">{page.data.site?.domain}</div>
 			</a>
-			{#if page.data.site.translations[0].navigation_primary.length == 1}
-				{#each page.data.site.translations[0].navigation_primary[0].links as l}
+			{#if navigationPrimary.length == 1}
+				{#each navigationPrimary[0].links as l}
 					<Button href={l.link}>{l.label}</Button>
 				{/each}
-			{:else}
+			{:else if navigationPrimary.length > 1}
 				<Button aria-label={page.data.translations.navigation} on:mousedown={() => (showNavigation = !showNavigation)}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

@@ -22,9 +22,11 @@ function getCached(key, fetcher) {
 }
 
 // src/routes/+layout.server.js
+const DEFAULT_LOCALE = PUBLIC_VERSION === 'electrification' ? 'en' : 'de';
+
 export async function load({ fetch, params }) {
 	try {
-		const locale = params.lang ? params.lang : 'de';
+		const locale = params.lang ? params.lang : DEFAULT_LOCALE;
 
 		const localeLong = locale == 'de' ? 'de-DE' : 'en-US';
 		const directus = getDirectusInstance(fetch);

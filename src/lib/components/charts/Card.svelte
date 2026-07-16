@@ -3,7 +3,6 @@
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { page } from '$app/state';
-	import { PUBLIC_VERSION } from '$env/static/public';
 
 	import { snapdom, preCache } from '@zumer/snapdom';
 	import { Table } from '$lib/components/charts/primitives';
@@ -51,10 +50,11 @@
 	$: urlRegionId = page.url.searchParams.get('region');
 	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';
 
+	$: siteDomain = page.data.site?.domain;
 	$: logoHref =
 		isEmbedRoute && urlRegionId
-			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${urlRegionId}`
-			: `https://klimadashboard.${PUBLIC_VERSION}`;
+			? `https://${siteDomain}/regions/${urlRegionId}`
+			: `https://${siteDomain}`;
 
 	function handleClickOutside(e: MouseEvent) {
 		if (showDownloadMenu && !(e.target as HTMLElement).closest('.download-menu')) {
@@ -492,11 +492,11 @@
 				<a
 					href={logoHref}
 					target="_blank"
-					aria-label="Klimadashboard.{PUBLIC_VERSION}"
+					aria-label={siteDomain}
 					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
 					on:click={(e) => e.stopPropagation()}
 				>
-					<span class="text-sm font-bold text-[#28A889]">Klimadashboard.{PUBLIC_VERSION}</span>
+					<span class="text-sm font-bold text-[#28A889]">{siteDomain}</span>
 					<svg
 						width="256"
 						height="256"

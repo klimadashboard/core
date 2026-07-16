@@ -6,7 +6,7 @@ export interface Region {
 	code: string;
 	codeShort?: string;
 	name: string;
-	layer: 'country' | 'state' | 'district' | 'municipality';
+	layer: 'country' | 'state' | 'district' | 'municipality' | 'union';
 	layer_label?: string;
 	country?: string;
 	center: [string, string];
