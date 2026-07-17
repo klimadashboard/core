@@ -33,12 +33,15 @@ export interface ElectrificationDataset {
 }
 
 export const EU_REGION_CODE = 'eu27';
+
+/** Fallback for ChartData.meta.source. In practice the Directus `source` field overrides this
+ *  (Card.svelte resolves `chart.content?.source || chartData?.meta?.source`), and that field is
+ *  already localised. The page footer uses `strings(lang).sourceName` instead. */
 export const SOURCE = 'Eurostat, Complete energy balances (nrg_bal_c)';
 
-/** Countries with very small or distorted energy bases — dimmed + footnoted in charts. */
+/** Countries with very small or distorted energy bases — dimmed + footnoted in charts.
+ *  The footnote text lives in electrification.i18n.ts (`smallNote`). */
 export const SMALL_COUNTRY_CODES = ['mt', 'cy', 'lu'];
-export const SMALL_COUNTRY_NOTE =
-	'* Malta, Cyprus, Luxembourg have very small or distorted energy bases.';
 
 /** Charts default to this start year; early-1990s data is unreliable for several states. */
 export const DISPLAY_START = 2000;
@@ -46,53 +49,32 @@ export const DISPLAY_START = 2000;
 export type SourceKey = 'ec' | 'eap' | 'cop31' | 'esabcc';
 
 export interface SourceRef {
-	label: string;
-	/** Tag appended to chart annotations, e.g. "2030 · 32% (EU)". Keep it very short. */
-	short: string;
 	url: string;
 	/** Anchor into the landing page's "Data & methodology" section. */
 	anchor: string;
 }
 
+/** Language-neutral source data. Display labels live in electrification.i18n.ts
+ *  (`sourceLabel`), so this module stays free of user-facing strings. */
 export const SOURCES: Record<SourceKey, SourceRef> = {
 	ec: {
-		label: 'European Commission',
-		short: 'EU',
 		url: 'https://energy.ec.europa.eu/topics/eus-energy-system/electrification_en',
 		anchor: '#targets'
 	},
 	eap: {
-		label: 'Electrification Action Plan (draft)',
-		short: 'EU',
 		url: 'https://www.reuters.com/business/energy/eu-drafts-plan-double-electrification-rate-cut-oil-gas-use-2026-07-16/',
 		anchor: '#targets'
 	},
 	cop31: {
-		label: 'COP31 Presidency',
-		short: 'COP31',
 		url: 'https://unfccc.int/news/cop31-presidency-announces-new-targets-on-global-electrification-cutting-waste-resilient-cities',
 		anchor: '#benchmarks'
 	},
 	esabcc: {
-		label: 'EU Climate Advisory Board',
-		short: 'ESABCC',
 		url: 'https://climate-advisory-board.europa.eu/reports-and-publications/towards-eu-climate-neutrality-progress-policy-gaps-and-opportunities',
 		anchor: '#benchmarks'
 	}
 };
 
-/** Annotation text for a target dot/line, e.g. "2030 · 32% (EU)".
- *  `compact` (mobile) drops the year and source tag — measured, the full form collides and
- *  overflows the plot below ~500px. */
-export function targetAnnotation(
-	year: number,
-	value: number,
-	sourceKey: SourceKey,
-	compact: boolean
-): string {
-	if (compact) return fmtPct(value);
-	return `${year} · ${fmtPct(value)} (${SOURCES[sourceKey].short})`;
-}
 
 export interface Target {
 	year: number;
@@ -115,9 +97,8 @@ export const TARGETS: Target[] = [
 
 export interface ReferenceTarget {
 	id: string;
-	label: string;
-	/** True when the figure is a GLOBAL rate rather than an EU one. Surfaced in the UI:
-	 *  the EU sits above the global baseline, so an unlabelled comparison misleads. */
+	/** True when the figure is a GLOBAL rate rather than an EU one. Surfaced in the toggle
+	 *  label: the EU sits above the global baseline, so an unlabelled comparison misleads. */
 	global: boolean;
 	color: string;
 	/** Reference lines must not be told apart by colour alone (a11y). */
@@ -126,11 +107,11 @@ export interface ReferenceTarget {
 	sourceKey: SourceKey;
 }
 
-/** Contextual benchmarks, off by default, grouped so one toggle drives one source. */
+/** Contextual benchmarks, off by default, grouped so one toggle drives one source.
+ *  Display labels live in electrification.i18n.ts (`refLabel`). */
 export const REFERENCE_TARGETS: ReferenceTarget[] = [
 	{
 		id: 'cop31',
-		label: 'COP31 (global)',
 		global: true,
 		color: '#373949',
 		dash: '2 3',
@@ -139,7 +120,6 @@ export const REFERENCE_TARGETS: ReferenceTarget[] = [
 	},
 	{
 		id: 'esabcc',
-		label: 'Climate Advisory Board',
 		global: false,
 		color: '#B7693D',
 		dash: '7 3',
@@ -171,19 +151,18 @@ export function maxTargetValue(refs: ReferenceTarget[]): number {
 
 export interface SectorDef {
 	key: string;
-	label: string;
-	short: string;
 	color: string;
 }
 
 /** Sub-sectors of total final consumption. Colors reuse Klimadashboard's semantic sector palette
  *  where a direct match exists (industry, buildings, transport); "services" has no house
- *  equivalent so it borrows a ColorBrewer blue step per the multi-series guidance. */
+ *  equivalent so it borrows a ColorBrewer blue step per the multi-series guidance.
+ *  Names live in electrification.i18n.ts (`sectorLabel` / `sectorShort`). */
 export const SECTORS: SectorDef[] = [
-	{ key: 'industry', label: 'Industry', short: 'Industry', color: '#373949' },
-	{ key: 'residential', label: 'Residential buildings', short: 'Residential', color: '#4880A8' },
-	{ key: 'services', label: 'Commercial & services', short: 'Services', color: '#2171B5' },
-	{ key: 'transport', label: 'Transport', short: 'Transport', color: '#F5AF4A' }
+	{ key: 'industry', color: '#373949' },
+	{ key: 'residential', color: '#4880A8' },
+	{ key: 'services', color: '#2171B5' },
+	{ key: 'transport', color: '#F5AF4A' }
 ];
 
 /** Total final consumption (all sectors combined) — Klimadashboard's "economy" teal. */
@@ -209,17 +188,21 @@ export function countryColor(id: string, selected: string[], euId: string | unde
 	return COUNTRY_PALETTE[(i < 0 ? others.length : i) % COUNTRY_PALETTE.length];
 }
 
+/** @param lang short locale ('de' | 'en') — selects the region-name translation. Region names are
+ *  already translated in Directus (Österreich, Dänemark…), so this is all German names need. */
 export async function fetchElectrificationDataset(
-	fetch: typeof globalThis.fetch
+	fetch: typeof globalThis.fetch,
+	lang: string = 'en'
 ): Promise<ElectrificationDataset> {
 	const directus = getDirectusInstance(fetch);
+	const languageCode = lang === 'de' ? 'de' : 'en';
 
 	const [regionRows, rateRows] = await Promise.all([
 		directus.request(
 			readItems('regions', {
 				filter: { layer: { _in: ['country', 'union'] } },
 				fields: ['id', 'code', 'slug', 'layer', 'translations.name'],
-				deep: { translations: { _filter: { languages_code: { _eq: 'en' } } } },
+				deep: { translations: { _filter: { languages_code: { _eq: languageCode } } } },
 				limit: -1
 			})
 		),
@@ -297,22 +280,5 @@ export function regionByCode(
 	return dataset.regions.find((r) => r.code === code);
 }
 
-// ---------------------------------------------------------------------------
-// English-only formatting (no de-DE locale — this tracker ships English-only for now)
-// ---------------------------------------------------------------------------
-
-export function fmtPct(value: number, digits = 0): string {
-	if (value == null || isNaN(value)) return '–';
-	return `${value.toFixed(digits)}%`;
-}
-
-export function fmtPP(value: number, digits = 1): string {
-	if (value == null || isNaN(value)) return '–';
-	return `${value.toFixed(digits)}pp`;
-}
-
-/** Signed gap in percentage points, e.g. "+4.2pp" / "−8.6pp". */
-export function fmtSignedPP(value: number, digits = 1): string {
-	if (value == null || isNaN(value)) return '–';
-	return (value >= 0 ? '+' : '−') + fmtPP(Math.abs(value), digits);
-}
+// Formatting is locale-dependent (23.4% vs 23,4 %) and lives in electrification.i18n.ts —
+// see `formatters(lang)`.

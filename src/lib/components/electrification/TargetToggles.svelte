@@ -7,13 +7,17 @@
 -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { page } from '$app/stores';
 	import { REFERENCE_TARGETS } from '$lib/utils/electrification';
+	import { strings, refLabel, toLang } from '$lib/utils/electrification.i18n';
 
 	/** Ids of the reference targets currently shown. Off by default. */
 	export let selected: string[] = [];
-	export let label: string = 'Compare with';
 
 	const dispatch = createEventDispatcher<{ change: string[] }>();
+
+	$: lang = toLang($page.data.language?.code);
+	$: t = strings(lang);
 
 	function toggle(id: string) {
 		selected = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id];
@@ -22,7 +26,7 @@
 </script>
 
 <div class="flex flex-wrap items-center gap-1.5">
-	<span class="text-sm text-gray-500 dark:text-gray-400">{label}</span>
+	<span class="text-sm text-gray-500 dark:text-gray-400">{t.compareWith}</span>
 	{#each REFERENCE_TARGETS as r (r.id)}
 		{@const on = selected.includes(r.id)}
 		<button
@@ -44,7 +48,7 @@
 					stroke-dasharray={r.dash}
 				/>
 			</svg>
-			{r.label}
+			{refLabel(r.id, lang)}
 		</button>
 	{/each}
 </div>

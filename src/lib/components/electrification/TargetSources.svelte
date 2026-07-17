@@ -6,31 +6,36 @@
 	text (no links) and cannot react to the toggles, which are client state.
 -->
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { TARGETS, SOURCES, type ReferenceTarget } from '$lib/utils/electrification';
+	import { strings, refLabel, sourceLabel, formatters, toLang } from '$lib/utils/electrification.i18n';
 
 	/** The reference targets currently visible. */
 	export let refs: ReferenceTarget[] = [];
 
-	function points(pts: { year: number; value: number }[]): string {
-		return pts.map((p) => `${p.value}% by ${p.year}`).join(' and ');
-	}
+	$: lang = toLang($page.data.language?.code);
+	$: t = strings(lang);
+	$: f = formatters(lang);
 
+	$: joiner = lang === 'de' ? ' und ' : ' and ';
+	$: points = (pts: { year: number; value: number }[]) =>
+		pts.map((p) => t.byYear(f.pct(p.value), p.year)).join(joiner);
 	$: euTargets = TARGETS.map(
-		(t) => `${t.value}% by ${t.year}${t.status === 'proposed' ? ' (proposed)' : ''}`
-	).join(' and ');
+		(tg) => `${t.byYear(f.pct(tg.value), tg.year)}${tg.status === 'proposed' ? ` (${t.proposed})` : ''}`
+	).join(joiner);
 </script>
 
 <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
-	<span class="font-semibold">EU targets:</span>
+	<span class="font-semibold">{t.euTargets}:</span>
 	{euTargets} —
-	<a class="underline underline-offset-2" href={SOURCES.ec.anchor}>{SOURCES.ec.label}</a>,
-	<a class="underline underline-offset-2" href={SOURCES.eap.anchor}>{SOURCES.eap.label}</a>.
+	<a class="underline underline-offset-2" href={SOURCES.ec.anchor}>{sourceLabel('ec', lang)}</a>,
+	<a class="underline underline-offset-2" href={SOURCES.eap.anchor}>{sourceLabel('eap', lang)}</a>.
 	{#each refs as r (r.id)}
 		<span>
-			<span class="font-semibold">{r.label}:</span>
+			<span class="font-semibold">{refLabel(r.id, lang)}:</span>
 			{points(r.points)} —
 			<a class="underline underline-offset-2" href={SOURCES[r.sourceKey].anchor}
-				>{SOURCES[r.sourceKey].label}</a
+				>{sourceLabel(r.sourceKey, lang)}</a
 			>.
 		</span>
 	{/each}

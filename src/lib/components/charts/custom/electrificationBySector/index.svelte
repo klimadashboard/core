@@ -8,6 +8,7 @@
 	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import { RadioGroup } from '$lib/components/ui';
+	import { page } from '$app/stores';
 	import CountryPicker from '$lib/components/electrification/CountryPicker.svelte';
 	import {
 		fetchElectrificationDataset,
@@ -17,9 +18,15 @@
 		SECTORS,
 		DISPLAY_START,
 		EU_REGION_CODE,
-		fmtPct,
 		type ElectrificationDataset
 	} from '$lib/utils/electrification';
+	import {
+		strings,
+		formatters,
+		sectorLabel,
+		sectorShort,
+		toLang
+	} from '$lib/utils/electrification.i18n';
 	import { buildChartData } from './config';
 
 	export let region: Region | null = null;
@@ -31,11 +38,19 @@
 	let selected: string[] = [];
 	let initialized = false;
 
-	async function loadData() {
+	$: lang = toLang($page.data.language?.code);
+	$: t = strings(lang);
+	$: f = formatters(lang);
+
+	/** Ceiling for the shared-axis facet mode; also names the radio option. */
+	const SHARED_MAX = 55;
+
+	// Re-fetches when the locale changes: region names come back translated.
+	async function loadData(l: string) {
 		loading = true;
 		error = null;
 		try {
-			const result = await fetchElectrificationDataset(fetch);
+			const result = await fetchElectrificationDataset(fetch, l);
 			dataset = result;
 			if (!initialized) {
 				const euId = result.regions.find((r) => r.code === EU_REGION_CODE)?.id;
@@ -45,7 +60,7 @@
 			}
 		} catch (e) {
 			console.error('[electrificationBySector] Error:', e);
-			error = e instanceof Error ? e.message : 'Failed to load data';
+			error = e instanceof Error ? e.message : strings(l).loadError;
 			dataset = null;
 			onChartData?.(null);
 		} finally {
@@ -53,11 +68,11 @@
 		}
 	}
 
-	loadData();
+	$: loadData(lang);
 
 	// Re-emit chart data (including the computed headline) whenever the selection changes.
 	$: if (dataset && selected.length) {
-		onChartData?.(buildChartData(dataset, selected));
+		onChartData?.(buildChartData(dataset, selected, lang));
 	}
 
 	$: euId = dataset?.regions.find((r) => r.code === EU_REGION_CODE)?.id;
@@ -136,7 +151,7 @@
 
 	function facetMax(key: string, sel: string[], mode: 'per' | 'shared'): number {
 		if (!dataset) return 10;
-		if (mode === 'shared') return 55;
+		if (mode === 'shared') return SHARED_MAX;
 		const vals: number[] = [];
 		for (const id of sel) for (const [, v] of seriesFor(dataset as ElectrificationDataset, id, key)) vals.push(v);
 		const mx = vals.length ? Math.max(...vals) : 10;
@@ -159,8 +174,8 @@
 	}
 
 	$: subtitle = single
-		? `Electricity share of ${soloName}'s final consumption by sector, ${DISPLAY_START}–${dataset?.latestYear}`
-		: `Electricity share by sector, comparing ${selected.length} countries, ${DISPLAY_START}–${dataset?.latestYear}`;
+		? t.svSubSingle(soloName, DISPLAY_START, dataset?.latestYear ?? '')
+		: t.svSubMulti(selected.length, DISPLAY_START, dataset?.latestYear ?? '');
 </script>
 
 {#if loading}
@@ -168,20 +183,20 @@
 {:else if error}
 	<div class="h-[440px] flex items-center justify-center text-red-500">{error}</div>
 {:else if !dataset}
-	<div class="h-[440px] flex items-center justify-center text-gray-500">No data available</div>
+	<div class="h-[440px] flex items-center justify-center text-gray-500">{t.noDataAvailable}</div>
 {:else}
 	<div bind:clientWidth={containerWidth}>
 		<p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{subtitle}</p>
 
 		<div class="flex flex-wrap gap-4 items-center mb-3">
-			<CountryPicker regions={dataset.regions} bind:selected fallbackId={euId} clearLabel="Clear all" />
+			<CountryPicker regions={dataset.regions} bind:selected fallbackId={euId} clearLabel={t.clearAll} />
 			{#if !single}
 				<RadioGroup
-					label="Y-axis"
+					label={t.yAxis}
 					bind:value={scaleMode}
 					options={[
-						{ value: 'per', label: 'Per-sector' },
-						{ value: 'shared', label: 'Shared 0–55%' }
+						{ value: 'per', label: t.perSector },
+						{ value: 'shared', label: t.sharedAxis(f.pct(SHARED_MAX)) }
 					]}
 				/>
 			{/if}
@@ -199,7 +214,7 @@
 							{hidden[s.key] ? 'opacity-40' : ''}"
 					>
 						<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:{s.color}"></span>
-						{s.short}
+						{sectorShort(s.key, lang)}
 					</button>
 				{/each}
 			</div>
@@ -248,7 +263,7 @@
 						visibleSectors
 							.map((s) => ({
 								key: s.key,
-								label: s.short,
+								label: sectorShort(s.key, lang),
 								color: s.color,
 								value: seriesFor(dataset, soloId, s.key).at(-1)?.[1] ?? null
 							}))
@@ -283,7 +298,7 @@
 							stroke-linejoin="round"
 							paint-order="stroke fill"
 						>
-							{fmtPct(el.value)}
+							{f.pct(el.value)}
 						</text>
 					{/each}
 				</svelte:fragment>
@@ -299,7 +314,7 @@
 								.map((s) => ({ s, v: valueAt(dataset, soloId, s.key, hover.x) }))
 								.filter((r) => r.v != null)
 								.sort((a, b) => (b.v as number) - (a.v as number))
-								.map((r) => ({ label: r.s.short, value: fmtPct(r.v as number, 1), color: r.s.color }))}
+								.map((r) => ({ label: sectorShort(r.s.key, lang), value: f.pct(r.v as number, 1), color: r.s.color }))}
 						/>
 					{/if}
 				</svelte:fragment>
@@ -311,12 +326,12 @@
 					{@const fy = scaleLinear().domain([0, ymax]).range([fih, 0])}
 					{@const hasData = facetHasData(s.key, selected)}
 					<figure class="m-0">
-						<figcaption class="font-bold text-base mb-1" style="color:{s.color}">{s.label}</figcaption>
-						<svg viewBox="0 0 {FW} {FH}" width="100%" role="img" aria-label={s.label}>
+						<figcaption class="font-bold text-base mb-1" style="color:{s.color}">{sectorLabel(s.key, lang)}</figcaption>
+						<svg viewBox="0 0 {FW} {FH}" width="100%" role="img" aria-label={sectorLabel(s.key, lang)}>
 							<g transform="translate({fm.left},{fm.top})">
 								{#each [0, ymax / 2, ymax] as ft}
 									<line x1="0" x2={fiw} y1={fy(ft)} y2={fy(ft)} stroke="currentColor" class="text-gray-200 dark:text-gray-700" />
-									<text x="-6" y={fy(ft)} dy="0.32em" text-anchor="end" class="text-[10px] fill-gray-500 dark:fill-gray-400">{fmtPct(ft)}</text>
+									<text x="-6" y={fy(ft)} dy="0.32em" text-anchor="end" class="text-[10px] fill-gray-500 dark:fill-gray-400">{f.pct(ft)}</text>
 								{/each}
 								<!-- The last label sits at fiw, i.e. fm.left + fiw = 312 of a 320 viewBox. This
 								     svg has no overflow-visible, so a centred label would be clipped by the
@@ -327,7 +342,7 @@
 								{/each}
 
 								{#if !hasData}
-									<text x={fiw / 2} y={fih / 2} text-anchor="middle" class="text-xs fill-gray-400">No data</text>
+									<text x={fiw / 2} y={fih / 2} text-anchor="middle" class="text-xs fill-gray-400">{t.noData}</text>
 								{:else}
 									{#if facetHover && facetHover.key === s.key}
 										<line x1={fx(facetHover.year)} x2={fx(facetHover.year)} y1="0" y2={fih} stroke="currentColor" class="text-gray-400 dark:text-gray-500" stroke-dasharray="3 3" />
@@ -366,12 +381,12 @@
 						.sort((a, b) => (b.v as number) - (a.v as number))}
 					{#if rows.length}
 						<div class="pointer-events-none absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-3 py-2 text-sm" style="left: 50%; top: 0; transform: translateX(-50%);">
-							<div class="font-bold mb-1">{SECTORS.find((s) => s.key === facetHover?.key)?.label} · {facetHover.year}</div>
+							<div class="font-bold mb-1">{sectorLabel(facetHover.key, lang)} · {facetHover.year}</div>
 							{#each rows as r (r.id)}
 								<div class="flex items-center gap-2">
 									<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:{countryColor(r.id, selected, euId)}"></span>
 									<span class="text-gray-500 dark:text-gray-400">{dataset.regions.find((rg) => rg.id === r.id)?.name}</span>
-									<span class="ml-auto font-semibold tabular-nums">{fmtPct(r.v as number, 1)}</span>
+									<span class="ml-auto font-semibold tabular-nums">{f.pct(r.v as number, 1)}</span>
 								</div>
 							{/each}
 						</div>

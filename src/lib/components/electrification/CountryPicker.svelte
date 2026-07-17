@@ -5,15 +5,20 @@
 -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { page } from '$app/stores';
 	import { Select } from '$lib/components/ui';
 	import type { ElectrificationRegion } from '$lib/utils/electrification';
 	import { countryColor } from '$lib/utils/electrification';
+	import { strings, toLang } from '$lib/utils/electrification.i18n';
 
 	export let regions: ElectrificationRegion[] = [];
 	export let selected: string[] = [];
 	/** Region id re-added when the selection would otherwise go empty. */
 	export let fallbackId: string | undefined = undefined;
-	export let clearLabel: string = 'Clear selection';
+	/** Defaults to the localised "clear selection"; the sector panel overrides it with "clear all". */
+	export let clearLabel: string | undefined = undefined;
+
+	$: t = strings(toLang($page.data.language?.code));
 
 	const dispatch = createEventDispatcher<{ change: string[] }>();
 
@@ -51,14 +56,14 @@
 
 <div class="flex flex-wrap items-center gap-2">
 	<Select
-		label="Add country"
+		label={t.addCountry}
 		hideLabel
 		small
 		bind:value={toAdd}
 		on:change={onAdd}
 		disabled={available.length === 0}
 		options={[
-			{ value: '', label: '+ country…' },
+			{ value: '', label: t.addPlaceholder },
 			...available.map((r) => ({ value: r.id, label: r.name }))
 		]}
 	/>
@@ -76,7 +81,7 @@
 					type="button"
 					class="rounded-full w-5 h-5 inline-flex items-center justify-center leading-none
 						text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-					aria-label={`Remove ${regionName(id)}`}
+					aria-label={t.remove(regionName(id))}
 					on:click={() => removeCountry(id)}
 				>
 					×
@@ -90,7 +95,7 @@
 					underline underline-offset-2"
 				on:click={clearSelection}
 			>
-				{clearLabel}
+				{clearLabel ?? t.clearSelection}
 			</button>
 		{/if}
 	</div>

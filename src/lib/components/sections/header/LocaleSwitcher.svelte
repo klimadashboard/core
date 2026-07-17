@@ -3,6 +3,12 @@
 	import { readItems } from '@directus/sdk';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { PUBLIC_VERSION } from '$env/static/public';
+
+	// Which locale lives at the unprefixed root differs per build: the electrification site is
+	// English-first, every other site is German-first. Same expression as hooks.server.js:3 and
+	// +layout.server.js:25 — keep the three in step.
+	const DEFAULT_LOCALE = PUBLIC_VERSION === 'electrification' ? 'en' : 'de';
 
 	// Fetch languages from Directus
 	$: getLanguages = async () => {
@@ -26,9 +32,13 @@
 			pathSegments.shift();
 		}
 
-		// Prepend the new locale if it's not the default language
+		// Prepend the new locale unless it's the one served at the root for this build.
+		// (Previously hardcoded to 'de', which inverted the switcher on English-first builds:
+		// picking DE navigated to the unprefixed path, which resolves back to the default.)
 		const newPath =
-			newLocale === 'de' ? `/${pathSegments.join('/')}` : `/${newLocale}/${pathSegments.join('/')}`;
+			newLocale === DEFAULT_LOCALE
+				? `/${pathSegments.join('/')}`
+				: `/${newLocale}/${pathSegments.join('/')}`;
 
 		// Navigate to the new path
 		goto(newPath || '/');

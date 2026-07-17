@@ -11,5 +11,8 @@ static/data-handler
 .vscode
 /scripts
 
+# secrets
+directus_token.txt
+
 # AI tooling
 .claude/settings.local.json

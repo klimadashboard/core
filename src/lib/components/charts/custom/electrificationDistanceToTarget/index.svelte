@@ -4,6 +4,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import { page } from '$app/stores';
 	import TargetToggles from '$lib/components/electrification/TargetToggles.svelte';
 	import TargetSources from '$lib/components/electrification/TargetSources.svelte';
 	import {
@@ -12,13 +13,11 @@
 		TARGETS,
 		REFERENCE_TARGETS,
 		maxTargetValue,
-		targetAnnotation,
 		EU_REGION_CODE,
 		SMALL_COUNTRY_CODES,
-		fmtPct,
-		fmtSignedPP,
 		type ElectrificationDataset
 	} from '$lib/utils/electrification';
+	import { strings, formatters, targetAnnotation, refLabel, toLang } from '$lib/utils/electrification.i18n';
 	import { buildChartData } from './config';
 
 	export let region: Region | null = null;
@@ -30,21 +29,26 @@
 
 	let sort: 'value' | 'name' = 'value';
 
+	$: lang = toLang($page.data.language?.code);
+	$: t = strings(lang);
+	$: f = formatters(lang);
+
 	/** Contextual benchmarks, off by default. */
 	let refIds: string[] = [];
 	$: visibleRefs = REFERENCE_TARGETS.filter((r) => refIds.includes(r.id));
 	$: refPoints = visibleRefs.flatMap((r) => r.points.map((p) => ({ ...p, ref: r })));
 
-	async function loadData() {
+	// Re-fetches when the locale changes: region names come back translated.
+	async function loadData(l: string) {
 		loading = true;
 		error = null;
 		try {
-			const result = await fetchElectrificationDataset(fetch);
+			const result = await fetchElectrificationDataset(fetch, l);
 			dataset = result;
-			onChartData?.(buildChartData(result));
+			onChartData?.(buildChartData(result, l));
 		} catch (e) {
 			console.error('[electrificationDistanceToTarget] Error:', e);
-			error = e instanceof Error ? e.message : 'Failed to load data';
+			error = e instanceof Error ? e.message : strings(l).loadError;
 			dataset = null;
 			onChartData?.(null);
 		} finally {
@@ -52,7 +56,7 @@
 		}
 	}
 
-	loadData();
+	$: loadData(lang);
 
 	interface Row {
 		id: string;
@@ -120,14 +124,14 @@
 	$: hoverRow = rows.find((r) => r.id === hoverId) ?? null;
 	$: tooltipItems = hoverRow
 		? [
-				{ label: String(dataset?.latestYear ?? ''), value: fmtPct(hoverRow.value, 1) },
-				...TARGETS.map((t) => ({
-					label: `vs ${t.year} (${fmtPct(t.value)})`,
-					value: fmtSignedPP((hoverRow?.value ?? 0) - t.value)
+				{ label: String(dataset?.latestYear ?? ''), value: f.pct(hoverRow.value, 1) },
+				...TARGETS.map((tg) => ({
+					label: t.dtVs(tg.year, f.pct(tg.value)),
+					value: f.signedPP((hoverRow?.value ?? 0) - tg.value)
 				})),
 				...refPoints.map((p) => ({
-					label: `vs ${p.ref.label} ${p.year} (${fmtPct(p.value)})`,
-					value: fmtSignedPP((hoverRow?.value ?? 0) - p.value)
+					label: t.dtVsRef(refLabel(p.ref.id, lang), p.year, f.pct(p.value)),
+					value: f.signedPP((hoverRow?.value ?? 0) - p.value)
 				}))
 			]
 		: [];
@@ -138,15 +142,15 @@
 {:else if error}
 	<div class="h-[500px] flex items-center justify-center text-red-500">{error}</div>
 {:else if !dataset}
-	<div class="h-[500px] flex items-center justify-center text-gray-500">No data available</div>
+	<div class="h-[500px] flex items-center justify-center text-gray-500">{t.noDataAvailable}</div>
 {:else}
 	<div>
 		<div class="flex flex-wrap gap-4 items-center mb-3">
 			<Switch
-				label="Sort"
+				label={t.sort}
 				views={[
-					{ key: 'value', label: 'Value' },
-					{ key: 'name', label: 'A–Z' }
+					{ key: 'value', label: t.sortValue },
+					{ key: 'name', label: t.sortAZ }
 				]}
 				activeView={sort}
 				on:itemClick={(e) => (sort = e.detail)}
@@ -155,7 +159,7 @@
 		</div>
 
 		<div class="relative" bind:clientWidth={width}>
-			<svg viewBox="0 0 {width} {height}" width="100%" {height} role="img" aria-label="Distance to the EU electrification targets">
+			<svg viewBox="0 0 {width} {height}" width="100%" {height} role="img" aria-label={t.dtAria}>
 				<g transform="translate({margin.left},{margin.top})">
 					{#each xTicks as xt}
 						<line
@@ -173,7 +177,7 @@
 								text-anchor="middle"
 								class="text-xs fill-gray-500 dark:fill-gray-400"
 							>
-								{fmtPct(xt)}
+								{f.pct(xt)}
 							</text>
 						{/if}
 					{/each}
@@ -212,7 +216,7 @@
 								dy="0.32em"
 								class="{isMobile ? 'text-[9px]' : 'text-[11px]'} fill-gray-600 dark:fill-gray-300"
 							>
-								{fmtPct(r.value, 1)}
+								{f.pct(r.value, 1)}
 							</text>
 						</g>
 					{/each}
@@ -237,7 +241,7 @@
 							stroke-linejoin="round"
 							paint-order="stroke fill"
 						>
-							{targetAnnotation(tg.year, tg.value, tg.sourceKey, isMobile)}
+							{targetAnnotation(tg.year, tg.value, tg.sourceKey, isMobile, lang)}
 						</text>
 					{/each}
 
@@ -263,7 +267,7 @@
 							stroke-linejoin="round"
 							paint-order="stroke fill"
 						>
-							{targetAnnotation(p.year, p.value, p.ref.sourceKey, isMobile)}
+							{targetAnnotation(p.year, p.value, p.ref.sourceKey, isMobile, lang)}
 						</text>
 					{/each}
 				</g>

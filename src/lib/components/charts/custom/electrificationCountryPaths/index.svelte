@@ -8,6 +8,7 @@
 	import CountryPicker from '$lib/components/electrification/CountryPicker.svelte';
 	import TargetToggles from '$lib/components/electrification/TargetToggles.svelte';
 	import TargetSources from '$lib/components/electrification/TargetSources.svelte';
+	import { page } from '$app/stores';
 	import {
 		fetchElectrificationDataset,
 		seriesFor,
@@ -17,19 +18,21 @@
 		REFERENCE_TARGETS,
 		maxTargetYear,
 		maxTargetValue,
-		targetAnnotation,
 		DISPLAY_START,
 		EU_REGION_CODE,
-		fmtPct,
-		fmtSignedPP,
 		type ElectrificationDataset
 	} from '$lib/utils/electrification';
+	import { strings, formatters, targetAnnotation, toLang } from '$lib/utils/electrification.i18n';
 	import { buildChartData } from './config';
 
 	export let region: Region | null = null;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
 	const END = TARGETS[TARGETS.length - 1].year; // 2040
+
+	$: lang = toLang($page.data.language?.code);
+	$: t = strings(lang);
+	$: f = formatters(lang);
 
 	/** Contextual benchmarks, off by default. */
 	let refIds: string[] = [];
@@ -49,11 +52,12 @@
 	let selected: string[] = [];
 	let initialized = false;
 
-	async function loadData() {
+	// Re-fetches when the locale changes: region names come back translated.
+	async function loadData(l: string) {
 		loading = true;
 		error = null;
 		try {
-			const result = await fetchElectrificationDataset(fetch);
+			const result = await fetchElectrificationDataset(fetch, l);
 			dataset = result;
 			if (!initialized) {
 				const euId = result.regions.find((r) => r.code === EU_REGION_CODE)?.id;
@@ -63,7 +67,7 @@
 			}
 		} catch (e) {
 			console.error('[electrificationCountryPaths] Error:', e);
-			error = e instanceof Error ? e.message : 'Failed to load data';
+			error = e instanceof Error ? e.message : strings(l).loadError;
 			dataset = null;
 			onChartData?.(null);
 		} finally {
@@ -71,11 +75,11 @@
 		}
 	}
 
-	loadData();
+	$: loadData(lang);
 
 	// Re-emit chart data (including the computed headline) whenever the selection changes.
 	$: if (dataset && selected.length) {
-		onChartData?.(buildChartData(dataset, selected));
+		onChartData?.(buildChartData(dataset, selected, lang));
 	}
 
 	$: euId = dataset?.regions.find((r) => r.code === EU_REGION_CODE)?.id;
@@ -137,7 +141,7 @@
 {:else if error}
 	<div class="h-[380px] flex items-center justify-center text-red-500">{error}</div>
 {:else if !dataset}
-	<div class="h-[380px] flex items-center justify-center text-gray-500">No data available</div>
+	<div class="h-[380px] flex items-center justify-center text-gray-500">{t.noDataAvailable}</div>
 {:else}
 	<div bind:clientWidth={containerWidth}>
 		<div class="mb-3 flex flex-wrap gap-4 items-center">
@@ -149,15 +153,15 @@
 			<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
 				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
 					<div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						{dataset.latestYear} actual
+						{t.cpActual(dataset.latestYear)}
 					</div>
 					<div class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">
-						{fmtPct(single.current ?? 0, 1)}
+						{f.pct(single.current ?? 0, 1)}
 					</div>
 				</div>
 				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
 					<div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						Gap to {TARGETS[0].year} ({fmtPct(TARGETS[0].value)})
+						{t.cpGapTo(TARGETS[0].year, f.pct(TARGETS[0].value))}
 					</div>
 					<div
 						class="text-2xl font-bold tabular-nums"
@@ -165,12 +169,12 @@
 						class:text-gray-900={singleStats.gap2030 > 0}
 						class:dark:text-white={singleStats.gap2030 > 0}
 					>
-						{fmtSignedPP(-singleStats.gap2030)}
+						{f.signedPP(-singleStats.gap2030)}
 					</div>
 				</div>
 				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
 					<div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						Gap to {END} ({fmtPct(TARGETS[TARGETS.length - 1].value)})
+						{t.cpGapTo(END, f.pct(TARGETS[TARGETS.length - 1].value))}
 					</div>
 					<div
 						class="text-2xl font-bold tabular-nums"
@@ -178,15 +182,15 @@
 						class:text-gray-900={singleStats.gapEnd > 0}
 						class:dark:text-white={singleStats.gapEnd > 0}
 					>
-						{fmtSignedPP(-singleStats.gapEnd)}
+						{f.signedPP(-singleStats.gapEnd)}
 					</div>
 				</div>
 				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
 					<div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						Needed to {END}
+						{t.cpNeeded(END)}
 					</div>
 					<div class="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">
-						{singleStats.reqPerYear > 0 ? `${singleStats.reqPerYear.toFixed(2)} pp/yr` : '—'}
+						{singleStats.reqPerYear > 0 ? t.cpPerYr(f.num(singleStats.reqPerYear, 2)) : '—'}
 					</div>
 				</div>
 			</div>
@@ -295,8 +299,8 @@
 						paint-order="stroke fill"
 					>
 						{met
-							? `${tg.year} met`
-							: targetAnnotation(tg.year, tg.value, tg.sourceKey, isMobile)}
+							? t.cpMet(tg.year)
+							: targetAnnotation(tg.year, tg.value, tg.sourceKey, isMobile, lang)}
 					</text>
 				{/each}
 
@@ -312,7 +316,7 @@
 						stroke-linejoin="round"
 						paint-order="stroke fill"
 					>
-						{targetAnnotation(p.year, p.value, p.ref.sourceKey, isMobile)}
+						{targetAnnotation(p.year, p.value, p.ref.sourceKey, isMobile, lang)}
 					</text>
 				{/each}
 
@@ -344,7 +348,7 @@
 						text-anchor="middle"
 						class="text-sm fill-gray-400"
 					>
-						No data
+						{t.noData}
 					</text>
 				{/if}
 			</svelte:fragment>

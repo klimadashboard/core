@@ -8,16 +8,19 @@ import {
 	latestValue,
 	type ElectrificationDataset
 } from '$lib/utils/electrification';
+import { strings, formatters, toLang } from '$lib/utils/electrification.i18n';
 
-export function getTableColumns(): TableColumn[] {
+export function getTableColumns(lang: string = 'en'): TableColumn[] {
+	const t = strings(lang);
+	const f = formatters(toLang(lang));
 	return [
-		{ key: 'country', label: 'Country', align: 'left' },
-		{ key: 'year', label: 'Year', align: 'right' },
+		{ key: 'country', label: t.colCountry, align: 'left' },
+		{ key: 'year', label: t.colYear, align: 'right' },
 		{
 			key: 'value',
-			label: 'Electricity share of TFC (%)',
+			label: t.colShareTfc,
 			align: 'right',
-			format: (v) => (typeof v === 'number' ? v.toFixed(1) : '–')
+			format: (v) => (typeof v === 'number' ? f.num(v, 1) : '–')
 		}
 	];
 }
@@ -36,7 +39,15 @@ function recentAnnualPace(hist: [number, number][], latestYear: number): number 
 	return (curVal - pastVal) / (curYear - pastYear);
 }
 
-export function computeHeadline(dataset: ElectrificationDataset, selectedIds: string[]): string {
+export function computeHeadline(
+	dataset: ElectrificationDataset,
+	selectedIds: string[],
+	lang: string = 'en'
+): string {
+	const t = strings(lang);
+	const f = formatters(toLang(lang));
+	const y30 = TARGETS[0].year;
+	const y40 = TARGETS[TARGETS.length - 1].year;
 	const t2030 = TARGETS[0].value;
 	const t2040 = TARGETS[TARGETS.length - 1].value;
 
@@ -48,50 +59,40 @@ export function computeHeadline(dataset: ElectrificationDataset, selectedIds: st
 		})
 		.filter((p): p is { name: string; current: number } => p != null);
 
-	if (!paths.length) {
-		return 'Track country progress toward the EU electrification targets';
-	}
+	if (!paths.length) return t.hlCpFallback;
 
 	if (paths.length > 1) {
 		const sorted = [...paths].sort((a, b) => b.current - a.current);
 		const leader = sorted[0];
 		const laggard = sorted[sorted.length - 1];
-		if (leader.name === laggard.name) {
-			return `The selected regions are progressing toward the 2030 and 2040 electrification goals`;
-		}
-		return `${leader.name} leads the selected regions at ${leader.current.toFixed(1)}%, while ${laggard.name} trails at ${laggard.current.toFixed(1)}%`;
+		if (leader.name === laggard.name) return t.hlCpMultiSame(y40);
+		return t.hlCpMulti(leader.name, f.pct(leader.current, 1), laggard.name, f.pct(laggard.current, 1));
 	}
 
 	const { name, current } = paths[0];
-	if (current >= t2040) {
-		return `${name} has already surpassed the 2040 electrification target`;
-	}
+	if (current >= t2040) return t.hlCpSurpassed(name, y40);
 
 	const hist = seriesFor(dataset, selectedIds[0], 'total_economy');
 	const pace = recentAnnualPace(hist, dataset.latestYear);
-	const yearsTo2040 = TARGETS[TARGETS.length - 1].year - dataset.latestYear;
+	const yearsTo2040 = y40 - dataset.latestYear;
 	const neededPace = yearsTo2040 > 0 ? (t2040 - current) / yearsTo2040 : Infinity;
 	const onTrack = pace >= neededPace;
 	const met2030 = current >= t2030;
 
-	if (met2030 && onTrack) {
-		return `${name} has already reached its 2030 target and is on track for 2040`;
-	}
-	if (met2030 && !onTrack) {
-		return `${name} has reached its 2030 target, but isn't on track for 2040 yet`;
-	}
-	if (onTrack) {
-		return `${name} is on track to reach the 2030 and 2040 electrification goals`;
-	}
-	return `${name} is not yet on track to reach the 2030 and 2040 electrification goals`;
+	if (met2030 && onTrack) return t.hlCpMetOnTrack(name, y30, y40);
+	if (met2030 && !onTrack) return t.hlCpMetOffTrack(name, y30, y40);
+	if (onTrack) return t.hlCpOnTrack(name, y30, y40);
+	return t.hlCpOffTrack(name, y30, y40);
 }
 
 export function buildChartData(
 	dataset: ElectrificationDataset,
-	selectedIds: string[] = []
+	selectedIds: string[] = [],
+	lang: string = 'en'
 ): ChartData {
 	const eu = dataset.regions.find((r) => r.code === EU_REGION_CODE);
 	const euLatest = eu ? latestValue(dataset, eu.id, 'total_economy') : null;
+	const f = formatters(toLang(lang));
 
 	const rows = dataset.points
 		.filter((p) => p.category === 'total_economy')
@@ -103,19 +104,23 @@ export function buildChartData(
 
 	return {
 		raw: rows,
-		table: { columns: getTableColumns(), rows, filename: 'electrification-country-paths' },
+		table: {
+			columns: getTableColumns(lang),
+			rows,
+			filename: 'electrification-country-paths'
+		},
 		placeholders: {
-			euLatest: euLatest != null ? euLatest.toFixed(1) : '–',
+			euLatest: euLatest != null ? f.num(euLatest, 1) : '–',
 			latestYear: dataset.latestYear,
-			headline: computeHeadline(dataset, selectedIds)
+			headline: computeHeadline(dataset, selectedIds, lang)
 		},
 		meta: { source: SOURCE, updateDate: dataset.updateDate }
 	};
 }
 
-export async function fetchChartData({ fetch }: ChartFetchParams): Promise<ChartData | null> {
-	const dataset = await fetchElectrificationDataset(fetch);
+export async function fetchChartData({ fetch, lang }: ChartFetchParams): Promise<ChartData | null> {
+	const dataset = await fetchElectrificationDataset(fetch, lang);
 	if (!dataset.points.length) return null;
 	const euId = dataset.regions.find((r) => r.code === EU_REGION_CODE)?.id;
-	return buildChartData(dataset, euId ? [euId] : []);
+	return buildChartData(dataset, euId ? [euId] : [], lang);
 }

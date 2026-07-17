@@ -1,22 +1,27 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import Chart from '$lib/components/charts/index.svelte';
 	import {
 		fetchElectrificationDataset,
 		EU_REGION_CODE,
 		TARGETS,
 		SOURCES,
-		DISPLAY_START,
-		SOURCE,
-		SMALL_COUNTRY_NOTE,
-		fmtPct
+		DISPLAY_START
 	} from '$lib/utils/electrification';
+	import { strings, formatters, sectorLabel, toLang } from '$lib/utils/electrification.i18n';
+
+	$: lang = toLang($page.data.language?.code);
+	$: t = strings(lang);
+	$: f = formatters(lang);
 
 	let euNow: number | null = null;
 	let latestYear: number | null = null;
 
-	async function loadLede() {
+	// Region names aren't used in the lede, but fetching with the active locale keeps this
+	// request on the same cache key as the charts'.
+	async function loadLede(l: string) {
 		try {
-			const dataset = await fetchElectrificationDataset(fetch);
+			const dataset = await fetchElectrificationDataset(fetch, l);
 			const eu = dataset.regions.find((r) => r.code === EU_REGION_CODE);
 			const point = eu
 				? dataset.points.find(
@@ -30,54 +35,45 @@
 			console.error('[electrification landing] lede load failed', e);
 		}
 	}
-	loadLede();
+	$: loadLede(lang);
 
 	const t2030 = TARGETS[0];
 	const t2040 = TARGETS[TARGETS.length - 1];
+	$: t30Label = t.byYear(f.pct(t2030.value), t2030.year);
+	$: t40Label = t.byYear(f.pct(t2040.value), t2040.year);
 
 	// charts collection ids (custom_sveltestring matches the folder under charts/custom/)
 	const COUNTRY_PATHS_CHART_ID = 'e75c3605-79c0-4332-90e3-ca1481455b68';
 	const DISTANCE_TO_TARGET_CHART_ID = '00296ce1-a2bb-4521-9044-6834d73b57c4';
 	const BY_SECTOR_CHART_ID = 'ca7a9f2f-5d0f-49fe-afab-8b8924d580cf';
 
+	// Eurostat nrg_bal codes behind each sector shown in the methodology table.
 	const METHOD_SECTORS = [
-		{ label: 'Total final consumption', color: '#64AE9C', nrgBal: 'FC_E' },
-		{ label: 'Industry', color: '#373949', nrgBal: 'FC_IND_E' },
-		{ label: 'Residential buildings', color: '#4880A8', nrgBal: 'FC_OTH_HH_E' },
-		{ label: 'Commercial & services', color: '#2171B5', nrgBal: 'FC_OTH_CP_E' },
-		{ label: 'Transport', color: '#F5AF4A', nrgBal: 'FC_TRA_E' }
+		{ key: 'total_economy', color: '#64AE9C', nrgBal: 'FC_E' },
+		{ key: 'industry', color: '#373949', nrgBal: 'FC_IND_E' },
+		{ key: 'residential', color: '#4880A8', nrgBal: 'FC_OTH_HH_E' },
+		{ key: 'services', color: '#2171B5', nrgBal: 'FC_OTH_CP_E' },
+		{ key: 'transport', color: '#F5AF4A', nrgBal: 'FC_TRA_E' }
 	];
 </script>
 
 <svelte:head>
-	<title>EU Electrification Tracker | Klimadashboard</title>
-	<meta
-		name="description"
-		content="Track how the EU and its member states are progressing toward the 32% (2030) and proposed 46% (2040) electrification targets, by country and by sector."
-	/>
+	<title>{t.pageTitle}</title>
+	<meta name="description" content={t.metaDescription} />
 </svelte:head>
 
 <div class="container max-w-6xl mx-auto px-4 py-8 md:py-12">
 	<header class="mb-8 max-w-3xl">
 		<h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight mb-3">
-			How fast is the EU electrifying?
+			{t.headline}
 		</h1>
 		<p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
 			{#if euNow != null && latestYear != null}
-				Electricity now covers
-				<b class="text-gray-900 dark:text-white">{fmtPct(euNow, 1)}</b>
-				of the EU-27's total final energy consumption ({latestYear}).
+				{t.ledeCovers(f.pct(euNow, 1), latestYear)}
 			{:else}
-				Electricity covers a growing share of the EU-27's total final energy consumption.
+				{t.ledeCoversFallback}
 			{/if}
-			In order to cut dependence on oil and gas, the European Commission proposed a target of
-			<b class="text-gray-900 dark:text-white">{fmtPct(t2030.value)} by {t2030.year}</b>
-			as part of the Affordable Energy Action Plan on 26 February 2025. On 17 July 2026 the European
-			Commission proposed a new target of
-			<b class="text-gray-900 dark:text-white">{fmtPct(t2040.value)} by {t2040.year}</b>. These
-			targets are non-binding, but could be integrated into legislation. Here we track how each EU
-			country and sector is progressing toward the proposed {fmtPct(t2030.value)} by {t2030.year} and
-			{fmtPct(t2040.value)} by {t2040.year} electrification targets.
+			{t.ledeBody(t30Label, t40Label)}
 		</p>
 	</header>
 
@@ -88,27 +84,22 @@
 	</div>
 
 	<section class="mt-10">
-		<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Data &amp; methodology</h2>
+		<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">{t.methHeading}</h2>
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
 			<div>
-				<h3 class="font-bold text-gray-900 dark:text-white mb-1">Data source</h3>
+				<h3 class="font-bold text-gray-900 dark:text-white mb-1">{t.dataH}</h3>
 				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-					Eurostat, Complete energy balances (<code>nrg_bal_c</code>), annual. Charts show {DISPLAY_START}–{latestYear ??
-						'2024'}; the series reaches back to 1990 but early-1990s data is unreliable for several
-					states. For each sector, the electrification rate = final electricity consumption (product
-					<code>E7000</code>) ÷ that sector's total final energy consumption (product
-					<code>TOTAL</code>). The EU-27 aggregate is Σ member-state electricity ÷ Σ member-state
-					total.
+					{@html t.dataB(DISPLAY_START, latestYear ?? 2024)}
 				</p>
 			</div>
 
 			<div>
-				<h3 class="font-bold text-gray-900 dark:text-white mb-1">Sectors</h3>
+				<h3 class="font-bold text-gray-900 dark:text-white mb-1">{t.sectorsH}</h3>
 				<table class="w-full text-sm">
 					<thead>
 						<tr class="text-left text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">
-							<th class="pb-1 font-semibold">Sector</th>
-							<th class="pb-1 font-semibold">Eurostat code</th>
+							<th class="pb-1 font-semibold">{t.colSector}</th>
+							<th class="pb-1 font-semibold">{t.colCode}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -118,12 +109,10 @@
 									<span class="inline-flex items-center gap-2">
 										<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:{s.color}"
 										></span>
-										{s.label}
+										{sectorLabel(s.key, lang)}
 									</span>
 								</td>
-								<td class="py-1.5 text-gray-600 dark:text-gray-300"
-									><code>{s.nrgBal}</code></td
-								>
+								<td class="py-1.5 text-gray-600 dark:text-gray-300"><code>{s.nrgBal}</code></td>
 							</tr>
 						{/each}
 					</tbody>
@@ -131,77 +120,39 @@
 			</div>
 
 			<div id="targets" class="scroll-mt-24">
-				<h3 class="font-bold text-gray-900 dark:text-white mb-1">EU targets</h3>
+				<h3 class="font-bold text-gray-900 dark:text-white mb-1">{t.targetsH}</h3>
 				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-					<b class="text-gray-900 dark:text-white">32% by 2030</b> — the electrification key performance
-					indicator of the EU Clean Industrial Deal and the Affordable Energy Action Plan
-					(COM/2025/79), published <b class="text-gray-900 dark:text-white">26 February 2025</b>,
-					against a 2024 baseline of 23.4%
-					(<a class="underline underline-offset-2" href={SOURCES.ec.url} target="_blank" rel="noopener"
-						>European Commission</a
-					>).
-					<b class="text-gray-900 dark:text-white">46% by 2040 (proposed)</b> — the figure reported from
-					the draft Electrification Action Plan, which the Commission published on 17 July 2026
-					(<a
-						class="underline underline-offset-2"
-						href={SOURCES.eap.url}
-						target="_blank"
-						rel="noopener">Reuters, 16 July 2026</a
-					>). Treat it as provisional: an earlier draft left the target blank, and the Commission's own
-					electrification page still lists only the 2030 reference. It will be reconciled against the
-					final text.
+					{@html t.targetsB(t30Label, t40Label, SOURCES.ec.url, SOURCES.eap.url)}
 				</p>
 			</div>
 
 			<div id="benchmarks" class="scroll-mt-24">
-				<h3 class="font-bold text-gray-900 dark:text-white mb-1">Contextual benchmarks</h3>
+				<h3 class="font-bold text-gray-900 dark:text-white mb-1">{t.benchmarksH}</h3>
 				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-					Optional comparison lines, off by default.
-					<b class="text-gray-900 dark:text-white">COP31 — 35% by 2035</b>: a voluntary
-					<b class="text-gray-900 dark:text-white">global</b> electrification rate announced by the COP31
-					Presidency in June 2026, up from just over 20% worldwide
-					(<a
-						class="underline underline-offset-2"
-						href={SOURCES.cop31.url}
-						target="_blank"
-						rel="noopener">UNFCCC</a
-					>).
-					<b class="text-gray-900 dark:text-white">Climate Advisory Board — 50% by 2040, 60% by 2050</b
-					>: the electrification rates reached in the pathways that deliver a 90–95% emissions
-					reduction in the 2040 advice of the European Scientific Advisory Board on Climate Change
-					(ESABCC), Indicator E5. Scientific advice, not a policy target
-					(<a
-						class="underline underline-offset-2"
-						href={SOURCES.esabcc.url}
-						target="_blank"
-						rel="noopener">European Scientific Advisory Board on Climate Change</a
-					>).
+					{@html t.benchmarksB(SOURCES.cop31.url, SOURCES.esabcc.url)}
 				</p>
 			</div>
 
 			<div>
-				<h3 class="font-bold text-gray-900 dark:text-white mb-1">Notes &amp; caveats</h3>
+				<h3 class="font-bold text-gray-900 dark:text-white mb-1">{t.caveatsH}</h3>
 				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-					Transport is shown as the raw electricity/TFC ratio (~2%) and excludes the Renewable Energy
-					Directive multipliers that raise the Commission's headline figure. Pre-2004 EU-27 is a
-					counterfactual sum of today's 27 members. {SMALL_COUNTRY_NOTE} All figures are illustrative,
-					not forecasts.
+					{t.caveatsB(t.smallNote)}
 				</p>
 			</div>
 		</div>
 	</section>
 
 	<footer class="mt-8 text-xs text-gray-500 dark:text-gray-400 max-w-[90ch] leading-relaxed">
-		<p>Data: {SOURCE}.</p>
+		<p>{t.footerData(t.sourceName)}</p>
 		<p class="mt-1">
-			Inspired by Jan Rosenow —
+			{t.footerInspired}
 			<a
 				class="text-economy font-semibold underline underline-offset-2"
 				href="https://janrosenow.substack.com/p/is-electrification-happening-fast"
 				target="_blank"
 				rel="noopener"
 			>
-				Is electrification happening fast enough?
+				{t.footerLink}
 			</a>
 		</p>
 	</footer>
