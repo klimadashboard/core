@@ -62,7 +62,12 @@ export const SOURCES: Record<SourceKey, SourceRef> = {
 		anchor: '#targets'
 	},
 	eap: {
-		url: 'https://www.reuters.com/business/energy/eu-drafts-plan-double-electrification-rate-cut-oil-gas-use-2026-07-16/',
+		// PROVISIONAL. The 46% target was announced at the Commission's press conference on
+		// 17 Jul 2026; this is the EbS listing for that day. It is date-filtered and will show a
+		// different day's items tomorrow — replace it with the published Electrification Action
+		// Plan (COM(2026) 595, expected on EUR-Lex / the press corner) as soon as that is up.
+		// At time of writing no public document states the 46% figure in text.
+		url: 'https://audiovisual.ec.europa.eu/en/ebs/grid?ebs=yes&ebsplus=yes&date=20260717',
 		anchor: '#targets'
 	},
 	cop31: {

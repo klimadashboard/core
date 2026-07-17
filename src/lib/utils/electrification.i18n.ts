@@ -124,7 +124,7 @@ const en = {
 	proposed: 'proposed',
 	globalRate: 'global',
 	sourceEc: 'European Commission',
-	sourceEap: 'Electrification Action Plan (draft)',
+	sourceEap: 'Electrification Action Plan',
 	sourceCop31: 'COP31 Presidency',
 	sourceEsabcc: 'EU Climate Advisory Board',
 	refCop31: 'COP31 (global)',
@@ -154,7 +154,7 @@ const en = {
 	colCode: 'Eurostat code',
 	targetsH: 'EU targets',
 	targetsB: (t30: string, t40: string, ecUrl: string, eapUrl: string) =>
-		`<b class="text-gray-900 dark:text-white">${t30}</b> — the electrification key performance indicator of the EU Clean Industrial Deal and the Affordable Energy Action Plan (COM/2025/79), published <b class="text-gray-900 dark:text-white">26 February 2025</b>, against a 2024 baseline of 23.4% (<a class="underline underline-offset-2" href="${ecUrl}" target="_blank" rel="noopener">European Commission</a>). <b class="text-gray-900 dark:text-white">${t40} (proposed)</b> — the figure reported from the draft Electrification Action Plan, which the Commission published on 17 July 2026 (<a class="underline underline-offset-2" href="${eapUrl}" target="_blank" rel="noopener">Reuters, 16 July 2026</a>). Treat it as provisional: an earlier draft left the target blank, and the Commission's own electrification page still lists only the 2030 reference. It will be reconciled against the final text.`,
+		`<b class="text-gray-900 dark:text-white">${t30}</b> — the electrification key performance indicator of the EU Clean Industrial Deal and the Affordable Energy Action Plan (COM/2025/79), published <b class="text-gray-900 dark:text-white">26 February 2025</b>, against a 2024 baseline of 23.4% (<a class="underline underline-offset-2" href="${ecUrl}" target="_blank" rel="noopener">European Commission</a>). <b class="text-gray-900 dark:text-white">${t40} (proposed)</b> — announced on <b class="text-gray-900 dark:text-white">17 July 2026</b> with the Electrification Action Plan. Source: <a class="underline underline-offset-2" href="${eapUrl}" target="_blank" rel="noopener">Press conference by Teresa RIBERA, Executive Vice-President of the European Commission for a Clean, Just and Competitive Transition, Wopke HOEKSTRA, European Commissioner for Climate, Net Zero and Clean Growth and Dan JØRGENSEN, European Commissioner for Energy and Housing</a>. The figure is not yet stated in a published Commission document; this reference will be updated to the plan itself once it is available.`,
 	benchmarksH: 'Contextual benchmarks',
 	benchmarksB: (cop31Url: string, esabccUrl: string) =>
 		`Optional comparison lines, off by default. <b class="text-gray-900 dark:text-white">COP31 — 35% by 2035</b>: a voluntary <b class="text-gray-900 dark:text-white">global</b> electrification rate announced by the COP31 Presidency in June 2026, up from just over 20% worldwide (<a class="underline underline-offset-2" href="${cop31Url}" target="_blank" rel="noopener">UNFCCC</a>). <b class="text-gray-900 dark:text-white">Climate Advisory Board — 50% by 2040, 60% by 2050</b>: the electrification rates reached in the pathways that deliver a 90–95% emissions reduction in the 2040 advice of the European Scientific Advisory Board on Climate Change (ESABCC), Indicator E5. Scientific advice, not a policy target (<a class="underline underline-offset-2" href="${esabccUrl}" target="_blank" rel="noopener">European Scientific Advisory Board on Climate Change</a>).`,
@@ -249,7 +249,7 @@ const de: Strings = {
 	proposed: 'Vorschlag',
 	globalRate: 'global',
 	sourceEc: 'Europäische Kommission',
-	sourceEap: 'Electrification Action Plan (Entwurf)',
+	sourceEap: 'Electrification Action Plan',
 	sourceCop31: 'COP31-Präsidentschaft',
 	sourceEsabcc: 'EU-Klimabeirat',
 	refCop31: 'COP31 (global)',
@@ -281,7 +281,7 @@ const de: Strings = {
 	targetsH: 'EU-Ziele',
 	// New copy — v1's targetsB predates the 46 % proposal and still says 50 %.
 	targetsB: (t30, t40, ecUrl, eapUrl) =>
-		`<b class="text-gray-900 dark:text-white">${t30}</b> — der Elektrifizierungs-Leitindikator des <b>Clean Industrial Deal</b> und des <b>Affordable Energy Action Plan</b> der EU (COM/2025/79), veröffentlicht am <b class="text-gray-900 dark:text-white">26. Februar 2025</b>, gegenüber einem Basiswert von 23,4 % im Jahr 2024 (<a class="underline underline-offset-2" href="${ecUrl}" target="_blank" rel="noopener">Europäische Kommission</a>). <b class="text-gray-900 dark:text-white">${t40} (Vorschlag)</b> — der Wert aus dem Entwurf des Electrification Action Plan, den die Kommission am 17. Juli 2026 veröffentlicht hat (<a class="underline underline-offset-2" href="${eapUrl}" target="_blank" rel="noopener">Reuters, 16. Juli 2026</a>). Der Wert ist als vorläufig zu behandeln: Ein früherer Entwurf ließ das Ziel offen, und die Elektrifizierungs-Seite der Kommission nennt weiterhin nur den 2030-Richtwert. Er wird mit der endgültigen Fassung abgeglichen.`,
+		`<b class="text-gray-900 dark:text-white">${t30}</b> — der Elektrifizierungs-Leitindikator des <b>Clean Industrial Deal</b> und des <b>Affordable Energy Action Plan</b> der EU (COM/2025/79), veröffentlicht am <b class="text-gray-900 dark:text-white">26. Februar 2025</b>, gegenüber einem Basiswert von 23,4 % im Jahr 2024 (<a class="underline underline-offset-2" href="${ecUrl}" target="_blank" rel="noopener">Europäische Kommission</a>). <b class="text-gray-900 dark:text-white">${t40} (Vorschlag)</b> — angekündigt am <b class="text-gray-900 dark:text-white">17. Juli 2026</b> mit dem Electrification Action Plan. Quelle: <a class="underline underline-offset-2" href="${eapUrl}" target="_blank" rel="noopener">Press conference by Teresa RIBERA, Executive Vice-President of the European Commission for a Clean, Just and Competitive Transition, Wopke HOEKSTRA, European Commissioner for Climate, Net Zero and Clean Growth and Dan JØRGENSEN, European Commissioner for Energy and Housing</a>. Der Wert ist bislang in keinem veröffentlichten Dokument der Kommission genannt; dieser Beleg wird auf den Plan selbst aktualisiert, sobald er vorliegt.`,
 	benchmarksH: 'Vergleichswerte',
 	benchmarksB: (cop31Url, esabccUrl) =>
 		`Optionale Vergleichslinien, standardmäßig ausgeblendet. <b class="text-gray-900 dark:text-white">COP31 — 35 % bis 2035</b>: eine freiwillige <b class="text-gray-900 dark:text-white">globale</b> Elektrifizierungsquote, die die COP31-Präsidentschaft im Juni 2026 angekündigt hat, ausgehend von etwas über 20 % weltweit (<a class="underline underline-offset-2" href="${cop31Url}" target="_blank" rel="noopener">UNFCCC</a>). <b class="text-gray-900 dark:text-white">EU-Klimabeirat — 50 % bis 2040, 60 % bis 2050</b>: die Elektrifizierungsquoten in jenen Pfaden, die im 2040-Gutachten des Europäischen Wissenschaftlichen Beirats zum Klimawandel (ESABCC) eine Emissionsminderung von 90–95 % erreichen (Indikator E5). Wissenschaftliche Beratung, kein politisches Ziel (<a class="underline underline-offset-2" href="${esabccUrl}" target="_blank" rel="noopener">Europäischer Wissenschaftlicher Beirat zum Klimawandel</a>).`,
