@@ -318,8 +318,12 @@
 									<line x1="0" x2={fiw} y1={fy(ft)} y2={fy(ft)} stroke="currentColor" class="text-gray-200 dark:text-gray-700" />
 									<text x="-6" y={fy(ft)} dy="0.32em" text-anchor="end" class="text-[10px] fill-gray-500 dark:fill-gray-400">{fmtPct(ft)}</text>
 								{/each}
-								{#each [DISPLAY_START, dataset.latestYear] as xt}
-									<text x={fx(xt)} y={fih + 16} text-anchor="middle" class="text-[10px] fill-gray-500 dark:fill-gray-400">{xt}</text>
+								<!-- The last label sits at fiw, i.e. fm.left + fiw = 312 of a 320 viewBox. This
+								     svg has no overflow-visible, so a centred label would be clipped by the
+								     viewBox; anchor it to the end to keep it inside. Same trick as
+								     electrificationCountryPaths. -->
+								{#each [DISPLAY_START, dataset.latestYear] as xt, i}
+									<text x={fx(xt)} y={fih + 16} text-anchor={i === 0 ? 'middle' : 'end'} class="text-[10px] fill-gray-500 dark:fill-gray-400">{xt}</text>
 								{/each}
 
 								{#if !hasData}
