@@ -62,12 +62,11 @@ export const SOURCES: Record<SourceKey, SourceRef> = {
 		anchor: '#targets'
 	},
 	eap: {
-		// PROVISIONAL. The 46% target was announced at the Commission's press conference on
-		// 17 Jul 2026; this is the EbS listing for that day. It is date-filtered and will show a
-		// different day's items tomorrow — replace it with the published Electrification Action
-		// Plan (COM(2026) 595, expected on EUR-Lex / the press corner) as soon as that is up.
-		// At time of writing no public document states the 46% figure in text.
-		url: 'https://audiovisual.ec.europa.eu/en/ebs/grid?ebs=yes&ebsplus=yes&date=20260717',
+		// Electrification Action Plan, COM(2026) 595, adopted Brussels 17.7.2026. Action 1 states
+		// the target verbatim: "An indicative electrification target of 46% by 2040 (electricity
+		// share in final energy consumption)" — the same metric this tracker plots. The document
+		// never uses the word "binding".
+		url: 'https://energy.ec.europa.eu/document/download/0ac29166-0bf1-4174-98d9-50606d660025_en?filename=COM_2026_595_1_EN_ACT_part1_v7_0.pdf',
 		anchor: '#targets'
 	},
 	cop31: {
