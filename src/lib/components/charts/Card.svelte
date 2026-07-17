@@ -605,11 +605,17 @@
 				</div>
 
 				<!-- Table Tab -->
+				<!-- Tab panels stay in the DOM while hidden, and the table isn't virtualised, so an
+				     inactive panel can hold thousands of rows. handleImage() clones contentEl and
+				     inlines computed styles per node, so those hidden rows are pure cost — invisible
+				     in the output but paid for on every export. Tag them so snapdom's `filter` skips
+				     them. Value must be truthy: the filter tests dataset.shareIgnore, and "" is falsy. -->
 				<div
 					id="tabpanel-{chart.id}-table"
 					role="tabpanel"
 					aria-labelledby="tab-{chart.id}-table"
 					hidden={activeTab !== 'table'}
+					data-share-ignore={activeTab !== 'table' ? 'true' : undefined}
 				>
 					{#if chartData?.table}
 						<Table
@@ -627,6 +633,7 @@
 					role="tabpanel"
 					aria-labelledby="tab-{chart.id}-text"
 					hidden={activeTab !== 'text'}
+					data-share-ignore={activeTab !== 'text' ? 'true' : undefined}
 					class="overflow-y-auto"
 					style="max-height: {textPanelMaxHeight}px;"
 				>
