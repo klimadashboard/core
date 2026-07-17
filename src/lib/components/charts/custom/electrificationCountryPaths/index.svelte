@@ -6,12 +6,18 @@
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
 	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
 	import CountryPicker from '$lib/components/electrification/CountryPicker.svelte';
+	import TargetToggles from '$lib/components/electrification/TargetToggles.svelte';
+	import TargetSources from '$lib/components/electrification/TargetSources.svelte';
 	import {
 		fetchElectrificationDataset,
 		seriesFor,
 		latestValue,
 		countryColor,
 		TARGETS,
+		REFERENCE_TARGETS,
+		maxTargetYear,
+		maxTargetValue,
+		targetAnnotation,
 		DISPLAY_START,
 		EU_REGION_CODE,
 		fmtPct,
@@ -24,6 +30,18 @@
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
 	const END = TARGETS[TARGETS.length - 1].year; // 2040
+
+	/** Contextual benchmarks, off by default. */
+	let refIds: string[] = [];
+	$: visibleRefs = REFERENCE_TARGETS.filter((r) => refIds.includes(r.id));
+	$: refPoints = visibleRefs.flatMap((r) => r.points.map((p) => ({ ...p, ref: r })));
+	// Benchmarks can reach past the EU's 2040 horizon (the Advisory Board's 2050 point), so the
+	// x-domain follows the furthest visible target. Note this compresses the 2000-2024 history.
+	$: domainEnd = maxTargetYear(visibleRefs);
+	// yMax must clear the highest visible target plus room for its label, which is drawn 12px
+	// above the dot. Chart applies .nice() on top of this.
+	$: yMax = Math.max(58, Math.ceil((maxTargetValue(visibleRefs) + 5) / 5) * 5);
+	$: forceTicks = [...new Set([DISPLAY_START, dataset?.latestYear ?? DISPLAY_START, END, domainEnd])];
 
 	let dataset: ElectrificationDataset | null = null;
 	let loading = true;
@@ -83,7 +101,7 @@
 
 	$: flatData = [
 		{ year: DISPLAY_START },
-		{ year: END },
+		{ year: domainEnd },
 		...paths.flatMap((p) => p.hist.map(([year, value]) => ({ year, value })))
 	];
 
@@ -122,8 +140,9 @@
 	<div class="h-[380px] flex items-center justify-center text-gray-500">No data available</div>
 {:else}
 	<div bind:clientWidth={containerWidth}>
-		<div class="mb-3">
+		<div class="mb-3 flex flex-wrap gap-4 items-center">
 			<CountryPicker regions={dataset.regions} bind:selected fallbackId={euId} />
+			<TargetToggles bind:selected={refIds} />
 		</div>
 
 		{#if single && singleStats}
@@ -180,19 +199,19 @@
 			xType="linear"
 			height={380}
 			yMin={0}
-			yMax={58}
+			{yMax}
 			margin={chartMargin}
 		>
 			<svelte:fragment slot="default" let:xScale let:yScale let:innerWidth let:innerHeight>
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
 				<AxisX
 					{xScale}
-					xDomain={[DISPLAY_START, END]}
+					xDomain={[DISPLAY_START, domainEnd]}
 					{innerWidth}
 					{innerHeight}
 					format={(v) => String(Math.round(v))}
 					tickCount={5}
-					forceTicks={[DISPLAY_START, dataset.latestYear, END]}
+					{forceTicks}
 				/>
 
 				<!-- "now" divider -->
@@ -243,16 +262,31 @@
 					/>
 				{/each}
 
+				<!-- benchmark markers: squares, so they're told apart from the EU target dots by
+				     shape and not colour alone -->
+				{#each refPoints as p (`${p.ref.id}-${p.year}`)}
+					<rect
+						x={xScale(p.year) - 5}
+						y={yScale(p.value) - 5}
+						width="10"
+						height="10"
+						fill="white"
+						stroke={p.ref.color}
+						stroke-width="2.2"
+					/>
+				{/each}
+
 				<!-- all text labels last, on top of every line/dot, with a white halo for legibility.
-				     The last target sits at the right edge of the plot, so it's right-anchored
-				     (text flows inward) instead of center-anchored — no extra right margin needed. -->
-				{#each TARGETS as tg, i (tg.year)}
+				     A target sitting at the right edge of the plot is right-anchored (text flows
+				     inward) instead of center-anchored — no extra right margin needed. Which target
+				     that is depends on the visible benchmarks, so compare against domainEnd rather
+				     than assuming it's the last EU target. -->
+				{#each TARGETS as tg (tg.year)}
 					{@const met = single ? (single.current ?? 0) >= tg.value : false}
-					{@const isLast = i === TARGETS.length - 1}
 					<text
 						x={xScale(tg.year)}
 						y={yScale(tg.value) - 12}
-						text-anchor={isLast ? 'end' : 'middle'}
+						text-anchor={tg.year === domainEnd ? 'end' : 'middle'}
 						class="text-xs font-bold"
 						fill={met ? '#64AE9C' : '#F5AF4A'}
 						stroke="white"
@@ -260,7 +294,25 @@
 						stroke-linejoin="round"
 						paint-order="stroke fill"
 					>
-						{met ? `${tg.year} met` : isMobile ? fmtPct(tg.value) : `${tg.year} · ${fmtPct(tg.value)}`}
+						{met
+							? `${tg.year} met`
+							: targetAnnotation(tg.year, tg.value, tg.sourceKey, isMobile)}
+					</text>
+				{/each}
+
+				{#each refPoints as p (`${p.ref.id}-${p.year}`)}
+					<text
+						x={xScale(p.year)}
+						y={yScale(p.value) - 12}
+						text-anchor={p.year === domainEnd ? 'end' : 'middle'}
+						class="text-xs font-bold"
+						fill={p.ref.color}
+						stroke="white"
+						stroke-width="3"
+						stroke-linejoin="round"
+						paint-order="stroke fill"
+					>
+						{targetAnnotation(p.year, p.value, p.ref.sourceKey, isMobile)}
 					</text>
 				{/each}
 
@@ -297,5 +349,7 @@
 				{/if}
 			</svelte:fragment>
 		</Chart>
+
+		<TargetSources refs={visibleRefs} />
 	</div>
 {/if}

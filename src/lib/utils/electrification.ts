@@ -43,11 +43,131 @@ export const SMALL_COUNTRY_NOTE =
 /** Charts default to this start year; early-1990s data is unreliable for several states. */
 export const DISPLAY_START = 2000;
 
-/** Proposed EU electrification targets, sorted by year. Value is a percentage (0-100). */
-export const TARGETS = [
-	{ year: 2030, value: 32 },
-	{ year: 2040, value: 50 }
+export type SourceKey = 'ec' | 'eap' | 'cop31' | 'esabcc';
+
+export interface SourceRef {
+	label: string;
+	/** Tag appended to chart annotations, e.g. "2030 · 32% (EU)". Keep it very short. */
+	short: string;
+	url: string;
+	/** Anchor into the landing page's "Data & methodology" section. */
+	anchor: string;
+}
+
+export const SOURCES: Record<SourceKey, SourceRef> = {
+	ec: {
+		label: 'European Commission',
+		short: 'EU',
+		url: 'https://energy.ec.europa.eu/topics/eus-energy-system/electrification_en',
+		anchor: '#targets'
+	},
+	eap: {
+		label: 'Electrification Action Plan (draft)',
+		short: 'EU',
+		url: 'https://www.reuters.com/business/energy/eu-drafts-plan-double-electrification-rate-cut-oil-gas-use-2026-07-16/',
+		anchor: '#targets'
+	},
+	cop31: {
+		label: 'COP31 Presidency',
+		short: 'COP31',
+		url: 'https://unfccc.int/news/cop31-presidency-announces-new-targets-on-global-electrification-cutting-waste-resilient-cities',
+		anchor: '#benchmarks'
+	},
+	esabcc: {
+		label: 'EU Climate Advisory Board',
+		short: 'ESABCC',
+		url: 'https://climate-advisory-board.europa.eu/reports-and-publications/towards-eu-climate-neutrality-progress-policy-gaps-and-opportunities',
+		anchor: '#benchmarks'
+	}
+};
+
+/** Annotation text for a target dot/line, e.g. "2030 · 32% (EU)".
+ *  `compact` (mobile) drops the year and source tag — measured, the full form collides and
+ *  overflows the plot below ~500px. */
+export function targetAnnotation(
+	year: number,
+	value: number,
+	sourceKey: SourceKey,
+	compact: boolean
+): string {
+	if (compact) return fmtPct(value);
+	return `${year} · ${fmtPct(value)} (${SOURCES[sourceKey].short})`;
+}
+
+export interface Target {
+	year: number;
+	value: number;
+	/** 'reference' = published EU reference point; 'proposed' = draft figure, final text pending. */
+	status: 'reference' | 'proposed';
+	sourceKey: SourceKey;
+}
+
+/** The EU's own electrification targets, sorted by year. Value is a percentage (0-100).
+ *
+ *  EXACTLY TWO ENTRIES — do not append. Consumers across five files read `TARGETS[0]` as
+ *  "the 2030 target" and `TARGETS[TARGETS.length - 1]` as "the 2040 target"; a third entry
+ *  would silently repoint the country-paths x-domain and mislabel the gap columns.
+ *  Contextual benchmarks from other bodies belong in REFERENCE_TARGETS. */
+export const TARGETS: Target[] = [
+	{ year: 2030, value: 32, status: 'reference', sourceKey: 'ec' },
+	{ year: 2040, value: 46, status: 'proposed', sourceKey: 'eap' }
 ];
+
+export interface ReferenceTarget {
+	id: string;
+	label: string;
+	/** True when the figure is a GLOBAL rate rather than an EU one. Surfaced in the UI:
+	 *  the EU sits above the global baseline, so an unlabelled comparison misleads. */
+	global: boolean;
+	color: string;
+	/** Reference lines must not be told apart by colour alone (a11y). */
+	dash: string;
+	points: { year: number; value: number }[];
+	sourceKey: SourceKey;
+}
+
+/** Contextual benchmarks, off by default, grouped so one toggle drives one source. */
+export const REFERENCE_TARGETS: ReferenceTarget[] = [
+	{
+		id: 'cop31',
+		label: 'COP31 (global)',
+		global: true,
+		color: '#373949',
+		dash: '2 3',
+		points: [{ year: 2035, value: 35 }],
+		sourceKey: 'cop31'
+	},
+	{
+		id: 'esabcc',
+		label: 'Climate Advisory Board',
+		global: false,
+		color: '#B7693D',
+		dash: '7 3',
+		points: [
+			{ year: 2040, value: 50 },
+			{ year: 2050, value: 60 }
+		],
+		sourceKey: 'esabcc'
+	}
+];
+
+/** Latest year any visible target refers to — drives x-domain extension. */
+export function maxTargetYear(refs: ReferenceTarget[]): number {
+	const years = [
+		...TARGETS.map((t) => t.year),
+		...refs.flatMap((r) => r.points.map((p) => p.year))
+	];
+	return Math.max(...years);
+}
+
+/** Highest value any visible target refers to — drives y-domain headroom. */
+export function maxTargetValue(refs: ReferenceTarget[]): number {
+	const values = [
+		...TARGETS.map((t) => t.value),
+		...refs.flatMap((r) => r.points.map((p) => p.value))
+	];
+	return Math.max(...values);
+}
 
 export interface SectorDef {
 	key: string;

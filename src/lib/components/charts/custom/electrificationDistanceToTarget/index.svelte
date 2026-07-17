@@ -4,10 +4,15 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import TargetToggles from '$lib/components/electrification/TargetToggles.svelte';
+	import TargetSources from '$lib/components/electrification/TargetSources.svelte';
 	import {
 		fetchElectrificationDataset,
 		latestValue,
 		TARGETS,
+		REFERENCE_TARGETS,
+		maxTargetValue,
+		targetAnnotation,
 		EU_REGION_CODE,
 		SMALL_COUNTRY_CODES,
 		fmtPct,
@@ -24,6 +29,11 @@
 	let error: string | null = null;
 
 	let sort: 'value' | 'name' = 'value';
+
+	/** Contextual benchmarks, off by default. */
+	let refIds: string[] = [];
+	$: visibleRefs = REFERENCE_TARGETS.filter((r) => refIds.includes(r.id));
+	$: refPoints = visibleRefs.flatMap((r) => r.points.map((p) => ({ ...p, ref: r })));
 
 	async function loadData() {
 		loading = true;
@@ -58,15 +68,20 @@
 	// tight margins instead of full names, rather than shrinking everything via viewBox scale.
 	let width = 900;
 	$: isMobile = width < 500;
+	// Benchmark labels get their own row above the EU ones rather than being nudged sideways
+	// off their own lines, so the top margin has to grow to make room for it.
 	$: margin = isMobile
-		? { top: 26, right: 12, bottom: 26, left: 34 }
-		: { top: 30, right: 16, bottom: 30, left: 130 };
+		? { top: visibleRefs.length ? 44 : 26, right: 12, bottom: 26, left: 34 }
+		: { top: visibleRefs.length ? 48 : 30, right: 16, bottom: 30, left: 130 };
 	const rowH = 24;
 	$: innerWidth = Math.max(10, width - margin.left - margin.right);
 	$: innerHeight = rows.length * rowH;
 	$: height = innerHeight + margin.top + margin.bottom;
-	$: xScale = scaleLinear().domain([0, 55]).range([0, innerWidth]);
-	const xTicks = [0, 10, 20, 30, 40, 50];
+	// This svg is not overflow-visible, so anything past the domain is hard-clipped: the domain
+	// has to cover the highest visible target (60% for the Advisory Board's 2050 point).
+	$: xMax = Math.max(55, Math.ceil((maxTargetValue(visibleRefs) + 5) / 5) * 5);
+	$: xScale = scaleLinear().domain([0, xMax]).range([0, innerWidth]);
+	$: xTicks = Array.from({ length: Math.floor(xMax / 10) + 1 }, (_, i) => i * 10);
 
 	// `rows` (including the display label) is recomputed whenever isMobile changes, not just
 	// once at mount — a plain helper called from the template wouldn't pick up that dependency.
@@ -108,7 +123,11 @@
 				{ label: String(dataset?.latestYear ?? ''), value: fmtPct(hoverRow.value, 1) },
 				...TARGETS.map((t) => ({
 					label: `vs ${t.year} (${fmtPct(t.value)})`,
-					value: fmtSignedPP(hoverRow.value - t.value)
+					value: fmtSignedPP((hoverRow?.value ?? 0) - t.value)
+				})),
+				...refPoints.map((p) => ({
+					label: `vs ${p.ref.label} ${p.year} (${fmtPct(p.value)})`,
+					value: fmtSignedPP((hoverRow?.value ?? 0) - p.value)
 				}))
 			]
 		: [];
@@ -132,6 +151,7 @@
 				activeView={sort}
 				on:itemClick={(e) => (sort = e.detail)}
 			/>
+			<TargetToggles bind:selected={refIds} />
 		</div>
 
 		<div class="relative" bind:clientWidth={width}>
@@ -217,12 +237,40 @@
 							stroke-linejoin="round"
 							paint-order="stroke fill"
 						>
-							{isMobile ? fmtPct(tg.value) : `${tg.year} · ${fmtPct(tg.value)}`}
+							{targetAnnotation(tg.year, tg.value, tg.sourceKey, isMobile)}
+						</text>
+					{/each}
+
+					<!-- Benchmarks get a second label row above the EU one; each keeps its own dash so
+					     the lines aren't told apart by colour alone. -->
+					{#each refPoints as p (`${p.ref.id}-${p.year}`)}
+						<line
+							x1={xScale(p.value)}
+							x2={xScale(p.value)}
+							y1="-28"
+							y2={innerHeight}
+							stroke={p.ref.color}
+							stroke-dasharray={p.ref.dash}
+						/>
+						<text
+							x={xScale(p.value)}
+							y="-32"
+							text-anchor="middle"
+							class="text-xs font-bold"
+							fill={p.ref.color}
+							stroke="white"
+							stroke-width="3"
+							stroke-linejoin="round"
+							paint-order="stroke fill"
+						>
+							{targetAnnotation(p.year, p.value, p.ref.sourceKey, isMobile)}
 						</text>
 					{/each}
 				</g>
 			</svg>
 		</div>
+
+		<TargetSources refs={visibleRefs} />
 
 		{#if hoverRow}
 			<Tooltip visible={true} x={tip.x} y={tip.y} title={hoverRow.name} items={tooltipItems} />

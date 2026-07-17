@@ -4,6 +4,7 @@
 		fetchElectrificationDataset,
 		EU_REGION_CODE,
 		TARGETS,
+		SOURCES,
 		DISPLAY_START,
 		SOURCE,
 		SMALL_COUNTRY_NOTE,
@@ -52,7 +53,7 @@
 	<title>EU Electrification Tracker | Klimadashboard</title>
 	<meta
 		name="description"
-		content="Track how the EU and its member states are progressing toward the proposed 32% (2030) and 50% (2040) electrification targets, by country and by sector."
+		content="Track how the EU and its member states are progressing toward the 32% (2030) and proposed 46% (2040) electrification targets, by country and by sector."
 	/>
 </svelte:head>
 
@@ -69,11 +70,14 @@
 			{:else}
 				Electricity covers a growing share of the EU-27's total final energy consumption.
 			{/if}
-			Tracking how each sector and country is progressing toward the proposed
+			In order to cut dependence on oil and gas, the European Commission proposed a target of
 			<b class="text-gray-900 dark:text-white">{fmtPct(t2030.value)} by {t2030.year}</b>
-			and
-			<b class="text-gray-900 dark:text-white">{fmtPct(t2040.value)} by {t2040.year}</b>
-			electrification targets.
+			as part of the Affordable Energy Action Plan on 26 February 2025. On 17 July 2026 the European
+			Commission proposed a new target of
+			<b class="text-gray-900 dark:text-white">{fmtPct(t2040.value)} by {t2040.year}</b>. These
+			targets are non-binding, but could be integrated into legislation. Here we track how each EU
+			country and sector is progressing toward the proposed {fmtPct(t2030.value)} by {t2030.year} and
+			{fmtPct(t2040.value)} by {t2040.year} electrification targets.
 		</p>
 	</header>
 
@@ -126,16 +130,52 @@
 				</table>
 			</div>
 
-			<div>
-				<h3 class="font-bold text-gray-900 dark:text-white mb-1">Targets</h3>
+			<div id="targets" class="scroll-mt-24">
+				<h3 class="font-bold text-gray-900 dark:text-white mb-1">EU targets</h3>
 				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
 					<b class="text-gray-900 dark:text-white">32% by 2030</b> — the electrification key performance
-					indicator of the EU Clean Industrial Deal and Affordable Energy Action Plan (2025), against
-					a 2024 baseline of 23.4%.
-					<b class="text-gray-900 dark:text-white">50% by 2040</b> — the ambition expected from the
-					forthcoming Electrification Action Plan; the same ~50% level appears in the European
-					Commission's 2040 climate-target impact assessment (rising above 60% by 2050). The 2040
-					figure is provisional and will be updated once the Action Plan is published.
+					indicator of the EU Clean Industrial Deal and the Affordable Energy Action Plan
+					(COM/2025/79), published <b class="text-gray-900 dark:text-white">26 February 2025</b>,
+					against a 2024 baseline of 23.4%
+					(<a class="underline underline-offset-2" href={SOURCES.ec.url} target="_blank" rel="noopener"
+						>European Commission</a
+					>).
+					<b class="text-gray-900 dark:text-white">46% by 2040 (proposed)</b> — the figure reported from
+					the draft Electrification Action Plan, which the Commission published on 17 July 2026
+					(<a
+						class="underline underline-offset-2"
+						href={SOURCES.eap.url}
+						target="_blank"
+						rel="noopener">Reuters, 16 July 2026</a
+					>). Treat it as provisional: an earlier draft left the target blank, and the Commission's own
+					electrification page still lists only the 2030 reference. It will be reconciled against the
+					final text.
+				</p>
+			</div>
+
+			<div id="benchmarks" class="scroll-mt-24">
+				<h3 class="font-bold text-gray-900 dark:text-white mb-1">Contextual benchmarks</h3>
+				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+					Optional comparison lines, off by default.
+					<b class="text-gray-900 dark:text-white">COP31 — 35% by 2035</b>: a voluntary
+					<b class="text-gray-900 dark:text-white">global</b> electrification rate announced by the COP31
+					Presidency in June 2026, up from just over 20% worldwide
+					(<a
+						class="underline underline-offset-2"
+						href={SOURCES.cop31.url}
+						target="_blank"
+						rel="noopener">UNFCCC</a
+					>).
+					<b class="text-gray-900 dark:text-white">Climate Advisory Board — 50% by 2040, 60% by 2050</b
+					>: the electrification rates reached in the pathways that deliver a 90–95% emissions
+					reduction in the 2040 advice of the European Scientific Advisory Board on Climate Change
+					(ESABCC), Indicator E5. Scientific advice, not a policy target
+					(<a
+						class="underline underline-offset-2"
+						href={SOURCES.esabcc.url}
+						target="_blank"
+						rel="noopener">European Scientific Advisory Board on Climate Change</a
+					>).
 				</p>
 			</div>
 
