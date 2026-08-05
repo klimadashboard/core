@@ -8,6 +8,7 @@
 	import { tick } from 'svelte';
 	import { onMount } from 'svelte';
 	import dayjs from 'dayjs';
+	import QRCode from 'qrcode';
 
 	export let data;
 
@@ -16,7 +17,7 @@
 	let success = false;
 	let isValid = false;
 	let error = '';
-	let qrCodeUrl = '';
+	let qrCodeSvg = '';
 
 	$: isValid = name && email && dob && zip && city && amount > 19;
 
@@ -170,7 +171,7 @@
 		return { fee, net, total };
 	}
 
-	function buildEpcQr(amountNum: number, donorName: string, donorDob: string) {
+	async function buildEpcQr(amountNum: number, donorName: string, donorDob: string) {
 		const version = '002'; // 002 oder 003, 002 ist sehr kompatibel
 		const charset = '1'; // 1 = UTF-8
 		const identification = 'SCT'; // SEPA Credit Transfer
@@ -196,7 +197,16 @@
 			info // 12
 		].join('\n');
 
-		return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=svg&data=${encodeURIComponent(epcData)}`;
+		// Rendered locally in the browser — donor data must never leave the device.
+		// EPC/Girocode requires error correction level "M" and a single UTF-8
+		// byte-mode segment (charset "1" above), so the mode is set explicitly
+		// instead of letting the encoder split into mixed modes.
+		return await QRCode.toString([{ data: epcData, mode: 'byte' }], {
+			type: 'svg',
+			errorCorrectionLevel: 'M',
+			margin: 1,
+			color: { dark: '#000000', light: '#ffffff' }
+		});
 	}
 
 	function cleanURL(url: string) {
@@ -405,9 +415,15 @@
 			</div>
 
 			<!-- Right: QR -->
-			{#if qrCodeUrl}
+			{#if qrCodeSvg}
 				<div class="flex flex-col items-center">
-					<img src={qrCodeUrl} alt="Bank transfer QR code" class="w-32 h-32" />
+					<div
+						class="w-32 h-32 bg-white rounded [&>svg]:w-full [&>svg]:h-full"
+						role="img"
+						aria-label="Bank transfer QR code"
+					>
+						{@html qrCodeSvg}
+					</div>
 					<p class="leading-none text-sm text-center mt-2 opacity-70">
 						Scan mit deiner Banking-App
 					</p>
@@ -475,7 +491,7 @@
 						const data: any = result.data || {};
 						success = true;
 						error = '';
-						qrCodeUrl = buildEpcQr(Number(data.amount), data.name, data.dob);
+						qrCodeSvg = await buildEpcQr(Number(data.amount), data.name, data.dob);
 						await update({ reset: false });
 						name = data.name ?? name;
 						dob = data.dob ?? dob;

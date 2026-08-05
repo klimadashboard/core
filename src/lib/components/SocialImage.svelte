@@ -32,7 +32,21 @@
 
 <style>
 	/* no global styles available here, so everything coded by hand */
-	@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;700&display=swap');
+	/* Barlow is self-hosted from /static/fonts — never load it from a font CDN. */
+	@font-face {
+		font-family: 'Barlow';
+		font-style: normal;
+		font-weight: 400;
+		font-display: swap;
+		src: url('/fonts/barlow-v12-latin-regular.woff2') format('woff2');
+	}
+	@font-face {
+		font-family: 'Barlow';
+		font-style: normal;
+		font-weight: 600;
+		font-display: swap;
+		src: url('/fonts/barlow-v12-latin-600.woff2') format('woff2');
+	}
 
 	:global {
 	html,
