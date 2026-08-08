@@ -89,7 +89,7 @@
 	$: parentRegionIds = new Set(region?.parents?.map((p) => p.id) || []);
 
 	// Check if we should show the goal line (only when main region is the only selected region)
-	$: mainRegionCode = region?.codeShort || region?.code_short || 'DE';
+	$: mainRegionCode = region?.code || region?.codeShort || 'DE';
 	$: showGoal = comparisonSeries.length === 1 && comparisonSeries[0]?.code === mainRegionCode;
 
 	// Prepare chart data with unit conversion
@@ -355,7 +355,7 @@
 			// Initialize comparison series with main region
 			comparisonSeries = [
 				{
-					code: region?.codeShort || region?.code_short || 'DE',
+					code: region?.code || region?.codeShort || 'DE',
 					name: region?.name || 'Deutschland',
 					data: mainData,
 					color: colors.dark
@@ -660,7 +660,7 @@
 									label,
 									value:
 										selectedUnit === 'perArea'
-											? `${formatNumber(point.value, 1)} kW/km²`
+											? `${formatNumber(point.value, 1)} ${unitLabel}`
 											: formatPower(point.value, selectedEnergy),
 									color: s.color
 								};
