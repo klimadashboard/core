@@ -3,6 +3,27 @@
 	import { page } from '$app/state';
 	import DonationBanner from './DonationBanner.svelte';
 	import { Button } from '$lib/components/ui';
+
+	let newsletterEmail = '';
+	let newsletterStatus = 'idle'; // idle | loading | success | error
+
+	$: isEn = page.data.language?.code === 'en';
+
+	async function handleNewsletterSubmit(event) {
+		event.preventDefault();
+		if (!newsletterEmail || newsletterStatus === 'loading') return;
+		newsletterStatus = 'loading';
+		try {
+			const res = await fetch('/api/newsletter', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ email: newsletterEmail })
+			});
+			newsletterStatus = res.ok ? 'success' : 'error';
+		} catch {
+			newsletterStatus = 'error';
+		}
+	}
 </script>
 
 <footer class="">
@@ -25,29 +46,49 @@
 		<div class="">
 			<h2 class="font-bold">{page.data.translations.footer1Title}</h2>
 			<p>{page.data.translations.footer1Text}</p>
-			<div class="flex items-center gap-2 flex-wrap mt-2">
-				<form
-					action="https://buttondown.email/api/emails/embed-subscribe/klimadashboard"
-					method="post"
-					target="popupwindow"
-					class="flex group"
-				>
-					<label class="">
-						<span class="hidden">E-Mail</span>
+			<div class="flex flex-col gap-1 mt-2">
+				{#if newsletterStatus === 'success'}
+					<p class="text-sm text-green-700 dark:text-green-400">
+						{isEn
+							? 'Please check your inbox to confirm your subscription.'
+							: 'Bitte bestätige deine Anmeldung über den Link in deinem Postfach.'}
+					</p>
+				{:else}
+					<form on:submit={handleNewsletterSubmit} class="flex group w-full">
+						<label class="flex-1 min-w-0">
+							<span class="hidden">E-Mail</span>
+							<input
+								type="email"
+								name="email"
+								id="bd-email"
+								bind:value={newsletterEmail}
+								required
+								disabled={newsletterStatus === 'loading'}
+								class="input !rounded-r-none !border-gray-100 dark:!border-gray-800 w-full text-black dark:text-white"
+								placeholder="your@email.com"
+							/>
+						</label>
 						<input
-							type="email"
-							name="email"
-							id="bd-email"
-							class="input !rounded-r-none !border-gray-100 dark:!border-gray-800 w-36 text-black dark:text-white"
-							placeholder="your@email.com"
+							type="submit"
+							value={newsletterStatus === 'loading'
+								? isEn
+									? 'Sending…'
+									: 'Sende…'
+								: page.data.translations.signUp}
+							disabled={newsletterStatus === 'loading'}
+							class="button !rounded-l-none !text-sm shrink-0"
 						/>
-					</label>
-					<input
-						type="submit"
-						value={page.data.translations.signUp}
-						class="button !rounded-l-none !text-sm"
-					/>
-				</form>
+					</form>
+					{#if newsletterStatus === 'error'}
+						<p class="text-sm text-red-600 dark:text-red-400">
+							{isEn
+								? 'Something went wrong. Please try again.'
+								: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.'}
+						</p>
+					{/if}
+				{/if}
+			</div>
+			<div class="flex items-center gap-2 flex-wrap mt-2">
 				<Button
 					href="https://instagram.com/klimadashboard{PUBLIC_VERSION == 'de' ? '.de' : ''}"
 					aria-label="Instagram"
