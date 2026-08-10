@@ -105,7 +105,7 @@
 		dispatch('dataAvailable', { hasData });
 	}
 
-	$: source = chartData?.meta?.source || chart.content?.source;
+	$: source = resolveText(chartData?.meta?.source || chart.content?.source, chartData?.placeholders)?.replace(/^<p>([\s\S]*?)<\/p>$/i, '$1').trim();
 	$: updateDate = chartData?.meta?.updateDate;
 	$: note = chartData?.meta?.note;
 
