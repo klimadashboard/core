@@ -108,6 +108,10 @@
 						const update = updateDate && !isNaN(+updateDate)
 							? updateDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 							: '';
+						const fmtPer100k = (/** @type {any} */ val) =>
+							val != null ? val.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : '';
+						const saarland2026 = rawData.find((/** @type {any} */ d) => d.Region === 'Saarland' && d.Year === 2026);
+						const schleswig2026 = rawData.find((/** @type {any} */ d) => d.Region === 'Schleswig-Holstein' && d.Year === 2026);
 						onChartData({
 							raw: rawData,
 							table: {
@@ -128,11 +132,13 @@
 							placeholders: {
 								deaths: latest?.ExpectedValue != null ? latest.ExpectedValue.toLocaleString('de-DE') : '',
 								year: latest?.Year ?? '',
-								update
+								update,
+								deathsSaarland2026per100000: fmtPer100k(saarland2026?.ExpectedValuePer100000),
+								'deathsSchleswig-Holstein2026per100000': fmtPer100k(schleswig2026?.ExpectedValuePer100000)
 							}
 						});
 					}
-					resolve();
+					resolve(undefined);
 				},
 				error: reject
 			});

@@ -76,7 +76,7 @@
 				return show ? content : '';
 			}
 		);
-		result = result.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+		result = result.replace(/\{\{([\w-]+)\}\}/g, (_: string, k: string) => {
 			const v = placeholders[k];
 			return v !== undefined ? String(v) : `{{${k}}}`;
 		});
