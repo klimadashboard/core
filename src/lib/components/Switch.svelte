@@ -125,6 +125,7 @@
 				aria-selected={isActive}
 				tabindex={isActive ? 0 : -1}
 				class="relative z-10 flex items-center gap-2 rounded-full px-2 py-1 text-sm font-medium
+					whitespace-nowrap overflow-hidden
 					transition-colors duration-200 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed
 					focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
 					{isActive
