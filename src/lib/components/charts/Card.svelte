@@ -94,7 +94,10 @@
 		return result;
 	}
 
-	$: resolvedPlaceholders = { ...chartData?.placeholders, regionId: currentRegionId ?? regionId ?? '' };
+	$: resolvedPlaceholders = {
+		...chartData?.placeholders,
+		regionId: currentRegionId ?? regionId ?? ''
+	};
 	$: heading = resolveText(chart.content?.heading, resolvedPlaceholders);
 	$: text = resolveText(chart.content?.text, resolvedPlaceholders);
 	$: methods = resolveText(chart.content?.methods, resolvedPlaceholders);
@@ -160,7 +163,7 @@
 				},
 				{
 					format: 'JPEG',
-					label: `${t(page.data.translations, 'ui.card.imageRaster') || 'Raster'} (JPEG)`,
+					label: `${t(page.data.translations, 'ui.card.imageRaster') || 'Raster'}`,
 					handler: (e: MouseEvent) => handleImage(e, 'jpeg')
 				},
 				{
@@ -279,12 +282,24 @@
 				const cs = window.getComputedStyle(src);
 				const color = cs.getPropertyValue('color');
 				const props = [
-					'fill', 'fill-opacity', 'fill-rule',
-					'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-opacity',
-					'stroke-linecap', 'stroke-linejoin',
+					'fill',
+					'fill-opacity',
+					'fill-rule',
+					'stroke',
+					'stroke-width',
+					'stroke-dasharray',
+					'stroke-dashoffset',
+					'stroke-opacity',
+					'stroke-linecap',
+					'stroke-linejoin',
 					'opacity',
-					'font-family', 'font-size', 'font-weight', 'font-style',
-					'text-anchor', 'dominant-baseline', 'shape-rendering'
+					'font-family',
+					'font-size',
+					'font-weight',
+					'font-style',
+					'text-anchor',
+					'dominant-baseline',
+					'shape-rendering'
 				];
 				const styles: string[] = [];
 				for (const p of props) {
@@ -348,8 +363,7 @@
 				const lineHeight = headingFontSize * 1.3;
 				const tspans = lines
 					.map(
-						(l, i) =>
-							`<tspan x="${PADDING}" dy="${i === 0 ? 0 : lineHeight}">${escXml(l)}</tspan>`
+						(l, i) => `<tspan x="${PADDING}" dy="${i === 0 ? 0 : lineHeight}">${escXml(l)}</tspan>`
 					)
 					.join('');
 				parts.push(
@@ -416,14 +430,20 @@
 				} else {
 					await preCache(contentEl, { embedFonts: true, localFonts });
 					const result = await snapdom(contentEl, {
-						scale: 2, embedFonts: true, cache: 'full', localFonts,
+						scale: 2,
+						embedFonts: true,
+						cache: 'full',
+						localFonts,
 						filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
 					});
 					const canvas = await result.toCanvas();
 					const png = canvas.toDataURL('image/png');
-					const w = canvas.width, h = canvas.height;
+					const w = canvas.width,
+						h = canvas.height;
 					blob = new Blob(
-						[`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><image href="${png}" width="${w}" height="${h}"/></svg>`],
+						[
+							`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><image href="${png}" width="${w}" height="${h}"/></svg>`
+						],
 						{ type: 'image/svg+xml' }
 					);
 				}
