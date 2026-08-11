@@ -159,6 +159,11 @@
 					handler: (e: MouseEvent) => handleImage(e, 'png')
 				},
 				{
+					format: 'JPEG',
+					label: `${t(page.data.translations, 'ui.card.imageRaster') || 'Raster'} (JPEG)`,
+					handler: (e: MouseEvent) => handleImage(e, 'jpeg')
+				},
+				{
 					format: 'SVG',
 					label: t(page.data.translations, 'ui.card.imageVector') || 'Vector',
 					handler: (e: MouseEvent) => handleImage(e, 'svg')
@@ -380,7 +385,7 @@
 		return new Blob([doc], { type: 'image/svg+xml' });
 	}
 
-	async function handleImage(e: MouseEvent, type: 'png' | 'svg' = 'png') {
+	async function handleImage(e: MouseEvent, type: 'png' | 'jpeg' | 'svg' = 'png') {
 		e.stopPropagation();
 		if (!contentEl) return;
 
@@ -431,7 +436,16 @@
 					localFonts,
 					filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
 				});
-				blob = await result.toBlob({ type });
+				// JPEG has no alpha channel, so fall back to the card's own (light/dark)
+				// background color instead of snapdom's default white fill.
+				blob =
+					type === 'jpeg'
+						? await result.toBlob({
+								type,
+								quality: 0.92,
+								backgroundColor: window.getComputedStyle(cardEl).backgroundColor
+							})
+						: await result.toBlob({ type });
 			}
 
 			const url = URL.createObjectURL(blob);
