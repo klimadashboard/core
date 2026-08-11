@@ -12,6 +12,7 @@ import { formatPower, formatNumber, getPowerUnit, convertPowerUnit } from '$lib/
 
 export type EnergyType = 'solar' | 'wind';
 export type ViewMode = 'yearly' | 'cumulative' | 'map';
+export type MetricMode = 'power' | 'units';
 
 export interface RenewablesParams {
 	energy: EnergyType;
@@ -110,7 +111,7 @@ export function getAvailableViews(energy: EnergyType): ViewMode[] {
 export function getViewLabels(energy: EnergyType): Record<ViewMode, string> {
 	return {
 		yearly: 'Jährlicher Zubau',
-		cumulative: 'Kumulierte Leistung',
+		cumulative: 'Kumulativ',
 		map: energy === 'wind' ? 'Windkraftanlagen' : 'Anlagen'
 	};
 }
@@ -122,6 +123,32 @@ export function getViewIcons(): Record<ViewMode, string> {
 		cumulative: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
 		map: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`
 	};
+}
+
+/** Get metric labels (only relevant for yearly/cumulative views) */
+export function getMetricLabels(): Record<MetricMode, string> {
+	return {
+		power: 'Leistung',
+		units: 'Anzahl Anlagen'
+	};
+}
+
+/** Get metric icons (simple inline SVGs) */
+export function getMetricIcons(): Record<MetricMode, string> {
+	return {
+		power: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+		units: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="6" height="10" rx="1"/><rect x="9" y="3" width="6" height="14" rx="1"/><rect x="16" y="5" width="6" height="12" rx="1"/></svg>`
+	};
+}
+
+/** Get the yearly value for a data point given the selected metric */
+export function getYearlyValue(d: RenewablesRawData, metric: MetricMode): number {
+	return metric === 'power' ? d.net_power_kw : d.added_units || 0;
+}
+
+/** Get the cumulative value for a data point given the selected metric */
+export function getCumulativeValue(d: RenewablesRawData, metric: MetricMode): number {
+	return metric === 'power' ? d.cumulative_power_kw : d.cumulative_units || 0;
 }
 
 // ============================================================================

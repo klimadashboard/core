@@ -18,6 +18,7 @@
 		formatPower,
 		formatNumber,
 		type EnergyType,
+		type MetricMode,
 		type RenewablesRawData,
 		type RenewableGoal,
 		type ComparisonSeries
@@ -35,6 +36,7 @@
 	export let updateDate: string = '';
 	export let gridOperatorCheckedRatio: number | null = null;
 	export let dataLoading: boolean = true;
+	export let metricMode: MetricMode = 'power';
 
 	// Optional: pre-provided regions list (if empty, will fetch from API)
 	export let regions: Array<{
@@ -99,7 +101,8 @@
 		selectedUnit,
 		regionArea,
 		goal,
-		showGoal
+		showGoal,
+		metricMode
 	);
 
 	function prepareChartData(
@@ -108,7 +111,8 @@
 		unit: string,
 		area: number | null,
 		goalData: RenewableGoal | null,
-		shouldShowGoal: boolean
+		shouldShowGoal: boolean,
+		metric: MetricMode
 	) {
 		const result: Array<{
 			name: string;
@@ -134,15 +138,17 @@
 				data: s.data.map((point) => ({
 					year: point.year,
 					value:
-						unit === 'perArea' && regionArea
-							? point.cumulative_power_kw / regionArea
-							: point.cumulative_power_kw
+						metric === 'units'
+							? point.cumulative_units || 0
+							: unit === 'perArea' && regionArea
+								? point.cumulative_power_kw / regionArea
+								: point.cumulative_power_kw
 				}))
 			});
 		}
 
-		// Add goal line (only for absolute view and when main region is the only selection)
-		if (goalData && main.length > 0 && unit === 'absolute' && shouldShowGoal) {
+		// Add goal line (only for absolute power view and when main region is the only selection)
+		if (goalData && main.length > 0 && unit === 'absolute' && shouldShowGoal && metric === 'power') {
 			const currentYear = new Date().getFullYear();
 			const lastDataYear = main[main.length - 1]?.year || currentYear;
 			const lastCumulative = main[main.length - 1]?.cumulative_power_kw || 0;
@@ -205,6 +211,11 @@
 
 	// Unit label
 	$: unitLabel = (() => {
+		if (metricMode === 'units') {
+			if (maxValue >= 1_000_000) return 'Mio. Anlagen';
+			if (maxValue >= 1_000) return 'Tsd. Anlagen';
+			return 'Anlagen';
+		}
 		const suffix = selectedEnergy === 'solar' ? 'p' : '';
 		if (selectedUnit === 'perArea') return `kW${suffix}/km²`;
 		if (maxValue >= 1_000_000) return `GW${suffix}`;
@@ -214,13 +225,19 @@
 
 	// Divisor for display
 	$: divisor =
-		selectedUnit === 'perArea'
-			? 1
-			: maxValue >= 1_000_000
+		metricMode === 'units'
+			? maxValue >= 1_000_000
 				? 1_000_000
 				: maxValue >= 1_000
 					? 1_000
-					: 1;
+					: 1
+			: selectedUnit === 'perArea'
+				? 1
+				: maxValue >= 1_000_000
+					? 1_000_000
+					: maxValue >= 1_000
+						? 1_000
+						: 1;
 
 	// Y-axis formatter
 	$: yFormat = (v: number) => formatNumber(v, 0);
@@ -479,71 +496,73 @@
 	{:else if mainData.length === 0}
 		<div class="h-96 flex items-center justify-center text-gray-500">Keine Daten verfügbar</div>
 	{:else}
-		<!-- Controls -->
-		<div class="flex items-center gap-2 flex-wrap mb-4">
-			<!-- Region Search -->
-			<div class="relative">
-				<input
-					type="text"
-					bind:value={searchTerm}
-					on:input={handleSearchInput}
-					on:focus={handleInputFocus}
-					on:blur={handleInputBlur}
-					placeholder="Region hinzufügen..."
-					class="bg-gray-100 dark:bg-gray-800 rounded-full py-2 px-4 text-sm w-48"
-				/>
-				{#if regionsLoading}
-					<div class="absolute right-3 top-1/2 -translate-y-1/2">
-						<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-					</div>
-				{/if}
+		<!-- Controls: region comparison only applies to the power metric -->
+		{#if metricMode === 'power'}
+			<div class="flex items-center gap-2 flex-wrap mb-4">
+				<!-- Region Search -->
+				<div class="relative">
+					<input
+						type="text"
+						bind:value={searchTerm}
+						on:input={handleSearchInput}
+						on:focus={handleInputFocus}
+						on:blur={handleInputBlur}
+						placeholder="Region hinzufügen..."
+						class="bg-gray-100 dark:bg-gray-800 rounded-full py-2 px-4 text-sm w-48"
+					/>
+					{#if regionsLoading}
+						<div class="absolute right-3 top-1/2 -translate-y-1/2">
+							<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+						</div>
+					{/if}
 
-				{#if searchDropdownOpen && (filteredSearchRegions.length > 0 || searchTerm.length >= 2)}
-					<div
-						class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto w-64"
-					>
-						{#if filteredSearchRegions.length > 0}
-							{#if !searchTerm || searchTerm.length < 2}
-								<div
-									class="px-4 py-1 text-xs text-gray-400 border-b border-gray-100 dark:border-gray-700"
-								>
-									Übergeordnete Regionen
-								</div>
+					{#if searchDropdownOpen && (filteredSearchRegions.length > 0 || searchTerm.length >= 2)}
+						<div
+							class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto w-64"
+						>
+							{#if filteredSearchRegions.length > 0}
+								{#if !searchTerm || searchTerm.length < 2}
+									<div
+										class="px-4 py-1 text-xs text-gray-400 border-b border-gray-100 dark:border-gray-700"
+									>
+										Übergeordnete Regionen
+									</div>
+								{/if}
+								{#each filteredSearchRegions as searchRegion}
+									<button
+										class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex justify-between items-center"
+										on:mousedown|preventDefault={() => toggleRegion(searchRegion)}
+									>
+										<span>{searchRegion.name}</span>
+										{#if searchRegion.layer_label}
+											<span class="text-xs text-gray-400">{searchRegion.layer_label}</span>
+										{:else if searchRegion.layer}
+											<span class="text-xs text-gray-400">{searchRegion.layer}</span>
+										{/if}
+									</button>
+								{/each}
+							{:else if searchTerm.length >= 2 && !regionsLoading}
+								<div class="px-4 py-2 text-sm text-gray-500">Keine Regionen gefunden</div>
+							{:else if searchTerm.length < 2}
+								<div class="px-4 py-2 text-sm text-gray-500">Mind. 2 Zeichen eingeben...</div>
 							{/if}
-							{#each filteredSearchRegions as searchRegion}
-								<button
-									class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex justify-between items-center"
-									on:mousedown|preventDefault={() => toggleRegion(searchRegion)}
-								>
-									<span>{searchRegion.name}</span>
-									{#if searchRegion.layer_label}
-										<span class="text-xs text-gray-400">{searchRegion.layer_label}</span>
-									{:else if searchRegion.layer}
-										<span class="text-xs text-gray-400">{searchRegion.layer}</span>
-									{/if}
-								</button>
-							{/each}
-						{:else if searchTerm.length >= 2 && !regionsLoading}
-							<div class="px-4 py-2 text-sm text-gray-500">Keine Regionen gefunden</div>
-						{:else if searchTerm.length < 2}
-							<div class="px-4 py-2 text-sm text-gray-500">Mind. 2 Zeichen eingeben...</div>
-						{/if}
-					</div>
-				{/if}
-			</div>
+						</div>
+					{/if}
+				</div>
 
-			<!-- Unit Toggle -->
-			<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2">
-				<label class:font-bold={selectedUnit === 'absolute'}>
-					<input type="radio" value="absolute" class="mr-1" bind:group={selectedUnit} />
-					absolut
-				</label>
-				<label class:font-bold={selectedUnit === 'perArea'}>
-					<input type="radio" value="perArea" class="mr-1" bind:group={selectedUnit} />
-					pro km²
-				</label>
+				<!-- Unit Toggle -->
+				<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2">
+					<label class:font-bold={selectedUnit === 'absolute'}>
+						<input type="radio" value="absolute" class="mr-1" bind:group={selectedUnit} />
+						absolut
+					</label>
+					<label class:font-bold={selectedUnit === 'perArea'}>
+						<input type="radio" value="perArea" class="mr-1" bind:group={selectedUnit} />
+						pro km²
+					</label>
+				</div>
 			</div>
-		</div>
+		{/if}
 
 		<!-- Chart -->
 		<div class="relative">
@@ -663,9 +682,11 @@
 								return {
 									label,
 									value:
-										selectedUnit === 'perArea'
-											? `${formatNumber(point.value, 1)} ${unitLabel}`
-											: formatPower(point.value, selectedEnergy),
+										metricMode === 'units'
+											? formatNumber(point.value, 0)
+											: selectedUnit === 'perArea'
+												? `${formatNumber(point.value, 1)} ${unitLabel}`
+												: formatPower(point.value, selectedEnergy),
 									color: s.color
 								};
 							})

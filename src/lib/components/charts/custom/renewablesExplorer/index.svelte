@@ -11,10 +11,13 @@
 		getAvailableViews,
 		getViewLabels,
 		getViewIcons,
+		getMetricLabels,
+		getMetricIcons,
 		fetchData,
 		fetchGoal,
 		type EnergyType,
 		type ViewMode,
+		type MetricMode,
 		type RenewablesRawData,
 		type RenewableGoal
 	} from './config';
@@ -67,6 +70,7 @@
 
 	// State
 	let currentView: ViewMode;
+	let currentMetric: MetricMode = 'power';
 
 	// Initialize currentView from initialView (only on first load or when config changes)
 	$: if (initialView) {
@@ -83,6 +87,14 @@
 		key: view,
 		label: viewLabels[view],
 		icon: viewIcons[view]
+	}));
+
+	$: metricLabels = getMetricLabels();
+	$: metricIcons = getMetricIcons();
+	$: switchMetrics = (['power', 'units'] as MetricMode[]).map((metric) => ({
+		key: metric,
+		label: metricLabels[metric],
+		icon: metricIcons[metric]
 	}));
 
 	// Reset to yearly view if current view is not available for selected energy
@@ -131,6 +143,10 @@
 		currentView = event.detail.key ?? event.detail;
 	}
 
+	function handleMetricSwitch(event: CustomEvent) {
+		currentMetric = event.detail.key ?? event.detail;
+	}
+
 	// Handle map overlay event
 	function handleMapOverlay(event: CustomEvent) {
 		dispatch('openMapOverlay', event.detail);
@@ -140,8 +156,11 @@
 <div class="renewables-chart">
 	<!-- View Switcher (optional based on config) -->
 	{#if showViewSwitcher && availableViews.length > 1}
-		<div class="mb-4">
+		<div class="mb-4 flex flex-wrap gap-2">
 			<Switch views={switchViews} activeView={currentView} on:itemClick={handleViewSwitch} />
+			{#if currentView === 'yearly' || currentView === 'cumulative'}
+				<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
+			{/if}
 		</div>
 	{/if}
 
@@ -158,6 +177,7 @@
 				updateDate={sharedUpdateDate}
 				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
 				{dataLoading}
+				metricMode={currentMetric}
 			/>
 		{:else if currentView === 'cumulative'}
 			<CumulativeLineView
@@ -171,6 +191,7 @@
 				updateDate={sharedUpdateDate}
 				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
 				{dataLoading}
+				metricMode={currentMetric}
 			/>
 		{:else if currentView === 'map'}
 			<MapView
