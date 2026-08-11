@@ -121,7 +121,11 @@
 
 		// Add comparison series
 		for (const s of series) {
-			const regionInfo = effectiveRegions.find((r) => r.code === s.code || r.code_short === s.code);
+			const regionInfo = effectiveRegions.find(
+				(r) =>
+					r.code?.toLowerCase() === s.code?.toLowerCase() ||
+					r.code_short?.toLowerCase() === s.code?.toLowerCase()
+			);
 			const regionArea = regionInfo?.area || null;
 			result.push({
 				name: s.name,
