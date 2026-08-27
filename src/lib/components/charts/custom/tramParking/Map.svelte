@@ -2,6 +2,7 @@
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 	import { browser } from '$app/environment';
+	import { cartoRasterTiles } from '$lib/utils/cartoBasemap';
 
 	export let incidents = [];
 	export let selectedDistrict = null;
@@ -155,23 +156,13 @@
 	}
 
 	function basemapNoLabelsTiles() {
-		const style = isDark() ? 'dark_nolabels' : 'light_nolabels';
-		return [
-			`https://a.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`,
-			`https://b.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`,
-			`https://c.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`,
-			`https://d.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`
-		];
+		const style = isDark() ? 'darkNoLabels' : 'lightNoLabels';
+		return cartoRasterTiles(style, { retina: true });
 	}
 
 	function basemapLabelsTiles() {
-		const style = isDark() ? 'dark_only_labels' : 'light_only_labels';
-		return [
-			`https://a.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`,
-			`https://b.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`,
-			`https://c.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`,
-			`https://d.basemaps.cartocdn.com/${style}/{z}/{x}/{y}@2x.png`
-		];
+		const style = isDark() ? 'darkLabelsOnly' : 'lightLabelsOnly';
+		return cartoRasterTiles(style, { retina: true });
 	}
 
 	function createMap() {

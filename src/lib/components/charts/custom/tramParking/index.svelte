@@ -182,6 +182,13 @@
 						'address_full',
 						'district'
 					],
+					// Wiener Linien's "stoerungkurz" entries (incident_id like "R1620-160")
+					// are auto-generated per affected stop with no address text, and the
+					// same real incident produces one entry per stop -- exclude them so
+					// they never appear as noise/duplicates on the map.
+					filter: {
+						incident_id: { _nstarts_with: 'R' }
+					},
 					sort: ['-date_start']
 				})
 			);

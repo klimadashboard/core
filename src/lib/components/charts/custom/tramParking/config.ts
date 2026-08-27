@@ -20,7 +20,13 @@ export async function fetchChartData({
 					'lat',
 					'lon',
 					'district'
-				]
+				],
+				// Exclude Wiener Linien "stoerungkurz" entries (incident_id like
+				// "R1620-160") -- auto-generated per affected stop, no address text,
+				// duplicate the same real incident once per stop.
+				filter: {
+					incident_id: { _nstarts_with: 'R' }
+				}
 			})
 		);
 

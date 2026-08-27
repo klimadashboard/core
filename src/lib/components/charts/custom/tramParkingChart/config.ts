@@ -11,11 +11,15 @@ export async function fetchChartData({
 			readItems('mobility_tram_parking', {
 				limit: -1,
 				fields: ['id', 'date_start', 'lines', 'address', 'district'],
+				// Exclude Wiener Linien "stoerungkurz" entries (incident_id like
+				// "R1620-160") -- auto-generated per affected stop, no address text,
+				// duplicate the same real incident once per stop.
 				filter: {
 					date_start: {
 						_gte: '2025-01-01',
 						_lt: '2026-01-01'
-					}
+					},
+					incident_id: { _nstarts_with: 'R' }
 				}
 			})
 		);

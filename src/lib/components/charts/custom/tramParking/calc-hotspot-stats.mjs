@@ -89,7 +89,10 @@ function detectHotspots(incidents, minCount=3) {
 async function fetchAll() {
 	let all = [], page = 1;
 	while (true) {
-		const url = `https://base.klimadashboard.org/items/mobility_tram_parking?limit=5000&page=${page}&fields=id,date_start,date_end,lines,address,address_category,lat,lon,district&sort=-date_start`;
+		// Excludes Wiener Linien "stoerungkurz" entries (incident_id like "R1620-160") --
+		// auto-generated per affected stop, no address text, duplicate the same real
+		// incident once per stop.
+		const url = `https://base.klimadashboard.org/items/mobility_tram_parking?limit=5000&page=${page}&fields=id,date_start,date_end,lines,address,address_category,lat,lon,district&filter[incident_id][_nstarts_with]=R&sort=-date_start`;
 		const r = await fetch(url);
 		const json = await r.json();
 		const items = json.data || [];
