@@ -10,6 +10,7 @@
 	import MapSolar from './maps/MapSolar.svelte';
 	import MapWind from './maps/MapWind.svelte';
 	import MapCarTypes from './maps/MapCarTypes.svelte';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let regionId;
 	export let regionName;
@@ -120,13 +121,6 @@
 		return false;
 	}
 
-	// Get basemap style URL based on dark mode
-	function getBasemapStyle(dark) {
-		return dark
-			? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-			: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
-	}
-
 	onMount(() => {
 		isDarkMode = detectDarkMode();
 
@@ -155,26 +149,10 @@
 
 		map.on('load', () => {
 			// Add CARTO basemap
-			const basemapTiles = isDarkMode
-				? [
-						'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-						'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-						'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-						'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-					]
-				: [
-						'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-						'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-						'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-						'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-					];
-
-			map.addSource('carto-basemap', {
-				type: 'raster',
-				tiles: basemapTiles,
-				tileSize: 256,
-				maxzoom: 20
-			});
+			map.addSource(
+				'carto-basemap',
+				cartoRasterSource(isDarkMode ? 'dark' : 'voyager', { maxzoom: 20 })
+			);
 
 			map.addLayer({
 				id: 'carto-basemap',
@@ -232,20 +210,6 @@
 	function updateBasemap() {
 		if (!map) return;
 
-		const basemapTiles = isDarkMode
-			? [
-					'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-				]
-			: [
-					'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-				];
-
 		// Update the source tiles - keep the source, just update tiles
 		const source = map.getSource('carto-basemap');
 		if (source && source.type === 'raster') {
@@ -255,12 +219,10 @@
 			}
 			map.removeSource('carto-basemap');
 
-			map.addSource('carto-basemap', {
-				type: 'raster',
-				tiles: basemapTiles,
-				tileSize: 256,
-				maxzoom: 20
-			});
+			map.addSource(
+				'carto-basemap',
+				cartoRasterSource(isDarkMode ? 'dark' : 'voyager', { maxzoom: 20 })
+			);
 
 			// Get the first layer id to insert before (should be city-labels or first data layer)
 			const firstLayerId = map.getStyle().layers[0]?.id;

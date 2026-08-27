@@ -5,6 +5,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import { buildTileOutlines } from './mapUtils';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let selectedRegion;
 	export let selectedDate;
@@ -172,12 +173,7 @@
 				version: 8,
 				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
 				sources: {
-					carto: {
-						type: 'raster',
-						tiles: ['https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'],
-						tileSize: 256,
-						attribution: '© OpenStreetMap contributors © CARTO'
-					},
+					carto: cartoRasterSource('light', { attribution: '© OpenStreetMap contributors © CARTO' }),
 					labels: {
 						type: 'vector',
 						url: `https://tiles.klimadashboard.org/data/labels-${PUBLIC_VERSION}.json`

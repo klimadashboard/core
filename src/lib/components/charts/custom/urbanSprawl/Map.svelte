@@ -4,6 +4,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { fade } from 'svelte/transition';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let data; // raw data from Directus
 	export let regions; // geo features
@@ -75,17 +76,7 @@
 
 			const REGION_LAYER = 'districts';
 
-			map.addSource('carto-voyager', {
-				type: 'raster',
-				tiles: [
-					'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-				],
-				tileSize: 256,
-				maxzoom: 20
-			});
+			map.addSource('carto-voyager', cartoRasterSource('voyager', { maxzoom: 20 }));
 
 			const matchExpr = ['match', ['get', 'RS']];
 			transformedData.forEach((d) => {

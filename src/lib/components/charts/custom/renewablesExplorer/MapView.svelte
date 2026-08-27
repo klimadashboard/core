@@ -8,6 +8,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import Loader from '$lib/components/Loader.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 	import {
 		fetchAllTurbines,
 		fetchTurbineDetails,
@@ -174,26 +175,10 @@
 	}
 
 	function getBasemapStyle(dark: boolean) {
-		const tiles = dark
-			? [
-					'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-				]
-			: [
-					'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-				];
-
 		return {
 			version: 8,
 			sources: {
-				'carto-basemap': {
-					type: 'raster',
-					tiles,
-					tileSize: 256
-				}
+				'carto-basemap': cartoRasterSource(dark ? 'dark' : 'light', { subdomains: ['a', 'b', 'c'] })
 			},
 			layers: [
 				{

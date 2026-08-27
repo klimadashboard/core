@@ -1,6 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import maplibregl from 'maplibre-gl';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let center;
 	export let zoom;
@@ -14,16 +15,9 @@
 		return {
 			version: 8,
 			sources: {
-				carto: {
-					type: 'raster',
-					tiles: [
-						isDark
-							? 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-							: 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-					],
-					tileSize: 256,
+				carto: cartoRasterSource(isDark ? 'dark' : 'light', {
 					attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
-				}
+				})
 			},
 			layers: [
 				{
@@ -111,10 +105,7 @@
 			const nowDark = document.body.classList.contains('dark');
 			const currentTiles = map.getStyle().sources.carto.tiles?.[0];
 
-			const darkURL = 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
-			const lightURL = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
-
-			const isCurrentlyDark = currentTiles === darkURL;
+			const isCurrentlyDark = currentTiles?.includes('dark_all');
 
 			if (nowDark !== isCurrentlyDark) {
 				map.setStyle(getBaseMapStyle(nowDark));

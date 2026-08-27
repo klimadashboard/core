@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import maplibregl from 'maplibre-gl';
 	import { browser } from '$app/environment';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let data;
 
@@ -72,17 +73,7 @@
 			style: {
 				version: 8,
 				sources: {
-					'carto-basemap': {
-						type: 'raster',
-						tiles: [
-							'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-							'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-							'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-							'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-						],
-						tileSize: 256,
-						maxzoom: 20
-					}
+					'carto-basemap': cartoRasterSource('voyager', { maxzoom: 20 })
 				},
 				layers: [
 					{

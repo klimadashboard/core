@@ -5,6 +5,7 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { fetchRegion } from '$lib/utils/getRegion';
 	import type { Region } from '$lib/utils/getRegion';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	// Props
 	export let regionId: string | null = null;
@@ -164,15 +165,7 @@
 			style: {
 				version: 8,
 				sources: {
-					'carto-light': {
-						type: 'raster',
-						tiles: [
-							'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-							'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-							'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-						],
-						tileSize: 256
-					}
+					'carto-light': cartoRasterSource('light', { subdomains: ['a', 'b', 'c'] })
 				},
 				layers: [
 					{

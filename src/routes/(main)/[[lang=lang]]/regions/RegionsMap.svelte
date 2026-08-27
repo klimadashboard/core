@@ -4,6 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	let map;
 	let hoveredCode = '';
@@ -22,15 +23,7 @@
 			version: 8,
 			glyphs: 'https://data.klimadashboard.org/fonts/{fontstack}/{range}.pbf',
 			sources: {
-				carto: {
-					type: 'raster',
-					tiles: [
-						isDark
-							? 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-							: 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-					],
-					tileSize: 256
-				},
+				carto: cartoRasterSource(isDark ? 'dark' : 'light'),
 				municipalities: {
 					type: 'vector',
 					tiles: [

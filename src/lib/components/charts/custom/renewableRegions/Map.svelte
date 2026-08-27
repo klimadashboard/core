@@ -7,6 +7,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import Loader from '$lib/components/Loader.svelte';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	let layers = [
 		{
@@ -216,17 +217,7 @@
 		map.on('load', () => {
 			installRegionSourceAndLayers();
 
-			map.addSource('carto-voyager', {
-				type: 'raster',
-				tiles: [
-					'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-				],
-				tileSize: 256,
-				maxzoom: 20
-			});
+			map.addSource('carto-voyager', cartoRasterSource('voyager', { maxzoom: 20 }));
 
 			map.addLayer(
 				{
