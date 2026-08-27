@@ -6,7 +6,7 @@ function withApiKey(url: string): string {
 	const apiKey = env.PUBLIC_CARTO_API_KEY;
 	if (!apiKey) return url;
 	const separator = url.includes('?') ? '&' : '?';
-	return `${url}${separator}api_key=${apiKey}`;
+	return `${url}${separator}key=${apiKey}`;
 }
 
 /**
