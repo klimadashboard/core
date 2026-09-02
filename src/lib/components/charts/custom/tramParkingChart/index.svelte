@@ -14,13 +14,23 @@
 
 	let loading = true;
 	let error: string | null = null;
-	let incidents: Incident[] = [];
+	let allIncidents: Incident[] = [];
 	let view = 'lines';
+	let selectedYear = 2025;
 	let containerWidth = 0;
 	let containerEl: HTMLDivElement;
 	let hoverLabel: string | null = null;
 	let hoverClientX = 0;
 	let hoverClientY = 0;
+
+	const YEAR_OPTIONS = [
+		{ value: 2025, label: '2025' },
+		{ value: 2026, label: '2026' }
+	];
+
+	$: incidents = allIncidents.filter(
+		(i) => i.date_start && new Date(i.date_start).getFullYear() === selectedYear
+	);
 
 	const VIEW_OPTIONS = [
 		{ value: 'lines', label: 'Linien' },
@@ -28,13 +38,23 @@
 		{ value: 'districts', label: 'Bezirke' }
 	];
 
-	const VIEW_NOTES: Record<string, string> = {
+	// Computed live per selected year rather than hardcoded, since these rates
+	// differ year to year (and shift further as e.g. late historical imports land).
+	$: districtRatePct = incidents.length
+		? Math.round((100 * incidents.filter((i) => i.district != null).length) / incidents.length)
+		: 0;
+	$: fullAddressRatePct = incidents.length
+		? Math.round(
+				(100 * incidents.filter((i) => i.address_category === 'strasse_hausnummer').length) /
+					incidents.length
+			)
+		: 0;
+
+	$: VIEW_NOTES = {
 		lines: 'Für jeden Vorfall wird die betroffene Linie dokumentiert. Diese Auswertung umfasst daher alle verfügbaren Daten – ohne Datenverlust durch fehlende Adressen.',
-		districts:
-			'Nur bei 56\u202f% der Vorfälle (2025) konnte ein Bezirk ermittelt werden – 2016 waren es noch 88\u202f%. Die übrigen Fälle fehlen in dieser Auswertung.',
-		hotspots:
-			'Nur bei 48\u202f% der Vorfälle (2025) wurde eine vollständige Adresse mit Hausnummer erfasst. Die Auswertung zeigt, welche Straßen besonders häufig betroffen sind. Längere Straßen haben naturgemäß mehr Haltestellen und können daher mehr Vorfälle aufweisen.'
-	};
+		districts: `Nur bei ${districtRatePct}\u202f% der Vorfälle (${selectedYear}) konnte ein Bezirk ermittelt werden – 2016 waren es noch 88\u202f%. Die übrigen Fälle fehlen in dieser Auswertung.`,
+		hotspots: `Nur bei ${fullAddressRatePct}\u202f% der Vorfälle (${selectedYear}) wurde eine vollständige Adresse mit Hausnummer erfasst. Die Auswertung zeigt, welche Straßen besonders häufig betroffen sind. Längere Straßen haben naturgemäß mehr Haltestellen und können daher mehr Vorfälle aufweisen.`
+	} as Record<string, string>;
 
 	const COUNT_COLOR = '#e11d48';
 	const WAIT_COLOR = '#f97316';
@@ -221,6 +241,8 @@
 		hoverLabel = null;
 	}
 
+	// Covers both selectable years in a single fetch -- switching the year toggle
+	// then just re-filters client-side (see `incidents` above) instead of refetching.
 	onMount(async () => {
 		try {
 			const directus = getDirectusInstance(fetch);
@@ -249,7 +271,7 @@
 						filter: {
 							date_start: {
 								_gte: '2025-01-01',
-								_lt: '2026-01-01'
+								_lt: '2027-01-01'
 							},
 							incident_id: { _nstarts_with: 'R' }
 						},
@@ -260,17 +282,8 @@
 				if (items.length < 5000) break;
 				page++;
 			}
-			incidents = all;
+			allIncidents = all;
 			loading = false;
-
-			if (onChartData) {
-				onChartData({
-					raw: all,
-					placeholders: { total: all.length },
-					meta: { source: 'Wiener Linien Störungsmeldungen | f59.at' },
-					hasData: true
-				});
-			}
 		} catch (e) {
 			console.error('tramParkingChart error:', e);
 			error = e instanceof Error ? e.message : String(e);
@@ -278,6 +291,16 @@
 			if (onChartData) onChartData(null);
 		}
 	});
+
+	// Re-reports to the parent whenever the visible (year-filtered) set changes.
+	$: if (!loading && !error && onChartData) {
+		onChartData({
+			raw: incidents,
+			placeholders: { total: incidents.length },
+			meta: { source: 'Wiener Linien Störungsmeldungen | f59.at' },
+			hasData: true
+		});
+	}
 </script>
 
 {#if loading}
@@ -288,7 +311,10 @@
 	<div class="h-[350px] flex items-center justify-center text-gray-500">Keine Daten verfügbar</div>
 {:else}
 	<div class="flex flex-wrap justify-between items-center gap-2 mb-3">
-		<RadioGroup label="Ansicht" bind:value={view} options={VIEW_OPTIONS} inline hideLabel />
+		<div class="flex flex-wrap items-center gap-3">
+			<RadioGroup label="Ansicht" bind:value={view} options={VIEW_OPTIONS} inline hideLabel />
+			<RadioGroup label="Jahr" bind:value={selectedYear} options={YEAR_OPTIONS} inline hideLabel />
+		</div>
 		<div class="flex gap-4 text-xs">
 			<span style="color:{COUNT_COLOR}">● Vorfälle</span>
 			<span style="color:{WAIT_COLOR}">— Wartezeit</span>
