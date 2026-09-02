@@ -95,6 +95,7 @@
 	onMount(async () => {
 		const status = page.url.searchParams.get('status');
 		const sessionId = page.url.searchParams.get('session_id');
+		const presetAmount = page.url.searchParams.get('amount');
 
 		if (status === 'success' && sessionId) {
 			checkoutStatus = 'success';
@@ -103,11 +104,20 @@
 			checkoutStatus = 'cancel';
 		}
 
+		if (presetAmount) {
+			const parsed = parseFloat(presetAmount);
+			if (!isNaN(parsed) && parsed > 0) {
+				amount = parsed;
+				customAmount = String(parsed);
+			}
+		}
+
 		// Optional: clean URL
-		if (status || sessionId) {
+		if (status || sessionId || presetAmount) {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('status');
 			url.searchParams.delete('session_id');
+			url.searchParams.delete('amount');
 			window.history.replaceState({}, '', url.toString());
 		}
 
