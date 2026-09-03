@@ -32,7 +32,8 @@
 
 	const rybbitSiteIds = {
 		at: 'bef2508789da',
-		de: '80ab23225a7d'
+		de: '80ab23225a7d',
+		org: 'fcd9541adeee'
 	};
 
 	let description = $state(
