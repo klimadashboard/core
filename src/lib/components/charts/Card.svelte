@@ -305,6 +305,18 @@
 				for (const p of props) {
 					let v = cs.getPropertyValue(p);
 					if (v === 'currentColor') v = color;
+					// getComputedStyle resolves a fragment-only reference like
+					// fill="url(#gradientId)" to an absolute URL tied to this document
+					// (e.g. url("https://.../charts/foo#gradientId")). Once the clone is
+					// serialized into a standalone SVG, that absolute reference no longer
+					// resolves, so the paint server lookup fails and fill falls back to
+					// black. Re-fragment it back down to url(#id) so it keeps resolving
+					// against the exported document's own <defs>.
+					const urlMatch = v.match(/^url\((['"]?)(.*?)\1\)$/);
+					if (urlMatch) {
+						const hashIndex = urlMatch[2].indexOf('#');
+						if (hashIndex !== -1) v = `url(${urlMatch[2].slice(hashIndex)})`;
+					}
 					if (v) styles.push(`${p}:${v}`);
 				}
 				if (styles.length) (dst as SVGElement).setAttribute('style', styles.join(';'));
