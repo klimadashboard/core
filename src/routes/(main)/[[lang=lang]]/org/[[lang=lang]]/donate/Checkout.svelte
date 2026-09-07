@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onMount, createEventDispatcher } from 'svelte';
-	import type { Stripe, StripeElements, PaymentIntent } from '@stripe/stripe-js';
+	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import type { Stripe, StripeElements, PaymentIntent, Appearance } from '@stripe/stripe-js';
 	import { getStripe } from '$lib/stripe-client';
 
 	export let clientSecret: string;
@@ -12,6 +12,13 @@
 	export let amountCents: number = 0;
 	/** Where the donor can cancel later; shown in their Apple Wallet. */
 	export let managementUrl: string = '';
+	/**
+	 * Pushes the current donor details onto the intent right before confirming.
+	 * Donor fields deliberately do NOT recreate the intent (that would rebuild this
+	 * element on every keystroke — brutal with an iOS date wheel), so this is what
+	 * keeps the metadata the webhook books from in sync.
+	 */
+	export let syncMetadata: (() => Promise<void>) | null = null;
 
 	const dispatch = createEventDispatcher<{
 		success: PaymentIntent;
@@ -33,6 +40,16 @@
 		if (!stripe || !elements) return false;
 		submitting = true;
 		errorMessage = '';
+
+		// Never block a donation on this: if the sync fails the payment still goes
+		// through, it just books with slightly older donor details.
+		if (syncMetadata) {
+			try {
+				await syncMetadata();
+			} catch (e) {
+				console.error('metadata sync before confirm failed (non-fatal)', e);
+			}
+		}
 
 		// redirect: 'if_required' keeps everything inline — only payment methods that
 		// truly need a redirect (rare) will navigate away.
@@ -58,6 +75,26 @@
 		await confirm();
 	}
 
+	// Stripe renders its own labels and inputs inside an iframe, so our `dark:`
+	// classes can't reach them — the theme has to be handed over explicitly, or the
+	// grey field labels end up near-invisible on the dark card.
+	const isDark = () => document.body.classList.contains('dark');
+	function appearance(): Appearance {
+		return {
+			theme: isDark() ? 'night' : 'stripe',
+			variables: {
+				colorPrimary: '#16a34a',
+				borderRadius: '12px',
+				...(isDark() ? { colorBackground: '#1f2937' } : {})
+			}
+		};
+	}
+
+	// The theme is toggled by adding/removing a class on <body>, so watch for that
+	// and restyle in place — Elements supports appearance updates without a remount.
+	let themeObserver: MutationObserver | null = null;
+	onDestroy(() => themeObserver?.disconnect());
+
 	onMount(async () => {
 		try {
 			stripe = await getStripe();
@@ -66,14 +103,11 @@
 			elements = stripe.elements({
 				clientSecret,
 				locale: 'de',
-				appearance: {
-					theme: 'stripe',
-					variables: {
-						colorPrimary: '#16a34a',
-						borderRadius: '12px'
-					}
-				}
+				appearance: appearance()
 			});
+
+			themeObserver = new MutationObserver(() => elements?.update({ appearance: appearance() }));
+			themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
 			// Without recurringPaymentRequest the Apple Pay sheet presents a monthly
 			// donation as a plain one-off charge — the donor authorises €X with no hint

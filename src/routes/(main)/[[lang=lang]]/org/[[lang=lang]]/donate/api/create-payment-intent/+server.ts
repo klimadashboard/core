@@ -97,6 +97,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	};
 
 	let clientSecret: string | null = null;
+	let subscriptionId: string | null = null;
 	try {
 		if (frequency === 'recurring') {
 			const sub = await createRecurringSubscription({
@@ -105,6 +106,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				metadata
 			});
 			clientSecret = sub.clientSecret;
+			subscriptionId = sub.subscriptionId;
 		} else {
 			const pi = await getStripe().paymentIntents.create({
 				amount: amountCents,
@@ -126,8 +128,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		throw error(502, { message: 'Zahlung konnte nicht initialisiert werden.' });
 	}
 
-	// Only the client secret goes back to the browser — never the customer id, which
-	// would otherwise let anyone submitting this form with someone else's email walk
-	// away with an identifier that opens that person's billing portal.
-	return json({ clientSecret });
+	// Only the client secret (plus, for recurring, the subscription it belongs to)
+	// goes back to the browser — never the customer id, which would otherwise let
+	// anyone submitting this form with someone else's email walk away with an
+	// identifier that opens that person's billing portal.
+	return json({ clientSecret, subscriptionId });
 };

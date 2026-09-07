@@ -31,6 +31,11 @@
 		return () => clearTimeout(timer);
 	});
 
+	// Anywhere in the donation flow — the form, the thank-you page, the management
+	// page. Asking someone to donate while they're mid-donation (or just after, or
+	// while cancelling) reads badly. Matches lang-prefixed paths too.
+	$: inDonateFlow = /\/donate(\/|$)/.test(page.url.pathname);
+
 	const hideForever = () => {
 		hidden = true;
 
@@ -47,7 +52,7 @@
 	(main) group and so normally render no footer at all — but the error page does
 	render one, which is how this would otherwise slip through.
 -->
-{#if !hidden && !page.url.pathname.endsWith('/donate') && !page.url.pathname.startsWith('/embed/')}
+{#if !hidden && !inDonateFlow && !page.url.pathname.startsWith('/embed/')}
 	<div
 		in:fly={{ y: 40, duration: 300 }}
 		out:fly={{ y: 40, duration: 200 }}

@@ -5,6 +5,7 @@
 	import PaymentMethods from '$lib/components/PaymentMethods.svelte';
 	import { IconLock } from '@tabler/icons-svelte-runes';
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { calculateCardFee, MIN_DONATION_EUR } from '$lib/utils/donationFee';
 	import { onMount } from 'svelte';
@@ -21,8 +22,8 @@
 	// Express Checkout (Apple Pay / Google Pay / Link) buttons load in additionally
 	// once the real Checkout mounts.
 	let clientSecret: string | null = null;
+	let subscriptionId: string | null = null;
 	let creatingIntent = false;
-	let cardSuccess = false;
 	let lastIntentFingerprint = '';
 	let lastChargeFingerprint = '';
 	let intentTimer: ReturnType<typeof setTimeout>;
@@ -31,7 +32,6 @@
 	// one-time, managed afterwards via Stripe's own Customer Portal.
 	type Frequency = 'onetime' | 'recurring';
 	let frequency: Frequency = 'onetime';
-	let portalUrl: string | null = null;
 
 	$: isValid =
 		name &&
@@ -39,12 +39,6 @@
 		amount >= MIN_DONATION_EUR &&
 		(country !== 'AT' || birthdate) &&
 		(country === 'AT' || !wantsReceipt || (birthdate && addressLine && zip && city));
-
-	// Result after returning from a redirect-based payment method (rare — most
-	// wallets/cards confirm inline without ever leaving the page).
-	type CheckoutStatus = 'idle' | 'success' | 'processing' | 'error';
-	let checkoutStatus: CheckoutStatus = 'idle';
-	$: done = checkoutStatus === 'success' || cardSuccess;
 
 	// Form fields
 	let name = '';
@@ -81,7 +75,6 @@
 
 	onMount(async () => {
 		const presetAmount = page.url.searchParams.get('amount');
-		const piClientSecret = page.url.searchParams.get('payment_intent_client_secret');
 
 		if (presetAmount) {
 			const parsed = parseFloat(presetAmount);
@@ -93,27 +86,9 @@
 			}
 		}
 
-		// Returning from a redirect-based payment method (SEPA, some bank redirects) —
-		// card/Apple Pay/Google Pay never leave the page, so this is the rare fallback.
-		if (piClientSecret) {
-			checkoutStatus = 'processing';
-			const stripe = await getStripe();
-			const result = await stripe?.retrievePaymentIntent(piClientSecret);
-			if (result?.paymentIntent?.status === 'succeeded') {
-				checkoutStatus = 'success';
-				window.rybbit?.event('Donation Success', { method: 'card', redirected: 'true' });
-			} else if (result?.paymentIntent?.status === 'processing') {
-				checkoutStatus = 'processing';
-			} else {
-				checkoutStatus = 'error';
-			}
-		}
-
-		if (presetAmount || piClientSecret) {
+		if (presetAmount) {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('amount');
-			url.searchParams.delete('payment_intent_client_secret');
-			url.searchParams.delete('payment_intent');
 			window.history.replaceState({}, '', url.toString());
 		}
 
@@ -166,22 +141,12 @@
 	// PaymentIntent automatically whenever the relevant fields settle (debounced),
 	// instead of waiting for an explicit "continue" click.
 	$: if (browser) {
-		// What the donor actually gets charged, kept separate from the rest.
+		// Only what the donor is actually charged may recreate the intent. Donor
+		// details deliberately do NOT: they don't change the amount, and rebuilding
+		// the intent would tear down and remount the Stripe element underneath the
+		// donor — which an iOS date wheel does dozens of times while it spins. Those
+		// fields are pushed onto the intent just before confirming instead.
 		const charge = JSON.stringify({ amount: amountEUR(amount), frequency, coverFee });
-		const fp = JSON.stringify({
-			charge,
-			newsletter,
-			name,
-			email,
-			country,
-			birthdate,
-			wantsReceipt,
-			addressLine,
-			zip,
-			city,
-			state,
-			details2
-		});
 
 		// A Stripe Elements group is pinned to one PaymentIntent for its whole life —
 		// it cannot be re-pointed at another. So the moment the charge changes, the
@@ -193,13 +158,37 @@
 			clientSecret = null;
 		}
 
-		if (isValid && fp !== lastIntentFingerprint) {
-			lastIntentFingerprint = fp;
+		if (isValid && charge !== lastIntentFingerprint) {
+			lastIntentFingerprint = charge;
 			clearTimeout(intentTimer);
 			intentTimer = setTimeout(createPaymentIntent, 600);
 		} else if (!isValid && clientSecret) {
 			clientSecret = null;
+			lastIntentFingerprint = '';
 		}
+	}
+
+	/** Pushes current donor details onto the intent right before it's confirmed. */
+	async function syncMetadata() {
+		if (!clientSecret) return;
+		await fetch(`${window.location.pathname}/api/update-payment-intent`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				clientSecret,
+				subscriptionId: subscriptionId ?? undefined,
+				name,
+				email,
+				country,
+				birthdate: birthdate || undefined,
+				wantsReceipt,
+				newsletter,
+				address:
+					country !== 'AT' && wantsReceipt
+						? { addressLine, zip, city, state: state || undefined, details2: details2 || undefined }
+						: undefined
+			})
+		});
 	}
 
 	async function createPaymentIntent() {
@@ -237,6 +226,7 @@
 			}
 			const body = await res.json();
 			clientSecret = body.clientSecret;
+			subscriptionId = body.subscriptionId ?? null;
 		} catch (e: any) {
 			error = e?.message || 'Zahlung konnte nicht vorbereitet werden. Bitte versuche es erneut.';
 			clientSecret = null;
@@ -246,31 +236,28 @@
 	}
 
 	async function handleCardSuccess() {
-		cardSuccess = true;
 		window.rybbit?.event('Donation Success', {
 			method: 'card',
 			frequency,
 			amount: amountEUR(amount)
 		});
-
-		if (frequency === 'recurring' && clientSecret) {
-			try {
-				const res = await fetch(`${window.location.pathname}/api/create-portal-session`, {
-					method: 'POST',
-					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ clientSecret })
-				});
-				if (res.ok) {
-					const body = await res.json();
-					portalUrl = body.url ?? null;
-				}
-			} catch (e) {
-				console.error('Failed to create portal session', e);
-			}
-		}
+		// A full navigation rather than an in-page state swap: scrolling a long form
+		// back to a banner is unreliable, and donors were being left mid-FAQ.
+		await goto(thanksUrl(), { replaceState: true });
 	}
 	function handleCardError(e: CustomEvent) {
 		window.rybbit?.event('Donation Error', { method: 'card', message: e.detail?.message });
+	}
+
+	/**
+	 * The thank-you page verifies the intent itself before congratulating anyone, so
+	 * the secret travels with the donor. `type` is display-only — it just decides
+	 * whether the manage-your-donation link is shown.
+	 */
+	function thanksUrl(): string {
+		const params = new URLSearchParams({ type: frequency });
+		if (clientSecret) params.set('payment_intent_client_secret', clientSecret);
+		return `${page.url.pathname}/danke?${params}`;
 	}
 
 	function cleanURL(url: string) {
@@ -315,57 +302,9 @@
 		>.
 	</p>
 
-	{#if done}
-		<div
-			class="mt-6 rounded-2xl border border-green-300 dark:border-green-800 bg-green-100 dark:bg-green-900/25 px-4 py-3 text-green-900 dark:text-green-200"
-			id="success"
-		>
-			<p class="font-semibold">Danke für deine Spende! 💚</p>
-			<p class="text-sm mt-1">
-				{#if frequency === 'recurring'}
-					Deine monatliche Spende wurde erfolgreich eingerichtet. Vielen Dank für deine dauerhafte
-					Unterstützung!
-				{:else}
-					Deine Zahlung wurde erfolgreich abgeschlossen. Vielen Dank für deine Unterstützung!
-				{/if}
-				{#if country === 'AT'}
-					Wir melden deine Spende automatisch ans Finanzamt.
-				{/if}
-				Bei Fragen:
-				<a href="mailto:team@klimadashboard.org" class="underline">team@klimadashboard.org</a>.
-			</p>
-			{#if frequency === 'recurring' && portalUrl}
-				<a href={portalUrl} class="inline-block mt-2 text-sm underline underline-offset-2">
-					Monatliche Spende verwalten oder kündigen
-				</a>
-			{/if}
-		</div>
-	{:else}
-		{#if checkoutStatus === 'processing'}
-			<div
-				class="mt-6 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/25 px-4 py-3 text-amber-900 dark:text-amber-200"
-			>
-				<p class="font-semibold">Zahlung wird verarbeitet …</p>
-				<p class="text-sm mt-1">
-					Wir bestätigen deine Zahlung gerade. Das kann bei manchen Zahlungsarten etwas dauern — du
-					bekommst in Kürze eine Bestätigung per E-Mail.
-				</p>
-			</div>
-		{:else if checkoutStatus === 'error'}
-			<div
-				class="mt-6 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/25 px-4 py-3 text-amber-900 dark:text-amber-200"
-			>
-				<p class="font-semibold">Zahlung nicht abgeschlossen</p>
-				<p class="text-sm mt-1">
-					Deine Zahlung konnte nicht bestätigt werden. Deine Karte wurde dabei nicht belastet. Du
-					kannst unten jederzeit einen neuen Spendenversuch starten.
-				</p>
-			</div>
-		{/if}
-
-		<div
-			class="mt-8 bg-white dark:bg-gray-900 border border-current/10 rounded-3xl shadow-sm p-5 sm:p-6"
-		>
+	<div
+		class="mt-8 bg-white dark:bg-gray-900 border border-current/10 rounded-3xl shadow-sm p-5 sm:p-6"
+	>
 			<!-- ───────────────── Einmalig / Monatlich — segmented control.
 			     Native radios inside a fieldset (same a11y pattern as $lib/components/ui
 			     RadioGroup, restyled to the donation green and able to sit inline). -->
@@ -629,10 +568,11 @@
 						<Checkout
 							{clientSecret}
 							amountLabel={`€${chargedEUR.toFixed(2)}${frequency === 'recurring' ? '/Monat' : ''}`}
-							returnUrl={`${page.url.origin}${page.url.pathname}`}
+							returnUrl={`${page.url.origin}${thanksUrl()}`}
 							recurring={frequency === 'recurring'}
 							amountCents={Math.round(chargedEUR * 100)}
 							managementUrl={`${page.url.origin}/donate/manage`}
+							{syncMetadata}
 							on:success={handleCardSuccess}
 							on:error={handleCardError}
 						/>
@@ -669,7 +609,6 @@
 				</div>
 			</div>
 		</div>
-	{/if}
 
 	<!-- Info blocks -->
 	<div class="text-lg my-16">

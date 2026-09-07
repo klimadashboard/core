@@ -4,6 +4,12 @@
 	import DonationBanner from './DonationBanner.svelte';
 	import { Button } from '$lib/components/ui';
 
+	/**
+	 * Error pages opt out: an error can happen on any path, so the banner's own
+	 * path check can't detect one — it has to be told.
+	 */
+	export let showDonationBanner = true;
+
 	let newsletterEmail = '';
 	let newsletterStatus = 'idle'; // idle | loading | success | error
 
@@ -26,7 +32,9 @@
 	}
 </script>
 
-<DonationBanner />
+{#if showDonationBanner}
+	<DonationBanner />
+{/if}
 
 <footer class="">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
