@@ -89,9 +89,10 @@
 		loading = true;
 
 		try {
-			data = await fetchHeatingData(selectedRegion, allRegions);
+			const result = await fetchHeatingData(selectedRegion, allRegions);
+			data = result.data;
 			if (data.length > 0) {
-				const chartData = buildChartData(data, selectedRegion, allRegions);
+				const chartData = buildChartData(data, selectedRegion, allRegions, result.dataPeriod);
 				onChartData?.(chartData);
 			} else {
 				onChartData?.(null);

@@ -150,7 +150,7 @@ export function getDataRegion(
 async function fetchHeatingDataAT(
 	regionObj: RegionWithDistance,
 	allRegions: RegionWithDistance[]
-): Promise<{ data: HeatingDataPoint[]; stateName: string; dataPeriod?: Date }> {
+): Promise<{ data: HeatingDataPoint[]; stateName: string; dataPeriod?: string }> {
 	const state = findParentState(regionObj, allRegions);
 	if (!state) return { data: [], stateName: '' };
 
@@ -186,21 +186,33 @@ async function fetchHeatingDataAT(
 	return {
 		data: data.sort((a, b) => (a.category === 'total' ? -1 : b.category === 'total' ? 1 : 0)),
 		stateName: state.name,
-		dataPeriod: new Date(latestPeriod)
+		dataPeriod: latestPeriod
 	};
+}
+
+/**
+ * Label the Mikrozensus survey wave a period belongs to.
+ * The survey runs every two years from July to June, so the period stored as
+ * 2024-12-31 covers July 2023 – June 2024 and is published as "2023/2024".
+ */
+export function formatMikrozensusPeriod(period: string | null | undefined): string {
+	if (!period) return '';
+	const year = Number(String(period).slice(0, 4));
+	if (!Number.isFinite(year)) return '';
+	return `${year - 1}/${year}`;
 }
 
 /** Fetch heating data for a region (DE: census per municipality, AT: mikrozensus per federal state) */
 export async function fetchHeatingData(
 	regionObj: RegionWithDistance | null,
 	allRegions: RegionWithDistance[]
-): Promise<HeatingDataPoint[]> {
-	if (!regionObj) return [];
+): Promise<{ data: HeatingDataPoint[]; dataPeriod?: string }> {
+	if (!regionObj) return { data: [] };
 
 	// AT regions: use mikrozensus data aggregated to federal state level
 	if (regionObj.country === 'AT') {
-		const { data } = await fetchHeatingDataAT(regionObj, allRegions);
-		return data;
+		const { data, dataPeriod } = await fetchHeatingDataAT(regionObj, allRegions);
+		return { data, dataPeriod };
 	}
 
 	const directus = getDirectusInstance(fetch);
@@ -210,7 +222,7 @@ export async function fetchHeatingData(
 		const children = getChildMunicipalities(allRegions, regionObj.id);
 		const muniIds = children.map((c) => c.id);
 
-		if (muniIds.length === 0) return [];
+		if (muniIds.length === 0) return { data: [] };
 
 		const rawData = await directus.request(
 			readItems('energy_heating_systems', {
@@ -236,7 +248,9 @@ export async function fetchHeatingData(
 			percentage: total ? (value / total) * 100 : null
 		}));
 
-		return data.sort((a, b) => (a.category === 'total' ? -1 : b.category === 'total' ? 1 : 0));
+		return {
+			data: data.sort((a, b) => (a.category === 'total' ? -1 : b.category === 'total' ? 1 : 0))
+		};
 	}
 
 	// DE: Default — municipality
@@ -250,11 +264,13 @@ export async function fetchHeatingData(
 	);
 
 	const total = (rawData as any[]).find((d) => d.category === 'total')?.value ?? 0;
-	return (rawData as any[]).map((d) => ({
-		category: d.category,
-		value: d.value,
-		percentage: total ? (d.value / total) * 100 : null
-	}));
+	return {
+		data: (rawData as any[]).map((d) => ({
+			category: d.category,
+			value: d.value,
+			percentage: total ? (d.value / total) * 100 : null
+		}))
+	};
 }
 
 /** Build region label with aggregation info for districts / AT state-level */
@@ -432,7 +448,8 @@ export function buildTableRows(data: HeatingDataPoint[]): Array<Record<string, a
 export function getPlaceholders(
 	data: HeatingDataPoint[],
 	region: RegionWithDistance | null,
-	allRegions: RegionWithDistance[]
+	allRegions: RegionWithDistance[],
+	dataPeriod?: string
 ): Record<string, string | number> {
 	const processed = processChartData(data);
 	const gasEntry = data.find((d) => d.category === 'gas');
@@ -482,6 +499,9 @@ export function getPlaceholders(
 		woodPercentage: formatNumber(woodEntry?.percentage ?? 0),
 		fossilPercentage: formatNumber(fossilPct),
 		targetYear: getTargetYear(country),
+		// Data vintage: AT = Mikrozensus survey wave, DE = Zensus reference date
+		dataPeriod: isAT ? formatMikrozensusPeriod(dataPeriod) : '2022',
+		dataYear: isAT ? (dataPeriod ? String(dataPeriod).slice(0, 4) : '') : '2022',
 		// Country flags for conditional text blocks
 		isAT: isAT ? 1 : 0,
 		isDE: isDE ? 1 : 0
@@ -492,10 +512,12 @@ export function getPlaceholders(
 export function buildChartData(
 	data: HeatingDataPoint[],
 	region: RegionWithDistance | null,
-	allRegions: RegionWithDistance[]
+	allRegions: RegionWithDistance[],
+	dataPeriod?: string
 ): ChartData {
 	const isAT = region?.country === 'AT';
 	const dataRegion = getDataRegion(region, allRegions);
+	const periodLabel = formatMikrozensusPeriod(dataPeriod);
 	return {
 		raw: data,
 		table: {
@@ -503,11 +525,11 @@ export function buildChartData(
 			rows: buildTableRows(data),
 			filename: 'heating_systems'
 		},
-		placeholders: getPlaceholders(data, region, allRegions),
+		placeholders: getPlaceholders(data, region, allRegions, dataPeriod),
 		meta: {
-			updateDate: isAT ? undefined : '2024-06-26',
+			updateDate: isAT ? dataPeriod : '2024-06-26',
 			source: isAT
-				? 'Statistik Austria, Mikrozensus Energieeinsatz der Haushalte'
+				? `Statistik Austria, Mikrozensus Energieeinsatz der Haushalte${periodLabel ? ` ${periodLabel}` : ''}`
 				: 'Statistisches Bundesamt (2024): Zensus 2022',
 			region: region as any,
 			dataRegion: dataRegion as any
@@ -534,8 +556,8 @@ export async function fetchChartData({
 	const region = allRegions.find((r) => r.id === regionId) as RegionWithDistance | undefined;
 	if (!region) return null;
 
-	const data = await fetchHeatingData(region, allRegions);
+	const { data, dataPeriod } = await fetchHeatingData(region, allRegions);
 	if (!data || data.length === 0) return null;
 
-	return buildChartData(data, region, allRegions);
+	return buildChartData(data, region, allRegions, dataPeriod);
 }

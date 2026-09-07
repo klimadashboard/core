@@ -71,7 +71,7 @@
 					<div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
 				{/each}
 			</div>
-		{:then data}
+		{:then { data }}
 			{#if data.length > 0}
 				{@const featuredSum = featuredCategories.reduce((sum, cat) => sum + (data.find((d) => d.category === cat.key)?.percentage ?? 0), 0)}
 				{@const otherPct = Math.max(0, 100 - featuredSum)}
