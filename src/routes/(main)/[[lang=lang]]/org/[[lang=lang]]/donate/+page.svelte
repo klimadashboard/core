@@ -372,7 +372,7 @@
 			<fieldset class="mb-5">
 				<legend class="sr-only">Wie oft möchtest du spenden?</legend>
 				<div class="flex p-1 gap-1 rounded-full bg-gray-100 dark:bg-gray-800 max-w-xs mx-auto">
-					{#each [{ value: 'onetime', label: 'Einmalig' }, { value: 'recurring', label: 'Monatlich' }] as opt}
+					{#each [{ value: 'onetime', label: 'Einmalig' }, { value: 'recurring', label: '&hearts; Monatlich' }] as opt}
 						<label class="flex-1 relative">
 							<input
 								type="radio"
@@ -389,7 +389,7 @@
 									? 'bg-green-600 text-white shadow-sm'
 									: 'hover:bg-white/70 dark:hover:bg-gray-700'}"
 							>
-								{opt.label}
+								{@html opt.label}
 							</span>
 						</label>
 					{/each}
@@ -623,10 +623,16 @@
 					<!-- Keyed on the secret: Stripe Elements read it once at mount, so a
 					     changed intent needs a brand-new component, not an updated prop. -->
 					{#key clientSecret}
+						{@const chargedEUR = coverFee
+							? calculateCardFee(amountEUR(amount)).total
+							: amountEUR(amount)}
 						<Checkout
 							{clientSecret}
-							amountLabel={`€${(coverFee ? calculateCardFee(amountEUR(amount)).total : amountEUR(amount)).toFixed(2)}${frequency === 'recurring' ? '/Monat' : ''}`}
+							amountLabel={`€${chargedEUR.toFixed(2)}${frequency === 'recurring' ? '/Monat' : ''}`}
 							returnUrl={`${page.url.origin}${page.url.pathname}`}
+							recurring={frequency === 'recurring'}
+							amountCents={Math.round(chargedEUR * 100)}
+							managementUrl={`${page.url.origin}/donate/manage`}
 							on:success={handleCardSuccess}
 							on:error={handleCardError}
 						/>
@@ -655,8 +661,8 @@
 						Sichere, SSL-verschlüsselte Zahlung über Stripe. Wir speichern keine Kartendaten.
 					</p>
 					<p class="text-xs opacity-70 text-center max-w-md">
-						Wir verarbeiten deine Angaben, um deine Spende abzuwickeln, sie zu verbuchen und —
-						in Österreich — ans Finanzamt zu melden. Mehr dazu in unserer
+						Wir verarbeiten deine Angaben, um deine Spende abzuwickeln, sie zu verbuchen und — in
+						Österreich — ans Finanzamt zu melden. Mehr dazu in unserer
 						<a href="/datenschutz" class="underline underline-offset-2">Datenschutzerklärung</a>.
 					</p>
 					<PaymentMethods />

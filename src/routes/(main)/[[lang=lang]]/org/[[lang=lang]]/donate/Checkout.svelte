@@ -6,6 +6,12 @@
 	export let clientSecret: string;
 	export let amountLabel: string;
 	export let returnUrl: string;
+	/** Monthly donation? Drives Apple Pay's recurring disclosure. */
+	export let recurring: boolean = false;
+	/** Amount actually charged, in cents — Apple Pay wants the subunit. */
+	export let amountCents: number = 0;
+	/** Where the donor can cancel later; shown in their Apple Wallet. */
+	export let managementUrl: string = '';
 
 	const dispatch = createEventDispatcher<{
 		success: PaymentIntent;
@@ -69,7 +75,31 @@
 				}
 			});
 
-			const expressCheckout = elements.create('expressCheckout', { buttonHeight: 48 });
+			// Without recurringPaymentRequest the Apple Pay sheet presents a monthly
+			// donation as a plain one-off charge — the donor authorises €X with no hint
+			// that it repeats. This makes the sheet state the interval, and puts a
+			// cancel link in their Apple Wallet.
+			const expressCheckout = elements.create('expressCheckout', {
+				buttonHeight: 48,
+				...(recurring && amountCents > 0
+					? {
+							applePay: {
+								recurringPaymentRequest: {
+									paymentDescription: 'Monatliche Spende ans Klimadashboard',
+									managementURL: managementUrl,
+									regularBilling: {
+										label: 'Monatliche Spende',
+										amount: amountCents,
+										recurringPaymentIntervalUnit: 'month' as const,
+										recurringPaymentIntervalCount: 1
+									},
+									billingAgreement:
+										'Deine Spende wird monatlich abgebucht, bis du sie kündigst.'
+								}
+							}
+						}
+					: {})
+			});
 			expressCheckout.on('ready', ({ availablePaymentMethods }) => {
 				hasExpressMethods = !!(
 					availablePaymentMethods && Object.values(availablePaymentMethods).some(Boolean)
