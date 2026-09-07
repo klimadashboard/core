@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { z } from 'zod';
 import { getStripe, upsertStripeCustomer, createRecurringSubscription } from '$lib/server/stripe';
-import { calculateCardFee } from '$lib/utils/donationFee';
+import { calculateCardFee, MIN_DONATION_EUR } from '$lib/utils/donationFee';
 
 const addressSchema = z.object({
 	addressLine: z.string().min(1),
@@ -14,7 +14,7 @@ const addressSchema = z.object({
 
 const requestSchema = z
 	.object({
-		amount: z.number().min(20).max(200000),
+		amount: z.number().min(MIN_DONATION_EUR).max(200000),
 		frequency: z.enum(['onetime', 'recurring']).default('onetime'),
 		coverFee: z.boolean(),
 		name: z.string().min(1).max(81),

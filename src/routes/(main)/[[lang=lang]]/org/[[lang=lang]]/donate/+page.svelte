@@ -6,7 +6,7 @@
 	import { IconLock } from '@tabler/icons-svelte-runes';
 	import { page } from '$app/state';
 	import getDirectusInstance from '$lib/utils/directus';
-	import { calculateCardFee } from '$lib/utils/donationFee';
+	import { calculateCardFee, MIN_DONATION_EUR } from '$lib/utils/donationFee';
 	import { onMount } from 'svelte';
 	import { getStripe } from '$lib/stripe-client';
 
@@ -24,6 +24,7 @@
 	let creatingIntent = false;
 	let cardSuccess = false;
 	let lastIntentFingerprint = '';
+	let lastChargeFingerprint = '';
 	let intentTimer: ReturnType<typeof setTimeout>;
 
 	// Recurring donations (Stripe Subscriptions, monthly only) — same amounts as
@@ -35,7 +36,7 @@
 	$: isValid =
 		name &&
 		email &&
-		amount > 19 &&
+		amount >= MIN_DONATION_EUR &&
 		(country !== 'AT' || birthdate) &&
 		(country === 'AT' || !wantsReceipt || (birthdate && addressLine && zip && city));
 
@@ -165,10 +166,10 @@
 	// PaymentIntent automatically whenever the relevant fields settle (debounced),
 	// instead of waiting for an explicit "continue" click.
 	$: if (browser) {
+		// What the donor actually gets charged, kept separate from the rest.
+		const charge = JSON.stringify({ amount: amountEUR(amount), frequency, coverFee });
 		const fp = JSON.stringify({
-			amount: amountEUR(amount),
-			frequency,
-			coverFee,
+			charge,
 			newsletter,
 			name,
 			email,
@@ -181,6 +182,17 @@
 			state,
 			details2
 		});
+
+		// A Stripe Elements group is pinned to one PaymentIntent for its whole life —
+		// it cannot be re-pointed at another. So the moment the charge changes, the
+		// mounted element is stale and must be torn down immediately, not after the
+		// debounce: otherwise Apple Pay would happily confirm the previous intent
+		// (which is how a monthly donation once went through as a one-off charge).
+		if (charge !== lastChargeFingerprint) {
+			lastChargeFingerprint = charge;
+			clientSecret = null;
+		}
+
 		if (isValid && fp !== lastIntentFingerprint) {
 			lastIntentFingerprint = fp;
 			clearTimeout(intentTimer);
@@ -435,10 +447,10 @@
 					{/if}
 				</label>
 			</fieldset>
-			{#if amount && amount < 20}
+			{#if amount && amount < MIN_DONATION_EUR}
 				<p class="text-sm mt-2 text-center opacity-70">
-					Mindestspende mit Kartenzahlung sind 20€, damit die Verwaltungskosten im Rahmen bleiben.
-					Du kannst aber sehr gern direkt per Überweisung spenden, siehe unten.
+					Mindestspende mit Kartenzahlung sind {MIN_DONATION_EUR}€, damit die Verwaltungskosten im
+					Rahmen bleiben. Du kannst aber sehr gern direkt per Überweisung spenden, siehe unten.
 				</p>
 			{/if}
 
@@ -578,7 +590,7 @@
 			</div>
 
 			<div class="mt-4 grid gap-2">
-				{#if amount && amountEUR(amount) >= 20}
+				{#if amount && amountEUR(amount) >= MIN_DONATION_EUR}
 					{@const { fee } = calculateCardFee(amountEUR(amount))}
 					<label class="flex items-start gap-2 text-sm cursor-pointer opacity-80">
 						<input type="checkbox" bind:checked={coverFee} class="mt-0.5" />
@@ -608,13 +620,17 @@
 			     (Apple Pay / Google Pay / Link) loads in additionally once ready -->
 			<div class="mt-6">
 				{#if clientSecret}
-					<Checkout
-						{clientSecret}
-						amountLabel={`€${(coverFee ? calculateCardFee(amountEUR(amount)).total : amountEUR(amount)).toFixed(2)}${frequency === 'recurring' ? '/Monat' : ''}`}
-						returnUrl={`${page.url.origin}${page.url.pathname}`}
-						on:success={handleCardSuccess}
-						on:error={handleCardError}
-					/>
+					<!-- Keyed on the secret: Stripe Elements read it once at mount, so a
+					     changed intent needs a brand-new component, not an updated prop. -->
+					{#key clientSecret}
+						<Checkout
+							{clientSecret}
+							amountLabel={`€${(coverFee ? calculateCardFee(amountEUR(amount)).total : amountEUR(amount)).toFixed(2)}${frequency === 'recurring' ? '/Monat' : ''}`}
+							returnUrl={`${page.url.origin}${page.url.pathname}`}
+							on:success={handleCardSuccess}
+							on:error={handleCardError}
+						/>
+					{/key}
 				{:else}
 					<button
 						type="button"
