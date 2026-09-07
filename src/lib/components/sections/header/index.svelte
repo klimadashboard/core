@@ -57,7 +57,7 @@
 			<Button
 				href="https://klimadashboard.org/donate"
 				target="_blank"
-				class="!bg-green-400 dark:!bg-green-600 hover:!bg-green-500 dark:hover:!bg-green-500 hidden md:inline-flex"
+				class="!bg-green-400 dark:!bg-green-600 hover:!bg-green-500 dark:hover:!bg-green-500 !px-2.5 sm:!px-4"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +75,7 @@
 						d="M12 6l-3.293 3.293a1 1 0 0 0 0 1.414l.543 .543c.69 .69 1.81 .69 2.5 0l1 -1a3.182 3.182 0 0 1 4.5 0l2.25 2.25"
 					/><path d="M12.5 15.5l2 2" /><path d="M15 13l2 2" /></svg
 				>
-				Spenden
+				<span class="hidden sm:inline">Spenden</span>
 			</Button>
 			<LocaleSwitcher />
 

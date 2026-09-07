@@ -26,6 +26,8 @@
 	}
 </script>
 
+<DonationBanner />
+
 <footer class="">
 	<div class="container grid md:grid-cols-3 gap-4 py-8">
 		{#if page.data.site?.content?.faq}
