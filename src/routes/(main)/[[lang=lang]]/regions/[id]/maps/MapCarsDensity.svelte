@@ -47,6 +47,7 @@
 	// Determine initial layer based on the current region's layer
 	function getInitialLayer(): LayerPlural {
 		if (regionLayer === 'district') return 'districts';
+		if (PUBLIC_VERSION !== 'at') return 'districts';
 		return 'municipalities';
 	}
 
