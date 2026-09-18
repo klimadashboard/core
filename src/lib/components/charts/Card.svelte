@@ -270,6 +270,15 @@
 		showEmbedModal = true;
 	}
 
+	// Sanitize a resolved title for use as a downloaded filename: strip characters
+	// that are invalid (or awkward) in filenames on common filesystems.
+	function sanitizeFilename(name: string): string {
+		return name
+			.replace(/[/\\:*?"<>|]/g, '')
+			.replace(/\s+/g, ' ')
+			.trim();
+	}
+
 	function buildVectorSvg(): Blob | null {
 		// Find the D3 chart SVG (inside .chart-container, not the logo or other SVGs)
 		const chartContainer = contentEl.querySelector('.chart-container');
@@ -418,7 +427,10 @@
 				{ family: 'Barlow Condensed', src: condensedFontBold, weight: '800' }
 			];
 
-			const filename = chart.content?.title || 'chart';
+			// Use the already-resolved title (placeholders like {{regionName}} interpolated,
+			// same value shown in the card header) instead of the raw CMS string, which
+			// would otherwise leak literal "{{placeholder}}" text into the downloaded filename.
+			const filename = sanitizeFilename(title || chart.content?.title || 'chart') || 'chart';
 			let blob: Blob;
 
 			if (type === 'svg') {
