@@ -47,6 +47,8 @@
 	// Determine initial layer based on the current region's layer
 	function getInitialLayer(): LayerPlural {
 		if (regionLayer === 'district') return 'districts';
+		// Only AT has municipality-level car data; elsewhere that layer renders empty.
+		if (PUBLIC_VERSION !== 'at') return 'districts';
 		return 'municipalities';
 	}
 
@@ -189,19 +191,24 @@
 			selectedLayer === 'districts' ? d.layer === 'district' : d.layer === 'municipality'
 		);
 
-		return regionsForMap
-			.map((d) => {
-				const code = PUBLIC_VERSION === 'at' ? String(d.code) : String(d.code_short ?? d.code);
-				const dataArr =
-					selectedView === 'pop'
-						? d.carsPer1000Inhabitants
-						: selectedView === 'private'
-							? d.carsPrivateShare
-							: d.carsCompanyShare;
-				const hit = dataArr.find((row) => String(row.period) === String(selectedPeriod));
-				return { region: code, value: hit?.value ?? (null as any) };
-			})
-			.filter((d) => d.value != null);
+		// Keyed by region code so a code never appears twice: the colour scale is
+		// applied as a MapLibre `match` expression, and duplicate branch labels make
+		// MapLibre reject the expression outright, leaving the whole map unstyled.
+		const byCode = new Map<string, number>();
+
+		for (const d of regionsForMap) {
+			const code = PUBLIC_VERSION === 'at' ? String(d.code) : String(d.code_short ?? d.code);
+			const dataArr =
+				selectedView === 'pop'
+					? d.carsPer1000Inhabitants
+					: selectedView === 'private'
+						? d.carsPrivateShare
+						: d.carsCompanyShare;
+			const hit = dataArr.find((row) => String(row.period) === String(selectedPeriod));
+			if (hit?.value != null) byCode.set(code, hit.value);
+		}
+
+		return Array.from(byCode, ([region, value]) => ({ region, value }));
 	}
 
 	function applyColorsToActiveLayer(): void {
