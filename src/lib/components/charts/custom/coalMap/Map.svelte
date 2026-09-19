@@ -75,6 +75,9 @@
 	const createMap = function () {
 		coalMap = new maplibregl.Map({
 			container: coalMapElement,
+			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
+			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
+			canvasContextAttributes: { preserveDrawingBuffer: true },
 			interactive: true,
 			style: {
 				version: 8,
