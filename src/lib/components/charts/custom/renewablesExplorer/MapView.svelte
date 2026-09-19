@@ -240,7 +240,13 @@
 			container: mapContainer,
 			style: getBasemapStyle(isDarkMode),
 			center: centerCoords,
-			zoom: region || urlRegionId ? 8 : 5
+			zoom: region || urlRegionId ? 8 : 5,
+			// Keep the WebGL drawing buffer around after each frame is presented.
+			// Without this, the browser clears the canvas once it's composited to
+			// the screen, so `canvas.toDataURL()` (used by snapdom's PNG/JPEG card
+			// export in Card.svelte) reads back a blank/white canvas even though
+			// the map looks fine on screen.
+			canvasContextAttributes: { preserveDrawingBuffer: true }
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -576,7 +582,9 @@
 			}
 
 			// Find the most recent year with new installations
-			const lastYearWithInstallation = [...yearlyData].reverse().find((d) => (d.added_units || 0) > 0);
+			const lastYearWithInstallation = [...yearlyData]
+				.reverse()
+				.find((d) => (d.added_units || 0) > 0);
 			if (lastYearWithInstallation) {
 				return `Zuletzt wurde im Jahr ${lastYearWithInstallation.year} ein Windrad in ${regionDisplayName} in Betrieb genommen.`;
 			}
@@ -587,7 +595,13 @@
 
 		// Fallback to turbine count if yearly data not yet loaded
 		const totalTurbines = turbines.length;
-		if (totalTurbines === 0 && !loading && !regionLoading && !internalRegionLoading && !dataLoading) {
+		if (
+			totalTurbines === 0 &&
+			!loading &&
+			!regionLoading &&
+			!internalRegionLoading &&
+			!dataLoading
+		) {
 			return `In ${regionDisplayName} ist aktuell kein Windrad in Betrieb.`;
 		} else if (totalTurbines > 0) {
 			return `In ${regionDisplayName} sind Windräder in Betrieb.`;
