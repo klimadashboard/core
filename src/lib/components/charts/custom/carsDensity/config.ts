@@ -757,8 +757,15 @@ export async function fetchAllRegions(fetchFn: typeof fetch): Promise<AllRegions
 				m.parents.some((p: any) => p.layer === 'district' && p.id === districtId)
 		);
 
-	// Aggregate districts from their municipalities
+	// Districts: prefer figures reported for the district itself. DE reports car
+	// numbers per Kreis (5-digit AGS) and has no municipality-level rows at all, so
+	// aggregating from children would report 0 cars for every German district. AT
+	// reports per municipality and has no district-level rows, so it still falls
+	// through to the aggregation below.
 	const districts: RegionWithData[] = districtShapes.map((shape) => {
+		const ownRows = byShape(shape);
+		if (ownRows.length) return enrichRegionWithData(shape, ownRows);
+
 		const children = getChildren(shape.id!);
 		const childRows = children
 			.map((c) => municipalities.find((m) => m.code === c.code))
