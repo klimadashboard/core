@@ -1,7 +1,7 @@
 <script>
 	export let selectedTiles = [];
 	export let gueteklassColors;
-	export let categories;
+	export let survey = null;
 
 	const MAX_POP = 100;
 	const MAX_PT = 7;
@@ -13,8 +13,13 @@
 
 	let debounceTimeout;
 
-	function getGueteklass(category) {
-		return categories.find((c) => c.category == category)?.gueteklass;
+	// Die Güteklasse gehört zur Fläche, nicht zur Haltestelle — sie ergibt sich erst
+	// aus Haltestellenkategorie und Fußwegdistanz. Die Liste zeigt deshalb nur die
+	// Kategorie, so wie sie im Datensatz steht. Haltestellen unter dem Angebots-
+	// mindeststandard führt die ÖROK ohne Kategorie.
+	function getCategory(category) {
+		if (!category || category === 'Keine Hst-Kategorie') return '–';
+		return category;
 	}
 
 	function getCenterFromGeometry(tile) {
@@ -127,12 +132,18 @@
 <div
 	class="bg-white text-lg dark:bg-gray-900 border border-current/10 shadow p-4 rounded-2xl -mt-16 z-30 relative max-w-3xl mx-auto"
 >
-	<div class="px-8">
-		<div class="w-[69%] translate-x-15 border-l border-t border-r text-sm opacity-80 mb-1">
-			<p class="w-full text-center">ländlich</p>
+	<!-- Räumliche Zuordnung laut ÖROK Heft 10, Tab. 2. Acht Spalten, damit die
+	     Klammern exakt über den acht Feldern der Legende darunter sitzen:
+	     X · G · F · E · D · C · B · A -->
+	<div class="grid grid-cols-8 text-sm opacity-80 mb-1">
+		<div class="col-start-2 col-span-3 border-l border-t border-r">
+			<p class="text-center">ländlich</p>
 		</div>
-		<div class="w-1/2 ml-auto border-l border-t border-r text-sm opacity-80 mb-1">
-			<p class="w-full text-center">städtisch</p>
+		<div class="col-span-2 border-l border-t border-r">
+			<p class="text-center">städtisch & ländlich</p>
+		</div>
+		<div class="col-span-2 border-l border-t border-r">
+			<p class="text-center">städtisch</p>
 		</div>
 	</div>
 	<div class="flex rounded-full overflow-hidden mt-1">
@@ -168,7 +179,7 @@
 					<thead>
 						<tr>
 							<th>Name</th>
-							<th>Güteklasse</th>
+							<th>Kategorie</th>
 							<th>Intervall</th>
 							<th>Linien</th>
 						</tr>
@@ -177,13 +188,7 @@
 						{#each stops as stop}
 							<tr>
 								<td>{stop.name}</td>
-								<td
-									><span
-										style="background-color: {gueteklassColors[getGueteklass(stop.category)]}"
-										class="w-5 h-5 rounded-full block text-white font-bold px-1.5"
-										>{getGueteklass(stop.category)}</span
-									></td
-								>
+								<td class="tabular-nums">{getCategory(stop.category)}</td>
 								<td>{getInterval(stop.interval)}</td>
 								<td>
 									{#each stop.lines.filter((d) => d !== 'nan') as line}
@@ -206,22 +211,27 @@
 		</p>
 	{/if}
 	<p class="text-lg mt-2">
-		Die Güteklassen des Öffentlichen Verkehrs (ÖV) zeigen, wie gut ein Gebiet mit Bus und Bahn
-		angebunden ist. Dabei wird berücksichtigt, wie oft die Verbindungen fahren und wie nah die
-		Haltestellen zu Fuß erreichbar sind. Güteklasse A steht für eine sehr gute Anbindung in Städten,
-		Klasse C für eine gute Erschließung in Randgebieten mit größeren Umsteigepunkten. Im ländlichen
-		Raum steht Güteklasse E für eine verlässliche Grundversorgung mit öffentlichen Verkehrsmitteln.
-		Hier gibt es zwar weniger Fahrten und weitere Wege zur Haltestelle, aber der ÖV ist gut nutzbar.
-		Güteklasse G bezeichnet eine einfache Basisversorgung mit wenigen Verbindungen und oft längeren
-		Fußwegen, was die Nutzung des ÖV erschwert. In der Karte kannst du dir die Anbindungsgüte für
-		Wochentage & für Wochenenden und auch Haltestellen anzeigen lassen.
+		Die Güteklassen des Öffentlichen Verkehrs (ÖV) beschreiben, wie gut eine Fläche mit Bus und Bahn
+		erschlossen ist. Sie ergeben sich aus zwei Größen: wie dicht die Haltestellen in der Nähe
+		zwischen 6 und 20 Uhr bedient werden und wie weit der Fußweg dorthin ist. <strong>A</strong> und
+		<strong>B</strong>
+		stehen für höchstrangige und hochrangige Erschließung im städtischen Raum.
+		<strong>C</strong>
+		und <strong>D</strong> bezeichnen sehr gute und gute Erschließung entlang von ÖV-Achsen und an
+		Knotenpunkten — in der Stadt wie am Land. <strong>E</strong>, <strong>F</strong> und
+		<strong>G</strong>
+		beschreiben die Basiserschließung im ländlichen Raum, von sehr guter über gute bis zur einfachen
+		Basiserschließung. <strong>X</strong> bedeutet, dass keine Haltestelle nah genug liegt. Erhoben wird
+		an zwei Stichtagen: an einem Werktag in der Normalwoche und an einem Werktag in den Herbstferien.
+		Oben links in der Karte kannst du zwischen beiden wechseln und so sehen, wo die Anbindung ohne Schulverkehr
+		abfällt.
 	</p>
 	<p class="text-sm opacity-70 mt-2">
 		Datenquelle: <a
 			class="underline underline-offset-2"
 			href="https://www.oerok.gv.at/raum/themen/raumordnung-und-mobilitaet">ÖROK ÖV-Güteklassen</a
 		>
-		am 23.10.2024 |
+		am {survey?.date ?? '22.10.2025'}{survey ? ` (${survey.label})` : ''} |
 		<a
 			class="underline underline-offset-2"
 			href="https://www.google.com/url?q=https://www.oerok.gv.at/fileadmin/user_upload/O__ROK-Broschuere_Heft_10_O__V-Gu__teklassen.pdf&sa=D&source=docs&ust=1750177327120933&usg=AOvVaw1-0hxhbUpXlJN3DHJYnr93"
@@ -238,6 +248,11 @@
 
 	td,
 	th {
-		@apply py-1 border-b border-current/20;
+		@apply py-1 pr-4 border-b border-current/20 align-top;
+	}
+
+	td:last-child,
+	th:last-child {
+		@apply pr-0;
 	}
 </style>
