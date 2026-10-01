@@ -16,7 +16,7 @@
 	let error: string | null = null;
 	let allIncidents: Incident[] = [];
 	let view = 'lines';
-	let selectedYear = 2025;
+	let selectedYear = 2026;
 	let containerWidth = 0;
 	let containerEl: HTMLDivElement;
 	let hoverLabel: string | null = null;
@@ -50,6 +50,13 @@
 			)
 		: 0;
 
+	// Live-sync rows (late Aug 2026 onward) whose clear time couldn't be
+	// reconstructed have no date_fix -- they count as incidents but add no
+	// waiting time, so the year's total is understated by that many incidents.
+	$: missingDurationCount = incidents.filter(
+		(i) => i.import_status !== 'manual' && !i.date_fix
+	).length;
+
 	$: VIEW_NOTES = {
 		lines: 'Für jeden Vorfall wird die betroffene Linie dokumentiert. Diese Auswertung umfasst daher alle verfügbaren Daten – ohne Datenverlust durch fehlende Adressen.',
 		districts: `Nur bei ${districtRatePct}\u202f% der Vorfälle (${selectedYear}) konnte ein Bezirk ermittelt werden – 2016 waren es noch 88\u202f%. Die übrigen Fälle fehlen in dieser Auswertung.`,
@@ -60,7 +67,10 @@
 	const WAIT_COLOR = '#f97316';
 
 	function incidentWaitingHours(inc: Incident) {
-		const end = inc.date_fix ?? inc.date_end;
+		// date_end is only a meaningful fallback for the historical manual rows. On
+		// rows from the live sync it's WL's end-of-service-day estimate (23:55), so
+		// an auto/reviewed row without date_fix has no known duration.
+		const end = inc.date_fix ?? (inc.import_status === 'manual' ? inc.date_end : null);
 		if (!end || !inc.date_start) return null;
 		const diff = dayjs(end).diff(dayjs(inc.date_start), 'minute');
 		return diff > 0 ? diff / 60 : null;
@@ -258,6 +268,7 @@
 							'date_start',
 							'date_fix',
 							'date_end',
+							'import_status',
 							'lines',
 							'address',
 							'address_category',
@@ -407,6 +418,12 @@
 	{#if VIEW_NOTES[view]}
 		<p class="mt-3 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
 			{VIEW_NOTES[view]}
+		</p>
+	{/if}
+	{#if missingDurationCount > 0}
+		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+			Bei {missingDurationCount} Vorfällen im Jahr {selectedYear} fehlt der Zeitpunkt, zu dem die
+			Störung behoben war – sie fließen deswegen nicht in unsere Wartezeit-Auswertungen ein.
 		</p>
 	{/if}
 

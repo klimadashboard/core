@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5173,
       "autoPort": true
+    },
+    {
+      "name": "dev-at",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["PUBLIC_VERSION=at", "npm", "run", "dev", "--", "--port", "5174"],
+      "port": 5174
     }
   ]
 }

@@ -14,6 +14,7 @@ export interface Incident {
 	lon: number | null;
 	address_full: string | null;
 	district: number | null;
+	import_status?: 'manual' | 'auto' | 'reviewed' | null;
 }
 
 export interface Hotspot {
