@@ -1,12 +1,13 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 
-	export let startDate = '2025-01-01';
-	export let endDate = '2025-12-31';
+	export let startDate = '2026-01-01';
+	export let endDate = '2026-12-31';
 
 	const dispatch = createEventDispatcher();
 
 	const presets = [
+		{ label: '2026', start: '2026-01-01', end: '2026-12-31' },
 		{ label: '2025', start: '2025-01-01', end: '2025-12-31' },
 		{ label: '2024', start: '2024-01-01', end: '2024-12-31' },
 		{ label: '2023', start: '2023-01-01', end: '2023-12-31' },

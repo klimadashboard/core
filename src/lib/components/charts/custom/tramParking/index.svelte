@@ -23,8 +23,8 @@
 	let loading = true;
 	let error = null;
 
-	let startDate = '2025-01-01';
-	let endDate = '2025-12-31';
+	let startDate = '2026-01-01';
+	let endDate = '2026-12-31';
 	let selectedDistrict = null;
 	let selectedIncident = null;
 	let selectedHotspot = null;
