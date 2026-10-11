@@ -66,8 +66,9 @@
 				Das Klimadashboard bleibt <b>kostenlos, werbefrei und unabhängig</b> – für alle, die
 				verlässliche Klimadaten brauchen. Möglich ist das nur, weil Menschen wie du uns direkt
 				unterstützen. Deine Spende ermöglicht <b>neue Projekte und regelmäßige Datenupdates</b>.
-				{#if PUBLIC_VERSION == 'at'}
-					In Österreich ist deine Spende an uns <b>steuerlich absetzbar</b>.
+				{#if PUBLIC_VERSION == 'at' || PUBLIC_VERSION == 'de'}
+					In {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'} ist deine Spende an uns
+					<b>steuerlich absetzbar</b>.
 				{/if} Danke, dass du dabei bist!
 			</p>
 			<div class="flex flex-wrap items-center gap-2 mt-3">

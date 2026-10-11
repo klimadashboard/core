@@ -115,6 +115,11 @@
 			// cancel link in their Apple Wallet.
 			const expressCheckout = elements.create('expressCheckout', {
 				buttonHeight: 48,
+				// Explicit, because Stripe flips this to false as soon as an `applePay`
+				// option is passed — which is exactly the recurring case. German donors
+				// need an address for their Zuwendungsbestätigung, and a wallet hands one
+				// over with no typing, so losing it silently is the worst outcome.
+				billingAddressRequired: true,
 				...(recurring && amountCents > 0
 					? {
 							applePay: {

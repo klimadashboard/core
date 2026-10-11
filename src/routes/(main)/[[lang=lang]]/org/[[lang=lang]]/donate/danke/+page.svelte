@@ -95,8 +95,8 @@
 			{/if}
 		</p>
 		<p class="text-base mt-4 opacity-80">
-			Bist du in Österreich steuerpflichtig, melden wir deine Spende automatisch ans Finanzamt. Eine
-			Bestätigung schicken wir dir per E-Mail.
+			Bist du in Österreich steuerpflichtig, melden wir deine Spende automatisch ans Finanzamt.
+			Spendest du aus Deutschland, schicken wir dir deine Zuwendungsbestätigung per E-Mail.
 		</p>
 
 		{#if recurring}

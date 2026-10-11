@@ -12,6 +12,7 @@ import {
 	type Address
 } from '$lib/server/campai';
 import { subscribeToNewsletter } from '$lib/server/brevo';
+import { taxRegime, needsAddress } from '$lib/donationTax';
 
 /**
  * Stripe webhook — the only place a donation gets booked into Campai. Read the raw
@@ -100,8 +101,7 @@ function parseDonorMeta(meta: Stripe.Metadata): DonorMeta | null {
 	const country = meta.country || 'AT';
 	const birthdate = meta.birthdate || undefined;
 	const wantsReceipt = meta.wantsReceipt === 'true';
-	const needsFullReceipt = country !== 'AT' && wantsReceipt;
-	const address: Address | undefined = needsFullReceipt
+	const address: Address | undefined = needsAddress(country, wantsReceipt)
 		? {
 				country,
 				zip: meta.zip || '',
@@ -148,10 +148,19 @@ async function bookIntoCampai(opts: {
 	description: string;
 }) {
 	const { fetch, donor, debtorAccount, amountEUR, date, description } = opts;
-	const needsFullReceipt = donor.country !== 'AT' && donor.wantsReceipt;
+	const regime = taxRegime(donor.country);
 
-	if (needsFullReceipt && donor.address) {
-		await createDonationReceipt({
+	// Germany always, elsewhere on opt-in: book a donation-type receipt, which is
+	// what Campai's year-end createDonationsFromReceipts run turns into the formal
+	// confirmation. The Zuwendungsbestätigung is NOT issued per charge — it has to be
+	// an annual Sammelbestätigung (one document, all of the donor's positions).
+	// Issuing one per monthly charge would mean twelve documents and twelve chances
+	// to be wrong, and § 10b Abs. 4 EStG puts 30% of the amount on the issuer for a
+	// wrong one.
+	const wantsConfirmation = regime === 'DE' || (regime === 'none' && donor.wantsReceipt);
+	let receiptId: string;
+	if (wantsConfirmation && donor.address) {
+		({ receiptId } = await createDonationReceipt({
 			fetch,
 			debtorAccount,
 			debtorName: donor.name,
@@ -161,9 +170,8 @@ async function bookIntoCampai(opts: {
 			amountEUR,
 			address: donor.address,
 			intro: 'Vielen Dank für deine Unterstützung!',
-			sendEmail: true,
 			dbg: donor.dbg
-		});
+		}));
 	} else {
 		const receipt = await createRevenueReceipt({
 			fetch,
@@ -173,10 +181,12 @@ async function bookIntoCampai(opts: {
 			description,
 			dbg: donor.dbg
 		});
-		await markReceiptPaid({ fetch, receiptId: receipt._id, debtorAccount, amountEUR, dbg: donor.dbg });
+		receiptId = receipt._id;
 	}
+	// Paid by card already — and only a paid receipt qualifies for the confirmation run.
+	await markReceiptPaid({ fetch, receiptId, amountEUR, dbg: donor.dbg });
 
-	if (donor.country === 'AT') {
+	if (regime === 'AT') {
 		await createAustrianDonationRecord({
 			fetch,
 			debtorAccount,

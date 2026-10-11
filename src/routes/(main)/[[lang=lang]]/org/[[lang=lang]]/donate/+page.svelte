@@ -8,6 +8,7 @@
 	import { goto } from '$app/navigation';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { calculateCardFee, MIN_DONATION_EUR } from '$lib/utils/donationFee';
+	import { taxRegime, needsAddress, needsBirthdate } from '$lib/donationTax';
 	import { onMount } from 'svelte';
 	import { getStripe } from '$lib/stripe-client';
 
@@ -33,12 +34,19 @@
 	type Frequency = 'onetime' | 'recurring';
 	let frequency: Frequency = 'onetime';
 
+	$: regime = taxRegime(country);
 	$: isValid =
 		name &&
 		email &&
-		amount >= MIN_DONATION_EUR &&
-		(country !== 'AT' || birthdate) &&
-		(country === 'AT' || !wantsReceipt || (birthdate && addressLine && zip && city));
+		amountEUR(amount) >= MIN_DONATION_EUR &&
+		(!needsBirthdate(country, wantsReceipt) || birthdate) &&
+		(!needsAddress(country, wantsReceipt) || (addressLine && zip && city));
+
+	/** The address as the API expects it, or undefined when this country needs none. */
+	$: addressPayload =
+		needsAddress(country, wantsReceipt) && addressLine && zip && city
+			? { addressLine, zip, city, state: state || undefined, details2: details2 || undefined }
+			: undefined;
 
 	// Form fields
 	let name = '';
@@ -56,9 +64,9 @@
 	let coverFee = false;
 	let newsletter = false; // optional, opt-in — the only genuine consent on this form
 
-	// Countries from Directus
+	// Countries from Directus, loaded in onMount
 	type CountryOption = { id: string; name_de: string };
-	let countries: CountryOption[] = data.countries ?? [];
+	let countries: CountryOption[] = [];
 
 	// Amount (DONATION amount, excludes any covered fee). `customAmount` is kept
 	// separate so the free-text field stays empty while a preset is selected,
@@ -68,8 +76,8 @@
 	const suggestedAmounts = [30, 50, 100, 200];
 
 	// Bank transfer details — shown in the FAQ as a manual alternative, not a form.
-	const iban = 'AT04 3412 9000 0893 6452';
-	const bic = 'GENOAT21XXX';
+	const iban = 'AT10 3468 0000 0133 6452';
+	const bic = 'RZOOAT2L680';
 	const bankName = 'Raiffeisenbank Gunskirchen';
 	const receiverName = 'Klimadashboard';
 
@@ -183,10 +191,7 @@
 				birthdate: birthdate || undefined,
 				wantsReceipt,
 				newsletter,
-				address:
-					country !== 'AT' && wantsReceipt
-						? { addressLine, zip, city, state: state || undefined, details2: details2 || undefined }
-						: undefined
+				address: addressPayload
 			})
 		});
 	}
@@ -208,16 +213,7 @@
 					country,
 					birthdate: birthdate || undefined,
 					wantsReceipt,
-					address:
-						country !== 'AT' && wantsReceipt
-							? {
-									addressLine,
-									zip,
-									city,
-									state: state || undefined,
-									details2: details2 || undefined
-								}
-							: undefined
+					address: addressPayload
 				})
 			});
 			if (!res.ok) {
@@ -260,6 +256,8 @@
 		return `${page.url.pathname}/danke?${params}`;
 	}
 
+	const returnTo = page.url.searchParams.get('returnTo');
+
 	function cleanURL(url: string) {
 		return url.replace(/^https?:\/\//, '');
 	}
@@ -268,14 +266,12 @@
 <div class="max-w-3xl mx-auto p-4">
 	<p class="text-sm">
 		<a
-			href={page.url.searchParams.get('returnTo')
-				? page.url.searchParams.get('returnTo')
-				: 'https://klimadashboard.org'}
+			href={returnTo ?? 'https://klimadashboard.org'}
 			class="opacity-80 underline hover:opacity-100 underline-offset-2"
 		>
 			&larr; zurück zu
-			{#if page.url.searchParams.get('returnTo')}
-				{cleanURL(page.url.searchParams.get('returnTo'))}
+			{#if returnTo}
+				{cleanURL(returnTo)}
 			{:else}
 				klimadashboard.org
 			{/if}
@@ -305,319 +301,338 @@
 	<div
 		class="mt-8 bg-white dark:bg-gray-900 border border-current/10 rounded-3xl shadow-sm p-5 sm:p-6"
 	>
-			<!-- ───────────────── Einmalig / Monatlich — segmented control.
+		<!-- ───────────────── Einmalig / Monatlich — segmented control.
 			     Native radios inside a fieldset (same a11y pattern as $lib/components/ui
 			     RadioGroup, restyled to the donation green and able to sit inline). -->
-			<fieldset class="mb-5">
-				<legend class="sr-only">Wie oft möchtest du spenden?</legend>
-				<div class="flex p-1 gap-1 rounded-full bg-gray-100 dark:bg-gray-800 max-w-xs mx-auto">
-					{#each [{ value: 'onetime', label: 'Einmalig' }, { value: 'recurring', label: '&hearts; Monatlich' }] as opt}
-						<label class="flex-1 relative">
-							<input
-								type="radio"
-								name="frequency"
-								value={opt.value}
-								checked={frequency === opt.value}
-								on:change={() => selectFrequency(opt.value as Frequency)}
-								class="sr-only peer"
-							/>
-							<span
-								class="block text-center text-sm font-medium py-2 rounded-full cursor-pointer transition-colors
+		<fieldset class="mb-5">
+			<legend class="sr-only">Wie oft möchtest du spenden?</legend>
+			<div class="flex p-1 gap-1 rounded-full bg-gray-100 dark:bg-gray-800 max-w-xs mx-auto">
+				{#each [{ value: 'onetime', label: 'Einmalig' }, { value: 'recurring', label: '&hearts; Monatlich' }] as opt}
+					<label class="flex-1 relative">
+						<input
+							type="radio"
+							name="frequency"
+							value={opt.value}
+							checked={frequency === opt.value}
+							on:change={() => selectFrequency(opt.value as Frequency)}
+							class="sr-only peer"
+						/>
+						<span
+							class="block text-center text-sm font-medium py-2 rounded-full cursor-pointer transition-colors
 									peer-focus-visible:ring-2 peer-focus-visible:ring-green-600 peer-focus-visible:ring-offset-1
 									{frequency === opt.value
-									? 'bg-green-600 text-white shadow-sm'
-									: 'hover:bg-white/70 dark:hover:bg-gray-700'}"
-							>
-								{@html opt.label}
-							</span>
-						</label>
-					{/each}
-				</div>
-			</fieldset>
-
-			<!-- ───────────────── Amount -->
-			<fieldset>
-				<legend
-					class="block w-full text-center text-sm font-bold uppercase tracking-wide opacity-70 mb-3"
-				>
-					{frequency === 'recurring' ? 'Deine monatliche Spende' : 'Deine Spende'}
-				</legend>
-				<div class="grid grid-cols-4 gap-2">
-					{#each suggestedAmounts as amt}
-						<label class="relative">
-							<input
-								type="radio"
-								name="amount"
-								value={amt}
-								checked={amount === amt}
-								on:change={() => selectSuggestedAmount(amt)}
-								class="sr-only peer"
-							/>
-							<span
-								class="block text-center py-2.5 rounded-xl border font-medium cursor-pointer transition-colors
-									peer-focus-visible:ring-2 peer-focus-visible:ring-green-600 peer-focus-visible:ring-offset-1
-									{amount === amt
-									? 'bg-green-600 text-white border-transparent'
-									: 'border-gray-200 dark:border-gray-700 hover:border-green-600'}"
-							>
-								€{amt}
-							</span>
-						</label>
-					{/each}
-				</div>
-
-				<label
-					class="mt-2 flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2.5 focus-within:ring-2 focus-within:ring-green-600"
-				>
-					<span class="opacity-60" aria-hidden="true">€</span>
-					<span class="sr-only">Anderer Betrag in Euro</span>
-					<input
-						type="number"
-						min="1"
-						max="9999"
-						step="1"
-						placeholder="Anderer Betrag"
-						class="w-full bg-transparent outline-none"
-						value={customAmount}
-						on:input={handleCustomAmount}
-					/>
-					{#if frequency === 'recurring'}
-						<span class="text-sm opacity-60 whitespace-nowrap">/ Monat</span>
-					{/if}
-				</label>
-			</fieldset>
-			{#if amount && amount < MIN_DONATION_EUR}
-				<p class="text-sm mt-2 text-center opacity-70">
-					Mindestspende mit Kartenzahlung sind {MIN_DONATION_EUR}€, damit die Verwaltungskosten im
-					Rahmen bleiben. Du kannst aber sehr gern direkt per Überweisung spenden, siehe unten.
-				</p>
-			{/if}
-
-			<!-- ───────────────── Donor info -->
-			<div class="grid gap-3 mt-6">
-				<div class="grid sm:grid-cols-2 gap-3">
-					<div class="flex flex-col gap-1">
-						<label for="name">Name</label>
-						<input
-							id="name"
-							type="text"
-							class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-							bind:value={name}
-							required
-						/>
-					</div>
-					<div class="flex flex-col gap-1">
-						<label for="email">Email</label>
-						<input
-							id="email"
-							type="email"
-							bind:value={email}
-							class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-							required
-						/>
-					</div>
-				</div>
-
-				<div class="flex flex-col gap-1 sm:max-w-xs">
-					<label for="country">Land</label>
-					<select
-						id="country"
-						class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-						bind:value={country}
-					>
-						{#if !countries.length}
-							<option value="AT">Österreich</option>
-						{:else}
-							{#each countries as c}
-								<option value={c.id}>{c.name_de}</option>
-							{/each}
-						{/if}
-					</select>
-				</div>
-
-				{#if country === 'AT'}
-					<div
-						class="rounded-2xl border border-green-300 dark:border-green-800 bg-green-100 dark:bg-green-900/25 px-4 py-3 text-green-900 dark:text-green-200 text-sm"
-					>
-						<b>Deine Spende ist in Österreich steuerlich absetzbar.</b> Wir melden sie automatisch mit
-						deinem Namen & Geburtsdatum ans Finanzamt — dafür brauchen wir nur dein Geburtsdatum, keine
-						Adresse.
-					</div>
-					<div class="flex flex-col gap-1 sm:max-w-xs">
-						<label for="birthdate">Geburtsdatum</label>
-						<input
-							id="birthdate"
-							type="date"
-							bind:value={birthdate}
-							class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-							min="1900-01-01"
-							required
-						/>
-					</div>
-				{:else}
-					<div
-						class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm"
-					>
-						Spenden aus {countries.find((c) => c.id === country)?.name_de ?? 'diesem Land'} sind bei
-						uns aktuell nicht steuerlich absetzbar.
-						<button
-							type="button"
-							class="underline underline-offset-2 font-medium ml-1"
-							on:click={toggleWantsReceipt}
+								? 'bg-green-600 text-white shadow-sm'
+								: 'hover:bg-white/70 dark:hover:bg-gray-700'}"
 						>
-							{wantsReceipt
-								? 'Doch keine Spendenbescheinigung nötig'
-								: 'Ich möchte trotzdem eine Spendenbescheinigung'}
-						</button>
-					</div>
-
-					{#if wantsReceipt}
-						<div class="flex flex-col gap-1 sm:max-w-xs">
-							<label for="birthdate">Geburtsdatum</label>
-							<input
-								id="birthdate"
-								type="date"
-								bind:value={birthdate}
-								class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-								min="1900-01-01"
-								required
-							/>
-						</div>
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-							<div class="flex flex-col gap-1 sm:col-span-2">
-								<label for="addressLine">Straße & Nr.</label>
-								<input
-									id="addressLine"
-									type="text"
-									bind:value={addressLine}
-									class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-									required
-								/>
-							</div>
-							<div class="flex flex-col gap-1">
-								<label for="zip">PLZ</label>
-								<input
-									id="zip"
-									type="text"
-									bind:value={zip}
-									class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-									required
-								/>
-							</div>
-							<div class="flex flex-col gap-1">
-								<label for="city">Ort</label>
-								<input
-									id="city"
-									type="text"
-									bind:value={city}
-									class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-									required
-								/>
-							</div>
-							<div class="flex flex-col gap-1">
-								<label for="details2">Adresszusatz (optional)</label>
-								<input
-									id="details2"
-									type="text"
-									bind:value={details2}
-									class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
-								/>
-							</div>
-						</div>
-					{/if}
-				{/if}
-			</div>
-
-			<div class="mt-4 grid gap-2">
-				{#if amount && amountEUR(amount) >= MIN_DONATION_EUR}
-					{@const { fee } = calculateCardFee(amountEUR(amount))}
-					<label class="flex items-start gap-2 text-sm cursor-pointer opacity-80">
-						<input type="checkbox" bind:checked={coverFee} class="mt-0.5" />
-						<span>
-							Ich übernehme die {frequency === 'recurring' ? 'monatliche ' : ''}Kartengebühr von
-							<b>€{fee.toFixed(2)}</b>, damit 100% meiner Spende ankommt.
+							{@html opt.label}
 						</span>
 					</label>
-				{/if}
+				{/each}
+			</div>
+		</fieldset>
 
-				<!-- Optional and unticked: marketing email is the one thing here that
-				     genuinely needs consent, so it stays separate from the donation. -->
-				<label class="flex items-start gap-2 text-sm cursor-pointer opacity-80">
-					<input type="checkbox" bind:checked={newsletter} class="mt-0.5" />
-					<span>
-						Ja, ich möchte den Klimadashboard-Newsletter mit neuen Datenvisualisierungen erhalten.
-						Abmeldung jederzeit möglich.
-					</span>
-				</label>
+		<!-- ───────────────── Amount -->
+		<fieldset>
+			<legend
+				class="block w-full text-center text-sm font-bold uppercase tracking-wide opacity-70 mb-3"
+			>
+				{frequency === 'recurring' ? 'Deine monatliche Spende' : 'Deine Spende'}
+			</legend>
+			<div class="grid grid-cols-4 gap-2">
+				{#each suggestedAmounts as amt}
+					<label class="relative">
+						<input
+							type="radio"
+							name="amount"
+							value={amt}
+							checked={amount === amt}
+							on:change={() => selectSuggestedAmount(amt)}
+							class="sr-only peer"
+						/>
+						<span
+							class="block text-center py-2.5 rounded-xl border font-medium cursor-pointer transition-colors
+									peer-focus-visible:ring-2 peer-focus-visible:ring-green-600 peer-focus-visible:ring-offset-1
+									{amount === amt
+								? 'bg-green-600 text-white border-transparent'
+								: 'border-gray-200 dark:border-gray-700 hover:border-green-600'}"
+						>
+							€{amt}
+						</span>
+					</label>
+				{/each}
 			</div>
 
-			{#if error}
-				<p class="text-red-600 text-sm mt-3">{error}</p>
-			{/if}
+			<label
+				class="mt-2 flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-2.5 focus-within:ring-2 focus-within:ring-green-600"
+			>
+				<span class="opacity-60" aria-hidden="true">€</span>
+				<span class="sr-only">Anderer Betrag in Euro</span>
+				<input
+					type="number"
+					min="1"
+					max="9999"
+					step="1"
+					placeholder="Anderer Betrag"
+					class="w-full bg-transparent outline-none"
+					value={customAmount}
+					on:input={handleCustomAmount}
+				/>
+				{#if frequency === 'recurring'}
+					<span class="text-sm opacity-60 whitespace-nowrap">/ Monat</span>
+				{/if}
+			</label>
+		</fieldset>
+		{#if amount && amount < MIN_DONATION_EUR}
+			<p class="text-sm mt-2 text-center opacity-70">
+				Mindestspende mit Kartenzahlung sind {MIN_DONATION_EUR}€, damit die Verwaltungskosten im
+				Rahmen bleiben. Du kannst aber sehr gern direkt per Überweisung spenden, siehe unten.
+			</p>
+		{/if}
 
-			<!-- ───────────────── Checkout: always-visible button, Express Checkout
-			     (Apple Pay / Google Pay / Link) loads in additionally once ready -->
-			<div class="mt-6">
-				{#if clientSecret}
-					<!-- Keyed on the secret: Stripe Elements read it once at mount, so a
-					     changed intent needs a brand-new component, not an updated prop. -->
-					{#key clientSecret}
-						{@const chargedEUR = coverFee
-							? calculateCardFee(amountEUR(amount)).total
-							: amountEUR(amount)}
-						<Checkout
-							{clientSecret}
-							amountLabel={`€${chargedEUR.toFixed(2)}${frequency === 'recurring' ? '/Monat' : ''}`}
-							returnUrl={`${page.url.origin}${thanksUrl()}`}
-							recurring={frequency === 'recurring'}
-							amountCents={Math.round(chargedEUR * 100)}
-							managementUrl={`${page.url.origin}/donate/manage`}
-							{syncMetadata}
-							on:success={handleCardSuccess}
-							on:error={handleCardError}
-						/>
-					{/key}
-				{:else}
+		<!-- ───────────────── Donor info -->
+		<div class="grid gap-3 mt-6">
+			<div class="grid sm:grid-cols-2 gap-3">
+				<div class="flex flex-col gap-1">
+					<label for="name">Name</label>
+					<input
+						id="name"
+						type="text"
+						class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+						bind:value={name}
+						required
+					/>
+				</div>
+				<div class="flex flex-col gap-1">
+					<label for="email">Email</label>
+					<input
+						id="email"
+						type="email"
+						bind:value={email}
+						class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+						required
+					/>
+				</div>
+			</div>
+
+			<div class="flex flex-col gap-1 sm:max-w-xs">
+				<label for="country">Land</label>
+				<select
+					id="country"
+					class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+					bind:value={country}
+				>
+					{#if !countries.length}
+						<option value="AT">Österreich</option>
+					{:else}
+						{#each countries as c}
+							<option value={c.id}>{c.name_de}</option>
+						{/each}
+					{/if}
+				</select>
+			</div>
+
+			{#if regime === 'AT'}
+				<div
+					class="rounded-2xl border border-green-300 dark:border-green-800 bg-green-100 dark:bg-green-900/25 px-4 py-3 text-green-900 dark:text-green-200 text-sm"
+				>
+					<b>Deine Spende ist in Österreich steuerlich absetzbar.</b> Wir melden sie automatisch mit
+					deinem Namen & Geburtsdatum ans Finanzamt — dafür brauchen wir nur dein Geburtsdatum, keine
+					Adresse.
+				</div>
+				{@render birthdateField()}
+			{:else if regime === 'DE'}
+				<!-- Germany: the Verein is in the Zuwendungsempfängerregister, but as a
+					     foreign recipient every deductible donation needs a Bestätigung nach
+					     amtlichem Muster (§ 50 Abs. 1 EStDV) — which requires the address.
+					     There is no simplified-proof shortcut, so this isn't optional. -->
+				<div
+					class="rounded-2xl border border-green-300 dark:border-green-800 bg-green-100 dark:bg-green-900/25 px-4 py-3 text-green-900 dark:text-green-200 text-sm"
+				>
+					<b>Deine Spende ist in Deutschland steuerlich absetzbar.</b> Wir sind beim
+					Bundeszentralamt für Steuern im
+					<a
+						href="https://zer.bzst.de/"
+						target="_blank"
+						rel="noopener"
+						class="underline underline-offset-2">Zuwendungsempfängerregister</a
+					> eingetragen. Für die Zuwendungsbestätigung schreibt das Finanzamt uns deine Anschrift vor
+					— die Bestätigung schicken wir dir nach deiner Zahlung per E-Mail.
+				</div>
+				{@render addressFields()}
+			{:else}
+				<div
+					class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm"
+				>
+					Spenden aus {countries.find((c) => c.id === country)?.name_de ?? 'diesem Land'} sind bei uns
+					aktuell nicht steuerlich absetzbar.
 					<button
 						type="button"
-						disabled
-						class="w-full py-3 rounded-full bg-green-700 text-white font-bold opacity-40 cursor-not-allowed"
+						class="underline underline-offset-2 font-medium ml-1"
+						on:click={toggleWantsReceipt}
 					>
-						{creatingIntent ? 'Wird vorbereitet …' : 'Jetzt spenden'}
+						{wantsReceipt
+							? 'Doch keine Spendenbescheinigung nötig'
+							: 'Ich möchte trotzdem eine Spendenbescheinigung'}
 					</button>
-					{#if !isValid}
-						<p class="text-sm text-center opacity-60 mt-2">Bitte Betrag, Name und Email angeben.</p>
-					{/if}
-				{/if}
+				</div>
 
-				<!-- ───────────────── Trust strip + Art. 13 DSGVO notice.
+				{#if wantsReceipt}
+					{@render birthdateField()}
+					{@render addressFields()}
+				{/if}
+			{/if}
+		</div>
+
+		{#snippet birthdateField()}
+			<div class="flex flex-col gap-1 sm:max-w-xs">
+				<label for="birthdate">Geburtsdatum</label>
+				<input
+					id="birthdate"
+					type="date"
+					bind:value={birthdate}
+					class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+					min="1900-01-01"
+					required
+				/>
+			</div>
+		{/snippet}
+
+		{#snippet addressFields()}
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<div class="flex flex-col gap-1 sm:col-span-2">
+					<label for="addressLine">Straße & Nr.</label>
+					<input
+						id="addressLine"
+						type="text"
+						bind:value={addressLine}
+						class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+						required
+					/>
+				</div>
+				<div class="flex flex-col gap-1">
+					<label for="zip">PLZ</label>
+					<input
+						id="zip"
+						type="text"
+						bind:value={zip}
+						class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+						required
+					/>
+				</div>
+				<div class="flex flex-col gap-1">
+					<label for="city">Ort</label>
+					<input
+						id="city"
+						type="text"
+						bind:value={city}
+						class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+						required
+					/>
+				</div>
+				<div class="flex flex-col gap-1">
+					<label for="details2">Adresszusatz (optional)</label>
+					<input
+						id="details2"
+						type="text"
+						bind:value={details2}
+						class="w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2"
+					/>
+				</div>
+			</div>
+		{/snippet}
+
+		<div class="mt-4 grid gap-2">
+			{#if amount && amountEUR(amount) >= MIN_DONATION_EUR}
+				{@const { fee } = calculateCardFee(amountEUR(amount))}
+				<label class="flex items-start gap-2 text-sm cursor-pointer opacity-80">
+					<input type="checkbox" bind:checked={coverFee} class="mt-0.5" />
+					<span>
+						Ich übernehme die {frequency === 'recurring' ? 'monatliche ' : ''}Kartengebühr von
+						<b>€{fee.toFixed(2)}</b>, damit 100% meiner Spende ankommt.
+					</span>
+				</label>
+			{/if}
+
+			<!-- Optional and unticked: marketing email is the one thing here that
+				     genuinely needs consent, so it stays separate from the donation. -->
+			<label class="flex items-start gap-2 text-sm cursor-pointer opacity-80">
+				<input type="checkbox" bind:checked={newsletter} class="mt-0.5" />
+				<span>
+					Ja, ich möchte den Klimadashboard-Newsletter mit neuen Datenvisualisierungen erhalten.
+					Abmeldung jederzeit möglich.
+				</span>
+			</label>
+		</div>
+
+		{#if error}
+			<p class="text-red-600 text-sm mt-3">{error}</p>
+		{/if}
+
+		<!-- ───────────────── Checkout: always-visible button, Express Checkout
+			     (Apple Pay / Google Pay / Link) loads in additionally once ready -->
+		<div class="mt-6">
+			{#if clientSecret}
+				<!-- Keyed on the secret: Stripe Elements read it once at mount, so a
+					     changed intent needs a brand-new component, not an updated prop. -->
+				{#key clientSecret}
+					{@const chargedEUR = coverFee
+						? calculateCardFee(amountEUR(amount)).total
+						: amountEUR(amount)}
+					<Checkout
+						{clientSecret}
+						amountLabel={`€${chargedEUR.toFixed(2)}${frequency === 'recurring' ? '/Monat' : ''}`}
+						returnUrl={`${page.url.origin}${thanksUrl()}`}
+						recurring={frequency === 'recurring'}
+						amountCents={Math.round(chargedEUR * 100)}
+						managementUrl={`${page.url.origin}/donate/manage`}
+						{syncMetadata}
+						on:success={handleCardSuccess}
+						on:error={handleCardError}
+					/>
+				{/key}
+			{:else}
+				<button
+					type="button"
+					disabled
+					class="w-full py-3 rounded-full bg-green-700 text-white font-bold opacity-40 cursor-not-allowed"
+				>
+					{creatingIntent ? 'Wird vorbereitet …' : 'Jetzt spenden'}
+				</button>
+				{#if !isValid}
+					<p class="text-sm text-center opacity-60 mt-2">Bitte Betrag, Name und Email angeben.</p>
+				{/if}
+			{/if}
+
+			<!-- ───────────────── Trust strip + Art. 13 DSGVO notice.
 				     An information duty, not a consent one: the donation itself is
 				     processed on the basis of contract and legal obligation
 				     (bookkeeping, Finanzamt-Meldung), so there is nothing here to
 				     tick — only to disclose. -->
-				<div class="mt-4 flex flex-col items-center gap-2">
-					<p class="flex items-center gap-1.5 text-xs opacity-70">
-						<IconLock size={15} stroke={1.5} aria-hidden="true" />
-						Sichere, SSL-verschlüsselte Zahlung über Stripe. Wir speichern keine Kartendaten.
-					</p>
-					<p class="text-xs opacity-70 text-center max-w-md">
-						Wir verarbeiten deine Angaben, um deine Spende abzuwickeln, sie zu verbuchen und — in
-						Österreich — ans Finanzamt zu melden. Mehr dazu in unserer
-						<a href="/datenschutz" class="underline underline-offset-2">Datenschutzerklärung</a>.
-					</p>
-					<PaymentMethods />
-				</div>
+			<div class="mt-4 flex flex-col items-center gap-2">
+				<p class="flex items-center gap-1.5 text-xs opacity-70">
+					<IconLock size={15} stroke={1.5} aria-hidden="true" />
+					Sichere, SSL-verschlüsselte Zahlung über Stripe. Wir speichern keine Kartendaten.
+				</p>
+				<p class="text-xs opacity-70 text-center max-w-md">
+					Wir verarbeiten deine Angaben, um deine Spende abzuwickeln, sie zu verbuchen und — in
+					Österreich — ans Finanzamt zu melden. Mehr dazu in unserer
+					<a href="/datenschutz" class="underline underline-offset-2">Datenschutzerklärung</a>.
+				</p>
+				<PaymentMethods />
 			</div>
 		</div>
+	</div>
 
 	<!-- Info blocks -->
 	<div class="text-lg my-16">
 		<h3 class="font-bold">Kann ich meine Spende von der Steuer absetzen?</h3>
 		<p>
-			In Österreich ja — deine Spende wird mit deinem Namen & Geburtsdatum automatisch ans Finanzamt
-			gemeldet. In anderen Ländern ist unser Verein aktuell noch nicht gemeinnützig, Spenden sind
-			dort daher nicht absetzungsfähig; du kannst aber trotzdem eine formale Spendenbescheinigung
-			anfordern.
+			In Österreich und in Deutschland ja. In Österreich melden wir deine Spende mit Namen &
+			Geburtsdatum automatisch ans Finanzamt. In Deutschland sind wir beim Bundeszentralamt für
+			Steuern im Zuwendungsempfängerregister eingetragen; dort brauchst du für den
+			Sonderausgabenabzug eine Zuwendungsbestätigung, die wir dir nach deiner Zahlung zuschicken —
+			dafür benötigen wir deine Anschrift. In allen anderen Ländern ist deine Spende nicht
+			absetzungsfähig; du kannst aber trotzdem eine formale Spendenbescheinigung anfordern.
 		</p>
 
 		<h3 class="font-bold mt-4">Kann ich meine monatliche Spende ändern oder kündigen?</h3>
@@ -668,9 +683,11 @@
 		<h3 class="font-bold mt-4">Bekomme ich eine Spendenbescheinigung?</h3>
 		<p>
 			Bist du in Österreich steuerpflichtig, melden wir deine Spende automatisch ans Finanzamt —
-			eine gesonderte Spendenbescheinigung brauchst du dafür nicht. Aus anderen Ländern kannst du
-			beim Spenden angeben, dass du eine formale Spendenbescheinigung möchtest; sie ist aktuell aber
-			nicht steuerlich absetzbar, da unser Verein dort noch nicht gemeinnützig ist.
+			eine gesonderte Spendenbescheinigung brauchst du dafür nicht. Spendest du aus Deutschland,
+			bekommst du automatisch eine Zuwendungsbestätigung nach amtlichem Muster; spendest du
+			regelmäßig, fassen wir das Jahr in einer einzigen Sammelbestätigung zusammen. Aus allen
+			anderen Ländern kannst du beim Spenden angeben, dass du eine formale Spendenbescheinigung
+			möchtest; steuerlich absetzbar ist sie dort aktuell nicht.
 		</p>
 
 		<p class="mt-4 opacity-70">&hearts; Danke für deine Unterstützung.</p>

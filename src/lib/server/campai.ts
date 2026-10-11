@@ -130,30 +130,41 @@ export async function createRevenueReceipt(args: {
 	return receipt as { _id: string };
 }
 
+/**
+ * The account a payment is booked against. Campai requires a bank or
+ * Saldenvortrag account here — passing the debtor account is rejected with a 400
+ * ("Das Konto ist ungültig oder kein Bank- oder Saldenvortragskonto"). 18000 is the
+ * bank account every other payment in this mandate is booked to.
+ */
+const PAYMENT_ACCOUNT = 18000;
+
 /** Marks a revenue receipt as paid immediately — used for the card path, where payment is already confirmed by the time we book it. */
 export async function markReceiptPaid(args: {
 	fetch: typeof globalThis.fetch;
 	receiptId: string;
-	debtorAccount: number;
 	amountEUR: number;
 	dbg: string;
 }) {
 	assertEnvCampai();
-	const { fetch, receiptId, debtorAccount, amountEUR, dbg } = args;
+	const { fetch, receiptId, amountEUR, dbg } = args;
 	const today = new Date().toISOString().slice(0, 10);
 	await campaiPost(
 		fetch,
 		`/finance/receipts/${receiptId}/payments`,
-		{ account: debtorAccount, date: today, amount: Math.round(amountEUR * 100) },
+		{ account: PAYMENT_ACCOUNT, date: today, amount: Math.round(amountEUR * 100) },
 		dbg,
 		'mark receipt paid'
 	);
 }
 
 /**
- * The classic formal donation receipt (Spendenbescheinigung) — always requires a
- * full address (confirmed live, even for country: 'AT'). Only used when a donor
- * explicitly opts into a formal receipt.
+ * A donation-type receipt — always requires a full address (confirmed live, even
+ * for country: 'AT'). Used for every donor who will get a formal confirmation
+ * (Germany always, elsewhere on opt-in): only paid donation-type receipts show up
+ * in Campai's "requireDonation" view, which createDonationsFromReceipts turns into
+ * the actual Spendenbestätigung / Zuwendungsbestätigung. Revenue receipts never do
+ * (confirmed live). Nothing is sent from here: the donor already paid by card, and
+ * Campai's own receipt email reads as a payment request.
  */
 export async function createDonationReceipt(args: {
 	fetch: typeof globalThis.fetch;
@@ -165,11 +176,10 @@ export async function createDonationReceipt(args: {
 	amountEUR: number;
 	address: Address;
 	intro: string;
-	sendEmail: boolean;
 	dbg: string;
 }) {
 	assertEnvCampai();
-	const { fetch, debtorAccount, debtorName, name, email, birthdate, amountEUR, address, intro, sendEmail, dbg } =
+	const { fetch, debtorAccount, debtorName, name, email, birthdate, amountEUR, address, intro, dbg } =
 		args;
 
 	const today = new Date();
@@ -195,7 +205,7 @@ export async function createDonationReceipt(args: {
 			dueDate: toISO(due),
 			donationType: 'cash',
 			email,
-			sendMethod: sendEmail ? 'email' : 'none',
+			sendMethod: 'none',
 			positions: [
 				{
 					description: 'Spende an den Verein Klimadashboard',
@@ -205,20 +215,13 @@ export async function createDonationReceipt(args: {
 					costCenter1: 1
 				}
 			],
-			queueReceiptDocument: false,
-			...(sendEmail
-				? {
-						emailTexts: {
-							subject: 'Deine Spende ans Klimadashboard',
-							message: `Hallo ${name}, vielen Dank, dass du mit deiner Spende das Klimadashboard unterstützt. Anbei findest du alle Informationen, die du zur Bezahlung benötigst.`
-						}
-					}
-				: {})
+			queueReceiptDocument: false
 		},
 		dbg,
 		'donation receipt create'
 	);
-	const receiptId = receipt?.receipt ?? receipt?.id ?? receipt?._id ?? null;
+	const receiptId: string | null = receipt?.receipt ?? receipt?.id ?? receipt?._id ?? null;
+	if (!receiptId) throw new Error('Campai donation receipt create returned no id');
 	return { receiptId };
 }
 

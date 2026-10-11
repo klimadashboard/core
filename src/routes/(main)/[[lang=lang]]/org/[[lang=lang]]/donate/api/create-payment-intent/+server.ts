@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { z } from 'zod';
 import { getStripe, upsertStripeCustomer, createRecurringSubscription } from '$lib/server/stripe';
 import { calculateCardFee, MIN_DONATION_EUR } from '$lib/utils/donationFee';
+import { needsAddress, needsBirthdate } from '$lib/donationTax';
 
 const addressSchema = z.object({
 	addressLine: z.string().min(1),
@@ -27,11 +28,12 @@ const requestSchema = z
 		message: z.string().max(2000).optional()
 	})
 	.superRefine((data, ctx) => {
-		const needsFullReceipt = data.country !== 'AT' && data.wantsReceipt;
-		if ((data.country === 'AT' || needsFullReceipt) && !data.birthdate) {
+		// Same rules as the form, from the same module — a mismatch here would let a
+		// donation through without the data its country's tax authority requires.
+		if (needsBirthdate(data.country, data.wantsReceipt) && !data.birthdate) {
 			ctx.addIssue({ code: 'custom', message: 'Geburtsdatum fehlt.', path: ['birthdate'] });
 		}
-		if (needsFullReceipt && !data.address) {
+		if (needsAddress(data.country, data.wantsReceipt) && !data.address) {
 			ctx.addIssue({ code: 'custom', message: 'Adresse fehlt.', path: ['address'] });
 		}
 	});
