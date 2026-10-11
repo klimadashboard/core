@@ -6,12 +6,12 @@
 	const SERIES = [
 		{ key: 'wilhelmshaven', label: 'Wilhelmshaven', color: '#347C86' },
 		{ key: 'brunsbuettel', label: 'Brunsbüttel', color: '#575C75' },
-		{ key: 'balticEnergyGate', label: 'Lubmin (Baltic Energy Gate)', color: '#CF6317' }
+		{ key: 'balticEnergyGate', label: 'Lubmin / Mukran (Baltic Energy Gate)', color: '#CF6317' }
 	];
 
 	let rawData;
 
-	Papa.parse('https://static.dwcdn.net/data/Qa2I3.csv', {
+	Papa.parse('https://data.klimadashboard.org/de/energy/fossil/lng_imports.csv', {
 		download: true,
 		dynamicTyping: true,
 		header: true,
@@ -26,9 +26,9 @@
 		const entry = { x: i, label: e['periodFrom'] };
 		for (const s of SERIES) {
 			const raw = {
-				wilhelmshaven: e['Wilhelmshaven, LNG-Zone'],
-				brunsbuettel: e['BRUNSBUETTEL HAFEN (FSRU) (DE)'],
-				balticEnergyGate: e['Baltic Energy Gate (Port) (DE)']
+				wilhelmshaven: e['wilhelmshaven'],
+				brunsbuettel: e['brunsbuettel'],
+				balticEnergyGate: e['balticEnergyGate']
 			}[s.key];
 			const val = typeof raw === 'number' && !isNaN(raw) ? raw : 0;
 			entry[s.key + '_y0'] = y0;
