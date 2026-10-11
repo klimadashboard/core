@@ -9,6 +9,10 @@
 	const suggestedAmounts = [30, 50, 100, 200];
 	let amount = 50;
 
+	// Both countries apply on every site — the German version just lists Germany first.
+	const deductibleIn =
+		PUBLIC_VERSION == 'de' ? 'Deutschland und Österreich' : 'Österreich und Deutschland';
+
 	let hidden = true; // start hidden, will show after 20s if no cookie
 
 	onMount(() => {
@@ -66,10 +70,7 @@
 				Das Klimadashboard bleibt <b>kostenlos, werbefrei und unabhängig</b> – für alle, die
 				verlässliche Klimadaten brauchen. Möglich ist das nur, weil Menschen wie du uns direkt
 				unterstützen. Deine Spende ermöglicht <b>neue Projekte und regelmäßige Datenupdates</b>.
-				{#if PUBLIC_VERSION == 'at' || PUBLIC_VERSION == 'de'}
-					In {PUBLIC_VERSION == 'de' ? 'Deutschland' : 'Österreich'} ist deine Spende an uns
-					<b>steuerlich absetzbar</b>.
-				{/if} Danke, dass du dabei bist!
+				Danke, dass du dabei bist!
 			</p>
 			<div class="flex flex-wrap items-center gap-2 mt-3">
 				{#each suggestedAmounts as amt}
@@ -90,6 +91,25 @@
 				>
 					Jetzt spenden
 				</a>
+				<!-- Plain text with an icon, not a pill: it must not read as a second button. -->
+				<p
+					class="inline-flex items-center gap-1 text-sm font-semibold leading-tight"
+					title="In {deductibleIn} steuerlich absetzbar"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="w-5 h-5 shrink-0"
+						aria-hidden="true"
+						><circle cx="12" cy="12" r="9" /><path d="M8.5 12l2.5 2.5l4.5 -4.5" /></svg
+					>
+					steuerlich absetzbar<span class="sr-only"> in {deductibleIn}</span>
+				</p>
 				<PaymentMethods size={22} />
 			</div>
 			<button
