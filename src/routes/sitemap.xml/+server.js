@@ -161,7 +161,7 @@ export const GET = async ({ url }) => {
 			})),
 			...regions.map((region) => ({
 				// Prefer the readable slug (canonical); fall back to UUID if unset.
-				loc: `${currentUrl}/regions/${(region.slug && region.slug.split(',')[0].trim()) || region.id}`,
+				loc: `${currentUrl}/regions/${encodeURIComponent((region.slug && region.slug.split(',')[0].trim()) || region.id)}`,
 				priority: '0.5',
 				changefreq: 'monthly',
 				lastmod: null

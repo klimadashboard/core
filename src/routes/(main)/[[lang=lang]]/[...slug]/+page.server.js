@@ -60,11 +60,12 @@ export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
 
 	if (params.lang == 'de') {
-		redirect(308, '/' + params.slug);
+		redirect(308, '/' + params.slug.split('/').map(encodeURIComponent).join('/'));
 	}
 
 	const language = params.lang || 'de';
-	const slug = params.slug || 'home';
+	// Normalise to NFC so umlaut slugs typed on macOS/iOS (decomposed ü) match the stored slug.
+	const slug = (params.slug || 'home').normalize('NFC');
 	const site = PUBLIC_VERSION;
 	dayjs.locale(language);
 
@@ -162,7 +163,10 @@ export async function load({ fetch, params }) {
 					(t) => t.languages_code == language
 				);
 				if (translatedPage) {
-					redirect(308, `/${translatedPage.languages_code}/${translatedPage.slug}`);
+					redirect(
+						308,
+						`/${translatedPage.languages_code}/${translatedPage.slug.split('/').map(encodeURIComponent).join('/')}`
+					);
 				}
 			}
 
@@ -179,7 +183,9 @@ export async function load({ fetch, params }) {
 
 			if (regionMatch && regionMatch.length > 0) {
 				const canonical = String(regionMatch[0].slug || '').split(',')[0].trim();
-				redirect(308, `/regions/${canonical || regionMatch[0].id}`);
+				// Location header must be ASCII: a raw "ü" is sent as an invalid latin-1 byte (and
+				// non-latin-1 characters throw), so percent-encode the slug.
+				redirect(308, `/regions/${encodeURIComponent(canonical || regionMatch[0].id)}`);
 			}
 
 			throw error(404, 'Page not found');

@@ -44,7 +44,7 @@ export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
 
 	if (params.lang == 'de') {
-		redirect(308, '/' + params.slug);
+		redirect(308, '/' + params.slug.split('/').map(encodeURIComponent).join('/'));
 	}
 
 	const language = params.lang || 'de';
@@ -144,7 +144,10 @@ export async function load({ fetch, params }) {
 			if (slugs.length > 0) {
 				const translatedPage = slugs[0].translations.find((t) => t.languages_code == language);
 				if (translatedPage) {
-					redirect(308, `/${translatedPage.languages_code}/${translatedPage.slug}`);
+					redirect(
+						308,
+						`/${translatedPage.languages_code}/${translatedPage.slug.split('/').map(encodeURIComponent).join('/')}`
+					);
 				}
 			}
 
