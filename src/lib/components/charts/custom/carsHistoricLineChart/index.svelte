@@ -118,6 +118,9 @@
 	// Monthly resolution if any data point falls outside January
 	$: isMonthlyData = data.some((d) => d.date.getMonth() !== 0);
 
+	// Skip a year's tick when the next year starts within ~3 months (partial leading year)
+	const MIN_YEAR_TICK_GAP = 90 * 24 * 60 * 60 * 1000;
+
 	// One tick per year for Bestand (first data point of each calendar year)
 	$: yearTicks = (() => {
 		const seen = new Set<number>();
@@ -128,7 +131,8 @@
 				seen.add(year);
 				return true;
 			})
-			.map((d) => d.timestamp);
+			.map((d) => d.timestamp)
+			.filter((ts, i, all) => i === all.length - 1 || all[i + 1] - ts >= MIN_YEAR_TICK_GAP);
 	})();
 
 	// End labels data with values (only for visible series)
