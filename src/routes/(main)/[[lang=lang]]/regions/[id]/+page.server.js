@@ -36,14 +36,15 @@ export async function load({ fetch, params, url, parent }) {
 	const langPrefix = lang === 'de' ? '' : `/${lang}`;
 
 	try {
-		const idParam = params.id;
+		// NFC so decomposed umlauts (macOS/iOS input) match the stored slug.
+		const idParam = params.id.normalize('NFC');
 		let page;
 
 		if (UUID_RE.test(idParam)) {
 			// Legacy UUID URL — load, then 301 to the readable slug if one exists.
 			page = await directus.request(readItem('regions', idParam, { fields: REGION_FIELDS }));
 			const slug = canonicalSlug(page?.slug);
-			if (slug) throw redirect(301, `${langPrefix}/regions/${slug}`);
+			if (slug) throw redirect(301, `${langPrefix}/regions/${encodeURIComponent(slug)}`);
 		} else {
 			// Slug URL — exact match first (covers the single-value slugs),
 			// then fall back to comma-separated aliases.
@@ -71,7 +72,8 @@ export async function load({ fetch, params, url, parent }) {
 			// Hit an alias rather than the canonical slug → 301 to canonical.
 			const canonical = canonicalSlug(page.slug);
 			if (canonical && canonical !== idParam) {
-				throw redirect(301, `${langPrefix}/regions/${canonical}`);
+				// Percent-encode: a raw "ü" in the Location header is an invalid latin-1 byte.
+				throw redirect(301, `${langPrefix}/regions/${encodeURIComponent(canonical)}`);
 			}
 		}
 
