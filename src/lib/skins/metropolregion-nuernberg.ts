@@ -30,7 +30,12 @@ const skin: Skin = {
 		}
 	],
 	attribution: 'compact',
-	// Offer p.3: funding notice + link to the full dashboard on klimadashboard.de
+	// Offer p.3: link to the full dashboard (planned URL, not live yet) — shown top-right
+	dashboardLink: {
+		href: 'https://klimadashboard.de/metropolregion-nuernberg',
+		label: 'Zum Gesamtdashboard'
+	},
+	// Offer p.3: funding notice
 	footer: {
 		logos: [
 			{
@@ -38,12 +43,7 @@ const skin: Skin = {
 				src: '/skins/metropolregion-nuernberg/bmftr-gefoerdert-durch.jpg',
 				alt: 'Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt'
 			}
-		],
-		link: {
-			// Planned URL of the full dashboard (offer p.3) — not live yet
-			href: 'https://klimadashboard.de/metropolregion-nuernberg',
-			label: 'Gesamtdashboard auf klimadashboard.de'
-		}
+		]
 	}
 };
 

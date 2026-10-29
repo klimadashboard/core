@@ -53,6 +53,7 @@
 	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';
 	$: skin = isEmbedRoute ? getSkin(page.url.searchParams.get('skin')) : null;
 	$: compactAttribution = !!skin?.logos?.length && skin.attribution !== 'full';
+	$: dashboardLink = skin?.dashboardLink ?? null;
 
 	$: logoHref =
 		isEmbedRoute && urlRegionId
@@ -552,7 +553,7 @@
 						{title || chart.content?.title}
 					</h2>
 				{/if}
-				<div class="flex-shrink-0 flex items-center gap-2 self-end sm:self-auto">
+				<div class="flex-shrink-0 flex flex-wrap items-center justify-end gap-x-3 gap-y-2 self-end sm:self-auto">
 				{#if skin?.logos?.length}
 					<div class="flex items-center gap-3 bg-white rounded-md px-2 py-1 shadow-sm">
 						{#each skin.logos as logo}
@@ -567,16 +568,20 @@
 					</div>
 				{/if}
 				<a
-					href={logoHref}
+					href={dashboardLink?.href ?? logoHref}
 					target="_blank"
-					aria-label="Klimadashboard.{PUBLIC_VERSION}"
-					title={compactAttribution ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
-					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
+					aria-label={dashboardLink
+						? `${dashboardLink.label} – Klimadashboard.${PUBLIC_VERSION}`
+						: `Klimadashboard.${PUBLIC_VERSION}`}
+					title={compactAttribution && !dashboardLink ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
+					class="flex-shrink-0 transition flex items-center gap-2 {dashboardLink
+						? 'hover:underline underline-offset-2'
+						: 'opacity-80 hover:opacity-100'}"
 					on:click={(e) => e.stopPropagation()}
 				>
-					{#if !compactAttribution}
+					{#if dashboardLink || !compactAttribution}
 						<span class="text-sm font-bold text-[var(--kd-accent,#28A889)] dark:text-[var(--kd-accent-dark,#28A889)]"
-							>Klimadashboard.{PUBLIC_VERSION}</span
+							>{dashboardLink?.label ?? `Klimadashboard.${PUBLIC_VERSION}`}</span
 						>
 					{/if}
 					<svg
@@ -585,7 +590,7 @@
 						viewBox="0 0 256 256"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
-						class="rounded-sm {compactAttribution ? 'h-6 w-6' : 'h-8 w-8'}"
+						class="rounded-sm {compactAttribution && !dashboardLink ? 'h-6 w-6' : 'h-8 w-8'}"
 					>
 						<rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" />
 						<path
@@ -727,7 +732,7 @@
 				</div>
 			</div>
 
-			<!-- Skin footer (embeds only): funding notices + link to the full dashboard -->
+			<!-- Skin footer (embeds only): funding notices -->
 			{#if skin?.footer}
 				<div
 					class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800 flex flex-wrap items-end justify-between gap-3 text-xs text-gray-600 dark:text-gray-300"
@@ -750,17 +755,6 @@
 								</figure>
 							{/each}
 						</div>
-					{/if}
-					{#if skin.footer.link}
-						<a
-							href={skin.footer.link.href}
-							target="_blank"
-							rel="noopener"
-							class="font-semibold underline underline-offset-2 text-[var(--kd-accent,#28A889)] dark:text-[var(--kd-accent-dark,#28A889)]"
-							on:click={(e) => e.stopPropagation()}
-						>
-							{skin.footer.link.label} →
-						</a>
 					{/if}
 				</div>
 			{/if}

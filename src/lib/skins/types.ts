@@ -30,9 +30,10 @@ export interface Skin {
 	logos?: SkinLogo[];
 	/** How the Klimadashboard credit is shown next to skin logos (default 'compact') */
 	attribution?: 'compact' | 'full';
-	/** Optional strip at the bottom of the card content: funding logos and a link */
+	/** Replaces the top-right Klimadashboard wordmark with a link, e.g. to the partner's full dashboard */
+	dashboardLink?: { href: string; label: string };
+	/** Optional strip at the bottom of the card content, e.g. funding logos */
 	footer?: {
 		logos?: SkinLogo[];
-		link?: { href: string; label: string };
 	};
 }
