@@ -1,6 +1,7 @@
 // $lib/components/charts/custom/carsDensity/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItem } from '@directus/sdk';
 import { readItems } from '@directus/sdk';
@@ -8,6 +9,7 @@ import getDirectusInstance from '$lib/utils/directus';
 import { getRegions } from '$lib/utils/regions';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
+import { getAggregateMembers } from '$lib/utils/regionAggregation';
 
 // =============================================================================
 // Types
@@ -179,12 +181,12 @@ export async function fetchData(
 	return fetchNationalAggregate(fetchFn, countryCode, source);
 }
 
-/** Fetch and aggregate data from child municipalities when no direct data exists */
-async function fetchAggregatedFromChildren(
+/** Municipalities whose parents include `parentRegion` */
+async function fetchChildMunicipalities(
 	fetchFn: typeof fetch,
 	parentRegion: Region,
 	countryCode: string
-): Promise<CarDensityData | null> {
+): Promise<RegionShape[]> {
 	const directus = getDirectusInstance(fetchFn);
 
 	// Find all municipalities in this country
@@ -203,7 +205,7 @@ async function fetchAggregatedFromChildren(
 	// IMPORTANT: Exclude municipalities with the same name as the parent
 	// (to avoid including aggregate entries like Wien 90001)
 	const parentNameLower = parentRegion.name?.toLowerCase() || '';
-	const childMunicipalities = allMunicipalities.filter((m) => {
+	return allMunicipalities.filter((m) => {
 		const muniNameLower = m.name?.toLowerCase() || '';
 		// Exclude same-name municipalities
 		if (parentNameLower && muniNameLower === parentNameLower) {
@@ -215,6 +217,20 @@ async function fetchAggregatedFromChildren(
 			m.parents.some((p: any) => p.id === parentRegion.id)
 		);
 	});
+}
+
+/** Fetch and aggregate data from child municipalities when no direct data exists */
+async function fetchAggregatedFromChildren(
+	fetchFn: typeof fetch,
+	parentRegion: Region,
+	countryCode: string
+): Promise<CarDensityData | null> {
+	const directus = getDirectusInstance(fetchFn);
+
+	// Aggregate regions (Metropolregion) sum their member districts
+	const childMunicipalities =
+		((await getAggregateMembers(parentRegion, fetchFn)) as RegionShape[] | null) ??
+		(await fetchChildMunicipalities(fetchFn, parentRegion, countryCode));
 
 	if (childMunicipalities.length === 0) {
 		return null;
@@ -288,25 +304,35 @@ async function fetchAggregatedFromChildren(
 	const carsPrivateShare: TimeSeriesPoint[] = periods.map((p) => {
 		let privatSum = 0;
 		let totalSum = 0;
+		let hasPrivat = false;
 		for (const [code, records] of dataByCode) {
 			const privat = records.find((r) => r.period === p && r.category === 'Privat')?.value;
 			const total = records.find((r) => r.period === p && r.category === 'Insgesamt')?.value;
-			if (privat != null) privatSum += privat;
+			if (privat != null) {
+				privatSum += privat;
+				hasPrivat = true;
+			}
 			if (total != null) totalSum += total;
 		}
-		return { period: p, value: totalSum > 0 ? (privatSum / totalSum) * 100 : null };
+		// No 'Privat' rows at all (e.g. DE districts) → unknown, not 0 %
+		return { period: p, value: hasPrivat && totalSum > 0 ? (privatSum / totalSum) * 100 : null };
 	});
 
 	const carsCompanyShare: TimeSeriesPoint[] = periods.map((p) => {
 		let firmenSum = 0;
 		let totalSum = 0;
+		let hasFirmen = false;
 		for (const [code, records] of dataByCode) {
 			const firmen = records.find((r) => r.period === p && r.category === 'Firmen')?.value;
 			const total = records.find((r) => r.period === p && r.category === 'Insgesamt')?.value;
-			if (firmen != null) firmenSum += firmen;
+			if (firmen != null) {
+				firmenSum += firmen;
+				hasFirmen = true;
+			}
 			if (total != null) totalSum += total;
 		}
-		return { period: p, value: totalSum > 0 ? (firmenSum / totalSum) * 100 : null };
+		// No 'Firmen' rows at all (e.g. DE districts) → unknown, not 0 %
+		return { period: p, value: hasFirmen && totalSum > 0 ? (firmenSum / totalSum) * 100 : null };
 	});
 
 	const regionWithData: RegionWithData = {
@@ -920,7 +946,7 @@ export function getPlaceholders(
 	const layerLabel = (region as any)?.layer_label || '';
 	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
 	const regionName = layerLabel && region?.layer !== 'country'
-		? `${baseName} (${layerLabel})`
+		? withLayerLabel(baseName, layerLabel)
 		: baseName;
 	const countryName = data.country?.name ?? (PUBLIC_VERSION === 'at' ? 'Österreich' : 'Deutschland');
 	const nationalCarsPerTen = (nationalLatest.carsPer1000 ?? 0) / 100;

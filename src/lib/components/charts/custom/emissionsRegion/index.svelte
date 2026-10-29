@@ -5,6 +5,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { onMount } from 'svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { getFallbackParentIds } from '$lib/utils/regionAggregation';
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
@@ -113,7 +114,11 @@
 		loading = true;
 		try {
 			const { results: fetchedResults, populationByYear: fetchedPopulation } =
-				await fetchEmissionsData(regionCandidates);
+				await fetchEmissionsData(
+					currentId
+						? [currentId, ...(await getFallbackParentIds(currentId, parentIds))]
+						: regionCandidates
+				);
 
 			results = fetchedResults;
 			populationByYear = fetchedPopulation;

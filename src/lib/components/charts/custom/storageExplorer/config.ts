@@ -1,6 +1,7 @@
 // $lib/components/charts/custom/storageExplorer/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
+import { getAggregateCodes } from '$lib/utils/regionAggregation';
 import type { TableColumn, ChartData } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
 
@@ -159,7 +160,7 @@ export async function fetchStorageData(
 	region: Region | null,
 	group: 'year' | 'month' = 'year'
 ): Promise<StorageApiResponse> {
-	const regionCode = region?.codeShort || region?.code;
+	const regionCode = (await getAggregateCodes(region)) ?? (region?.codeShort || region?.code);
 
 	let url = `https://base.klimadashboard.org/get-storage-growth?group=${group}`;
 	if (regionCode) url += `&region=${regionCode}`;

@@ -82,7 +82,7 @@
 			})
 		);
 		illustrations = illustrations.filter((i) =>
-			i.attributes.some((attr) => data.page.attributes.includes(attr))
+			i.attributes?.some((attr) => data.page.attributes?.includes(attr))
 		);
 
 		panels = await fetchPanels($page.data?.language?.code || 'de');

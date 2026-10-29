@@ -1,6 +1,7 @@
 // $lib/components/charts/custom/modalSplit/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import type {
 	TableColumn,
 	ChartData,
@@ -9,6 +10,7 @@ import type {
 } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getAggregateMembers, weightedMeanRows } from '$lib/utils/regionAggregation';
 import { t } from '$lib/utils/t';
 import { formatPeriodDate } from '$lib/utils/formatters';
 
@@ -340,6 +342,29 @@ export async function fetchData(
 		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, (region as any)?.layer_label || null, false);
 	}
 
+	// Aggregate regions (Metropolregion): population-weighted mean of the member districts' shares
+	const members = await getAggregateMembers(region);
+	if (region && members) {
+		const population = new Map(members.map((m) => [m.id, m.population]));
+		const memberRecords = (await directus.request(
+			readItems('mobility_modal_split', {
+				filter: { region: { _in: [...population.keys()] } },
+				fields: ['year', 'category', 'region', 'value', 'update', 'source'],
+				limit: -1
+			})
+		)) as any[];
+		if (memberRecords.length > 0) {
+			const records = weightedMeanRows(
+				memberRecords,
+				['year', 'category'],
+				['value'],
+				(r) => population.get(r.region),
+				{ region: region.id }
+			).filter((r) => r.value !== null);
+			return buildFetchResult(records, region.id, region.name, region.layer, region.layer_label || null, false);
+		}
+	}
+
 	// Otherwise, need to find the best fallback from parents
 	// Fetch region metadata for candidates that have data to determine layer priority
 	const candidatesWithData = regionCandidates.filter(
@@ -653,7 +678,7 @@ export function getPlaceholders(
 	const layerLabel = matchedRegionLayerLabel || (region as any)?.layer_label || '';
 	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
 	const displayRegionName = layerLabel && region?.layer !== 'country'
-		? `${baseName} (${layerLabel})`
+		? withLayerLabel(baseName, layerLabel)
 		: baseName;
 
 	return {

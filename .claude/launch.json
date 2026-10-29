@@ -13,6 +13,12 @@
       "runtimeExecutable": "env",
       "runtimeArgs": ["PUBLIC_VERSION=at", "npm", "run", "dev", "--", "--port", "5174"],
       "port": 5174
+    },
+    {
+      "name": "dev-de",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["PUBLIC_VERSION=de", "npm", "run", "dev", "--", "--port", "5176"],
+      "port": 5176
     }
   ]
 }

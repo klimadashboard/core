@@ -1,7 +1,9 @@
 import getDirectusInstance from '$lib/utils/directus';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import { readItems } from '@directus/sdk';
 import type { Region } from '$lib/utils/getRegion';
 import type { ChartData, TableColumn, ChartFetchParams } from '$lib/components/charts/types';
+import { isAggregateRegion } from '$lib/utils/regionAggregation';
 
 export interface HeatingCategory {
 	key: string;
@@ -89,17 +91,22 @@ export function formatExchangeRate(total: number, country?: string, baseDate?: D
 	return { value: Math.round(perYear), unit: 'year' };
 }
 
-/** Get child municipalities for a district */
+/** Get child municipalities for a district or an aggregate region (Metropolregion) */
 function getChildMunicipalities(
 	regions: RegionWithDistance[],
-	districtId: string
+	parent: { id: string; layer: string }
 ): RegionWithDistance[] {
 	return regions.filter(
 		(r) =>
 			r.layer === 'municipality' &&
 			Array.isArray(r.parents) &&
-			r.parents.some((p) => p.id === districtId && p.layer === 'district')
+			r.parents.some((p) => p.id === parent.id && p.layer === parent.layer)
 	);
+}
+
+/** Whether census data for this region is summed from its municipalities */
+function isSummedFromMunicipalities(region: RegionWithDistance): boolean {
+	return region.layer === 'district' || isAggregateRegion(region);
 }
 
 /** Find parent state for an AT region */
@@ -217,22 +224,31 @@ export async function fetchHeatingData(
 
 	const directus = getDirectusInstance(fetch);
 
-	// DE: If a district, collect all municipalities and query them in one go
-	if (regionObj.layer === 'district') {
-		const children = getChildMunicipalities(allRegions, regionObj.id);
+	// DE: districts and aggregate regions sum their municipalities
+	if (isSummedFromMunicipalities(regionObj)) {
+		const children = getChildMunicipalities(allRegions, regionObj);
 		const muniIds = children.map((c) => c.id);
 
 		if (muniIds.length === 0) return { data: [] };
 
-		const rawData = await directus.request(
-			readItems('energy_heating_systems', {
-				filter: {
-					region: { _in: muniIds },
-					source: { _eq: 'zensus-federal-statistical-office' }
-				},
-				limit: -1
-			})
-		);
+		// Chunk the id list so the query URL stays short (a Metropolregion has ~700 municipalities)
+		const chunks: string[][] = [];
+		for (let i = 0; i < muniIds.length; i += 100) chunks.push(muniIds.slice(i, i + 100));
+		const rawData = (
+			await Promise.all(
+				chunks.map((ids) =>
+					directus.request(
+						readItems('energy_heating_systems', {
+							filter: {
+								region: { _in: ids },
+								source: { _eq: 'zensus-federal-statistical-office' }
+							},
+							limit: -1
+						})
+					)
+				)
+			)
+		).flat();
 
 		// Sum values per category across municipalities
 		const sums = new Map<string, number>();
@@ -289,8 +305,8 @@ export function buildRegionLabel(
 		return region.name ?? '';
 	}
 
-	if (region.layer === 'district') {
-		const count = getChildMunicipalities(allRegions, region.id).length;
+	if (isSummedFromMunicipalities(region)) {
+		const count = getChildMunicipalities(allRegions, region).length;
 		return `${region.name} – aggregiert aus ${count} Gemeinden`;
 	}
 	return region.name ?? '';
@@ -477,7 +493,7 @@ export function getPlaceholders(
 	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
 	const baseName = dataRegion?.name || region?.name || '';
 	const regionNameDisplay = layerLabel && region?.layer !== 'country'
-		? `${baseName} (${layerLabel})`
+		? withLayerLabel(baseName, layerLabel)
 		: baseName;
 
 	return {
@@ -548,7 +564,8 @@ export async function fetchChartData({
 	const allRegions = (await directus.request(
 		readItems('regions', {
 			fields: ['id', 'code', 'name', 'layer', 'layer_label', 'country', 'center', 'population', 'parents'],
-			filter: { visible: { _eq: true } },
+			// Include the requested region even if hidden (e.g. a Metropolregion not yet public)
+			filter: { _or: [{ visible: { _eq: true } }, { id: { _eq: regionId } }] },
 			limit: -1
 		})
 	)) as (RegionWithDistance & { layer_label?: string })[];

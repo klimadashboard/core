@@ -1,10 +1,18 @@
 // $lib/components/charts/custom/renewablesExplorer/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItem } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { formatPower, formatNumber, getPowerUnit, convertPowerUnit } from '$lib/utils/formatters';
+import { getAggregateCodes } from '$lib/utils/regionAggregation';
+
+async function fetchJson(url: string) {
+	const response = await fetch(url);
+	if (!response.ok) throw new Error(`HTTP ${response.status}`);
+	return response.json();
+}
 
 // ============================================================================
 // TYPES
@@ -278,16 +286,12 @@ export async function fetchData(
 	gridOperatorCheckedRatio: number | null;
 }> {
 	const { energy } = params;
-	const regionCode = region?.codeShort ? region?.codeShort : region?.code;
+	const regionCode = (await getAggregateCodes(region)) ?? (region?.codeShort ? region?.codeShort : region?.code);
 
-	const url = regionCode
-		? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year&region=${regionCode}`
-		: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year`;
+	const baseUrl = `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year`;
+	const url = regionCode ? `${baseUrl}&region=${regionCode}` : baseUrl;
 
-	const response = await fetch(url);
-	if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-	const result = await response.json();
+	const result = await fetchJson(url);
 	return {
 		data: result.by_year || [],
 		updateDate: result.update_date || '',
@@ -527,7 +531,7 @@ export function getPlaceholders(
 	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
 	const layerLabel = (region as any)?.layer_label || '';
 	const regionName = layerLabel && region?.layer !== 'country'
-		? `${region?.name || 'Deutschland'} (${layerLabel})`
+		? withLayerLabel(region?.name || 'Deutschland', layerLabel)
 		: region?.name || 'Deutschland';
 
 	// Build titleWind placeholder for wind energy

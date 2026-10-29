@@ -1,6 +1,8 @@
 import type { ChartFetchParams, ChartData } from '$lib/components/charts/types';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import { readItem } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getAggregateCodes } from '$lib/utils/regionAggregation';
 
 export interface SolarTypeConfig {
 	key: string;
@@ -75,11 +77,10 @@ export function formatPercentage(part: number, total: number): string {
 
 /** Fetch solar types data from API */
 export async function fetchSolarTypesData(region: Region | null): Promise<SolarTypesResponse> {
-	const regionCode = region?.codeShort || region?.code;
+	const regionCode = (await getAggregateCodes(region)) ?? (region?.codeShort || region?.code);
 
-	const url = regionCode
-		? `https://base.klimadashboard.org/get-renewables-growth?table=energy_solar_units&group=year&region=${regionCode}`
-		: `https://base.klimadashboard.org/get-renewables-growth?table=energy_solar_units&group=year`;
+	const baseUrl = 'https://base.klimadashboard.org/get-renewables-growth?table=energy_solar_units&group=year';
+	const url = regionCode ? `${baseUrl}&region=${regionCode}` : baseUrl;
 
 	const response = await fetch(url);
 	if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -163,7 +164,7 @@ export function getPlaceholders(
 	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
 	const layerLabel = region?.layer_label || '';
 	const regionName = layerLabel && region?.layer !== 'country'
-		? `${region?.name || 'Deutschland'} (${layerLabel})`
+		? withLayerLabel(region?.name || 'Deutschland', layerLabel)
 		: region?.name || 'Deutschland';
 
 	return {

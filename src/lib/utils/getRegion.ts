@@ -6,7 +6,7 @@ export interface Region {
 	code: string;
 	codeShort?: string;
 	name: string;
-	layer: 'country' | 'state' | 'district' | 'municipality';
+	layer: 'country' | 'state' | 'district' | 'municipality' | 'metropolitan_region' | 'group';
 	layer_label?: string;
 	country?: string;
 	center: [string, string];
@@ -203,4 +203,13 @@ export async function getRegion(regionId?: string | null): Promise<Region | null
 	// Fetch from API
 	console.log('[getRegion] Fetching region from API...');
 	return fetchRegion(effectiveRegionId);
+}
+
+/**
+ * "Salzburg (Bundesland)" for disambiguation, but not "Metropolregion X (Metropolregion)":
+ * the label is skipped when the name already contains it.
+ */
+export function withLayerLabel(name: string, layerLabel?: string | null): string {
+	if (!layerLabel || name.toLowerCase().includes(layerLabel.toLowerCase())) return name;
+	return `${name} (${layerLabel})`;
 }

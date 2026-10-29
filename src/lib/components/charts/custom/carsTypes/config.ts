@@ -1,5 +1,6 @@
 // $lib/components/charts/custom/carsTypes/config.ts
 import type { Region } from '$lib/utils/getRegion';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import type {
 	TableColumn,
 	ChartData,
@@ -11,6 +12,7 @@ import { PUBLIC_VERSION } from '$env/static/public';
 import { filterCategoryValues } from '$lib/components/charts/utils/privacyFilter';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getAggregateMembers } from '$lib/utils/regionAggregation';
 
 export type DataMode = 'bestand' | 'neuzulassungen';
 
@@ -124,12 +126,15 @@ async function fetchBestandData(
 } | null> {
 	const country = getCountryCode();
 	const isCountryLevel = !region || region.layer === 'country';
+	// Aggregate regions (Metropolregion): sum their member districts like the country branch
+	const members = await getAggregateMembers(region);
+	const memberIds = members ? new Set(members.map((m) => m.id)) : null;
 
 	let yearData: Record<string, Record<string, number>>;
 	let regionName: string;
 	let source: string;
 
-	if (isCountryLevel) {
+	if (isCountryLevel || memberIds) {
 		// Country-level: fetch all districts and aggregate
 		const url = `https://base.klimadashboard.org/get-mobility-cars?layer=district&country=${country}&includeMeta=true`;
 		const resp = await fetch(url);
@@ -142,6 +147,7 @@ async function fetchBestandData(
 		const allSourceParts = new Set<string>();
 
 		for (const district of districts) {
+			if (memberIds && !memberIds.has(district.region?.id)) continue;
 			const dData = district.data || {};
 			if (district.source) {
 				for (const part of String(district.source).split(',')) {
@@ -158,7 +164,9 @@ async function fetchBestandData(
 			}
 		}
 
-		regionName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
+		regionName = memberIds
+			? region!.name
+			: country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 		// Keep raw source parts — will be filtered by displayed year later
 		source = [...allSourceParts].join(', ');
 	} else {
@@ -733,7 +741,7 @@ export function buildChartData(
 	const effectiveLayerLabel = fallbackInfo?.dataLayerLabel || regionLayerLabel || '';
 	const displayRegionName =
 		effectiveLayerLabel && regionName
-			? `${regionName} (${effectiveLayerLabel})`
+			? withLayerLabel(regionName, effectiveLayerLabel)
 			: regionName;
 
 	return {

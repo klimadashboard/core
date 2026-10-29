@@ -4,6 +4,7 @@
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { getFallbackParentIds } from '$lib/utils/regionAggregation';
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
@@ -72,7 +73,9 @@
 	async function loadData() {
 		loading = true;
 		try {
-			const { results: fetchedResults } = await fetchEmissionsData(regionCandidates);
+			const { results: fetchedResults } = await fetchEmissionsData(
+				currentId ? [currentId, ...(await getFallbackParentIds(currentId, parentIds))] : regionCandidates
+			);
 			results = fetchedResults;
 
 			views = results

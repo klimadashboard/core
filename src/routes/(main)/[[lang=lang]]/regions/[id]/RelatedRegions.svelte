@@ -1,6 +1,7 @@
 <script>
 	import { getRegions } from '@/lib/utils/regions';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { isAggregateRegion } from '$lib/utils/regionAggregation';
 
 	export let data;
 
@@ -26,6 +27,14 @@
 	async function loadRegions(region) {
 		regions = await getRegions();
 
+		// Aggregate regions (Metropolregion) have no peers of their layer: list their members instead
+		if (isAggregateRegion(region)) {
+			relatedRegions = regions
+				.filter((r) => r.layer === 'district' && r.parents?.some((p) => p.id === region.id))
+				.sort((a, b) => (b.population || 0) - (a.population || 0));
+			return;
+		}
+
 		const otherRegions = regions.filter(
 			(r) => r.id !== region.id && r.center && r.population && r.layer == region.layer
 		);
@@ -44,7 +53,7 @@
 					Math.abs(region.population - a.population) - Math.abs(region.population - b.population)
 			)[0];
 
-		relatedRegions = [...closestByLocation, closestByPopulation];
+		relatedRegions = [...closestByLocation, closestByPopulation].filter(Boolean);
 	}
 
 	// Reactively re-run when `page.data.page` changes
@@ -62,7 +71,11 @@
 				href="/regions/{region.id}"
 			>
 				<p class="uppercase font-bold tracking-wide text-sm">
-					{i < 7 ? 'In der Nähe' : 'Ähnliche Bevölkerung'}
+					{isAggregateRegion(data.page)
+						? region.layer_label
+						: i < 7
+							? 'In der Nähe'
+							: 'Ähnliche Bevölkerung'}
 				</p>
 				<h3 class="text-2xl md:text-3xl hyphens-auto leading-none my-1">{region.name}</h3>
 				<p>{formatNumber(region.population)} Einwohner</p>

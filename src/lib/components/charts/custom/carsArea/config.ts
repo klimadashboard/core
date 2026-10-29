@@ -1,6 +1,7 @@
 // $lib/components/charts/custom/carsArea/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItem } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
@@ -46,7 +47,7 @@ export function getPlaceholders(
 	const layerLabel = (region as any)?.layer_label || '';
 	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
 	const regionName = layerLabel && region?.layer !== 'country'
-		? `${baseName} (${layerLabel})`
+		? withLayerLabel(baseName, layerLabel)
 		: baseName;
 
 	return {

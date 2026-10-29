@@ -4,6 +4,7 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getFallbackParentIds } from '$lib/utils/regionAggregation';
 import { t } from '$lib/utils/t';
 import { formatPeriodDate } from '$lib/utils/formatters';
 
@@ -694,7 +695,7 @@ export async function fetchChartData({
 }: ChartFetchParams): Promise<ChartData | null> {
 	if (!regionId) return null;
 
-	const regionCandidates = [regionId, ...parentIds];
+	const regionCandidates = [regionId, ...(await getFallbackParentIds(regionId, parentIds, fetchFn))];
 	const { results } = await fetchEmissionsData(regionCandidates, fetchFn);
 	if (!results || results.length === 0) return null;
 

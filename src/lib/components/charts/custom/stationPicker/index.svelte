@@ -6,6 +6,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { isAggregateRegion } from '$lib/utils/regionAggregation';
 
 	export let selectedStation;
 	export const chart = undefined;
@@ -56,7 +57,14 @@
 	};
 
 	onMount(() => {
-		const stored = localStorage.getItem('kd_region_coordinates');
+		// Aggregate regions (Metropolregion) are large and their center rarely sits next to a
+		// station: use the page region's own center and accept the nearest station within 50 km.
+		const pageRegion = page.data?.page;
+		const aggregate = isAggregateRegion(pageRegion) && pageRegion?.center;
+		const stored = aggregate
+			? pageRegion.center.join(',')
+			: localStorage.getItem('kd_region_coordinates');
+		const maxDistance = aggregate ? 50 : 5;
 		if (stored && page.url.pathname.includes('regions')) {
 			const [lng, lat] = stored.split(',').map(Number); // convert to numbers
 
@@ -84,7 +92,7 @@
 					}
 				}
 
-				if (closest && minDistance <= 5) {
+				if (closest && minDistance <= maxDistance) {
 					selectedStation = closest;
 					const url = new URL(window.location.href);
 					url.searchParams.set('weatherStation', closest.id);

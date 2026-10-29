@@ -1,5 +1,6 @@
 // $lib/components/charts/custom/carsHistoricLineChart/config.ts
 import type { Region } from '$lib/utils/getRegion';
+import { withLayerLabel } from '$lib/utils/getRegion';
 import type {
 	TableColumn,
 	ChartData,
@@ -11,6 +12,7 @@ import { PUBLIC_VERSION } from '$env/static/public';
 import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getAggregateMembers } from '$lib/utils/regionAggregation';
 
 export type DataMode = 'neuzulassungen' | 'bestand';
 
@@ -118,12 +120,15 @@ export async function fetchBestandData(
 ): Promise<{ data: VehicleRawData[]; categories: string[]; updateDate: string; source: string; regionName?: string; hasPrivacySuppression?: boolean }> {
 	const country = getCountryCode();
 	const isCountryLevel = !region || region.layer === 'country';
+	// Aggregate regions (Metropolregion): sum their member districts like the country branch
+	const members = await getAggregateMembers(region);
+	const memberIds = members ? new Set(members.map((m) => m.id)) : null;
 
 	let yearData: Record<string, Record<string, number>>;
 	let regionName: string | undefined;
 	let source: string;
 
-	if (isCountryLevel) {
+	if (isCountryLevel || memberIds) {
 		// Country-level: fetch all districts and aggregate
 		const url = `https://base.klimadashboard.org/get-mobility-cars?layer=district&country=${country}&includeMeta=true`;
 		const resp = await fetch(url);
@@ -140,6 +145,7 @@ export async function fetchBestandData(
 		const allSourceParts = new Set<string>();
 
 		for (const district of districts) {
+			if (memberIds && !memberIds.has(district.region?.id)) continue;
 			const dData = district.data || {};
 			if (district.source) {
 				for (const part of String(district.source).split(',')) {
@@ -156,7 +162,9 @@ export async function fetchBestandData(
 			}
 		}
 
-		regionName = country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
+		regionName = memberIds
+			? region!.name
+			: country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 		// Compact sources: deduplicate by removing year suffixes
 		const baseSourceNames = new Set([...allSourceParts].map((s) => s.replace(/\s+\d{4}(-\d{2})?$/, '')));
 		source = [...baseSourceNames].join(', ');
@@ -571,7 +579,7 @@ export function getPlaceholders(
 
 	// Build regionName with layer_label suffix for disambiguation (e.g., "Meißen (Landkreis)")
 	const regionName = regionLayerLabel && region?.name && region?.layer !== 'country'
-		? `${region.name} (${regionLayerLabel})`
+		? withLayerLabel(region.name, regionLayerLabel)
 		: region?.name ?? '';
 
 	// Calculate first and last year for data range
