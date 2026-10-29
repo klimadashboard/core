@@ -559,16 +559,16 @@
 						{#each skin.logos as logo}
 							{#if logo.href}
 								<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
-									<img src={logo.src} alt={logo.alt} class="h-8 sm:h-10 w-auto" />
+									<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
 								</a>
 							{:else}
-								<img src={logo.src} alt={logo.alt} class="h-8 sm:h-10 w-auto" />
+								<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
 							{/if}
 						{/each}
 					</div>
 				{/if}
 				{#if dashboardLink}
-					<!-- Always Klimadashboard green; dark text because white on #28A889 is only 3:1 -->
+					<!-- Always Klimadashboard green; dark text because white on #28A889 is only 3:1 (white mark is decorative) -->
 					<a
 						href={dashboardLink.href}
 						target="_blank"
@@ -577,7 +577,7 @@
 						on:click={(e) => e.stopPropagation()}
 					>
 						<span>{dashboardLink.label}</span>
-						<svg viewBox="45 84 162 88" fill="currentColor" aria-hidden="true" class="h-3.5 w-auto">
+						<svg viewBox="45 84 162 88" fill="#ffffff" aria-hidden="true" class="h-3.5 w-auto">
 							<path
 								d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
 							/>

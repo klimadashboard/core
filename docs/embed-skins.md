@@ -55,9 +55,9 @@ CMS plugin. Ids are permanent; a skin may be visually updated without changing i
 | `fonts.stylesheet` | optional URL of a self-hosted `@font-face` stylesheet under `/skins/<id>/` |
 | `colors.accent` | interface accent: active tab marker and the Klimadashboard wordmark |
 | `colors.accentDark` | the same for dark mode (must reach 4.5:1 on `gray-900`) |
-| `logos[]` | logos shown top-right (`src`, `alt`, optional `href`; rendered 32px high on phones, 40px from `sm`). They are placed on a white plate, so logos that must sit on white (as most CDs require) stay correct in dark mode |
+| `logos[]` | logos shown top-right (`src`, `alt`, optional `href`; rendered 24px high on phones, 32px from `sm`). They are placed on a white plate, so logos that must sit on white (as most CDs require) stay correct in dark mode |
 | `footer.logos[]` | logos (64px high) at the bottom of the card content, each with an optional `caption` above it (e.g. "Gefördert vom") |
-| `dashboardLink` | `{ href, label }` — replaces the top-right "Klimadashboard.de" wordmark with a button in Klimadashboard green (`#28A889`, independent of the skin accent) showing the label + the Klimadashboard mark, e.g. a link to the partner's full dashboard. Text is dark: white on `#28A889` is only 3:1 |
+| `dashboardLink` | `{ href, label }` — replaces the top-right "Klimadashboard.de" wordmark with a button in Klimadashboard green (`#28A889`, independent of the skin accent) showing the label (dark text) + the white Klimadashboard mark, e.g. a link to the partner's full dashboard. Text is dark: white on `#28A889` is only 3:1 |
 | `attribution` | `'compact'` (default when a skin has logos) keeps a small "Klimadashboard" icon link next to the partner logos (ignored when `dashboardLink` is set); `'full'` keeps the default wordmark + icon |
 
 Every property is optional. A **logos-only skin** (just `logos` and/or `footer`, no `fonts` or
@@ -108,7 +108,7 @@ documents.
 | Accent | `#647235` (5.3:1 on white); dark mode `#a7be59` (8.6:1 on gray-900) | website green `#a7be59`, darker shades `#8da440`/`#647235`; `#a7be59` fails contrast on white, so it is used in dark mode only | — |
 | Header logo | combined EMN \| Klimapakt2030plus lockup (SVG from the website) | CD: both logos always together, on white | confirm we may use the website file; ideally an official delivery |
 | Förderhinweis | footer: BMFTR "Gefördert durch" (474×231 JPG from the website) | required by the tender | official BMFTR logo as SVG (the JPG is low-res) |
-| Full-dashboard link | top-right green button "Zum Klimadashboard" + Klimadashboard mark → `klimadashboard.de/metropolregion-nuernberg` | offer p.3 | URL is not live yet — confirm path |
+| Full-dashboard link | top-right green button "Klimadashboard Metropolregion Nürnberg" + Klimadashboard mark → `klimadashboard.de/metropolregion-nuernberg` | offer p.3 | URL is not live yet — confirm path |
 
 Screenshots: `docs/embed-skins-screenshots/` (`default-light`, `nuernberg-light`,
 `nuernberg-dark`, `nuernberg-mobile`).
