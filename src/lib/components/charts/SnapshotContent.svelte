@@ -3,11 +3,11 @@
 	export let snapshot;
 </script>
 
-<h2 class="md:text-lg font-bold text-gray-900 dark:text-white leading-tight text-balance mb-3">
+<h2 class="kd-card-title md:text-lg font-bold text-gray-900 dark:text-white leading-tight text-balance mb-3">
 	{snapshot.title}
 </h2>
 {#if snapshot.heading}
-	<p class="text-xl md:text-2xl mb-3 text-balance">{@html snapshot.heading}</p>
+	<p class="kd-card-heading text-xl md:text-2xl mb-3 text-balance">{@html snapshot.heading}</p>
 {/if}
 {#if snapshot.table?.rows?.length}
 	<div class="mt-3">

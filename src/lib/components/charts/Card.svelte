@@ -13,6 +13,7 @@
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
 	import { t } from '$lib/utils/t';
+	import { getSkin } from '$lib/skins';
 
 	export let chart: any;
 	export let span = 12;
@@ -50,6 +51,8 @@
 	$: isEmbedRoute = page.url.pathname.startsWith('/embed/');
 	$: urlRegionId = page.url.searchParams.get('region');
 	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';
+	$: skin = isEmbedRoute ? getSkin(page.url.searchParams.get('skin')) : null;
+	$: compactAttribution = !!skin?.logos?.length && skin.attribution !== 'full';
 
 	$: logoHref =
 		isEmbedRoute && urlRegionId
@@ -537,31 +540,57 @@
 
 			<div
 				bind:this={headerEl}
-				class="flex justify-between items-start mb-3"
+				class="flex mb-3 {skin?.logos?.length
+					? 'flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-start'
+					: 'justify-between items-start'}"
 				class:opacity-0={showSkeleton}
 			>
 				{#if !embedHideTitle}
 					<h2
-						class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
+						class="kd-card-title md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
 					>
 						{title || chart.content?.title}
 					</h2>
+				{/if}
+				<div class="flex-shrink-0 flex items-center gap-2 self-end sm:self-auto">
+				{#if skin?.logos?.length}
+					<div class="flex items-center gap-3 bg-white rounded-md px-2 py-1 shadow-sm">
+						{#each skin.logos as logo}
+							{#if logo.href}
+								<a
+									href={logo.href}
+									target="_blank"
+									rel="noopener"
+									on:click={(e) => e.stopPropagation()}
+								>
+									<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
+								</a>
+							{:else}
+								<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
+							{/if}
+						{/each}
+					</div>
 				{/if}
 				<a
 					href={logoHref}
 					target="_blank"
 					aria-label="Klimadashboard.{PUBLIC_VERSION}"
+					title={compactAttribution ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
 					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
 					on:click={(e) => e.stopPropagation()}
 				>
-					<span class="text-sm font-bold text-[#28A889]">Klimadashboard.{PUBLIC_VERSION}</span>
+					{#if !compactAttribution}
+						<span class="text-sm font-bold text-[var(--kd-accent,#28A889)] dark:text-[var(--kd-accent-dark,#28A889)]"
+							>Klimadashboard.{PUBLIC_VERSION}</span
+						>
+					{/if}
 					<svg
 						width="256"
 						height="256"
 						viewBox="0 0 256 256"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-8 w-8 rounded-sm"
+						class="rounded-sm {compactAttribution ? 'h-6 w-6' : 'h-8 w-8'}"
 					>
 						<rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" />
 						<path
@@ -593,6 +622,7 @@
 						</defs>
 					</svg>
 				</a>
+				</div>
 			</div>
 
 			<!-- Content -->
@@ -605,7 +635,7 @@
 					hidden={activeTab !== 'chart'}
 				>
 					{#if heading && !embedHideTitle}
-						<h3 class="text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
+						<h3 class="kd-card-heading text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
 					{/if}
 
 					<div class="my-3 relative">
@@ -744,7 +774,7 @@
 						tabindex={activeTab === tab.id ? 0 : -1}
 						class="relative px-4 py-2.5 transition-colors flex items-center gap-1.5
 							{activeTab === tab.id
-							? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white -mb-px border-t-2 border-t-[#28A889]'
+							? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white -mb-px border-t-2 border-t-[var(--kd-accent,#28A889)] dark:border-t-[var(--kd-accent-dark,#28A889)]'
 							: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}"
 						on:click={() => setTab(tab.id)}
 						on:keydown={(e) => handleTabKeydown(e, tab.id)}
