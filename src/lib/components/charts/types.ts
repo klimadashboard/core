@@ -46,6 +46,20 @@ export interface EmbedOption {
 	currentValue: string;
 }
 
+/**
+ * Static declaration of a chart's embed options. Export it from a chart's config.ts as
+ * `export const embedOptions: EmbedOptionDeclaration[]` so CMS plugins (e.g. the TYPO3
+ * extension) can offer them via GET /api/embed-options/<chartId> without fetching data.
+ */
+export interface EmbedOptionDeclaration {
+	/** Parameter name used in URL query string */
+	key: string;
+	label: { de: string; en: string };
+	choices: Array<{ value: string; label: { de: string; en: string } }>;
+	/** Value the chart uses when the parameter is not set */
+	default: string;
+}
+
 /** Parameters for server-side chart data fetching */
 export interface ChartFetchParams {
 	regionId: string | null;

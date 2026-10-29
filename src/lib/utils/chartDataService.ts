@@ -19,7 +19,7 @@
 import getDirectusInstance from './directus';
 import { readItems, readTranslations } from '@directus/sdk';
 import { resolvePlaceholders } from './placeholderUtils';
-import type { ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import type { ChartData, ChartFetchParams, EmbedOption, EmbedOptionDeclaration } from '$lib/components/charts/types';
 
 export interface SnapshotTableColumn {
 	key: string;
@@ -402,6 +402,45 @@ export async function getChartSnapshots(
 	}
 
 	return result;
+}
+
+// ---------------------------------------------------------------------------
+// Embed options (chart-specific embed parameters, e.g. for CMS plugins)
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the chart-specific embed options a chart declares (config.ts may export
+ * `embedOptions: EmbedOptionDeclaration[]`), with labels in the requested language.
+ * Returns null if the chart does not exist, [] if it declares no options.
+ * Static declarations need no data fetch, so this is cheap to call from CMS backends.
+ */
+export async function getChartEmbedOptions(
+	chartId: string,
+	lang: string,
+	fetch: typeof globalThis.fetch
+): Promise<EmbedOption[] | null> {
+	const directus = getDirectusInstance(createCachedFetch(fetch));
+	const charts = (await directus.request(
+		readItems('charts', {
+			filter: { id: { _eq: chartId } },
+			fields: ['id', 'type', 'custom_sveltestring'],
+			limit: 1
+		})
+	)) as any[];
+	if (!charts.length) return null;
+
+	const loader = moduleByType.get(charts[0].custom_sveltestring || charts[0].type);
+	if (!loader) return [];
+	const mod = await loader();
+	const declarations: EmbedOptionDeclaration[] = mod.embedOptions ?? [];
+	const l = lang === 'en' ? 'en' : 'de';
+
+	return declarations.map((option) => ({
+		key: option.key,
+		label: option.label[l],
+		choices: option.choices.map((choice) => ({ value: choice.value, label: choice.label[l] })),
+		currentValue: option.default
+	}));
 }
 
 // ---------------------------------------------------------------------------

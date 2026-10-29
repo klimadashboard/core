@@ -1,6 +1,11 @@
 // $lib/components/charts/custom/carsHistoricLineChart/config.ts
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import type {
+	TableColumn,
+	ChartData,
+	ChartFetchParams,
+	EmbedOptionDeclaration
+} from '$lib/components/charts/types';
 import { formatPeriodDate } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
@@ -698,6 +703,20 @@ export function buildChartData(
 		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
 }
+
+/** Embed parameter `mode` — a hint; falls back to the available data mode for the region */
+export const embedOptions: EmbedOptionDeclaration[] = [
+	{
+		key: 'mode',
+		label: { de: 'Datenansicht vorauswählen', en: 'Preselect data view' },
+		choices: [
+			{ value: 'neuzulassungen', label: { de: 'Neuzulassungen', en: 'New registrations' } },
+			{ value: 'bestand', label: { de: 'Bestand', en: 'Vehicle stock' } }
+		],
+		default: 'neuzulassungen'
+	}
+];
+
 
 export async function fetchChartData({
 	regionId,

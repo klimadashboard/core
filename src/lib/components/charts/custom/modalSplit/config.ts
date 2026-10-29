@@ -1,7 +1,12 @@
 // $lib/components/charts/custom/modalSplit/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import type {
+	TableColumn,
+	ChartData,
+	ChartFetchParams,
+	EmbedOptionDeclaration
+} from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { t } from '$lib/utils/t';
@@ -718,6 +723,20 @@ export function buildChartData(
 		]
 	};
 }
+
+/** Embed parameter `historic` — show the historical development */
+export const embedOptions: EmbedOptionDeclaration[] = [
+	{
+		key: 'historic',
+		label: { de: 'Historische Entwicklung anzeigen', en: 'Show historical development' },
+		choices: [
+			{ value: 'false', label: { de: 'Nein', en: 'No' } },
+			{ value: 'true', label: { de: 'Ja', en: 'Yes' } }
+		],
+		default: 'false'
+	}
+];
+
 
 export async function fetchChartData({
 	regionId,
