@@ -33,7 +33,7 @@ const skin: Skin = {
 	// Offer p.3: link to the full dashboard (planned URL, not live yet) — shown top-right
 	dashboardLink: {
 		href: 'https://klimadashboard.de/metropolregion-nuernberg',
-		label: 'Zum Gesamtdashboard'
+		label: 'Zum Klimadashboard'
 	},
 	// Offer p.3: funding notice
 	footer: {

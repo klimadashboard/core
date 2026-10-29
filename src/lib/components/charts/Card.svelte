@@ -567,21 +567,42 @@
 						{/each}
 					</div>
 				{/if}
+				{#if dashboardLink}
+					<!-- Always Klimadashboard green; dark text because white on #28A889 is only 3:1 -->
+					<a
+						href={dashboardLink.href}
+						target="_blank"
+						rel="noopener"
+						class="flex-shrink-0 inline-flex items-center gap-2 rounded-full bg-[#28A889] hover:bg-[#2FBF9C] text-gray-950 text-sm font-bold leading-none pl-3.5 pr-3 py-2 transition-colors"
+						on:click={(e) => e.stopPropagation()}
+					>
+						<span>{dashboardLink.label}</span>
+						<svg viewBox="45 84 162 88" fill="currentColor" aria-hidden="true" class="h-3.5 w-auto">
+							<path
+								d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
+							/>
+							<path
+								opacity="0.6"
+								d="M162.95 88H134.808C133.732 88 132.701 88.4337 131.948 89.203L96.7358 125.203C95.2152 126.758 95.2152 129.242 96.7358 130.797L131.948 166.797C132.701 167.566 133.732 168 134.808 168H162.95C166.498 168 168.29 163.723 165.8 161.194L135.887 130.806C134.355 129.249 134.355 126.751 135.887 125.194L165.8 94.8061C168.29 92.2773 166.498 88 162.95 88Z"
+							/>
+							<path
+								opacity="0.3"
+								d="M197.95 88H178.808C177.732 88 176.701 88.4337 175.948 89.203L140.736 125.203C139.215 126.758 139.215 129.242 140.736 130.797L175.948 166.797C176.701 167.566 177.732 168 178.808 168H197.95C201.498 168 203.29 163.723 200.8 161.194L170.887 130.806C169.355 129.249 169.355 126.751 170.887 125.194L200.8 94.8061C203.29 92.2773 201.498 88 197.95 88Z"
+							/>
+						</svg>
+					</a>
+				{:else}
 				<a
-					href={dashboardLink?.href ?? logoHref}
+					href={logoHref}
 					target="_blank"
-					aria-label={dashboardLink
-						? `${dashboardLink.label} – Klimadashboard.${PUBLIC_VERSION}`
-						: `Klimadashboard.${PUBLIC_VERSION}`}
-					title={compactAttribution && !dashboardLink ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
-					class="flex-shrink-0 transition flex items-center gap-2 {dashboardLink
-						? 'hover:underline underline-offset-2'
-						: 'opacity-80 hover:opacity-100'}"
+					aria-label="Klimadashboard.{PUBLIC_VERSION}"
+					title={compactAttribution ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
+					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
 					on:click={(e) => e.stopPropagation()}
 				>
-					{#if dashboardLink || !compactAttribution}
+					{#if !compactAttribution}
 						<span class="text-sm font-bold text-[var(--kd-accent,#28A889)] dark:text-[var(--kd-accent-dark,#28A889)]"
-							>{dashboardLink?.label ?? `Klimadashboard.${PUBLIC_VERSION}`}</span
+							>Klimadashboard.{PUBLIC_VERSION}</span
 						>
 					{/if}
 					<svg
@@ -590,7 +611,7 @@
 						viewBox="0 0 256 256"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
-						class="rounded-sm {compactAttribution && !dashboardLink ? 'h-6 w-6' : 'h-8 w-8'}"
+						class="rounded-sm {compactAttribution ? 'h-6 w-6' : 'h-8 w-8'}"
 					>
 						<rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" />
 						<path
@@ -622,6 +643,7 @@
 						</defs>
 					</svg>
 				</a>
+				{/if}
 				</div>
 			</div>
 
