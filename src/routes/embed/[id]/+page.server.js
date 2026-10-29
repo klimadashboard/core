@@ -2,6 +2,19 @@ import { error, redirect } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem, readItems } from '@directus/sdk';
 import { getChartSnapshots } from '$lib/utils/chartDataService';
+import { match as isUuid } from '../../../params/uuid.js';
+
+// Canonical region slug for the "Klimadashboard.de/<slug>" credit in the card header
+async function getRegionSlug(directus, regionId) {
+	if (!regionId) return null;
+	if (!isUuid(regionId)) return regionId;
+	try {
+		const region = await directus.request(readItem('regions', regionId, { fields: ['slug'] }));
+		return String(region?.slug || '').split(',')[0].trim() || null;
+	} catch {
+		return null;
+	}
+}
 
 export async function load({ fetch, params, url }) {
 	const directus = getDirectusInstance(fetch);
@@ -13,11 +26,15 @@ export async function load({ fetch, params, url }) {
 		// SSR chart snapshot (region from query param if present)
 		const regionId = url.searchParams.get('region') || null;
 		const lang = url.searchParams.get('lang') || 'de';
-		const snapshots = await getChartSnapshots([params.id], regionId, [], lang, fetch);
+		const [snapshots, regionSlug] = await Promise.all([
+			getChartSnapshots([params.id], regionId, [], lang, fetch),
+			getRegionSlug(directus, regionId)
+		]);
 
 		return {
 			id: params.id,
-			chartSnapshot: snapshots[params.id] || null
+			chartSnapshot: snapshots[params.id] || null,
+			regionSlug
 		};
 	} catch (err) {
 		// On rate-limit or backend error, don't attempt a second Directus request

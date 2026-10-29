@@ -21,23 +21,18 @@ const skin: Skin = {
 		// Website's signature Klimapakt green — 8.6:1 on gray-900
 		accentDark: '#a7be59'
 	},
-	logos: [
-		{
-			// Combined EMN | Klimapakt2030plus lockup from the website header (CD: always together)
-			src: '/skins/metropolregion-nuernberg/logo-emn-klimapakt2030plus.svg',
-			alt: 'Europäische Metropolregion Nürnberg und Klimapakt2030plus',
-			href: 'https://www.klimapakt2030plus.de'
-		}
-	],
-	attribution: 'compact',
-	// Offer p.3: link to the full dashboard (planned URL, not live yet) — shown top-right
-	dashboardLink: {
-		href: 'https://klimadashboard.de/metropolregion-nuernberg',
-		label: 'Klimadashboard Metropolregion Nürnberg'
-	},
-	// Offer p.3: funding notice
+	// Top-right keeps the regular Klimadashboard credit (links to the region page with
+	// ?region=, e.g. klimadashboard.de/metropolregion-nuernberg). Partner and funding logos
+	// sit in the footer.
 	footer: {
 		logos: [
+			{
+				// Combined EMN | Klimapakt2030plus lockup from the website header (CD: always together)
+				src: '/skins/metropolregion-nuernberg/logo-emn-klimapakt2030plus.svg',
+				alt: 'Europäische Metropolregion Nürnberg und Klimapakt2030plus',
+				href: 'https://www.klimapakt2030plus.de',
+				height: 36
+			},
 			{
 				// From the website (474×231 JPG, includes "Gefördert durch:") — ask for the SVG
 				src: '/skins/metropolregion-nuernberg/bmftr-gefoerdert-durch.jpg',

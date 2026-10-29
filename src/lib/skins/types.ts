@@ -5,6 +5,8 @@ export interface SkinLogo {
 	href?: string;
 	/** Text above the logo, e.g. "Gefördert vom" for funding notices */
 	caption?: string;
+	/** Rendered height in px — footer logos only (default 64) */
+	height?: number;
 }
 
 export interface Skin {
@@ -30,9 +32,7 @@ export interface Skin {
 	logos?: SkinLogo[];
 	/** How the Klimadashboard credit is shown next to skin logos (default 'compact') */
 	attribution?: 'compact' | 'full';
-	/** Replaces the top-right Klimadashboard wordmark with a green button (label + Klimadashboard mark), e.g. to the partner's full dashboard */
-	dashboardLink?: { href: string; label: string };
-	/** Optional strip at the bottom of the card content, e.g. funding logos */
+	/** Optional strip at the bottom of the card content, e.g. partner and funding logos */
 	footer?: {
 		logos?: SkinLogo[];
 	};

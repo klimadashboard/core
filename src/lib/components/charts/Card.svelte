@@ -53,11 +53,11 @@
 	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';
 	$: skin = isEmbedRoute ? getSkin(page.url.searchParams.get('skin')) : null;
 	$: compactAttribution = !!skin?.logos?.length && skin.attribution !== 'full';
-	$: dashboardLink = skin?.dashboardLink ?? null;
+	$: regionSlug = isEmbedRoute ? (page.data.regionSlug ?? null) : null;
 
 	$: logoHref =
 		isEmbedRoute && urlRegionId
-			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${urlRegionId}`
+			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${regionSlug || urlRegionId}`
 			: `https://klimadashboard.${PUBLIC_VERSION}`;
 
 	function handleClickOutside(e: MouseEvent) {
@@ -541,7 +541,7 @@
 
 			<div
 				bind:this={headerEl}
-				class="flex mb-3 {skin?.logos?.length
+				class="flex mb-3 {skin?.logos?.length || regionSlug
 					? 'flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-start'
 					: 'justify-between items-start'}"
 				class:opacity-0={showSkeleton}
@@ -567,42 +567,17 @@
 						{/each}
 					</div>
 				{/if}
-				{#if dashboardLink}
-					<!-- Always Klimadashboard green; dark text because white on #28A889 is only 3:1 (white mark is decorative) -->
-					<a
-						href={dashboardLink.href}
-						target="_blank"
-						rel="noopener"
-						class="flex-shrink-0 inline-flex items-center gap-2 rounded-full bg-[#28A889] hover:bg-[#2FBF9C] text-gray-950 text-sm font-bold leading-none pl-3.5 pr-3 py-2 transition-colors"
-						on:click={(e) => e.stopPropagation()}
-					>
-						<span>{dashboardLink.label}</span>
-						<svg viewBox="45 84 162 88" fill="#ffffff" aria-hidden="true" class="h-3.5 w-auto">
-							<path
-								d="M119.45 88H53C50.7909 88 49 89.7909 49 92V164C49 166.209 50.7909 168 53 168H119.45C122.998 168 124.79 163.723 122.3 161.194L92.3872 130.806C90.8547 129.249 90.8547 126.751 92.3872 125.194L122.3 94.8061C124.79 92.2773 122.998 88 119.45 88Z"
-							/>
-							<path
-								opacity="0.6"
-								d="M162.95 88H134.808C133.732 88 132.701 88.4337 131.948 89.203L96.7358 125.203C95.2152 126.758 95.2152 129.242 96.7358 130.797L131.948 166.797C132.701 167.566 133.732 168 134.808 168H162.95C166.498 168 168.29 163.723 165.8 161.194L135.887 130.806C134.355 129.249 134.355 126.751 135.887 125.194L165.8 94.8061C168.29 92.2773 166.498 88 162.95 88Z"
-							/>
-							<path
-								opacity="0.3"
-								d="M197.95 88H178.808C177.732 88 176.701 88.4337 175.948 89.203L140.736 125.203C139.215 126.758 139.215 129.242 140.736 130.797L175.948 166.797C176.701 167.566 177.732 168 178.808 168H197.95C201.498 168 203.29 163.723 200.8 161.194L170.887 130.806C169.355 129.249 169.355 126.751 170.887 125.194L200.8 94.8061C203.29 92.2773 201.498 88 197.95 88Z"
-							/>
-						</svg>
-					</a>
-				{:else}
 				<a
 					href={logoHref}
 					target="_blank"
-					aria-label="Klimadashboard.{PUBLIC_VERSION}"
+					aria-label="Klimadashboard.{PUBLIC_VERSION}{regionSlug ? `/${regionSlug}` : ''}"
 					title={compactAttribution ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
 					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
 					on:click={(e) => e.stopPropagation()}
 				>
 					{#if !compactAttribution}
-						<span class="text-sm font-bold text-[var(--kd-accent,#28A889)] dark:text-[var(--kd-accent-dark,#28A889)]"
-							>Klimadashboard.{PUBLIC_VERSION}</span
+						<span class="text-sm font-bold text-[#28A889] text-right"
+							>Klimadashboard.{PUBLIC_VERSION}{regionSlug ? `/${regionSlug}` : ''}</span
 						>
 					{/if}
 					<svg
@@ -643,7 +618,6 @@
 						</defs>
 					</svg>
 				</a>
-				{/if}
 				</div>
 			</div>
 
@@ -761,17 +735,17 @@
 					class:opacity-0={showSkeleton}
 				>
 					{#if skin.footer.logos?.length}
-						<div class="flex flex-wrap items-end gap-4">
+						<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
 							{#each skin.footer.logos as logo}
 								<figure class="flex flex-col gap-1">
 									{#if logo.caption}<figcaption>{logo.caption}</figcaption>{/if}
 									<div class="bg-white rounded px-2 py-1">
 										{#if logo.href}
 											<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
-												<img src={logo.src} alt={logo.alt} class="h-16 w-auto" />
+												<img src={logo.src} alt={logo.alt} style="height: {logo.height ?? 64}px" class="w-auto" />
 											</a>
 										{:else}
-											<img src={logo.src} alt={logo.alt} class="h-16 w-auto" />
+											<img src={logo.src} alt={logo.alt} style="height: {logo.height ?? 64}px" class="w-auto" />
 										{/if}
 									</div>
 								</figure>
