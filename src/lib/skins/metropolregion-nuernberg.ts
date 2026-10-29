@@ -34,7 +34,23 @@ const skin: Skin = {
 			href: 'https://www.klimapakt2030plus.de'
 		}
 	],
-	attribution: 'compact'
+	attribution: 'compact',
+	// Offer p.3: funding notice + link to the full dashboard on klimadashboard.de
+	footer: {
+		logos: [
+			{
+				// PLACEHOLDER file — replace with the official BMFTR "Gefördert vom" logo
+				src: '/skins/metropolregion-nuernberg/logo-bmftr.svg',
+				alt: 'Bundesministerium für Forschung, Technologie und Raumfahrt',
+				caption: 'Gefördert vom'
+			}
+		],
+		link: {
+			// Planned URL of the full dashboard (offer p.3) — not live yet
+			href: 'https://klimadashboard.de/metropolregion-nuernberg',
+			label: 'Gesamtdashboard auf klimadashboard.de'
+		}
+	}
 };
 
 export default skin;

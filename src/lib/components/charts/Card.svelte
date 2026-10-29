@@ -557,12 +557,7 @@
 					<div class="flex items-center gap-3 bg-white rounded-md px-2 py-1 shadow-sm">
 						{#each skin.logos as logo}
 							{#if logo.href}
-								<a
-									href={logo.href}
-									target="_blank"
-									rel="noopener"
-									on:click={(e) => e.stopPropagation()}
-								>
+								<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
 									<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
 								</a>
 							{:else}
@@ -731,6 +726,44 @@
 					{/if}
 				</div>
 			</div>
+
+			<!-- Skin footer (embeds only): funding notices + link to the full dashboard -->
+			{#if skin?.footer}
+				<div
+					class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800 flex flex-wrap items-end justify-between gap-3 text-xs text-gray-600 dark:text-gray-300"
+					class:opacity-0={showSkeleton}
+				>
+					{#if skin.footer.logos?.length}
+						<div class="flex flex-wrap items-end gap-4">
+							{#each skin.footer.logos as logo}
+								<figure class="flex flex-col gap-1">
+									{#if logo.caption}<figcaption>{logo.caption}</figcaption>{/if}
+									<div class="bg-white rounded px-2 py-1">
+										{#if logo.href}
+											<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
+												<img src={logo.src} alt={logo.alt} class="h-10 w-auto" />
+											</a>
+										{:else}
+											<img src={logo.src} alt={logo.alt} class="h-10 w-auto" />
+										{/if}
+									</div>
+								</figure>
+							{/each}
+						</div>
+					{/if}
+					{#if skin.footer.link}
+						<a
+							href={skin.footer.link.href}
+							target="_blank"
+							rel="noopener"
+							class="font-semibold underline underline-offset-2 text-[var(--kd-accent,#28A889)] dark:text-[var(--kd-accent-dark,#28A889)]"
+							on:click={(e) => e.stopPropagation()}
+						>
+							{skin.footer.link.label} →
+						</a>
+					{/if}
+				</div>
+			{/if}
 
 			<!-- Map button -->
 			{#if mapLayerId}

@@ -3,6 +3,8 @@ export interface SkinLogo {
 	src: string;
 	alt: string;
 	href?: string;
+	/** Text above the logo, e.g. "Gefördert vom" for funding notices */
+	caption?: string;
 }
 
 export interface Skin {
@@ -28,4 +30,9 @@ export interface Skin {
 	logos?: SkinLogo[];
 	/** How the Klimadashboard credit is shown next to skin logos (default 'compact') */
 	attribution?: 'compact' | 'full';
+	/** Optional strip at the bottom of the card content: funding logos and a link */
+	footer?: {
+		logos?: SkinLogo[];
+		link?: { href: string; label: string };
+	};
 }

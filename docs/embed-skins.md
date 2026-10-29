@@ -1,7 +1,8 @@
 # Embed skins
 
 A **skin** changes how an embedded chart looks in a partner's website — typefaces,
-interface accent colors and the logo(s) in the top-right corner of the chart card.
+interface accent colors, the logo(s) in the top-right corner of the chart card and an
+optional footer (funding notices, link to the full dashboard).
 Data, layout, interactions, texts and chart-series colors stay the same.
 
 Skins only apply on embed routes (`/embed/*`). On klimadashboard.* itself they are ignored.
@@ -55,7 +56,15 @@ CMS plugin. Ids are permanent; a skin may be visually updated without changing i
 | `colors.accent` | interface accent: active tab marker and the Klimadashboard wordmark |
 | `colors.accentDark` | the same for dark mode (must reach 4.5:1 on `gray-900`) |
 | `logos[]` | logos shown top-right (`src`, `alt`, optional `href`; rendered 24px high on phones, 32px from `sm`). They are placed on a white plate, so logos that must sit on white (as most CDs require) stay correct in dark mode |
+| `footer.logos[]` | logos at the bottom of the card content, each with an optional `caption` above it (e.g. "Gefördert vom") |
+| `footer.link` | `{ href, label }` — e.g. a link to the partner's full dashboard on klimadashboard.de |
 | `attribution` | `'compact'` (default when a skin has logos) keeps a small "Klimadashboard" link next to the partner logos; `'full'` keeps the default wordmark + icon |
+
+Every property is optional. A **logos-only skin** (just `logos` and/or `footer`, no `fonts` or
+`colors`) keeps the Klimadashboard fonts and colours and only adds partner logos. This is the
+intended model for partner pages on klimadashboard.de itself (e.g. the planned
+`/metropolregion-nuernberg` dashboard). Skins are currently only *applied* on `/embed/*`;
+using them on regular pages is a separate step.
 
 Not changed by skins (on purpose): chart data-series colors, layout, chart primitives.
 See "Data-series colors" below.
@@ -97,7 +106,8 @@ tender documents.
 | Headline font | Barlow Condensed, caps (self-hosted, DIN-like) — **placeholder** | DIN 1451 Engschrift LT, caps | webfont licence + `woff2` for DIN 1451 Engschrift, or OK to keep the placeholder |
 | Accent | EMN-Rot `#d40032` (5.5:1 on white); dark mode Klimapakt-Grün `#94c11c` (8.4:1 on gray-900) | EMN-Rot, EMN-Grau, Klimapakt ramp `#94c11c → #d40032` | — |
 | Logos | dashed **placeholder** SVGs in `static/skins/metropolregion-nuernberg/` | EMN logo + Klimapakt2030plus project logo, always together, on white | official SVGs of both logos (colour versions) |
-| Förderhinweis | not shown in embeds | BMFTR logo "Gefördert vom" required in the tender | BMFTR logo SVG + decision where it goes (card footer vs. TYPO3 page) |
+| Förderhinweis | card footer: "Gefördert vom" + dashed **placeholder** logo | BMFTR logo "Gefördert vom" required in the tender | official BMFTR logo SVG (and any further funder/partner logos) |
+| Full-dashboard link | card footer → `klimadashboard.de/metropolregion-nuernberg` | offer p.3 | URL is not live yet — confirm path |
 
 Screenshots: `docs/embed-skins-screenshots/` (`default-light`, `nuernberg-light`,
 `nuernberg-dark`, `nuernberg-mobile`).
