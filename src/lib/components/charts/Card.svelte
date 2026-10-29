@@ -558,10 +558,10 @@
 						{#each skin.logos as logo}
 							{#if logo.href}
 								<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
-									<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
+									<img src={logo.src} alt={logo.alt} class="h-8 sm:h-10 w-auto" />
 								</a>
 							{:else}
-								<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
+								<img src={logo.src} alt={logo.alt} class="h-8 sm:h-10 w-auto" />
 							{/if}
 						{/each}
 					</div>
@@ -741,10 +741,10 @@
 									<div class="bg-white rounded px-2 py-1">
 										{#if logo.href}
 											<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
-												<img src={logo.src} alt={logo.alt} class="h-10 w-auto" />
+												<img src={logo.src} alt={logo.alt} class="h-16 w-auto" />
 											</a>
 										{:else}
-											<img src={logo.src} alt={logo.alt} class="h-10 w-auto" />
+											<img src={logo.src} alt={logo.alt} class="h-16 w-auto" />
 										{/if}
 									</div>
 								</figure>

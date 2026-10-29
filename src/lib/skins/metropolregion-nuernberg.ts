@@ -1,36 +1,31 @@
 import type { Skin } from './types';
 
-// Source: Gestaltungsleitfaden EMN (2010) + Klimapakt2030plus CD-Manual (30.10.2023),
-// both in the tender documents (Leistungsverzeichnis, Anhang).
+// Adapted to www.klimapakt2030plus.de (checked 2026-10-29); CD reference: Klimapakt2030plus
+// CD-Manual (30.10.2023) in the tender documents. Logos are taken from the website.
 const skin: Skin = {
 	id: 'metropolregion-nuernberg',
 	label: 'Metropolregion Nürnberg · Klimapakt2030plus',
 	fonts: {
-		// CD web substitute for Trade Gothic LT Condensed No. 18 is Arial (system font, nothing loaded)
-		body: "Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif",
-		// PLACEHOLDER: CD headline font is DIN 1451 Engschrift LT in caps. Until a webfont licence
-		// and woff2 files exist, use our self-hosted Barlow Condensed (DIN-like). When available:
-		// add static/skins/metropolregion-nuernberg/fonts.css, set `stylesheet`, prepend the family.
+		// The website uses DIN Condensed (headings) and Trade Gothic LT W01 Cond No. 18 (body).
+		// Both are commercial webfonts licensed to their domain, so we can't self-host copies.
+		// Stand-in: our self-hosted Barlow Condensed (DIN-like) for both. If the licence can be
+		// extended to klimadashboard.de, add /skins/metropolregion-nuernberg/fonts.css, set
+		// `stylesheet` and prepend the families below.
+		body: "'Barlow Condensed', 'Arial Narrow', Arial, sans-serif",
 		heading: "'Barlow Condensed', 'Arial Narrow', Arial, sans-serif",
-		headingTransform: 'uppercase'
+		headingTransform: 'none'
 	},
 	colors: {
-		// EMN-Rot #d40032 — 5.5:1 on white
-		accent: '#d40032',
-		// Klimapakt-Grün #94c11c — the CD forbids tinting EMN-Rot, which is too dark on gray-900
-		accentDark: '#94c11c'
+		// Website's dark Klimapakt green — 5.3:1 on white (the signature #a7be59 is only 2.1:1)
+		accent: '#647235',
+		// Website's signature Klimapakt green — 8.6:1 on gray-900
+		accentDark: '#a7be59'
 	},
 	logos: [
 		{
-			// PLACEHOLDER file — replace with the official SVG
-			src: '/skins/metropolregion-nuernberg/logo-emn.svg',
-			alt: 'Europäische Metropolregion Nürnberg',
-			href: 'https://www.metropolregion.nuernberg.de'
-		},
-		{
-			// PLACEHOLDER file — replace with the official SVG
-			src: '/skins/metropolregion-nuernberg/logo-klimapakt2030plus.svg',
-			alt: 'Klimapakt2030plus',
+			// Combined EMN | Klimapakt2030plus lockup from the website header (CD: always together)
+			src: '/skins/metropolregion-nuernberg/logo-emn-klimapakt2030plus.svg',
+			alt: 'Europäische Metropolregion Nürnberg und Klimapakt2030plus',
 			href: 'https://www.klimapakt2030plus.de'
 		}
 	],
@@ -39,10 +34,9 @@ const skin: Skin = {
 	footer: {
 		logos: [
 			{
-				// PLACEHOLDER file — replace with the official BMFTR "Gefördert vom" logo
-				src: '/skins/metropolregion-nuernberg/logo-bmftr.svg',
-				alt: 'Bundesministerium für Forschung, Technologie und Raumfahrt',
-				caption: 'Gefördert vom'
+				// From the website (474×231 JPG, includes "Gefördert durch:") — ask for the SVG
+				src: '/skins/metropolregion-nuernberg/bmftr-gefoerdert-durch.jpg',
+				alt: 'Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt'
 			}
 		],
 		link: {
