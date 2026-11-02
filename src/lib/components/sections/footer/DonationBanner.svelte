@@ -4,6 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import PaymentMethods from '$lib/components/PaymentMethods.svelte';
+	import { pickDonationBannerVariant } from '$lib/donationBannerVariants';
 
 	const COOKIE_NAME = 'hide_donation_banner';
 	const suggestedAmounts = [30, 50, 100, 200];
@@ -14,6 +15,10 @@
 		PUBLIC_VERSION == 'de' ? 'Deutschland und Österreich' : 'Österreich und Deutschland';
 
 	let hidden = true; // start hidden, will show after 20s if no cookie
+
+	// A/B test: headline is drawn per page view, see donationBannerVariants.ts.
+	const variant = pickDonationBannerVariant();
+	let impressionSent = false;
 
 	onMount(() => {
 		// Check cookie
@@ -40,8 +45,17 @@
 	// while cancelling) reads badly. Matches lang-prefixed paths too.
 	$: inDonateFlow = /\/donate(\/|$)/.test(page.url.pathname);
 
+	$: visible = !hidden && !inDonateFlow && !page.url.pathname.startsWith('/embed/');
+
+	// Only count impressions that were actually rendered.
+	$: if (visible && !impressionSent) {
+		impressionSent = true;
+		window.rybbit?.event('Donation Banner Impression', { variant: variant.id });
+	}
+
 	const hideForever = () => {
 		hidden = true;
+		window.rybbit?.event('Donation Banner Dismiss', { variant: variant.id });
 
 		// Set cookie for 7 days
 		const expires = new Date();
@@ -56,7 +70,7 @@
 	(main) group and so normally render no footer at all — but the error page does
 	render one, which is how this would otherwise slip through.
 -->
-{#if !hidden && !inDonateFlow && !page.url.pathname.startsWith('/embed/')}
+{#if visible}
 	<div
 		in:fly={{ y: 40, duration: 300 }}
 		out:fly={{ y: 40, duration: 200 }}
@@ -64,7 +78,7 @@
 	>
 		<div class="container relative">
 			<h2 class="font-bold text-xl max-w-2xl w-[80%] leading-tight">
-				Fakten statt Fake News – hilf uns, unabhängig zu bleiben!
+				{variant.headline}
 			</h2>
 			<p class="leading-snug max-w-3xl text-sm md:text-base text-balance my-1">
 				Das Klimadashboard bleibt <b>kostenlos, werbefrei und unabhängig</b> – für alle, die
@@ -86,7 +100,9 @@
 				{/each}
 				<a
 					class="block flex-shrink-0 py-1.5 bg-black text-white px-4 rounded-full font-bold hover:bg-white hover:text-black transition"
-					href="https://klimadashboard.org/donate?amount={amount}"
+					href="https://klimadashboard.org/donate?amount={amount}&banner={variant.id}"
+					on:click={() =>
+						window.rybbit?.event('Donation Banner Click', { variant: variant.id, amount })}
 					aria-label="Jetzt spenden"
 				>
 					Jetzt spenden

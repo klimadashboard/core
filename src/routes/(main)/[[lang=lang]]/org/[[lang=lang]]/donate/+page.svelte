@@ -9,6 +9,7 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { calculateCardFee, MIN_DONATION_EUR } from '$lib/utils/donationFee';
 	import { taxRegime, needsAddress, needsBirthdate } from '$lib/donationTax';
+	import { isDonationBannerVariantId } from '$lib/donationBannerVariants';
 	import { onMount } from 'svelte';
 	import { getStripe } from '$lib/stripe-client';
 
@@ -81,6 +82,8 @@
 	const bankName = 'Raiffeisenbank Gunskirchen';
 	const receiverName = 'Klimadashboard';
 
+	let bannerVariant: string | null = null;
+
 	onMount(async () => {
 		const presetAmount = page.url.searchParams.get('amount');
 
@@ -94,9 +97,14 @@
 			}
 		}
 
-		if (presetAmount) {
+		// Which donation-banner headline brought the donor here (A/B test).
+		const bannerParam = page.url.searchParams.get('banner');
+		if (isDonationBannerVariantId(bannerParam)) bannerVariant = bannerParam;
+
+		if (presetAmount || bannerParam) {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('amount');
+			url.searchParams.delete('banner');
 			window.history.replaceState({}, '', url.toString());
 		}
 
@@ -235,7 +243,8 @@
 		window.rybbit?.event('Donation Success', {
 			method: 'card',
 			frequency,
-			amount: amountEUR(amount)
+			amount: amountEUR(amount),
+			...(bannerVariant && { banner: bannerVariant })
 		});
 		// A full navigation rather than an in-page state swap: scrolling a long form
 		// back to a banner is unreliable, and donors were being left mid-FAQ.
