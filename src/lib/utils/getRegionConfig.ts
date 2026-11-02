@@ -101,6 +101,10 @@ export async function getRegionConfig(
 	let currentRegionId: string | null = regionId;
 	const visitedRegions = new Set<string>();
 	let lastRegionCountry: string | null = null;
+	// Set when the hierarchy walk hit a backend error. "No config" is then not a
+	// fact about the data, so it must not be cached — otherwise one 503 pins the
+	// region to the default config for a full TTL.
+	let walkFailed = false;
 
 	// Walk up the hierarchy
 	while (currentRegionId && !visitedRegions.has(currentRegionId)) {
@@ -203,12 +207,22 @@ export async function getRegionConfig(
 				}
 			}
 		} catch (error) {
-			console.error(`Error fetching config for region ${currentRegionId}:`, error);
+			walkFailed = true;
+			const status =
+				(error as { response?: { status?: number }; status?: number })?.response?.status ??
+				(error as { status?: number })?.status;
+			console.error(
+				`Error fetching config for region ${currentRegionId}:`,
+				status ? `HTTP ${status}` : error
+			);
 			// Try to continue with parent if possible
 			try {
 				const region = (await directus.request(
 					readItem('regions', currentRegionId, { fields: ['parents', 'country'] })
-				)) as { parents: Array<{ id: string; layer: string }> | null; country: string | null } | null;
+				)) as {
+					parents: Array<{ id: string; layer: string }> | null;
+					country: string | null;
+				} | null;
 				if (region?.country) {
 					lastRegionCountry = region.country;
 				}
@@ -219,9 +233,11 @@ export async function getRegionConfig(
 		}
 	}
 
-	// No config found anywhere in hierarchy — cache this too
-	console.log(`No config found in hierarchy, returning null`);
-	configCache.set(cacheKey, { data: null, expires: Date.now() + CONFIG_TTL });
+	// No config found anywhere in hierarchy — cache this too, but only if the
+	// walk actually completed. After a backend error we retry on the next render.
+	if (!walkFailed) {
+		configCache.set(cacheKey, { data: null, expires: Date.now() + CONFIG_TTL });
+	}
 	return null;
 }
 
