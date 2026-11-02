@@ -44,5 +44,8 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 		// Field not yet configured in Directus — silently skip
 	}
 
-	return { member, authoredPages };
+	// `content.title` drives the breadcrumb label, which would otherwise show the raw UUID.
+	const fullName = [member.first_name, member.last_name].filter(Boolean).join(' ');
+
+	return { member, authoredPages, content: { title: fullName } };
 };

@@ -30,6 +30,14 @@
 		publisher: { '@type': 'Organization', name: 'Klimadashboard' }
 	});
 
+	// Build an absolute hreflang URL. The default language `de` has no path prefix,
+	// and the `home` slug maps to the site root.
+	const alternateHref = (languages_code, slug) => {
+		const langSegment = languages_code === 'de' ? '' : `/${languages_code}`;
+		const slugSegment = slug === 'home' ? '' : `/${slug}`;
+		return page.url.origin + (langSegment + slugSegment || '/');
+	};
+
 	const rybbitSiteIds = {
 		at: 'bef2508789da',
 		de: '80ab23225a7d',
@@ -96,12 +104,7 @@
 			<link
 				rel="alternate"
 				hreflang={languages_code}
-				href={(
-					page.url.origin +
-					'/' +
-					languages_code.replace('de', '') +
-					(slug === 'home' ? '' : '/' + slug)
-				).replace(/\/+/g, '/')}
+				href={alternateHref(languages_code, slug)}
 			/>
 		{/if}
 	{/each}

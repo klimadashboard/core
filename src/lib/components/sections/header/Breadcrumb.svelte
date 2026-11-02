@@ -4,6 +4,10 @@
 
 	let breadcrumbs = [];
 
+	// Path segments that only exist as parents of a detail route — there is no
+	// index page behind them, so they must not be linked.
+	const SEGMENTS_WITHOUT_PAGE = ['team', 'companies'];
+
 	const updateBreadcrumbs = () => {
 		// Access the current URL from the SvelteKit page store
 		const { pathname } = $page.url;
@@ -23,7 +27,7 @@
 					? $page.data.content.title
 					: decodeURIComponent(part);
 
-			return { label, href };
+			return { label, href, linkable: !SEGMENTS_WITHOUT_PAGE.includes(part) };
 		});
 	};
 
@@ -41,9 +45,13 @@
 		{#each breadcrumbs as crumb, index}
 			<li class="flex items-center">
 				<span class="opacity-50 mx-2">›</span>
-				<a href={crumb.href} class="hover:underline">
-					{crumb.label.replace('regions', 'Regionen')}
-				</a>
+				{#if crumb.linkable}
+					<a href={crumb.href} class="hover:underline">
+						{crumb.label.replace('regions', 'Regionen')}
+					</a>
+				{:else}
+					<span>{crumb.label.replace('regions', 'Regionen')}</span>
+				{/if}
 			</li>
 		{/each}
 	</ol>
