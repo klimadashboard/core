@@ -3,8 +3,20 @@
 FROM node:24.22.1-bookworm-slim AS build
 WORKDIR /app
 
+# Dependencies go in their own layer, before anything that varies: as long as
+# package-lock.json is unchanged this comes straight from the build cache.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
 # $env/static/* imports are inlined at build time, so these must be present
 # during `vite build`. Coolify passes build-time variables as build args.
+#
+# They are declared here and not at the top of the stage on purpose: an ARG in
+# scope is part of the cache key of every RUN that follows it, and the three
+# sites (AT/DE/ORG) build the same commit with different values. Declared
+# earlier, each site would get its own `npm ci` instead of sharing one.
 ARG API_URL
 ARG BREVO_API_KEY
 ARG BREVO_DOI_REDIRECT_URL
@@ -20,9 +32,6 @@ ARG PUBLIC_VERSION
 ARG STRIPE_SECRET_KEY
 ARG STRIPE_WEBHOOK_SECRET
 
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
 RUN npm run build && npm prune --omit=dev
 
 # Runtime stage carries no build args; runtime env comes from Coolify.
