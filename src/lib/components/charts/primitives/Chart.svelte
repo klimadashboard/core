@@ -34,7 +34,13 @@
 
 	// Y domain
 	$: yFields = Array.isArray(y) ? y : [y];
-	$: allYValues = data.flatMap((d) => yFields.map((f) => d[f]).filter((v) => v != null));
+	$: allYValues = data.flatMap((d) =>
+		yFields
+			.map((f) => d[f])
+			.filter((v) => v != null && v !== '')
+			.map((v) => Number(v))
+			.filter((v) => Number.isFinite(v))
+	);
 	$: yDomain = [
 		yMin ?? Math.min(0, min(allYValues) ?? 0),
 		yMax ?? Math.max(0, max(allYValues) ?? 1)

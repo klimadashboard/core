@@ -152,11 +152,12 @@
 							y={hover.clientY}
 							title={pt.label}
 							items={keys
-								.filter((k) => typeof pt[k] === 'number')
-								.map((k, i) => ({
-									label: labels[i],
-									value: formatNumber(pt[k], 0) + ' t',
-									color: colors[i]
+								.map((k, i) => ({ key: k, index: i }))
+								.filter(({ key }) => typeof pt[key] === 'number')
+								.map(({ key, index }) => ({
+									label: labels[index],
+									value: formatNumber(pt[key], 0) + ' t',
+									color: colors[index]
 								}))}
 						/>
 					{/if}
