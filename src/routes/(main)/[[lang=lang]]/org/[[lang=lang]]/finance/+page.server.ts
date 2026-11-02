@@ -316,8 +316,6 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		);
 		years = data.years;
 		intro = data.intro;
-		console.log(data);
-		console.log(accounts);
 	} catch (e) {
 		const message = e instanceof Error ? e.message : 'Unknown error';
 		throw error(500, message);
