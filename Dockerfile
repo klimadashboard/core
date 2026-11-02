@@ -32,6 +32,12 @@ ARG PUBLIC_VERSION
 ARG STRIPE_SECRET_KEY
 ARG STRIPE_WEBHOOK_SECRET
 
+# Cap the heap so several builds running at once cannot collectively
+# overcommit the box. Left to itself Node sizes the old space from total
+# RAM, and three concurrent builds drove this machine into swap and an
+# OOM kill. Set after `npm ci` on purpose, so that layer stays cached.
+ENV NODE_OPTIONS=--max-old-space-size=4096
+
 RUN npm run build && npm prune --omit=dev
 
 # Runtime stage carries no build args; runtime env comes from Coolify.
