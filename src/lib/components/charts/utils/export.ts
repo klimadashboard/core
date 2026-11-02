@@ -1,6 +1,7 @@
 // $lib/charts/utils/export.ts
 
 import type { TableColumn } from '../types';
+import type { XLSXInfo } from './xlsx';
 
 interface TableData {
 	columns: TableColumn[];
@@ -8,7 +9,7 @@ interface TableData {
 	filename: string;
 }
 
-function download(content: string, filename: string, type: string) {
+function download(content: BlobPart, filename: string, type: string) {
 	const blob = new Blob([content], { type });
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement('a');
@@ -41,6 +42,17 @@ export function exportCSV(table: TableData, regionCode?: string) {
 export function exportJSON(data: any[], filename: string, regionCode?: string) {
 	const name = regionCode ? `${filename}-${regionCode}.json` : `${filename}.json`;
 	download(JSON.stringify(data, null, 2), name, 'application/json');
+}
+
+/**
+ * Export a chart table as .xlsx with a second "Info" sheet (source, data date,
+ * region, link). The writer is lazy-loaded so it stays out of the main bundle.
+ */
+export async function exportXLSX(table: TableData, info: XLSXInfo = {}, regionCode?: string) {
+	const { buildXLSX } = await import('./xlsx');
+	const blob = await buildXLSX(table, info);
+	const name = regionCode ? `${table.filename}-${regionCode}.xlsx` : `${table.filename}.xlsx`;
+	download(blob, name, blob.type);
 }
 
 export async function copyToClipboard(text: string): Promise<boolean> {

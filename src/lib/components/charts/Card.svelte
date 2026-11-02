@@ -8,7 +8,7 @@
 	import { snapdom, preCache } from '@zumer/snapdom';
 	import { Table } from '$lib/components/charts/primitives';
 	import SnapshotContent from './SnapshotContent.svelte';
-	import { exportCSV, exportJSON } from '$lib/components/charts/utils/export';
+	import { exportCSV, exportJSON, exportXLSX } from '$lib/components/charts/utils/export';
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
@@ -144,6 +144,15 @@
 								label: t(page.data.translations, 'ui.card.tabTable'),
 								handler: handleExportCSV
 							},
+							...(showTable
+								? [
+										{
+											format: 'XLSX',
+											label: t(page.data.translations, 'ui.card.tabTable'),
+											handler: handleExportXLSX
+										}
+									]
+								: []),
 							{
 								format: 'JSON',
 								label: t(page.data.translations, 'ui.card.rawData'),
@@ -245,6 +254,32 @@
 		if (chartData?.table) exportCSV(chartData.table, chartData.meta?.region?.codeShort);
 		window.rybbit?.event('Chart Download', { format: 'csv', chart: chart.id });
 		showDownloadMenu = false;
+	}
+
+	async function handleExportXLSX(e: MouseEvent) {
+		e.stopPropagation();
+		showDownloadMenu = false;
+		if (!chartData?.table) return;
+		const dataRegionId = chartData.meta?.region?.id;
+		const permalink = `${window.location.origin}/charts/${chart.id}${dataRegionId ? `?region=${dataRegionId}` : ''}`;
+		try {
+			await exportXLSX(
+				chartData.table,
+				{
+					title: title || heading,
+					source,
+					updateDate: chartData.meta?.updateDate,
+					region: chartData.meta?.region?.name,
+					methods,
+					url: permalink,
+					lang: page.data.language?.code
+				},
+				chartData.meta?.region?.codeShort
+			);
+			window.rybbit?.event('Chart Download', { format: 'xlsx', chart: chart.id });
+		} catch (err) {
+			console.error('XLSX export failed:', err);
+		}
 	}
 
 	function handleExportJSON(e: MouseEvent) {
