@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import { page } from '$app/state';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { fetchRegion } from '$lib/utils/getRegion';
 	import type { Region } from '$lib/utils/getRegion';

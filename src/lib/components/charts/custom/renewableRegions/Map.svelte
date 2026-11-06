@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import { scaleThreshold } from 'd3-scale';
 	import { interpolateRgb } from 'd3-interpolate';
 	import { fade } from 'svelte/transition';

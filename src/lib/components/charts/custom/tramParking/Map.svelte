@@ -1,6 +1,6 @@
 <script>
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import { browser } from '$app/environment';
 	import { cartoRasterTiles } from '$lib/utils/cartoBasemap';
 

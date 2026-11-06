@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import MapCarsDensity from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapCarsDensity.svelte';
 	import MapCarTypes from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapCarTypes.svelte';

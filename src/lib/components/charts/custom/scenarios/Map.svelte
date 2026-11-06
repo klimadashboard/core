@@ -5,11 +5,8 @@
 	import { bbox } from '@turf/bbox';
 	import { union } from '@turf/union';
 	import { onMount } from 'svelte';
-	import maplibregl, {
-		type GeoJSONFeature,
-		type GeoJSONSource,
-		type LngLatLike
-	} from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
+	import type { GeoJSONFeature, GeoJSONSource, LngLatLike } from 'maplibre-gl';
 	import { page } from '$app/state';
 	import Switch from '$lib/components/Switch.svelte';
 	import { cartoRasterSource } from '$lib/utils/cartoBasemap';

@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';

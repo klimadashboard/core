@@ -59,7 +59,7 @@
 	onMount(async () => {
 		if (!browser || !regions?.length) return;
 
-		const maplibregl = await import('maplibre-gl');
+		const maplibregl = await import('$lib/utils/maplibre');
 		await import('maplibre-gl/dist/maplibre-gl.css');
 
 		const isDark = document.body.classList.contains('dark');
