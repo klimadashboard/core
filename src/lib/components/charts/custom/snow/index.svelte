@@ -173,9 +173,7 @@
 								opacity={dimmed ? 0.4 : 1}
 								class="cursor-pointer transition-opacity"
 								role="presentation"
-								on:mouseenter={(e) =>
-								role="presentation"
-							> handleMouseMove(e, w.year)}
+								on:mouseenter={(e) => handleMouseMove(e, w.year)}
 								on:mousemove={(e) => { hoverClientX = e.clientX; hoverClientY = e.clientY; }}
 								on:mouseleave={() => (hoveredYear = null)}
 							/>

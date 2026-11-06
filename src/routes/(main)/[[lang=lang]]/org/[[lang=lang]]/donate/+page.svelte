@@ -13,7 +13,6 @@
 	import { onMount } from 'svelte';
 	import { getStripe } from '$lib/stripe-client';
 
-	export let data;
 
 	// ───────────────────────────────── UI state
 	let error = '';

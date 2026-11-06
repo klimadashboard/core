@@ -13,14 +13,15 @@
 <script lang="ts">
 	import { Chart, AxisX, AxisY, Line, Area, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { formatNumber } from '$lib/utils/formatters';
-	import {
-		AsyncGetMobilityRenewableShare,
-		AsyncGetCountries,
-		type GetMobilityRenewableShareQuery,
-		type GetCountriesQuery
-	} from './__generated__/getData.generated';
+	import { readItems } from '@directus/sdk';
+	import getDirectusInstance from '$lib/utils/directus';
 	import { onMount } from 'svelte';
-	import { transformDataForChart, type LineChartData } from './transformData';
+	import {
+		transformDataForChart,
+		type LineChartData,
+		type MobilityRow,
+		type Country
+	} from './transformData';
 	import { FOSSIL_COLOR } from './constants';
 
 	let loading = true;
@@ -29,8 +30,8 @@
 	let compareCountries = false;
 	let currentCountry = 'DE';
 	let availableCountries: { id: string; name: string | null | undefined; selected: boolean }[] = [];
-	let data: GetMobilityRenewableShareQuery['mobility'];
-	let countries: GetCountriesQuery['countries'];
+	let data: MobilityRow[] = [];
+	let countries: Country[] = [];
 	let selectedCountries: string[] = [];
 	let isDropdownOpen = false;
 
@@ -78,12 +79,19 @@
 	onMount(async () => {
 		currentCountry = getCountryFromDomain();
 		try {
+			const directus = getDirectusInstance();
 			const [mobilityData, countriesData] = await Promise.all([
-				AsyncGetMobilityRenewableShare({}),
-				AsyncGetCountries({})
+				directus.request(
+					readItems('mobility', {
+						filter: { category: { _eq: 'share_renewable' } },
+						fields: ['period', 'region', 'value'],
+						limit: -1
+					})
+				),
+				directus.request(readItems('countries', { fields: ['id', 'name_de'], limit: -1 }))
 			]);
-			data = mobilityData.data.mobility;
-			countries = countriesData.data.countries;
+			data = mobilityData as MobilityRow[];
+			countries = countriesData as Country[];
 			availableCountries = countries
 				.filter((c) => data.some((item) => item.region === c.id))
 				.map((c) => ({ id: c.id, name: c.name_de, selected: defaultCountries.includes(c.id) }))

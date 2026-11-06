@@ -3,7 +3,6 @@
 	import { scaleLinear } from 'd3-scale';
 	import { draw, fade } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
-	import { pointer } from 'd3-selection';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
 	export let dataHistoric;
@@ -189,9 +188,7 @@
 					? 'opacity-100'
 					: 'opacity-60'}"
 				role="presentation"
-								on:mouseover={() =>
-								role="presentation"
-							> (chosenPath = i)}
+								on:mouseover={() => (chosenPath = i)}
 				on:focus={() => (chosenPath = i)}
 				on:mouseout={() => (chosenPath = 2)}
 				on:blur={() => (chosenPath = 2)}
@@ -344,9 +341,7 @@
 										fill-opacity={chosenPath == i ? '0.3' : '0'}
 										transition:fade
 										role="presentation"
-								on:mouseover={() =>
-								role="presentation"
-							> (chosenPath = i)}
+								on:mouseover={() => (chosenPath = i)}
 										on:mouseout={() => (chosenPath = 2)}
 									/>
 								</g>
@@ -355,9 +350,7 @@
 								<g
 									id="line"
 									role="presentation"
-								on:mouseover={() =>
-								role="presentation"
-							> (chosenPath = i)}
+								on:mouseover={() => (chosenPath = i)}
 									on:mouseout={() => (chosenPath = 2)}
 								>
 									<path

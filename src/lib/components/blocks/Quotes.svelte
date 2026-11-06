@@ -1,6 +1,6 @@
 <script>
 	import { Splide, SplideSlide } from '@splidejs/svelte-splide';
-	import { readItems, readAssetRaw } from '@directus/sdk';
+	import { readItems } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
 
 	let quotes = [];

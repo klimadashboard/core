@@ -90,9 +90,7 @@
 				on:mousemove={processTooltip}
 				on:touchmove|preventDefault={processTooltip}
 				on:touchstart|preventDefault={processTooltip}
-				on:mouseleave={() =>
-								role="presentation"
-							> (selectedDataPoint = null)}
+				on:mouseleave={() => (selectedDataPoint = null)}
 				on:touchend={() => (selectedDataPoint = null)}
 				on:touchcancel={() => (selectedDataPoint = null)}
 				class="fill-transparent cursor-crosshair"

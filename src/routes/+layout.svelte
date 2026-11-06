@@ -1,4 +1,5 @@
 <script>
+	let { children } = $props();
 	import '$lib/app.css';
 	import { page } from '$app/state';
 	import { glossaryItem } from '$lib/stores/glossary';
@@ -139,6 +140,6 @@
 		{#if $glossaryItem}
 			<Glossary />
 		{/if}
-		<slot />
+		{@render children?.()}
 	</div>
 </div>

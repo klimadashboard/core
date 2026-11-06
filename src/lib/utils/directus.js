@@ -1,5 +1,5 @@
 import { createDirectus, rest, staticToken } from '@directus/sdk';
-import { readItems, readItem, updateItem, updateUser, createItem, deleteItem } from '@directus/sdk';
+import { readItems, readItem, updateItem } from '@directus/sdk';
 
 function getDirectusInstance(fetch) {
 	const options = fetch ? { globals: { fetch } } : {};

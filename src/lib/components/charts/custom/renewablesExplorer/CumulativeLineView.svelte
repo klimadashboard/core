@@ -631,9 +631,8 @@
 							: []}
 						<g
 							class="cursor-pointer"
-							on:mouseenter={() =>
-								role="presentation"
-							> (hoveredSeries = series.name)}
+							role="presentation"
+							on:mouseenter={() => (hoveredSeries = series.name)}
 							on:mouseleave={() => (hoveredSeries = null)}
 						>
 							<!-- Solid line for completed years -->

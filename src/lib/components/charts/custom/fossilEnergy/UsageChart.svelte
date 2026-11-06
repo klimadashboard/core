@@ -1,8 +1,9 @@
 <script>
-	import { scaleLinear, scaleOrdinal, scaleBand } from 'd3-scale';
+	import { scaleLinear, scaleBand } from 'd3-scale';
 	import { fade } from 'svelte/transition';
 	import formatNumber from '$lib/stores/formatNumber';
 	import formatPercentage from '$lib/stores/formatPercentage';
+	import { glossaryItem } from '$lib/stores/glossary';
 
 	export let data;
 	export let max;
@@ -10,6 +11,10 @@
 	export let selectedUnit;
 
 	let chartWidth;
+
+	function showGlossary(term) {
+		if (term) glossaryItem.set(term);
+	}
 
 	const margin = { top: 10, right: 1, bottom: 2, left: 1 };
 
@@ -106,7 +111,7 @@
 					transform="translate(0, 0)"
 					style="color: {data[0].color}"
 					class="cursor-help"
-					role="tooltip"
+					role="presentation"
 					on:mousedown={() => showGlossary('gas_grossDomesticConsumption')}
 				>
 					<path
@@ -143,7 +148,7 @@
 								class="cursor-help {!selectedParent || selectedParent == category
 									? 'opacity-100'
 									: 'opacity-50'}"
-								role="tooltip"
+								role="presentation"
 								on:mouseover={() => (selectedParent = category)}
 								on:focus={() => (selectedParent = category)}
 								on:mouseout={() => (selectedParent = false)}
@@ -196,7 +201,7 @@
 											<rect
 												width={xScale(subcategory.total)}
 												height={60}
-												role="tooltip"
+												role="presentation"
 												fill={subcategory.color}
 												on:mouseover={() => (selectedCategory = subcategory)}
 												on:focus={() => (selectedCategory = subcategory)}
@@ -296,7 +301,7 @@
 						width={'100%'}
 						height="{selectedCategory.children.filter((d) => d.total > 0).length * 40}px"
 						on:mousemove={handleMousemove}
-						role="tooltip"
+						role="presentation"
 						class="mt-2"
 					>
 						{#each [...selectedCategory.children]
@@ -305,13 +310,11 @@
 							<g
 								transform="translate(0, {index * 40})"
 								style="color: {selectedCategory.color}"
-								on:mouseover={() =>
 								role="presentation"
-							> (selectedSubCategory = child)}
+								on:mouseover={() => (selectedSubCategory = child)}
 								on:focus={() => (selectedSubCategory = child)}
 								on:mouseout={() => (selectedSubCategory = null)}
 								on:blur={() => (selectedSubCategory = null)}
-								role="tooltip"
 							>
 								<rect
 									height={36}

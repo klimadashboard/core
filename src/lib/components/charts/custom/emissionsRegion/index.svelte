@@ -613,9 +613,7 @@
 							opacity={hoveredSector === null || hoveredSector === d.category ? 1 : 0.4}
 							class="transition-opacity cursor-pointer"
 							role="presentation"
-								on:mouseenter={(e) =>
-								role="presentation"
-							> handleHorizontalMouseMove(e, d.category)}
+								on:mouseenter={(e) => handleHorizontalMouseMove(e, d.category)}
 							on:mousemove={(e) => {
 								hoverClientX = e.clientX;
 								hoverClientY = e.clientY;
@@ -685,9 +683,7 @@
 												opacity={hoveredYear === null || hoveredYear === yearData.year ? 1 : 0.4}
 												class="transition-opacity cursor-pointer"
 												role="presentation"
-								on:mouseenter={(e) =>
-								role="presentation"
-							> handleMouseMove(e, yearData.year)}
+								on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
 												on:mousemove={(e) => handleMouseMove(e, yearData.year)}
 												on:mouseleave={handleMouseLeave}
 											/>
@@ -705,9 +701,7 @@
 												opacity={hoveredYear === null || hoveredYear === yearData.year ? 1 : 0.4}
 												class="transition-opacity cursor-pointer"
 												role="presentation"
-								on:mouseenter={(e) =>
-								role="presentation"
-							> handleMouseMove(e, yearData.year)}
+								on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
 												on:mousemove={(e) => handleMouseMove(e, yearData.year)}
 												on:mouseleave={handleMouseLeave}
 											/>
@@ -738,9 +732,7 @@
 											opacity={hoveredYear === null || hoveredYear === yearData.year ? 0.6 : 0.25}
 											class="transition-opacity cursor-pointer"
 											role="presentation"
-								on:mouseenter={(e) =>
-								role="presentation"
-							> handleMouseMove(e, yearData.year)}
+								on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
 											on:mousemove={(e) => handleMouseMove(e, yearData.year)}
 											on:mouseleave={handleMouseLeave}
 										/>
@@ -763,9 +755,7 @@
 									fill="transparent"
 									class="cursor-pointer"
 									role="presentation"
-								on:mouseenter={(e) =>
-								role="presentation"
-							> handleMouseMove(e, target.year)}
+								on:mouseenter={(e) => handleMouseMove(e, target.year)}
 									on:mousemove={(e) => handleMouseMove(e, target.year)}
 									on:mouseleave={handleMouseLeave}
 								/>
@@ -858,9 +848,7 @@
 						? 'opacity-40'
 						: ''}"
 					role="presentation"
-								on:mouseenter={(e) =>
-								role="presentation"
-							> handleHorizontalMouseMove(e, sector.category)}
+								on:mouseenter={(e) => handleHorizontalMouseMove(e, sector.category)}
 					on:mouseleave={handleMouseLeave}
 				>
 					<span class="w-3 h-3 rounded-sm" style="background-color: {sector.category_color}"></span>

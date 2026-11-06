@@ -1,8 +1,7 @@
 <!-- to add: chart federal states -->
 <script>
 	import { onMount } from 'svelte';
-	import { scaleLinear, scaleOrdinal, scaleBand } from 'd3-scale';
-	import { stack } from 'd3-shape';
+	import { scaleLinear, scaleBand } from 'd3-scale';
 	import { min, extent, max } from 'd3-array';
 	import { geoPath, geoAlbers } from 'd3-geo';
 	import topo from './austria.json';
@@ -317,9 +316,7 @@
 						dominant-baseline="hanging"
 						fill="currentColor"
 						role="presentation"
-								on:mousedown={() =>
-								role="presentation"
-							> (sortKey = 'emissions')}
+								on:mousedown={() => (sortKey = 'emissions')}
 						on:mousedown={() => (sortAscending = !sortAscending)}
 					>
 						Treibhausgas-Emissionen pro Kopf
@@ -334,9 +331,7 @@
 						fill="currentColor"
 						x="-19"
 						role="presentation"
-								on:mousedown={() =>
-								role="presentation"
-							> (sortKey = 'population')}
+								on:mousedown={() => (sortKey = 'population')}
 						on:mousedown={() => (sortAscending = !sortAscending)}
 					>
 						{#if sortKey == 'population'}
@@ -414,9 +409,7 @@
 											height={dimensions.height}
 											fill="transparent"
 											role="presentation"
-								on:mouseover={() =>
-								role="presentation"
-							> (activeState = state)}
+								on:mouseover={() => (activeState = state)}
 											on:focus={() => (activeState = state)}
 											on:mouseout={() => (activeState = '')}
 											on:blur={() => (activeState = '')}
@@ -487,9 +480,7 @@
 					transform="translate({chartWidth - 24 || 0}, 0)"
 					class="cursor-pointer"
 					role="presentation"
-								on:mousedown={() =>
-								role="presentation"
-							> (openMap = !openMap)}
+								on:mousedown={() => (openMap = !openMap)}
 				>
 					<IconMap size={24} />
 				</g>
@@ -513,9 +504,7 @@
 									stroke="#FFFFFF"
 									strokeWidth="1"
 									role="presentation"
-								on:mouseup={() =>
-								role="presentation"
-							> handleMouseOver(feature)}
+								on:mouseup={() => handleMouseOver(feature)}
 									on:touchstart={() => handleMouseOver(feature)}
 									on:mouseover={() => (activeState = feature.properties.name)}
 									on:focus={() => (activeState = feature.properties.name)}
