@@ -303,5 +303,5 @@ export function buildChartData(
 export async function fetchChartData({ fetch }: ChartFetchParams): Promise<ChartData | null> {
 	const { universities, emissions } = await fetchUniversityData(fetch);
 	if (!universities.length) return null;
-	return buildChartData(universities[0], emissions, 'location_based');
+	return buildChartData(universities[0], emissions, 'market_based');
 }
