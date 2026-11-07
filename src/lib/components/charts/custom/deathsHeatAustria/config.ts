@@ -93,11 +93,14 @@ export function getPlaceholders(rows: DeathsHeatAustriaRow[]): Record<string, st
 			? updateDate.toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' })
 			: '';
 
-	// Per-state values for the latest year, e.g. {{deathsSteiermark}}
+	// Per-state values for the latest year, e.g. {{deathsNiederoesterreich}}.
+	// Keys are ASCII because the placeholder regex in Card.svelte only matches [\w-].
+	const asciiKey = (s: string) =>
+		s.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
 	const states = Object.fromEntries(
 		rows
 			.filter((d) => d.Region !== NATIONAL && d.Period === 'Jun-Sep' && d.Year === latest.Year)
-			.map((d) => [`deaths${d.Region}`, fmt(d.ExpectedValue)])
+			.map((d) => [`deaths${asciiKey(d.Region)}`, fmt(d.ExpectedValue)])
 	);
 
 	return {

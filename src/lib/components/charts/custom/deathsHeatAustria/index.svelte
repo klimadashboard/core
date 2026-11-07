@@ -42,13 +42,8 @@
 		dataset.length > 0 ? Math.max(...dataset.map((d) => Math.max(d.upper ?? 0, d.value ?? 0))) : 0;
 	$: yMinValue = dataset.length > 0 ? Math.min(0, ...dataset.map((d) => d.lower ?? 0)) : 0;
 
-	$: yDivisor = yMaxValue >= 1_000 ? 1_000 : 1;
-	$: yUnit = yMaxValue >= 1_000 ? 'Tsd.' : '';
-
-	$: formatY = (val) => {
-		const divided = val / yDivisor;
-		return formatNumber(divided, Number.isInteger(divided) ? 0 : 1);
-	};
+	const yUnit = 'Menschen';
+	const formatY = (val) => formatNumber(val);
 
 	$: leftMargin = (() => {
 		const sample = formatY(Math.ceil(yMaxValue));
