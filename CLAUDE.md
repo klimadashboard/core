@@ -155,3 +155,35 @@ For multi-series without sector semantics, use the ColorBrewer-derived palettes 
 - Always show a `<Legend>` for multi-series charts
 - Tooltip must show the actual value (not just a color swatch)
 - Avoid red+green as the only pair (color-blind unsafe)
+
+---
+
+# Data conventions
+
+Apply to every dataset, CSV/TSV, database table and import script for Klimadashboard.
+
+## General rules
+
+- All variables, files, folders and datasets are **written in English**.
+- Use **snake_case** (split_by_underscore) for variables, files and folders.
+  - Correct: `01a_emissions_production`, `country_code`
+  - Incorrect: `01a-emissionsProduction`, `countryCode`
+- **Missing values: leave the field empty.** No `NA`, `-`, `n/a` or other strings in the final file (`null` in the database). If a gap needs explaining, add a README file.
+- **Decimal separator: dot (`.`).** **No thousands separator.**
+- **Cell separator: semicolon (`;`).**
+- **Encoding: UTF-8**, so `ä`, `ö`, `ü` are kept.
+- Prefer **long format** over wide format. If unsure, ask the dev team in the `#development` Slack channel.
+- **GHG emissions are given in tons**, never Mt or Gt: `1056456`, not `1.056456`.
+- **Regions are given as the region ID** from the Klimadashboard database (regions table). An extra `region_name` column (Burgenland, Wien, …) may be kept for readability.
+
+## Commonly used variables
+
+| Variable | Rule | Example |
+|---|---|---|
+| `date` | ISO 8601 | `2023-01-31` |
+| `date` (with time) | Optional; ISO 8601 with UTC offset | `2023-01-31T17:29:55+00:00` |
+| `year` | four digits | `2023` |
+| `state` | Country as 2-letter code (ISO 3166-1 alpha-2), not 3-letter | `AT`, `DE` |
+| `region` | Region ID from the Klimadashboard database ([how to find it](https://wiki.klimadashboard.org/doc/database-McNwRkly5C#h-how-to-get-the-klimadashboard-region-ids)) | |
+| `value` | Always a number (float), never a string; no quotes around values in CSVs; empty if not provided. Emissions in tons; all other values need a separate `unit` column stating the unit. In general, prefer smaller units over bigger ones. | `1`, `10`, `10.1` |
+| `postcode` | Number only, no country prefix or letters | `1010` |
