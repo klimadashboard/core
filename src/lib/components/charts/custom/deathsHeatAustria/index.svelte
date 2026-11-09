@@ -1,29 +1,22 @@
 <script>
 	import Select from '$lib/components/ui/Select.svelte';
-	import RadioGroup from '$lib/components/ui/RadioGroup.svelte';
 	import { Chart, AxisX, AxisY, Tooltip } from '$lib/components/charts/primitives';
 	import { formatNumber } from '$lib/utils/formatters';
-	import { fetchRows, getRegions, buildChartData, NATIONAL, PERIOD_LABELS } from './config';
+	import { fetchRows, getRegions, buildChartData, NATIONAL, PERIOD, PERIOD_LABEL } from './config';
 
 	export let region = null;
 	export let onChartData = undefined;
 
 	const BAR_COLOR = '#e85d04';
+	// Latest year is highlighted like 2026 on the DE chart
+	const BAR_COLOR_LATEST = '#9d0208';
 
 	let rawData = [];
 	let selectedRegion = NATIONAL;
-	/** @type {'Jun-Aug' | 'Jun-Sep'} */
-	let period = 'Jun-Aug';
 	let loading = true;
 	let error = /** @type {string | null} */ (null);
 
-	const periodOptions = [
-		{ value: 'Jun-Aug', label: PERIOD_LABELS['Jun-Aug'] },
-		{ value: 'Jun-Sep', label: PERIOD_LABELS['Jun-Sep'] }
-	];
-
-	// Federal state values exist only for June–September
-	$: periodRows = rawData.filter((d) => d.Period === period);
+	$: periodRows = rawData.filter((d) => d.Period === PERIOD);
 	$: regions = getRegions(periodRows);
 	$: if (!regions.includes(selectedRegion)) selectedRegion = NATIONAL;
 	$: regionOptions = regions.map((r) => ({ value: r, label: r }));
@@ -37,6 +30,9 @@
 			upper: d.UpperPredictionLimit
 		}))
 		.sort((a, b) => a.year - b.year);
+
+	$: latestYear = dataset.length ? dataset[dataset.length - 1].year : null;
+	const barColor = (year) => (year === latestYear ? BAR_COLOR_LATEST : BAR_COLOR);
 
 	$: yMaxValue =
 		dataset.length > 0 ? Math.max(...dataset.map((d) => Math.max(d.upper ?? 0, d.value ?? 0))) : 0;
@@ -55,7 +51,7 @@
 	function buildTooltipItems(hoverX) {
 		const point = dataset.find((d) => d.year === hoverX);
 		if (!point) return [];
-		const items = [{ label: 'Geschätzte Sterbefälle', value: fmt(point.value), color: BAR_COLOR }];
+		const items = [{ label: 'Geschätzte Sterbefälle', value: fmt(point.value), color: barColor(point.year) }];
 		if (point.lower != null && point.upper != null) {
 			items.push({
 				label: '95 %-Unsicherheitsintervall',
@@ -87,7 +83,6 @@
 </script>
 
 <div class="flex flex-wrap items-center gap-3 mb-4">
-	<RadioGroup label="Zeitraum" bind:value={period} options={periodOptions} inline hideLabel />
 	<Select
 		label="Region"
 		bind:value={selectedRegion}
@@ -95,11 +90,7 @@
 		hideLabel
 		disabled={regions.length <= 1}
 	/>
-	{#if period === 'Jun-Aug'}
-		<p class="text-sm text-gray-600 dark:text-gray-400">
-			Werte für die Bundesländer gibt es nur für Juni–September.
-		</p>
-	{/if}
+	<p class="text-sm text-gray-600 dark:text-gray-400">Sommer: {PERIOD_LABEL}</p>
 </div>
 
 {#if loading}
@@ -158,7 +149,7 @@
 								y={barTop}
 								width={bw}
 								height={Math.max(1, barBot - barTop)}
-								fill={BAR_COLOR}
+								fill={barColor(d.year)}
 								opacity={dimmed ? 0.4 : 1}
 								rx="2"
 								class="transition-opacity duration-100"

@@ -2,18 +2,17 @@ import Papa from 'papaparse';
 import type { ChartData, ChartFetchParams, TableColumn } from '$lib/components/charts/types';
 import { formatNumber } from '$lib/utils/formatters';
 
-// AGES heat mortality monitoring: Table 1 (Austria, June–August), Table 2 (Austria, June–September)
-// and Table 3 (federal states, June–September only).
+// AGES heat mortality monitoring: Table 1 (Austria) and Table 2 (federal states),
+// both for the summer period June–September. The Period column is kept in the data.
 // Source page: https://www.ages.at/umwelt/klima/klimawandelanpassung/hitze
 const ASSET_URL = 'https://base.klimadashboard.org/assets/2c72c169-3538-48b1-80c2-2d22e9faaddf';
 
 export const NATIONAL = 'Österreich';
 
-export type Period = 'Jun-Aug' | 'Jun-Sep';
-export const PERIOD_LABELS: Record<Period, string> = {
-	'Jun-Sep': 'Juni–September',
-	'Jun-Aug': 'Juni–August'
-};
+export type Period = 'Jun-Sep';
+export const PERIOD: Period = 'Jun-Sep';
+export const PERIOD_LABEL = 'Juni–September';
+const PERIOD_LABELS: Record<string, string> = { 'Jun-Sep': PERIOD_LABEL };
 
 export interface DeathsHeatAustriaRow {
 	Year: number;
@@ -61,7 +60,7 @@ export function getTableColumns(): TableColumn[] {
 			key: 'Period',
 			label: 'Zeitraum',
 			align: 'left',
-			format: (v) => PERIOD_LABELS[v as Period] ?? String(v)
+			format: (v) => PERIOD_LABELS[String(v)] ?? String(v)
 		},
 		{ key: 'Region', label: 'Region', align: 'left' },
 		{ key: 'ExpectedValue', label: 'Geschätzte Anzahl Sterbefälle', align: 'right', format: fmt },
@@ -79,12 +78,11 @@ function latestOf(rows: DeathsHeatAustriaRow[]): DeathsHeatAustriaRow | undefine
 }
 
 export function getPlaceholders(rows: DeathsHeatAustriaRow[]): Record<string, string | number> {
-	const national = rows.filter((d) => d.Region === NATIONAL && d.Period === 'Jun-Sep');
+	const national = rows.filter((d) => d.Region === NATIONAL && d.Period === PERIOD);
 	const latest = latestOf(national);
 	if (!latest) return {};
 
 	const max = national.reduce((a, b) => ((b.ExpectedValue ?? 0) > (a.ExpectedValue ?? 0) ? b : a));
-	const latestJunAug = latestOf(rows.filter((d) => d.Region === NATIONAL && d.Period === 'Jun-Aug'));
 
 	const updateRaw = getUpdateDate(rows);
 	const updateDate = updateRaw ? new Date(updateRaw) : null;
@@ -99,7 +97,7 @@ export function getPlaceholders(rows: DeathsHeatAustriaRow[]): Record<string, st
 		s.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
 	const states = Object.fromEntries(
 		rows
-			.filter((d) => d.Region !== NATIONAL && d.Period === 'Jun-Sep' && d.Year === latest.Year)
+			.filter((d) => d.Region !== NATIONAL && d.Period === PERIOD && d.Year === latest.Year)
 			.map((d) => [`deaths${asciiKey(d.Region)}`, fmt(d.ExpectedValue)])
 	);
 
@@ -110,10 +108,6 @@ export function getPlaceholders(rows: DeathsHeatAustriaRow[]): Record<string, st
 		year: latest.Year,
 		maxDeaths: fmt(max.ExpectedValue),
 		maxYear: max.Year,
-		deathsJunAug: fmt(latestJunAug?.ExpectedValue),
-		deathsJunAugLower: fmt(latestJunAug?.LowerPredictionLimit),
-		deathsJunAugUpper: fmt(latestJunAug?.UpperPredictionLimit),
-		yearJunAug: latestJunAug?.Year ?? '',
 		update,
 		...states
 	};
