@@ -441,18 +441,19 @@ export async function fetchTurbines(
 // ============================================================================
 
 /** Get table columns */
-export function getTableColumns(_params: RenewablesParams): TableColumn[] {
+export function getTableColumns(params: RenewablesParams): TableColumn[] {
+	const unit = params.energy === 'solar' ? 'kWp' : 'kW';
 	return [
 		{ key: 'year', label: 'Jahr', align: 'left' },
 		{
 			key: 'net_power_kw',
-			label: 'Zubau (kWp)',
+			label: `Zubau (${unit})`,
 			align: 'right',
 			format: (v) => formatNumber(v)
 		},
 		{
 			key: 'cumulative_power_kw',
-			label: 'Kumulierte Leistung (kWp)',
+			label: `Kumulierte Leistung (${unit})`,
 			align: 'right',
 			format: (v) => formatNumber(v)
 		}
@@ -697,7 +698,8 @@ export { formatPower, formatNumber, getPowerUnit, convertPowerUnit };
 
 export async function fetchChartData({
 	regionId,
-	fetch: fetchFn
+	fetch: fetchFn,
+	chartConfig
 }: ChartFetchParams): Promise<ChartData | null> {
 	let region: Region | null = null;
 
@@ -711,7 +713,9 @@ export async function fetchChartData({
 		region = { ...raw, codeShort: raw.code_short } as Region;
 	}
 
-	const params = { energy: 'solar' as const };
+	const energy = (chartConfig?.energy as EnergyType) || 'solar';
+	if (!(energy in CARRIER_COLORS)) return null;
+	const params: RenewablesParams = { energy };
 	const { data, updateDate, gridOperatorCheckedRatio } = await fetchData(region, params);
 	if (!data || data.length === 0) return null;
 

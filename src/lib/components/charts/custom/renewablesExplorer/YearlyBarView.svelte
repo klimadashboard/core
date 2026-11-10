@@ -211,8 +211,8 @@
 					? 'Tsd. Anlagen'
 					: 'Anlagen';
 	$: yFormat = (v: number) => {
-		if (metricMode === 'power') return formatNumber(convertPowerUnit(v, maxAbs), 0);
-		const scaled = v / unitsDivisor;
+		// Small regions (e.g. biomass in a city) have sub-unit ticks like 0.2 MW: keep one decimal
+		const scaled = metricMode === 'power' ? convertPowerUnit(v, maxAbs) : v / unitsDivisor;
 		return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0);
 	};
 

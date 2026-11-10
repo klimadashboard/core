@@ -66,9 +66,12 @@
 	let containerEl: HTMLElement;
 	let hoveredSeries: string | null = null;
 
-	// Comparison palette without red/green next to each other (a11y), solar yellow is the main line
+	// Comparison palette without red/green next to each other (a11y), solar yellow is the main line.
+	// Biomass has a green main line, so the green comparison colour is left out there.
 	const PALETTE_ORDER = [1, 3, 0, 5, 6, 7, 2, 4];
-	$: palette = PALETTE_ORDER.map((i) => comparisonPalette[i]).filter(Boolean);
+	$: palette = PALETTE_ORDER.filter((i) => !(selectedEnergy === 'biomass' && i === 2))
+		.map((i) => comparisonPalette[i])
+		.filter(Boolean);
 
 	// Derived
 	$: params = { energy: selectedEnergy };
@@ -226,7 +229,7 @@
 						: 1;
 
 	// Y-axis formatter
-	$: yFormat = (v: number) => formatNumber(v, 0);
+	$: yFormat = (v: number) => formatNumber(v, v % 1 !== 0 ? 1 : 0);
 
 	// Initialize from shared data when it changes
 	$: if (!dataLoading && data.length > 0) {

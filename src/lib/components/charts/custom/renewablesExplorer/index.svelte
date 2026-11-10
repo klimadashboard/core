@@ -59,7 +59,7 @@
 	 * Expected config structure in Directus:
 	 * {
 	 *   "component": "renewablesChart",
-	 *   "energy": "solar" | "wind",
+	 *   "energy": "solar" | "wind" | "biomass" | "hydro",
 	 *   "initialView": "yearly" | "cumulative" | "map",  // optional, defaults to "yearly"
 	 *   "showViewSwitcher": true | false                  // optional, defaults to true
 	 * }

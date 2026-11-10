@@ -67,6 +67,8 @@ export interface ChartFetchParams {
 	lang: string;
 	fetch: typeof globalThis.fetch;
 	translations: Record<string, string>;
+	/** The chart record's `config` JSON from Directus (e.g. `{ energy: 'biomass' }`) */
+	chartConfig?: Record<string, any> | null;
 }
 
 /** Chart data exposed to Card */

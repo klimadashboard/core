@@ -364,6 +364,7 @@ export async function getChartSnapshots(
 					'id',
 					'type',
 					'custom_sveltestring',
+					'config',
 					'translations.*',
 					'translations.variables.*'
 				],
@@ -485,7 +486,8 @@ async function generateChartSnapshot(
 						parentIds,
 						lang,
 						fetch,
-						translations
+						translations,
+						chartConfig: chart.config ?? null
 					});
 				} finally {
 					globalActiveFetches--;
