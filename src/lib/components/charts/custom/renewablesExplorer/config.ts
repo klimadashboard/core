@@ -125,9 +125,7 @@ export function getColor(energy: EnergyType): string {
 
 /** Get available view modes for energy type */
 export function getAvailableViews(energy: EnergyType): ViewMode[] {
-	if (energy === 'wind') {
-		return ['yearly', 'cumulative', 'map'];
-	}
+	// Wind turbine locations are part of the Card's "Karte" tab (RegionMapView)
 	return ['yearly', 'cumulative'];
 }
 

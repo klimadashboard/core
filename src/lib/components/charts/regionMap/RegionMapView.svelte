@@ -3,8 +3,9 @@
 
 	All regions of the current region's layer, coloured by installed power/capacity/units – per km²
 	by default – and centred on the current region (aggregate regions: their members, others dimmed).
-	Geometry from our own vector tiles, no basemap and no glyphs, so no visitor data goes to
-	third-party CDNs. Driven by the `energy` key, see `CARRIERS` in regionMapData.ts.
+	Geometry from our own vector tiles, no glyphs. Driven by the `energy` key, see `CARRIERS` in
+	regionMapData.ts. Carriers with `points` (wind) also show the unit locations on a CARTO
+	basemap (raster, no labels below the choropleth, labels above it); the others have no basemap.
 -->
 <script lang="ts">
 	import { onDestroy, tick } from 'svelte';
@@ -14,12 +15,19 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { interpolateRgb, piecewise } from 'd3-interpolate';
 	import Switch from '$lib/components/Switch.svelte';
+	import { Toggle } from '$lib/components/ui';
+	import { cartoRasterTiles } from '$lib/utils/cartoBasemap';
+	import {
+		fetchTurbineDetails,
+		type TurbineData
+	} from '$lib/components/charts/custom/renewablesExplorer/config';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { formatNumber } from '$lib/utils/formatters';
 	import { getAggregateCodes, isAggregateRegion } from '$lib/utils/regionAggregation';
 	import {
 		getCarrier,
 		loadCarrierValues,
+		loadUnitLocations,
 		type MapMetric,
 		type RegionValues
 	} from './regionMapData';
@@ -55,7 +63,16 @@
 	let hoverCode: string | null = null;
 	let darkObserver: MutationObserver | null = null;
 
+	// Unit locations (carriers with `points`)
+	const OWN_COLOR = '#0ea5e9';
+	let showPoints = true;
+	let units: TurbineData[] = [];
+	let unitTip: { x: number; y: number; id: string; data: TurbineData | null } | null = null;
+
 	$: carrier = getCarrier(energy);
+	$: withPoints = !!carrier.points;
+	$: if (withPoints) loadUnitLocations(energy).then((d) => ((units = d), addUnits()));
+	$: ownUnits = r?.id ? units.filter((u) => u.region_owner === r.id).length : 0;
 	$: if (!carrier.metrics.includes(metric)) metric = carrier.metrics[0];
 
 	// The Card passes a Region (getRegion.ts); without one fall back to the page's region
@@ -185,7 +202,16 @@
 			(width < 500 ? 0.7 : 0);
 		map = new maplibregl.Map({
 			container: mapContainer,
-			style: { version: 8, sources: {}, layers: [] },
+			style: withPoints
+				? {
+						version: 8,
+						sources: {
+							basemap: { type: 'raster', tiles: basemapTiles('NoLabels'), tileSize: 256 },
+							labels: { type: 'raster', tiles: basemapTiles('LabelsOnly'), tileSize: 256 }
+						},
+						layers: [{ id: 'basemap', type: 'raster', source: 'basemap' }]
+					}
+				: { version: 8, sources: {}, layers: [] },
 			center: c,
 			zoom,
 			minZoom: 4,
@@ -203,6 +229,13 @@
 		});
 		map.touchZoomRotate.disableRotation();
 		map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+		if (withPoints)
+			map.addControl(
+				new maplibregl.AttributionControl({
+					compact: true,
+					customAttribution: '© OpenStreetMap-Mitwirkende © CARTO'
+				})
+			);
 
 		map.on('load', () => {
 			if (!map) return;
@@ -225,11 +258,39 @@
 					paint,
 					...(filter && { filter })
 				});
-			add('fill', 'fill', {});
+			add('fill', 'fill', withPoints ? { 'fill-opacity': 0.7 } : {});
 			add('border', 'line', { 'line-width': 0.6 });
 			add('hover', 'line', {
 				'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 2, 0]
 			});
+			if (withPoints) {
+				map.addLayer({ id: 'labels', type: 'raster', source: 'labels' });
+				map.addSource('units', { type: 'geojson', data: unitFeatures() });
+				map.addLayer({
+					id: 'units',
+					type: 'circle',
+					source: 'units',
+					layout: { visibility: showPoints ? 'visible' : 'none' },
+					paint: {
+						'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 1.4, 8, 2.6, 11, 4.5],
+						'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 5, 0, 8, 0.6]
+					}
+				});
+				map.on('mousemove', 'units', (e: any) => {
+					const f = e.features?.[0];
+					if (!f || !map) return;
+					map.getCanvas().style.cursor = 'pointer';
+					tooltip = null;
+					const id = String(f.properties?.id);
+					if (unitTip?.id !== id) {
+						unitTip = { x: e.point.x, y: e.point.y, id, data: null };
+						fetchTurbineDetails(id, energy as any).then((d) => {
+							if (unitTip?.id === id) unitTip = { ...unitTip, data: d };
+						});
+					} else unitTip = { ...unitTip, x: e.point.x, y: e.point.y };
+				});
+				map.on('mouseleave', 'units', () => (unitTip = null));
+			}
 			add('current-casing', 'line', { 'line-width': 5 }, own);
 			add('current', 'line', { 'line-width': 2.5 }, own);
 
@@ -238,6 +299,7 @@
 				if (!f || !map) return;
 				map.getCanvas().style.cursor = 'pointer';
 				setHover(String(f.id));
+				if (unitTip) return; // a unit's tooltip wins over the region's
 				tooltip = { x: e.point.x, y: e.point.y, code: String(f.id), name: f.properties?.GEN ?? '' };
 			});
 			map.on('mouseleave', 'fill', () => {
@@ -250,6 +312,10 @@
 				if (f) select(String(f.id), f.properties?.GEN ?? '');
 			});
 
+			// Compact attribution starts collapsed (the ⓘ button opens it)
+			mapContainer
+				?.querySelector('.maplibregl-ctrl-attrib')
+				?.classList.remove('maplibregl-compact-show');
 			mapLoaded = true;
 			paint();
 		});
@@ -266,6 +332,27 @@
 			el.setAttribute('aria-hidden', 'true');
 			marker = new maplibregl.Marker({ element: el }).setLngLat(c).addTo(map);
 		}
+	}
+
+	function basemapTiles(kind: 'NoLabels' | 'LabelsOnly') {
+		const dark = pageIsDark();
+		return cartoRasterTiles(`${dark ? 'dark' : 'light'}${kind}` as any, { retina: true });
+	}
+
+	function unitFeatures(): any {
+		return {
+			type: 'FeatureCollection',
+			features: units.map((u) => ({
+				type: 'Feature',
+				geometry: { type: 'Point', coordinates: [u.lon, u.lat] },
+				properties: { id: u.id, own: !!r?.id && u.region_owner === r.id }
+			}))
+		};
+	}
+
+	function addUnits() {
+		const src = map?.getSource('units') as any;
+		if (mapLoaded && src) src.setData(unitFeatures());
 	}
 
 	function setHover(ags: string | null) {
@@ -294,6 +381,18 @@
 		map.setPaintProperty('hover', 'line-color', strong);
 		map.setPaintProperty('current-casing', 'line-color', line);
 		map.setPaintProperty('current', 'line-color', strong);
+		if (withPoints && map.getLayer('units')) {
+			map.setPaintProperty('units', 'circle-color', [
+				'case',
+				['get', 'own'],
+				OWN_COLOR,
+				isDark ? '#F4F4F5' : '#18181B'
+			]);
+			map.setPaintProperty('units', 'circle-stroke-color', line);
+			map.setLayoutProperty('units', 'visibility', showPoints ? 'visible' : 'none');
+			(map.getSource('basemap') as any)?.setTiles(basemapTiles('NoLabels'));
+			(map.getSource('labels') as any)?.setTiles(basemapTiles('LabelsOnly'));
+		}
 	}
 
 	async function select(ags: string, name: string) {
@@ -324,7 +423,7 @@
 	}
 
 	$: if (!loading && mapContainer && !map) tick().then(initMap);
-	$: if (map) paint(valueOf, classOf, palette, members, isDark);
+	$: if (map) paint(valueOf, classOf, palette, members, isDark, showPoints);
 	$: if (width && map) map.resize();
 
 	onDestroy(() => {
@@ -368,6 +467,11 @@
 				on:itemClick={(e) => (metric = e.detail)}
 			/>
 		{/if}
+		{#if withPoints}
+			<div class="flex items-center">
+				<Toggle label="Anlagenstandorte" bind:checked={showPoints} />
+			</div>
+		{/if}
 	</div>
 
 	{#if loading && !map}
@@ -399,7 +503,31 @@
 				</div>
 			{/if}
 
-			{#if tooltip}
+			{#if unitTip}
+				{@const u = unitTip.data}
+				<div
+					class="pointer-events-none absolute z-10 min-w-[11rem] rounded border border-gray-200 bg-white px-3 py-2 text-sm shadow-lg dark:border-gray-700 dark:bg-gray-800"
+					style="left: {Math.min(unitTip.x + 12, width - 210)}px; top: {Math.max(unitTip.y - 12, 0)}px"
+				>
+					{#if !u}
+						<div class="text-gray-600 dark:text-gray-300">Lade Details…</div>
+					{:else}
+						<div class="font-semibold text-gray-900 dark:text-white">
+							{u.name || carrier.points?.labelSingular}
+						</div>
+						<dl class="mt-0.5 grid grid-cols-[auto_1fr] gap-x-2 text-xs text-gray-700 dark:text-gray-300">
+							<dt>Leistung</dt><dd>{formatAbsolute(u.net_power_kw, 'power')}</dd>
+							{#if u.commissioning_date}
+								<dt>In Betrieb seit</dt><dd>{new Date(u.commissioning_date).toLocaleDateString('de-DE')}</dd>
+							{/if}
+							{#if u.municipality}<dt>Gemeinde</dt><dd>{u.municipality}</dd>{/if}
+							{#if u.height}<dt>Nabenhöhe</dt><dd>{u.height} m</dd>{/if}
+							{#if u.rotor_diameter}<dt>Rotor</dt><dd>{u.rotor_diameter} m</dd>{/if}
+							{#if u.manufacturer && u.manufacturer !== 'Unbekannt'}<dt>Hersteller</dt><dd>{u.manufacturer}</dd>{/if}
+						</dl>
+					{/if}
+				</div>
+			{:else if tooltip}
 				{@const v = values.get(tooltip.code)}
 				<div
 					class="pointer-events-none absolute z-10 min-w-[10rem] rounded border border-gray-200 bg-white px-3 py-2 text-sm shadow-lg dark:border-gray-700 dark:bg-gray-800"
@@ -420,6 +548,20 @@
 		</div>
 
 		{#if hasData && numbers.length}
+			{#if withPoints && showPoints && units.length}
+				<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-700 dark:text-gray-300">
+					<span class="inline-flex items-center gap-1.5">
+						<span class="inline-block h-2.5 w-2.5 rounded-full bg-gray-900 ring-1 ring-white dark:bg-gray-100 dark:ring-gray-900"></span>
+						{carrier.points?.label} ({formatNumber(units.length)} in Betrieb)
+					</span>
+					{#if ownUnits}
+						<span class="inline-flex items-center gap-1.5">
+							<span class="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white dark:ring-gray-900" style="background: {OWN_COLOR}"></span>
+							Anlagen von {r?.name} ({formatNumber(ownUnits)})
+						</span>
+					{/if}
+				</div>
+			{/if}
 			<div
 				class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-700 dark:text-gray-300"
 			>

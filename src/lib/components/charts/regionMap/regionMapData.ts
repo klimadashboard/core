@@ -5,7 +5,11 @@
  * values from the stats endpoints in klimadashboard-base. Adding a carrier (biomass, hydro, …)
  * only needs an entry in `CARRIERS` – plus the server endpoint accepting its table.
  */
-import { getColors } from '$lib/components/charts/custom/renewablesExplorer/config';
+import {
+	fetchAllTurbines,
+	getColors,
+	type TurbineData
+} from '$lib/components/charts/custom/renewablesExplorer/config';
 import { categoryConfigs } from '$lib/components/charts/custom/storageExplorer/config';
 
 export type MapMetric = 'power' | 'units' | 'capacity';
@@ -17,6 +21,8 @@ export interface CarrierConfig {
 	/** Same colours as the chart: [pale, strong] */
 	colors: [string, string];
 	source: { type: 'regionStats'; table: string } | { type: 'storage'; categories: string[] };
+	/** Unit locations as points on a basemap (MaStR, units in operation) */
+	points?: { label: string; labelSingular: string };
 }
 
 const stats = (energy: 'solar' | 'wind' | 'biomass' | 'hydro', label: string): CarrierConfig => {
@@ -31,7 +37,10 @@ const stats = (energy: 'solar' | 'wind' | 'biomass' | 'hydro', label: string): C
 
 export const CARRIERS: Record<string, CarrierConfig> = {
 	solar: stats('solar', 'Photovoltaik'),
-	wind: stats('wind', 'Windkraft'),
+	wind: {
+		...stats('wind', 'Windkraft'),
+		points: { label: 'Windkraftanlagen', labelSingular: 'Windkraftanlage' }
+	},
 	biomass: stats('biomass', 'Biomasse'),
 	hydro: stats('hydro', 'Wasserkraft'),
 	storage: {
@@ -114,4 +123,16 @@ export async function loadCarrierValues(
 		});
 	}
 	return out;
+}
+
+const locationCache = new Map<string, Promise<TurbineData[]>>();
+
+/** Locations of all units in operation for a carrier (all of Germany, cached per page load) */
+export function loadUnitLocations(energy: string): Promise<TurbineData[]> {
+	if (!locationCache.has(energy)) {
+		const request = fetchAllTurbines(energy as any);
+		request.then((d) => d.length || locationCache.delete(energy)).catch(() => locationCache.delete(energy));
+		locationCache.set(energy, request);
+	}
+	return locationCache.get(energy)!;
 }

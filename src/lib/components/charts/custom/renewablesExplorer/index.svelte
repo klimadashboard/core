@@ -6,7 +6,6 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import YearlyBarView from './YearlyBarView.svelte';
 	import CumulativeLineView from './CumulativeLineView.svelte';
-	import MapView from './MapView.svelte';
 	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
 	import { RadioGroup } from '$lib/components/ui';
 	import type { ContextRegion } from '$lib/utils/regionContext';
@@ -106,8 +105,6 @@
 		currentView = 'yearly';
 	}
 
-	// Get regionId from the region prop if available
-	$: regionId = region?.id || null;
 
 	// Fetch shared data when region or energy changes
 	$: if (!regionLoading && selectedEnergy) {
@@ -181,10 +178,6 @@
 		currentMetric = event.detail.key ?? event.detail;
 	}
 
-	// Handle map overlay event
-	function handleMapOverlay(event: CustomEvent) {
-		dispatch('openMapOverlay', event.detail);
-	}
 </script>
 
 <div class="renewables-chart">
@@ -269,20 +262,6 @@
 				{comparisons}
 				{selectedUnit}
 				onRemoveComparison={removeComparison}
-			/>
-		{:else if currentView === 'map'}
-			<MapView
-				{selectedEnergy}
-				{region}
-				{regionLoading}
-				{regionId}
-				{onChartData}
-				on:openMapOverlay={handleMapOverlay}
-				yearlyData={sharedData}
-				goal={sharedGoal}
-				updateDate={sharedUpdateDate}
-				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
-				{dataLoading}
 			/>
 		{/if}
 	</div>
