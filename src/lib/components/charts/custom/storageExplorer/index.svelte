@@ -5,8 +5,11 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import YearlyBarView from './YearlyBarView.svelte';
 	import CumulativeAreaView from './CumulativeAreaView.svelte';
+	import RegionMapView from '$lib/components/charts/regionMap/RegionMapView.svelte';
 	import {
 		fetchStorageData,
+		buildChartData,
+		getActiveCategories,
 		getViewLabels,
 		getViewIcons,
 		getMetricLabels,
@@ -44,7 +47,7 @@
 
 	$: viewLabels = getViewLabels();
 	$: viewIcons = getViewIcons();
-	$: switchViews = (['yearly', 'cumulative'] as ViewMode[]).map((view) => ({
+	$: switchViews = (['yearly', 'cumulative', 'regions'] as ViewMode[]).map((view) => ({
 		key: view,
 		label: viewLabels[view],
 		icon: viewIcons[view]
@@ -67,9 +70,7 @@
 		dataLoading = true;
 		try {
 			const result = await fetchStorageData(region, 'month');
-			sharedData = (result.by_period || []).filter(
-				(d) => String(d.period) >= MONTHLY_START
-			);
+			sharedData = (result.by_period || []).filter((d) => String(d.period) >= MONTHLY_START);
 			sharedUpdateDate = result.update_date;
 		} catch (e) {
 			console.error('[storageExplorer] Error loading data:', e);
@@ -117,6 +118,23 @@
 				updateDate={sharedUpdateDate}
 				{dataLoading}
 				metricMode={currentMetric}
+			/>
+		{:else if currentView === 'regions'}
+			<RegionMapView
+				{region}
+				regionLoading={regionLoading || dataLoading}
+				energy="storage"
+				metric={currentMetric === 'power' ? 'capacity' : 'units'}
+				baseChartData={sharedData.length
+					? buildChartData(
+							sharedData,
+							region,
+							getActiveCategories(sharedData),
+							sharedUpdateDate,
+							'cumulative'
+						)
+					: null}
+				{onChartData}
 			/>
 		{/if}
 	</div>

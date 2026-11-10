@@ -14,7 +14,7 @@ export function formatNumber(value: number, decimals: number = 0): string {
 /**
  * Format power values (kW input) to appropriate unit
  */
-export function formatPower(valueKw: number, energy?: 'solar' | 'wind'): string {
+export function formatPower(valueKw: number, energy?: string): string {
 	if (valueKw == null || isNaN(valueKw)) return '–';
 
 	const sign = valueKw < 0 ? '-' : '';
@@ -32,7 +32,7 @@ export function formatPower(valueKw: number, energy?: 'solar' | 'wind'): string 
 /**
  * Get power unit string based on max value
  */
-export function getPowerUnit(maxKw: number, energy?: 'solar' | 'wind'): string {
+export function getPowerUnit(maxKw: number, energy?: string): string {
 	const suffix = energy === 'solar' ? 'p' : '';
 	if (maxKw >= 1_000_000) return `GW${suffix}`;
 	if (maxKw >= 1_000) return `MW${suffix}`;

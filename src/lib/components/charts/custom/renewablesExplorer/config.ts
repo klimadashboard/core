@@ -18,8 +18,13 @@ async function fetchJson(url: string) {
 // TYPES
 // ============================================================================
 
-export type EnergyType = 'solar' | 'wind';
-export type ViewMode = 'yearly' | 'cumulative' | 'map';
+/**
+ * Energy carrier, from the chart config `energy` parameter. Data comes from the MaStR table
+ * `energy_<energy>_units`; the regional map is configured in regionMap/regionMapData.ts (CARRIERS).
+ */
+export type EnergyType = 'solar' | 'wind' | 'biomass' | 'hydro';
+/** 'regions' = choropleth of the surrounding regions, 'map' = individual units (wind only) */
+export type ViewMode = 'yearly' | 'cumulative' | 'regions' | 'map';
 export type MetricMode = 'power' | 'units';
 
 export interface RenewablesParams {
@@ -95,24 +100,36 @@ export const comparisonPalette = [
 	'#999999'
 ];
 
+const ENERGY_LABELS: Record<EnergyType, string> = {
+	solar: 'Solar',
+	wind: 'Wind',
+	biomass: 'Biomasse',
+	hydro: 'Wasserkraft'
+};
+
+const CARRIER_COLORS: Record<EnergyType, { light: string; dark: string }> = {
+	solar: { light: '#F0E1C2', dark: '#E0A906' },
+	wind: { light: '#E5F3FA', dark: '#003B80' },
+	biomass: { light: '#DDEBCF', dark: '#4A7A22' },
+	hydro: { light: '#D3EEF2', dark: '#11707F' }
+};
+
 /** Get colors based on energy type */
 export function getColors(energy: EnergyType): { light: string; dark: string } {
-	return energy === 'solar'
-		? { light: '#F0E1C2', dark: '#E0A906' }
-		: { light: '#E5F3FA', dark: '#003B80' };
+	return CARRIER_COLORS[energy] ?? CARRIER_COLORS.solar;
 }
 
 /** Get single color based on energy type */
 export function getColor(energy: EnergyType): string {
-	return energy === 'solar' ? '#E0A906' : '#003B80';
+	return getColors(energy).dark;
 }
 
 /** Get available view modes for energy type */
 export function getAvailableViews(energy: EnergyType): ViewMode[] {
 	if (energy === 'wind') {
-		return ['yearly', 'cumulative', 'map'];
+		return ['yearly', 'cumulative', 'regions', 'map'];
 	}
-	return ['yearly', 'cumulative'];
+	return ['yearly', 'cumulative', 'regions'];
 }
 
 /** Get view labels */
@@ -120,6 +137,7 @@ export function getViewLabels(energy: EnergyType): Record<ViewMode, string> {
 	return {
 		yearly: 'Jährlicher Zubau',
 		cumulative: 'Kumulativ',
+		regions: 'Karte',
 		map: energy === 'wind' ? 'Windkraftanlagen' : 'Anlagen'
 	};
 }
@@ -129,7 +147,8 @@ export function getViewIcons(): Record<ViewMode, string> {
 	return {
 		yearly: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
 		cumulative: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
-		map: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`
+		regions: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`,
+		map: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>`,
 	};
 }
 
@@ -566,7 +585,7 @@ export function getPlaceholders(
 		lastYearWithData: lastPositive?.year || currentYear,
 		growthPercent,
 		energyType: energy,
-		energyLabel: energy === 'solar' ? 'Solar' : 'Wind',
+		energyLabel: ENERGY_LABELS[energy] ?? energy,
 		dataYearStart,
 		dataYearEnd,
 		// Cumulative values at dataYearStart and dataYearEnd
