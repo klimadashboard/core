@@ -276,6 +276,7 @@ export function buildChartData(
 	table: { columns: any[]; rows: any[]; filename: string };
 	placeholders: Record<string, string | number>;
 	meta: { updateDate: string; source: string; region: Region | null };
+	map: { energy: string };
 } {
 	const updateDate = data?.update_date || '';
 	const formattedDate = formatUpdateDate(updateDate);
@@ -297,7 +298,8 @@ export function buildChartData(
 			updateDate,
 			source,
 			region
-		}
+		},
+		map: { energy: 'solar' }
 	};
 }
 

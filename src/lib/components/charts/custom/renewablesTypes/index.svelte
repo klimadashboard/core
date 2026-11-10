@@ -1,6 +1,4 @@
 <script lang="ts">
-	import Switch from '$lib/components/Switch.svelte';
-	import RegionMapView from '$lib/components/charts/regionMap/RegionMapView.svelte';
 	import {
 		solarTypeConfigs,
 		formatNumber,
@@ -20,27 +18,6 @@
 	let error: string | null = null;
 
 	$: region, loadData();
-
-	// "Übersicht" (type cards) or "Karte" (regional comparison of the total)
-	let view: 'cards' | 'regions' = 'cards';
-	const switchViews = [
-		{
-			key: 'cards',
-			label: 'Übersicht',
-			icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`
-		},
-		{
-			key: 'regions',
-			label: 'Karte',
-			icon: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`
-		}
-	];
-
-	function handleViewSwitch(event: CustomEvent) {
-		view = event.detail.key ?? event.detail;
-		// Back on the cards, the Card's table/placeholders belong to the type data again
-		if (view === 'cards' && !loading && !error) onChartData(buildChartData(data, region));
-	}
 
 	async function loadData() {
 		loading = true;
@@ -182,19 +159,7 @@
 	</div>
 {/snippet}
 
-<div class="mb-4">
-	<Switch views={switchViews} activeView={view} on:itemClick={handleViewSwitch} />
-</div>
-
-{#if view === 'regions'}
-	<RegionMapView
-		{region}
-		energy="solar"
-		metric={null}
-		baseChartData={data ? buildChartData(data, region) : null}
-		{onChartData}
-	/>
-{:else if loading}
+{#if loading}
 	<div class="flex flex-col gap-3">
 		{#each [1, 2, 3] as _}
 			{@render skeletonCard()}

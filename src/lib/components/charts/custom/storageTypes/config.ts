@@ -206,6 +206,7 @@ export function buildChartData(
 		meta: {
 			updateDate: updateDate || '',
 			region
-		}
+		},
+		map: { energy: 'storage' }
 	};
 }

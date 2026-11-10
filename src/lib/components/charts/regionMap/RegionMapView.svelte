@@ -15,7 +15,6 @@
 	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { interpolateRgb } from 'd3-interpolate';
-	import type { ChartData, TableColumn } from '$lib/components/charts/types';
 	import { RadioGroup, Select } from '$lib/components/ui';
 	import { formatNumber } from '$lib/utils/formatters';
 	import {
@@ -34,11 +33,6 @@
 	export let regionLoading = false;
 	/** Carrier key, e.g. 'solar', 'wind', 'storage', 'biomass', 'hydro' */
 	export let energy = 'solar';
-	/** Metric chosen by the parent chart; when null the map shows its own selector */
-	export let metric: MapMetric | null = null;
-	/** Parent chart's ChartData (placeholders, meta) – the map only swaps in its table */
-	export let baseChartData: Partial<ChartData> | Record<string, any> | null = null;
-	export let onChartData: ((data: any) => void) | undefined = undefined;
 	export let height = 380;
 
 	type Normalize = 'area' | 'absolute';
@@ -69,8 +63,8 @@
 
 	$: carrier = getCarrier(energy);
 	$: if (!carrier.metrics.includes(ownMetric)) ownMetric = carrier.metrics[0];
-	$: activeMetric = metric && carrier.metrics.includes(metric) ? metric : ownMetric;
-	$: showMetricSelect = !metric && carrier.metrics.length > 1;
+	$: activeMetric = ownMetric;
+	$: showMetricSelect = carrier.metrics.length > 1;
 
 	// ---------------------------------------------------------------- loading
 	let reqId = 0;
@@ -348,9 +342,17 @@
 		};
 	}
 
+	/** Tailwind's `dark:` applies if <html> (theme store) or <body> (header LightSwitch) has it */
+	function pageIsDark(): boolean {
+		return (
+			document.documentElement.classList.contains('dark') ||
+			document.body.classList.contains('dark')
+		);
+	}
+
 	function initMap() {
 		if (map || !mapContainer) return;
-		isDark = document.documentElement.classList.contains('dark');
+		isDark = pageIsDark();
 		map = new maplibregl.Map({
 			container: mapContainer,
 			style: { version: 8, sources: {}, layers: [] },
@@ -444,13 +446,12 @@
 		});
 
 		darkObserver = new MutationObserver(() => {
-			const now = document.documentElement.classList.contains('dark');
+			const now = pageIsDark();
 			if (now !== isDark) isDark = now;
 		});
-		darkObserver.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ['class']
-		});
+		for (const el of [document.documentElement, document.body]) {
+			darkObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+		}
 	}
 
 	function setHover(id: string | null) {
@@ -518,52 +519,6 @@
 		map?.remove();
 		map = null;
 	});
-
-	// ---------------------------------------------------------------- ChartData
-	$: tableColumns = [
-		{ key: 'rank', label: 'Rang', align: 'right' },
-		{ key: 'name', label: 'Region', align: 'left' },
-		{
-			key: 'absolute',
-			label: `${metricLabel} (${unitSuffix(activeMetric)})`,
-			align: 'right',
-			format: (v: number | null) => (v === null ? '–' : formatNumber(v))
-		},
-		{
-			key: 'perArea',
-			label: `${metricLabel} pro km² (${unitSuffix(activeMetric)}/km²)`,
-			align: 'right',
-			format: (v: number | null) => (v === null ? '–' : formatNumber(v, 2))
-		},
-		{
-			key: 'area',
-			label: 'Fläche (km²)',
-			align: 'right',
-			format: (v: number | null) => (v === null ? '–' : formatNumber(v, 1))
-		}
-	] as TableColumn[];
-
-	$: if (onChartData && !loading && set) {
-		onChartData({
-			...(baseChartData ?? {}),
-			raw: sortedRows.map((r) => ({ region: r.region.name, code: r.region.code, value: r.value })),
-			table: {
-				columns: tableColumns,
-				rows: sortedRows.map((r) => ({
-					rank: r.rank ?? '–',
-					name: r.region.name + (r.region.isCurrent ? ' (ausgewählt)' : ''),
-					absolute: r.absolute,
-					perArea: r.perArea,
-					area: r.region.area
-				})),
-				filename: `${energy}-regionen-${normalize === 'area' ? 'pro-km2' : 'absolut'}`
-			},
-			meta: {
-				source: 'Marktstammdatenregister der Bundesnetzagentur',
-				...(baseChartData?.meta ?? {})
-			}
-		} as ChartData);
-	}
 
 	// Whole aggregate (e.g. Metropolregion): sum of members, per km² from the summed area
 	$: aggregateValue = (() => {

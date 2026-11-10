@@ -7,7 +7,6 @@
 	import YearlyBarView from './YearlyBarView.svelte';
 	import CumulativeLineView from './CumulativeLineView.svelte';
 	import MapView from './MapView.svelte';
-	import RegionMapView from '$lib/components/charts/regionMap/RegionMapView.svelte';
 	import {
 		getAvailableViews,
 		getViewLabels,
@@ -16,7 +15,6 @@
 		getMetricIcons,
 		fetchData,
 		fetchGoal,
-		buildChartData,
 		type EnergyType,
 		type ViewMode,
 		type MetricMode,
@@ -58,8 +56,8 @@
 	 * Expected config structure in Directus:
 	 * {
 	 *   "component": "renewablesChart",
-	 *   "energy": "solar" | "wind" | "biomass" | "hydro",
-	 *   "initialView": "yearly" | "cumulative" | "regions" | "map",  // optional, defaults to "yearly"
+	 *   "energy": "solar" | "wind",
+	 *   "initialView": "yearly" | "cumulative" | "map",  // optional, defaults to "yearly"
 	 *   "showViewSwitcher": true | false                  // optional, defaults to true
 	 * }
 	 */
@@ -160,12 +158,8 @@
 	{#if showViewSwitcher && availableViews.length > 1}
 		<div class="mb-4 flex flex-wrap gap-2">
 			<Switch views={switchViews} activeView={currentView} on:itemClick={handleViewSwitch} />
-			{#if currentView === 'yearly' || currentView === 'cumulative' || currentView === 'regions'}
-				<Switch
-					views={switchMetrics}
-					activeView={currentMetric}
-					on:itemClick={handleMetricSwitch}
-				/>
+			{#if currentView === 'yearly' || currentView === 'cumulative'}
+				<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
 			{/if}
 		</div>
 	{/if}
@@ -198,25 +192,6 @@
 				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
 				{dataLoading}
 				metricMode={currentMetric}
-			/>
-		{:else if currentView === 'regions'}
-			<RegionMapView
-				{region}
-				regionLoading={regionLoading || dataLoading}
-				energy={selectedEnergy}
-				metric={currentMetric}
-				baseChartData={dataFetched
-					? buildChartData(
-							sharedData,
-							sharedUpdateDate,
-							region,
-							{ energy: selectedEnergy },
-							'cumulative',
-							sharedGoal,
-							sharedGridOperatorCheckedRatio
-						)
-					: null}
-				{onChartData}
 			/>
 		{:else if currentView === 'map'}
 			<MapView

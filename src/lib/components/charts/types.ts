@@ -101,4 +101,10 @@ export interface ChartData {
 	 * Set to false to hide the data download options while still showing image exports.
 	 */
 	allowDataDownload?: boolean;
+	/**
+	 * Adds a "Karte" tab to the Card: a choropleth of the current region among the regions
+	 * around it (see regionMap/RegionMapView.svelte). `energy` is a key of `CARRIERS` in
+	 * regionMap/regionMapData.ts, e.g. 'solar', 'wind', 'storage', 'biomass', 'hydro'.
+	 */
+	map?: { energy: string };
 }

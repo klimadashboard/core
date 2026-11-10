@@ -23,8 +23,7 @@ async function fetchJson(url: string) {
  * `energy_<energy>_units`; the regional map is configured in regionMap/regionMapData.ts (CARRIERS).
  */
 export type EnergyType = 'solar' | 'wind' | 'biomass' | 'hydro';
-/** 'regions' = choropleth of the surrounding regions, 'map' = individual units (wind only) */
-export type ViewMode = 'yearly' | 'cumulative' | 'regions' | 'map';
+export type ViewMode = 'yearly' | 'cumulative' | 'map';
 export type MetricMode = 'power' | 'units';
 
 export interface RenewablesParams {
@@ -127,9 +126,9 @@ export function getColor(energy: EnergyType): string {
 /** Get available view modes for energy type */
 export function getAvailableViews(energy: EnergyType): ViewMode[] {
 	if (energy === 'wind') {
-		return ['yearly', 'cumulative', 'regions', 'map'];
+		return ['yearly', 'cumulative', 'map'];
 	}
-	return ['yearly', 'cumulative', 'regions'];
+	return ['yearly', 'cumulative'];
 }
 
 /** Get view labels */
@@ -137,7 +136,6 @@ export function getViewLabels(energy: EnergyType): Record<ViewMode, string> {
 	return {
 		yearly: 'Jährlicher Zubau',
 		cumulative: 'Kumulativ',
-		regions: 'Karte',
 		map: energy === 'wind' ? 'Windkraftanlagen' : 'Anlagen'
 	};
 }
@@ -147,7 +145,6 @@ export function getViewIcons(): Record<ViewMode, string> {
 	return {
 		yearly: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
 		cumulative: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
-		regions: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`,
 		map: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>`,
 	};
 }
@@ -663,7 +660,8 @@ export function buildChartData(
 			updateDate,
 			source,
 			region
-		}
+		},
+		map: { energy: params.energy }
 	};
 }
 

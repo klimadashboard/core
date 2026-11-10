@@ -11,6 +11,7 @@
 	import { exportCSV, exportJSON, exportXLSX } from '$lib/components/charts/utils/export';
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
+	import RegionMapView from '$lib/components/charts/regionMap/RegionMapView.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
 	import { t } from '$lib/utils/t';
 
@@ -28,7 +29,7 @@
 	let headerEl: HTMLElement;
 	let isVisible = false;
 	let isLoading = true;
-	let activeTab: 'chart' | 'table' | 'text' = 'chart';
+	let activeTab: 'chart' | 'map' | 'table' | 'text' = 'chart';
 	let chartData: ChartData | null = null;
 	let showDownloadMenu = false;
 	let showEmbedModal = false;
@@ -132,6 +133,14 @@
 
 	$: note = chartData?.meta?.note;
 
+	// "Karte" tab: charts opt in via chartData.map. Remember it, so the tab doesn't vanish
+	// while a chart-internal view (e.g. the wind turbine map) reports data without it.
+	let mapConfig: { energy: string } | null = null;
+	$: if (chartData?.map) mapConfig = chartData.map;
+	// Mount the map on first open only, then keep it (and its state) around
+	let mapOpened = false;
+	$: if (activeTab === 'map') mapOpened = true;
+
 	// Download menu sections (data-driven)
 	$: downloadSections = [
 		...(allowDataDownload
@@ -185,9 +194,17 @@
 	];
 
 	// Tab configuration
-	type TabId = 'chart' | 'table' | 'text';
+	type TabId = 'chart' | 'map' | 'table' | 'text';
 	$: tabs = [
 		{ id: 'chart' as TabId, label: t(page.data.translations, 'ui.card.tabChart'), show: true },
+		{
+			id: 'map' as TabId,
+			label:
+				page.data.translations?.['ui.card.tabMap'] ??
+				page.data.translations?.['ui.card.map'] ??
+				'Karte',
+			show: !!mapConfig
+		},
 		{
 			id: 'table' as TabId,
 			label: t(page.data.translations, 'ui.card.tabTable'),
@@ -697,6 +714,29 @@
 					</div>
 				</div>
 
+				<!-- Map Tab -->
+				{#if mapConfig}
+					<div
+						id="tabpanel-{chart.id}-map"
+						role="tabpanel"
+						aria-labelledby="tab-{chart.id}-map"
+						hidden={activeTab !== 'map'}
+					>
+						{#if heading && !embedHideTitle}
+							<h3 class="text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
+						{/if}
+						{#if mapOpened}
+							<RegionMapView region={chartData?.meta?.region ?? null} energy={mapConfig.energy} />
+						{/if}
+						{#if source}
+							<p class="text-xs text-gray-500 mt-4">
+								{page.data.translations?.source}:
+								{@html source}
+							</p>
+						{/if}
+					</div>
+				{/if}
+
 				<!-- Table Tab -->
 				<div
 					id="tabpanel-{chart.id}-table"
@@ -801,6 +841,24 @@
 									x2="6"
 									y2="14"
 								/>
+							</svg>
+						{:else if tab.id === 'map'}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								class="flex-shrink-0"
+							>
+								<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line
+									x1="9"
+									y1="3"
+									x2="9"
+									y2="18"
+								/><line x1="15" y1="6" x2="15" y2="21" />
 							</svg>
 						{:else if tab.id === 'table'}
 							<svg

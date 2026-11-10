@@ -625,7 +625,8 @@
 				source: 'Marktstammdatenregister der Bundesnetzagentur',
 				region: effectiveRegion
 			},
-			hasData: true // Map view is always considered to have data
+			hasData: true, // Map view is always considered to have data
+			map: { energy: selectedEnergy }
 		});
 	}
 

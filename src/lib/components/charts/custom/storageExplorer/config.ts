@@ -9,7 +9,7 @@ import { formatNumber } from '$lib/utils/formatters';
 // TYPES
 // ============================================================================
 
-export type ViewMode = 'yearly' | 'cumulative' | 'regions';
+export type ViewMode = 'yearly' | 'cumulative';
 export type MetricMode = 'power' | 'units';
 
 export interface StorageCategory {
@@ -120,16 +120,14 @@ export function getValue(row: StoragePeriodData, categoryKey: string, metric: st
 export function getViewLabels(): Record<ViewMode, string> {
 	return {
 		yearly: 'Monatlicher Zubau',
-		cumulative: 'Kumulativ',
-		regions: 'Karte'
+		cumulative: 'Kumulativ'
 	};
 }
 
 export function getViewIcons(): Record<ViewMode, string> {
 	return {
 		yearly: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
-		cumulative: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
-		regions: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`
+		cumulative: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`
 	};
 }
 
@@ -325,7 +323,8 @@ export function buildChartData(
 		meta: {
 			updateDate: updateDate || '',
 			region
-		}
+		},
+		map: { energy: 'storage' }
 	};
 }
 
