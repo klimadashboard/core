@@ -388,32 +388,32 @@
 	{:else}
 		<!-- Controls: region comparison only applies to the power metric -->
 		{#if metricMode === 'power'}
-			<div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-				<div class="min-w-0 flex-1">
-					<RegionSwitcher
-						{region}
-						mode="compare"
-						variant={pickerVariant}
-						{selectedIds}
-						max={MAX_COMPARISONS}
-						rank={rankByArea}
-						rankBasis="pro km²"
-						on:add={(e) => addRegions(e.detail)}
-						on:remove={(e) => removeRegion(e.detail.id)}
-					/>
-				</div>
-				<div class="shrink-0">
-					<RadioGroup
-						label="Einheit"
-						hideLabel
-						bind:value={selectedUnit}
-						options={[
-							{ value: 'absolute', label: 'absolut' },
-							{ value: 'perArea', label: 'pro km²' }
-						]}
-						on:change={() => (unitTouched = true)}
-					/>
-				</div>
+			<div class="mb-4">
+				<RegionSwitcher
+					{region}
+					mode="compare"
+					variant={pickerVariant}
+					{selectedIds}
+					max={MAX_COMPARISONS}
+					rank={rankByArea}
+					rankBasis="pro km²"
+					on:add={(e) => addRegions(e.detail)}
+					on:remove={(e) => removeRegion(e.detail.id)}
+				>
+					{#snippet end()}
+						<RadioGroup
+							label="Einheit"
+							hideLabel
+							small
+							bind:value={selectedUnit}
+							options={[
+								{ value: 'absolute', label: 'absolut' },
+								{ value: 'perArea', label: 'pro km²' }
+							]}
+							on:change={() => (unitTouched = true)}
+						/>
+					{/snippet}
+				</RegionSwitcher>
 			</div>
 		{/if}
 

@@ -26,10 +26,11 @@
 			on:add={(e) => addSeries(e.detail)} on:remove={(e) => removeSeries(e.detail)} />
 -->
 <script lang="ts">
-	import { createEventDispatcher, tick } from 'svelte';
+	import { createEventDispatcher, tick, type Snippet } from 'svelte';
 	import { page } from '$app/state';
 	import { fetchRegion, type Region } from '$lib/utils/getRegion';
 	import { getRegions } from '$lib/utils/regions';
+	import { isAggregateRegion } from '$lib/utils/regionAggregation';
 	import {
 		getRegionContext,
 		type ContextRegion,
@@ -56,6 +57,8 @@
 	export let rankCount = 3;
 	/** e.g. "pro km²" — what the ranking is based on, shown on the button */
 	export let rankBasis = '';
+	/** Extra controls at the end of the row (e.g. the unit toggle) */
+	export let end: Snippet | undefined = undefined;
 
 	const dispatch = createEventDispatcher<{
 		change: Region;
@@ -148,9 +151,6 @@
 	let query = '';
 	let searchPool: ContextRegion[] = [];
 	let searchLoading = false;
-	let searchOpen = false;
-	let activeIndex = -1;
-
 	async function ensureSearchPool() {
 		if (searchPool.length || searchLoading) return;
 		searchLoading = true;
@@ -180,38 +180,27 @@
 			})
 			.slice(0, 12);
 	})();
-	$: if (activeIndex >= searchResults.length) activeIndex = searchResults.length - 1;
-
-	function pickResult(r: ContextRegion) {
-		toggle(r);
-		query = '';
-		searchOpen = false;
-		activeIndex = -1;
-	}
-
-	function onSearchKey(e: KeyboardEvent) {
-		if (e.key === 'ArrowDown') {
-			e.preventDefault();
-			searchOpen = true;
-			activeIndex = Math.min(activeIndex + 1, searchResults.length - 1);
-		} else if (e.key === 'ArrowUp') {
-			e.preventDefault();
-			activeIndex = Math.max(activeIndex - 1, 0);
-		} else if (e.key === 'Enter' && activeIndex >= 0 && searchResults[activeIndex]) {
-			e.preventDefault();
-			pickResult(searchResults[activeIndex]);
-		} else if (e.key === 'Escape') {
-			if (query || searchOpen) e.stopPropagation();
-			query = '';
-			searchOpen = false;
-			activeIndex = -1;
-		}
-	}
 
 	// ---------------------------------------------------------------- peers filter
 	let peersOpen = false;
-	let peerFilter = '';
-	$: filteredPeerGroups = filterGroups(peerGroups, variant === 'menu' ? query : peerFilter);
+	let panelInput: HTMLInputElement;
+	let peersButton: HTMLButtonElement;
+	$: filteredPeerGroups = filterGroups(peerGroups, query);
+
+	async function togglePanel() {
+		peersOpen = !peersOpen;
+		if (!peersOpen) return (query = '');
+		ensureSearchPool();
+		await tick();
+		panelInput?.focus();
+	}
+	function onPanelKey(e: KeyboardEvent) {
+		if (e.key !== 'Escape') return;
+		e.preventDefault();
+		peersOpen = false;
+		query = '';
+		peersButton?.focus();
+	}
 
 	function filterGroups(groups: typeof peerGroups, q: string) {
 		const s = q.trim().toLowerCase();
@@ -255,13 +244,13 @@
 	}
 
 	const chipBase =
-		'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:cursor-not-allowed disabled:opacity-50';
+		'inline-flex min-h-7 items-center gap-1 rounded-full px-2.5 py-1 text-xs leading-tight transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:cursor-not-allowed disabled:opacity-50';
 	const chipOff =
 		'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700';
 	const chipOn =
 		'bg-gray-900 text-white hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white';
 	const inputBase =
-		'w-full rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-400';
+		'w-full rounded-full border border-gray-300 bg-white px-3 py-1 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-400';
 </script>
 
 <svelte:window on:pointerdown={onWindowPointer} on:keydown={onMenuKey} />
@@ -287,17 +276,21 @@
 	</svg>
 {/snippet}
 
-{#snippet chip(r: ContextRegion, showLayer: boolean)}
+{#snippet chip(r: ContextRegion, showLayer: boolean, short = false)}
 	{@const on = isSelected(r, selected)}
+	<!-- A region has one Metropolregion: in the levels row its layer label is enough -->
+	{@const label = short && isAggregateRegion(r) && r.layer_label ? r.layer_label : r.name}
 	<button
 		type="button"
 		class="{chipBase} {on ? chipOn : chipOff}"
 		aria-pressed={on}
+		aria-label={label !== r.name ? r.name : undefined}
+		title={label !== r.name ? r.name : undefined}
 		disabled={disabled || (!on && atMax)}
 		on:click={() => toggle(r)}
 	>
 		{@render icon(on ? 'check' : 'plus')}
-		<span>{r.name}</span>
+		<span>{label}</span>
 		{#if showLayer && r.layer_label}
 			<span class="text-xs {on ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}"
 				>{r.layer_label}</span
@@ -310,8 +303,10 @@
 	{#if rank && g.regions.length > rankCount}
 		<button
 			type="button"
-			class="{chipBase} !py-1 text-xs border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100 dark:hover:bg-amber-900"
-			disabled={disabled || atMax || !!rankLoading}
+			class="{chipBase} border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100 dark:hover:bg-amber-900"
+			{disabled}
+			aria-disabled={atMax || !!rankLoading}
+			class:opacity-50={atMax}
 			aria-busy={rankLoading === g.label}
 			on:click={() => addLeaders(g.regions, g.label)}
 		>
@@ -319,68 +314,6 @@
 			{rankLoading === g.label ? 'Wird berechnet…' : rankLabel(g)}
 		</button>
 	{/if}
-{/snippet}
-
-{#snippet searchBox()}
-	<div class="relative w-full sm:w-56">
-		<span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-			{@render icon('search')}
-		</span>
-		<input
-			type="text"
-			role="combobox"
-			class="{inputBase} pl-8"
-			placeholder="Andere Region suchen…"
-			aria-label="Andere Region zum Vergleich suchen"
-			aria-expanded={searchOpen && query.trim().length >= 2}
-			aria-controls="{uid}-results"
-			aria-autocomplete="list"
-			aria-activedescendant={activeIndex >= 0 ? `${uid}-opt-${activeIndex}` : undefined}
-			autocomplete="off"
-			bind:value={query}
-			{disabled}
-			on:focus={() => {
-				ensureSearchPool();
-				searchOpen = true;
-			}}
-			on:input={() => {
-				searchOpen = true;
-				activeIndex = -1;
-			}}
-			on:blur={() => setTimeout(() => (searchOpen = false), 150)}
-			on:keydown={onSearchKey}
-		/>
-		{#if searchOpen && query.trim().length >= 2}
-			<ul
-				id="{uid}-results"
-				role="listbox"
-				aria-label="Suchergebnisse"
-				class="absolute left-0 top-full z-20 mt-1 max-h-64 w-full min-w-64 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
-			>
-				{#each searchResults as r, i (r.id)}
-					{@const on = isSelected(r, selected)}
-					<li
-						id="{uid}-opt-{i}"
-						role="option"
-						aria-selected={on}
-						aria-disabled={!on && atMax}
-						class="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm text-gray-900 dark:text-gray-100
-							{i === activeIndex ? 'bg-gray-100 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700/60'}"
-						on:mousedown|preventDefault={() => pickResult(r)}
-					>
-						<span class="flex items-center gap-2">
-							{#if on}{@render icon('check')}{/if}{r.name}
-						</span>
-						<span class="text-xs text-gray-500 dark:text-gray-400">{r.layer_label ?? ''}</span>
-					</li>
-				{:else}
-					<li class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-						{searchLoading ? 'Regionen werden geladen…' : 'Keine Region gefunden'}
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	</div>
 {/snippet}
 
 {#snippet maxNote()}
@@ -406,73 +339,101 @@
 	{/if}
 {:else if variant === 'chips'}
 	<!-- ============================ Variant A: chips ============================ -->
-	<div class="space-y-2" role="group" aria-labelledby="{uid}-label">
-		<div class="flex items-baseline justify-between gap-2">
-			<span id="{uid}-label" class="text-sm font-medium text-gray-700 dark:text-gray-300"
-				>Vergleichen mit</span
-			>
-			<span class="text-xs tabular-nums text-gray-600 dark:text-gray-400"
-				>{selectedIds.length}/{max} Vergleiche</span
-			>
-		</div>
-		<div class="flex flex-wrap items-center gap-2">
+	<div class="space-y-2" role="group" aria-label="Vergleichen mit">
+		<div class="flex flex-wrap items-center gap-1.5">
 			{#each levels as r (r.id)}
-				{@render chip(r, false)}
+				{@render chip(r, false, true)}
 			{/each}
-			{#if allPeers.length}
+			{#if allPeers.length || searchable}
 				<button
+					bind:this={peersButton}
 					type="button"
-					class="{chipBase} {chipOff} border border-dashed border-gray-400 dark:border-gray-500"
+					class="{chipBase} {peersOpen ? chipOn : chipOff}"
 					aria-expanded={peersOpen}
 					aria-controls="{uid}-peers"
-					on:click={() => (peersOpen = !peersOpen)}
+					aria-label={allPeers.length
+						? `${context?.peersTitle} (${allPeers.length}) und weitere Regionen`
+						: 'Weitere Regionen suchen'}
+					on:click={togglePanel}
 				>
-					<span>{context?.peersTitle}</span>
-					<span class="text-xs text-gray-600 dark:text-gray-400">({allPeers.length})</span>
+					{@render icon('search')}
+					{#if allPeers.length}
+						<span>{context?.peersLabel || 'Weitere'}</span>
+						<span class="tabular-nums opacity-70">{allPeers.length}</span>
+					{:else}
+						<span>Suchen</span>
+					{/if}
 					<span class="transition-transform {peersOpen ? 'rotate-180' : ''}">{@render icon('chevron')}</span>
 				</button>
 			{/if}
-			{#if searchable}
-				{@render searchBox()}
+			{#if end}
+				<div class="ml-auto">{@render end()}</div>
 			{/if}
 		</div>
-		{#if peersOpen && allPeers.length}
+		{#if peersOpen}
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 			<div
 				id="{uid}-peers"
-				class="space-y-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
+				role="region"
+				aria-label={context?.peersTitle ?? 'Weitere Regionen'}
+				class="space-y-2 rounded-xl border border-gray-200 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-900"
+				on:keydown={onPanelKey}
 			>
-				{#if allPeers.length > 12}
-				<div class="flex flex-wrap items-center gap-2">
-						<input
-							type="search"
-							class="{inputBase} sm:w-48"
-							placeholder="Filtern…"
-							aria-label="{context?.peersTitle} filtern"
-							bind:value={peerFilter}
-						/>
+				<div class="flex items-center gap-2">
+					<input
+						bind:this={panelInput}
+						type="search"
+						class={inputBase}
+						placeholder={allPeers.length ? `${context?.peersLabel ?? 'Region'} oder andere Region suchen…` : 'Region suchen…'}
+						aria-label="Regionen suchen und filtern"
+						bind:value={query}
+					/>
+					<span class="shrink-0 text-xs tabular-nums text-gray-600 dark:text-gray-400"
+						>{selectedIds.length}/{max}</span
+					>
 				</div>
-				{/if}
-				<div class="max-h-64 space-y-3 overflow-y-auto pr-1">
-				{#each filteredPeerGroups as g (g.label)}
-					<div role="group" aria-labelledby="{uid}-g-{g.label}">
-						<div class="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+				<div class="max-h-48 space-y-2 overflow-y-auto pr-1">
+					{#each filteredPeerGroups as g (g.label)}
+						<div role="group" aria-labelledby="{uid}-g-{g.label}">
+							<div class="mb-1 flex flex-wrap items-center justify-between gap-2">
+								<h4
+									id="{uid}-g-{g.label}"
+									class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
+								>
+									{g.label}
+								</h4>
+								{#if !query}
+									{@render rankButton(g)}
+								{/if}
+							</div>
+							<div class="flex flex-wrap gap-1">
+								{#each g.regions as r (r.id)}
+									{@render chip(r, false)}
+								{/each}
+							</div>
+						</div>
+					{/each}
+					{#if menuExtra.length}
+						<div role="group" aria-labelledby="{uid}-g-extra">
 							<h4
-								id="{uid}-g-{g.label}"
-								class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
+								id="{uid}-g-extra"
+								class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
 							>
-								{g.label}
+								Weitere Regionen
 							</h4>
-							{@render rankButton(peerGroups.find((p) => p.label === g.label) ?? g)}
+							<div class="flex flex-wrap gap-1">
+								{#each menuExtra as r (r.id)}
+									{@render chip(r, true)}
+								{/each}
+							</div>
 						</div>
-						<div class="flex flex-wrap gap-1.5">
-							{#each g.regions as r (r.id)}
-								{@render chip(r, false)}
-							{/each}
-						</div>
-					</div>
-				{:else}
-					<p class="text-sm text-gray-600 dark:text-gray-400">Keine Treffer</p>
-				{/each}
+					{:else if query.trim().length >= 2 && !filteredPeerGroups.length}
+						<p class="text-xs text-gray-600 dark:text-gray-400">
+							{searchLoading ? 'Regionen werden geladen…' : 'Keine Region gefunden'}
+						</p>
+					{:else if query.trim().length === 1}
+						<p class="text-xs text-gray-600 dark:text-gray-400">Für andere Regionen mind. 2 Zeichen eingeben</p>
+					{/if}
 				</div>
 			</div>
 		{/if}
@@ -480,6 +441,7 @@
 	</div>
 {:else}
 	<!-- ============================ Variant B: menu ============================ -->
+	<div class="flex flex-wrap items-center gap-2">
 	<div class="relative inline-block">
 		<button
 			bind:this={menuButton}
@@ -601,6 +563,10 @@
 				</div>
 			</div>
 		{/if}
+	</div>
+	{#if end}
+		<div class="ml-auto">{@render end()}</div>
+	{/if}
 	</div>
 {/if}
 

@@ -48,6 +48,8 @@ export interface RegionContext {
 	levels: ContextRegion[];
 	/** Title for the peer list, e.g. "Kreise der Metropolregion Nürnberg" */
 	peersTitle: string | null;
+	/** Short label for the peers, e.g. "Kreise" */
+	peersLabel: string | null;
 	peers: PeerGroup[];
 }
 
@@ -214,7 +216,15 @@ async function loadContext(region: ContextRegion): Promise<RegionContext | null>
 	}
 	peers = peers.filter((p) => p.id !== self.id);
 
-	return { self, aggregate, levels, peersTitle, peers: groupByLabel(peers, peers[0]?.layer === 'district', PEER_LABELS[peers[0]?.layer] ?? '') };
+	const peersLabel = PEER_LABELS[peers[0]?.layer] ?? null;
+	return {
+		self,
+		aggregate,
+		levels,
+		peersTitle,
+		peersLabel,
+		peers: groupByLabel(peers, peers[0]?.layer === 'district', peersLabel ?? '')
+	};
 }
 
 /** Levels and peers of a region (cached for an hour, failures are not cached) */
