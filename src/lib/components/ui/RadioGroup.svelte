@@ -41,17 +41,22 @@
 		{label}
 	</legend>
 
-	<div class="flex gap-1 {inline ? 'flex-row flex-wrap' : 'flex-col'}">
+	<!-- Same look as the segmented Switch ($lib/components/Switch.svelte) used in the charts -->
+	<div
+		class="inline-flex max-w-full gap-0.5 rounded-full border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-800
+			{inline ? 'flex-row flex-wrap' : 'flex-col'} self-start"
+	>
 		{#each options as opt}
 			{@const checked = value === opt.value}
 			{@const id = `${name}-${opt.value}`}
 			<label
 				for={id}
-				class="inline-flex items-center rounded-full border px-3 py-1 text-sm cursor-pointer transition-colors
-					{disabled ? 'opacity-50 cursor-not-allowed' : ''}
+				class="inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 text-sm font-medium transition-colors duration-200
+					focus-within:ring-2 focus-within:ring-blue-500
+					{disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
 					{checked
-						? 'border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500'
-						: 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'}"
+					? 'bg-white text-black dark:bg-gray-900 dark:text-white'
+					: 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'}"
 			>
 				<input
 					{id}

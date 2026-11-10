@@ -15,7 +15,7 @@
 	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { interpolateRgb } from 'd3-interpolate';
-	import { RadioGroup, Select } from '$lib/components/ui';
+	import Switch from '$lib/components/Switch.svelte';
 	import { formatNumber } from '$lib/utils/formatters';
 	import {
 		getCarrier,
@@ -65,6 +65,24 @@
 	$: if (!carrier.metrics.includes(ownMetric)) ownMetric = carrier.metrics[0];
 	$: activeMetric = ownMetric;
 	$: showMetricSelect = carrier.metrics.length > 1;
+
+	// Same segmented Switch + icons as the charts' own metric switch
+	const ICONS: Record<string, string> = {
+		power: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+		capacity: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/></svg>`,
+		units: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="6" height="10" rx="1"/><rect x="9" y="3" width="6" height="14" rx="1"/><rect x="16" y="5" width="6" height="12" rx="1"/></svg>`,
+		area: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 12h16M12 4v16"/></svg>`,
+		absolute: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4H6l6 8-6 8h12"/></svg>`
+	};
+	const normalizeViews = [
+		{ key: 'area', label: 'pro km²', icon: ICONS.area },
+		{ key: 'absolute', label: 'absolut', icon: ICONS.absolute }
+	];
+	$: metricViews = carrier.metrics.map((m) => ({
+		key: m,
+		label: m === 'power' ? 'Leistung' : m === 'capacity' ? 'Kapazität' : 'Anzahl Anlagen',
+		icon: ICONS[m]
+	}));
 
 	// ---------------------------------------------------------------- loading
 	let reqId = 0;
@@ -544,27 +562,20 @@
 </script>
 
 <div class="w-full" bind:clientWidth={width}>
-	<div class="mb-3 flex flex-wrap items-end gap-x-4 gap-y-2">
-		<RadioGroup
+	<div class="mb-4 flex flex-wrap gap-2">
+		<Switch
 			label="Darstellung"
-			bind:value={normalize}
-			options={[
-				{ value: 'area', label: 'pro km²' },
-				{ value: 'absolute', label: 'absolut' }
-			]}
+			views={normalizeViews}
+			activeView={normalize}
+			on:itemClick={(e) => (normalize = e.detail)}
 		/>
 		{#if showMetricSelect}
-			<div class="w-44">
-				<Select
-					label="Kennzahl"
-					small
-					bind:value={ownMetric}
-					options={carrier.metrics.map((m) => ({
-						value: m,
-						label: m === 'power' ? 'Leistung' : m === 'capacity' ? 'Kapazität' : 'Anzahl Anlagen'
-					}))}
-				/>
-			</div>
+			<Switch
+				label="Kennzahl"
+				views={metricViews}
+				activeView={ownMetric}
+				on:itemClick={(e) => (ownMetric = e.detail)}
+			/>
 		{/if}
 	</div>
 
@@ -694,50 +705,19 @@
 			</div>
 		{/if}
 
-		<!-- Text alternative: every region with its value, keyboard-reachable links -->
-		<details class="mt-3 text-sm">
-			<summary
-				class="cursor-pointer text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-			>
-				Alle {coloredRows.length} Regionen als Liste
-			</summary>
-			<ol class="mt-2 max-h-72 overflow-y-auto rounded border border-gray-200 dark:border-gray-700">
+		<!-- Text alternative for screen readers (no visible list) -->
+		<table class="sr-only">
+			<caption>{valueLabel} – {coloredRows.length} Regionen</caption>
+			<thead><tr><th>Rang</th><th>Region</th><th>{valueLabel}</th></tr></thead>
+			<tbody>
 				{#each sortedRows as row (row.region.id)}
-					<li
-						class="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-1.5 last:border-b-0 dark:border-gray-800 {row
-							.region.isCurrent
-							? 'bg-gray-100 font-semibold dark:bg-gray-800'
-							: ''}"
-						on:mouseenter={() => setHover(row.region.id)}
-						on:mouseleave={() => setHover(null)}
-						on:focusin={() => setHover(row.region.id)}
-						on:focusout={() => setHover(null)}
-					>
-						<span class="flex items-center gap-2">
-							<span class="w-6 text-right tabular-nums text-gray-500 dark:text-gray-400"
-								>{row.rank ?? '–'}</span
-							>
-							<span
-								class="inline-block h-3 w-3 shrink-0 rounded-sm border border-gray-300 dark:border-gray-600"
-								style="background: {row.color}"
-								aria-hidden="true"
-							></span>
-							{#if row.region.isCurrent}
-								<span class="text-gray-900 dark:text-white">{row.region.name} (ausgewählt)</span>
-							{:else}
-								<a
-									href={regionHref(row.region)}
-									class="text-gray-900 underline decoration-gray-300 underline-offset-2 hover:decoration-gray-900 dark:text-white dark:decoration-gray-600 dark:hover:decoration-white"
-									>{row.region.name}</a
-								>
-							{/if}
-						</span>
-						<span class="tabular-nums text-gray-700 dark:text-gray-200"
-							>{formatValue(row.value)}</span
-						>
-					</li>
+					<tr>
+						<td>{row.rank ?? '–'}</td>
+						<td>{row.region.name}{row.region.isCurrent ? ' (ausgewählt)' : ''}</td>
+						<td>{formatValue(row.value)}</td>
+					</tr>
 				{/each}
-			</ol>
-		</details>
+			</tbody>
+		</table>
 	{/if}
 </div>

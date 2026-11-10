@@ -101,7 +101,7 @@ Import from `$lib/components/ui`. All components are WCAG 2.1 AA compliant and d
 |---|---|---|
 | `Toggle` | `label`, `bind:checked`, `disabled?` | On/off switch |
 | `Select` | `label`, `bind:value`, `options`, `hideLabel?`, `small?`, `disabled?` | Dropdown — options: `{value, label, group?}[]` |
-| `RadioGroup` | `label`, `bind:value`, `options`, `inline?`, `hideLabel?`, `disabled?` | Pill-style radio buttons |
+| `RadioGroup` | `label`, `bind:value`, `options`, `inline?`, `hideLabel?`, `disabled?` | Segmented control, same look as `$lib/components/Switch.svelte` |
 | `RangeSlider` | `label`, `bind:value`, `min`, `max`, `step?`, `format?`, `hideLabel?`, `disabled?` | Slider with visible value |
 | `Checkbox` | `label`, `bind:checked`, `disabled?` | Single checkbox |
 
