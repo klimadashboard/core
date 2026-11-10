@@ -2,11 +2,8 @@
 <script lang="ts">
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
-	import { page } from '$app/state';
-	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
-	import { RadioGroup } from '$lib/components/ui';
 	import { getRegionContext, growthCode, type ContextRegion } from '$lib/utils/regionContext';
-	import { getAggregateCodes, isAggregateRegion } from '$lib/utils/regionAggregation';
+	import { loadComparisonData } from './comparison';
 	import Chart from '$lib/components/charts/primitives/Chart.svelte';
 	import AxisX from '$lib/components/charts/primitives/axes/AxisX.svelte';
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
@@ -14,7 +11,6 @@
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Loader from '$lib/components/Loader.svelte';
 	import {
-		fetchComparisonData,
 		buildChartData,
 		getColors,
 		comparisonPalette,
@@ -41,6 +37,11 @@
 	export let dataLoading: boolean = true;
 	export let metricMode: MetricMode = 'power';
 
+	// Chart-wide comparison (picker in index.svelte, kept across views)
+	export let comparisons: ContextRegion[] = [];
+	export let selectedUnit: 'absolute' | 'perArea' = 'absolute';
+	export let onRemoveComparison: ((id: string) => void) | undefined = undefined;
+
 	// Optional: pre-provided regions list (if empty, will fetch from API)
 	export let regions: Array<{
 		code: string;
@@ -63,21 +64,11 @@
 	let comparisonLoading = false;
 	let error: string | null = null;
 	let containerEl: HTMLElement;
-	let selectedUnit: 'absolute' | 'perArea' = 'absolute';
-	/** The user picked a unit themselves: don't switch to pro km² automatically */
-	let unitTouched = false;
 	let hoveredSeries: string | null = null;
-
-	/** Proposal only: ?regionPicker=menu shows variant B. Remove once a variant is chosen. */
-	$: pickerVariant = (page.url?.searchParams?.get('regionPicker') === 'menu' ? 'menu' : 'chips') as
-		| 'chips'
-		| 'menu';
 
 	// Comparison palette without red/green next to each other (a11y), solar yellow is the main line
 	const PALETTE_ORDER = [1, 3, 0, 5, 6, 7, 2, 4];
 	$: palette = PALETTE_ORDER.map((i) => comparisonPalette[i]).filter(Boolean);
-	/** Max comparison lines on top of the region itself */
-	const MAX_COMPARISONS = 7;
 
 	// Derived
 	$: params = { energy: selectedEnergy };
@@ -237,8 +228,6 @@
 	// Y-axis formatter
 	$: yFormat = (v: number) => formatNumber(v, 0);
 
-	$: selectedIds = comparisonSeries.filter((s) => s.id && s.id !== region?.id).map((s) => s.id!);
-
 	// Initialize from shared data when it changes
 	$: if (!dataLoading && data.length > 0) {
 		initializeFromSharedData();
@@ -284,79 +273,44 @@
 		}
 	}
 
-	// Data per comparison region, per energy (also feeds the Spitzenreiter ranking)
-	const seriesCache = new Map<string, Promise<RenewablesRawData[]>>();
+	// Keep the comparison lines in sync with the chart-wide selection
+	let syncToken = 0;
+	$: if (!initialLoading && mainData.length) syncComparisons(comparisons, selectedEnergy);
 
-	async function loadRegionData(r: ContextRegion): Promise<RenewablesRawData[]> {
-		const key = `${selectedEnergy}-${r.id}`;
-		if (!seriesCache.has(key)) {
-			const request = (async () => {
-				// Metropolregion: sum of its members; Deutschland: no region filter (region=de has no rows)
-				const code = isAggregateRegion(r) ? await getAggregateCodes(r) : growthCode(r);
-				return fetchComparisonData(code ?? '', params);
-			})();
-			request.catch(() => seriesCache.delete(key));
-			seriesCache.set(key, request);
-		}
-		return seriesCache.get(key)!;
-	}
-
-	function nextColor() {
-		const used = new Set(comparisonSeries.map((s) => s.color));
-		return palette.find((c) => !used.has(c)) ?? palette[comparisonSeries.length % palette.length];
-	}
-
-	let pendingAdds = 0;
-	async function addRegions(list: ContextRegion[]) {
-		const todo = list
-			.filter((r) => !comparisonSeries.some((s) => s.id === r.id))
-			.slice(0, Math.max(0, MAX_COMPARISONS - selectedIds.length));
-		if (!todo.length) return;
-		pendingAdds++;
+	async function syncComparisons(list: ContextRegion[], energy: EnergyType) {
+		const token = ++syncToken;
+		const wanted = new Set(list.map((r) => r.id));
+		const keep = (all: Series[]) => all.filter((s) => s.id === region?.id || wanted.has(s.id ?? ''));
+		comparisonSeries = keep(comparisonSeries);
+		const missing = list.filter((r) => !comparisonSeries.some((s) => s.id === r.id));
+		if (!missing.length) return;
 		comparisonLoading = true;
 		try {
-			const results = await Promise.all(todo.map((r) => loadRegionData(r).catch(() => [])));
-			let next = [...comparisonSeries];
-			todo.forEach((r, i) => {
+			const results = await Promise.all(missing.map((r) => loadComparisonData(r, energy).catch(() => [])));
+			if (token !== syncToken) return; // a newer selection takes over (data is cached)
+			let next = keep(comparisonSeries);
+			missing.forEach((r, i) => {
 				if (!results[i].length || next.some((s) => s.id === r.id)) return;
 				const used = new Set(next.map((s) => s.color));
-				const color = palette.find((c) => !used.has(c)) ?? nextColor();
+				const color = palette.find((c) => !used.has(c)) ?? palette[next.length % palette.length];
 				next = [
 					...next,
 					{ id: r.id, code: growthCode(r) ?? 'DE', name: r.name, area: r.area ?? null, data: results[i], color }
 				];
 			});
-			comparisonSeries = next;
-			// Regions of different size only compare fairly per area (workshop: "Fläche verwenden")
-			if (!unitTouched && comparisonSeries.length > 1) selectedUnit = 'perArea';
+			// Region itself first, then in the order picked
+			const main = next.filter((s) => s.id === region?.id);
+			comparisonSeries = [...main, ...list.map((r) => next.find((s) => s.id === r.id)).filter((s): s is Series => !!s)];
 		} catch (e) {
 			console.error('[CumulativeLineView] Failed to fetch comparison data:', e);
 		} finally {
-			pendingAdds--;
-			comparisonLoading = pendingAdds > 0;
+			if (token === syncToken) comparisonLoading = false;
 		}
 	}
 
-	function removeRegion(id: string | undefined) {
-		if (!id || id === region?.id) return;
-		comparisonSeries = comparisonSeries.filter((s) => s.id !== id);
-	}
-
-	/** Best first, by installed power per km² (latest year) */
-	async function rankByArea(list: ContextRegion[]): Promise<ContextRegion[]> {
-		const withArea = list.filter((r) => r.area);
-		const latest = await Promise.all(
-			withArea.map(async (r) => {
-				const d = await loadRegionData(r).catch(() => []);
-				return (d.at(-1)?.cumulative_power_kw ?? 0) / r.area!;
-			})
-		);
-		return withArea.map((r, i) => ({ r, v: latest[i] })).sort((a, b) => b.v - a.v).map((x) => x.r);
-	}
-
 	function handleLegendClick(series: { id?: string; isGoal?: boolean }) {
-		if (series.isGoal) return;
-		removeRegion(series.id);
+		if (series.isGoal || !series.id || series.id === region?.id) return;
+		onRemoveComparison?.(series.id);
 	}
 </script>
 
@@ -386,37 +340,6 @@
 	{:else if mainData.length === 0}
 		<div class="h-96 flex items-center justify-center text-gray-500">Keine Daten verfügbar</div>
 	{:else}
-		<!-- Controls: region comparison only applies to the power metric -->
-		{#if metricMode === 'power'}
-			<div class="mb-4">
-				<RegionSwitcher
-					{region}
-					mode="compare"
-					variant={pickerVariant}
-					{selectedIds}
-					max={MAX_COMPARISONS}
-					rank={rankByArea}
-					rankBasis="pro km²"
-					on:add={(e) => addRegions(e.detail)}
-					on:remove={(e) => removeRegion(e.detail.id)}
-				>
-					{#snippet end()}
-						<RadioGroup
-							label="Einheit"
-							hideLabel
-							small
-							bind:value={selectedUnit}
-							options={[
-								{ value: 'absolute', label: 'absolut' },
-								{ value: 'perArea', label: 'pro km²' }
-							]}
-							on:change={() => (unitTouched = true)}
-						/>
-					{/snippet}
-				</RegionSwitcher>
-			</div>
-		{/if}
-
 		<!-- Chart -->
 		<div class="relative">
 			{#if comparisonLoading}

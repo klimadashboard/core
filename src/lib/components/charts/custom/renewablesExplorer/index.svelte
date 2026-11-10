@@ -7,6 +7,10 @@
 	import YearlyBarView from './YearlyBarView.svelte';
 	import CumulativeLineView from './CumulativeLineView.svelte';
 	import MapView from './MapView.svelte';
+	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
+	import { RadioGroup } from '$lib/components/ui';
+	import type { ContextRegion } from '$lib/utils/regionContext';
+	import { MAX_COMPARISONS, rankByArea } from './comparison';
 	import {
 		getAvailableViews,
 		getViewLabels,
@@ -139,6 +143,36 @@
 	}
 
 	// Handle view switch
+	// ------------------------------------------------------------------ comparison
+	// Chart-wide: the picker sits above all views, the lines show in "Kumulativ"
+	let comparisons: ContextRegion[] = [];
+	let selectedUnit: 'absolute' | 'perArea' = 'absolute';
+	/** The user picked a unit themselves: don't switch to pro km² automatically */
+	let unitTouched = false;
+	let comparisonRegionId: string | null | undefined = undefined;
+
+	$: if (region?.id !== comparisonRegionId) {
+		comparisonRegionId = region?.id;
+		comparisons = [];
+		unitTouched = false;
+		selectedUnit = 'absolute';
+	}
+	$: comparisonIds = comparisons.map((r) => r.id);
+	$: showsComparison = currentView === 'cumulative';
+
+	function addComparisons(list: ContextRegion[]) {
+		const fresh = list.filter((r) => !comparisonIds.includes(r.id));
+		comparisons = [...comparisons, ...fresh].slice(0, MAX_COMPARISONS);
+		// Comparisons are lines: show them
+		if (!showsComparison) currentView = 'cumulative';
+		// Regions of different size only compare fairly per area (workshop: "Fläche verwenden")
+		if (!unitTouched) selectedUnit = 'perArea';
+	}
+
+	function removeComparison(id: string) {
+		comparisons = comparisons.filter((r) => r.id !== id);
+	}
+
 	function handleViewSwitch(event: CustomEvent) {
 		currentView = event.detail.key ?? event.detail;
 	}
@@ -161,6 +195,46 @@
 			{#if currentView === 'yearly' || currentView === 'cumulative'}
 				<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
 			{/if}
+		</div>
+	{/if}
+
+	<!-- Comparison: chart-wide, lines show in "Kumulativ" -->
+	{#if availableViews.includes('cumulative')}
+		<div class="mb-4">
+			<RegionSwitcher
+				{region}
+				mode="compare"
+				selectedIds={comparisonIds}
+				max={MAX_COMPARISONS}
+				rank={(list) => rankByArea(list, selectedEnergy)}
+				rankBasis="pro km²"
+				on:add={(e) => addComparisons(e.detail)}
+				on:remove={(e) => removeComparison(e.detail.id)}
+			>
+				{#snippet end()}
+					{#if showsComparison && currentMetric === 'power'}
+						<RadioGroup
+							label="Einheit"
+							hideLabel
+							small
+							bind:value={selectedUnit}
+							options={[
+								{ value: 'absolute', label: 'absolut' },
+								{ value: 'perArea', label: 'pro km²' }
+							]}
+							on:change={() => (unitTouched = true)}
+						/>
+					{:else if !showsComparison && comparisons.length}
+						<button
+							type="button"
+							class="rounded-full px-2.5 py-1 text-xs font-medium text-blue-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-300"
+							on:click={() => (currentView = 'cumulative')}
+						>
+							{comparisons.length === 1 ? 'Vergleich' : `${comparisons.length} Vergleiche`} in „Kumulativ“ anzeigen
+						</button>
+					{/if}
+				{/snippet}
+			</RegionSwitcher>
 		</div>
 	{/if}
 
@@ -192,6 +266,9 @@
 				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
 				{dataLoading}
 				metricMode={currentMetric}
+				{comparisons}
+				{selectedUnit}
+				onRemoveComparison={removeComparison}
 			/>
 		{:else if currentView === 'map'}
 			<MapView
