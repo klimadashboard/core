@@ -4,7 +4,7 @@
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { getFallbackParentIds } from '$lib/utils/regionAggregation';
+	import { getFallbackParentIds, isForeignAggregate, aggregatesLast } from '$lib/utils/regionAggregation';
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
@@ -79,7 +79,14 @@
 			results = fetchedResults;
 
 			views = results
-				.map((r) => ({ key: r.key, label: r.label, priority: getLayerPriority(r.layer_label) }))
+				.map((r) => ({
+					key: r.key,
+					label: r.label,
+					// aggregate regions of other pages (e.g. a Metropolregion on a member's page) go last
+					priority: isForeignAggregate({ id: r.id, layer: r.key }, currentId)
+						? 10_000
+						: getLayerPriority(r.layer_label)
+				}))
 				.sort((a, b) => a.priority - b.priority)
 				.map(({ key, label }) => ({ key, label }));
 
@@ -162,7 +169,7 @@
 			const dataSource =
 				selectedRegion.data.find((d) => d.source !== 'climate-target')?.source || 'Emissions data';
 			// Compute info text placeholders from page region context
-			const infoTextPlaceholders = computeInfoTextPlaceholders(results, pageRegionContext);
+			const infoTextPlaceholders = computeInfoTextPlaceholders(aggregatesLast(results, currentId), pageRegionContext);
 			const chartData = buildChartData(
 				selectedRegion,
 				sectors,
