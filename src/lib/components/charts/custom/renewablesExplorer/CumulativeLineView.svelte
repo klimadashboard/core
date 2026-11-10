@@ -2,7 +2,11 @@
 <script lang="ts">
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
-	import { getRegions } from '$lib/utils/regions';
+	import { page } from '$app/state';
+	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
+	import { RadioGroup } from '$lib/components/ui';
+	import { getRegionContext, growthCode, type ContextRegion } from '$lib/utils/regionContext';
+	import { getAggregateCodes, isAggregateRegion } from '$lib/utils/regionAggregation';
 	import Chart from '$lib/components/charts/primitives/Chart.svelte';
 	import AxisX from '$lib/components/charts/primitives/axes/AxisX.svelte';
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
@@ -13,7 +17,6 @@
 		fetchComparisonData,
 		buildChartData,
 		getColors,
-		getDistance,
 		comparisonPalette,
 		formatPower,
 		formatNumber,
@@ -51,44 +54,38 @@
 		parents?: Array<{ id: string; layer: string }>;
 	}> = [];
 
+	type Series = ComparisonSeries & { id?: string; area?: number | null };
+
 	// State
 	let mainData: RenewablesRawData[] = [];
-	let comparisonSeries: ComparisonSeries[] = [];
+	let comparisonSeries: Series[] = [];
 	let initialLoading = true;
 	let comparisonLoading = false;
 	let error: string | null = null;
 	let containerEl: HTMLElement;
 	let selectedUnit: 'absolute' | 'perArea' = 'absolute';
-	let searchTerm = '';
+	/** The user picked a unit themselves: don't switch to pro km² automatically */
+	let unitTouched = false;
 	let hoveredSeries: string | null = null;
 
-	// Region search state
-	let allRegions: Array<{
-		id?: string;
-		code: string;
-		code_short?: string;
-		name: string;
-		center?: [number, number] | [string, string];
-		area?: number;
-		layer?: string;
-		layer_label?: string;
-		visible?: boolean;
-		parents?: Array<{ id: string; layer: string }>;
-	}> = [];
-	let regionsLoading = false;
-	let regionsLoaded = false;
-	let searchDropdownOpen = false;
+	/** Proposal only: ?regionPicker=menu shows variant B. Remove once a variant is chosen. */
+	$: pickerVariant = (page.url?.searchParams?.get('regionPicker') === 'menu' ? 'menu' : 'chips') as
+		| 'chips'
+		| 'menu';
+
+	// Comparison palette without red/green next to each other (a11y), solar yellow is the main line
+	const PALETTE_ORDER = [1, 3, 0, 5, 6, 7, 2, 4];
+	$: palette = PALETTE_ORDER.map((i) => comparisonPalette[i]).filter(Boolean);
+	/** Max comparison lines on top of the region itself */
+	const MAX_COMPARISONS = 7;
 
 	// Derived
 	$: params = { energy: selectedEnergy };
 	$: colors = getColors(selectedEnergy);
-	$: regionArea = region?.area_km2 || region?.area || null;
-
-	// Use provided regions or fetched regions
-	$: effectiveRegions = regions.length > 0 ? regions : allRegions;
-
-	// Get parent region IDs from current region
-	$: parentRegionIds = new Set(region?.parents?.map((p) => p.id) || []);
+	// Page regions don't always carry the area: fall back to the region record
+	let contextArea: number | null = null;
+	$: getRegionContext(region).then((c) => (contextArea = c?.self.area ?? null));
+	$: regionArea = region?.area_km2 || (region as { area?: number } | null)?.area || contextArea || null;
 
 	// Check if we should show the goal line (only when main region is the only selected region)
 	$: mainRegionCode = region?.code || region?.codeShort || 'DE';
@@ -106,7 +103,7 @@
 	);
 
 	function prepareChartData(
-		series: ComparisonSeries[],
+		series: Series[],
 		main: RenewablesRawData[],
 		unit: string,
 		area: number | null,
@@ -117,31 +114,29 @@
 		const result: Array<{
 			name: string;
 			code?: string;
+			id?: string;
 			color: string;
 			isDashed?: boolean;
 			isGoal?: boolean;
 			data: Array<{ year: number; value: number }>;
 		}> = [];
 
-		// Add comparison series
+		// Add comparison series (pro km² needs the area: series without one are left out)
 		for (const s of series) {
-			const regionInfo = effectiveRegions.find(
-				(r) =>
-					r.code?.toLowerCase() === s.code?.toLowerCase() ||
-					r.code_short?.toLowerCase() === s.code?.toLowerCase()
-			);
-			const regionArea = regionInfo?.area || null;
+			const seriesArea = s.id === region?.id ? area : (s.area ?? null);
+			if (metric !== 'units' && unit === 'perArea' && !seriesArea) continue;
 			result.push({
 				name: s.name,
 				code: s.code,
+				id: s.id,
 				color: s.color,
 				data: s.data.map((point) => ({
 					year: point.year,
 					value:
 						metric === 'units'
 							? point.cumulative_units || 0
-							: unit === 'perArea' && regionArea
-								? point.cumulative_power_kw / regionArea
+							: unit === 'perArea' && seriesArea
+								? point.cumulative_power_kw / seriesArea
 								: point.cumulative_power_kw
 				}))
 			});
@@ -242,118 +237,7 @@
 	// Y-axis formatter
 	$: yFormat = (v: number) => formatNumber(v, 0);
 
-	// Searchable regions: show parent regions first when no search term, otherwise search all
-	$: selectedCodes = new Set(comparisonSeries.map((s) => s.code));
-
-	// Parent regions (from current region's parents array)
-	$: parentRegions = effectiveRegions.filter((r) => {
-		if (!r.id) return false;
-		return parentRegionIds.has(r.id);
-	});
-
-	// Helper to check if a region is already selected
-	function isRegionSelected(r: { code: string; code_short?: string }): boolean {
-		const code = r.code_short || r.code;
-		// Check both the code and code_short against selectedCodes
-		return (
-			selectedCodes.has(code) ||
-			selectedCodes.has(r.code) ||
-			(r.code_short ? selectedCodes.has(r.code_short) : false)
-		);
-	}
-
-	$: searchableRegions = (() => {
-		// If no search term, show parent regions first
-		if (!searchTerm || searchTerm.length < 2) {
-			return parentRegions.filter((r) => !isRegionSelected(r));
-		}
-
-		// Otherwise search all regions
-		return effectiveRegions
-			.filter((r) => {
-				// Exclude countries
-				if (r.layer === 'country') return false;
-				// Exclude hidden regions
-				if (r.visible === false) return false;
-				// Exclude already selected regions
-				if (isRegionSelected(r)) return false;
-				// Filter by search term
-				if (!r.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-				return true;
-			})
-			.sort((a, b) => {
-				// Sort parents first, then by distance
-				const aIsParent = a.id && parentRegionIds.has(a.id);
-				const bIsParent = b.id && parentRegionIds.has(b.id);
-				if (aIsParent && !bIsParent) return -1;
-				if (!aIsParent && bIsParent) return 1;
-
-				if (!region?.center) return 0;
-				const parseCenter = (
-					c: [number, number] | [string, string] | undefined
-				): [number, number] | null => {
-					if (!c) return null;
-					return [parseFloat(String(c[0])), parseFloat(String(c[1]))];
-				};
-				const centerA = parseCenter(a.center);
-				const centerB = parseCenter(b.center);
-				const regionCenter = parseCenter(region.center as [string, string]);
-				return getDistance(regionCenter, centerA) - getDistance(regionCenter, centerB);
-			})
-			.slice(0, 15);
-	})();
-
-	$: filteredSearchRegions = searchableRegions;
-
-	// Fetch available regions using getRegions helper
-	async function fetchAvailableRegions() {
-		if (regions.length > 0) {
-			console.log('[CumulativeLineView] Using provided regions:', regions.length);
-			return;
-		}
-		if (regionsLoaded) {
-			console.log('[CumulativeLineView] Regions already loaded:', allRegions.length);
-			return;
-		}
-
-		regionsLoading = true;
-		console.log('[CumulativeLineView] Fetching regions via getRegions()...');
-
-		try {
-			const result = await getRegions();
-			console.log('[CumulativeLineView] getRegions() returned:', result);
-
-			if (Array.isArray(result)) {
-				allRegions = result;
-				console.log('[CumulativeLineView] Loaded regions:', allRegions.length);
-				console.log('[CumulativeLineView] Sample region:', allRegions[0]);
-			} else if (result && typeof result === 'object' && 'data' in result) {
-				allRegions = (result as any).data || [];
-				console.log('[CumulativeLineView] Loaded regions from .data:', allRegions.length);
-			} else {
-				console.warn('[CumulativeLineView] Unexpected result format:', typeof result);
-				allRegions = [];
-			}
-
-			regionsLoaded = true;
-		} catch (e) {
-			console.error('[CumulativeLineView] Failed to fetch regions:', e);
-			allRegions = [];
-		} finally {
-			regionsLoading = false;
-		}
-	}
-
-	// Debounced search (regions are pre-loaded, so just filter)
-	let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-	function handleSearchInput() {
-		// Regions are already loaded, filtering happens reactively
-		// Just ensure regions are loaded
-		if (!regionsLoaded && !regionsLoading) {
-			fetchAvailableRegions();
-		}
-	}
+	$: selectedIds = comparisonSeries.filter((s) => s.id && s.id !== region?.id).map((s) => s.id!);
 
 	// Initialize from shared data when it changes
 	$: if (!dataLoading && data.length > 0) {
@@ -365,17 +249,14 @@
 		error = null;
 
 		try {
-			// Fetch regions list if not provided
-			if (regions.length === 0 && !regionsLoaded) {
-				await fetchAvailableRegions();
-			}
-
 			// Use shared data
 			mainData = data;
 
 			// Initialize comparison series with main region
 			comparisonSeries = [
 				{
+					id: region?.id,
+					area: regionArea,
 					code: region?.code || region?.codeShort || 'DE',
 					name: region?.name || 'Deutschland',
 					data: mainData,
@@ -403,70 +284,79 @@
 		}
 	}
 
-	async function toggleRegion(toggledRegion: { code: string; code_short?: string; name?: string }) {
-		const codeToUse = toggledRegion.code_short || toggledRegion.code;
-		console.log('[CumulativeLineView] toggleRegion called:', toggledRegion);
-		console.log('[CumulativeLineView] Using code:', codeToUse);
+	// Data per comparison region, per energy (also feeds the Spitzenreiter ranking)
+	const seriesCache = new Map<string, Promise<RenewablesRawData[]>>();
 
-		const isSelected = comparisonSeries.some((d) => d.code === codeToUse);
-
-		if (isSelected && comparisonSeries.length > 1) {
-			console.log('[CumulativeLineView] Removing region:', codeToUse);
-			comparisonSeries = comparisonSeries.filter((d) => d.code !== codeToUse);
-		} else if (!isSelected) {
-			comparisonLoading = true;
-			try {
-				console.log('[CumulativeLineView] Fetching comparison data for:', codeToUse);
-				const data = await fetchComparisonData(codeToUse, params);
-				console.log('[CumulativeLineView] Comparison data received:', data.length, 'records');
-
-				if (data.length === 0) {
-					console.warn(`[CumulativeLineView] No data found for region ${codeToUse}`);
-					comparisonLoading = false;
-					return;
-				}
-
-				const colorIndex = comparisonSeries.length - 1;
-				comparisonSeries = [
-					...comparisonSeries,
-					{
-						code: codeToUse,
-						name: toggledRegion.name || codeToUse,
-						data,
-						color: comparisonPalette[colorIndex % comparisonPalette.length]
-					}
-				];
-				console.log(
-					'[CumulativeLineView] Updated comparison series:',
-					comparisonSeries.map((s) => s.name)
-				);
-			} catch (e) {
-				console.error('[CumulativeLineView] Failed to fetch comparison data:', e);
-			} finally {
-				comparisonLoading = false;
-			}
+	async function loadRegionData(r: ContextRegion): Promise<RenewablesRawData[]> {
+		const key = `${selectedEnergy}-${r.id}`;
+		if (!seriesCache.has(key)) {
+			const request = (async () => {
+				// Metropolregion: sum of its members; Deutschland: no region filter (region=de has no rows)
+				const code = isAggregateRegion(r) ? await getAggregateCodes(r) : growthCode(r);
+				return fetchComparisonData(code ?? '', params);
+			})();
+			request.catch(() => seriesCache.delete(key));
+			seriesCache.set(key, request);
 		}
-
-		searchTerm = '';
-		searchDropdownOpen = false;
+		return seriesCache.get(key)!;
 	}
 
-	function handleInputFocus() {
-		searchDropdownOpen = true;
+	function nextColor() {
+		const used = new Set(comparisonSeries.map((s) => s.color));
+		return palette.find((c) => !used.has(c)) ?? palette[comparisonSeries.length % palette.length];
 	}
 
-	function handleInputBlur() {
-		// Delay closing to allow click on dropdown items
-		setTimeout(() => {
-			searchDropdownOpen = false;
-		}, 200);
+	let pendingAdds = 0;
+	async function addRegions(list: ContextRegion[]) {
+		const todo = list
+			.filter((r) => !comparisonSeries.some((s) => s.id === r.id))
+			.slice(0, Math.max(0, MAX_COMPARISONS - selectedIds.length));
+		if (!todo.length) return;
+		pendingAdds++;
+		comparisonLoading = true;
+		try {
+			const results = await Promise.all(todo.map((r) => loadRegionData(r).catch(() => [])));
+			let next = [...comparisonSeries];
+			todo.forEach((r, i) => {
+				if (!results[i].length || next.some((s) => s.id === r.id)) return;
+				const used = new Set(next.map((s) => s.color));
+				const color = palette.find((c) => !used.has(c)) ?? nextColor();
+				next = [
+					...next,
+					{ id: r.id, code: growthCode(r) ?? 'DE', name: r.name, area: r.area ?? null, data: results[i], color }
+				];
+			});
+			comparisonSeries = next;
+			// Regions of different size only compare fairly per area (workshop: "Fläche verwenden")
+			if (!unitTouched && comparisonSeries.length > 1) selectedUnit = 'perArea';
+		} catch (e) {
+			console.error('[CumulativeLineView] Failed to fetch comparison data:', e);
+		} finally {
+			pendingAdds--;
+			comparisonLoading = pendingAdds > 0;
+		}
 	}
 
-	function handleLegendClick(series: { code?: string; isGoal?: boolean }) {
-		// Don't allow removing goal line or if it's the last region
-		if (series.isGoal || !series.code) return;
-		if (comparisonSeries.length <= 1) return;
-		toggleRegion({ code: series.code });
+	function removeRegion(id: string | undefined) {
+		if (!id || id === region?.id) return;
+		comparisonSeries = comparisonSeries.filter((s) => s.id !== id);
+	}
+
+	/** Best first, by installed power per km² (latest year) */
+	async function rankByArea(list: ContextRegion[]): Promise<ContextRegion[]> {
+		const withArea = list.filter((r) => r.area);
+		const latest = await Promise.all(
+			withArea.map(async (r) => {
+				const d = await loadRegionData(r).catch(() => []);
+				return (d.at(-1)?.cumulative_power_kw ?? 0) / r.area!;
+			})
+		);
+		return withArea.map((r, i) => ({ r, v: latest[i] })).sort((a, b) => b.v - a.v).map((x) => x.r);
+	}
+
+	function handleLegendClick(series: { id?: string; isGoal?: boolean }) {
+		if (series.isGoal) return;
+		removeRegion(series.id);
 	}
 </script>
 
@@ -498,68 +388,31 @@
 	{:else}
 		<!-- Controls: region comparison only applies to the power metric -->
 		{#if metricMode === 'power'}
-			<div class="flex items-center gap-2 flex-wrap mb-4">
-				<!-- Region Search -->
-				<div class="relative">
-					<input
-						type="text"
-						bind:value={searchTerm}
-						on:input={handleSearchInput}
-						on:focus={handleInputFocus}
-						on:blur={handleInputBlur}
-						placeholder="Region hinzufügen..."
-						class="bg-gray-100 dark:bg-gray-800 rounded-full py-2 px-4 text-sm w-48"
+			<div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<div class="min-w-0 flex-1">
+					<RegionSwitcher
+						{region}
+						mode="compare"
+						variant={pickerVariant}
+						{selectedIds}
+						max={MAX_COMPARISONS}
+						rank={rankByArea}
+						rankBasis="pro km²"
+						on:add={(e) => addRegions(e.detail)}
+						on:remove={(e) => removeRegion(e.detail.id)}
 					/>
-					{#if regionsLoading}
-						<div class="absolute right-3 top-1/2 -translate-y-1/2">
-							<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-						</div>
-					{/if}
-
-					{#if searchDropdownOpen && (filteredSearchRegions.length > 0 || searchTerm.length >= 2)}
-						<div
-							class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto w-64"
-						>
-							{#if filteredSearchRegions.length > 0}
-								{#if !searchTerm || searchTerm.length < 2}
-									<div
-										class="px-4 py-1 text-xs text-gray-400 border-b border-gray-100 dark:border-gray-700"
-									>
-										Übergeordnete Regionen
-									</div>
-								{/if}
-								{#each filteredSearchRegions as searchRegion}
-									<button
-										class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex justify-between items-center"
-										on:mousedown|preventDefault={() => toggleRegion(searchRegion)}
-									>
-										<span>{searchRegion.name}</span>
-										{#if searchRegion.layer_label}
-											<span class="text-xs text-gray-400">{searchRegion.layer_label}</span>
-										{:else if searchRegion.layer}
-											<span class="text-xs text-gray-400">{searchRegion.layer}</span>
-										{/if}
-									</button>
-								{/each}
-							{:else if searchTerm.length >= 2 && !regionsLoading}
-								<div class="px-4 py-2 text-sm text-gray-500">Keine Regionen gefunden</div>
-							{:else if searchTerm.length < 2}
-								<div class="px-4 py-2 text-sm text-gray-500">Mind. 2 Zeichen eingeben...</div>
-							{/if}
-						</div>
-					{/if}
 				</div>
-
-				<!-- Unit Toggle -->
-				<div class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 px-3 text-sm inline-flex gap-2">
-					<label class:font-bold={selectedUnit === 'absolute'}>
-						<input type="radio" value="absolute" class="mr-1" bind:group={selectedUnit} />
-						absolut
-					</label>
-					<label class:font-bold={selectedUnit === 'perArea'}>
-						<input type="radio" value="perArea" class="mr-1" bind:group={selectedUnit} />
-						pro km²
-					</label>
+				<div class="shrink-0">
+					<RadioGroup
+						label="Einheit"
+						hideLabel
+						bind:value={selectedUnit}
+						options={[
+							{ value: 'absolute', label: 'absolut' },
+							{ value: 'perArea', label: 'pro km²' }
+						]}
+						on:change={() => (unitTouched = true)}
+					/>
 				</div>
 			</div>
 		{/if}
@@ -706,13 +559,14 @@
 		<!-- Legend -->
 		<div class="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-sm">
 			{#each chartData as series}
-				{@const canRemove = !series.isGoal && series.code && comparisonSeries.length > 1}
+				{@const canRemove = !series.isGoal && !!series.id && series.id !== region?.id}
 				<button
 					class="flex items-center gap-2 transition-opacity {canRemove ? 'hover:opacity-70' : ''}"
 					on:mouseenter={() => (hoveredSeries = series.name)}
 					on:mouseleave={() => (hoveredSeries = null)}
 					on:click={() => handleLegendClick(series)}
 					disabled={!canRemove}
+					aria-label={canRemove ? `${series.name} aus dem Vergleich entfernen` : undefined}
 				>
 					<div
 						class="w-5 h-0.5"
