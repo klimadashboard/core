@@ -52,45 +52,31 @@
 	let hoverTimeout = null;
 	let currentRegionCode = null; // Code of the current page's region for highlighting
 
-	// Colors for the gradient (green for EV share)
-	function getColorRange() {
-		const driveType = driveTypes.find(d => d.key === selectedDriveType);
-		const baseColor = driveType?.color || '#10B981';
-		// Create a gradient from light to the base color
-		const lightColor = isDarkMode ? '#1F2937' : '#F3F4F6';
-		return [lightColor, baseColor];
-	}
-
 	function getInterpolatedColors(start, end, steps) {
 		const interp = interpolateRgb(start, end);
 		return Array.from({ length: steps }, (_, i) => interp(i / (steps - 1)));
 	}
 
-	function createColorScale(data) {
-		if (!data || data.size === 0) {
-			return { scale: () => '#F2F2F2', range: [], thresholds: [] };
-		}
+	// Fixed thresholds per drive type for a clear visual spread
+	const fixedScales = {
+		'Elektro':        { thresholds: [2, 5, 8, 12, 18, 25] },
+		'Plug-in-Hybrid': { thresholds: [1, 2, 4, 6, 8, 12] },
+		'Hybrid':         { thresholds: [2, 5, 8, 12, 16, 22] },
+		'Benzin':         { thresholds: [20, 28, 34, 40, 46, 52] },
+		'Diesel':         { thresholds: [15, 22, 28, 34, 40, 48] }
+	};
 
-		const values = Array.from(data.values())
-			.map(d => d[selectedDriveType] || 0)
-			.filter(v => v != null && v > 0);
+	function createColorScale(_data) {
+		const driveType = driveTypes.find(d => d.key === selectedDriveType);
+		const baseColor = driveType?.color || '#10B981';
+		const lightColor = isDarkMode ? '#1F2937' : '#F3F4F6';
 
-		if (!values.length) {
-			return { scale: () => '#F2F2F2', range: [], thresholds: [] };
-		}
+		const cfg = fixedScales[selectedDriveType] || { thresholds: [5, 10, 15, 20, 30, 50] };
+		const steps = cfg.thresholds.length + 1;
+		const colorRange = getInterpolatedColors(lightColor, baseColor, steps);
+		const scale = scaleThreshold().domain(cfg.thresholds).range(colorRange);
 
-		const sorted = [...values].sort((a, b) => a - b);
-		const steps = 7;
-		const thresholds = Array.from({ length: steps - 1 }, (_, i) => {
-			const p = (i + 1) / steps;
-			return sorted[Math.floor(p * sorted.length)];
-		});
-
-		const [startColor, endColor] = getColorRange();
-		const colorRange = getInterpolatedColors(startColor, endColor, steps);
-		const scale = scaleThreshold().domain(thresholds).range(colorRange);
-
-		return { scale, range: colorRange, thresholds };
+		return { scale, range: colorRange, thresholds: cfg.thresholds };
 	}
 
 	function tilesURLForLayer(layer) {
@@ -134,27 +120,69 @@
 			const json = await res.json();
 			const records = json.data || [];
 
-			// Get region shapes to map region IDs to codes
+			// Get ALL region shapes (not just selected layer) to resolve any region ID
 			const allRegions = await getRegions();
-			const regionsOfLayer = allRegions.filter(r => r.country === country && r.layer === layerFilter);
+			const countryRegions = allRegions.filter(r => r.country === country);
 
-			// Create a map from region ID to region code (code_short for DE, code for AT)
-			const regionIdToCode = new Map();
-			const regionIdToName = new Map();
-			for (const r of regionsOfLayer) {
-				const code = PUBLIC_VERSION === 'at' ? r.code : (r.code_short || r.code);
-				regionIdToCode.set(r.id, code);
-				regionIdToName.set(r.id, r.name);
+			// Map region ID → region object (for all layers)
+			const regionById = new Map();
+			for (const r of countryRegions) {
+				regionById.set(r.id, r);
 			}
 
-			// Group records by region and period, then get latest period per region
+			// Map region ID → tile code for the selected layer
+			const tileCodeForLayer = (r) =>
+				PUBLIC_VERSION === 'at' ? r.code : (r.code_short || r.code);
+
+			// For district view: map municipality ID → parent district tile code
+			const muniToDistrictCode = new Map();
+			const districtNames = new Map();
+			if (layerFilter === 'district') {
+				const districts = countryRegions.filter(r => r.layer === 'district');
+				for (const d of districts) {
+					const code = tileCodeForLayer(d);
+					districtNames.set(code, d.name);
+				}
+				const municipalities = countryRegions.filter(r => r.layer === 'municipality');
+				for (const m of municipalities) {
+					if (Array.isArray(m.parents)) {
+						const districtParent = m.parents.find(p => p.layer === 'district');
+						if (districtParent) {
+							const parentRegion = regionById.get(districtParent.id);
+							if (parentRegion) {
+								muniToDistrictCode.set(m.id, tileCodeForLayer(parentRegion));
+							}
+						}
+					}
+				}
+			}
+
+			// Resolve each record's region to a tile code for the selected layer
+			function resolveRegionCode(regionId) {
+				const r = regionById.get(regionId);
+				if (!r) return null;
+
+				// Record matches selected layer directly
+				if (r.layer === layerFilter) return tileCodeForLayer(r);
+
+				// Municipality record on district view → aggregate to parent district
+				if (layerFilter === 'district' && r.layer === 'municipality') {
+					return muniToDistrictCode.get(regionId) || null;
+				}
+
+				return null;
+			}
+
+			// Group records by resolved tile code and period
 			const regionPeriods = new Map();
 			for (const row of records) {
-				const regionCode = regionIdToCode.get(row.region) || row.region;
-				if (!regionPeriods.has(regionCode)) {
-					regionPeriods.set(regionCode, new Map());
+				const code = resolveRegionCode(row.region);
+				if (!code) continue; // Skip unresolved records
+
+				if (!regionPeriods.has(code)) {
+					regionPeriods.set(code, new Map());
 				}
-				const periods = regionPeriods.get(regionCode);
+				const periods = regionPeriods.get(code);
 				if (!periods.has(row.period)) {
 					periods.set(row.period, []);
 				}
@@ -163,13 +191,13 @@
 
 			// Process into regionData with shares
 			regionData = new Map();
-			for (const [regionCode, periods] of regionPeriods.entries()) {
+			for (const [code, periods] of regionPeriods.entries()) {
 				// Get the latest period
 				const sortedPeriods = Array.from(periods.keys()).sort();
 				const latestPeriod = sortedPeriods[sortedPeriods.length - 1];
 				const latestRecords = periods.get(latestPeriod);
 
-				// Calculate total and shares
+				// Calculate total and shares (aggregated if district view)
 				const categoryTotals = {};
 				let total = 0;
 				for (const row of latestRecords) {
@@ -183,17 +211,22 @@
 					shares[cat] = total > 0 ? (val / total) * 100 : 0;
 				}
 
-				// Find region name
-				let name = regionCode;
-				for (const [id, code] of regionIdToCode.entries()) {
-					if (code === regionCode) {
-						name = regionIdToName.get(id) || regionCode;
-						break;
+				// Region name: look up from the layer's regions
+				let name = code;
+				if (layerFilter === 'district') {
+					name = districtNames.get(code) || code;
+				} else {
+					// Find municipality name
+					for (const r of countryRegions) {
+						if (r.layer === 'municipality' && tileCodeForLayer(r) === code) {
+							name = r.name;
+							break;
+						}
 					}
 				}
 
 				shares.name = name;
-				regionData.set(regionCode, shares);
+				regionData.set(code, shares);
 			}
 
 			loading = false;
@@ -236,7 +269,6 @@
 
 		const feature = e.features[0];
 		const regionCode = String(feature.properties?.[idProp]);
-		const rName = feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
 
 		const data = regionData.get(regionCode);
 		if (!data) {
@@ -244,8 +276,11 @@
 			return;
 		}
 
+		// Prefer name from API data, fall back to tile properties
+		const rName = data.name || feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
+
 		hoveredRegion = {
-			name: data.name || rName,
+			name: rName,
 			code: regionCode,
 			...data
 		};
@@ -372,6 +407,8 @@
 		map.on('sourcedata', onData);
 	}
 
+	let installedLayer = null;
+
 	onMount(async () => {
 		// Set the current region's code for highlighting from props
 		if (regionCode || regionCodeShort) {
@@ -384,6 +421,7 @@
 		if (map && map.loaded()) {
 			installRegionSourceAndLayers();
 		}
+		installedLayer = selectedLayer;
 	});
 
 	onDestroy(() => {
@@ -392,12 +430,13 @@
 		}
 	});
 
-	// Reactivity
-	$: if (!loading && map && selectedLayer) {
+	// Only react to actual layer changes (not loading toggling)
+	$: if (map && selectedLayer && selectedLayer !== installedLayer && installedLayer !== null) {
 		removeRegionSourceAndLayers();
 		idProp = 'AGS';
 		installRegionSourceAndLayers();
 		loadData();
+		installedLayer = selectedLayer;
 	}
 
 	$: if (!loading && map && regionData && selectedDriveType) {

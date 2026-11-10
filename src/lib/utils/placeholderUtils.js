@@ -8,7 +8,30 @@ import formatNumber from '$lib/stores/formatNumber';
 
 dayjs.extend(relativeTime);
 
-const getSiteData = async () => {
+// ---------------------------------------------------------------------------
+// TTL cache — each data source is fetched at most once per TTL period.
+// Concurrent calls share one in-flight promise (deduplication).
+// ---------------------------------------------------------------------------
+const dataCache = new Map();
+const DATA_TTL = 5 * 60 * 1000; // 5 minutes — default, for sources that can change intraday
+const HOUR_TTL = 60 * 60 * 1000; // 1 hour — for sources that only update once a day upstream
+
+function cachedFetch(key, fetcher, ttl = DATA_TTL) {
+	const entry = dataCache.get(key);
+	if (entry && Date.now() < entry.expires) return entry.promise;
+	const promise = fetcher().catch((err) => {
+		dataCache.delete(key); // Don't cache errors
+		throw err;
+	});
+	dataCache.set(key, { promise, expires: Date.now() + ttl });
+	return promise;
+}
+
+// ---------------------------------------------------------------------------
+// Raw data fetchers (called at most once per TTL period)
+// ---------------------------------------------------------------------------
+
+const _fetchSiteData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	const data = await directus
@@ -26,7 +49,7 @@ const getSiteData = async () => {
 	};
 };
 
-const getRenewableData = async function () {
+const _fetchRenewableData = async function () {
 	const directus = getDirectusInstance(fetch);
 
 	try {
@@ -89,16 +112,18 @@ const getRenewableData = async function () {
 	}
 };
 
-const getCO2PriceData = async () => {
+const _fetchCO2PriceData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
 		const data = await directus
-			.request(readItems('carbon_prices', { sort: ['-date'] }))
+			.request(readItems('carbon_prices', { sort: ['-date'], limit: -1 }))
 			.catch(() => []);
 
-		const co2PriceNowEUEntry = data.find((d) => d.region === 'EU');
-		const co2PriceNowNationalEntry = data.find((d) => d.region === PUBLIC_VERSION);
+		const co2PriceNowEUEntry = data.find((d) => d.region === 'EU' && d.type === 'ETS');
+		const co2PriceNowNationalEntry = data.find(
+			(d) => d.region === PUBLIC_VERSION && d.type === 'CO2-Preis'
+		);
 
 		return {
 			co2PriceNowEU: co2PriceNowEUEntry?.value || 'N/A',
@@ -117,7 +142,7 @@ const getCO2PriceData = async () => {
 	}
 };
 
-const getGasUsageData = async () => {
+const _fetchGasUsageData = async () => {
 	const directus = getDirectusInstance(fetch);
 
 	try {
@@ -165,7 +190,24 @@ const getGasUsageData = async () => {
 	}
 };
 
-const getBalkonStats = async () => {
+const _fetchCO2ConcentrationData = async () => {
+	const directus = getDirectusInstance(fetch);
+
+	try {
+		const data = await directus
+			.request(readItems('global_co2_concentration', { sort: ['-year'], limit: 1 }))
+			.catch(() => []);
+
+		return {
+			co2ConcentrationCurrent: data[0]?.mean != null ? formatNumber(Math.round(data[0].mean)) : 'N/A'
+		};
+	} catch (error) {
+		console.error('Error fetching CO2 concentration data:', error);
+		return { co2ConcentrationCurrent: 'N/A' };
+	}
+};
+
+const _fetchBalkonStats = async () => {
 	try {
 		const res = await fetch('https://base.klimadashboard.org/get-balkonkraftwerke');
 		const json = await res.json();
@@ -209,6 +251,71 @@ const getBalkonStats = async () => {
 	}
 };
 
+const _fetchSolarUnitsStats = async () => {
+	try {
+		const res = await fetch(
+			'https://base.klimadashboard.org/get-renewables-growth?group=year&table=energy_solar_units'
+		);
+		const json = await res.json();
+
+		const byYear = json.by_year;
+		if (!Array.isArray(byYear) || !byYear.length) throw new Error('Invalid response format');
+
+		const currentYear = dayjs().year();
+		const lastYear = currentYear - 1;
+
+		const thisYearStats = byYear.find((d) => Number(d.year) === currentYear);
+		const lastYearStats = byYear.find((d) => Number(d.year) === lastYear);
+		const latestStats = byYear[byYear.length - 1];
+
+		const addedThisYear = thisYearStats?.added_units || 0;
+		const hoursPassedThisYear = dayjs().diff(dayjs(`${currentYear}-01-01`), 'hour') || 1;
+		const unitsPerHourThisYear = addedThisYear / hoursPassedThisYear;
+
+		const netLastYear = lastYearStats?.net_units || 0;
+		const hoursInLastYear = dayjs(`${currentYear}-01-01`).diff(dayjs(`${lastYear}-01-01`), 'hour');
+		const unitsPerHourLastYear = hoursInLastYear ? netLastYear / hoursInLastYear : 0;
+
+		const toMillions = (value) =>
+			(value / 1_000_000).toLocaleString('de-AT', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2
+			});
+
+		return {
+			solarUnitsThisYear: formatNumber(addedThisYear, undefined, 0),
+			solarUnitsPerHourThisYear: formatNumber(Math.round(unitsPerHourThisYear), undefined, 0),
+			solarUnitsInOperationMillions: toMillions(latestStats?.cumulative_units || 0),
+			solarLastYear: String(lastYear),
+			solarUnitsLastYearMillions: toMillions(netLastYear),
+			solarUnitsPerHourLastYear: formatNumber(Math.round(unitsPerHourLastYear), undefined, 0),
+			solarUnitsDate: dayjs(json.update_date).format('D.M.YYYY')
+		};
+	} catch (error) {
+		console.error('Error fetching solar units stats:', error);
+		return {
+			solarUnitsThisYear: 'N/A',
+			solarUnitsPerHourThisYear: 'N/A',
+			solarUnitsInOperationMillions: 'N/A',
+			solarLastYear: 'N/A',
+			solarUnitsLastYearMillions: 'N/A',
+			solarUnitsPerHourLastYear: 'N/A',
+			solarUnitsDate: 'N/A'
+		};
+	}
+};
+
+// ---------------------------------------------------------------------------
+// Cached accessors — deduplicates calls and caches for 5 minutes
+// ---------------------------------------------------------------------------
+const getSiteData = () => cachedFetch('site', _fetchSiteData);
+const getRenewableData = () => cachedFetch('renewable', _fetchRenewableData);
+const getCO2PriceData = () => cachedFetch('co2price', _fetchCO2PriceData, HOUR_TTL);
+const getGasUsageData = () => cachedFetch('gasusage', _fetchGasUsageData, HOUR_TTL);
+const getCO2ConcentrationData = () => cachedFetch('co2concentration', _fetchCO2ConcentrationData);
+const getBalkonStats = () => cachedFetch('balkon', _fetchBalkonStats, HOUR_TTL);
+const getSolarUnitsStats = () => cachedFetch('solarUnits', _fetchSolarUnitsStats, HOUR_TTL);
+
 const placeholderHandlers = {
 	renewablePercentageNow: async () => (await getRenewableData()).renewablePercentageNow,
 	renewablePercentageNowDate: async () => (await getRenewableData()).renewablePercentageNowDate,
@@ -223,6 +330,7 @@ const placeholderHandlers = {
 	gasUsageCurrentDate: async () => (await getGasUsageData()).gasUsageCurrentDate,
 	gasUsageLastYear: async () => (await getGasUsageData()).gasUsageLastYear,
 	gasUsageLastYearDate: async () => (await getGasUsageData()).gasUsageLastYearDate,
+	co2ConcentrationCurrent: async () => (await getCO2ConcentrationData()).co2ConcentrationCurrent,
 	currentCountry: async () => (await getSiteData()).region,
 	balkonkraftUnitsThisYear: async () => (await getBalkonStats()).balkonkraftUnitsThisYear,
 	balkonkraftUnitsLastYear: async () => (await getBalkonStats()).balkonkraftUnitsLastYear,
@@ -230,7 +338,15 @@ const placeholderHandlers = {
 	balkonkraftPowerTotal: async () => (await getBalkonStats()).balkonkraftPowerTotal,
 	balkonkraftDate: async () => (await getBalkonStats()).balkonkraftDate,
 	balkonkraftUnitsPerDayThisYear: async () =>
-		(await getBalkonStats()).balkonkraftUnitsPerDayThisYear
+		(await getBalkonStats()).balkonkraftUnitsPerDayThisYear,
+	solarUnitsThisYear: async () => (await getSolarUnitsStats()).solarUnitsThisYear,
+	solarUnitsPerHourThisYear: async () => (await getSolarUnitsStats()).solarUnitsPerHourThisYear,
+	solarUnitsInOperationMillions: async () =>
+		(await getSolarUnitsStats()).solarUnitsInOperationMillions,
+	solarLastYear: async () => (await getSolarUnitsStats()).solarLastYear,
+	solarUnitsLastYearMillions: async () => (await getSolarUnitsStats()).solarUnitsLastYearMillions,
+	solarUnitsPerHourLastYear: async () => (await getSolarUnitsStats()).solarUnitsPerHourLastYear,
+	solarUnitsDate: async () => (await getSolarUnitsStats()).solarUnitsDate
 };
 
 const parseTemplate = async (template) => {

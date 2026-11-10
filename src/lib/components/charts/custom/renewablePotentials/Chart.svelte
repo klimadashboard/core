@@ -80,7 +80,8 @@
 		<svg
 			width={'100%'}
 			height={'100%'}
-			on:focus={(event) => {
+			role="presentation"
+			on:focus={(event)=> {
 				hoverBundesland = null;
 				hoverType = null;
 			}}
@@ -101,7 +102,8 @@
 							height={yScale(0) - yScale(1)}
 							fill={type.color}
 							opacity={0.3}
-							on:focus={(event) => {
+							role="presentation"
+							on:focus={(event)=> {
 								hoverBundesland = bundesland;
 								hoverType = type;
 								event.stopPropagation();
@@ -124,7 +126,8 @@
 							height={yScale(0) - yScale(ratio_techn_2030)}
 							fill={type.color}
 							opacity={0.5}
-							on:focus={(event) => {
+							role="presentation"
+							on:focus={(event)=> {
 								hoverBundesland = bundesland;
 								hoverType = type;
 								event.stopPropagation();
@@ -142,7 +145,8 @@
 							height={yScale(0) - yScale(ratio_current_2030(ratio_data, type.dataKey))}
 							fill={type.color}
 							opacity={1.0}
-							on:focus={(event) => {
+							role="presentation"
+							on:focus={(event)=> {
 								hoverBundesland = bundesland;
 								hoverType = type;
 								event.stopPropagation();

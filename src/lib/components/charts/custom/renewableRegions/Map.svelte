@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import { scaleThreshold } from 'd3-scale';
 	import { interpolateRgb } from 'd3-interpolate';
 	import { fade } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import Loader from '$lib/components/Loader.svelte';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	let layers = [
 		{
@@ -191,6 +192,9 @@
 	onMount(() => {
 		map = new maplibregl.Map({
 			container: mapContainer,
+			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
+			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
+			canvasContextAttributes: { preserveDrawingBuffer: true },
 			style: {
 				version: 8,
 				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=C9NLXahOLRDRQl9OB6yH`,
@@ -216,17 +220,7 @@
 		map.on('load', () => {
 			installRegionSourceAndLayers();
 
-			map.addSource('carto-voyager', {
-				type: 'raster',
-				tiles: [
-					'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-				],
-				tileSize: 256,
-				maxzoom: 20
-			});
+			map.addSource('carto-voyager', cartoRasterSource('voyager', { maxzoom: 20 }));
 
 			map.addLayer(
 				{

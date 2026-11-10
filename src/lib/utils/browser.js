@@ -1,5 +1,4 @@
 import { chromium } from 'playwright';
-import { EventEmitter } from 'events';
 
 const BROWSER_OPTIONS = {
 	headless: true,

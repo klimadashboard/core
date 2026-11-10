@@ -27,9 +27,9 @@
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 	export let mode: DataMode | undefined = undefined;
 
-	// Check URL for mode parameter (for embeds)
-	$: urlMode = page.url?.searchParams?.get('mode') as DataMode | null;
-	$: initialMode = urlMode || mode;
+	// Preset from URL (data-mode embed attribute) or prop — only affects initial selection,
+	// never hides available modes from the switch.
+	$: presetMode = (page.url?.searchParams?.get('mode') as DataMode | null) ?? mode ?? null;
 
 	// State
 	let data: VehicleRawData[] = [];
@@ -68,7 +68,8 @@
 
 	// Build region candidates from current region + parents (for fallback)
 	// The API accepts region IDs directly, so we just pass the IDs
-	$: regionCandidates = region
+	// Only treat as region if it has a valid layer (page content items from RegionProvider don't)
+	$: regionCandidates = region?.layer
 		? [
 				{ id: region.id, name: region.name, layer: region.layer, layer_label: region.layer_label },
 				...(region.parents?.map((p: any) => ({
@@ -86,8 +87,8 @@
 		...(hasBestand ? [{ key: 'bestand', label: 'Bestand' }] : [])
 	];
 
-	// Show switch if at least one mode is available
-	$: showSwitch = hasBestand || hasNeuzulassungen;
+	// Only show switch when both modes are available — single-item switch is meaningless
+	$: showSwitch = hasBestand && hasNeuzulassungen;
 
 	// Derived
 	$: params = { mode: activeMode };
@@ -113,6 +114,26 @@
 	// X domain
 	$: xMin = data.length > 0 ? Math.min(...data.map((d) => d.date.getTime())) : Date.now();
 	$: xMax = data.length > 0 ? Math.max(...data.map((d) => d.date.getTime())) : Date.now();
+
+	// Monthly resolution if any data point falls outside January
+	$: isMonthlyData = data.some((d) => d.date.getMonth() !== 0);
+
+	// Skip a year's tick when the next year starts within ~3 months (partial leading year)
+	const MIN_YEAR_TICK_GAP = 90 * 24 * 60 * 60 * 1000;
+
+	// One tick per year for Bestand (first data point of each calendar year)
+	$: yearTicks = (() => {
+		const seen = new Set<number>();
+		return chartData
+			.filter((d) => {
+				const year = new Date(d.timestamp).getFullYear();
+				if (seen.has(year)) return false;
+				seen.add(year);
+				return true;
+			})
+			.map((d) => d.timestamp)
+			.filter((ts, i, all) => i === all.length - 1 || all[i + 1] - ts >= MIN_YEAR_TICK_GAP);
+	})();
 
 	// End labels data with values (only for visible series)
 	$: labelData =
@@ -211,10 +232,11 @@
 				return;
 			}
 
-			// Set mode: use initialMode if specified and available, otherwise prefer Neuzulassungen
-			if (initialMode === 'bestand' && hasBestand) {
+			// Apply preset if that mode has data; otherwise default to Neuzulassungen.
+			// presetMode is a hint only — modeViews always shows all available modes.
+			if (presetMode === 'bestand' && hasBestand) {
 				activeMode = 'bestand';
-			} else if (initialMode === 'neuzulassungen' && hasNeuzulassungen) {
+			} else if (presetMode === 'neuzulassungen' && hasNeuzulassungen) {
 				activeMode = 'neuzulassungen';
 			} else if (hasNeuzulassungen) {
 				activeMode = 'neuzulassungen';
@@ -262,18 +284,22 @@
 			currentDataRegion = { id: result.regionId, name: result.regionName };
 
 			// Create a region object for the data source (may be a parent region)
+			const matchedCandidate = regionCandidates.find((c) => c.id === result.regionId);
 			const dataRegion: Region = {
 				id: result.regionId,
-				name: result.regionName
+				name: result.regionName,
+				layer: matchedCandidate?.layer || 'unknown'
 			} as Region;
 
-			// Build fallback info if showing data from a different region
-			const fallbackInfo = region && result.regionName !== region.name
+			// Build fallback info if showing data from a different region (compare IDs, not names)
+			const fallbackInfo = region?.layer && result.regionId !== region.id
 				? {
 						originalRegionName: region.name,
 						dataRegionName: result.regionName,
 						originalLayerLabel: region.layer_label || '',
-						dataLayerLabel: result.regionLayerLabel || ''
+						dataLayerLabel: result.regionLayerLabel || '',
+						originalLayer: region.layer,
+						dataLayer: regionCandidates.find((c) => c.id === result.regionId)?.layer || ''
 					}
 				: undefined;
 
@@ -361,7 +387,8 @@
 					{innerWidth}
 					{innerHeight}
 					format={formatDate}
-					tickCount={activeMode === 'bestand' ? Math.min(data.length, 6) : 6}
+					tickCount={activeMode === 'bestand' ? 0 : 6}
+					forceTicks={activeMode === 'bestand' ? yearTicks : []}
 				/>
 
 				<!-- Lines for each category (non-highlighted first, then highlighted on top) -->
@@ -470,9 +497,9 @@
 						visible={true}
 						x={hover.clientX}
 						y={hover.clientY}
-						title={activeMode === 'bestand'
-							? date.getFullYear().toString()
-							: date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+						title={isMonthlyData
+							? date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+							: date.getFullYear().toString()}
 						{items}
 						container={containerEl}
 					/>

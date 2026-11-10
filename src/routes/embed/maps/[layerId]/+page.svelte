@@ -1,12 +1,13 @@
 <script>
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import MapCarsDensity from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapCarsDensity.svelte';
 	import MapCarTypes from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapCarTypes.svelte';
 	import MapSolar from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapSolar.svelte';
 	import MapWind from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapWind.svelte';
+	import { cartoGlStyleUrl } from '$lib/utils/cartoBasemap';
 
 	// Get layer ID from URL params
 	$: layerId = $page.params.layerId;
@@ -62,9 +63,7 @@
 	});
 
 	function initMap() {
-		const basemapStyle = isDarkMode
-			? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-			: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
+		const basemapStyle = cartoGlStyleUrl(isDarkMode ? 'darkMatter' : 'voyager');
 
 		map = new maplibregl.Map({
 			container: mapContainer,
@@ -90,9 +89,7 @@
 
 	function updateBasemap() {
 		if (!map) return;
-		const basemapStyle = isDarkMode
-			? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-			: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json';
+		const basemapStyle = cartoGlStyleUrl(isDarkMode ? 'darkMatter' : 'voyager');
 		map.setStyle(basemapStyle);
 		map.once('style.load', () => {
 			mapReady = true;

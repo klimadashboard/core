@@ -15,8 +15,8 @@
 	} from '$lib/components/charts/custom/carsDensity/config';
 
 	export let map: any; // MapLibre GL map instance from parent
-	export let regionId: string | undefined = undefined;
-	export let regionName: string | undefined = undefined;
+	export const regionId: string | undefined = undefined;
+	export const regionName: string | undefined = undefined;
 	export let regionCode: string | null = null;
 	export let regionCodeShort: string | null = null;
 	export let regionLayer: string | null = null; // 'municipality', 'district', etc.
@@ -47,6 +47,8 @@
 	// Determine initial layer based on the current region's layer
 	function getInitialLayer(): LayerPlural {
 		if (regionLayer === 'district') return 'districts';
+		// Only AT has municipality-level car data; elsewhere that layer renders empty.
+		if (PUBLIC_VERSION !== 'at') return 'districts';
 		return 'municipalities';
 	}
 
@@ -118,38 +120,42 @@
 		return Array.from({ length: steps }, (_, i) => interp(i / (steps - 1)));
 	}
 
-	function getColorRangeForView(view: ViewKey): [string, string] {
-		switch (view) {
-			case 'pop':
-				return [getColor('carsLight', isDarkMode), getColor('cars', isDarkMode)];
-			case 'private':
-				return [getColor('privateLight', isDarkMode), getColor('private', isDarkMode)];
-			case 'company':
-				return [getColor('companyLight', isDarkMode), getColor('company', isDarkMode)];
+	// Fixed thresholds and color ranges per view for a clear visual spread
+	const fixedScales: Record<ViewKey, { thresholds: number[]; startColor: string; endColor: string }> = {
+		pop: {
+			thresholds: [300, 400, 450, 500, 550, 600],
+			startColor: isDarkMode ? '#3d0a14' : '#fde8ed',
+			endColor: isDarkMode ? '#E85A7A' : '#84112E'
+		},
+		private: {
+			thresholds: [75, 80, 84, 87, 90, 93],
+			startColor: isDarkMode ? '#3a1a0c' : '#fde8dc',
+			endColor: isDarkMode ? '#E8844D' : '#B04C21'
+		},
+		company: {
+			thresholds: [5, 8, 11, 14, 18, 23],
+			startColor: isDarkMode ? '#3a2c10' : '#fef5e0',
+			endColor: isDarkMode ? '#F5C563' : '#DA9B34'
 		}
+	};
+
+	// Re-derive scales when dark mode changes
+	$: {
+		fixedScales.pop.startColor = isDarkMode ? '#3d0a14' : '#fde8ed';
+		fixedScales.pop.endColor = isDarkMode ? '#E85A7A' : '#84112E';
+		fixedScales.private.startColor = isDarkMode ? '#3a1a0c' : '#fde8dc';
+		fixedScales.private.endColor = isDarkMode ? '#E8844D' : '#B04C21';
+		fixedScales.company.startColor = isDarkMode ? '#3a2c10' : '#fef5e0';
+		fixedScales.company.endColor = isDarkMode ? '#F5C563' : '#DA9B34';
 	}
 
-	function createColorScale(data: Array<{ region: string; value: number }>) {
-		if (!Array.isArray(data) || data.length === 0) {
-			return { scale: () => '#F2F2F2', range: [] as string[], thresholds: [] as number[] };
-		}
-		const values = data.map((d) => d.value).filter((v) => v != null) as number[];
-		if (!values.length) {
-			return { scale: () => '#F2F2F2', range: [] as string[], thresholds: [] as number[] };
-		}
+	function createColorScale(_data: Array<{ region: string; value: number }>) {
+		const cfg = fixedScales[selectedView];
+		const steps = cfg.thresholds.length + 1;
+		const colorRange = getInterpolatedColors(cfg.startColor, cfg.endColor, steps);
+		const scale = scaleThreshold<number, string>().domain(cfg.thresholds).range(colorRange);
 
-		const sorted = [...values].sort((a, b) => a - b);
-		const steps = 7;
-		const thresholds = Array.from({ length: steps - 1 }, (_, i) => {
-			const p = (i + 1) / steps;
-			return sorted[Math.floor(p * sorted.length)];
-		});
-
-		const [startColor, endColor] = getColorRangeForView(selectedView);
-		const colorRange = getInterpolatedColors(startColor, endColor, steps);
-		const scale = scaleThreshold<number, string>().domain(thresholds).range(colorRange);
-
-		return { scale, range: colorRange, thresholds };
+		return { scale, range: colorRange, thresholds: cfg.thresholds };
 	}
 
 	// Map layer helpers
@@ -185,19 +191,24 @@
 			selectedLayer === 'districts' ? d.layer === 'district' : d.layer === 'municipality'
 		);
 
-		return regionsForMap
-			.map((d) => {
-				const code = PUBLIC_VERSION === 'at' ? String(d.code) : String(d.code_short ?? d.code);
-				const dataArr =
-					selectedView === 'pop'
-						? d.carsPer1000Inhabitants
-						: selectedView === 'private'
-							? d.carsPrivateShare
-							: d.carsCompanyShare;
-				const hit = dataArr.find((row) => String(row.period) === String(selectedPeriod));
-				return { region: code, value: hit?.value ?? (null as any) };
-			})
-			.filter((d) => d.value != null);
+		// Keyed by region code so a code never appears twice: the colour scale is
+		// applied as a MapLibre `match` expression, and duplicate branch labels make
+		// MapLibre reject the expression outright, leaving the whole map unstyled.
+		const byCode = new Map<string, number>();
+
+		for (const d of regionsForMap) {
+			const code = PUBLIC_VERSION === 'at' ? String(d.code) : String(d.code_short ?? d.code);
+			const dataArr =
+				selectedView === 'pop'
+					? d.carsPer1000Inhabitants
+					: selectedView === 'private'
+						? d.carsPrivateShare
+						: d.carsCompanyShare;
+			const hit = dataArr.find((row) => String(row.period) === String(selectedPeriod));
+			if (hit?.value != null) byCode.set(code, hit.value);
+		}
+
+		return Array.from(byCode, ([region, value]) => ({ region, value }));
 	}
 
 	function applyColorsToActiveLayer(): void {
@@ -234,7 +245,6 @@
 
 		const feature = e.features[0];
 		const regionCode = String(feature.properties?.[idProp]);
-		const regionName = feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
 
 		// Find the region data
 		const regionData = regions.find((r) => {
@@ -246,6 +256,9 @@
 			hoveredRegion = null;
 			return;
 		}
+
+		// Prefer name from API data, fall back to tile properties
+		const regionName = regionData.name || feature.properties?.GEN || feature.properties?.name || feature.properties?.NAME || regionCode;
 
 		const dataArr =
 			selectedView === 'pop'

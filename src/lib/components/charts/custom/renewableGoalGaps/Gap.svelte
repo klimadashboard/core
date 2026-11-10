@@ -98,8 +98,11 @@
 					{#each federalStates as state}
 						<g
 							transform="translate({getOffset(state, federalStates)},0)"
+							role="presentation"
 							on:mouseover={() => (selectedState = state)}
+							on:focus={() => (selectedState = state)}
 							on:mouseout={() => (selectedState = null)}
+							on:blur={() => (selectedState = null)}
 						>
 							<rect
 								width={xScale(state.goal > 0 ? state.goal : state.currentProduction)}

@@ -2,6 +2,7 @@
 	// import { fade, scale } from 'svelte/transition';
 	import { tweened } from 'svelte/motion';
 	import { cubicInOut } from 'svelte/easing';
+	import { IconX } from '@tabler/icons-svelte-runes';
 
 	export let sortedData;
 
@@ -34,20 +35,14 @@
 	$: relativeFactor = useAbsoluteUnits ? 1 : 100 / totalSelectedYear;
 	$: unitValue = ({ value, short = true, forceAbsolute = false }) => {
 		let val = value * (forceAbsolute ? 1 : relativeFactor);
-		let u = 'M';
-		if ((useAbsoluteUnits || forceAbsolute) && val < 0.1) {
-			val *= 1000;
-			u = 'k';
+		if (useAbsoluteUnits || forceAbsolute) {
+			if (val < 1) {
+				const tons = (val * 1_000_000).toLocaleString('de-AT', { maximumFractionDigits: 0 });
+				return `${tons}${short ? 't' : 't CO₂eq'}`;
+			}
+			return `${val.toFixed(2).replace('.', ',')}${short ? 'Mt' : 'Mt CO₂eq'}`;
 		}
-		return `${val.toFixed(2).replace('.', ',')}${
-			short
-				? useAbsoluteUnits || forceAbsolute
-					? `${u}t`
-					: '%'
-				: useAbsoluteUnits || forceAbsolute
-					? `${u}t CO₂eq`
-					: '%'
-		}`;
+		return `${val.toFixed(2).replace('.', ',')}%`;
 	};
 
 	$: [maxTotalYear, maxTotal] = years
@@ -62,9 +57,9 @@
 	$: HEIGHT = 1000;
 
 	// selected ksg sector
-	$: selection = ksgSelection != null ? sortedData[ksgSelection] : null;
-	$: fixedSelection = ksgSelection != null ? sectorlyData[ksgSelection] : null;
-	$: sortedSelection = ksgSelection != null ? sortedData[ksgSelection] : null;
+	$: selection = ksgSelection != null ? sortedData.find((sec) => sec.key === ksgSelection) ?? null : null;
+	$: fixedSelection = ksgSelection != null ? sectorlyData.find((sec) => sec.key === ksgSelection) ?? null : null;
+	$: sortedSelection = selection;
 	const area = tweened([-150, 0, 1150, 1150], { easing: cubicInOut, duration: 800 });
 	$: selection != null
 		? area.set([selection.x, selection.y, selection.w, selection.h])
@@ -78,6 +73,7 @@
 	{#if sortedData}
 		<svg
 			viewBox="-150 -20 1150 1020"
+			role="presentation"
 			on:mouseleave={() => {
 				ksgHover = null;
 				crfHover = null;
@@ -91,21 +87,22 @@
 					y={ksgSector.percentCumulative * HEIGHT}
 					width="80"
 					height={ksgSector.relative * HEIGHT}
-					fill={ksgHover == s
+					fill={ksgHover == ksgSector.key
 						? colorForKey(ksgSector.key).colorCodeHighlighted
 						: colorForKey(ksgSector.key).colorCode}
 					style="transition: fill 0.3s ease;"
-					opacity={ksgSelection != null && s != ksgSelection ? 0.2 : 1}
+					opacity={ksgSelection != null && ksgSector.key != ksgSelection ? 0.2 : 1}
 					class="cursor-pointer"
+					role="presentation"
 					on:mousedown|stopPropagation={() => {
-						ksgSelection = s;
+						ksgSelection = ksgSector.key;
 						ksgHover = null;
 						crfSelection = null;
 						crfHover = null;
 					}}
 					on:mousemove|stopPropagation={(e) => {
 						if (ksgSelection != null) return;
-						ksgHover = s;
+						ksgHover = ksgSector.key;
 					}}
 				/>
 				{#if ksgSector.relative * HEIGHT > 30}
@@ -115,19 +112,20 @@
 							(ksgSector.relative * HEIGHT) / 2 -
 							10})"
 					>
-						{@html colorForKey(ksgSector.key).icon(1)}
+						<svelte:component this={colorForKey(ksgSector.key).iconComponent} size={30} color="white" />
 					</g>
 				{/if}
 
-				{#if ksgSelection == null || s == ksgSelection}
+				{#if ksgSelection == null || ksgSector.key == ksgSelection}
 					<g
+						role="presentation"
 						on:mousemove|stopPropagation={(e) => {
 							if (ksgSelection != null) return;
 							mouse = { x: e.layerX, y: e.layerY };
-							ksgHover = s;
+							ksgHover = ksgSector.key;
 						}}
 						on:mousedown|stopPropagation={() => {
-							ksgSelection = s;
+							ksgSelection = ksgSector.key;
 							ksgHover = null;
 						}}
 						class="transition-opacity cursor-pointer"
@@ -146,8 +144,7 @@
 								>
 									<div
 										class="w-full h-full flex items-end justify-start"
-										style="border: 3px solid white; transition: background 0.3s ease; background-color: {ksgHover ==
-										s
+										style="border: 3px solid white; transition: background 0.3s ease; background-color: {ksgHover == ksgSector.key
 											? colorForKey(ksgSector.key).colorCodeHighlighted
 											: colorForKey(ksgSector.key).colorCode};"
 									>
@@ -159,7 +156,7 @@
 										>
 											{#if ksgSelection == null}
 												<span style="display: inline-block; margin-right: {fontSize / 6}px"
-													>{@html colorForKey(ksgSector.key).icon(fontSize / 20)}</span
+													><svelte:component this={colorForKey(ksgSector.key).iconComponent} size={Math.round(fontSize * 1.5)} color="white" /></span
 												>
 												<strong
 													class="{ksgSector.h < 100
@@ -181,12 +178,13 @@
 								width={crfSector.w2}
 								x={crfSector.x2}
 								y={crfSector.y2}
+								role="presentation"
 								on:mousemove={(e) => {
 									if (ksgSelection == null) return;
 									else e.stopPropagation();
 
 									mouse = { x: e.layerX, y: e.layerY };
-									crfHover = crfSector.index;
+									crfHover = crfSector.code;
 								}}
 								on:pointerdown|stopPropagation={() => {
 									if (ksgSelection == null) return;
@@ -198,9 +196,9 @@
 										class="w-full h-full flex items-end justify-between px-[25px]"
 										style="transition: background 0.3s ease; background-color: {ksgSelection == null
 											? 'transparent'
-											: crfHover == crfSector.index
+											: crfHover == crfSector.code
 												? colorForKey(crfSector.key).colorCodeHighlighted
-												: colorForKey(crfSector.key).colorCode}; {ksgHover == s ||
+												: colorForKey(crfSector.key).colorCode}; {ksgHover == ksgSector.key ||
 										ksgSelection != null
 											? 'border-bottom: 4px solid #ffffff44;'
 											: ''} padding-block: {fontSizeCRF < 30
@@ -210,11 +208,7 @@
 										{#if ksgSelection != null}
 											<strong class="flex items-center"
 												><span class="mr-4">
-													{@html iconForCRFCode({
-														crfCode: crfSector.code,
-														ksgKey: ksgSector.key,
-														size: fontSizeCRF / 30
-													})}
+													<svelte:component this={iconForCRFCode({ crfCode: crfSector.code, ksgKey: ksgSector.key })} size={fontSizeCRF} color="white" />
 												</span>
 												{crfSector.label}
 												<!-- {crfSector.code} -->
@@ -235,6 +229,7 @@
 								x={0}
 								y={-20}
 								style="transition: fill 0.3s ease"
+								role="presentation"
 								on:pointerdown|stopPropagation={() => {
 									extensiveList = true;
 								}}
@@ -247,7 +242,7 @@
 									class="w-full h-full flex items-center justify-between px-[25px]"
 									style="transition: background 0.3s ease; background-color: {crfHover == -1
 										? colorForKey(ksgSector.key).colorCodeHighlighted
-										: colorForKey(ksgSector.key).colorCode}; {ksgHover == s || ksgSelection != null
+										: colorForKey(ksgSector.key).colorCode}; {ksgHover == ksgSector.key || ksgSelection != null
 										? 'border-bottom: 4px solid #ffffff44;'
 										: ''} font-size: {fontSizeMore}px; color: white;"
 								>
@@ -275,11 +270,7 @@
 					>
 						<strong class="basis-[125px] flex items-center">
 							<span class="mr-8"
-								>{@html iconForCRFCode({
-									crfCode: detailSector.code,
-									ksgKey: sectorlyData[ksgSelection].key,
-									size: 50 / 30
-								})}</span
+								><svelte:component this={iconForCRFCode({ crfCode: detailSector.code, ksgKey: ksgSelection })} size={50} color="white" /></span
 							>
 							{detailSector.label}
 						</strong>
@@ -308,11 +299,12 @@
 	{#if extensiveList && ksgSelection != null}
 		<div
 			class="absolute rounded-sm -top-4 -right-4 h-90 w-5/6 overflow-scroll"
-			style="background-color: {colorForKey(sortedData[ksgSelection].key).colorCode};"
+			style="background-color: {colorForKey(ksgSelection).colorCode};"
 		>
 			<div
 				class="text-white p-4 flex justify-between items-start"
 				style="background-color: rgba(255,255,255,0.2)"
+				role="presentation"
 				on:mousemove={(e) => {
 					e.stopPropagation();
 					crfHover = null;
@@ -323,39 +315,24 @@
 					on:click={() => {
 						extensiveList = false;
 					}}
-					><svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="icon icon-tabler icon-tabler-x"
-						width="24"
-						height="24"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke="currentColor"
-						fill="none"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						><path stroke="none" d="M0 0h24v24H0z" fill="none" /><line
-							x1="18"
-							y1="6"
-							x2="6"
-							y2="18"
-						/><line x1="6" y1="6" x2="18" y2="18" /></svg
-					></button
+					>
+					<IconX size={24} />
+				</button
 				>
 			</div>
 			<ul class="divide-y">
-				{#each sortedData[ksgSelection].sectors as crfSector, c}
+				{#each (selection?.sectors ?? []) as crfSector, c}
 					{#if crfSector.h2 < 40}
 						<li
 							class="px-4 py-2 text-white flex justify-between cursor-pointer"
 							style="transition: background 0.3s ease; background-color: {crfHover ==
-							crfSector.index
+							crfSector.code
 								? colorForKey(crfSector.key).colorCodeHighlighted
 								: colorForKey(crfSector.key).colorCode};"
 							on:mousemove={(e) => {
 								e.stopPropagation();
 								mouse = { x: e.layerX, y: e.layerY };
-								crfHover = crfSector.index;
+								crfHover = crfSector.code;
 							}}
 							on:pointerdown|stopPropagation={() => {
 								crfSelection = crfSector.code;
@@ -364,11 +341,7 @@
 						>
 							<strong class="flex items-center"
 								><span class="mr-4">
-									{@html iconForCRFCode({
-										crfCode: crfSector.code,
-										ksgKey: sortedData[ksgSelection].key,
-										size: 25 / 30
-									})}
+									<svelte:component this={iconForCRFCode({ crfCode: crfSector.code, ksgKey: ksgSelection })} size={25} color="white" />
 								</span>{crfSector.label}
 								<!-- {crfSector.code} -->
 							</strong>

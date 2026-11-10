@@ -6,7 +6,7 @@
 	import { readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
 
-	export let v;
+	export const v = undefined;
 
 	const goalScenarios = {
 		eag: 'EAG',
@@ -52,7 +52,8 @@
 					filter: {
 						_and: [
 							{
-								Country: { _eq: PUBLIC_VERSION.toUpperCase() }
+								Country: { _eq: PUBLIC_VERSION.toUpperCase() },
+								source_category: { _eq: "Bundesland" }
 							}
 						]
 					},

@@ -1,6 +1,7 @@
 <script>
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
+	import { browser } from '$app/environment';
 
 	let quizQuestions = [];
 	let questionIndex = 0;
@@ -9,38 +10,45 @@
 	// ID of the selected answer in the current question. Null means none selected yet.
 	let selectedAnswerId = null;
 
-	// Fetch and initialize questions
-	fetch('https://base.klimadashboard.org/items/quiz_questions?fields=*.*')
-		.then(async (response) => {
-			const data = await response.json();
+	// Fetch and initialize questions.
+	// Browser only: the quiz is interactive and never rendered server-side, so
+	// fetching during SSR only added one Directus request per page render.
+	if (browser) fetchQuestions();
 
-			// Reformat questions
-			const reformattedQuestions = data.data
-				.filter((d) => d.countries.indexOf(PUBLIC_VERSION) > -1)
-				.map((question) => {
-					const totalAnswerCount = question.answers.reduce(
-						(sum, answer) => sum + (answer.answer_count || 0),
-						0
-					);
+	function fetchQuestions() {
+		fetch('https://base.klimadashboard.org/items/quiz_questions?fields=*.*')
+			.then(async (response) => {
+				if (!response.ok) throw new Error(`HTTP ${response.status}`);
+				const data = await response.json();
 
-					const reformattedAnswers = question.answers.map((answer) => ({
-						...answer,
-						percentage:
-							totalAnswerCount > 0 ? ((answer.answer_count || 0) / totalAnswerCount) * 100 : 0
-					}));
+				// Reformat questions
+				const reformattedQuestions = (data?.data ?? [])
+					.filter((d) => d.countries.indexOf(PUBLIC_VERSION) > -1)
+					.map((question) => {
+						const totalAnswerCount = question.answers.reduce(
+							(sum, answer) => sum + (answer.answer_count || 0),
+							0
+						);
 
-					return {
-						...question,
-						total_answer_count: totalAnswerCount,
-						answers: reformattedAnswers
-					};
-				});
+						const reformattedAnswers = question.answers.map((answer) => ({
+							...answer,
+							percentage:
+								totalAnswerCount > 0 ? ((answer.answer_count || 0) / totalAnswerCount) * 100 : 0
+						}));
 
-			quizQuestions = shuffleArray(reformattedQuestions).slice(0, 10); // shuffle array and get first 10 questions
-		})
-		.catch((error) => {
-			console.error('Error fetching questions:', error);
-		});
+						return {
+							...question,
+							total_answer_count: totalAnswerCount,
+							answers: reformattedAnswers
+						};
+					});
+
+				quizQuestions = shuffleArray(reformattedQuestions).slice(0, 10); // shuffle array and get first 10 questions
+			})
+			.catch((error) => {
+				console.error('Error fetching questions:', error);
+			});
+	}
 
 	function shuffleArray(arr) {
 		for (let i = arr.length - 1; i > 0; i--) {
@@ -118,9 +126,9 @@
 					{#each quizQuestions as q}
 						<div
 							class="h-1 w-full bg-gray-100
-							{q.correct === true ? 'bg-green-500' : ''} 
+							{q.correct === true ? 'bg-green-500' : ''}
 							{q.correct === false ? 'bg-red-500' : ''}"
-						/>
+						></div>
 					{/each}
 				</div>
 
@@ -150,10 +158,10 @@
 										<!-- Colored bar -->
 										<div
 											class="absolute bottom-0 left-0 top-0
-											{answer.is_true ? 'bg-green-400' : 'bg-red-400'} 
+											{answer.is_true ? 'bg-green-400' : 'bg-red-400'}
 											transition-[width]"
 											style="width: {selectedAnswerId !== null ? answer.percentage : 0}%"
-										/>
+										></div>
 										<div class="relative">
 											{answer.label}
 										</div>

@@ -1,6 +1,7 @@
 // $lib/charts/utils/export.ts
 
 import type { TableColumn } from '../types';
+import type { XLSXInfo } from './xlsx';
 
 interface TableData {
 	columns: TableColumn[];
@@ -8,7 +9,7 @@ interface TableData {
 	filename: string;
 }
 
-function download(content: string, filename: string, type: string) {
+function download(content: BlobPart, filename: string, type: string) {
 	const blob = new Blob([content], { type });
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement('a');
@@ -43,6 +44,17 @@ export function exportJSON(data: any[], filename: string, regionCode?: string) {
 	download(JSON.stringify(data, null, 2), name, 'application/json');
 }
 
+/**
+ * Export a chart table as .xlsx with a second "Info" sheet (source, data date,
+ * region, link). The writer is lazy-loaded so it stays out of the main bundle.
+ */
+export async function exportXLSX(table: TableData, info: XLSXInfo = {}, regionCode?: string) {
+	const { buildXLSX } = await import('./xlsx');
+	const blob = await buildXLSX(table, info);
+	const name = regionCode ? `${table.filename}-${regionCode}.xlsx` : `${table.filename}.xlsx`;
+	download(blob, name, blob.type);
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
 	try {
 		await navigator.clipboard.writeText(text);
@@ -63,6 +75,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 export interface EmbedOptions {
 	region?: string;
 	view?: 'full' | 'simple';
+	hideTitle?: boolean;
 	/** Custom parameters from chart's embedOptions */
 	customParams?: Record<string, string>;
 }
@@ -72,6 +85,7 @@ export function generateEmbedCode(chartId: string, options: EmbedOptions = {}): 
 	const params = new URLSearchParams();
 	if (options.region) params.set('region', options.region);
 	if (options.view) params.set('view', options.view);
+	if (options.hideTitle) params.set('notitle', 'true');
 	// Add custom parameters
 	if (options.customParams) {
 		for (const [key, value] of Object.entries(options.customParams)) {
@@ -89,6 +103,7 @@ export function generateScriptEmbedCode(chartId: string, options: EmbedOptions =
 	let dataAttrs = '';
 	if (options.region) dataAttrs += ` data-region="${options.region}"`;
 	if (options.view) dataAttrs += ` data-view="${options.view}"`;
+	if (options.hideTitle) dataAttrs += ` data-notitle="true"`;
 	// Add custom parameters as data attributes
 	if (options.customParams) {
 		for (const [key, value] of Object.entries(options.customParams)) {

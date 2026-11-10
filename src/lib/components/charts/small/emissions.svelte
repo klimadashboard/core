@@ -5,10 +5,31 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import formatNumber from '$lib/stores/formatNumber';
+	import Papa from 'papaparse';
 
 	let data = [];
 
+	// DE: same maintained CSV as the emissions page chart (productionBasedEmissions)
+	async function getDataFromCsv() {
+		try {
+			const res = await fetch('https://data.klimadashboard.org/de/emissions/emissions_by_sectors.csv');
+			const parsed = Papa.parse(await res.text(), {
+				header: true,
+				dynamicTyping: true,
+				skipEmptyLines: true
+			});
+			data = parsed.data
+				.filter((e) => e.state === 'DE' && typeof e.total_co2e_t === 'number')
+				.map((e) => ({ x: e.year, y: Math.round(e.total_co2e_t) }));
+			return data;
+		} catch (err) {
+			console.error(err);
+			return [];
+		}
+	}
+
 	async function getData() {
+		if (PUBLIC_VERSION === 'de') return getDataFromCsv();
 		const directus = getDirectusInstance();
 		try {
 			const response = await directus.request(

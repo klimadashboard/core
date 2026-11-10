@@ -8,7 +8,7 @@
 	} from './config';
 
 	export let data: HeatingDataPoint[];
-	export let categories: HeatingCategory[];
+	export const categories: HeatingCategory[] = [];
 
 	$: processed = processChartData(data);
 </script>

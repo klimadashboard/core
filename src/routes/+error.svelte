@@ -19,4 +19,4 @@
 	<p class="font-mono mt-16">{$page.error.message}</p>
 </main>
 
-<Footer />
+<Footer showDonationBanner={false} />

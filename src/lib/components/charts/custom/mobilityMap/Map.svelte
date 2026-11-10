@@ -1,22 +1,37 @@
 <script>
 	import { onMount } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import { buildTileOutlines } from './mapUtils';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let selectedRegion;
 	export let selectedDate;
 	export let selectedTiles = [];
 	export let gueteklassColors;
-	export let categories;
+	export let stopCategories;
+	export let stopsVisible = false;
+
+	// MapLibre-'match' über die Haltestellenkategorie, Fallback am Ende für Werte,
+	// die der Datensatz noch nicht kennt.
+	const byCategory = (key, fallback) => [
+		'match',
+		['get', 'category'],
+		...stopCategories.flatMap((c) => [c.category, c[key]]),
+		fallback
+	];
 
 	let styleLoaded = false;
 	let map;
 	let stopsSourceId = 'stops-json';
 	let hoveredId = null;
 	let sourceLayer = selectedDate;
+	// Which survey date is currently on the map. Kept separate from `selectedDate`
+	// so the swap below only runs on an actual change and doesn't tear down the
+	// source (and the auto-selected tile) right after the initial load.
+	let renderedDate = null;
 	const minStopsZoom = 12;
 
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH';
@@ -119,8 +134,10 @@
 	}
 
 	async function updateStops() {
-		if (!map || map.getZoom() < minStopsZoom) {
-			map.getSource(stopsSourceId)?.setData({ type: 'FeatureCollection', features: [] });
+		stopsVisible = !!map && map.getZoom() >= minStopsZoom;
+
+		if (!stopsVisible) {
+			map?.getSource(stopsSourceId)?.setData({ type: 'FeatureCollection', features: [] });
 			return;
 		}
 
@@ -140,7 +157,6 @@
 					name: stop.name,
 					code: stop.code,
 					category: stop.category,
-					gueteklass: categories.find((d) => d.category == stop.category)?.gueteklass,
 					interval: stop.interval,
 					lines: stop.lines
 				}
@@ -168,16 +184,16 @@
 	onMount(() => {
 		map = new maplibregl.Map({
 			container: 'mobilityMap',
+			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
+			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
+			canvasContextAttributes: { preserveDrawingBuffer: true },
 			style: {
 				version: 8,
 				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
 				sources: {
-					carto: {
-						type: 'raster',
-						tiles: ['https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'],
-						tileSize: 256,
+					carto: cartoRasterSource('light', {
 						attribution: '© OpenStreetMap contributors © CARTO'
-					},
+					}),
 					labels: {
 						type: 'vector',
 						url: `https://tiles.klimadashboard.org/data/labels-${PUBLIC_VERSION}.json`
@@ -214,32 +230,13 @@
 				type: 'circle',
 				source: stopsSourceId,
 				paint: {
-					'circle-radius': 5,
-					'circle-color': [
-						'match',
-						['get', 'gueteklass'],
-						'none',
-						gueteklassColors.none,
-						'G',
-						gueteklassColors.G,
-						'F',
-						gueteklassColors.F,
-						'E',
-						gueteklassColors.E,
-						'D',
-						gueteklassColors.D,
-						'C',
-						gueteklassColors.C,
-						'B',
-						gueteklassColors.B,
-						'A',
-						gueteklassColors.A,
-						'#ccc'
-					],
-					'circle-stroke-color': '#fff',
-					'circle-stroke-width': 1,
-					'circle-blur': 0.5,
-					'circle-opacity': 0.9
+					'circle-radius': byCategory('radius', 3),
+					'circle-color': byCategory('color', '#D1D5DB'),
+					// Dünne dunkle Kontur statt der weißen: die hellen Kategorien wären
+					// auf den pastellfarbenen Flächen sonst kaum zu sehen.
+					'circle-stroke-color': '#374151',
+					'circle-stroke-width': 0.75,
+					'circle-opacity': 0.95
 				},
 				minzoom: minStopsZoom
 			});
@@ -265,6 +262,7 @@
 			});
 
 			addMobilityLayers('mobility-source', selectedDate);
+			renderedDate = selectedDate;
 
 			map.on('click', 'gueteklass-layer', (e) => {
 				if (e.features.length > 0) {
@@ -353,9 +351,32 @@
 		});
 	});
 
-	$: if (map && styleLoaded && selectedDate) {
-		const newTiles = `https://tiles.klimadashboard.org/data/mobility-at-${selectedDate}`;
-		const newLayer = selectedDate;
+	// Re-select the tile at `lngLat` once the freshly added source has painted, so
+	// switching survey dates keeps the inspector on the same place instead of
+	// resetting it — comparing the two dates for one location is the point.
+	function reselectAt(lngLat) {
+		const onIdle = () => {
+			map.off('idle', onIdle);
+			if (!map.getLayer('gueteklass-layer')) return;
+			const features = map.queryRenderedFeatures(map.project(lngLat), {
+				layers: ['gueteklass-layer']
+			});
+			if (!features.length) return;
+			setSelectedTiles([features[0]]);
+			selectedRegion = { id: features[0].id, properties: features[0].properties };
+		};
+		map.on('idle', onIdle);
+	}
+
+	$: if (map && styleLoaded && selectedDate && selectedDate !== renderedDate) {
+		const previousCenter = selectedTiles.length
+			? (() => {
+					const ring = selectedTiles[0].geometry?.coordinates?.[0];
+					if (!ring) return null;
+					const sum = ring.reduce((acc, [lng, lat]) => [acc[0] + lng, acc[1] + lat], [0, 0]);
+					return [sum[0] / ring.length, sum[1] / ring.length];
+				})()
+			: null;
 
 		if (map.getLayer('gueteklass-layer')) map.removeLayer('gueteklass-layer');
 		if (map.getLayer('hover-outline')) map.removeLayer('hover-outline');
@@ -363,13 +384,18 @@
 
 		map.addSource('mobility-source', {
 			type: 'vector',
-			tiles: [`${newTiles}/{z}/{x}/{y}.pbf`],
-			maxZoom: 12
+			tiles: [`https://tiles.klimadashboard.org/data/mobility-at-${selectedDate}/{z}/{x}/{y}.pbf`],
+			minzoom: 4,
+			maxzoom: 12
 		});
 
-		addMobilityLayers('mobility-source', newLayer);
-		sourceLayer = newLayer;
+		addMobilityLayers('mobility-source', selectedDate);
+		sourceLayer = selectedDate;
+		hoveredId = null;
 		clearSelectedStates();
+		renderedDate = selectedDate;
+
+		if (previousCenter) reselectAt(previousCenter);
 	}
 </script>
 

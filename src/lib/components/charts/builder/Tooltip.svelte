@@ -86,6 +86,7 @@
 				y={0}
 				width={chartWidth}
 				height={chartHeight}
+				role="presentation"
 				on:mousemove={processTooltip}
 				on:touchmove|preventDefault={processTooltip}
 				on:touchstart|preventDefault={processTooltip}

@@ -5,6 +5,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { onMount } from 'svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
+	import { getFallbackParentIds } from '$lib/utils/regionAggregation';
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
@@ -21,6 +22,7 @@
 		getClimateTargets,
 		getDisplayedCategories,
 		sortCategoryOrderByFirstYear,
+		isNetZeroTarget,
 		type RegionResult,
 		type YearGroup,
 		type PageRegionContext
@@ -112,7 +114,11 @@
 		loading = true;
 		try {
 			const { results: fetchedResults, populationByYear: fetchedPopulation } =
-				await fetchEmissionsData(regionCandidates);
+				await fetchEmissionsData(
+					currentId
+						? [currentId, ...(await getFallbackParentIds(currentId, parentIds))]
+						: regionCandidates
+				);
 
 			results = fetchedResults;
 			populationByYear = fetchedPopulation;
@@ -347,7 +353,7 @@
 	// Climate neutrality text for dynamic heading placeholder
 	$: climateNeutrality =
 		lastTarget && activeCategory === 'all' && !isHorizontal && selectedRegion
-			? `Bis ${lastTarget.year} möchte ${selectedRegion.name} ${lastTarget.value === 0 ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreichen.`
+			? `Bis ${lastTarget.year} möchte ${selectedRegion.name} ${isNetZeroTarget(lastTarget) ? 'Klimaneutralität' : formatNumber(lastTarget.value) + ' ' + unit} erreichen.`
 			: null;
 
 	// Update chart data when selection, climateNeutrality, or chart mode changes
@@ -606,7 +612,8 @@
 							transform="translate(0,{margin.top})"
 							opacity={hoveredSector === null || hoveredSector === d.category ? 1 : 0.4}
 							class="transition-opacity cursor-pointer"
-							on:mouseenter={(e) => handleHorizontalMouseMove(e, d.category)}
+							role="presentation"
+								on:mouseenter={(e) => handleHorizontalMouseMove(e, d.category)}
 							on:mousemove={(e) => {
 								hoverClientX = e.clientX;
 								hoverClientY = e.clientY;
@@ -675,7 +682,8 @@
 												fill={s.color}
 												opacity={hoveredYear === null || hoveredYear === yearData.year ? 1 : 0.4}
 												class="transition-opacity cursor-pointer"
-												on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
+												role="presentation"
+								on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
 												on:mousemove={(e) => handleMouseMove(e, yearData.year)}
 												on:mouseleave={handleMouseLeave}
 											/>
@@ -692,7 +700,8 @@
 												fill={s.color}
 												opacity={hoveredYear === null || hoveredYear === yearData.year ? 1 : 0.4}
 												class="transition-opacity cursor-pointer"
-												on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
+												role="presentation"
+								on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
 												on:mousemove={(e) => handleMouseMove(e, yearData.year)}
 												on:mouseleave={handleMouseLeave}
 											/>
@@ -722,7 +731,8 @@
 											stroke-dasharray="3,2"
 											opacity={hoveredYear === null || hoveredYear === yearData.year ? 0.6 : 0.25}
 											class="transition-opacity cursor-pointer"
-											on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
+											role="presentation"
+								on:mouseenter={(e) => handleMouseMove(e, yearData.year)}
 											on:mousemove={(e) => handleMouseMove(e, yearData.year)}
 											on:mouseleave={handleMouseLeave}
 										/>
@@ -744,7 +754,8 @@
 									height={innerHeight}
 									fill="transparent"
 									class="cursor-pointer"
-									on:mouseenter={(e) => handleMouseMove(e, target.year)}
+									role="presentation"
+								on:mouseenter={(e) => handleMouseMove(e, target.year)}
 									on:mousemove={(e) => handleMouseMove(e, target.year)}
 									on:mouseleave={handleMouseLeave}
 								/>
@@ -769,7 +780,8 @@
 									stroke-width={8}
 									opacity={0}
 									class="cursor-pointer"
-									on:mouseenter={handleProjectionMouseMove}
+									role="presentation"
+								on:mouseenter={handleProjectionMouseMove}
 									on:mousemove={handleProjectionMouseMove}
 									on:mouseleave={handleMouseLeave}
 								/>
@@ -835,7 +847,8 @@
 						null && hoveredSector !== sector.category
 						? 'opacity-40'
 						: ''}"
-					on:mouseenter={(e) => handleHorizontalMouseMove(e, sector.category)}
+					role="presentation"
+								on:mouseenter={(e) => handleHorizontalMouseMove(e, sector.category)}
 					on:mouseleave={handleMouseLeave}
 				>
 					<span class="w-3 h-3 rounded-sm" style="background-color: {sector.category_color}"></span>
@@ -862,4 +875,9 @@
 			</p>
 		{/if}
 	</div>
+
+	{@const noteText = selectedRegion ? v?.[`note.${selectedRegion.id}`] : undefined}
+	{#if noteText}
+		<p class="text-sm mt-3 text-gray-600 dark:text-gray-400">{@html noteText}</p>
+	{/if}
 {/if}

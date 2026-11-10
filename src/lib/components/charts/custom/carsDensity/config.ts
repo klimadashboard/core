@@ -1,12 +1,15 @@
-// $lib/components/charts/custom/mobilityCarDensity/config.ts
+// $lib/components/charts/custom/carsDensity/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import { withLayerLabel } from '$lib/utils/getRegion';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import { readItem } from '@directus/sdk';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { getRegions } from '$lib/utils/regions';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { PRIVACY_THRESHOLD } from '$lib/components/charts/utils/privacyFilter';
+import { getAggregateMembers } from '$lib/utils/regionAggregation';
 
 // =============================================================================
 // Types
@@ -133,9 +136,13 @@ export async function fetchData(
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
 
-	// Get periods from data
+	// Get periods from data (use 'Insgesamt' as primary, fall back to any category)
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// If we have a specific region, we can build the data directly
@@ -174,12 +181,12 @@ export async function fetchData(
 	return fetchNationalAggregate(fetchFn, countryCode, source);
 }
 
-/** Fetch and aggregate data from child municipalities when no direct data exists */
-async function fetchAggregatedFromChildren(
+/** Municipalities whose parents include `parentRegion` */
+async function fetchChildMunicipalities(
 	fetchFn: typeof fetch,
 	parentRegion: Region,
 	countryCode: string
-): Promise<CarDensityData | null> {
+): Promise<RegionShape[]> {
 	const directus = getDirectusInstance(fetchFn);
 
 	// Find all municipalities in this country
@@ -198,7 +205,7 @@ async function fetchAggregatedFromChildren(
 	// IMPORTANT: Exclude municipalities with the same name as the parent
 	// (to avoid including aggregate entries like Wien 90001)
 	const parentNameLower = parentRegion.name?.toLowerCase() || '';
-	const childMunicipalities = allMunicipalities.filter((m) => {
+	return allMunicipalities.filter((m) => {
 		const muniNameLower = m.name?.toLowerCase() || '';
 		// Exclude same-name municipalities
 		if (parentNameLower && muniNameLower === parentNameLower) {
@@ -210,6 +217,20 @@ async function fetchAggregatedFromChildren(
 			m.parents.some((p: any) => p.id === parentRegion.id)
 		);
 	});
+}
+
+/** Fetch and aggregate data from child municipalities when no direct data exists */
+async function fetchAggregatedFromChildren(
+	fetchFn: typeof fetch,
+	parentRegion: Region,
+	countryCode: string
+): Promise<CarDensityData | null> {
+	const directus = getDirectusInstance(fetchFn);
+
+	// Aggregate regions (Metropolregion) sum their member districts
+	const childMunicipalities =
+		((await getAggregateMembers(parentRegion, fetchFn)) as RegionShape[] | null) ??
+		(await fetchChildMunicipalities(fetchFn, parentRegion, countryCode));
 
 	if (childMunicipalities.length === 0) {
 		return null;
@@ -241,9 +262,13 @@ async function fetchAggregatedFromChildren(
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
 
-	// Get all periods
+	// Get all periods (use 'Insgesamt' as primary, fall back to any category)
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// Group data by municipality code
@@ -279,25 +304,35 @@ async function fetchAggregatedFromChildren(
 	const carsPrivateShare: TimeSeriesPoint[] = periods.map((p) => {
 		let privatSum = 0;
 		let totalSum = 0;
+		let hasPrivat = false;
 		for (const [code, records] of dataByCode) {
 			const privat = records.find((r) => r.period === p && r.category === 'Privat')?.value;
 			const total = records.find((r) => r.period === p && r.category === 'Insgesamt')?.value;
-			if (privat != null) privatSum += privat;
+			if (privat != null) {
+				privatSum += privat;
+				hasPrivat = true;
+			}
 			if (total != null) totalSum += total;
 		}
-		return { period: p, value: totalSum > 0 ? (privatSum / totalSum) * 100 : null };
+		// No 'Privat' rows at all (e.g. DE districts) → unknown, not 0 %
+		return { period: p, value: hasPrivat && totalSum > 0 ? (privatSum / totalSum) * 100 : null };
 	});
 
 	const carsCompanyShare: TimeSeriesPoint[] = periods.map((p) => {
 		let firmenSum = 0;
 		let totalSum = 0;
+		let hasFirmen = false;
 		for (const [code, records] of dataByCode) {
 			const firmen = records.find((r) => r.period === p && r.category === 'Firmen')?.value;
 			const total = records.find((r) => r.period === p && r.category === 'Insgesamt')?.value;
-			if (firmen != null) firmenSum += firmen;
+			if (firmen != null) {
+				firmenSum += firmen;
+				hasFirmen = true;
+			}
 			if (total != null) totalSum += total;
 		}
-		return { period: p, value: totalSum > 0 ? (firmenSum / totalSum) * 100 : null };
+		// No 'Firmen' rows at all (e.g. DE districts) → unknown, not 0 %
+		return { period: p, value: hasFirmen && totalSum > 0 ? (firmenSum / totalSum) * 100 : null };
 	});
 
 	const regionWithData: RegionWithData = {
@@ -458,7 +493,11 @@ async function fetchNationalAggregate(
 	);
 
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// Load region shapes
@@ -706,7 +745,11 @@ export async function fetchAllRegions(fetchFn: typeof fetch): Promise<AllRegions
 	const sources = Array.from(new Set(rawData.map((d) => d.source).filter(Boolean)));
 	const source = sources.join(', ');
 	const periods = Array.from(
-		new Set(rawData.filter((d) => d.category === 'Privat').map((d) => d.period))
+		new Set(
+			rawData
+				.filter((d) => d.category === 'Insgesamt')
+				.map((d) => d.period)
+		)
 	).sort((a, b) => Number(a) - Number(b));
 
 	// Load region shapes
@@ -740,8 +783,15 @@ export async function fetchAllRegions(fetchFn: typeof fetch): Promise<AllRegions
 				m.parents.some((p: any) => p.layer === 'district' && p.id === districtId)
 		);
 
-	// Aggregate districts from their municipalities
+	// Districts: prefer figures reported for the district itself. DE reports car
+	// numbers per Kreis (5-digit AGS) and has no municipality-level rows at all, so
+	// aggregating from children would report 0 cars for every German district. AT
+	// reports per municipality and has no district-level rows, so it still falls
+	// through to the aggregation below.
 	const districts: RegionWithData[] = districtShapes.map((shape) => {
+		const ownRows = byShape(shape);
+		if (ownRows.length) return enrichRegionWithData(shape, ownRows);
+
 		const children = getChildren(shape.id!);
 		const childRows = children
 			.map((c) => municipalities.find((m) => m.code === c.code))
@@ -892,12 +942,18 @@ export function getPlaceholders(
 	const formatNumber = (n: number) => n.toLocaleString('de-DE');
 	const formatPercent = (n: number) => n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-	const regionName = region?.name ?? regionData.name;
+	const baseName = region?.name ?? regionData.name;
+	const layerLabel = (region as any)?.layer_label || '';
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const regionName = layerLabel && region?.layer !== 'country'
+		? withLayerLabel(baseName, layerLabel)
+		: baseName;
 	const countryName = data.country?.name ?? (PUBLIC_VERSION === 'at' ? 'Österreich' : 'Deutschland');
 	const nationalCarsPerTen = (nationalLatest.carsPer1000 ?? 0) / 100;
 
 	return {
 		regionName,
+		layerLabel,
 		population: regionData.population,
 		totalPopulation: formatNumber(regionData.population),
 		latestPeriod: latest.period,
@@ -979,4 +1035,25 @@ export function buildChartData(data: CarDensityData, region?: Region | null, pri
 		hasData: tableRows.length > 0 && tableRows.some((row) => row.cars != null),
 		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	let region: Region | null = null;
+
+	if (regionId) {
+		const directus = getDirectusInstance(fetchFn);
+		region = (await directus.request(
+			readItem('regions', regionId, {
+				fields: ['id', 'code', 'name', 'layer', 'layer_label', 'center', 'population']
+			})
+		)) as Region;
+	}
+
+	const data = await fetchData(fetchFn, region);
+	if (!data.region || data.region.cars.length === 0) return null;
+
+	return buildChartData(data, region);
 }

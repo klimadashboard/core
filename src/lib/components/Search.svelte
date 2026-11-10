@@ -217,6 +217,7 @@
 				stroke-linecap="round"
 				stroke-linejoin="round"
 				class="absolute left-3 top-1.5 cursor-pointer"
+				role="presentation"
 				on:pointerdown={onSearchIconClick}
 			>
 				<path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -265,6 +266,7 @@
 	</div>
 	{#if showSuggestions && suggestions.length > 0}
 		<ul
+			role="listbox"
 			on:mousedown={cancelBlur}
 			class="absolute top-full left-0 right-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm border overflow-scroll z-10 max-h-64 rounded-2xl"
 		>
@@ -282,7 +284,7 @@
 					{#if suggestion.subtitle}
 						<span>{suggestion.subtitle}</span>
 					{/if}
-					<span class="opacity-80 ml-1">[{$page.data.translations[suggestion.source]}]</span>
+					<span class="opacity-80 ml-1">[{suggestion.sourceLabel || $page.data.translations[suggestion.source]}]</span>
 				</li>
 			{/each}
 		</ul>

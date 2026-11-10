@@ -8,7 +8,7 @@
 	export let blockValue;
 	export let index;
 	export let offset;
-	export let progress;
+	export const progress = undefined;
 	export let chartWidth;
 	export let chartHeight;
 	export let currentYear;

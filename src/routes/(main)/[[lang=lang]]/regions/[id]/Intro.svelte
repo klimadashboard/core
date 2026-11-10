@@ -14,7 +14,10 @@
 	export let data;
 
 	$: regionConfig = data.regionConfig;
-	$: introText = regionConfig.intro_text.replace('{regionName}', data.page.name);
+	$: displayName = data.page.layer_label
+		? `${data.page.name} (${data.page.layer_label})`
+		: data.page.name;
+	$: introText = regionConfig.intro_text.replace('{regionName}', displayName);
 
 	let panels = [];
 	let illustrationsSlider;
@@ -79,7 +82,7 @@
 			})
 		);
 		illustrations = illustrations.filter((i) =>
-			i.attributes.some((attr) => data.page.attributes.includes(attr))
+			i.attributes?.some((attr) => data.page.attributes?.includes(attr))
 		);
 
 		panels = await fetchPanels($page.data?.language?.code || 'de');
@@ -126,7 +129,10 @@
 	<!-- Statistics Slider Top -->
 	<div
 		class="reg-card-quarter rounded-xl overflow-hidden relative cursor-pointer"
+		role="button"
+		tabindex="0"
 		on:click={(e) => handleSliderClick(e, statisticsSliderTop)}
+		on:keydown={(e) => e.key === 'Enter' && handleSliderClick(e, statisticsSliderTop)}
 	>
 		{#if panels.slice(0, Math.ceil(panels.length / 2)).length > 0}
 			<Splide
@@ -181,7 +187,10 @@
 	<!-- Statistics Slider Bottom -->
 	<div
 		class="reg-card-quarter rounded-xl overflow-hidden relative cursor-pointer"
+		role="button"
+		tabindex="0"
 		on:click={(e) => handleSliderClick(e, statisticsSliderBottom)}
+		on:keydown={(e) => e.key === 'Enter' && handleSliderClick(e, statisticsSliderBottom)}
 	>
 		{#if panels.slice(Math.ceil(panels.length / 2)).length > 0}
 			<Splide
@@ -298,10 +307,12 @@
 	@media (min-width: 1024px) {
 		:global(.reg-card),
 		:global(.reg-card-half) {
-			@apply w-full max-w-full h-[60vh];
+			@apply w-full max-w-full;
+			height: max(60vh, 600px);
 		}
 		:global(.reg-card-quarter) {
-			@apply w-full max-w-full h-[calc(30vh-0.125rem)];
+			@apply w-full max-w-full;
+			height: max(calc(30vh - 0.125rem), calc(300px - 0.125rem));
 		}
 	}
 

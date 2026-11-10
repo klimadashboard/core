@@ -1,8 +1,18 @@
-// $lib/components/charts/custom/renewablesChart/config.ts
+// $lib/components/charts/custom/renewablesExplorer/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import { withLayerLabel } from '$lib/utils/getRegion';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
+import { readItem } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
 import { formatPower, formatNumber, getPowerUnit, convertPowerUnit } from '$lib/utils/formatters';
+import { getAggregateCodes } from '$lib/utils/regionAggregation';
+
+async function fetchJson(url: string) {
+	const response = await fetch(url);
+	if (!response.ok) throw new Error(`HTTP ${response.status}`);
+	return response.json();
+}
 
 // ============================================================================
 // TYPES
@@ -10,6 +20,7 @@ import { formatPower, formatNumber, getPowerUnit, convertPowerUnit } from '$lib/
 
 export type EnergyType = 'solar' | 'wind';
 export type ViewMode = 'yearly' | 'cumulative' | 'map';
+export type MetricMode = 'power' | 'units';
 
 export interface RenewablesParams {
 	energy: EnergyType;
@@ -108,7 +119,7 @@ export function getAvailableViews(energy: EnergyType): ViewMode[] {
 export function getViewLabels(energy: EnergyType): Record<ViewMode, string> {
 	return {
 		yearly: 'Jährlicher Zubau',
-		cumulative: 'Kumulierte Leistung',
+		cumulative: 'Kumulativ',
 		map: energy === 'wind' ? 'Windkraftanlagen' : 'Anlagen'
 	};
 }
@@ -120,6 +131,32 @@ export function getViewIcons(): Record<ViewMode, string> {
 		cumulative: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
 		map: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`
 	};
+}
+
+/** Get metric labels (only relevant for yearly/cumulative views) */
+export function getMetricLabels(): Record<MetricMode, string> {
+	return {
+		power: 'Leistung',
+		units: 'Anzahl Anlagen'
+	};
+}
+
+/** Get metric icons (simple inline SVGs) */
+export function getMetricIcons(): Record<MetricMode, string> {
+	return {
+		power: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+		units: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="6" height="10" rx="1"/><rect x="9" y="3" width="6" height="14" rx="1"/><rect x="16" y="5" width="6" height="12" rx="1"/></svg>`
+	};
+}
+
+/** Get the yearly value for a data point given the selected metric */
+export function getYearlyValue(d: RenewablesRawData, metric: MetricMode): number {
+	return metric === 'power' ? d.net_power_kw : d.added_units || 0;
+}
+
+/** Get the cumulative value for a data point given the selected metric */
+export function getCumulativeValue(d: RenewablesRawData, metric: MetricMode): number {
+	return metric === 'power' ? d.cumulative_power_kw : d.cumulative_units || 0;
 }
 
 // ============================================================================
@@ -249,16 +286,12 @@ export async function fetchData(
 	gridOperatorCheckedRatio: number | null;
 }> {
 	const { energy } = params;
-	const regionCode = region?.codeShort ? region?.codeShort : region?.code;
+	const regionCode = (await getAggregateCodes(region)) ?? (region?.codeShort ? region?.codeShort : region?.code);
 
-	const url = regionCode
-		? `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year&region=${regionCode}`
-		: `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year`;
+	const baseUrl = `https://base.klimadashboard.org/get-renewables-growth?table=energy_${energy}_units&group=year`;
+	const url = regionCode ? `${baseUrl}&region=${regionCode}` : baseUrl;
 
-	const response = await fetch(url);
-	if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-	const result = await response.json();
+	const result = await fetchJson(url);
 	return {
 		data: result.by_year || [],
 		updateDate: result.update_date || '',
@@ -495,29 +528,35 @@ export function getPlaceholders(
 	const dataYearStartData = data.find((d) => d.year === dataYearStart);
 	const dataYearEndData = data.find((d) => d.year === dataYearEnd);
 
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const layerLabel = (region as any)?.layer_label || '';
+	const regionName = layerLabel && region?.layer !== 'country'
+		? withLayerLabel(region?.name || 'Deutschland', layerLabel)
+		: region?.name || 'Deutschland';
+
 	// Build titleWind placeholder for wind energy
 	let titleWind = '';
 	if (energy === 'wind') {
-		const regionDisplayName = region?.name || 'Deutschland';
 		const totalCumulativeUnits = lastEntry?.cumulative_units || 0;
 
 		if (totalCumulativeUnits === 0) {
 			// No wind turbines in operation
-			titleWind = `In ${regionDisplayName} ist aktuell kein Windrad in Betrieb.`;
+			titleWind = `In ${regionName} ist aktuell kein Windrad in Betrieb.`;
 		} else {
 			// Find the most recent year with new installations
 			const lastYearWithInstallation = [...data].reverse().find((d) => (d.added_units || 0) > 0);
 			if (lastYearWithInstallation) {
-				titleWind = `Zuletzt wurde im Jahr ${lastYearWithInstallation.year} ein Windrad in ${regionDisplayName} in Betrieb genommen.`;
+				titleWind = `Zuletzt wurde im Jahr ${lastYearWithInstallation.year} ein Windrad in ${regionName} in Betrieb genommen.`;
 			} else {
 				// Has cumulative but no yearly data - fallback
-				titleWind = `In ${regionDisplayName} sind Windräder in Betrieb.`;
+				titleWind = `In ${regionName} sind Windräder in Betrieb.`;
 			}
 		}
 	}
 
 	return {
-		regionName: region?.name || 'Deutschland',
+		regionName,
+		layerLabel,
 		currentYear,
 		currentYearPower: formatPower(currentYearData?.net_power_kw || 0, energy),
 		currentYearPowerRaw: currentYearData?.net_power_kw || 0,
@@ -640,3 +679,28 @@ export function formatPowerValue(value: number): string {
 
 /** Re-export formatters for convenience */
 export { formatPower, formatNumber, getPowerUnit, convertPowerUnit };
+
+export async function fetchChartData({
+	regionId,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	let region: Region | null = null;
+
+	if (regionId) {
+		const directus = getDirectusInstance(fetchFn);
+		const raw = await directus.request(
+			readItem('regions', regionId, {
+				fields: ['id', 'code', 'code_short', 'name', 'layer', 'layer_label']
+			})
+		) as any;
+		region = { ...raw, codeShort: raw.code_short } as Region;
+	}
+
+	const params = { energy: 'solar' as const };
+	const { data, updateDate, gridOperatorCheckedRatio } = await fetchData(region, params);
+	if (!data || data.length === 0) return null;
+
+	const goal = await fetchGoal(region, params);
+
+	return buildChartData(data, updateDate, region, params, 'yearly', goal, gridOperatorCheckedRatio);
+}

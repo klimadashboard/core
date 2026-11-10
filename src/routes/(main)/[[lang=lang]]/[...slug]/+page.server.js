@@ -1,12 +1,28 @@
-/** @type {import('./$types').PageLoad} */
+/** @type {import('./$types').PageServerLoad} */
 import { error, redirect } from '@sveltejs/kit';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItems } from '@directus/sdk';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { resolvePlaceholders } from '$lib/utils/placeholderUtils.js';
+import { getChartSnapshots } from '$lib/utils/chartDataService';
 import dayjs from 'dayjs';
 import 'dayjs/locale/de';
 import 'dayjs/locale/en';
+
+/** Extract chart IDs from a blocks array (handles nested block_grid) */
+function extractChartIds(blocks) {
+	const ids = [];
+	for (const block of blocks || []) {
+		if (block.collection === 'block_chart' && block.item?.charts) {
+			for (const c of block.item.charts) {
+				if (c.chart) ids.push(c.chart);
+			}
+		} else if (block.collection === 'block_grid' && block.item?.blocks) {
+			ids.push(...extractChartIds(block.item.blocks));
+		}
+	}
+	return ids;
+}
 
 function filterTranslations(data, language) {
 	// If data is an array, process each element.
@@ -44,25 +60,16 @@ export async function load({ fetch, params }) {
 	const directus = getDirectusInstance(fetch);
 
 	if (params.lang == 'de') {
-		redirect(308, '/' + params.slug);
+		redirect(308, '/' + params.slug.split('/').map(encodeURIComponent).join('/'));
 	}
 
 	const language = params.lang || 'de';
-	const slug = params.slug || 'home';
+	// Normalise to NFC so umlaut slugs typed on macOS/iOS (decomposed ü) match the stored slug.
+	const slug = (params.slug || 'home').normalize('NFC');
 	const site = PUBLIC_VERSION;
 	dayjs.locale(language);
 
 	try {
-		const slugs = await directus.request(
-			readItems('pages', {
-				filter: {
-					site: { _eq: site },
-					translations: { slug: { _eq: slug } }
-				},
-				fields: ['translations.slug', 'translations.languages_code']
-			})
-		);
-
 		// ---------- Fetch the page + expansions ----------
 		const pages = await directus.request(
 			readItems('pages', {
@@ -85,7 +92,7 @@ export async function load({ fetch, params }) {
 					'id',
 					'date_updated',
 
-					// Page translations (only the current language via "deep")
+					// Page translations (all languages — used for hreflang)
 					'translations.*',
 
 					// Page->blocks pivot
@@ -131,6 +138,7 @@ export async function load({ fetch, params }) {
 					// Non-translated block types inside grid
 					'blocks.item:block_grid.blocks.item:block_news.*',
 					'blocks.item:block_grid.blocks.item:block_chart.*',
+					'blocks.item:block_grid.blocks.item:block_chart.charts.chart',
 					'blocks.item:block_grid.blocks.item:block_quiz.*',
 					'blocks.item:block_grid.blocks.item:block_grid.*'
 					// ^ if you allow nested grids, you'd keep going or do recursion.
@@ -139,28 +147,45 @@ export async function load({ fetch, params }) {
 		);
 
 		if (!pages || pages.length === 0) {
-			// Check if the slug exists in any other language first
+			// Page not found in current language — check if it exists in another language
+			const slugs = await directus.request(
+				readItems('pages', {
+					filter: {
+						site: { _eq: site },
+						translations: { slug: { _eq: slug } }
+					},
+					fields: ['translations.slug', 'translations.languages_code']
+				})
+			);
+
 			if (slugs.length > 0) {
-				const translatedPage = slugs[0].translations.find((t) => t.languages_code == language);
+				const translatedPage = slugs[0].translations.find(
+					(t) => t.languages_code == language
+				);
 				if (translatedPage) {
-					redirect(308, `/${translatedPage.languages_code}/${translatedPage.slug}`);
+					redirect(
+						308,
+						`/${translatedPage.languages_code}/${translatedPage.slug.split('/').map(encodeURIComponent).join('/')}`
+					);
 				}
 			}
 
-			//Check if slug matches a region
+			//Check if slug matches a region → send to the canonical /regions/<slug> URL
 			const regionMatch = await directus.request(
 				readItems('regions', {
 					filter: {
 						slug: { _eq: slug }
 					},
-					fields: ['id'],
+					fields: ['id', 'slug'],
 					limit: 1
 				})
 			);
 
 			if (regionMatch && regionMatch.length > 0) {
-				const regionId = regionMatch[0].id;
-				redirect(308, `/regions/${regionId}`);
+				const canonical = String(regionMatch[0].slug || '').split(',')[0].trim();
+				// Location header must be ASCII: a raw "ü" is sent as an invalid latin-1 byte (and
+				// non-latin-1 characters throw), so percent-encode the slug.
+				redirect(308, `/regions/${encodeURIComponent(canonical || regionMatch[0].id)}`);
 			}
 
 			throw error(404, 'Page not found');
@@ -175,19 +200,43 @@ export async function load({ fetch, params }) {
 
 		const blocks = content.blocks;
 
+		// SSR chart snapshots for any chart blocks on this page
+		const chartIds = extractChartIds(blocks);
+		const chartSnapshots =
+			chartIds.length > 0
+				? await getChartSnapshots(chartIds, null, [], language, fetch)
+				: {};
+
 		return {
 			page: {
 				id: page.id,
 				date_updated: page.date_updated,
 				blocks: blocks,
-				slugs: slugs[0].translations
+				// Extract slugs from the already-fetched translations (all languages included)
+				slugs: page.translations.map((t) => ({
+					slug: t.slug,
+					languages_code: t.languages_code
+				}))
 			},
-			content
+			content,
+			chartSnapshots
 		};
 	} catch (err) {
 		if (err && 'location' in err) {
 			throw err;
 		}
-		throw error(404, 'Page not found');
+		if (err?.status && err.status < 500) {
+			// Re-throw SvelteKit errors (genuine 404s thrown above) as-is
+			throw err;
+		}
+		const status = err?.response?.status ?? err?.status;
+		if (status === 429) {
+			throw error(503, 'Too many requests to data backend — please try again shortly');
+		}
+		if (status >= 500) {
+			throw error(503, 'Data backend unavailable — please try again shortly');
+		}
+		console.error('[page load]', err);
+		throw error(503, 'Unexpected error loading page');
 	}
 }

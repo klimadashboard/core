@@ -2,7 +2,7 @@
 	import formatNumber from '$lib/stores/formatNumber';
 	export let region;
 	export let ratio;
-	export let colors;
+	export const colors = undefined;
 	export let selectedEnergy;
 	export let updateDate;
 </script>

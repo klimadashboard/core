@@ -3,7 +3,7 @@
 </script>
 
 <div class="">
-	<div class="spinner bg-green-400 mx-auto" />
+	<div class="spinner bg-green-400 mx-auto"></div>
 	{#if showText}
 		<p class="text-sm mx-auto text-green-600 text-center">Daten werden geladen...</p>
 	{/if}

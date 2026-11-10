@@ -24,15 +24,17 @@
 	}
 </script>
 
-<div class="reg-card flex flex-col relative bg-black" on:click={() => toggleImage(data.id)}>
+<div class="reg-card flex flex-col relative bg-black" role="button" tabindex="0" on:click={() => toggleImage(data.id)} on:keydown={(e) => e.key === 'Enter' && toggleImage(data.id)}>
 	<div class="relative flex-1 w-full h-full">
 		<img
 			src="https://base.klimadashboard.org/assets/{data.files[0].directus_files_id}?key=medium"
+			alt=""
 			class="absolute object-cover w-full h-full transition-opacity duration-700"
 			class:opacity-0={currentImage[data.id]}
 		/>
 		<img
 			src="https://base.klimadashboard.org/assets/{data.files[1].directus_files_id}?key=medium"
+			alt=""
 			class="absolute object-cover w-full h-full transition-opacity duration-700"
 			class:opacity-0={!currentImage[data.id]}
 		/>
@@ -86,7 +88,10 @@
 
 	<div
 		class="absolute bottom-0 left-0 right-0 text-white cursor-pointer"
+		role="button"
+		tabindex="0"
 		on:click={() => toggleText(data.id)}
+		on:keydown={(e) => e.key === 'Enter' && toggleText(data.id)}
 	>
 		<div class="bg-gradient-to-b from-transparent to-black/70 h-16"></div>
 		<div

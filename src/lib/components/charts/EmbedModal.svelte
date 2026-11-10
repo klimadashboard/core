@@ -26,6 +26,7 @@
 	// Built-in options
 	let includeRegion = !!currentRegionId;
 	let viewMode: 'full' | 'simple' = 'full';
+	let hideTitle = false;
 
 	// Custom options state - track which are enabled and their selected values
 	let customOptionsState: Record<string, { enabled: boolean; value: string }> = {};
@@ -58,6 +59,7 @@
 	$: embedOptions = {
 		region: includeRegion && currentRegionId ? currentRegionId : undefined,
 		view: availableOptions.view && viewMode !== 'full' ? viewMode : undefined,
+		hideTitle: hideTitle || undefined,
 		customParams
 	} satisfies EmbedOptions;
 
@@ -66,12 +68,13 @@
 			? generateEmbedCode(chartId, embedOptions)
 			: generateScriptEmbedCode(chartId, embedOptions);
 
-	// Check if we have any options to show
-	$: hasOptions = currentRegionId || availableOptions.view || customEmbedOptions.length > 0;
+	// Check if we have any options to show (always true since hideTitle is always available)
+	$: hasOptions = true;
 
 	let copied = false;
 	async function handleCopy() {
 		await copyToClipboard(embedCode);
+		window.rybbit?.event('Chart Embed', { action: 'copied', chart: chartId });
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	}
@@ -145,9 +148,9 @@
 		<div class="p-4 space-y-4">
 			<!-- Embed type selection -->
 			<div>
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+				<p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 					{t(page.data.translations, 'ui.embed.type')}
-				</label>
+				</p>
 				<div class="flex gap-2">
 					<button
 						on:click={() => (embedType = 'script')}
@@ -175,9 +178,9 @@
 			<!-- Options -->
 			{#if hasOptions}
 				<div class="space-y-3">
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+					<p class="block text-sm font-medium text-gray-700 dark:text-gray-300">
 						{t(page.data.translations, 'ui.embed.options')}
-					</label>
+					</p>
 
 					{#if currentRegionId}
 						<label class="flex items-center gap-3 cursor-pointer">
@@ -208,7 +211,18 @@
 						</div>
 					{/if}
 
-					<!-- Custom embed options from chart -->
+					<label class="flex items-center gap-3 cursor-pointer">
+						<input
+							type="checkbox"
+							bind:checked={hideTitle}
+							class="w-4 h-4 rounded border-gray-300 text-[#28A889] focus:ring-[#28A889]"
+						/>
+						<span class="text-sm text-gray-700 dark:text-gray-300">
+							{t(page.data.translations, 'ui.embed.hideTitle') || 'Hide headline'}
+						</span>
+					</label>
+
+				<!-- Custom embed options from chart -->
 					{#each customEmbedOptions as option (option.key)}
 						{@const state = customOptionsState[option.key]}
 						<div>
@@ -245,9 +259,9 @@
 
 			<!-- Code preview -->
 			<div>
-				<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+				<p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 					{t(page.data.translations, 'ui.embed.code')}
-				</label>
+				</p>
 				<div class="relative">
 					<pre
 						class="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 text-xs font-mono text-gray-800 dark:text-gray-200 overflow-x-auto whitespace-pre-wrap break-all">{embedCode}</pre>

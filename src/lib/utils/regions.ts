@@ -76,12 +76,11 @@ export async function getRegions(forceRefresh = false): Promise<any[]> {
 	let filter;
 
 	if (PUBLIC_VERSION == 'org') {
-		filter = {};
+		filter = { visible: { _eq: true } };
 	} else {
 		filter = {
-			country: {
-				_eq: PUBLIC_VERSION.toUpperCase()
-			}
+			country: { _eq: PUBLIC_VERSION.toUpperCase() },
+			visible: { _eq: true }
 		};
 	}
 

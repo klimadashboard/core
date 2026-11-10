@@ -22,20 +22,6 @@
 
 	$: zeroY = yScale?.(0) ?? 0;
 
-	// Debug
-	$: if (xScale && data.length > 0) {
-		console.log('[BarY] Debug:', {
-			isBandScale,
-			bandwidth,
-			xField: x,
-			firstDataX: data[0]?.[x],
-			firstBarX: xScale(data[0]?.[x]),
-			secondBarX: data[1] ? xScale(data[1]?.[x]) : 'N/A',
-			scaleRange: xScale.range?.(),
-			scaleDomain: xScale.domain?.()
-		});
-	}
-
 	function getBarX(d: any): number {
 		if (!xScale) return 0;
 		const val = xScale(d[x]) ?? 0;
@@ -53,13 +39,6 @@
 			{@const barHeight = Math.abs(yScale(value) - zeroY)}
 			{@const isHovered = hover.x === d[x]}
 			{@const dimmed = hoverDim && hover.x !== null && !isHovered}
-
-			{#if i < 3}
-				<!-- Debug first few bars -->
-				{@const _ = console.log(
-					`[BarY] Bar ${i}: x=${d[x]}, barX=${barX}, value=${value}, barY=${barY}, height=${barHeight}`
-				)}
-			{/if}
 
 			<rect
 				x={barX}

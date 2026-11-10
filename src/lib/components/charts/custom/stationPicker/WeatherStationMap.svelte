@@ -1,9 +1,10 @@
 <script>
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import { onMount, onDestroy } from 'svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { createEventDispatcher } from 'svelte';
 	import { page } from '$app/stores';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	const dispatch = createEventDispatcher();
 
@@ -20,6 +21,9 @@
 	onMount(() => {
 		map = new maplibregl.Map({
 			container: mapContainer,
+			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
+			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
+			canvasContextAttributes: { preserveDrawingBuffer: true },
 			style: {
 				version: 8,
 				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
@@ -55,18 +59,13 @@
 				data: data.geo
 			});
 
-			map.addSource('carto-light', {
-				type: 'raster',
-				tiles: [
-					'https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
-				],
-				tileSize: 256,
-				attribution:
-					'© <a href="https://carto.com/">CARTO</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-			});
+			map.addSource(
+				'carto-light',
+				cartoRasterSource('lightNoLabels', {
+					attribution:
+						'© <a href="https://carto.com/">CARTO</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+				})
+			);
 
 			map.addLayer({
 				id: 'carto-light-layer',

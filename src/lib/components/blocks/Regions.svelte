@@ -33,13 +33,5 @@
 			>
 			<span>Zu den Regionen</span></a
 		>
-
-		<div
-			class="absolute top-3 right-2 w-16 h-16 !bg-white rounded-full grid place-items-center rotate-5"
-		>
-			<span class="text-green-800 font-bold m-auto uppercase text-center leading-none"
-				>Jetzt<br />neu!</span
-			>
-		</div>
 	</div>
 </div>

@@ -4,6 +4,13 @@ import type { CompanyEmissionArray } from './types';
 // Define the emissions per year object type
 type EmissionsPerYear = Record<number, EmissionsYearRecord>;
 
+// Parse a raw value, returning null for anything that is not a usable number
+const parseValue = (value: string | null) => {
+	if (value === null || value === '') return null;
+	const parsed = parseInt(value);
+	return Number.isFinite(parsed) ? parsed : null;
+};
+
 export const transformDataSingleCompany = (
 	emissionsData: CompanyEmissionArray,
 	selectedCompany: string,
@@ -26,11 +33,7 @@ export const transformDataSingleCompany = (
 		if (!emissionsPerYear[year]) {
 			emissionsPerYear[year] = { year, unit: 'CO2', label: year }; // Initialize if not present
 		}
-		if (!value) {
-			emissionsPerYear[year][scope] = 'na';
-		} else {
-			emissionsPerYear[year][scope] = parseInt(value); // Merge scope data
-		}
+		emissionsPerYear[year][scope] = parseValue(value); // Merge scope data, null when missing
 	});
 	return convertObjectToArray(emissionsPerYear);
 };
@@ -42,6 +45,8 @@ export const transformDataMultipleCompanies = (
 	selectedScope2Category: string
 ) => {
 	const emissionsPerYear: EmissionsPerYear = {};
+	// Year/company combinations with at least one missing scope — their sum is incomplete
+	const incomplete = new Set<string>();
 
 	emissionsData.forEach(({ year, company, scope, value, category }) => {
 		// Skip items that are not included in the companies array
@@ -58,12 +63,15 @@ export const transformDataMultipleCompanies = (
 			emissionsPerYear[year] = { year, unit: 'CO2', label: year };
 		}
 
-		if (!value) {
-			emissionsPerYear[year][company] = 'na';
-		} else if (!emissionsPerYear[year][company]) {
-			emissionsPerYear[year][company] = parseInt(value);
-		} else if (value && emissionsPerYear[year][company] !== 'na') {
-			emissionsPerYear[year][company] += parseInt(value);
+		const parsed = parseValue(value);
+		const key = `${year}|${company}`;
+
+		if (parsed === null) {
+			// A missing scope invalidates the whole sum for that year
+			incomplete.add(key);
+			emissionsPerYear[year][company] = null;
+		} else if (!incomplete.has(key)) {
+			emissionsPerYear[year][company] = (emissionsPerYear[year][company] ?? 0) + parsed;
 		}
 	});
 

@@ -1,9 +1,18 @@
-// $lib/components/charts/custom/vehicleRegistrations/config.ts
+// $lib/components/charts/custom/carsTypes/config.ts
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
-import { formatNumber } from '$lib/utils/formatters';
+import { withLayerLabel } from '$lib/utils/getRegion';
+import type {
+	TableColumn,
+	ChartData,
+	ChartFetchParams,
+	EmbedOptionDeclaration
+} from '$lib/components/charts/types';
+import { formatNumber, formatPeriodDate } from '$lib/utils/formatters';
 import { PUBLIC_VERSION } from '$env/static/public';
 import { filterCategoryValues } from '$lib/components/charts/utils/privacyFilter';
+import { readItems } from '@directus/sdk';
+import getDirectusInstance from '$lib/utils/directus';
+import { getAggregateMembers } from '$lib/utils/regionAggregation';
 
 export type DataMode = 'bestand' | 'neuzulassungen';
 
@@ -27,6 +36,24 @@ const layerHierarchy = [
 	'country',
 	'land'
 ];
+
+/** Readable German labels for layer values (used as fallback when layer_label is empty) */
+const layerLabels: Record<string, string> = {
+	municipality: 'Gemeinde',
+	gemeinde: 'Gemeinde',
+	district: 'Bezirk',
+	bezirk: 'Bezirk',
+	kreis: 'Kreis',
+	landkreis: 'Landkreis',
+	city: 'Stadt',
+	stadt: 'Stadt',
+	region: 'Region',
+	regierungsbezirk: 'Regierungsbezirk',
+	bundesland: 'Bundesland',
+	state: 'Bundesland',
+	country: 'Land',
+	land: 'Land'
+};
 
 /** Get priority for a layer (lower = more local = preferred) */
 function getLayerPriority(layer: string): number {
@@ -98,47 +125,89 @@ async function fetchBestandData(
 	hasPrivacySuppression?: boolean;
 } | null> {
 	const country = getCountryCode();
+	const isCountryLevel = !region || region.layer === 'country';
+	// Aggregate regions (Metropolregion): sum their member districts like the country branch
+	const members = await getAggregateMembers(region);
+	const memberIds = members ? new Set(members.map((m) => m.id)) : null;
 
-	// Use the custom endpoint that handles region lookup and aggregation
-	// The endpoint accepts region IDs (UUIDs) and looks them up internally
-	const regionKey = region?.id || (country === 'DE' ? 'DE' : country);
-	const url = `https://base.klimadashboard.org/get-mobility-cars?region=${encodeURIComponent(regionKey)}&country=${country}&includeMeta=true`;
+	let yearData: Record<string, Record<string, number>>;
+	let regionName: string;
+	let source: string;
 
-	const resp = await fetch(url);
+	if (isCountryLevel || memberIds) {
+		// Country-level: fetch all districts and aggregate
+		const url = `https://base.klimadashboard.org/get-mobility-cars?layer=district&country=${country}&includeMeta=true`;
+		const resp = await fetch(url);
+		if (!resp.ok) return null;
 
-	if (!resp.ok) {
-		// 404 or 400 means no data for this region
-		if (resp.status === 404 || resp.status === 400) {
-			return null;
+		const districts = await resp.json();
+		if (!Array.isArray(districts) || districts.length === 0) return null;
+
+		yearData = {};
+		const allSourceParts = new Set<string>();
+
+		for (const district of districts) {
+			if (memberIds && !memberIds.has(district.region?.id)) continue;
+			const dData = district.data || {};
+			if (district.source) {
+				for (const part of String(district.source).split(',')) {
+					const trimmed = part.trim();
+					if (trimmed) allSourceParts.add(trimmed);
+				}
+			}
+
+			for (const [year, categories] of Object.entries(dData)) {
+				if (!yearData[year]) yearData[year] = {};
+				for (const [cat, val] of Object.entries(categories as Record<string, number>)) {
+					yearData[year][cat] = (yearData[year][cat] || 0) + ((val as number) || 0);
+				}
+			}
 		}
-		throw new Error(`Endpoint error ${resp.status}`);
+
+		regionName = memberIds
+			? region!.name
+			: country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
+		// Keep raw source parts — will be filtered by displayed year later
+		source = [...allSourceParts].join(', ');
+	} else {
+		// Single-region: use the region-specific endpoint
+		const regionKey = region?.id || (country === 'DE' ? 'DE' : country);
+		const url = `https://base.klimadashboard.org/get-mobility-cars?region=${encodeURIComponent(regionKey)}&country=${country}&includeMeta=true`;
+
+		const resp = await fetch(url);
+		if (!resp.ok) {
+			if (resp.status === 404 || resp.status === 400) return null;
+			throw new Error(`Endpoint error ${resp.status}`);
+		}
+
+		const result = await resp.json();
+		if (result.error) return null;
+
+		yearData = result.data || {};
+		regionName = result.region?.name || region?.name || (country === 'DE' ? 'Deutschland' : country);
+		source = result.source || result.meta?.source || '';
 	}
 
-	const result = await resp.json();
-
-	// Handle error responses from the endpoint
-	if (result.error) {
-		return null;
-	}
-
-	// The endpoint returns { region: {...}, data: { [year]: { [category]: value } } }
-	const yearData = result.data || {};
 	const periods = Object.keys(yearData).sort();
-	const regionName =
-		result.region?.name || region?.name || (country === 'DE' ? 'Deutschland' : country);
 
 	if (periods.length === 0) {
 		return null;
 	}
 
-	// Get the latest year
-	const years = periods
-		.map((y) => parseInt(y))
-		.filter((y) => Number.isFinite(y))
-		.sort((a, b) => b - a);
+	// Get the latest period (date string like "2026-04-30" or legacy year string)
+	const latestPeriod = periods[periods.length - 1];
+	const latestYear = new Date(latestPeriod).getFullYear();
+	const latestYearData = yearData[latestPeriod] || {};
 
-	const latestYear = years[0];
-	const latestYearData = yearData[String(latestYear)] || {};
+	// Filter source to only show entries relevant to the displayed year
+	if (source.includes(',')) {
+		const sourceParts = source.split(',').map((s) => s.trim()).filter(Boolean);
+		const yearStr = String(latestYear);
+		const matching = sourceParts.filter((p) => p.includes(yearStr));
+		const partsToDedup = matching.length > 0 ? matching : sourceParts;
+		const baseNames = new Set(partsToDedup.map((s) => s.replace(/\s+\d{4}(-\d{2})?$/, '')));
+		source = [...baseNames].join(', ');
+	}
 
 	// Get all categories (excluding 'Insgesamt', 'Privat', 'Firmen' which are ownership types, not drive types)
 	const excludedCategories = ['Insgesamt', 'Privat', 'Firmen'];
@@ -182,10 +251,7 @@ async function fetchBestandData(
 		shares: sharesData
 	};
 
-	const updateDate = new Date(latestYear, 0, 1).toISOString();
-
-	// Get source from API response, fallback to empty string
-	const source = result.source || result.meta?.source || '';
+	const updateDate = new Date(latestPeriod).toISOString();
 
 	return { data, categories, updateDate, regionName, source, hasPrivacySuppression };
 }
@@ -202,12 +268,14 @@ async function fetchNeuzulassungenData(
 	hasPrivacySuppression?: boolean;
 } | null> {
 	const country = getCountryCode();
-	const regionCode = region?.id || country;
+	const isCountryLevel = !region || region.layer === 'country';
 	const defaultRegionName =
 		country === 'DE' ? 'Deutschland' : country === 'AT' ? 'Österreich' : country;
 
-	// Build Directus API URL with filters
-	const url = `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${regionCode}&filter[country][_eq]=${country}&sort=-period&limit=-1`;
+	// Build Directus API URL - omit region filter for country-level aggregation
+	const url = isCountryLevel
+		? `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[country][_eq]=${country}&sort=-period&limit=-1`
+		: `https://base.klimadashboard.org/items/mobility_cars_registrations?filter[region][_eq]=${region?.id || country}&filter[country][_eq]=${country}&sort=-period&limit=-1`;
 
 	const response = await fetch(url);
 	if (!response.ok) {
@@ -215,7 +283,7 @@ async function fetchNeuzulassungenData(
 	}
 
 	const result = await response.json();
-	const records = (result.data || []) as Array<{
+	let records = (result.data || []) as Array<{
 		region: string;
 		country: string;
 		period: string;
@@ -226,6 +294,27 @@ async function fetchNeuzulassungenData(
 
 	if (records.length === 0) {
 		return null;
+	}
+
+	// For country-level, aggregate records across all regions by period+category
+	if (isCountryLevel) {
+		const aggregated = new Map<string, Map<string, number>>();
+		for (const record of records) {
+			if (!aggregated.has(record.period)) aggregated.set(record.period, new Map());
+			const periodMap = aggregated.get(record.period)!;
+			periodMap.set(record.category, (periodMap.get(record.category) || 0) + record.value);
+		}
+		const firstSource = records[0]?.source;
+		records = [...aggregated.entries()].flatMap(([period, categories]) =>
+			[...categories.entries()].map(([category, value]) => ({
+				region: country,
+				country,
+				period,
+				category,
+				value,
+				source: firstSource
+			}))
+		);
 	}
 
 	// Get the latest period
@@ -320,7 +409,7 @@ export async function fetchDataWithFallback(
 						layerPriority: getLayerPriority(candidate.layer || 'unknown')
 					} as FetchResult;
 				}
-			} catch {
+			} catch (err) {
 				// Ignore errors, try next candidate
 			}
 			return null;
@@ -455,11 +544,19 @@ function formatPercent(value: number): string {
 	);
 }
 
+/** Format an ISO date string as a period label depending on mode */
+function formatPeriodLabel(updateDate: string, mode: DataMode): string {
+	if (mode === 'neuzulassungen') {
+		return formatPeriodDate(updateDate);
+	}
+	return String(new Date(updateDate).getUTCFullYear());
+}
+
 /** Get table columns */
-export function getTableColumns(year?: number): TableColumn[] {
+export function getTableColumns(periodLabel?: string): TableColumn[] {
 	return [
 		{ key: 'label', label: 'Antriebsart', align: 'left' },
-		{ key: 'absolute', label: `Anzahl${year ? ` (${year})` : ''}`, align: 'right', format: (v: number) => formatNumber(v, 0) },
+		{ key: 'absolute', label: periodLabel ? `Anzahl (${periodLabel})` : 'Anzahl', align: 'right', format: (v: number) => formatNumber(v, 0) },
 		{
 			key: 'share',
 			label: 'Anteil (%)',
@@ -528,14 +625,19 @@ export function getPlaceholders(
 	waffleData: VehicleShareData[],
 	regionName: string,
 	mode: DataMode = 'bestand',
-	source?: string
+	source?: string,
+	layerLabel?: string,
+	updateDate?: string
 ): Record<string, string | number> {
+	const lastUpdateDate = updateDate ? formatPeriodDate(updateDate) : '';
 	const placeholders: Record<string, string | number> = {
 		year: data.year,
 		total: formatNumber(data.total, 0),
 		totalRaw: data.total,
 		regionName,
+		layerLabel: layerLabel || '',
 		source: source || '',
+		lastUpdateDate,
 		title: generateTitle(waffleData, regionName, mode)
 	};
 
@@ -586,6 +688,8 @@ export function buildChartData(
 		dataRegionName: string;
 		originalLayerLabel?: string;
 		dataLayerLabel?: string;
+		originalLayer?: string;
+		dataLayer?: string;
 	},
 	regionLayerLabel?: string,
 	hasPrivacySuppression?: boolean,
@@ -618,22 +722,26 @@ export function buildChartData(
 
 	// Build source string, including fallback disclaimer if showing parent region data
 	let sourceText = source || '';
-	if (fallbackInfo && fallbackInfo.originalRegionName !== fallbackInfo.dataRegionName) {
-		// Include layer labels in the disclaimer (e.g., "Landkreis Meißen" instead of just "Meißen")
-		const dataRegionDisplay = fallbackInfo.dataLayerLabel
-			? `${fallbackInfo.dataLayerLabel} ${fallbackInfo.dataRegionName}`
+	if (fallbackInfo) {
+		// Always include layer labels to distinguish regions with the same name (e.g., "Wien (Bundesland)" vs "Wien (Gemeinde)")
+		// Fall back to layerLabels map when CMS layer_label is empty
+		const dataLabel = fallbackInfo.dataLayerLabel || (fallbackInfo.dataLayer && layerLabels[fallbackInfo.dataLayer]) || '';
+		const originalLabel = fallbackInfo.originalLayerLabel || (fallbackInfo.originalLayer && layerLabels[fallbackInfo.originalLayer]) || '';
+		const dataRegionDisplay = dataLabel
+			? `${fallbackInfo.dataRegionName} (${dataLabel})`
 			: fallbackInfo.dataRegionName;
-		const originalRegionDisplay = fallbackInfo.originalLayerLabel
-			? `${fallbackInfo.originalLayerLabel} ${fallbackInfo.originalRegionName}`
+		const originalRegionDisplay = originalLabel
+			? `${fallbackInfo.originalRegionName} (${originalLabel})`
 			: fallbackInfo.originalRegionName;
 		const disclaimer = `Daten für ${dataRegionDisplay} (nicht verfügbar für ${originalRegionDisplay})`;
 		sourceText = sourceText ? `${sourceText} · ${disclaimer}` : disclaimer;
 	}
 
-	// Build regionName with layer_label prefix if available (e.g., "Landkreis Meißen")
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Meißen (Landkreis)")
+	const effectiveLayerLabel = fallbackInfo?.dataLayerLabel || regionLayerLabel || '';
 	const displayRegionName =
-		(fallbackInfo?.dataLayerLabel || regionLayerLabel) && regionName
-			? `${fallbackInfo?.dataLayerLabel || regionLayerLabel} ${regionName}`
+		effectiveLayerLabel && regionName
+			? withLayerLabel(regionName, effectiveLayerLabel)
 			: regionName;
 
 	return {
@@ -641,11 +749,11 @@ export function buildChartData(
 		// Wrap in array so Card.svelte's `hasData` check works (chartData.raw.length > 0)
 		raw: [data],
 		table: {
-			columns: getTableColumns(data.year),
+			columns: getTableColumns(formatPeriodLabel(updateDate, mode)),
 			rows: tableRows,
 			filename: `kfz-${modeLabel}-antriebsarten-${regionName.toLowerCase().replace(/\s+/g, '-')}`
 		},
-		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode, source),
+		placeholders: getPlaceholders(data, waffleData, displayRegionName, mode, source, effectiveLayerLabel, updateDate),
 		meta: {
 			updateDate,
 			source: sourceText,
@@ -655,4 +763,79 @@ export function buildChartData(
 		embedOptions,
 		allowDataDownload: PUBLIC_VERSION !== 'at'
 	};
+}
+
+/** Embed parameter `mode` — a hint; falls back to the available data mode for the region */
+export const embedOptions: EmbedOptionDeclaration[] = [
+	{
+		key: 'mode',
+		label: { de: 'Datenansicht vorauswählen', en: 'Preselect data view' },
+		choices: [
+			{ value: 'neuzulassungen', label: { de: 'Neuzulassungen', en: 'New registrations' } },
+			{ value: 'bestand', label: { de: 'Bestand', en: 'Vehicle stock' } }
+		],
+		default: 'neuzulassungen'
+	}
+];
+
+
+export async function fetchChartData({
+	regionId,
+	parentIds,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	// Fetch region metadata including layer_label for disambiguation
+	const allIds = [regionId, ...parentIds];
+	const directus = getDirectusInstance(fetchFn);
+	const regionsData = await directus.request(
+		readItems('regions', {
+			filter: { id: { _in: allIds } },
+			fields: ['id', 'name', 'layer', 'layer_label'],
+			limit: allIds.length
+		})
+	) as Array<{ id: string; name: string; layer: string; layer_label?: string }>;
+
+	const regionMap = new Map(regionsData.map((r) => [r.id, r]));
+
+	const candidates = allIds.map((id) => {
+		const meta = regionMap.get(id);
+		return {
+			id,
+			name: meta?.name || '',
+			layer: meta?.layer || 'unknown',
+			layer_label: meta?.layer_label || ''
+		};
+	});
+
+	const neuzulassungenResult = await fetchDataWithFallback(candidates, { mode: 'neuzulassungen' });
+	const activeMode: DataMode = neuzulassungenResult ? 'neuzulassungen' : 'bestand';
+	const result = neuzulassungenResult ?? (await fetchDataWithFallback(candidates, { mode: 'bestand' }));
+	if (!result) return null;
+
+	const waffleData = buildWaffleData(result.data, result.categories);
+
+	// Build a minimal region object for placeholder resolution
+	const matchedCandidate = candidates.find((c) => c.id === result.regionId) || candidates[0];
+	const ssrRegion = {
+		id: result.regionId || regionId,
+		name: result.regionName || matchedCandidate?.name || '',
+		layer: matchedCandidate?.layer || 'unknown'
+	} as Region;
+
+	return buildChartData(
+		result.data,
+		waffleData,
+		result.updateDate,
+		result.regionName || '',
+		ssrRegion,
+		activeMode,
+		true, // hasData
+		undefined, // availability
+		result.source,
+		undefined, // fallbackInfo
+		result.regionLayerLabel,
+		result.hasPrivacySuppression
+	);
 }

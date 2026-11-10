@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Scroller from '@sveltejs/svelte-scroller';
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
 	import Intro from './Intro.svelte';
 	import Policies from '$lib/components/blocks/Policies.svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -9,8 +10,11 @@
 	import RelatedRegions from './RelatedRegions.svelte';
 	import Credits from './Credits.svelte';
 	import Chart from '$lib/components/charts/index.svelte';
+	import { serializeJsonLd } from '$lib/utils/jsonld';
 
 	export let data;
+
+	let stagingBannerDismissed = false;
 
 	// Map block names to components
 	const blockComponents = {
@@ -36,9 +40,12 @@
 	let index, offset, progress;
 
 	// Get sections from regionConfig, apply {regionName} placeholder
+	$: regionDisplayName = data.page.layer_label
+		? `${data.page.name} (${data.page.layer_label})`
+		: data.page.name;
 	$: sections = (data.regionConfig?.sections || []).map((section, i) => ({
 		...section,
-		description: section.description?.replace('{regionName}', data.page.name) || '',
+		description: section.description?.replace('{regionName}', regionDisplayName) || '',
 		active: i === index
 	}));
 
@@ -52,20 +59,123 @@
 			history.replaceState(null, '', url.toString());
 		}
 	}
+
+	// JSON-LD: Place schema for the region
+	$: langPrefix = $page.data.language?.code === 'de' ? '' : `/${$page.data.language?.code}`;
+	$: placeLD = {
+		'@context': 'https://schema.org',
+		'@type': 'Place',
+		name: data.page.name,
+		description: data.content?.description || data.page.description || '',
+		url: $page.url.href,
+		...(data.page.center?.length === 2
+			? {
+					geo: {
+						'@type': 'GeoCoordinates',
+						latitude: parseFloat(data.page.center[1]),
+						longitude: parseFloat(data.page.center[0])
+					}
+				}
+			: {}),
+		...(data.page.parents?.length
+			? {
+					containedInPlace: {
+						'@type': 'Place',
+						name: data.page.parents[0].name
+					}
+				}
+			: {})
+	};
+
+	// JSON-LD: BreadcrumbList
+	$: breadcrumbLD = {
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{
+				'@type': 'ListItem',
+				position: 1,
+				name: 'Home',
+				item: $page.url.origin + (langPrefix || '/')
+			},
+			{
+				'@type': 'ListItem',
+				position: 2,
+				name: data.page.name
+			}
+		]
+	};
+
+	// JSON-LD: Dataset for each chart
+	$: allCharts = (data.regionConfig?.sections || []).flatMap((s) => s.charts || []);
+	$: datasetsLD =
+		allCharts.length > 0
+			? {
+					'@context': 'https://schema.org',
+					'@type': 'ItemList',
+					name: `Klimadaten ${data.page.name}`,
+					itemListElement: allCharts
+						.map((c, i) => {
+							const meta = data.chartSnapshots?.[c.id];
+							if (!meta?.title) return null;
+							return {
+								'@type': 'ListItem',
+								position: i + 1,
+								item: {
+									'@type': 'Dataset',
+									name: meta.title,
+									description: meta.heading
+										? meta.heading.replace(/<[^>]*>/g, '')
+										: meta.title,
+									url: `${$page.url.origin}${langPrefix}/charts/${c.id}?region=${data.page.id}`,
+									spatialCoverage: data.page.name,
+									isAccessibleForFree: true,
+									inLanguage: $page.data.language?.code || 'de',
+									creator: {
+										'@type': 'Organization',
+										name: 'Klimadashboard'
+									},
+									license: 'https://creativecommons.org/licenses/by/4.0/'
+								}
+							};
+						})
+						.filter(Boolean)
+				}
+			: null;
 </script>
 
 <svelte:head>
-	<title>Klimadashboard {data.page.name} | Klimadashboard.{PUBLIC_VERSION}</title>
-	<meta name="description" content={data.page.description} />
-	<meta property="og:title" content="Klimadashboard {data.page.name}" />
-	<meta property="og:description" content={data.page.description} />
+	{#if !data.page.visible}
+		<meta name="robots" content="noindex, nofollow" />
+	{/if}
+	<title>{data.content?.metaTitle || `Klimadashboard ${data.page.name}`} | Klimadashboard.{PUBLIC_VERSION}</title>
+	<meta name="description" content={data.content?.description || data.page.description} />
+	<meta property="og:title" content={data.content?.metaTitle || `Klimadashboard ${data.page.name}`} />
+	<meta property="og:description" content={data.content?.description || data.page.description} />
+	{@html serializeJsonLd(placeLD)}
+	{@html serializeJsonLd(breadcrumbLD)}
+	{#if datasetsLD}
+		{@html serializeJsonLd(datasetsLD)}
+	{/if}
 </svelte:head>
 
 <main class="">
+	{#if !data.page.visible && !stagingBannerDismissed}
+		<div class="sticky top-0 z-50 bg-yellow-400 dark:bg-yellow-500 text-black text-sm font-medium text-center py-2 px-4 flex items-center justify-center gap-3">
+			<span>Staging-Link: Seite in Arbeit!</span>
+			<button onclick={() => stagingBannerDismissed = true} class="leading-none opacity-60 hover:opacity-100" aria-label="Banner schließen">✕</button>
+		</div>
+	{/if}
 	<Scroller bind:index bind:offset bind:progress>
-		<div slot="background" />
+		<div slot="background"></div>
 		<div slot="foreground">
 			<Intro {data} />
+
+			{#if data.content?.seoIntro}
+				<p class="text-lg text-center max-w-2xl mx-auto mt-4 px-4 leading-snug text-balance text-gray-700 dark:text-gray-300">
+					{data.content.seoIntro}
+				</p>
+			{/if}
 
 			<Navigation {sections} />
 
@@ -99,6 +209,7 @@
 												id={chart.id}
 												span={chart.span || 12}
 												type="card"
+												snapshot={data.chartSnapshots?.[chart.id]}
 												on:dataAvailable={(e) => handleDataAvailable(chart.id, e)}
 											/>
 										{/if}

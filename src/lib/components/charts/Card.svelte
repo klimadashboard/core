@@ -7,7 +7,8 @@
 
 	import { snapdom, preCache } from '@zumer/snapdom';
 	import { Table } from '$lib/components/charts/primitives';
-	import { exportCSV, exportJSON } from '$lib/components/charts/utils/export';
+	import SnapshotContent from './SnapshotContent.svelte';
+	import { exportCSV, exportJSON, exportXLSX } from '$lib/components/charts/utils/export';
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
@@ -17,6 +18,8 @@
 	export let span = 12;
 	export let mapLayerId: string | null = null;
 	export let regionId: string | null = null;
+	export let expandContent: boolean = false;
+	export let snapshot: any = null;
 
 	const dispatch = createEventDispatcher();
 
@@ -33,11 +36,9 @@
 
 	// Calculate available height for text panel when switching to text tab
 	$: if (activeTab === 'text' && contentEl && headerEl) {
-		// Content area height minus header height minus padding (mb-3 = 12px)
 		const contentHeight = contentEl.clientHeight;
 		const headerHeight = headerEl.clientHeight;
-		const padding = 12; // mb-3
-		textPanelMaxHeight = Math.max(200, contentHeight - headerHeight - padding);
+		textPanelMaxHeight = Math.max(200, contentHeight - headerHeight - 12);
 	}
 
 	// Charts that support the 'view' option (simple view)
@@ -45,53 +46,62 @@
 	$: hasViewOption =
 		chart.custom_sveltestring && chartsWithViewOption.includes(chart.custom_sveltestring);
 
-	// Get current region ID for embed options
-	$: currentRegionId = chartData?.meta?.region?.id || page.data.page?.id || null;
-
-	// Check if we're on an embed route and have a region parameter
+	$: currentRegionId = page.data.page?.id || chartData?.meta?.region?.id || null;
 	$: isEmbedRoute = page.url.pathname.startsWith('/embed/');
 	$: urlRegionId = page.url.searchParams.get('region');
+	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';
 
-	// Logo link: on embed route with region param, link to regional dashboard; otherwise main site
 	$: logoHref =
 		isEmbedRoute && urlRegionId
 			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${urlRegionId}`
 			: `https://klimadashboard.${PUBLIC_VERSION}`;
 
-	// Close menus when clicking outside
 	function handleClickOutside(e: MouseEvent) {
 		if (showDownloadMenu && !(e.target as HTMLElement).closest('.download-menu')) {
 			showDownloadMenu = false;
 		}
 	}
 
-	// Replace {{#if key}}, {{#if not key}}, and {{placeholder}} in text
+	// Replace {{#if key}}, {{#if not key}}, {{#if key == "value"}}, and {{placeholder}} in text
 	function resolveText(
 		raw: string | undefined,
 		placeholders: Record<string, any> | undefined
 	): string {
 		if (!raw || !placeholders) return raw || '';
-		// Step 1: conditional blocks {{#if key}}...{{/if}} and {{#if not key}}...{{/if}}
+		// Match both straight quotes and HTML-encoded &quot; (rich text editors encode quotes)
 		let result = raw.replace(
-			/\{\{#if\s+(not\s+)?(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
-			(_: string, negation: string | undefined, key: string, content: string) => {
-				const value = placeholders[key];
+			/\{\{#if\s+(?:(not\s+)?(\w+)|(\w+)\s*==\s*(?:"|&quot;)(.*?)(?:"|&quot;))\}\}([\s\S]*?)\{\{\/if\}\}/g,
+			(
+				_: string,
+				negation: string | undefined,
+				key: string | undefined,
+				eqKey: string | undefined,
+				eqVal: string | undefined,
+				content: string
+			) => {
+				if (eqKey !== undefined) {
+					return String(placeholders[eqKey] ?? '') === eqVal ? content : '';
+				}
+				const value = placeholders[key!];
 				const show = negation ? !value : !!value;
 				return show ? content : '';
 			}
 		);
-		// Step 2: replace {{placeholder}} values
-		result = result.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+		result = result.replace(/\{\{([\w-]+)\}\}/g, (_: string, k: string) => {
 			const v = placeholders[k];
 			return v !== undefined ? String(v) : `{{${k}}}`;
 		});
 		return result;
 	}
 
-	$: heading = resolveText(chart.content?.heading, chartData?.placeholders);
-	$: text = resolveText(chart.content?.text, chartData?.placeholders);
-	$: methods = resolveText(chart.content?.methods, chartData?.placeholders);
-	$: title = resolveText(chart.content?.title, chartData?.placeholders);
+	$: resolvedPlaceholders = {
+		...chartData?.placeholders,
+		regionId: currentRegionId ?? regionId ?? ''
+	};
+	$: heading = resolveText(chart.content?.heading, resolvedPlaceholders);
+	$: text = resolveText(chart.content?.text, resolvedPlaceholders);
+	$: methods = resolveText(chart.content?.methods, resolvedPlaceholders);
+	$: title = resolveText(chart.content?.title, resolvedPlaceholders);
 
 	// Check if text still contains unresolved placeholders like {{key}}
 	function hasUnresolvedPlaceholders(text: string | undefined): boolean {
@@ -106,33 +116,92 @@
 	$: showTable = chartData?.table && chartData.table.rows.length > 0;
 	$: showText = !!text || !!methods;
 	$: allowDataDownload = chartData?.allowDataDownload !== false;
-	// Check if chart has data - use explicit hasData flag if provided, otherwise check raw array
 	$: hasData = chartData?.hasData ?? (chartData?.raw && chartData.raw.length > 0);
 
-	// Dispatch visibility event when data availability changes
 	$: if (chartData !== null) {
 		dispatch('dataAvailable', { hasData });
 	}
 	$: source =
 		resolveText(
-			(chartData?.meta?.source || chart.content?.source || '').replace(
+			(chart.content?.source || chartData?.meta?.source || '').replace(
 				/^<p>([\s\S]*?)<\/p>\s*$/m,
 				'$1'
 			),
-			chartData?.placeholders
+			resolvedPlaceholders
 		) || undefined;
 
 	$: note = chartData?.meta?.note;
+
+	// Download menu sections (data-driven)
+	$: downloadSections = [
+		...(allowDataDownload
+			? [
+					{
+						heading: t(page.data.translations, 'ui.card.data') || 'Data',
+						items: [
+							{
+								format: 'CSV',
+								label: t(page.data.translations, 'ui.card.tabTable'),
+								handler: handleExportCSV
+							},
+							...(showTable
+								? [
+										{
+											format: 'XLSX',
+											label: t(page.data.translations, 'ui.card.tabTable'),
+											handler: handleExportXLSX
+										}
+									]
+								: []),
+							{
+								format: 'JSON',
+								label: t(page.data.translations, 'ui.card.rawData'),
+								handler: handleExportJSON
+							}
+						]
+					}
+				]
+			: []),
+		{
+			heading: t(page.data.translations, 'ui.card.image') || 'Image',
+			items: [
+				{
+					format: 'PNG',
+					label: t(page.data.translations, 'ui.card.imageRaster') || 'Raster',
+					handler: (e: MouseEvent) => handleImage(e, 'png')
+				},
+				{
+					format: 'JPEG',
+					label: `${t(page.data.translations, 'ui.card.imageRaster') || 'Raster'}`,
+					handler: (e: MouseEvent) => handleImage(e, 'jpeg')
+				},
+				{
+					format: 'SVG',
+					label: t(page.data.translations, 'ui.card.imageVector') || 'Vector',
+					handler: (e: MouseEvent) => handleImage(e, 'svg')
+				}
+			]
+		}
+	];
 
 	// Tab configuration
 	type TabId = 'chart' | 'table' | 'text';
 	$: tabs = [
 		{ id: 'chart' as TabId, label: t(page.data.translations, 'ui.card.tabChart'), show: true },
-		{ id: 'table' as TabId, label: t(page.data.translations, 'ui.card.tabTable'), show: showTable },
-		{ id: 'text' as TabId, label: t(page.data.translations, 'ui.card.tabInfo'), show: showText }
+		{
+			id: 'table' as TabId,
+			label: t(page.data.translations, 'ui.card.tabTable'),
+			show: showTable && !expandContent
+		},
+		{
+			id: 'text' as TabId,
+			label: t(page.data.translations, 'ui.card.tabInfo'),
+			show: showText && !expandContent
+		}
 	].filter((tab) => tab.show);
 
-	// Intersection observer
+	let liveTabLabel = '';
+
 	onMount(() => {
 		const obs = new IntersectionObserver(
 			(entries) => {
@@ -161,6 +230,8 @@
 
 	function setTab(tab: TabId) {
 		activeTab = tab;
+		liveTabLabel = tabs.find((t) => t.id === tab)?.label || '';
+		if (tab !== 'chart') window.rybbit?.event('Chart Tab', { tab, chart: chart.id });
 	}
 
 	function handleTabKeydown(e: KeyboardEvent, tab: TabId) {
@@ -181,7 +252,34 @@
 	function handleExportCSV(e: MouseEvent) {
 		e.stopPropagation();
 		if (chartData?.table) exportCSV(chartData.table, chartData.meta?.region?.codeShort);
+		window.rybbit?.event('Chart Download', { format: 'csv', chart: chart.id });
 		showDownloadMenu = false;
+	}
+
+	async function handleExportXLSX(e: MouseEvent) {
+		e.stopPropagation();
+		showDownloadMenu = false;
+		if (!chartData?.table) return;
+		const dataRegionId = chartData.meta?.region?.id;
+		const permalink = `${window.location.origin}/charts/${chart.id}${dataRegionId ? `?region=${dataRegionId}` : ''}`;
+		try {
+			await exportXLSX(
+				chartData.table,
+				{
+					title: title || heading,
+					source,
+					updateDate: chartData.meta?.updateDate,
+					region: chartData.meta?.region?.name,
+					methods,
+					url: permalink,
+					lang: page.data.language?.code
+				},
+				chartData.meta?.region?.codeShort
+			);
+			window.rybbit?.event('Chart Download', { format: 'xlsx', chart: chart.id });
+		} catch (err) {
+			console.error('XLSX export failed:', err);
+		}
 	}
 
 	function handleExportJSON(e: MouseEvent) {
@@ -192,6 +290,7 @@
 				chartData.table?.filename || 'data',
 				chartData.meta?.region?.codeShort
 			);
+		window.rybbit?.event('Chart Download', { format: 'json', chart: chart.id });
 		showDownloadMenu = false;
 	}
 
@@ -202,10 +301,161 @@
 
 	function openEmbedModal(e: MouseEvent) {
 		e.stopPropagation();
+		window.rybbit?.event('Chart Embed', { action: 'opened', chart: chart.id });
 		showEmbedModal = true;
 	}
 
-	async function handleImage(e: MouseEvent, type: 'png' | 'svg' = 'png') {
+	// Sanitize a resolved title for use as a downloaded filename: strip characters
+	// that are invalid (or awkward) in filenames on common filesystems.
+	function sanitizeFilename(name: string): string {
+		return name
+			.replace(/[/\\:*?"<>|]/g, '')
+			.replace(/\s+/g, ' ')
+			.trim();
+	}
+
+	function buildVectorSvg(): Blob | null {
+		// Find the D3 chart SVG (inside .chart-container, not the logo or other SVGs)
+		const chartContainer = contentEl.querySelector('.chart-container');
+		const chartSvg = chartContainer?.querySelector('svg') as SVGElement | null;
+		if (!chartSvg) return null;
+
+		// Walk original + clone in parallel, inlining computed presentation styles
+		function walkStyles(src: Element, dst: Element) {
+			if (src instanceof SVGElement) {
+				const cs = window.getComputedStyle(src);
+				const color = cs.getPropertyValue('color');
+				const props = [
+					'fill',
+					'fill-opacity',
+					'fill-rule',
+					'stroke',
+					'stroke-width',
+					'stroke-dasharray',
+					'stroke-dashoffset',
+					'stroke-opacity',
+					'stroke-linecap',
+					'stroke-linejoin',
+					'opacity',
+					'font-family',
+					'font-size',
+					'font-weight',
+					'font-style',
+					'text-anchor',
+					'dominant-baseline',
+					'shape-rendering'
+				];
+				const styles: string[] = [];
+				for (const p of props) {
+					let v = cs.getPropertyValue(p);
+					if (v === 'currentColor') v = color;
+					// getComputedStyle resolves a fragment-only reference like
+					// fill="url(#gradientId)" to an absolute URL tied to this document
+					// (e.g. url("https://.../charts/foo#gradientId")). Once the clone is
+					// serialized into a standalone SVG, that absolute reference no longer
+					// resolves, so the paint server lookup fails and fill falls back to
+					// black. Re-fragment it back down to url(#id) so it keeps resolving
+					// against the exported document's own <defs>.
+					const urlMatch = v.match(/^url\((['"]?)(.*?)\1\)$/);
+					if (urlMatch) {
+						const hashIndex = urlMatch[2].indexOf('#');
+						if (hashIndex !== -1) v = `url(${urlMatch[2].slice(hashIndex)})`;
+					}
+					if (v) styles.push(`${p}:${v}`);
+				}
+				if (styles.length) (dst as SVGElement).setAttribute('style', styles.join(';'));
+			}
+			const sc = Array.from(src.children);
+			const dc = Array.from(dst.children);
+			for (let i = 0; i < sc.length; i++) if (dc[i]) walkStyles(sc[i], dc[i]);
+		}
+
+		const cloned = chartSvg.cloneNode(true) as SVGElement;
+		walkStyles(chartSvg, cloned);
+		cloned.querySelectorAll('[data-share-ignore]').forEach((el) => el.remove());
+
+		const escXml = (s: string) =>
+			s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		const stripTags = (s: string) => s.replace(/<[^>]+>/g, '');
+
+		const cw = parseInt(cloned.getAttribute('width') || '0');
+		const ch = parseInt(cloned.getAttribute('height') || '0');
+		if (!cw || !ch) return null;
+
+		const PADDING = 20;
+		const svgWidth = cw + PADDING * 2;
+		let yOffset = PADDING;
+		const parts: string[] = [];
+
+		const titleText = title || chart.content?.title;
+		if (titleText) {
+			parts.push(
+				`<text x="${PADDING}" y="${yOffset + 16}" font-family="Barlow, sans-serif" font-size="16" font-weight="bold" fill="#111827">${escXml(titleText)}</text>`
+			);
+			yOffset += 32;
+		}
+
+		if (heading) {
+			const headingText = stripTags(heading).trim();
+			if (headingText) {
+				// Word-wrap: SVG <text> has no native wrapping, split into <tspan> lines
+				const headingFontSize = 20;
+				const maxLineWidth = svgWidth - PADDING * 2;
+				const avgCharWidth = headingFontSize * 0.52;
+				const words = headingText.split(' ');
+				const lines: string[] = [];
+				let line = '';
+				for (const word of words) {
+					const candidate = line ? `${line} ${word}` : word;
+					if (candidate.length * avgCharWidth > maxLineWidth && line) {
+						lines.push(line);
+						line = word;
+					} else {
+						line = candidate;
+					}
+				}
+				if (line) lines.push(line);
+
+				const lineHeight = headingFontSize * 1.3;
+				const tspans = lines
+					.map(
+						(l, i) => `<tspan x="${PADDING}" dy="${i === 0 ? 0 : lineHeight}">${escXml(l)}</tspan>`
+					)
+					.join('');
+				parts.push(
+					`<text x="${PADDING}" y="${yOffset + headingFontSize}" font-family="Barlow, sans-serif" font-size="${headingFontSize}" fill="#111827">${tspans}</text>`
+				);
+				yOffset += lines.length * lineHeight + 10;
+			}
+		}
+
+		// Embed the cloned chart SVG as a nested <svg> element
+		cloned.setAttribute('x', String(PADDING));
+		cloned.setAttribute('y', String(yOffset));
+		parts.push(new XMLSerializer().serializeToString(cloned));
+		yOffset += ch + 12;
+
+		if (source) {
+			const sourceText = stripTags(source).trim();
+			if (sourceText) {
+				parts.push(
+					`<text x="${PADDING}" y="${yOffset + 12}" font-family="Barlow, sans-serif" font-size="11" fill="#6b7280">${escXml(sourceText)}</text>`
+				);
+				yOffset += 20;
+			}
+		}
+
+		const svgHeight = yOffset + PADDING;
+		const doc = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
+  <rect width="${svgWidth}" height="${svgHeight}" fill="white"/>
+  ${parts.join('\n  ')}
+</svg>`;
+
+		return new Blob([doc], { type: 'image/svg+xml' });
+	}
+
+	async function handleImage(e: MouseEvent, type: 'png' | 'jpeg' | 'svg' = 'png') {
 		e.stopPropagation();
 		if (!contentEl) return;
 
@@ -215,36 +465,75 @@
 			const condensedFontBold = `${base}/fonts/barlow-condensed-v13-latin-800.woff2`;
 
 			const localFonts = [
-				// Regular Barlow
 				{ family: 'Barlow', src: `${base}/fonts/barlow-v12-latin-regular.woff2`, weight: '400' },
 				{ family: 'Barlow', src: `${base}/fonts/barlow-v12-latin-200.woff2`, weight: '200' },
 				{ family: 'Barlow', src: `${base}/fonts/barlow-v12-latin-600.woff2`, weight: '600' },
-				// Condensed
 				{ family: 'Barlow Condensed', src: condensedFont, weight: '400' },
 				{ family: 'Barlow Condensed', src: condensedFont, weight: '500' },
 				{ family: 'Barlow Condensed', src: condensedFontBold, weight: '700' },
 				{ family: 'Barlow Condensed', src: condensedFontBold, weight: '800' }
 			];
 
-			// Pre-cache fonts before capture
-			await preCache(contentEl, { embedFonts: true, localFonts });
+			// Use the already-resolved title (placeholders like {{regionName}} interpolated,
+			// same value shown in the card header) instead of the raw CMS string, which
+			// would otherwise leak literal "{{placeholder}}" text into the downloaded filename.
+			const filename = sanitizeFilename(title || chart.content?.title || 'chart') || 'chart';
+			let blob: Blob;
 
-			const result = await snapdom(contentEl, {
-				scale: 2,
-				embedFonts: true,
-				cache: 'full',
-				localFonts,
-				filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
-			});
+			if (type === 'svg') {
+				// Try to build a true vector SVG from the D3 chart elements.
+				// Fall back to a canvas-embedded SVG for non-SVG charts (stat cards etc.).
+				const vectorBlob = buildVectorSvg();
+				if (vectorBlob) {
+					blob = vectorBlob;
+				} else {
+					await preCache(contentEl, { embedFonts: true, localFonts });
+					const result = await snapdom(contentEl, {
+						scale: 2,
+						embedFonts: true,
+						cache: 'full',
+						localFonts,
+						filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
+					});
+					const canvas = await result.toCanvas();
+					const png = canvas.toDataURL('image/png');
+					const w = canvas.width,
+						h = canvas.height;
+					blob = new Blob(
+						[
+							`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><image href="${png}" width="${w}" height="${h}"/></svg>`
+						],
+						{ type: 'image/svg+xml' }
+					);
+				}
+			} else {
+				await preCache(contentEl, { embedFonts: true, localFonts });
+				const result = await snapdom(contentEl, {
+					scale: 2,
+					embedFonts: true,
+					cache: 'full',
+					localFonts,
+					filter: (el) => !(el as HTMLElement).dataset?.shareIgnore
+				});
+				// JPEG has no alpha channel, so fall back to the card's own (light/dark)
+				// background color instead of snapdom's default white fill.
+				blob =
+					type === 'jpeg'
+						? await result.toBlob({
+								type,
+								quality: 0.92,
+								backgroundColor: window.getComputedStyle(cardEl).backgroundColor
+							})
+						: await result.toBlob({ type });
+			}
 
-			const filename = chart.content?.title || 'chart';
-			const blob = await result.toBlob({ type });
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
 			a.download = `${filename}.${type}`;
 			a.click();
 			URL.revokeObjectURL(url);
+			window.rybbit?.event('Chart Download', { format: type, chart: chart.id });
 		} catch (err) {
 			console.error('Export failed:', err);
 		}
@@ -263,10 +552,6 @@
 	data-chart-id={chart.id}
 	class="chart-card group relative bg-white h-full dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all flex flex-col justify-between"
 	style="--span: {span};"
-	on:click={handleClick}
-	on:keydown={(e) => e.key === 'Enter' && handleClick(e)}
-	role="button"
-	tabindex="0"
 >
 	{#if isVisible}
 		<div
@@ -285,17 +570,18 @@
 				</div>
 			{/if}
 
-			<!-- Header (always visible) -->
 			<div
 				bind:this={headerEl}
 				class="flex justify-between items-start mb-3"
 				class:opacity-0={showSkeleton}
 			>
-				<h2
-					class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
-				>
-					{title || chart.content?.title}
-				</h2>
+				{#if !embedHideTitle}
+					<h2
+						class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
+					>
+						{title || chart.content?.title}
+					</h2>
+				{/if}
 				<a
 					href={logoHref}
 					target="_blank"
@@ -348,12 +634,12 @@
 			<div class:opacity-0={showSkeleton} class="transition-opacity">
 				<!-- Chart Tab -->
 				<div
-					id="tabpanel-chart"
+					id="tabpanel-{chart.id}-chart"
 					role="tabpanel"
-					aria-labelledby="tab-chart"
+					aria-labelledby="tab-{chart.id}-chart"
 					hidden={activeTab !== 'chart'}
 				>
-					{#if heading}
+					{#if heading && !embedHideTitle}
 						<h3 class="text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
 					{/if}
 
@@ -362,13 +648,13 @@
 							{@const onChartData = (data: ChartData | null) => {
 								chartData = data;
 							}}
-							<slot {region} regionLoading={loading} {onChartData} />
+							<slot {region} regionLoading={loading} {onChartData} snapshotData={snapshot} />
 						</RegionProvider>
 					</div>
 
 					<div class="text-xs text-gray-500 mt-4 flex">
 						{#if source || note}
-							<div class="">
+							<div>
 								{#if source}
 									<p>
 										{page.data.translations?.source}:
@@ -413,9 +699,9 @@
 
 				<!-- Table Tab -->
 				<div
-					id="tabpanel-table"
+					id="tabpanel-{chart.id}-table"
 					role="tabpanel"
-					aria-labelledby="tab-table"
+					aria-labelledby="tab-{chart.id}-table"
 					hidden={activeTab !== 'table'}
 				>
 					{#if chartData?.table}
@@ -423,15 +709,16 @@
 							columns={chartData.table.columns}
 							rows={chartData.table.rows}
 							maxHeight="400px"
+							caption={title || chart.content?.title}
 						/>
 					{/if}
 				</div>
 
 				<!-- Text/Info Tab -->
 				<div
-					id="tabpanel-text"
+					id="tabpanel-{chart.id}-text"
 					role="tabpanel"
-					aria-labelledby="tab-text"
+					aria-labelledby="tab-{chart.id}-text"
 					hidden={activeTab !== 'text'}
 					class="overflow-y-auto"
 					style="max-height: {textPanelMaxHeight}px;"
@@ -471,18 +758,24 @@
 			{/if}
 		</div>
 
+		<!-- Live region for tab change announcements -->
+		<div class="sr-only" aria-live="polite" aria-atomic="true">
+			{liveTabLabel}
+		</div>
+
 		<!-- Bottom bar -->
 		<div
 			class="no-card-click bg-gray-100 dark:bg-gray-800 flex items-stretch justify-between flex-shrink-0 relative z-10"
 		>
-			<!-- Tabs on the left - connected to content above -->
+			<!-- Tabs -->
 			<div class="flex items-stretch" role="tablist" aria-label="Chart views">
 				{#each tabs as tab}
 					<button
+						id="tab-{chart.id}-{tab.id}"
 						data-tab={tab.id}
 						role="tab"
 						aria-selected={activeTab === tab.id}
-						aria-controls="tabpanel-{tab.id}"
+						aria-controls="tabpanel-{chart.id}-{tab.id}"
 						tabindex={activeTab === tab.id ? 0 : -1}
 						class="relative px-4 py-2.5 transition-colors flex items-center gap-1.5
 							{activeTab === tab.id
@@ -548,9 +841,8 @@
 				{/each}
 			</div>
 
-			<!-- Action buttons on the right -->
+			<!-- Action buttons -->
 			<div class="flex items-center gap-1 px-2">
-				<!-- Download button with menu -->
 				{#if hasData}
 					<div class="relative download-menu">
 						<button
@@ -570,9 +862,9 @@
 								stroke="currentColor"
 								stroke-width="2"
 							>
-								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-								<polyline points="7 10 12 15 17 10" />
-								<line x1="12" y1="15" x2="12" y2="3" />
+								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline
+									points="7 10 12 15 17 10"
+								/><line x1="12" y1="15" x2="12" y2="3" />
 							</svg>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -593,69 +885,34 @@
 								class="absolute bottom-full right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-20 min-w-[140px]"
 								transition:fade={{ duration: 100 }}
 							>
-								<!-- Data exports -->
-								{#if allowDataDownload}
-									<div class="border-b border-gray-200 dark:border-gray-700">
+								{#each downloadSections as section, i}
+									<div
+										class:border-b={i < downloadSections.length - 1}
+										class="border-gray-200 dark:border-gray-700"
+									>
 										<span
 											class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-											>{t(page.data.translations, 'ui.card.data') || 'Data'}</span
+											>{section.heading}</span
 										>
-										<button
-											on:click={handleExportCSV}
-											class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-										>
-											<span
-												class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-												>CSV</span
+										{#each section.items as item}
+											<button
+												on:click={item.handler}
+												class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
 											>
-											<span>{t(page.data.translations, 'ui.card.tabTable')}</span>
-										</button>
-										<button
-											on:click={handleExportJSON}
-											class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-										>
-											<span
-												class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-												>JSON</span
-											>
-											<span>{t(page.data.translations, 'ui.card.rawData')}</span>
-										</button>
+												<span
+													class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+													>{item.format}</span
+												>
+												<span>{item.label}</span>
+											</button>
+										{/each}
 									</div>
-								{/if}
-
-								<!-- Image exports -->
-								<div>
-									<span
-										class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-										>{t(page.data.translations, 'ui.card.image') || 'Image'}</span
-									>
-									<button
-										on:click={(e) => handleImage(e, 'png')}
-										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-									>
-										<span
-											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-											>PNG</span
-										>
-										<span>{t(page.data.translations, 'ui.card.imageRaster') || 'Raster'}</span>
-									</button>
-									<button
-										on:click={(e) => handleImage(e, 'svg')}
-										class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-									>
-										<span
-											class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-											>SVG</span
-										>
-										<span>{t(page.data.translations, 'ui.card.imageVector') || 'Vector'}</span>
-									</button>
-								</div>
+								{/each}
 							</div>
 						{/if}
 					</div>
 				{/if}
 
-				<!-- Permalink -->
 				<a
 					href="/charts/{chart.id}{currentRegionId ? `?region=${currentRegionId}` : ''}"
 					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -678,7 +935,6 @@
 					</svg>
 				</a>
 
-				<!-- Embed button -->
 				<button
 					on:click={openEmbedModal}
 					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -704,8 +960,43 @@
 				</button>
 			</div>
 		</div>
+
+		<!-- Expanded content (table + info below card, for chart detail pages) -->
+		{#if expandContent}
+			{#if chartData?.table && chartData.table.rows.length > 0}
+				<div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+					<Table
+						columns={chartData.table.columns}
+						rows={chartData.table.rows}
+						maxHeight="600px"
+						caption={title || chart.content?.title}
+					/>
+				</div>
+			{/if}
+			{#if text || methods}
+				<div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+					{#if text}
+						<div class="text-base max-w-xl">
+							{@html text}
+						</div>
+					{/if}
+					{#if methods}
+						<div class="mt-4 text-base max-w-xl">
+							{@html methods}
+						</div>
+					{/if}
+				</div>
+			{/if}
+		{/if}
 	{:else}
-		<div class="min-h-[280px] bg-gray-50 dark:bg-gray-900"></div>
+		<!-- SSR snapshot (pre-rendered, before IntersectionObserver fires) -->
+		{#if snapshot}
+			<div class="p-5 pb-3 min-h-[280px]">
+				<SnapshotContent {snapshot} />
+			</div>
+		{:else}
+			<div class="min-h-[280px] bg-gray-50 dark:bg-gray-900"></div>
+		{/if}
 	{/if}
 </div>
 
@@ -733,7 +1024,7 @@
 		}
 	}
 
-	:global(#tabpanel-text p) {
+	:global([id^='tabpanel-'][id$='-text'] p) {
 		@apply my-2;
 	}
 </style>

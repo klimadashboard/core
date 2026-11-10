@@ -37,7 +37,7 @@
 </script>
 
 <div
-	class="border rounded-2xl border-current/10 relative {chart.methods ? 'pb-16' : ''}"
+	class="border rounded-2xl border-current/10 relative px-5 pt-5 {chart.methods ? 'pb-16' : 'pb-5'}"
 	id={chart.identifier_string}
 	bind:this={item}
 >

@@ -8,6 +8,7 @@
 	export let tickCount: number = 5;
 	export let label: string = '';
 	export let forceTicks: number[] = []; // Ticks that must be shown
+	export let rotate: number = 0; // Rotation angle for tick labels (degrees)
 
 	$: isBandScale = xScale && 'bandwidth' in xScale;
 
@@ -126,7 +127,12 @@
 		{#each tickData as { tick, x }}
 			<g transform="translate({x},0)">
 				<line y1="0" y2="5" stroke="currentColor" class="text-gray-300" />
-				<text y="18" text-anchor="middle" class="text-xs fill-gray-500 dark:fill-gray-400">
+				<text
+					y="18"
+					text-anchor={rotate ? 'end' : 'middle'}
+					transform={rotate ? `rotate(${rotate}, 0, 18)` : undefined}
+					class="text-xs fill-gray-500 dark:fill-gray-400"
+				>
 					{format(tick)}
 				</text>
 			</g>

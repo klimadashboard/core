@@ -2,12 +2,23 @@
 	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import DonationStatusBar from '$lib/components/DonationStatusBar.svelte';
 	import { page } from '$app/state';
+	import PaymentMethods from '$lib/components/PaymentMethods.svelte';
+	import { pickDonationBannerVariant } from '$lib/donationBannerVariants';
 
 	const COOKIE_NAME = 'hide_donation_banner';
+	const suggestedAmounts = [30, 50, 100, 200];
+	let amount = 50;
 
-	let hidden = true; // start hidden, will show after 5s if no cookie
+	// Both countries apply on every site — the German version just lists Germany first.
+	const deductibleIn =
+		PUBLIC_VERSION == 'de' ? 'Deutschland und Österreich' : 'Österreich und Deutschland';
+
+	let hidden = true; // start hidden, will show after 20s if no cookie
+
+	// A/B test: headline is drawn per page view, see donationBannerVariants.ts.
+	const variant = pickDonationBannerVariant();
+	let impressionSent = false;
 
 	onMount(() => {
 		// Check cookie
@@ -21,58 +32,102 @@
 			return;
 		}
 
-		// Show after 5 seconds
+		// Show after 10 seconds on the page
 		const timer = setTimeout(() => {
 			hidden = false;
-		}, 5000);
+		}, 10000);
 
 		return () => clearTimeout(timer);
 	});
 
+	// Anywhere in the donation flow — the form, the thank-you page, the management
+	// page. Asking someone to donate while they're mid-donation (or just after, or
+	// while cancelling) reads badly. Matches lang-prefixed paths too.
+	$: inDonateFlow = /\/donate(\/|$)/.test(page.url.pathname);
+
+	$: visible = !hidden && !inDonateFlow && !page.url.pathname.startsWith('/embed/');
+
+	// Only count impressions that were actually rendered.
+	$: if (visible && !impressionSent) {
+		impressionSent = true;
+		window.rybbit?.event('Donation Banner Impression', { variant: variant.id });
+	}
+
 	const hideForever = () => {
 		hidden = true;
+		window.rybbit?.event('Donation Banner Dismiss', { variant: variant.id });
 
-		// Set cookie for 10 days
+		// Set cookie for 7 days
 		const expires = new Date();
-		expires.setDate(expires.getDate() + 10);
+		expires.setDate(expires.getDate() + 7);
 		document.cookie = `${COOKIE_NAME}=true; expires=${expires.toUTCString()}; path=/`;
 	};
 </script>
 
-{#if !hidden && page.url.pathname !== '/donate'}
+<!--
+	Never inside an embed: those are iframed into other people's sites, where a
+	fixed-position banner would hijack their layout. Embed routes live outside the
+	(main) group and so normally render no footer at all — but the error page does
+	render one, which is how this would otherwise slip through.
+-->
+{#if visible}
 	<div
 		in:fly={{ y: 40, duration: 300 }}
 		out:fly={{ y: 40, duration: 200 }}
-		class="z-[100] fixed bottom-0 left-0 right-0 py-4 bg-white dark:bg-gray-950 shadow-2xl border-t border-t-current/10"
+		class="z-[100] fixed bottom-0 left-0 right-0 py-4 bg-amber-400 text-black 0 shadow-2xl border-t border-t-current/10"
 	>
 		<div class="container relative">
 			<h2 class="font-bold text-xl max-w-2xl w-[80%] leading-tight">
-				Deine Spende für <em class="not-italic underline underline-offset-2 decoration-green-600"
-					>mehr Fakten</em
-				>
-				und <em class="not-italic underline underline-offset-2 decoration-green-600">mehr Tempo</em>
-				in der Klimawende
+				{variant.headline}
 			</h2>
-			<p class="leading-snug max-w-3xl text-balance">
-				Das Klimadashboard ist und bleibt frei zugänglich für alle. <b
-					>Keine Paywall, keine Werbung</b
-				>. Wenn du unsere Arbeit hilfreich findest, bitten wir dich um eine Spende, um 2026 noch
-				mehr Datenvisualisierungen umsetzen zu können.
-				{#if PUBLIC_VERSION == 'at'}
-					In Österreich ist deine Spende an uns <b>steuerlich absetzbar</b>.
-				{/if}
+			<p class="leading-snug max-w-3xl text-sm md:text-base text-balance my-1">
+				Das Klimadashboard bleibt <b>kostenlos, werbefrei und unabhängig</b> – für alle, die
+				verlässliche Klimadaten brauchen. Möglich ist das nur, weil Menschen wie du uns direkt
+				unterstützen. Deine Spende ermöglicht <b>neue Projekte und regelmäßige Datenupdates</b>.
+				Danke, dass du dabei bist!
 			</p>
-			<a
-				class="flex gap-2 mt-2"
-				href="https://klimadashboard.org/donate"
-				aria-label="Jetzt spenden"
-			>
-				<DonationStatusBar />
-				<span
-					class="block flex-shrink-0 py-2 bg-green-600 text-white px-4 rounded-full h-10 font-bold"
-					>Jetzt spenden</span
+			<div class="flex flex-wrap items-center gap-2 mt-3">
+				{#each suggestedAmounts as amt}
+					<button
+						type="button"
+						class="px-3 py-1.5 rounded-full border text-sm cursor-pointer {amount === amt
+							? 'bg-black font-bold text-white border-transparent'
+							: 'border-current/20 hover:bg-gray-50 dark:hover:bg-gray-900'}"
+						on:click={() => (amount = amt)}
+					>
+						€{amt}
+					</button>
+				{/each}
+				<a
+					class="block flex-shrink-0 py-1.5 bg-black text-white px-4 rounded-full font-bold hover:bg-white hover:text-black transition"
+					href="https://klimadashboard.org/donate?amount={amount}&banner={variant.id}"
+					on:click={() =>
+						window.rybbit?.event('Donation Banner Click', { variant: variant.id, amount })}
+					aria-label="Jetzt spenden"
 				>
-			</a>
+					Jetzt spenden
+				</a>
+				<!-- Plain text with an icon, not a pill: it must not read as a second button. -->
+				<p
+					class="inline-flex items-center gap-1 text-sm font-semibold leading-tight"
+					title="In {deductibleIn} steuerlich absetzbar"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="w-5 h-5 shrink-0"
+						aria-hidden="true"
+						><circle cx="12" cy="12" r="9" /><path d="M8.5 12l2.5 2.5l4.5 -4.5" /></svg
+					>
+					steuerlich absetzbar<span class="sr-only"> in {deductibleIn}</span>
+				</p>
+				<PaymentMethods size={22} />
+			</div>
 			<button
 				class="relative mt-4 md:mt-0 md:absolute md:top-2 md:right-4 text-sm flex items-center gap-0.5 cursor-pointer opacity-70 hover:opacity-100"
 				on:mousedown={hideForever}

@@ -2,7 +2,7 @@
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/stores';
 	import { t } from '$lib/utils/t';
@@ -10,6 +10,7 @@
 	import MapSolar from './maps/MapSolar.svelte';
 	import MapWind from './maps/MapWind.svelte';
 	import MapCarTypes from './maps/MapCarTypes.svelte';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let regionId;
 	export let regionName;
@@ -17,7 +18,7 @@
 	export let regionCodeShort = null;
 	export let regionLayer = null; // 'municipality', 'district', 'state', etc.
 	export let initialLayerId = null;
-	export let embed = false;
+	export const embed = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -31,7 +32,10 @@
 	let mapContainer;
 	let map;
 	let mapReady = false;
-	let selectedLayer = initialLayerId || 'car-density';
+	let selectedLayer =
+		initialLayerId && mapLayers.some((l) => l.id === initialLayerId)
+			? initialLayerId
+			: 'car-density';
 	let isDarkMode = false;
 
 	// Map layer registry - just metadata
@@ -54,24 +58,28 @@
 			relatedChartId: null,
 			component: MapCarTypes
 		},
-		{
-			id: 'solar-installations',
-			titleKey: 'ui.map.solarInstallations',
-			titleFallback: 'Photovoltaik-Anlagen',
-			category: 'energy',
-			icon: '☀️',
-			relatedChartId: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
-			component: MapSolar
-		},
-		{
-			id: 'wind-power',
-			titleKey: 'ui.map.windPower',
-			titleFallback: 'Windkraftanlagen',
-			category: 'energy',
-			icon: '💨',
-			relatedChartId: '1e135ce2-06d2-4eae-b8f8-fdb4cbae910c',
-			component: MapWind
-		}
+		...(PUBLIC_VERSION === 'de'
+			? [
+					{
+						id: 'solar-installations',
+						titleKey: 'ui.map.solarInstallations',
+						titleFallback: 'Photovoltaik-Anlagen',
+						category: 'energy',
+						icon: '☀️',
+						relatedChartId: '31a5ca7c-08cf-487c-b2ab-aa04f9d2cd6f',
+						component: MapSolar
+					},
+					{
+						id: 'wind-power',
+						titleKey: 'ui.map.windPower',
+						titleFallback: 'Windkraftanlagen',
+						category: 'energy',
+						icon: '💨',
+						relatedChartId: '1e135ce2-06d2-4eae-b8f8-fdb4cbae910c',
+						component: MapWind
+					}
+				]
+			: [])
 	];
 
 	const categories = {
@@ -113,13 +121,6 @@
 		return false;
 	}
 
-	// Get basemap style URL based on dark mode
-	function getBasemapStyle(dark) {
-		return dark
-			? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-			: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
-	}
-
 	onMount(() => {
 		isDarkMode = detectDarkMode();
 
@@ -148,26 +149,10 @@
 
 		map.on('load', () => {
 			// Add CARTO basemap
-			const basemapTiles = isDarkMode
-				? [
-						'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-						'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-						'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-						'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-					]
-				: [
-						'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-						'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-						'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-						'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-					];
-
-			map.addSource('carto-basemap', {
-				type: 'raster',
-				tiles: basemapTiles,
-				tileSize: 256,
-				maxzoom: 20
-			});
+			map.addSource(
+				'carto-basemap',
+				cartoRasterSource(isDarkMode ? 'dark' : 'voyager', { maxzoom: 20 })
+			);
 
 			map.addLayer({
 				id: 'carto-basemap',
@@ -225,20 +210,6 @@
 	function updateBasemap() {
 		if (!map) return;
 
-		const basemapTiles = isDarkMode
-			? [
-					'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-				]
-			: [
-					'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-					'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-				];
-
 		// Update the source tiles - keep the source, just update tiles
 		const source = map.getSource('carto-basemap');
 		if (source && source.type === 'raster') {
@@ -248,12 +219,10 @@
 			}
 			map.removeSource('carto-basemap');
 
-			map.addSource('carto-basemap', {
-				type: 'raster',
-				tiles: basemapTiles,
-				tileSize: 256,
-				maxzoom: 20
-			});
+			map.addSource(
+				'carto-basemap',
+				cartoRasterSource(isDarkMode ? 'dark' : 'voyager', { maxzoom: 20 })
+			);
 
 			// Get the first layer id to insert before (should be city-labels or first data layer)
 			const firstLayerId = map.getStyle().layers[0]?.id;
@@ -328,6 +297,7 @@
 	class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
 	transition:fade={{ duration: 200 }}
 	on:click={handleClose}
+	on:keydown={(e) => e.key === 'Escape' && handleClose()}
 	role="button"
 	tabindex="-1"
 	aria-label={t(translations, 'action.close') !== 'action.close'
@@ -338,7 +308,9 @@
 		class="absolute inset-x-0 bottom-0 top-16 lg:left-4 lg:right-4 lg:bottom-4 bg-white dark:bg-gray-900 rounded-t-2xl lg:rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row"
 		transition:fly={{ y: '100%', duration: 400, easing: cubicOut }}
 		on:click={(e) => e.stopPropagation()}
+		on:keydown={(e) => e.stopPropagation()}
 		role="dialog"
+		tabindex="-1"
 		aria-modal="true"
 		aria-labelledby="map-title"
 	>
@@ -391,100 +363,100 @@
 						</h3>
 						<div class="space-y-1">
 							{#each mapLayers.filter((l) => l.category === categoryId) as layer}
-								<div class="relative">
-									<button
-										class="w-full text-left p-3 rounded-lg transition-colors {selectedLayer ===
-										layer.id
-											? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-500'
-											: 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}"
-										on:click={() => handleLayerSelect(layer.id)}
-									>
-										<div class="flex items-center gap-3">
-											<span class="text-2xl">{layer.icon}</span>
-											<div class="flex-1">
-												<div class="font-medium text-sm">{getLayerTitle(layer)}</div>
-												{#if !layer.component}
-													<div class="text-xs text-gray-500 dark:text-gray-400">
-														{t(translations, 'ui.map.comingSoon') !== 'ui.map.comingSoon'
-															? t(translations, 'ui.map.comingSoon')
-															: 'Bald verfügbar'}
-													</div>
-												{/if}
-											</div>
-											<div class="flex items-center gap-2">
-												{#if selectedLayer === layer.id}
-													<!-- Embed button -->
-													<button
-														on:click|stopPropagation={openEmbedModal}
-														class="p-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md transition-colors"
-														title={t(translations, 'action.embed') !== 'action.embed'
-															? t(translations, 'action.embed')
-															: 'Einbetten'}
-													>
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															width="16"
-															height="16"
-															viewBox="0 0 24 24"
-															fill="none"
-															stroke="currentColor"
-															stroke-width="2"
-															stroke-linecap="round"
-															stroke-linejoin="round"
-														>
-															<polyline points="7 8 3 12 7 16" />
-															<polyline points="17 8 21 12 17 16" />
-															<line x1="14" y1="4" x2="10" y2="20" />
-														</svg>
-													</button>
-													{#if layer.relatedChartId}
-														<button
-															on:click|stopPropagation={() =>
-																handleRelatedChartClick(layer.relatedChartId)}
-															class="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-															title={t(translations, 'ui.map.goToChart') !== 'ui.map.goToChart'
-																? t(translations, 'ui.map.goToChart')
-																: 'Zur Datenvisualisierung'}
-														>
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																width="16"
-																height="16"
-																viewBox="0 0 24 24"
-																fill="none"
-																stroke="currentColor"
-																stroke-width="2"
-																stroke-linecap="round"
-																stroke-linejoin="round"
-															>
-																<path d="M3 3v18h18" />
-																<path d="M18 17V9" />
-																<path d="M13 17V5" />
-																<path d="M8 17v-3" />
-															</svg>
-														</button>
-													{/if}
-												{/if}
-												{#if selectedLayer === layer.id}
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="20"
-														height="20"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														stroke-width="2"
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														class="text-blue-600"
-													>
-														<polyline points="20 6 9 17 4 12" />
-													</svg>
-												{/if}
-											</div>
+							<div
+								class="flex items-stretch rounded-lg transition-colors {selectedLayer ===
+								layer.id
+									? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-500'
+									: 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'}"
+							>
+								<button
+									class="flex-1 text-left p-3"
+									on:click={() => handleLayerSelect(layer.id)}
+								>
+									<div class="flex items-center gap-3">
+										<span class="text-2xl">{layer.icon}</span>
+										<div class="flex-1">
+											<div class="font-medium text-sm">{getLayerTitle(layer)}</div>
+											{#if !layer.component}
+												<div class="text-xs text-gray-500 dark:text-gray-400">
+													{t(translations, 'ui.map.comingSoon') !== 'ui.map.comingSoon'
+														? t(translations, 'ui.map.comingSoon')
+														: 'Bald verfügbar'}
+												</div>
+											{/if}
 										</div>
-									</button>
-								</div>
+										{#if selectedLayer === layer.id}
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="20"
+												height="20"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="text-blue-600"
+											>
+												<polyline points="20 6 9 17 4 12" />
+											</svg>
+										{/if}
+									</div>
+								</button>
+								{#if selectedLayer === layer.id}
+									<div class="flex items-center gap-1 pr-2">
+										<button
+											on:click={openEmbedModal}
+											class="p-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md transition-colors"
+											title={t(translations, 'action.embed') !== 'action.embed'
+												? t(translations, 'action.embed')
+												: 'Einbetten'}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="16"
+												height="16"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<polyline points="7 8 3 12 7 16" />
+												<polyline points="17 8 21 12 17 16" />
+												<line x1="14" y1="4" x2="10" y2="20" />
+											</svg>
+										</button>
+										{#if layer.relatedChartId}
+											<button
+												on:click={() => handleRelatedChartClick(layer.relatedChartId)}
+												class="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+												title={t(translations, 'ui.map.goToChart') !== 'ui.map.goToChart'
+													? t(translations, 'ui.map.goToChart')
+													: 'Zur Datenvisualisierung'}
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+												>
+													<path d="M3 3v18h18" />
+													<path d="M18 17V9" />
+													<path d="M13 17V5" />
+													<path d="M8 17v-3" />
+												</svg>
+											</button>
+										{/if}
+									</div>
+								{/if}
+							</div>
 							{/each}
 						</div>
 					</div>
@@ -527,13 +499,16 @@
 		class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
 		transition:fade={{ duration: 150 }}
 		on:click={closeEmbedModal}
+		on:keydown={(e) => e.key === 'Escape' && closeEmbedModal()}
 		role="button"
 		tabindex="-1"
 	>
 		<div
 			class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6"
 			on:click|stopPropagation
+			on:keydown|stopPropagation
 			role="dialog"
+			tabindex="-1"
 			aria-modal="true"
 			aria-labelledby="embed-title"
 		>
@@ -545,6 +520,7 @@
 				</h3>
 				<button
 					on:click={closeEmbedModal}
+					aria-label="Schließen"
 					class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
 				>
 					<svg

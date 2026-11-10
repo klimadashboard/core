@@ -73,6 +73,13 @@ export interface ResolvedRegionConfig {
 	source_region: string;
 }
 
+// ---------------------------------------------------------------------------
+// In-memory TTL cache for region configs.
+// Region configs rarely change and the hierarchy walk is expensive.
+// ---------------------------------------------------------------------------
+const configCache = new Map<string, { data: ResolvedRegionConfig | null; expires: number }>();
+const CONFIG_TTL = 30 * 60 * 1000; // 30 minutes
+
 /**
  * Get the region page config for a given region, walking up the hierarchy if needed
  */
@@ -81,6 +88,10 @@ export async function getRegionConfig(
 	lang: string = 'de',
 	fetch?: typeof globalThis.fetch
 ): Promise<ResolvedRegionConfig | null> {
+	const cacheKey = `${regionId}-${lang}`;
+	const cached = configCache.get(cacheKey);
+	if (cached && Date.now() < cached.expires) return cached.data;
+
 	const directus = getDirectusInstance(fetch);
 
 	// Country IDs for fallback (states don't have country in their parents array)
@@ -90,6 +101,10 @@ export async function getRegionConfig(
 	let currentRegionId: string | null = regionId;
 	const visitedRegions = new Set<string>();
 	let lastRegionCountry: string | null = null;
+	// Set when the hierarchy walk hit a backend error. "No config" is then not a
+	// fact about the data, so it must not be cached — otherwise one 503 pins the
+	// region to the default config for a full TTL.
+	let walkFailed = false;
 
 	// Walk up the hierarchy
 	while (currentRegionId && !visitedRegions.has(currentRegionId)) {
@@ -156,7 +171,7 @@ export async function getRegionConfig(
 				});
 
 				if (translation) {
-					return {
+					const result: ResolvedRegionConfig = {
 						intro_text: translation.intro_text || '',
 						explore_map_label: translation.explore_map_label || '',
 						scroll_for_more_label: translation.scroll_for_more_label || '',
@@ -165,6 +180,8 @@ export async function getRegionConfig(
 						sections: resolvedSections,
 						source_region: currentRegionId
 					};
+					configCache.set(cacheKey, { data: result, expires: Date.now() + CONFIG_TTL });
+					return result;
 				}
 			}
 
@@ -190,12 +207,22 @@ export async function getRegionConfig(
 				}
 			}
 		} catch (error) {
-			console.error(`Error fetching config for region ${currentRegionId}:`, error);
+			walkFailed = true;
+			const status =
+				(error as { response?: { status?: number }; status?: number })?.response?.status ??
+				(error as { status?: number })?.status;
+			console.error(
+				`Error fetching config for region ${currentRegionId}:`,
+				status ? `HTTP ${status}` : error
+			);
 			// Try to continue with parent if possible
 			try {
 				const region = (await directus.request(
 					readItem('regions', currentRegionId, { fields: ['parents', 'country'] })
-				)) as { parents: Array<{ id: string; layer: string }> | null; country: string | null } | null;
+				)) as {
+					parents: Array<{ id: string; layer: string }> | null;
+					country: string | null;
+				} | null;
 				if (region?.country) {
 					lastRegionCountry = region.country;
 				}
@@ -206,8 +233,11 @@ export async function getRegionConfig(
 		}
 	}
 
-	// No config found anywhere in hierarchy
-	console.log(`No config found in hierarchy, returning null`);
+	// No config found anywhere in hierarchy — cache this too, but only if the
+	// walk actually completed. After a backend error we retry on the next render.
+	if (!walkFailed) {
+		configCache.set(cacheKey, { data: null, expires: Date.now() + CONFIG_TTL });
+	}
 	return null;
 }
 

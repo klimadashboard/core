@@ -1,10 +1,12 @@
-// $lib/components/charts/custom/emissionsBySector/config.ts
+// $lib/components/charts/custom/emissionsRegion/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getFallbackParentIds } from '$lib/utils/regionAggregation';
 import { t } from '$lib/utils/t';
+import { formatPeriodDate } from '$lib/utils/formatters';
 
 export type Translations = Record<string, string>;
 
@@ -17,7 +19,11 @@ export interface EmissionsRawData {
 	source: string;
 	region?: string;
 	update?: string;
-	type?: string; // 'none' for nowcast data
+	type?: string; // 'none' for nowcast data, 'net-zero' for non-zero targets that still represent climate neutrality (e.g. without LULUCF)
+}
+
+export function isNetZeroTarget(entry: EmissionsRawData): boolean {
+	return entry.value === 0 || entry.type === 'net-zero';
 }
 
 export interface RegionResult {
@@ -98,13 +104,14 @@ export const customSectorOrder = [
 
 /** Fetch all emissions data for region candidates */
 export async function fetchEmissionsData(
-	regionCandidates: string[]
+	regionCandidates: string[],
+	fetchFn?: typeof globalThis.fetch
 ): Promise<{ results: RegionResult[]; populationByYear: Record<string, Record<number, number>> }> {
 	if (regionCandidates.length === 0) {
 		return { results: [], populationByYear: {} };
 	}
 
-	const directus = getDirectusInstance();
+	const directus = getDirectusInstance(fetchFn);
 
 	// Fetch emissions
 	const emissions = await directus.request(
@@ -537,7 +544,7 @@ export function computeInfoTextPlaceholders(
 	const hasClimateTargetStatic = !!lastTarget;
 	const climateTargetYear = lastTarget?.year?.toString() ?? '';
 	const climateTargetValue = lastTarget
-		? lastTarget.value === 0
+		? isNetZeroTarget(lastTarget)
 			? 'Klimaneutralität'
 			: `${fmt(lastTarget.value)} Millionen Tonnen CO₂-Äquivalente`
 		: '';
@@ -631,12 +638,20 @@ export function buildChartData(
 		}))
 	];
 
-	// Get source and update date from data (use first non-climate-target entry)
-	const dataSource = tableData[0]?.source || 'Emissions data';
-	const updateDate = tableData[0]?.update || new Date().toISOString();
+	// Get source and update date from data (use latest non-climate-target year)
+	const latestYearData = years.length > 0
+		? tableData.filter((d) => d.year === years[years.length - 1])
+		: tableData;
+	const dataSource = latestYearData[0]?.source || tableData[0]?.source || 'Emissions data';
+	const updateDate = latestYearData[0]?.update || tableData[0]?.update || new Date().toISOString();
 
 	// Calculate change statistics
 	const changeStats = calculateChangeStats(tableData, translations);
+
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const regionName = region.layer_label && region.key !== 'country'
+		? `${region.name} (${region.layer_label})`
+		: region.name;
 
 	return {
 		raw: data,
@@ -647,7 +662,7 @@ export function buildChartData(
 			filename: 'emissions_by_sector'
 		},
 		placeholders: {
-			regionName: region.name,
+			regionName,
 			layerLabel: region.layer_label,
 			unit,
 			changeVerb: changeStats.changeVerb,
@@ -660,6 +675,8 @@ export function buildChartData(
 			isHorizontal,
 			isSingleYear: isHorizontal,
 			singleYear: singleYear?.toString() ?? '',
+			source: dataSource,
+			lastUpdateDate: formatPeriodDate(updateDate),
 			...infoTextPlaceholders
 		},
 		meta: {
@@ -668,4 +685,35 @@ export function buildChartData(
 			region: { name: region.name, id: region.id } as any
 		}
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	parentIds,
+	translations,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	const regionCandidates = [regionId, ...(await getFallbackParentIds(regionId, parentIds, fetchFn))];
+	const { results } = await fetchEmissionsData(regionCandidates, fetchFn);
+	if (!results || results.length === 0) return null;
+
+	const region = results[0];
+	const useMegatons = shouldUseMegatons(region.data);
+	const sortedCategoryOrder = sortCategoryOrderByFirstYear(region.data, region.categoryOrder);
+	const infoTextPlaceholders = computeInfoTextPlaceholders([region], null);
+
+	return buildChartData(
+		region.data,
+		region,
+		false, // showPerCapita
+		useMegatons,
+		translations,
+		null, // climateNeutralityText
+		infoTextPlaceholders,
+		false, // isHorizontal
+		null, // singleYear
+		sortedCategoryOrder
+	);
 }

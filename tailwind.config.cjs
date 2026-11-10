@@ -70,10 +70,13 @@ module.exports = {
 				DEFAULT: '1rem',
 				lg: '2rem'
 			},
+			// sm/md/lg never clamp the container. These used to be '100%', which is not a valid
+			// media query (the rules were silently dropped by browsers, and Vite 7 now warns).
+			// A breakpoint that never matches keeps the exact same behaviour.
 			screens: {
-				sm: '100%',
-				md: '100%',
-				lg: '100%',
+				sm: '99999px',
+				md: '99999px',
+				lg: '99999px',
 				xl: '1280px'
 			}
 		},

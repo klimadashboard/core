@@ -18,5 +18,5 @@
 </script>
 
 <div class="h-0.5 bg-gray-100 dark:bg-gray-800">
-	<div class="bg-[#40B189] h-full transition" style="width: {scrollPercentage}%;" />
+	<div class="bg-[#40B189] h-full transition" style="width: {scrollPercentage}%;"></div>
 </div>

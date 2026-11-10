@@ -1,22 +1,49 @@
 <script>
+	let { children } = $props();
 	import '$lib/app.css';
-	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { glossaryItem } from '$lib/stores/glossary';
 	import Glossary from '$lib/components/Glossary.svelte';
 	import { onMount } from 'svelte';
-	import * as Fathom from 'fathom-client';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { afterNavigate } from '$app/navigation';
+	import { serializeJsonLd } from '$lib/utils/jsonld';
 	import dayjs from 'dayjs';
 	import 'dayjs/locale/de';
 	import 'dayjs/locale/en';
 
-	const fathom_ids = [
-		{ version: 'de', fathom: 'BKRABNNN' },
-		{ version: 'at', fathom: 'RDBKIXJL' },
-		{ version: 'org', fathom: 'TAJDDERD' }
-	];
+	const isEmbed = $derived(page.url.pathname.startsWith('/embed/'));
+
+	const organizationLD = $derived({
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'Klimadashboard',
+		url: page.url.origin,
+		logo: `${page.url.origin}/logo.svg`,
+		sameAs: ['https://twitter.com/klimadashboard']
+	});
+
+	const webSiteLD = $derived({
+		'@context': 'https://schema.org',
+		'@type': 'WebSite',
+		name: page.data.site?.translations?.[0]?.title || `Klimadashboard.${PUBLIC_VERSION}`,
+		url: page.url.origin,
+		inLanguage: page.data.language?.code || 'de',
+		publisher: { '@type': 'Organization', name: 'Klimadashboard' }
+	});
+
+	// Build an absolute hreflang URL. The default language `de` has no path prefix,
+	// and the `home` slug maps to the site root.
+	const alternateHref = (languages_code, slug) => {
+		const langSegment = languages_code === 'de' ? '' : `/${languages_code}`;
+		const slugSegment = slug === 'home' ? '' : `/${slug}`;
+		return page.url.origin + (langSegment + slugSegment || '/');
+	};
+
+	const rybbitSiteIds = {
+		at: 'bef2508789da',
+		de: '80ab23225a7d',
+		org: 'fcd9541adeee'
+	};
 
 	let description = $state(
 		(
@@ -55,23 +82,21 @@
 
 		document.addEventListener('click', handleGlobalClick);
 
-		Fathom.load(fathom_ids.find((d) => d.version == PUBLIC_VERSION).fathom, {
-			url: 'https://cdn-eu.usefathom.com/script.js'
-		});
-
 		return () => {
 			document.removeEventListener('click', handleGlobalClick);
 		};
 	});
 
-	afterNavigate(() => {
-		if (browser) {
-			Fathom.trackPageview();
-		}
-	});
 </script>
 
 <svelte:head>
+	{#if rybbitSiteIds[PUBLIC_VERSION]}
+		<script
+			src="https://analytics.klimadashboard.org/api/script.js"
+			data-site-id={rybbitSiteIds[PUBLIC_VERSION]}
+			defer
+		></script>
+	{/if}
 	<title>{title}</title>
 	<meta name="description" content={description} />
 
@@ -80,12 +105,7 @@
 			<link
 				rel="alternate"
 				hreflang={languages_code}
-				href={(
-					page.url.origin +
-					'/' +
-					languages_code.replace('de', '') +
-					(slug === 'home' ? '' : '/' + slug)
-				).replace(/\/+/g, '/')}
+				href={alternateHref(languages_code, slug)}
 			/>
 		{/if}
 	{/each}
@@ -104,6 +124,15 @@
 	<meta name="twitter:title" content={title} />
 	<meta name="twitter:description" content={description} />
 	<meta name="twitter:image" content={image} />
+
+	<!-- Canonical URL -->
+	<link rel="canonical" href={page.url.origin + page.url.pathname} />
+
+	<!-- Structured Data -->
+	{#if !isEmbed}
+		{@html serializeJsonLd(organizationLD)}
+		{@html serializeJsonLd(webSiteLD)}
+	{/if}
 </svelte:head>
 
 <div>
@@ -111,6 +140,6 @@
 		{#if $glossaryItem}
 			<Glossary />
 		{/if}
-		<slot />
+		{@render children?.()}
 	</div>
 </div>

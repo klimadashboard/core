@@ -5,13 +5,11 @@
 	import { bbox } from '@turf/bbox';
 	import { union } from '@turf/union';
 	import { onMount } from 'svelte';
-	import maplibregl, {
-		type GeoJSONFeature,
-		type GeoJSONSource,
-		type LngLatLike
-	} from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
+	import type { GeoJSONFeature, GeoJSONSource, LngLatLike } from 'maplibre-gl';
 	import { page } from '$app/state';
 	import Switch from '$lib/components/Switch.svelte';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let selection;
 
@@ -48,15 +46,13 @@
 	onMount(() => {
 		map = new maplibregl.Map({
 			container: 'scenarioMap',
+			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
+			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
+			canvasContextAttributes: { preserveDrawingBuffer: true },
 			style: {
 				version: 8,
 				sources: {
-					carto: {
-						type: 'raster',
-						tiles: ['https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'],
-						tileSize: 256,
-						attribution: '© OpenStreetMap contributors © CARTO'
-					},
+					carto: cartoRasterSource('light', { attribution: '© OpenStreetMap contributors © CARTO' }),
 					climate: {
 						type: 'vector',
 						tiles: ['https://tiles.klimadashboard.org/data/indicators_all/{z}/{x}/{y}.pbf'],

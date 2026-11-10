@@ -20,6 +20,11 @@
 
 	let gradientId = `line-gradient-${Math.random().toString(36).substr(2, 9)}`;
 
+	// A point is only drawable when its y value is a finite number
+	function hasValue(v: any): boolean {
+		return v != null && v !== '' && !isNaN(Number(v));
+	}
+
 	function getX(d: any): number {
 		if (!xScale) return 0;
 		const val = xScale(d[x]) ?? 0;
@@ -33,14 +38,14 @@
 		.x((d) => getX(d))
 		.y((d) => yScale?.(d[y]) ?? 0)
 		.curve(curve === 'monotone' ? curveMonotoneX : curveLinear)
-		.defined((d) => d[y] != null && !isNaN(d[y]));
+		.defined((d) => hasValue(d[y]));
 
 	$: areaGenerator = d3Area<any>()
 		.x((d) => getX(d))
 		.y0(yScale?.range()[0] ?? 0)
 		.y1((d) => yScale?.(d[y]) ?? 0)
 		.curve(curve === 'monotone' ? curveMonotoneX : curveLinear)
-		.defined((d) => d[y] != null && !isNaN(d[y]));
+		.defined((d) => hasValue(d[y]));
 
 	$: pathD = xScale && yScale ? lineGenerator(data) || '' : '';
 	$: areaD = xScale && yScale && fillGradient ? areaGenerator(data) || '' : '';
@@ -77,7 +82,7 @@
 				{@const cy = yScale(d[y]) ?? 0}
 				{@const isHovered = hover.x === d[x]}
 
-				{#if d[y] != null}
+				{#if hasValue(d[y])}
 					<circle {cx} {cy} r={isHovered ? dotRadius * 1.5 : dotRadius} fill={stroke} />
 				{/if}
 			{/each}
@@ -85,7 +90,7 @@
 
 		{#if hover.x !== null}
 			{@const hoveredPoint = data.find((d) => d[x] === hover.x)}
-			{#if hoveredPoint && hoveredPoint[y] != null}
+			{#if hoveredPoint && hasValue(hoveredPoint[y])}
 				<circle
 					cx={getX(hoveredPoint)}
 					cy={yScale(hoveredPoint[y]) ?? 0}

@@ -1,8 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import { browser } from '$app/environment';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	export let data;
 
@@ -74,21 +75,14 @@
 	const createMap = function () {
 		coalMap = new maplibregl.Map({
 			container: coalMapElement,
+			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
+			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
+			canvasContextAttributes: { preserveDrawingBuffer: true },
 			interactive: true,
 			style: {
 				version: 8,
 				sources: {
-					'carto-basemap': {
-						type: 'raster',
-						tiles: [
-							'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-							'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-							'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-							'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
-						],
-						tileSize: 256,
-						maxzoom: 20
-					}
+					'carto-basemap': cartoRasterSource('voyager', { maxzoom: 20 })
 				},
 				layers: [
 					{
@@ -171,7 +165,7 @@
 </script>
 
 <div class="grid md:grid-cols-3 map-wrapper mb-16">
-	<div id="map-coal" bind:this={coalMapElement} class="col-span-2 h-full rounded-l-lg" />
+	<div id="map-coal" bind:this={coalMapElement} class="col-span-2 h-full rounded-l-lg"></div>
 
 	<div class="overflow-y-auto h-full bg-gray-50 dark:bg-gray-900 rounded-r-lg">
 		<ul class="divide-y divide-gray-200 dark:divide-gray-700">

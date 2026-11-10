@@ -1,6 +1,7 @@
 // $lib/components/charts/custom/storageTypes/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
+import { getAggregateCodes } from '$lib/utils/regionAggregation';
 
 export interface StorageTypeConfig {
 	key: string;
@@ -108,7 +109,7 @@ function extractCurrentByCategory(
 export async function fetchStorageTypesData(
 	region: Region | null
 ): Promise<{ currentByCategory: Record<string, StorageTypeData>; updateDate: string | null }> {
-	const regionCode = region?.codeShort || region?.code;
+	const regionCode = (await getAggregateCodes(region)) ?? (region?.codeShort || region?.code);
 
 	let url = 'https://base.klimadashboard.org/get-storage-growth?group=year';
 	if (regionCode) url += `&region=${regionCode}`;

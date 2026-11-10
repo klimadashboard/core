@@ -1,9 +1,11 @@
-// $lib/components/charts/custom/emissionsReductionProgress/config.ts
+// $lib/components/charts/custom/emissionsReductionBySector/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getFallbackParentIds } from '$lib/utils/regionAggregation';
+import { formatPeriodDate } from '$lib/utils/formatters';
 
 // ============================================================================
 // TYPES
@@ -18,6 +20,11 @@ export interface EmissionsRawData {
 	source: string;
 	region?: string;
 	update?: string;
+	type?: string; // 'none' for nowcast data, 'net-zero' for non-zero targets that still represent climate neutrality (e.g. without LULUCF), 'base-year' to mark a climate-target row as the region's declared reference year
+}
+
+export function isNetZeroTarget(entry: EmissionsRawData): boolean {
+	return entry.value === 0 || entry.type === 'net-zero';
 }
 
 export interface RegionResult {
@@ -51,6 +58,7 @@ export interface ReductionSummary {
 	lastYearTotal: number;
 	baseYearTotal: number;
 	targetValue: number;
+	isNetZero: boolean;
 	totalReductionNeeded: number;
 	totalReductionAchieved: number;
 	overallProgress: number;
@@ -116,13 +124,14 @@ export function getLayerPriority(layer: string): number {
 
 /** Fetch all emissions data for region candidates */
 export async function fetchEmissionsData(
-	regionCandidates: string[]
+	regionCandidates: string[],
+	fetchFn?: typeof globalThis.fetch
 ): Promise<{ results: RegionResult[] }> {
 	if (regionCandidates.length === 0) {
 		return { results: [] };
 	}
 
-	const directus = getDirectusInstance();
+	const directus = getDirectusInstance(fetchFn);
 
 	// Fetch emissions
 	const emissions = await directus.request(
@@ -251,20 +260,24 @@ function buildCategoryOrder(
 // DATA PROCESSING
 // ============================================================================
 
-/** Get climate targets from data (returns past and future targets) */
+/** Get climate targets from data (returns the base-year reference and the final/net-zero goal) */
 export function getClimateTargets(data: EmissionsRawData[]): {
-	pastTarget: EmissionsRawData | null;
+	baseYearTarget: EmissionsRawData | null;
 	futureTarget: EmissionsRawData | null;
 } {
 	const currentYear = new Date().getFullYear();
 	const targets = data.filter((d) => d.source === 'climate-target').sort((a, b) => a.year - b.year);
 
-	// Find the most recent past target (base year) and the earliest future target
-	const pastTargets = targets.filter((t) => t.year <= currentYear);
+	// The base year is only ever an entry explicitly tagged `type: 'base-year'` — it must not be
+	// inferred from "any past-dated target", since interim milestones (e.g. a "-30% by 2025" goal)
+	// also become past-dated once their year elapses and would otherwise be mistaken for the base
+	// year. Regions without an explicit base-year entry fall back to the first year of actual data
+	// (handled by the caller).
+	const baseYearTarget = targets.find((t) => t.type === 'base-year') ?? null;
 	const futureTargets = targets.filter((t) => t.year > currentYear);
 
 	return {
-		pastTarget: pastTargets.length > 0 ? pastTargets[0] : null, // First (earliest) past target as base year
+		baseYearTarget,
 		futureTarget: futureTargets.length > 0 ? futureTargets[futureTargets.length - 1] : null // Last (latest) future target
 	};
 }
@@ -295,15 +308,17 @@ export function calculateSectorProgress(
 
 	const firstYear = years[0];
 	const lastYear = years[years.length - 1];
-	const { pastTarget, futureTarget } = getClimateTargets(region.data);
+	const { baseYearTarget, futureTarget } = getClimateTargets(region.data);
 
 	// Require a future climate target to show the chart
 	if (!futureTarget) {
 		return { sectors: [], summary: null, hasNegativeProgress: false };
 	}
 
-	// Base year: use past climate target year if available, otherwise first data year
-	const baseYear = pastTarget?.year ?? firstYear;
+	// Base year: defaults to the first year of actual historical data. A region can override this
+	// with an explicit `climate-target` row tagged `type: 'base-year'` (e.g. Stuttgart declares
+	// 2019 as its reference year even though its historical series starts in 2012).
+	const baseYear = baseYearTarget?.year ?? firstYear;
 
 	// Helper to convert value if needed
 	const convert = (value: number) => (useMegatons ? toMegatons(value) : value);
@@ -313,10 +328,13 @@ export function calculateSectorProgress(
 		.filter((d) => d.year === firstYear)
 		.reduce((sum, d) => sum + d.value, 0);
 
-	// Base year total: if base year differs from first year, try to get that year's data
+	// Base year total: prefer the explicit base-year target's own value (the authoritative figure
+	// a region declares for its reference year, which may not match the sum of our sector-level
+	// series for that year). Otherwise sum actual data for that year, falling back to firstYearTotal.
 	const baseYearTotalRaw =
-		barData.filter((d) => d.year === baseYear).reduce((sum, d) => sum + d.value, 0) ||
-		firstYearTotalRaw;
+		baseYearTarget?.value ??
+		(barData.filter((d) => d.year === baseYear).reduce((sum, d) => sum + d.value, 0) ||
+			firstYearTotalRaw);
 
 	const lastYearTotalRaw = barData
 		.filter((d) => d.year === lastYear)
@@ -385,6 +403,7 @@ export function calculateSectorProgress(
 		lastYearTotal: convert(lastYearTotalRaw),
 		baseYearTotal: convert(baseYearTotalRaw),
 		targetValue: convert(targetValueRaw),
+		isNetZero: isNetZeroTarget(futureTarget),
 		totalReductionNeeded: convert(totalReductionNeededRaw),
 		totalReductionAchieved: convert(totalReductionAchievedRaw),
 		overallProgress
@@ -585,7 +604,7 @@ export function getPlaceholders(
 		lastYearTotal: summary.lastYearTotal.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		baseYearTotal: summary.baseYearTotal.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		targetValue:
-			summary.targetValue === 0
+			summary.isNetZero
 				? 'Klimaneutralität'
 				: summary.targetValue.toLocaleString('de-DE', { maximumFractionDigits: 1 }),
 		totalReductionNeeded: summary.totalReductionNeeded.toLocaleString('de-DE', {
@@ -618,8 +637,11 @@ export function buildChartData(
 ): ChartData {
 	const unit = useMegatons ? 'Mt CO₂eq' : 't CO₂eq';
 
-	// Get update date from region data (use first entry's update field)
-	const updateDate = region.data[0]?.update || new Date().toISOString();
+	// Get update date and source from the latest non-climate-target year
+	const nonTargetData = region.data.filter((d) => d.source !== 'climate-target');
+	const latestYear = nonTargetData.reduce((max, d) => Math.max(max, d.year), 0);
+	const latestYearData = nonTargetData.filter((d) => d.year === latestYear);
+	const updateDate = latestYearData[0]?.update || nonTargetData[0]?.update || new Date().toISOString();
 
 	return {
 		raw: sectors,
@@ -630,6 +652,8 @@ export function buildChartData(
 		},
 		placeholders: {
 			...getPlaceholders(region, sectors, summary, useMegatons, locale),
+			source: dataSource,
+			lastUpdateDate: formatPeriodDate(updateDate),
 			...infoTextPlaceholders
 		},
 		meta: {
@@ -638,4 +662,34 @@ export function buildChartData(
 			region: { name: region.name, id: region.id } as any
 		}
 	};
+}
+
+export async function fetchChartData({
+	regionId,
+	parentIds,
+	lang,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	const regionCandidates = [regionId, ...(await getFallbackParentIds(regionId, parentIds, fetchFn))];
+	const { results } = await fetchEmissionsData(regionCandidates, fetchFn);
+	if (!results || results.length === 0) return null;
+
+	const region = results[0];
+	const useMegatons = shouldUseMegatons(region.data);
+	const { sectors, summary } = calculateSectorProgress(region, useMegatons);
+	if (!summary) return null;
+
+	const infoTextPlaceholders = computeInfoTextPlaceholders([region], null);
+
+	return buildChartData(
+		region,
+		sectors,
+		summary,
+		useMegatons,
+		region.data[0]?.source || 'Emissions data',
+		lang || 'de',
+		infoTextPlaceholders
+	);
 }

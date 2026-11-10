@@ -1,6 +1,5 @@
 <script lang="ts">
-	import CheckIcon from './CheckIcon.svelte';
-	import XIcon from './XIcon.svelte';
+	import { IconCheck, IconX } from '@tabler/icons-svelte-runes';
 	import type { CompanyMetaData } from './types';
 
 	export let companiesGoalData: CompanyMetaData[] = [];
@@ -44,9 +43,9 @@
 					</td>
 					<td class={tableCellClasses}>
 						{#if company.climate_neutrality_goal === 'Nein'}
-							<XIcon additionalClasses="mx-auto" />
+							<IconX color="#CB181D" class="mx-auto" />
 						{:else}
-							<CheckIcon additionalClasses="mx-auto" />
+							<IconCheck color="#006D2C" class="mx-auto" />
 							<b>{company.climate_neutrality_goal}</b><br />
 							{#if company.climate_neutrality_scopes === null}
 								ohne definierte Scopes
@@ -57,9 +56,9 @@
 					</td>
 					<td class={tableCellClasses}>
 						{#if company.member_sbt}
-							<CheckIcon additionalClasses="mx-auto" />
+							<IconCheck color="#006D2C" class="mx-auto" />
 						{:else}
-							<XIcon additionalClasses="mx-auto inline" />
+							<IconX color="#CB181D" class="mx-auto inline" />
 							{#if company.name === 'OMV AG'}<span>*</span>{/if}
 						{/if}
 					</td>

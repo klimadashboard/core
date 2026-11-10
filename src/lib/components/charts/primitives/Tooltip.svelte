@@ -16,7 +16,7 @@
 	export let title: string = '';
 
 	/** Items to display */
-	export let items: Array<{ label: string; value: string; color?: string }> = [];
+	export let items: Array<{ label: string; value: string; color?: string; icon?: string }> = [];
 
 	let tooltipEl: HTMLElement;
 
@@ -92,7 +92,9 @@
 		<div class="space-y-0.5">
 			{#each items as item}
 				<div class="flex items-center gap-2 text-sm">
-					{#if item.color}
+					{#if item.icon}
+						<span class="flex-shrink-0 text-gray-500 dark:text-gray-400">{@html item.icon}</span>
+					{:else if item.color}
 						<span
 							class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
 							style="background-color: {item.color};"

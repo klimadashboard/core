@@ -1,6 +1,6 @@
 <script>
 	import { onMount, createEventDispatcher } from 'svelte';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import { scaleLinear } from 'd3-scale';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { interpolateRgb } from 'd3-interpolate';
@@ -51,6 +51,9 @@
 	onMount(() => {
 		map = new maplibregl.Map({
 			container: mapContainer,
+			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
+			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
+			canvasContextAttributes: { preserveDrawingBuffer: true },
 			style: {
 				version: 8,
 				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,

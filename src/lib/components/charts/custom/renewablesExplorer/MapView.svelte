@@ -2,12 +2,13 @@
 <script lang="ts">
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import { page } from '$app/state';
-	import maplibregl from 'maplibre-gl';
+	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { fetchRegion } from '$lib/utils/getRegion';
 	import type { Region } from '$lib/utils/getRegion';
 	import Loader from '$lib/components/Loader.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 	import {
 		fetchAllTurbines,
 		fetchTurbineDetails,
@@ -31,9 +32,9 @@
 		added_units?: number;
 		cumulative_units?: number;
 	}> = [];
-	export let goal: any = null;
-	export let updateDate: string = '';
-	export let gridOperatorCheckedRatio: number | null = null;
+	export const goal: any = null;
+	export const updateDate: string = '';
+	export const gridOperatorCheckedRatio: number | null = null;
 	export let dataLoading: boolean = true;
 
 	const dispatch = createEventDispatcher();
@@ -174,26 +175,10 @@
 	}
 
 	function getBasemapStyle(dark: boolean) {
-		const tiles = dark
-			? [
-					'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-				]
-			: [
-					'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-					'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-					'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-				];
-
 		return {
 			version: 8,
 			sources: {
-				'carto-basemap': {
-					type: 'raster',
-					tiles,
-					tileSize: 256
-				}
+				'carto-basemap': cartoRasterSource(dark ? 'dark' : 'light', { subdomains: ['a', 'b', 'c'] })
 			},
 			layers: [
 				{
@@ -203,6 +188,20 @@
 				}
 			]
 		};
+	}
+
+	// Approximate bounding box for Germany
+	const GERMANY_BOUNDS: [[number, number], [number, number]] = [
+		[5.87, 47.27],
+		[15.04, 55.06]
+	];
+
+	function fitToGermany() {
+		if (!map) return;
+		map.fitBounds(GERMANY_BOUNDS, {
+			padding: { top: 30, bottom: 30, left: 30, right: 30 },
+			duration: 1000
+		});
 	}
 
 	function initializeMap(center: [string, string] | string[]) {
@@ -216,9 +215,11 @@
 		const centerArray: [string, string] = [String(center[0]), String(center[1])];
 
 		if (map) {
-			// If we have a region outline, fit to it; otherwise just center
+			// If we have a region outline, fit to it; otherwise fit to Germany
 			if (regionOutline) {
 				fitToRegionOutline();
+			} else if (!region && !urlRegionId) {
+				fitToGermany();
 			} else {
 				const lon = parseFloat(centerArray[0]);
 				const lat = parseFloat(centerArray[1]);
@@ -239,12 +240,21 @@
 			container: mapContainer,
 			style: getBasemapStyle(isDarkMode),
 			center: centerCoords,
-			zoom: 8
+			zoom: region || urlRegionId ? 8 : 5,
+			// Keep the WebGL drawing buffer around after each frame is presented.
+			// Without this, the browser clears the canvas once it's composited to
+			// the screen, so `canvas.toDataURL()` (used by snapdom's PNG/JPEG card
+			// export in Card.svelte) reads back a blank/white canvas even though
+			// the map looks fine on screen.
+			canvasContextAttributes: { preserveDrawingBuffer: true }
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
+			if (!region && !urlRegionId) {
+				fitToGermany();
+			}
 			loadTurbines();
 		});
 
@@ -537,6 +547,9 @@
 		} else if (regionOutline) {
 			// No highlighted turbines - zoom to region boundary
 			fitToRegionOutline();
+		} else {
+			// No region or region outline - zoom to show all of Germany
+			fitToGermany();
 		}
 	}
 
@@ -569,7 +582,9 @@
 			}
 
 			// Find the most recent year with new installations
-			const lastYearWithInstallation = [...yearlyData].reverse().find((d) => (d.added_units || 0) > 0);
+			const lastYearWithInstallation = [...yearlyData]
+				.reverse()
+				.find((d) => (d.added_units || 0) > 0);
 			if (lastYearWithInstallation) {
 				return `Zuletzt wurde im Jahr ${lastYearWithInstallation.year} ein Windrad in ${regionDisplayName} in Betrieb genommen.`;
 			}
@@ -580,7 +595,13 @@
 
 		// Fallback to turbine count if yearly data not yet loaded
 		const totalTurbines = turbines.length;
-		if (totalTurbines === 0 && !loading && !regionLoading && !internalRegionLoading && !dataLoading) {
+		if (
+			totalTurbines === 0 &&
+			!loading &&
+			!regionLoading &&
+			!internalRegionLoading &&
+			!dataLoading
+		) {
 			return `In ${regionDisplayName} ist aktuell kein Windrad in Betrieb.`;
 		} else if (totalTurbines > 0) {
 			return `In ${regionDisplayName} sind Windräder in Betrieb.`;

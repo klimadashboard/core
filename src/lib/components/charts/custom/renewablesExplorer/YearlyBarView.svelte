@@ -12,11 +12,14 @@
 		buildChartData,
 		getColor,
 		getColors,
+		getYearlyValue,
+		getCumulativeValue,
 		formatPower,
 		formatNumber,
 		getPowerUnit,
 		convertPowerUnit,
 		type EnergyType,
+		type MetricMode,
 		type RenewablesRawData,
 		type RenewableGoal
 	} from './config';
@@ -33,6 +36,7 @@
 	export let updateDate: string = '';
 	export let gridOperatorCheckedRatio: number | null = null;
 	export let dataLoading: boolean = true;
+	export let metricMode: MetricMode = 'power';
 
 	// State
 	let containerEl: HTMLElement;
@@ -44,8 +48,9 @@
 
 	// Calculate required yearly additions
 	// If goal has goal_path, use variable yearly requirements; otherwise use even distribution
+	// Goal targets are defined in kW, so they only apply to the power metric
 	$: goalInfo = (() => {
-		if (!goal || data.length === 0) return null;
+		if (!goal || data.length === 0 || metricMode !== 'power') return null;
 
 		const currentYear = new Date().getFullYear();
 		const lastEntry = data[data.length - 1];
@@ -113,12 +118,21 @@
 
 	// Build combined data with goal bars
 	$: combinedData = (() => {
-		if (!goalInfo) return data.map((d) => ({ ...d, isGoalYear: false, goalRequired: 0 }));
+		if (!goalInfo)
+			return data.map((d) => ({
+				...d,
+				value: getYearlyValue(d, metricMode),
+				cumulativeValue: getCumulativeValue(d, metricMode),
+				isGoalYear: false,
+				goalRequired: 0
+			}));
 
 		const result: Array<{
 			year: number;
 			net_power_kw: number;
 			cumulative_power_kw: number;
+			value: number;
+			cumulativeValue: number;
 			isGoalYear: boolean;
 			goalRequired: number;
 		}> = [];
@@ -136,6 +150,8 @@
 			const isGoalYear = d.year >= goalInfo.startYear && d.year <= goalInfo.endYear;
 			result.push({
 				...d,
+				value: getYearlyValue(d, metricMode),
+				cumulativeValue: getCumulativeValue(d, metricMode),
 				isGoalYear,
 				goalRequired: isGoalYear ? getGoalRequired(d.year) : 0
 			});
@@ -151,6 +167,8 @@
 						year,
 						net_power_kw: 0,
 						cumulative_power_kw: 0,
+						value: 0,
+						cumulativeValue: 0,
 						isGoalYear: true,
 						goalRequired
 					});
@@ -175,16 +193,28 @@
 
 	// Max value considers both actual data and goal
 	$: maxAbs = Math.max(
-		...combinedData.map((d) => Math.abs(d.net_power_kw)),
+		...combinedData.map((d) => Math.abs(d.value)),
 		maxGoalRequired,
 		1
 	);
 
 	// Y-axis max needs to include goal bars
-	$: yMax = Math.max(...combinedData.map((d) => d.net_power_kw), maxGoalRequired, 1);
+	$: yMax = Math.max(...combinedData.map((d) => d.value), maxGoalRequired, 1);
 
-	$: unit = getPowerUnit(maxAbs, selectedEnergy);
-	$: yFormat = (v: number) => formatNumber(convertPowerUnit(v, maxAbs), 0);
+	$: unitsDivisor = maxAbs >= 1_000_000 ? 1_000_000 : maxAbs >= 1_000 ? 1_000 : 1;
+	$: unit =
+		metricMode === 'power'
+			? getPowerUnit(maxAbs, selectedEnergy)
+			: unitsDivisor >= 1_000_000
+				? 'Mio. Anlagen'
+				: unitsDivisor >= 1_000
+					? 'Tsd. Anlagen'
+					: 'Anlagen';
+	$: yFormat = (v: number) => {
+		if (metricMode === 'power') return formatNumber(convertPowerUnit(v, maxAbs), 0);
+		const scaled = v / unitsDivisor;
+		return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0);
+	};
 
 	// Update chart data when shared data changes
 	$: if (!dataLoading && data.length > 0) {
@@ -204,7 +234,7 @@
 		<Chart
 			data={combinedData}
 			x="year"
-			y="net_power_kw"
+			y="value"
 			xType="band"
 			{xDomain}
 			{yMax}
@@ -269,10 +299,10 @@
 
 				<!-- Actual data bars -->
 				{#each combinedData as d}
-					{#if d.net_power_kw !== 0}
+					{#if d.value !== 0}
 						{@const barX = xScale(d.year)}
 						{@const barWidth = xScale.bandwidth ? xScale.bandwidth() : 20}
-						{@const value = d.net_power_kw}
+						{@const value = d.value}
 						{@const barY = value >= 0 ? yScale(value) : yScale(0)}
 						{@const zeroY = yScale(0)}
 						{@const barHeight = Math.abs(zeroY - yScale(value))}
@@ -302,20 +332,26 @@
 					title={hover.x !== null ? String(hover.x) : ''}
 					items={point
 						? [
-								...(point.net_power_kw !== 0
+								...(point.value !== 0
 									? [
 											{
-												label: 'Zubau',
-												value: formatPower(point.net_power_kw, selectedEnergy),
+												label: metricMode === 'power' ? 'Zubau' : 'Neu installierte Anlagen',
+												value:
+													metricMode === 'power'
+														? formatPower(point.value, selectedEnergy)
+														: formatNumber(point.value, 0),
 												color
 											}
 										]
 									: []),
-								...(point.cumulative_power_kw > 0
+								...(point.cumulativeValue > 0
 									? [
 											{
 												label: 'Kumuliert',
-												value: formatPower(point.cumulative_power_kw, selectedEnergy)
+												value:
+													metricMode === 'power'
+														? formatPower(point.cumulativeValue, selectedEnergy)
+														: formatNumber(point.cumulativeValue, 0)
 											}
 										]
 									: []),

@@ -95,10 +95,3 @@
 		</div>
 	{/each}
 </div>
-
-<style>
-	.wrapper {
-		height: 100vh;
-		min-height: 0;
-	}
-</style>

@@ -1,5 +1,6 @@
 <script>
-	import ChartLine from '$lib/components/charts/chartLine.svelte';
+	import { Chart, AxisX, AxisY, Line, Tooltip, Legend } from '$lib/components/charts/primitives';
+	import { formatNumber } from '$lib/utils/formatters';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -8,7 +9,21 @@
 
 	dayjs.extend(dayOfYear);
 
-	const getGasUsageData = async () => {
+	// Current year = dark teal, one year ago = medium teal, older = muted gray
+	function yearColor(i, total) {
+		if (i === total - 1) return '#347C86';
+		if (i === total - 2) return '#7CBAB3';
+		return '#D1D5DB';
+	}
+
+	let loading = true;
+	let error = null;
+	let chartData = [];
+	let years = [];
+	let lastYear = null;
+	let pulsePoint = null;
+
+	async function loadData() {
 		const directus = getDirectusInstance(fetch);
 		const rawData = await directus.request(
 			readItems('energy', {
@@ -20,9 +35,7 @@
 			})
 		);
 
-		// Determine all years present in data
-		const years = Array.from(new Set(rawData.map((d) => dayjs(d.period).year()))).sort();
-
+		years = Array.from(new Set(rawData.map((d) => dayjs(d.period).year()))).sort();
 		const grouped = {};
 
 		for (const d of rawData) {
@@ -33,50 +46,144 @@
 
 			if (!grouped[day]) {
 				grouped[day] = { x: day, label };
-				for (const y of years) {
-					grouped[day][y] = null;
-				}
+				for (const y of years) grouped[day][String(y)] = null;
 			}
-			grouped[day][year] = d.value;
+			grouped[day][String(year)] = d.value;
 		}
 
-		const rawDataSorted = Object.values(grouped)
-			.filter((d) => years.some((y) => d[y] != null)) // keep rows with at least one value
-			.sort((a, b) => a.x - b.x);
+		const sorted = Object.values(grouped)
+			.filter((d) => years.some((y) => d[String(y)] != null))
+			.sort((a, b) => a.x - b.x)
+			.map((d, i) => ({ ...d, x: i }));
 
-		// Remap x values to sequential 0-based index
-		const data = rawDataSorted.map((d, i) => ({
-			...d,
-			x: i
-		}));
+		chartData = sorted;
+		lastYear = years[years.length - 1] ?? null;
 
-		const lastYear = years[years.length - 1];
+		if (lastYear != null) {
+			const lastYearPts = sorted.filter((d) => d[String(lastYear)] != null);
+			pulsePoint = lastYearPts[lastYearPts.length - 1] ?? null;
+		}
+		loading = false;
+	}
 
-		const availableLastYearValues = data.filter((d) => d[lastYear] !== null);
+	loadData().catch((e) => {
+		error = e?.message ?? 'Fehler beim Laden';
+		loading = false;
+	});
 
-		const preselectedIndex = availableLastYearValues[availableLastYearValues.length - 1].x;
+	$: legendItems = years.map((y, i) => ({
+		key: String(y),
+		label: String(y),
+		color: yearColor(i, years.length)
+	}));
 
-		return { data, years, preselectedIndex, lastYear };
-	};
-
-	const promise = getGasUsageData();
+	$: yFields = years.map(String);
 </script>
 
-<div class="h-80">
-	{#await promise}
-		<p>Lade Daten…</p>
-	{:then result}
-		<ChartLine
-			data={result.data}
-			labels={result.years.map(String)}
-			keys={result.years.map(String)}
-			colors={['#BBE5CC', '#7CBAB3', '#347C86'].slice(0, result.years.length)}
-			unit="GWh/Tag"
-			showTotal={false}
-			showPulse={result.lastYear.toString()}
-			preselectedIndex={result.preselectedIndex}
-		/>
-	{:catch error}
-		<p class="text-red-500">Fehler beim Laden der Daten: {error.message}</p>
-	{/await}
-</div>
+{#if loading}
+	<div class="h-80 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+{:else if error}
+	<div class="h-80 flex items-center justify-center text-red-500">{error}</div>
+{:else}
+	<div class="flex flex-col gap-2">
+		<Legend items={legendItems} />
+		<Chart
+			data={chartData}
+			x="x"
+			y={yFields}
+			height={320}
+			yMin={0}
+			margin={{ top: 10, right: 20, bottom: 35, left: 60 }}
+		>
+			<svelte:fragment
+				slot="default"
+				let:xScale
+				let:yScale
+				let:xDomain
+				let:innerWidth
+				let:innerHeight
+				let:hover
+			>
+				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
+				<AxisX
+					{xScale}
+					{xDomain}
+					{innerWidth}
+					{innerHeight}
+					format={(v) => chartData[Math.round(v)]?.label ?? ''}
+					tickCount={6}
+				/>
+
+				<!-- Render past years first (behind current year) -->
+				{#each years as year, i}
+					{#if year !== lastYear}
+						<Line
+							data={chartData}
+							x="x"
+							y={String(year)}
+							{xScale}
+							{yScale}
+							stroke={yearColor(i, years.length)}
+							strokeWidth={1}
+							{hover}
+						/>
+					{/if}
+				{/each}
+
+				<!-- Current year on top, thicker, with dots -->
+				{#if lastYear != null}
+					{@const currentIdx = years.indexOf(lastYear)}
+					<Line
+						data={chartData}
+						x="x"
+						y={String(lastYear)}
+						{xScale}
+						{yScale}
+						stroke={yearColor(currentIdx, years.length)}
+						strokeWidth={2.5}
+						dots={true}
+						dotRadius={2}
+						{hover}
+					/>
+				{/if}
+
+				<!-- Animated pulse at last data point of current year -->
+				{#if pulsePoint && lastYear != null && xScale && yScale}
+					{@const cx = xScale(pulsePoint.x)}
+					{@const cy = yScale(pulsePoint[String(lastYear)])}
+					{@const currentColor = yearColor(years.length - 1, years.length)}
+					<g transform="translate({cx},{cy})">
+						<circle r="5" fill={currentColor} />
+						<circle r="5" fill={currentColor}>
+							<animate attributeName="r" from="5" to="12" dur="1.5s" repeatCount="indefinite" />
+							<animate attributeName="opacity" from="0.8" to="0" dur="1.5s" repeatCount="indefinite" />
+						</circle>
+					</g>
+				{/if}
+
+				<AxisY mode="labels" {yScale} {innerWidth} {innerHeight} unit="GWh/Tag" />
+			</svelte:fragment>
+
+			<svelte:fragment slot="tooltip" let:hover>
+				{#if hover.x !== null}
+					{@const pt = chartData.find((d) => d.x === hover.x)}
+					{#if pt}
+						<Tooltip
+							visible
+							x={hover.clientX}
+							y={hover.clientY}
+							title={pt.label}
+							items={[...years].reverse()
+								.filter((y) => pt[String(y)] != null)
+								.map((y, i, arr) => ({
+									label: String(y),
+									value: formatNumber(pt[String(y)], 1) + ' GWh/Tag',
+									color: yearColor(years.indexOf(y), years.length)
+								}))}
+						/>
+					{/if}
+				{/if}
+			</svelte:fragment>
+		</Chart>
+	</div>
+{/if}

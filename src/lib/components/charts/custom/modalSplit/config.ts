@@ -1,10 +1,18 @@
-// $lib/components/charts/custom/mobilityModalSplitStreet/config.ts
+// $lib/components/charts/custom/modalSplit/config.ts
 
 import type { Region } from '$lib/utils/getRegion';
-import type { TableColumn, ChartData } from '$lib/components/charts/types';
+import { withLayerLabel } from '$lib/utils/getRegion';
+import type {
+	TableColumn,
+	ChartData,
+	ChartFetchParams,
+	EmbedOptionDeclaration
+} from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
+import { getAggregateMembers, weightedMeanRows } from '$lib/utils/regionAggregation';
 import { t } from '$lib/utils/t';
+import { formatPeriodDate } from '$lib/utils/formatters';
 
 export type Translations = Record<string, string>;
 
@@ -29,11 +37,13 @@ export const categoryOrder = [
 	'public_transport',
 	'car_passenger',
 	'car_driver',
-	'motorbike'
+	'car',
+	'motorbike',
+	'other'
 ];
 
 export const sustainableCategories = ['on_foot', 'bicycle', 'e_bike', 'public_transport'];
-export const motorizedCategories = ['motorbike', 'car_driver', 'car_passenger'];
+export const motorizedCategories = ['motorbike', 'car_driver', 'car_passenger', 'car', 'other'];
 
 /** Get category metadata with translated labels */
 export function getCategoryMeta(
@@ -74,6 +84,16 @@ export function getCategoryMeta(
 			label: t(translations, 'domain.transport.carPassenger'),
 			shortLabel: t(translations, 'domain.transport.carPassengerShort'),
 			sustainable: false
+		},
+		car: {
+			label: t(translations, 'domain.transport.car'),
+			shortLabel: t(translations, 'domain.transport.carShort'),
+			sustainable: false
+		},
+		other: {
+			label: t(translations, 'domain.transport.other'),
+			shortLabel: t(translations, 'domain.transport.otherShort'),
+			sustainable: false
 		}
 	};
 }
@@ -87,9 +107,11 @@ export const categoryColors: Record<string, { main: string; light: string; dark:
 	bicycle: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - contrast 4.51:1
 	e_bike: { main: '#0891b2', light: '#cffafe', dark: '#0e7490' }, // Cyan-600 - same as bicycle
 	public_transport: { main: '#ca8a04', light: '#fef3c7', dark: '#a16207' }, // Yellow-600 - contrast 5.37:1
-	motorbike: { main: '#c2410c', light: '#ffedd5', dark: '#9a3412' }, // Orange-700 - contrast 5.93:1
+	motorbike: { main: '#92400e', light: '#fef3c7', dark: '#78350f' }, // Amber-800 - contrast 7.8:1
 	car_driver: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' }, // Pink-700 - contrast 5.64:1
-	car_passenger: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' } // Violet-600 - contrast 4.75:1
+	car_passenger: { main: '#7c3aed', light: '#f3e8ff', dark: '#6d28d9' }, // Violet-600 - contrast 4.75:1
+	car: { main: '#be185d', light: '#fce7f3', dark: '#9d174d' }, // Pink-700 - same as car_driver
+	other: { main: '#6b7280', light: '#f3f4f6', dark: '#4b5563' } // Gray-500 - contrast 4.64:1
 };
 
 // ============================================================================
@@ -257,6 +279,8 @@ export interface ModalSplitFetchResult {
 	matchedRegionName: string | null;
 	/** The layer of the matched region */
 	matchedRegionLayer: string | null;
+	/** The human-readable layer label (e.g., "Bundesland", "Gemeinde") */
+	matchedRegionLayerLabel: string | null;
 	/** Whether a fallback to parent region was used */
 	usedFallback: boolean;
 }
@@ -286,6 +310,7 @@ export async function fetchData(
 			matchedRegionId: null,
 			matchedRegionName: null,
 			matchedRegionLayer: null,
+			matchedRegionLayerLabel: null,
 			usedFallback: false
 		};
 	}
@@ -314,7 +339,30 @@ export async function fetchData(
 	const primaryRegionId = regionCandidates[0];
 	if (dataByRegion.has(primaryRegionId) && dataByRegion.get(primaryRegionId)!.length > 0) {
 		const regionRecords = dataByRegion.get(primaryRegionId)!;
-		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, false);
+		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, (region as any)?.layer_label || null, false);
+	}
+
+	// Aggregate regions (Metropolregion): population-weighted mean of the member districts' shares
+	const members = await getAggregateMembers(region);
+	if (region && members) {
+		const population = new Map(members.map((m) => [m.id, m.population]));
+		const memberRecords = (await directus.request(
+			readItems('mobility_modal_split', {
+				filter: { region: { _in: [...population.keys()] } },
+				fields: ['year', 'category', 'region', 'value', 'update', 'source'],
+				limit: -1
+			})
+		)) as any[];
+		if (memberRecords.length > 0) {
+			const records = weightedMeanRows(
+				memberRecords,
+				['year', 'category'],
+				['value'],
+				(r) => population.get(r.region),
+				{ region: region.id }
+			).filter((r) => r.value !== null);
+			return buildFetchResult(records, region.id, region.name, region.layer, region.layer_label || null, false);
+		}
 	}
 
 	// Otherwise, need to find the best fallback from parents
@@ -331,6 +379,7 @@ export async function fetchData(
 			matchedRegionId: null,
 			matchedRegionName: null,
 			matchedRegionLayer: null,
+			matchedRegionLayerLabel: null,
 			usedFallback: false
 		};
 	}
@@ -339,10 +388,10 @@ export async function fetchData(
 	const regionsMetadata = await directus.request(
 		readItems('regions', {
 			filter: { id: { _in: candidatesWithData } },
-			fields: ['id', 'name', 'layer'],
+			fields: ['id', 'name', 'layer', 'layer_label'],
 			limit: -1
 		})
-	) as Array<{ id: string; name: string; layer: string }>;
+	) as Array<{ id: string; name: string; layer: string; layer_label?: string }>;
 
 	// Sort by layer priority (most local first) and by order in regionCandidates (closer parent first)
 	const sortedCandidates = candidatesWithData
@@ -352,6 +401,7 @@ export async function fetchData(
 				id,
 				name: meta?.name || null,
 				layer: meta?.layer || null,
+				layer_label: meta?.layer_label || null,
 				layerPriority: meta?.layer ? getLayerPriority(meta.layer) : 999,
 				candidateIndex: regionCandidates.indexOf(id)
 			};
@@ -374,6 +424,7 @@ export async function fetchData(
 		bestCandidate.id,
 		bestCandidate.name,
 		bestCandidate.layer,
+		bestCandidate.layer_label,
 		true // Used fallback since primary region had no data
 	);
 }
@@ -384,6 +435,7 @@ function buildFetchResult(
 	regionId: string,
 	regionName: string | null,
 	regionLayer: string | null,
+	regionLayerLabel: string | null,
 	usedFallback: boolean
 ): ModalSplitFetchResult {
 	const data = rawRecords
@@ -413,6 +465,7 @@ function buildFetchResult(
 		matchedRegionId: regionId,
 		matchedRegionName: regionName,
 		matchedRegionLayer: regionLayer,
+		matchedRegionLayerLabel: regionLayerLabel,
 		usedFallback
 	};
 }
@@ -566,12 +619,23 @@ export function getTableRows(data: ModalSplitRawData[]): any[] {
 	});
 }
 
+/** Format a percentage: strip unnecessary decimals, use comma as decimal separator */
+function formatPercent(value: number): string {
+	const rounded = Math.round(value * 100) / 100; // max 2 decimal places
+	if (Number.isInteger(rounded)) {
+		return String(rounded);
+	}
+	return String(rounded).replace('.', ',');
+}
+
 /** Generate placeholders */
 export function getPlaceholders(
 	data: ModalSplitRawData[],
 	region: Region | null,
 	goalConfig: ResolvedGoalConfig | null,
-	matchedRegionName?: string | null
+	matchedRegionName?: string | null,
+	matchedRegionLayerLabel?: string | null,
+	updateDate?: string
 ): Record<string, string | number | boolean> {
 	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
 	const firstYear = years[0];
@@ -583,7 +647,7 @@ export function getPlaceholders(
 	const firstYearSustainable = firstYearData
 		.filter((d) => sustainableCategories.includes(d.category))
 		.reduce((sum, d) => sum + d.value, 0);
-	const firstYearEcoShare = firstYearTotal ? Math.round((firstYearSustainable / firstYearTotal) * 100) : 0;
+	const firstYearEcoShareRaw = firstYearTotal ? (firstYearSustainable / firstYearTotal) * 100 : 0;
 
 	// Calculate sustainable share for last year
 	const lastYearData = data.filter((d) => d.year === lastYear);
@@ -591,51 +655,58 @@ export function getPlaceholders(
 	const lastYearSustainable = lastYearData
 		.filter((d) => sustainableCategories.includes(d.category))
 		.reduce((sum, d) => sum + d.value, 0);
-	const lastYearEcoShare = lastYearTotal ? Math.round((lastYearSustainable / lastYearTotal) * 100) : 0;
+	const lastYearEcoShareRaw = lastYearTotal ? (lastYearSustainable / lastYearTotal) * 100 : 0;
 
-	// Calculate change in eco share
-	const ecoShareChange = lastYearEcoShare - firstYearEcoShare;
-	const ecoShareChangeDirection = ecoShareChange >= 0 ? 'Zuwachs' : 'Rückgang';
-	const ecoShareChangeAbs = Math.abs(ecoShareChange);
+	// Calculate change in eco share (rounded to 2 decimals for consistency)
+	const ecoShareChangeRaw = Math.round((lastYearEcoShareRaw - firstYearEcoShareRaw) * 100) / 100;
+	const ecoShareChangeDirection = ecoShareChangeRaw >= 0 ? 'Zuwachs' : 'Rückgang';
+	const ecoShareChangeAbs = Math.abs(ecoShareChangeRaw);
 	const yearSpan = lastYear - firstYear;
 
 	// Goal-related placeholders
 	const hasGoal = !!goalConfig;
 	const goalYear = goalConfig?.endYear || 0;
-	const goalEcoShare = goalConfig?.targetSustainablePercent || 0;
-	const goalChangeAbs = hasGoal ? Math.abs(goalEcoShare - lastYearEcoShare) : 0;
+	const goalEcoShareRaw = goalConfig?.targetSustainablePercent || 0;
+	const goalChangeAbs = hasGoal ? Math.round(Math.abs(goalEcoShareRaw - lastYearEcoShareRaw) * 100) / 100 : 0;
 	const goalYearSpan = hasGoal ? goalYear - lastYear : 0;
 
 	// Check if we have historical data (more than one year)
 	const hasHistoricalData = years.length > 1;
 
 	// Use matched region name if fallback was used, otherwise use the region prop
-	const displayRegionName = matchedRegionName || region?.name || 'Region';
+	const baseName = matchedRegionName || region?.name || 'Region';
+	const layerLabel = matchedRegionLayerLabel || (region as any)?.layer_label || '';
+	// Build regionName with layer_label suffix for disambiguation (e.g., "Salzburg (Bundesland)")
+	const displayRegionName = layerLabel && region?.layer !== 'country'
+		? withLayerLabel(baseName, layerLabel)
+		: baseName;
 
 	return {
 		regionName: displayRegionName,
+		layerLabel,
 		latestYear: lastYear,
-		sustainablePercent: lastYearEcoShare,
-		motorizedPercent: Math.round(100 - lastYearEcoShare),
+		sustainablePercent: formatPercent(lastYearEcoShareRaw),
+		motorizedPercent: formatPercent(Math.round((100 - lastYearEcoShareRaw) * 100) / 100),
 		targetYear: goalConfig?.endYear || '',
-		targetPercent: goalConfig?.targetSustainablePercent || '',
+		targetPercent: goalConfig?.targetSustainablePercent ? formatPercent(goalConfig.targetSustainablePercent) : '',
 		dataYearStart: firstYear || '',
 		dataYearEnd: lastYear || '',
 
 		// New placeholders for info text
 		firstYear,
 		lastYear,
-		firstYearEcoShare,
-		lastYearEcoShare,
+		firstYearEcoShare: formatPercent(firstYearEcoShareRaw),
+		lastYearEcoShare: formatPercent(lastYearEcoShareRaw),
 		ecoShareChangeDirection,
-		ecoShareChangeAbs,
+		ecoShareChangeAbs: formatPercent(ecoShareChangeAbs),
 		yearSpan,
 		hasHistoricalData,
 		hasGoal,
 		goalYear,
-		goalEcoShare,
-		goalChangeAbs,
-		goalYearSpan
+		goalEcoShare: formatPercent(goalEcoShareRaw),
+		goalChangeAbs: formatPercent(goalChangeAbs),
+		goalYearSpan,
+		lastUpdateDate: updateDate ? formatPeriodDate(updateDate) : ''
 	};
 }
 
@@ -648,7 +719,8 @@ export function buildChartData(
 	showHistoric: boolean = false,
 	translations: Translations,
 	goalConfig: ResolvedGoalConfig | null = null,
-	matchedRegionName?: string | null
+	matchedRegionName?: string | null,
+	matchedRegionLayerLabel?: string | null
 ): ChartData {
 	return {
 		raw: data,
@@ -657,7 +729,7 @@ export function buildChartData(
 			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
-		placeholders: getPlaceholders(data, region, goalConfig, matchedRegionName),
+		placeholders: { ...getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel, updateDate), source },
 		meta: {
 			updateDate,
 			source,
@@ -675,4 +747,67 @@ export function buildChartData(
 			}
 		]
 	};
+}
+
+/** Embed parameter `historic` — show the historical development */
+export const embedOptions: EmbedOptionDeclaration[] = [
+	{
+		key: 'historic',
+		label: { de: 'Historische Entwicklung anzeigen', en: 'Show historical development' },
+		choices: [
+			{ value: 'false', label: { de: 'Nein', en: 'No' } },
+			{ value: 'true', label: { de: 'Ja', en: 'Yes' } }
+		],
+		default: 'false'
+	}
+];
+
+
+export async function fetchChartData({
+	regionId,
+	parentIds,
+	translations,
+	fetch: fetchFn
+}: ChartFetchParams): Promise<ChartData | null> {
+	if (!regionId) return null;
+
+	// Fetch region metadata including layer_label for disambiguation
+	const directus = getDirectusInstance(fetchFn);
+	const regionsData = await directus.request(
+		readItems('regions', {
+			filter: { id: { _eq: regionId } },
+			fields: ['id', 'name', 'layer', 'layer_label'],
+			limit: 1
+		})
+	) as Array<{ id: string; name: string; layer: string; layer_label?: string }>;
+
+	const regionMeta = regionsData[0];
+	const region = {
+		id: regionId,
+		name: regionMeta?.name || '',
+		layer: regionMeta?.layer || 'municipality',
+		layer_label: regionMeta?.layer_label || '',
+		code: '',
+		center: ['0', '0']
+	} as Region & { layer_label: string };
+
+	const regionCandidates = [regionId, ...parentIds];
+
+	const fetchResult = await fetchData(region, { regionId, regionCandidates });
+	if (!fetchResult.data || fetchResult.data.length === 0) return null;
+
+	const goal = await fetchGoal(region);
+	const goalConfig = resolveGoalConfig(goal, fetchResult.data);
+
+	return buildChartData(
+		fetchResult.data,
+		fetchResult.updateDate,
+		fetchResult.source,
+		region,
+		false, // showHistoric
+		translations,
+		goalConfig,
+		fetchResult.matchedRegionName,
+		fetchResult.matchedRegionLayerLabel
+	);
 }

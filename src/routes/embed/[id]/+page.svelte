@@ -73,7 +73,7 @@
 </script>
 
 <main style="background: #{bgColor}" class={isAuto ? 'w-full' : 'fixed-embed'}>
-	<Chart id={$page.data.id} showText={showText == 'false' ? false : true} type="card" />
+	<Chart id={$page.data.id} showText={showText == 'false' ? false : true} type="card" snapshot={$page.data.chartSnapshot} />
 </main>
 
 <style>

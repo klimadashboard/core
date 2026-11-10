@@ -1,0 +1,107 @@
+{
+  "sectors": [
+    {
+      "key": "energy",
+      "ksgCode": "ksg_energy",
+      "label": "Energie",
+      "subsectors": [
+        { "code": "1 A 1 a w/o other fuels", "label": "Öffentliche Elektrizität und Wärmeerzeugung" },
+        { "code": "1 A 1 b", "label": "Erdölraffination" },
+        { "code": "1 A 1 c", "label": "Herstellung von festen Brennstoffen und sonstige Energieerzeuger" },
+        { "code": "1 A 3 e 1", "label": "Pipeline Transport" },
+        { "code": "1 A 3 e 2", "label": "Inländische Flughafen Bodenaktivitäten" },
+        { "code": "1 B 1", "label": "Feste Brennstoffe - Kohlenbergbau und -umwandlung" },
+        { "code": "1 B 2", "label": "Öl und Erdgas und diffuse Emissionen aus der Energieerzeugung" }
+      ]
+    },
+    {
+      "key": "industry",
+      "ksgCode": "ksg_industry",
+      "label": "Industrie",
+      "subsectors": [
+        { "code": "1 A 2 a", "label": "Eisenschaffende Industrie" },
+        { "code": "1 A 2 b", "label": "Nichteisen-Metalle" },
+        { "code": "1 A 2 c", "label": "Chemische Industrie (Verarbeitend)" },
+        { "code": "1 A 2 d", "label": "Zellstoff und Papierindustrie" },
+        { "code": "1 A 2 e", "label": "Lebensmittel-, Getränke- und Tabakindustrie" },
+        { "code": "1 A 2 f", "label": "Mineralische Industrie (Verarbeitend)" },
+        { "code": "1 A 2 g", "label": "Weitere Energieerzeugung" },
+        { "code": "2 A", "label": "Mineralische Industrie" },
+        { "code": "2 B", "label": "Chemische Industrie" },
+        { "code": "2 C", "label": "Metallproduktion" },
+        { "code": "2 D", "label": "Verwendung von nichtenergetischen Produkten aus Brennstoffen und von Lösemitteln" },
+        { "code": "2 G", "label": "Sonstige Produktherstellung und -verwendung" }
+      ]
+    },
+    {
+      "key": "traffic",
+      "ksgCode": "ksg_transport",
+      "label": "Verkehr",
+      "subsectors": [
+        { "code": "1 A 3 a", "label": "Inländische Luftfahrt" },
+        { "code": "1 A 3 b 1", "label": "Autos" },
+        { "code": "1 A 3 b 2", "label": "Leichte Nutzfahrzeuge" },
+        { "code": "1 A 3 b 3", "label": "Schwere Nutzfahrzeuge inklusive Busse" },
+        { "code": "1 A 3 b 4", "label": "Motorisierte Zweiräder" },
+        { "code": "1 A 3 b 5", "label": "Andere wie z. B. Schmieröl-Mitverbrennung in Zweitaktern des Straßenverkehrs" },
+        { "code": "1 A 3 c", "label": "Schienenverkehr" },
+        { "code": "1 A 3 d", "label": "Inländische Schifffahrt" },
+        { "code": "1 A 5", "label": "Andere Bereiche" }
+      ]
+    },
+    {
+      "key": "buildings",
+      "ksgCode": "ksg_buildings",
+      "label": "Gebäude",
+      "subsectors": [
+        { "code": "1 A 4 a", "label": "Gewerblich/Institutionell" },
+        { "code": "1 A 4 b", "label": "Wohnen" }
+      ]
+    },
+    {
+      "key": "agriculture",
+      "ksgCode": "ksg_agriculture",
+      "label": "Landwirtschaft",
+      "subsectors": [
+        { "code": "1 A 4 c", "label": "Brennstoffverbrennung in der Landwirtschaft" },
+        { "code": "3 A", "label": "Fermentation bei der Nutztier-Verdauung (Blähungen und Rülpser)" },
+        { "code": "3 B", "label": "Dünger-Management" },
+        { "code": "3 D", "label": "Landwirtschaftliche Böden" },
+        { "code": "3 F", "label": "Verbrennung von landwirtschaftlichen Rückständen auf dem Feld, Brandrodung" },
+        { "code": "3 G", "label": "Kalk-Ausbringung" },
+        { "code": "3 H", "label": "Verwendung von Harnstoff" },
+        { "code": "3 I", "label": "Andere" }
+      ]
+    },
+    {
+      "key": "fluorinated",
+      "ksgCode": "ksg_fgases",
+      "label": "F-Gase",
+      "subsectors": [
+        { "code": "2 E", "label": "Elektronik-Industrie" },
+        { "code": "2 F", "label": "Anwendungen als Ozon-zersetztende-Substanzien-Ersatzstoff" }
+      ]
+    },
+    {
+      "key": "memo",
+      "ksgCode": null,
+      "label": "Memo",
+      "subsectors": [
+        { "code": "Memo 1 D 1 a", "label": "Internationaler Flugverkehr" },
+        { "code": "Memo 1 D 1 b", "label": "Internationale Schifffahrt" }
+      ]
+    },
+    {
+      "key": "waste",
+      "ksgCode": "ksg_waste",
+      "label": "Abfallwirtschaft",
+      "subsectors": [
+        { "code": "1 A 1 a other", "label": "Energieerzeugung aus Abfallverbrennung" },
+        { "code": "5 A", "label": "Abfalldeponierung" },
+        { "code": "5 B", "label": "Biologische Abfallbehandlung" },
+        { "code": "5 C", "label": "Abfallverbrennung" },
+        { "code": "5 D", "label": "Abwasserbehandlung" }
+      ]
+    }
+  ]
+}

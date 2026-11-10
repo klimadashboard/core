@@ -1,8 +1,15 @@
-import type {
-	GetCountriesQuery,
-	GetMobilityRenewableShareQuery
-} from './__generated__/getData.generated';
 import { DEFAULT_COLOR, REGION_COLORS } from './constants';
+
+export type MobilityRow = {
+	period: string | null;
+	region: string | null;
+	value: number | null;
+};
+
+export type Country = {
+	id: string;
+	name_de: string | null;
+};
 
 // Type for chart data structure
 export type LineChartData = {
@@ -20,8 +27,8 @@ export type LineChartData = {
  * @returns Formatted data for the chart component
  */
 export function transformDataForChart(
-	apiData: GetMobilityRenewableShareQuery['mobility'],
-	countries: GetCountriesQuery['countries'],
+	apiData: MobilityRow[],
+	countries: Country[],
 	currentCountry: string = 'DE'
 ): LineChartData {
 	if (!apiData?.length) {

@@ -55,6 +55,7 @@
 	let latestDataYear: number = 0;
 	let goalConfig: ResolvedGoalConfig | null = null;
 	let matchedRegionName: string | null = null;
+	let matchedRegionLayerLabel: string | null = null;
 	let usedFallback: boolean = false;
 
 	// Computed dimensions - label width scales with container
@@ -165,6 +166,7 @@
 			updateDate = result.updateDate;
 			source = result.source;
 			matchedRegionName = result.matchedRegionName;
+			matchedRegionLayerLabel = result.matchedRegionLayerLabel;
 			usedFallback = result.usedFallback;
 
 			// Fetch goal for the matched region (not the original region) if fallback was used
@@ -188,7 +190,8 @@
 				showHistoric,
 				page.data.translations,
 				goalConfig,
-				matchedRegionName
+				matchedRegionName,
+				matchedRegionLayerLabel
 			);
 			onChartData?.(chartData);
 		} catch (e) {
@@ -210,7 +213,8 @@
 			showHistoric,
 			page.data.translations,
 			goalConfig,
-			matchedRegionName
+			matchedRegionName,
+			matchedRegionLayerLabel
 		);
 		onChartData?.(chartData);
 	}
@@ -238,6 +242,32 @@
 
 	function formatPercent(value: number): string {
 		return `${Math.round(value)}%`;
+	}
+
+	// Merge bicycle + e_bike into one segment for the large bar (same color, combined value is more readable)
+	function mergeSegmentsForLargeBar(
+		segments: ReturnType<typeof processYearData>
+	): Array<{ category: string; value: number; x0: number; x1: number; merged?: boolean }> {
+		const result: Array<{
+			category: string;
+			value: number;
+			x0: number;
+			x1: number;
+			merged?: boolean;
+		}> = [];
+		let i = 0;
+		while (i < segments.length) {
+			const seg = segments[i];
+			const next = segments[i + 1];
+			if (seg.category === 'bicycle' && next?.category === 'e_bike') {
+				result.push({ category: 'bicycle', value: seg.value + next.value, x0: seg.x0, x1: next.x1, merged: true });
+				i += 2;
+			} else {
+				result.push(seg);
+				i++;
+			}
+		}
+		return result;
 	}
 
 	// Hover state for tooltip
@@ -322,7 +352,7 @@
 {/snippet}
 
 <!-- Snippet: Large bar segments with icons -->
-{#snippet largeBarSegments(segments: ReturnType<typeof processYearData>, year: number)}
+{#snippet largeBarSegments(segments: ReturnType<typeof mergeSegmentsForLargeBar>, year: number)}
 	{#each segments as segment}
 		{@const segmentWidth = xScale(segment.value)}
 		{@const segmentX = xScale(segment.x0)}
@@ -347,9 +377,10 @@
 					{/if}
 				{/if}
 			</div>
-			{#if segmentWidth > 35}
-				<div class="absolute bottom-1.5 left-2 text-white opacity-80">
-					<TransportIcons category={segment.category} size={20} />
+			{#if segmentWidth > 14}
+				{@const iconSize = segmentWidth > 35 ? 20 : 14}
+				<div class="absolute bottom-1.5 text-white opacity-80" style="left: {Math.min(8, (segmentWidth - iconSize) / 2)}px;">
+					<TransportIcons category={segment.category} size={iconSize} />
 				</div>
 			{/if}
 		</div>
@@ -413,17 +444,19 @@
 	{:else if !ready || width === 0}
 		<div class="h-72 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else}
-		<!-- Historic toggle checkbox -->
-		<label
-			class="flex items-center gap-2 mb-4 cursor-pointer text-sm text-gray-600 dark:text-gray-400"
-		>
-			<input
-				type="checkbox"
-				bind:checked={showHistoric}
-				class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-			/>
-			<span>{t(page.data.translations, 'ui.renewable.showHistoric')}</span>
-		</label>
+		<!-- Historic toggle checkbox (only when historical data exists) -->
+		{#if historicYears.length > 1}
+			<label
+				class="flex items-center gap-2 mb-4 cursor-pointer text-sm text-gray-600 dark:text-gray-400"
+			>
+				<input
+					type="checkbox"
+					bind:checked={showHistoric}
+					class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+				/>
+				<span>{t(page.data.translations, 'ui.renewable.showHistoric')}</span>
+			</label>
+		{/if}
 
 		<div class="flex flex-col">
 			<!-- Historic years (small bars) -->
@@ -483,7 +516,7 @@
 						<span class="text-sm">Modal Split aktuell</span>
 					</div>
 					<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-						{@render largeBarSegments(currentYearData, latestDataYear)}
+						{@render largeBarSegments(mergeSegmentsForLargeBar(currentYearData), latestDataYear)}
 					</div>
 				</div>
 			</div>

@@ -1,0 +1,200 @@
+<script lang="ts">
+	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import type { Stripe, StripeElements, PaymentIntent, Appearance } from '@stripe/stripe-js';
+	import { getStripe } from '$lib/stripe-client';
+
+	export let clientSecret: string;
+	export let amountLabel: string;
+	export let returnUrl: string;
+	/** Monthly donation? Drives Apple Pay's recurring disclosure. */
+	export let recurring: boolean = false;
+	/** Amount actually charged, in cents — Apple Pay wants the subunit. */
+	export let amountCents: number = 0;
+	/** Where the donor can cancel later; shown in their Apple Wallet. */
+	export let managementUrl: string = '';
+	/**
+	 * Pushes the current donor details onto the intent right before confirming.
+	 * Donor fields deliberately do NOT recreate the intent (that would rebuild this
+	 * element on every keystroke — brutal with an iOS date wheel), so this is what
+	 * keeps the metadata the webhook books from in sync.
+	 */
+	export let syncMetadata: (() => Promise<void>) | null = null;
+
+	const dispatch = createEventDispatcher<{
+		success: PaymentIntent;
+		error: { message?: string };
+	}>();
+
+	let stripe: Stripe | null = null;
+	let elements: StripeElements | null = null;
+	let expressEl: HTMLDivElement;
+	let paymentEl: HTMLDivElement;
+	let loading = true;
+	let submitting = false;
+	let errorMessage = '';
+	let hasExpressMethods = false;
+
+	// Shared by both trigger points: the Express Checkout button (Apple Pay / Google
+	// Pay / Link) and the manual "Spenden" button below the card fields.
+	async function confirm(): Promise<boolean> {
+		if (!stripe || !elements) return false;
+		submitting = true;
+		errorMessage = '';
+
+		// Never block a donation on this: if the sync fails the payment still goes
+		// through, it just books with slightly older donor details.
+		if (syncMetadata) {
+			try {
+				await syncMetadata();
+			} catch (e) {
+				console.error('metadata sync before confirm failed (non-fatal)', e);
+			}
+		}
+
+		// redirect: 'if_required' keeps everything inline — only payment methods that
+		// truly need a redirect (rare) will navigate away.
+		const { error, paymentIntent } = await stripe.confirmPayment({
+			elements,
+			confirmParams: { return_url: returnUrl },
+			redirect: 'if_required'
+		});
+
+		if (error) {
+			errorMessage = error.message ?? 'Zahlung fehlgeschlagen. Bitte versuche es erneut.';
+			submitting = false;
+			dispatch('error', error);
+			return false;
+		}
+		if (paymentIntent) dispatch('success', paymentIntent);
+		return true;
+	}
+
+	async function handleCardSubmit(e: SubmitEvent) {
+		e.preventDefault();
+		if (submitting) return;
+		await confirm();
+	}
+
+	// Stripe renders its own labels and inputs inside an iframe, so our `dark:`
+	// classes can't reach them — the theme has to be handed over explicitly, or the
+	// grey field labels end up near-invisible on the dark card.
+	const isDark = () => document.body.classList.contains('dark');
+	function appearance(): Appearance {
+		return {
+			theme: isDark() ? 'night' : 'stripe',
+			variables: {
+				colorPrimary: '#16a34a',
+				borderRadius: '12px',
+				...(isDark() ? { colorBackground: '#1f2937' } : {})
+			}
+		};
+	}
+
+	// The theme is toggled by adding/removing a class on <body>, so watch for that
+	// and restyle in place — Elements supports appearance updates without a remount.
+	let themeObserver: MutationObserver | null = null;
+	onDestroy(() => themeObserver?.disconnect());
+
+	onMount(async () => {
+		try {
+			stripe = await getStripe();
+			if (!stripe) throw new Error('empty stripe instance');
+
+			elements = stripe.elements({
+				clientSecret,
+				locale: 'de',
+				appearance: appearance()
+			});
+
+			themeObserver = new MutationObserver(() => elements?.update({ appearance: appearance() }));
+			themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+			// Without recurringPaymentRequest the Apple Pay sheet presents a monthly
+			// donation as a plain one-off charge — the donor authorises €X with no hint
+			// that it repeats. This makes the sheet state the interval, and puts a
+			// cancel link in their Apple Wallet.
+			const expressCheckout = elements.create('expressCheckout', {
+				buttonHeight: 48,
+				// Explicit, because Stripe flips this to false as soon as an `applePay`
+				// option is passed — which is exactly the recurring case. German donors
+				// need an address for their Zuwendungsbestätigung, and a wallet hands one
+				// over with no typing, so losing it silently is the worst outcome.
+				billingAddressRequired: true,
+				...(recurring && amountCents > 0
+					? {
+							applePay: {
+								recurringPaymentRequest: {
+									paymentDescription: 'Monatliche Spende ans Klimadashboard',
+									managementURL: managementUrl,
+									regularBilling: {
+										label: 'Monatliche Spende',
+										amount: amountCents,
+										recurringPaymentIntervalUnit: 'month' as const,
+										recurringPaymentIntervalCount: 1
+									},
+									billingAgreement:
+										'Deine Spende wird monatlich abgebucht, bis du sie kündigst.'
+								}
+							}
+						}
+					: {})
+			});
+			expressCheckout.on('ready', ({ availablePaymentMethods }) => {
+				hasExpressMethods = !!(
+					availablePaymentMethods && Object.values(availablePaymentMethods).some(Boolean)
+				);
+				loading = false;
+			});
+			expressCheckout.on('confirm', async (event) => {
+				const ok = await confirm();
+				if (!ok) event.paymentFailed({ reason: 'fail' });
+			});
+			expressCheckout.mount(expressEl);
+
+			const payment = elements.create('payment', { layout: 'tabs' });
+			payment.mount(paymentEl);
+			payment.on('ready', () => (loading = false));
+		} catch (e) {
+			console.error('Checkout mount failed', e);
+			errorMessage = 'Zahlungsdienst konnte nicht geladen werden. Bitte lade die Seite neu.';
+			loading = false;
+		}
+	});
+</script>
+
+<div class="flex flex-col gap-3">
+	{#if loading}
+		<div class="flex items-center gap-2 py-6 justify-center opacity-70 text-sm">
+			<span
+				class="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current"
+			></span>
+			Zahlung wird vorbereitet …
+		</div>
+	{/if}
+
+	<div bind:this={expressEl}></div>
+
+	{#if hasExpressMethods}
+		<div class="flex items-center gap-3 text-xs uppercase tracking-wide opacity-50 my-1">
+			<span class="h-px flex-1 bg-current/15"></span>
+			oder mit Karte
+			<span class="h-px flex-1 bg-current/15"></span>
+		</div>
+	{/if}
+
+	<form on:submit={handleCardSubmit} class="flex flex-col gap-3">
+		<div bind:this={paymentEl}></div>
+
+		{#if errorMessage}
+			<p class="text-red-600 text-sm">{errorMessage}</p>
+		{/if}
+
+		<button
+			type="submit"
+			disabled={submitting || loading || !elements}
+			class="w-full py-3 rounded-full bg-green-700 text-white font-bold disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+		>
+			{submitting ? 'Wird verarbeitet …' : `Jetzt ${amountLabel} spenden`}
+		</button>
+	</form>
+</div>

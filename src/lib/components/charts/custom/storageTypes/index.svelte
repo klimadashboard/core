@@ -14,7 +14,7 @@
 
 	const categoryColorMap = Object.fromEntries(categoryConfigs.map((c) => [c.key, c.color]));
 
-	export let region: Region;
+	export let region: Region | null = null;
 	export let onChartData: (data: ReturnType<typeof buildChartData> | null) => void = () => {};
 
 	let currentByCategory: Record<string, StorageTypeData> = {};
@@ -22,9 +22,7 @@
 	let loading = true;
 	let error: string | null = null;
 
-	$: if (region) {
-		loadData();
-	}
+	$: region, loadData();
 
 	async function loadData() {
 		loading = true;

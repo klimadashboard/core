@@ -4,6 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
+	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
 
 	let map;
 	let hoveredCode = '';
@@ -22,15 +23,7 @@
 			version: 8,
 			glyphs: 'https://data.klimadashboard.org/fonts/{fontstack}/{range}.pbf',
 			sources: {
-				carto: {
-					type: 'raster',
-					tiles: [
-						isDark
-							? 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-							: 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-					],
-					tileSize: 256
-				},
+				carto: cartoRasterSource(isDark ? 'dark' : 'light'),
 				municipalities: {
 					type: 'vector',
 					tiles: [
@@ -66,7 +59,7 @@
 	onMount(async () => {
 		if (!browser || !regions?.length) return;
 
-		const maplibregl = await import('maplibre-gl');
+		const maplibregl = await import('$lib/utils/maplibre');
 		await import('maplibre-gl/dist/maplibre-gl.css');
 
 		const isDark = document.body.classList.contains('dark');
@@ -212,11 +205,11 @@
 </script>
 
 <div class="relative">
-	<div id="map" class="" />
+	<div id="map" class=""></div>
 	<div
 		id="tooltip"
 		class="absolute z-10 hidden p-3 rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-2xl leading-tight"
-	/>
+	></div>
 </div>
 
 <style>
