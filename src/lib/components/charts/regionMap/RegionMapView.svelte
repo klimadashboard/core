@@ -706,18 +706,21 @@
 		{/if}
 
 		<!-- Text alternative for screen readers (no visible list) -->
-		<table class="sr-only">
-			<caption>{valueLabel} – {coloredRows.length} Regionen</caption>
-			<thead><tr><th>Rang</th><th>Region</th><th>{valueLabel}</th></tr></thead>
-			<tbody>
-				{#each sortedRows as row (row.region.id)}
-					<tr>
-						<td>{row.rank ?? '–'}</td>
-						<td>{row.region.name}{row.region.isCurrent ? ' (ausgewählt)' : ''}</td>
-						<td>{formatValue(row.value)}</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+		<!-- sr-only on the wrapper: a <table> ignores the 1px box and would overflow the panel -->
+		<div class="sr-only">
+			<table>
+				<caption>{valueLabel} – {coloredRows.length} Regionen</caption>
+				<thead><tr><th>Rang</th><th>Region</th><th>{valueLabel}</th></tr></thead>
+				<tbody>
+					{#each sortedRows as row (row.region.id)}
+						<tr>
+							<td>{row.rank ?? '–'}</td>
+							<td>{row.region.name}{row.region.isCurrent ? ' (ausgewählt)' : ''}</td>
+							<td>{formatValue(row.value)}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 	{/if}
 </div>
