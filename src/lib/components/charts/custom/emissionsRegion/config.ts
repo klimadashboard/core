@@ -4,7 +4,7 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
-import { getFallbackParentIds } from '$lib/utils/regionAggregation';
+import { getFallbackParentIds, aggregatesLast, isShownOnPage } from '$lib/utils/regionAggregation';
 import { t } from '$lib/utils/t';
 import { formatPeriodDate } from '$lib/utils/formatters';
 
@@ -149,7 +149,7 @@ export async function fetchEmissionsData(
 	const regions = await directus.request(
 		readItems('regions', {
 			filter: { id: { _in: regionCandidates } },
-			fields: ['id', 'name', 'layer', 'layer_label', 'population']
+			fields: ['id', 'name', 'layer', 'layer_label', 'population', 'visible']
 		})
 	);
 
@@ -197,7 +197,9 @@ export async function fetchEmissionsData(
 	});
 
 	// Group by region
+	// regionCandidates[0] is the page region; unlaunched aggregate regions stay off other pages
 	const results = (regions as any[])
+		.filter((region) => isShownOnPage(region, regionCandidates[0]))
 		.map((region) => {
 			const regionData = enriched.filter((d) => d.region === region.id);
 			if (regionData.length > 0) {
@@ -699,7 +701,7 @@ export async function fetchChartData({
 	const { results } = await fetchEmissionsData(regionCandidates, fetchFn);
 	if (!results || results.length === 0) return null;
 
-	const region = results[0];
+	const region = aggregatesLast(results, regionId)[0];
 	const useMegatons = shouldUseMegatons(region.data);
 	const sortedCategoryOrder = sortCategoryOrderByFirstYear(region.data, region.categoryOrder);
 	const infoTextPlaceholders = computeInfoTextPlaceholders([region], null);

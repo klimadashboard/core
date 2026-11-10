@@ -5,7 +5,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { onMount } from 'svelte';
 	import { PUBLIC_VERSION } from '$env/static/public';
-	import { getFallbackParentIds } from '$lib/utils/regionAggregation';
+	import { getFallbackParentIds, isForeignAggregate, aggregatesLast } from '$lib/utils/regionAggregation';
 	import formatNumber from '$lib/stores/formatNumber';
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
@@ -27,6 +27,8 @@
 		type YearGroup,
 		type PageRegionContext
 	} from './config';
+	import TargetLabels from './TargetLabels.svelte';
+	import { getTargetLabels, getTargetNote, formatReduction } from './targetLabels';
 
 	// Props from Card slot
 	export let region: any = null;
@@ -127,11 +129,18 @@
 			const pageRegionContext: PageRegionContext | null = region
 				? { name: region.name, layer: region.layer, parents: region.parents }
 				: null;
-			infoTextPlaceholders = computeInfoTextPlaceholders(results, pageRegionContext);
+			infoTextPlaceholders = computeInfoTextPlaceholders(aggregatesLast(results, currentId), pageRegionContext);
 
 			// Sort views by layer hierarchy (smallest/most local first)
 			views = results
-				.map((r) => ({ key: r.key, label: r.label, priority: getLayerPriority(r.layer_label) }))
+				.map((r) => ({
+					key: r.key,
+					label: r.label,
+					// aggregate regions of other pages (e.g. a Metropolregion on a member's page) go last
+					priority: isForeignAggregate({ id: r.id, layer: r.key }, currentId)
+						? 10_000
+						: getLayerPriority(r.layer_label)
+				}))
 				.sort((a, b) => a.priority - b.priority)
 				.map(({ key, label }) => ({ key, label }));
 
@@ -264,6 +273,9 @@
 				useMegatons
 			)
 		: [];
+	// Reduction labels for targets ("−65 % ggü. 1990"), only for target rows that declare a reference year
+	$: targetLabels = selectedRegion ? getTargetLabels(selectedRegion.data) : [];
+	$: targetNote = getTargetNote(targetLabels);
 	$: displayedCategories = selectedRegion
 		? getDisplayedCategories(selectedRegion.data, sortedCategoryOrder)
 		: [];
@@ -423,9 +435,19 @@
 
 			// If it's only a climate target (no historic data for this year)
 			if (targetData && !yearData) {
+				const targetLabel = targetLabels.find((l) => l.year === hoveredYear);
 				return {
 					title: `${hoveredYear} (${t(page.data.translations, 'domain.emissions.target') || 'Ziel'})`,
 					items: [
+						...(targetLabel
+							? [
+									{
+										label: targetLabel.netZero ? 'Klimaneutralität' : 'Reduktionsziel',
+										value: formatReduction(targetLabel),
+										color: '#374151'
+									}
+								]
+							: []),
 						{
 							label: t(page.data.translations, 'domain.emissions.targetValue') || 'Zielwert',
 							value: targetData.value === 0
@@ -795,6 +817,18 @@
 									class="transition-opacity pointer-events-none"
 								/>
 							{/if}
+							{#if targetLabels.length > 0}
+								<TargetLabels
+									labels={targetLabels}
+									targets={climateTargets}
+									{xScale}
+									{yScale}
+									{innerWidth}
+									{hoveredYear}
+									{latestYear}
+									{latestTotal}
+								/>
+							{/if}
 						</g>
 					{/if}
 				</svg>
@@ -875,6 +909,10 @@
 			</p>
 		{/if}
 	</div>
+
+	{#if targetNote && !isHorizontal}
+		<p class="text-sm mt-3 text-gray-600 dark:text-gray-400">{targetNote}</p>
+	{/if}
 
 	{@const noteText = selectedRegion ? v?.[`note.${selectedRegion.id}`] : undefined}
 	{#if noteText}

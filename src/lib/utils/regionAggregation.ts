@@ -48,6 +48,45 @@ export function isAggregateRegion(region: { layer?: string | null } | null | und
 }
 
 /**
+ * True for an aggregate region (e.g. a Metropolregion) shown on another region's page,
+ * such as a member district. Charts offer it as an extra layer but don't select it by
+ * default, so members keep their own state as the default view.
+ * `layer` is the region's layer key (`regions.layer`).
+ */
+export function isForeignAggregate(
+	region: { id: string; layer?: string | null },
+	pageRegionId: string | null | undefined
+): boolean {
+	return isAggregateRegion(region) && region.id !== pageRegionId;
+}
+
+/**
+ * Layers whose regions only show up on other regions' pages once they are launched
+ * (`regions.visible`). Before that they appear on their own (staging) page only.
+ * Not every aggregate layer: hidden groups such as "Stadtstaaten" are data sources on
+ * purpose, as are hidden states.
+ */
+export const LAUNCH_GATED_LAYERS = ['metropolitan_region'];
+
+/** False for an unlaunched region of a launch-gated layer seen from another region's page. */
+export function isShownOnPage(
+	region: { id: string; layer?: string | null; visible?: boolean | null },
+	pageRegionId: string | null | undefined
+): boolean {
+	if (region.id === pageRegionId) return true;
+	return !(region.layer && LAUNCH_GATED_LAYERS.includes(region.layer) && region.visible === false);
+}
+
+/** Puts foreign aggregate regions last, keeping the order of everything else. */
+export function aggregatesLast<T extends { id: string; key: string }>(
+	results: T[],
+	pageRegionId: string | null | undefined
+): T[] {
+	const foreign = (r: T) => isForeignAggregate({ id: r.id, layer: r.key }, pageRegionId);
+	return [...results.filter((r) => !foreign(r)), ...results.filter(foreign)];
+}
+
+/**
  * Member regions of an aggregate region, by layer (default: districts).
  * Returns null when `region` isn't an aggregate region, so callers can branch on it.
  *
