@@ -15,6 +15,20 @@ const SOURCE = 'Statistisches Bundesamt (Destatis), Flächenerhebung nach Art de
 const CACHE_TTL = 12 * 60 * 60 * 1000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * Known breaks in the series that are not real changes in land use. A break applies to its
+ * region, to aggregates containing it (Metropolregion) and to the listed parent regions.
+ */
+const DATA_BREAKS = [
+	{
+		period: '2022',
+		region: '4131197d-2724-433a-96d2-4e386a4519ad', // Lkr. Neustadt a.d. Waldnaab
+		parents: ['faacc2ea-6e8a-47c8-a3c4-71bc58d26b09', COUNTRY_DE], // Bayern, Deutschland
+		note:
+			'Korrektur im Liegenschaftskataster: Teile des Truppenübungsplatzes Grafenwöhr (Lkr. Neustadt a.d. Waldnaab) waren seit 2014–2016 fälschlich als Siedlungsfläche erfasst und wurden 2022 berichtigt. Der Rückgang von rund 1.700 ha ist kein echter Rückbau.'
+	}
+];
+
 type Values = { settlement?: number; transport?: number; total?: number };
 type Index = Map<string, Map<string, Values>>;
 
@@ -114,10 +128,15 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
 		ids = members.map((m) => m.id);
 	}
 
+	const breaks = DATA_BREAKS.filter(
+		(b) => ids.includes(b.region) || b.parents.includes(region.id)
+	).map(({ period, note }) => ({ period, note }));
+
 	return json(
 		{
 			region: { id: region.id, name: region.name, population: region.population },
 			series: sumSeries(data, ids),
+			breaks,
 			memberCount: ids.length,
 			germany: { population: germany?.population ?? null, series: sumSeries(data, [COUNTRY_DE]) },
 			source: SOURCE

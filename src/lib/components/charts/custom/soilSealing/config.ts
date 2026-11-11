@@ -7,6 +7,15 @@ import { readItem } from '@directus/sdk';
 /** Deutsche Nachhaltigkeitsstrategie: Flächenneuinanspruchnahme unter 30 ha pro Tag bis 2030 */
 export const NATIONAL_TARGET_HA_PER_DAY = 30;
 
+/** Integriertes Umweltprogramm 2030 des Bundesumweltministeriums: 20 ha pro Tag bis 2030 */
+export const NATIONAL_TARGET_2030_HA_PER_DAY = 20;
+
+/** Football pitch of standard size (105 × 68 m), in ha — for an everyday comparison */
+export const FOOTBALL_PITCH_HA = (105 * 68) / 10_000;
+
+/** Number of football pitches: one decimal below 10, whole numbers above */
+export const formatPitches = (n: number) => formatNumber(n, n < 10 ? 1 : 0);
+
 interface LandUseYear {
 	period: string;
 	settlement: number;
@@ -23,6 +32,8 @@ export interface SoilSealingYear {
 	added: number | null;
 	/** Increase per day, in ha (null for the first year) */
 	perDay: number | null;
+	/** Set when the change in this year is distorted by a known data correction */
+	breakNote: string | null;
 }
 
 export interface SoilSealingRawData {
@@ -36,6 +47,8 @@ export interface SoilSealingRawData {
 	firstYear: string;
 	/** Region's share of the 30 ha target, by population, in ha per day */
 	target: number | null;
+	/** Region's share of the 20 ha target for 2030, by population, in ha per day */
+	target2030: number | null;
 	populationShare: number | null;
 	source: string;
 }
@@ -54,6 +67,7 @@ export async function fetchData(
 
 	const rows: LandUseYear[] = json.series ?? [];
 	if (rows.length < 2) return null;
+	const breaks: { period: string; note: string }[] = json.breaks ?? [];
 
 	const series: SoilSealingYear[] = rows.map((d, i) => {
 		const added = i > 0 ? d.suv - rows[i - 1].suv : null;
@@ -61,7 +75,8 @@ export async function fetchData(
 			period: d.period,
 			suv: d.suv,
 			added,
-			perDay: added != null ? added / daysInYear(Number(d.period)) : null
+			perDay: added != null ? added / daysInYear(Number(d.period)) : null,
+			breakNote: (i > 0 && breaks.find((b) => b.period === d.period)?.note) || null
 		};
 	});
 
@@ -82,6 +97,7 @@ export async function fetchData(
 		averagePerDay: (last.suv - first.suv) / days,
 		firstYear: first.period,
 		target: populationShare != null ? NATIONAL_TARGET_HA_PER_DAY * populationShare : null,
+		target2030: populationShare != null ? NATIONAL_TARGET_2030_HA_PER_DAY * populationShare : null,
 		populationShare,
 		source: json.source
 	};
@@ -92,7 +108,8 @@ export function getTableColumns(): TableColumn[] {
 		{ key: 'period', label: 'Jahr', align: 'left' },
 		{ key: 'suv', label: 'Siedlungs- und Verkehrsfläche (ha)', align: 'right', format: (v) => formatNumber(v) },
 		{ key: 'added', label: 'Zuwachs (ha)', align: 'right', format: (v) => (v == null ? '–' : formatNumber(v)) },
-		{ key: 'perDay', label: 'Zuwachs pro Tag (ha)', align: 'right', format: (v) => (v == null ? '–' : formatNumber(v, 1)) }
+		{ key: 'perDay', label: 'Zuwachs pro Tag (ha)', align: 'right', format: (v) => (v == null ? '–' : formatNumber(v, 1)) },
+		{ key: 'breakNote', label: 'Hinweis', align: 'left', format: (v) => (v ? 'Datenkorrektur, nicht vergleichbar' : '') }
 	];
 }
 
@@ -102,9 +119,14 @@ export function getPlaceholders(data: SoilSealingRawData): Record<string, string
 		year: data.latest.period,
 		firstYear: data.firstYear,
 		perDay: data.latest.perDay != null ? formatNumber(data.latest.perDay, 1) : '–',
+		pitchesPerDay:
+			data.latest.perDay != null ? formatPitches(data.latest.perDay / FOOTBALL_PITCH_HA) : '–',
+		pitchesPerYear:
+			data.latest.added != null ? formatNumber(data.latest.added / FOOTBALL_PITCH_HA, 0) : '–',
 		averagePerDay: formatNumber(data.averagePerDay, 1),
 		target: data.target != null ? formatNumber(data.target, 1) : '–',
 		targetFactor: data.target ? formatNumber(data.averagePerDay / data.target, 1) : '–',
+		target2030: data.target2030 != null ? formatNumber(data.target2030, 1) : '–',
 		populationShare: data.populationShare != null ? formatPercent(data.populationShare * 100, 1) : '–',
 		suv: formatNumber(data.latest.suv),
 		suvShare: formatPercent(data.suvShare, 1)

@@ -11,6 +11,8 @@
 	export let opacity: number = 1;
 	export let hover: HoverState = { x: null, clientX: 0, clientY: 0 };
 	export let hoverDim: boolean = true;
+	/** Corner radius of the bar's top (or bottom, for negative values) */
+	export let radius: number = 0;
 
 	$: isBandScale = xScale && 'bandwidth' in xScale;
 
@@ -22,29 +24,37 @@
 
 	$: zeroY = yScale?.(0) ?? 0;
 
-	function getBarX(d: any): number {
-		if (!xScale) return 0;
-		const val = xScale(d[x]) ?? 0;
-		if (isBandScale) return val;
-		return val - bandwidth / 2;
+	function barPath(x0: number, y0: number, w: number, h: number, positive: boolean, r: number) {
+		r = Math.min(r, w / 2, h);
+		if (positive) {
+			return `M${x0},${y0 + h}V${y0 + r}Q${x0},${y0} ${x0 + r},${y0}H${x0 + w - r}Q${x0 + w},${y0} ${x0 + w},${y0 + r}V${y0 + h}Z`;
+		}
+		return `M${x0},${y0}V${y0 + h - r}Q${x0},${y0 + h} ${x0 + r},${y0 + h}H${x0 + w - r}Q${x0 + w},${y0 + h} ${x0 + w},${y0 + h - r}V${y0}Z`;
 	}
+
+	// Computed here (not via a helper called in the template) so a resized scale
+	// moves the bars along with their width
+	$: bars =
+		xScale && yScale
+			? data.map((d) => {
+					const value = d[y];
+					const xPos = xScale(d[x]) ?? 0;
+					const barX = isBandScale ? xPos : xPos - bandwidth / 2;
+					const top = value >= 0 ? yScale(value) : zeroY;
+					const height = Math.abs(yScale(value) - zeroY);
+					return { key: d[x], path: barPath(barX, top, bandwidth, height, value >= 0, radius) };
+				})
+			: [];
 </script>
 
 {#if xScale && yScale && data.length > 0}
 	<g class="mark-bar-y">
-		{#each data as d, i}
-			{@const barX = getBarX(d)}
-			{@const value = d[y]}
-			{@const barY = value >= 0 ? yScale(value) : zeroY}
-			{@const barHeight = Math.abs(yScale(value) - zeroY)}
-			{@const isHovered = hover.x === d[x]}
+		{#each bars as b (b.key)}
+			{@const isHovered = hover.x === b.key}
 			{@const dimmed = hoverDim && hover.x !== null && !isHovered}
 
-			<rect
-				x={barX}
-				y={barY}
-				width={bandwidth}
-				height={barHeight}
+			<path
+				d={b.path}
 				fill={color}
 				opacity={dimmed ? opacity * 0.4 : opacity}
 				class="transition-opacity duration-100"
