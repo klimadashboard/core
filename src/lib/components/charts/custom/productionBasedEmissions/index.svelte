@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import { PUBLIC_VERSION } from '$env/static/public';
@@ -557,7 +558,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<div class="flex flex-wrap gap-3 items-end">
+	<ChartSettings>
 		{#if regions.length > 1}
 			<Select
 				label="Region"
@@ -575,9 +576,7 @@
 				hideLabel
 			/>
 		{/if}
-	</div>
 
-	<div class="flex flex-wrap gap-4 items-center">
 		{#if allowFlightEmissions}
 			<Toggle
 				label="Int. Flugverkehr"
@@ -596,7 +595,7 @@
 			bind:checked={showPerCapita}
 			disabled={!hasPerCapitaCols && populations === null}
 		/>
-	</div>
+	</ChartSettings>
 
 	{#if stackedData.length > 0}
 		<Chart

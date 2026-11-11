@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import HistoryChart from './HistoryChart.svelte';
 	import SectorsTreeChart from './SectorsTreeChart.svelte';
 	import { glossaryItem } from '$lib/stores/glossary';
@@ -393,7 +394,7 @@
 </script>
 
 {#if sortedData}
-	<div class="flex flex-wrap gap-5 items-center sm:justify-center md:justify-start">
+	<ChartSettings>
 		<Select
 			label={page.data.translations?.greenhouseGas || 'Treibhausgas'}
 			hideLabel
@@ -431,7 +432,7 @@
 		{/if}
 
 		<Toggle label="Absolute Werte" bind:checked={useAbsoluteUnits} />
-	</div>
+	</ChartSettings>
 
 	<div class="relative overflow-hidden mt-6 py-1 border-b sm:text-lg">
 		<div class="breadcrumb-slider overflow-x-auto flex items-center pr-8">

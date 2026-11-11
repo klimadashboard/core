@@ -1,5 +1,6 @@
 <!-- Updated Map.svelte -->
 <script lang="ts">
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { centroid } from '@turf/centroid';
 	import { booleanContains } from '@turf/boolean-contains';
 	import { bbox } from '@turf/bbox';
@@ -351,7 +352,7 @@
 </script>
 
 <!-- UI Controls -->
-<div class="controls space-y-2 mb-4">
+<ChartSettings>
 	<Switch
 		views={indicators}
 		bind:activeView={activeIndicator}
@@ -372,7 +373,7 @@
 		type="small"
 		on:itemClick={(e) => (activeWarming = e.detail)}
 	/>
-</div>
+</ChartSettings>
 
 <!-- Map -->
 <div id="scenarioMap" class="w-full h-[60vh] rounded-2xl relative"></div>

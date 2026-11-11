@@ -1,5 +1,6 @@
 <!-- $lib/components/charts/custom/renewableShare/index.svelte -->
 <script lang="ts">
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import Switch from '$lib/components/Switch.svelte';
@@ -134,9 +135,9 @@
 
 	<!-- View Switcher -->
 	{#if showViewSwitcher && availableViews.length > 1}
-		<div class="my-4">
+		<ChartSettings>
 			<Switch views={switchViews} activeView={currentCategory} on:itemClick={handleViewSwitch} />
-		</div>
+		</ChartSettings>
 	{/if}
 
 	<!-- Chart View -->

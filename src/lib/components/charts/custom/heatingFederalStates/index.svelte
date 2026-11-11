@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { readItems } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { Chart, AxisX, AxisY, BarStack, Tooltip, Legend } from '$lib/components/charts/primitives';
@@ -194,7 +195,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<div class="flex flex-col sm:flex-row justify-between gap-4 items-start">
+	<ChartSettings>
 		{#if maxYear}
 			<div class="w-full sm:w-64">
 				<RangeSlider
@@ -207,7 +208,7 @@
 			</div>
 		{/if}
 		<Toggle label={v?.per100households || 'Pro 100 Haushalte'} bind:checked={showPerHousehold} />
-	</div>
+	</ChartSettings>
 
 	<Legend items={legendItems} />
 

@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import Chart from './Chart.svelte';
 	import Details from './Details.svelte';
 	import { onMount } from 'svelte';
@@ -205,7 +206,7 @@
 	$: selectedStartYear = 2009; //minYear;
 </script>
 
-<div class="flex flex-wrap gap-4 items-center">
+<ChartSettings>
 	{#if energyByBundesland}
 		<Select
 			label="Bundesland"
@@ -224,7 +225,7 @@
 		/>
 	{/if}
 	<Toggle label="Technisch mögliche Potentiale" bind:checked={showTechn} />
-</div>
+</ChartSettings>
 
 <div class="mt-4">
 	{#if energyTypes && potentiale_2030 && potentiale_techn && energyByBundesland && selectedBundesland && dataset && goals}

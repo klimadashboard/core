@@ -1,5 +1,6 @@
 <!-- $lib/components/charts/custom/emissionsReductionProgress/index.svelte -->
 <script lang="ts">
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { page } from '$app/state';
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
@@ -306,13 +307,13 @@
 {:else if selectedRegion && summaryStats}
 	<!-- Layer switch -->
 	{#if filteredViews.length > 1}
-		<div class="mb-4">
+		<ChartSettings>
 			<Switch
 				views={filteredViews}
 				activeView={activeLayer}
 				on:itemClick={(e) => (activeLayer = e.detail)}
 			/>
-		</div>
+		</ChartSettings>
 	{/if}
 
 	<!-- Progress tracks -->

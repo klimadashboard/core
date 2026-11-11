@@ -1,5 +1,6 @@
 <!-- $lib/components/charts/custom/storageExplorer/index.svelte -->
 <script lang="ts">
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import Switch from '$lib/components/Switch.svelte';
@@ -91,10 +92,10 @@
 
 <div class="storage-explorer">
 	{#if showViewSwitcher}
-		<div class="mb-4 flex flex-wrap gap-2">
+		<ChartSettings>
 			<Switch views={switchViews} activeView={currentView} on:itemClick={handleViewSwitch} />
 			<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
-		</div>
+		</ChartSettings>
 	{/if}
 
 	<div class="chart-container">

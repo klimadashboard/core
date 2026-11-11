@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { onMount } from 'svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
@@ -265,7 +266,7 @@
 {:else}
 	<div class="space-y-4">
 		<!-- Controls bar -->
-		<div class="flex flex-wrap items-center gap-3">
+		<ChartSettings>
 			<DateRangeSlider {startDate} {endDate} on:change={handleDateChange} />
 
 			<div class="flex items-center gap-3">
@@ -284,7 +285,7 @@
 					small
 				/>
 			</div>
-		</div>
+		</ChartSettings>
 
 		<!-- Map -->
 		<div

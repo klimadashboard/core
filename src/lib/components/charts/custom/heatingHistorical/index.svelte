@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { readItems } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { Chart, AxisX, AxisY, Line, Tooltip, Legend } from '$lib/components/charts/primitives';
@@ -165,14 +166,14 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<div class="flex flex-col sm:flex-row justify-between gap-2">
+	<ChartSettings>
 		<Select
 			label="Region auswählen"
 			hideLabel
 			options={regions}
 			bind:value={selectedRegion}
 		/>
-	</div>
+	</ChartSettings>
 
 	<Legend items={legendItems} bind:hidden={hiddenSeries} interactive />
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { onMount } from 'svelte';
 	import { scaleBand, scaleLinear } from 'd3-scale';
 	import getDirectusInstance from '$lib/utils/directus';
@@ -322,10 +323,10 @@
 	<div class="h-[350px] flex items-center justify-center text-gray-500">Keine Daten verfügbar</div>
 {:else}
 	<div class="flex flex-wrap justify-between items-center gap-2 mb-3">
-		<div class="flex flex-wrap items-center gap-3">
+		<ChartSettings>
 			<RadioGroup label="Ansicht" bind:value={view} options={VIEW_OPTIONS} inline hideLabel />
 			<RadioGroup label="Jahr" bind:value={selectedYear} options={YEAR_OPTIONS} inline hideLabel />
-		</div>
+		</ChartSettings>
 		<div class="flex gap-4 text-xs">
 			<span style="color:{COUNT_COLOR}">● Vorfälle</span>
 			<span style="color:{WAIT_COLOR}">— Wartezeit</span>

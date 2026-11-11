@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
 	import Toggle from '$lib/components/ui/Toggle.svelte';
 	import { Chart, AxisX, AxisY, Tooltip } from '$lib/components/charts/primitives';
@@ -96,15 +97,12 @@
 	loadData();
 </script>
 
-<div class="flex flex-wrap items-end gap-3">
+<ChartSettings>
 	{#if regions.length > 1}
 		<Select label="Region" bind:value={selectedRegion} options={regionOptions} hideLabel />
 	{/if}
-</div>
-
-<div class="flex flex-wrap items-center gap-4 mt-3 mb-4">
 	<Toggle label="Pro 100.000 Einw." bind:checked={perCapita} />
-</div>
+</ChartSettings>
 
 {#if loading}
 	<div class="h-80 animate-pulse rounded bg-gray-100 dark:bg-gray-800"></div>

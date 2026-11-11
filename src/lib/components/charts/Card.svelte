@@ -682,6 +682,11 @@
 								on:itemClick={(e) => setTab(e.detail)}
 							/>
 						</div>
+					{:else if showChartSettings}
+						<!-- Single view: the chart's own controls share the row with the actions -->
+						<div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+							<ChartSettings outlet />
+						</div>
 					{/if}
 					<div class="ml-auto flex shrink-0 items-center gap-1">
 						{#if hasData}
@@ -801,7 +806,7 @@
 						</button>
 					</div>
 				</div>
-				{#if showChartSettings}
+				{#if showChartSettings && tabs.length > 1}
 					<div
 						class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-200 pt-2 dark:border-gray-700/70"
 					>

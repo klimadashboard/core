@@ -1,5 +1,6 @@
 <!-- $lib/components/charts/custom/vehicleRegistrations/index.svelte -->
 <script lang="ts">
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { page } from '$app/state';
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
@@ -282,7 +283,7 @@
 <div class="vehicle-waffle">
 	<!-- Mode Switch (only show if at least one mode is available) -->
 	{#if showSwitch}
-		<div class="mb-4">
+		<ChartSettings>
 			<Switch
 				views={modeViews}
 				activeView={activeMode}
@@ -290,7 +291,7 @@
 					activeMode = event.detail;
 				}}
 			/>
-		</div>
+		</ChartSettings>
 	{/if}
 
 	{#if loading || regionLoading}

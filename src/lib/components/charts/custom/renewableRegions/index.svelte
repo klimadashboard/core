@@ -1,4 +1,5 @@
 <script>
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import getDirectusInstance from '$lib/utils/directus';
 	import { readItems } from '@directus/sdk';
 	import Loader from '$lib/components/Loader.svelte';
@@ -43,13 +44,13 @@
 	$: promise = fetchRegions();
 </script>
 
-<div class="w-max mx-auto">
+<ChartSettings>
 	<Switch
 		{views}
 		bind:activeView={selectedEnergy}
 		on:itemClick={(e) => (selectedEnergy = e.detail)}
 	/>
-</div>
+</ChartSettings>
 <div class="my-4">
 	{#await promise}
 		<div class="bg-amber-400/10 rounded-2xl h-[38rem] animate-pulse"></div>
