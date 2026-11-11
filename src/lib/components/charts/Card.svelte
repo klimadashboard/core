@@ -12,6 +12,9 @@
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
 	import RegionMapView from '$lib/components/charts/regionMap/RegionMapView.svelte';
+	import Switch from '$lib/components/Switch.svelte';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import { provideChartSettings } from '$lib/components/charts/context/chartSettings';
 	import type { ChartData } from '$lib/components/charts/types';
 	import { t } from '$lib/utils/t';
 
@@ -26,7 +29,7 @@
 
 	let cardEl: HTMLElement;
 	let contentEl: HTMLElement;
-	let headerEl: HTMLElement;
+	let panelsEl: HTMLElement;
 	let isVisible = false;
 	let isLoading = true;
 	let activeTab: 'chart' | 'map' | 'table' | 'text' = 'chart';
@@ -36,11 +39,12 @@
 	let textPanelMaxHeight = 280;
 
 	// Calculate available height for text panel when switching to text tab
-	$: if (activeTab === 'text' && contentEl && headerEl) {
-		const contentHeight = contentEl.clientHeight;
-		const headerHeight = headerEl.clientHeight;
-		textPanelMaxHeight = Math.max(200, contentHeight - headerHeight - 12);
+	$: if (activeTab === 'text' && contentEl && panelsEl) {
+		textPanelMaxHeight = Math.max(200, contentEl.clientHeight - panelsEl.offsetTop - 12);
 	}
+
+	// Controls a chart wraps in <ChartSettings> show up in the settings area
+	const chartSettings = provideChartSettings();
 
 	// Charts that support the 'view' option (simple view)
 	const chartsWithViewOption = ['heatingRegions'];
@@ -195,6 +199,22 @@
 
 	// Tab configuration
 	type TabId = 'chart' | 'map' | 'table' | 'text';
+	const svgIcon = (d: string) =>
+		`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${d}</svg>`;
+	const tabIcons: Record<TabId, string> = {
+		chart: svgIcon(
+			'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'
+		),
+		map: svgIcon(
+			'<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/>'
+		),
+		table: svgIcon(
+			'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>'
+		),
+		text: svgIcon(
+			'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'
+		)
+	};
 	$: tabs = [
 		{ id: 'chart' as TabId, label: t(page.data.translations, 'ui.card.tabChart'), show: true },
 		{
@@ -215,9 +235,16 @@
 			label: t(page.data.translations, 'ui.card.tabInfo'),
 			show: showText && !expandContent
 		}
-	].filter((tab) => tab.show);
+	]
+		.filter((tab) => tab.show)
+		.map((tab) => ({ ...tab, key: tab.id, icon: tabIcons[tab.id] }));
+
+	// Chart settings apply to the chart and its table, not to the map or the info text
+	$: showChartSettings =
+		$chartSettings.length > 0 && (activeTab === 'chart' || activeTab === 'table');
 
 	let liveTabLabel = '';
+	$: settingsLabel = page.data.translations?.['ui.card.settings'] ?? 'Einstellungen';
 
 	onMount(() => {
 		const obs = new IntersectionObserver(
@@ -249,21 +276,6 @@
 		activeTab = tab;
 		liveTabLabel = tabs.find((t) => t.id === tab)?.label || '';
 		if (tab !== 'chart') window.rybbit?.event('Chart Tab', { tab, chart: chart.id });
-	}
-
-	function handleTabKeydown(e: KeyboardEvent, tab: TabId) {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			setTab(tab);
-		} else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-			e.preventDefault();
-			const currentIndex = tabs.findIndex((t) => t.id === activeTab);
-			const direction = e.key === 'ArrowRight' ? 1 : -1;
-			const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
-			setTab(tabs[nextIndex].id);
-			const tabEl = cardEl.querySelector(`[data-tab="${tabs[nextIndex].id}"]`) as HTMLElement;
-			tabEl?.focus();
-		}
 	}
 
 	function handleExportCSV(e: MouseEvent) {
@@ -573,13 +585,13 @@
 	{#if isVisible}
 		<div
 			bind:this={contentEl}
-			class="p-5 pb-3 min-h-[280px] relative overflow-y-auto"
+			class="p-4 sm:p-5 min-h-[280px] relative overflow-y-auto"
 			in:fade={{ duration: 200 }}
 		>
 			<!-- Skeleton -->
 			{#if showSkeleton}
 				<div
-					class="absolute inset-0 p-5 bg-white dark:bg-gray-900 z-10"
+					class="absolute inset-0 p-4 sm:p-5 bg-white dark:bg-gray-900 z-10"
 					transition:fade={{ duration: 150 }}
 				>
 					<div class="h-5 w-2/3 bg-gray-200 dark:bg-gray-800 rounded mb-4 animate-pulse"></div>
@@ -587,11 +599,8 @@
 				</div>
 			{/if}
 
-			<div
-				bind:this={headerEl}
-				class="flex justify-between items-start mb-3"
-				class:opacity-0={showSkeleton}
-			>
+			<!-- 1. Title + key statement -->
+			<div class="flex justify-between items-start mb-3" class:opacity-0={showSkeleton}>
 				{#if !embedHideTitle}
 					<h2
 						class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
@@ -647,8 +656,162 @@
 				</a>
 			</div>
 
-			<!-- Content -->
-			<div class:opacity-0={showSkeleton} class="transition-opacity">
+			{#if heading && !embedHideTitle}
+				<h3 class="text-xl md:text-2xl mb-4 text-balance" class:opacity-0={showSkeleton}>
+					{@html heading}
+				</h3>
+			{/if}
+
+			<!-- 2. Settings: view switch, download/share and the chart's own controls -->
+			<div
+				role="group"
+				aria-label={settingsLabel}
+				class="no-card-click -mx-4 mb-4 border-y border-gray-200 bg-gray-50 px-4 py-2.5 sm:-mx-5 sm:px-5 dark:border-gray-700/70 dark:bg-gray-800/40"
+				class:opacity-0={showSkeleton}
+			>
+				<div class="flex items-center gap-2">
+					{#if tabs.length > 1}
+						<div class="min-w-0">
+							<Switch
+								views={tabs}
+								activeView={activeTab}
+								label={t(page.data.translations, 'ui.card.views') === 'ui.card.views'
+									? 'Ansicht'
+									: t(page.data.translations, 'ui.card.views')}
+								panelPrefix={chart.id}
+								on:itemClick={(e) => setTab(e.detail)}
+							/>
+						</div>
+					{/if}
+					<div class="ml-auto flex shrink-0 items-center gap-1">
+						{#if hasData}
+							<div class="relative download-menu">
+								<button
+									on:click={toggleDownloadMenu}
+									class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex items-center gap-0.5"
+									aria-label={t(page.data.translations, 'action.downloadData')}
+									aria-expanded={showDownloadMenu}
+									aria-haspopup="true"
+									title={t(page.data.translations, 'action.downloadData')}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline
+											points="7 10 12 15 17 10"
+										/><line x1="12" y1="15" x2="12" y2="3" />
+									</svg>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="10"
+										height="10"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="transition-transform {showDownloadMenu ? 'rotate-180' : ''}"
+									>
+										<polyline points="6 9 12 15 18 9" />
+									</svg>
+								</button>
+
+								{#if showDownloadMenu}
+									<div
+										class="absolute top-full right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-20 min-w-[140px]"
+										transition:fade={{ duration: 100 }}
+									>
+										{#each downloadSections as section, i}
+											<div
+												class:border-b={i < downloadSections.length - 1}
+												class="border-gray-200 dark:border-gray-700"
+											>
+												<span
+													class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+													>{section.heading}</span
+												>
+												{#each section.items as item}
+													<button
+														on:click={item.handler}
+														class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+													>
+														<span
+															class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
+															>{item.format}</span
+														>
+														<span>{item.label}</span>
+													</button>
+												{/each}
+											</div>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						{/if}
+
+						<a
+							href="/charts/{chart.id}{currentRegionId ? `?region=${currentRegionId}` : ''}"
+							class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+							on:click={(e) => e.stopPropagation()}
+							aria-label={t(page.data.translations, 'ui.card.permalink')}
+							title={t(page.data.translations, 'ui.card.permalink')}
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path
+									d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+								/>
+							</svg>
+						</a>
+
+						<button
+							on:click={openEmbedModal}
+							class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+							aria-label={t(page.data.translations, 'ui.embed.code')}
+							title={t(page.data.translations, 'action.embed')}
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
+								<polyline points="7 8 3 12 7 16" /><polyline points="17 8 21 12 17 16" /><line
+									x1="14"
+									y1="4"
+									x2="10"
+									y2="20"
+								/>
+							</svg>
+						</button>
+					</div>
+				</div>
+				{#if showChartSettings}
+					<div
+						class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-200 pt-2 dark:border-gray-700/70"
+					>
+						<ChartSettings outlet />
+					</div>
+				{/if}
+			</div>
+
+			<!-- 3. Content -->
+			<div bind:this={panelsEl} class:opacity-0={showSkeleton} class="transition-opacity">
 				<!-- Chart Tab -->
 				<div
 					id="tabpanel-{chart.id}-chart"
@@ -656,11 +819,7 @@
 					aria-labelledby="tab-{chart.id}-chart"
 					hidden={activeTab !== 'chart'}
 				>
-					{#if heading && !embedHideTitle}
-						<h3 class="text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
-					{/if}
-
-					<div class="my-3 relative">
+					<div class="relative">
 						<RegionProvider {regionId} let:region let:loading>
 							{@const onChartData = (data: ChartData | null) => {
 								chartData = data;
@@ -669,6 +828,7 @@
 						</RegionProvider>
 					</div>
 
+					<!-- 4. Source -->
 					<div class="text-xs text-gray-500 mt-4 flex">
 						{#if source || note}
 							<div>
@@ -722,9 +882,6 @@
 						aria-labelledby="tab-{chart.id}-map"
 						hidden={activeTab !== 'map'}
 					>
-						{#if heading && !embedHideTitle}
-							<h3 class="text-xl md:text-2xl mb-3 text-balance">{@html heading}</h3>
-						{/if}
 						{#if mapOpened}
 							<RegionMapView region={chartData?.meta?.region ?? null} energy={mapConfig.energy} />
 						{/if}
@@ -796,226 +953,10 @@
 					>
 				</button>
 			{/if}
-		</div>
 
-		<!-- Live region for tab change announcements -->
-		<div class="sr-only" aria-live="polite" aria-atomic="true">
-			{liveTabLabel}
-		</div>
-
-		<!-- Bottom bar -->
-		<div
-			class="no-card-click bg-gray-100 dark:bg-gray-800 flex items-stretch justify-between flex-shrink-0 relative z-10"
-		>
-			<!-- Tabs -->
-			<div class="flex items-stretch" role="tablist" aria-label="Chart views">
-				{#each tabs as tab}
-					<button
-						id="tab-{chart.id}-{tab.id}"
-						data-tab={tab.id}
-						role="tab"
-						aria-selected={activeTab === tab.id}
-						aria-controls="tabpanel-{chart.id}-{tab.id}"
-						tabindex={activeTab === tab.id ? 0 : -1}
-						class="relative px-4 py-2.5 transition-colors flex items-center gap-1.5
-							{activeTab === tab.id
-							? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white -mb-px border-t-2 border-t-[#28A889]'
-							: 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}"
-						on:click={() => setTab(tab.id)}
-						on:keydown={(e) => handleTabKeydown(e, tab.id)}
-					>
-						{#if tab.id === 'chart'}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								class="flex-shrink-0"
-							>
-								<line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line
-									x1="6"
-									y1="20"
-									x2="6"
-									y2="14"
-								/>
-							</svg>
-						{:else if tab.id === 'map'}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								class="flex-shrink-0"
-							>
-								<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" /><line
-									x1="9"
-									y1="3"
-									x2="9"
-									y2="18"
-								/><line x1="15" y1="6" x2="15" y2="21" />
-							</svg>
-						{:else if tab.id === 'table'}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								class="flex-shrink-0"
-							>
-								<rect x="3" y="3" width="18" height="18" rx="2" /><line
-									x1="3"
-									y1="9"
-									x2="21"
-									y2="9"
-								/><line x1="3" y1="15" x2="21" y2="15" /><line x1="9" y1="3" x2="9" y2="21" />
-							</svg>
-						{:else if tab.id === 'text'}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								class="flex-shrink-0"
-							>
-								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline
-									points="14 2 14 8 20 8"
-								/><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-							</svg>
-						{/if}
-						<span class="text-sm font-medium">{tab.label}</span>
-					</button>
-				{/each}
-			</div>
-
-			<!-- Action buttons -->
-			<div class="flex items-center gap-1 px-2">
-				{#if hasData}
-					<div class="relative download-menu">
-						<button
-							on:click={toggleDownloadMenu}
-							class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center gap-0.5"
-							aria-label={t(page.data.translations, 'action.downloadData')}
-							aria-expanded={showDownloadMenu}
-							aria-haspopup="true"
-							title={t(page.data.translations, 'action.downloadData')}
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline
-									points="7 10 12 15 17 10"
-								/><line x1="12" y1="15" x2="12" y2="3" />
-							</svg>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="10"
-								height="10"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								class="transition-transform {showDownloadMenu ? 'rotate-180' : ''}"
-							>
-								<polyline points="6 9 12 15 18 9" />
-							</svg>
-						</button>
-
-						{#if showDownloadMenu}
-							<div
-								class="absolute bottom-full right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-20 min-w-[140px]"
-								transition:fade={{ duration: 100 }}
-							>
-								{#each downloadSections as section, i}
-									<div
-										class:border-b={i < downloadSections.length - 1}
-										class="border-gray-200 dark:border-gray-700"
-									>
-										<span
-											class="block px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-											>{section.heading}</span
-										>
-										{#each section.items as item}
-											<button
-												on:click={item.handler}
-												class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-											>
-												<span
-													class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
-													>{item.format}</span
-												>
-												<span>{item.label}</span>
-											</button>
-										{/each}
-									</div>
-								{/each}
-							</div>
-						{/if}
-					</div>
-				{/if}
-
-				<a
-					href="/charts/{chart.id}{currentRegionId ? `?region=${currentRegionId}` : ''}"
-					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-					on:click={(e) => e.stopPropagation()}
-					aria-label={t(page.data.translations, 'ui.card.permalink')}
-					title={t(page.data.translations, 'ui.card.permalink')}
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path
-							d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-						/>
-					</svg>
-				</a>
-
-				<button
-					on:click={openEmbedModal}
-					class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-					aria-label={t(page.data.translations, 'ui.embed.code')}
-					title={t(page.data.translations, 'action.embed')}
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-					>
-						<polyline points="7 8 3 12 7 16" /><polyline points="17 8 21 12 17 16" /><line
-							x1="14"
-							y1="4"
-							x2="10"
-							y2="20"
-						/>
-					</svg>
-				</button>
+			<!-- Live region for tab change announcements -->
+			<div class="sr-only" aria-live="polite" aria-atomic="true">
+				{liveTabLabel}
 			</div>
 		</div>
 

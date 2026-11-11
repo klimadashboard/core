@@ -8,6 +8,7 @@
 	import CumulativeLineView from './CumulativeLineView.svelte';
 	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
 	import { RadioGroup } from '$lib/components/ui';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import type { ContextRegion } from '$lib/utils/regionContext';
 	import { MAX_COMPARISONS, rankByArea } from './comparison';
 	import {
@@ -183,12 +184,12 @@
 <div class="renewables-chart">
 	<!-- View Switcher (optional based on config) -->
 	{#if showViewSwitcher && availableViews.length > 1}
-		<div class="mb-4 flex flex-wrap gap-2">
+		<ChartSettings>
 			<Switch views={switchViews} activeView={currentView} on:itemClick={handleViewSwitch} />
 			{#if currentView === 'yearly' || currentView === 'cumulative'}
 				<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
 			{/if}
-		</div>
+		</ChartSettings>
 	{/if}
 
 	<!-- Comparison: chart-wide, lines show in "Kumulativ" -->

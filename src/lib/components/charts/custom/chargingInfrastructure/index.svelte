@@ -3,6 +3,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import { Chart, AxisX, AxisY, BarStack, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { RadioGroup } from '$lib/components/ui';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { formatNumber, formatPower, formatDate } from '$lib/utils/formatters';
 	import { fetchData, buildChartData, type ChargingRawData } from './config';
 
@@ -125,15 +126,17 @@
 		</div>
 
 		<div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-			<RadioGroup
-				label="Kennzahl"
-				hideLabel
-				bind:value={metric}
-				options={[
-					{ value: 'points', label: 'Ladepunkte' },
-					{ value: 'power', label: 'Ladeleistung' }
-				]}
-			/>
+			<ChartSettings>
+				<RadioGroup
+					label="Kennzahl"
+					hideLabel
+					bind:value={metric}
+					options={[
+						{ value: 'points', label: 'Ladepunkte' },
+						{ value: 'power', label: 'Ladeleistung' }
+					]}
+				/>
+			</ChartSettings>
 			<Legend items={SERIES} />
 		</div>
 

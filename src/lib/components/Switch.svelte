@@ -15,6 +15,8 @@
 	export let views = [];
 	export let activeView;
 	export let label = '';
+	/** Optional: wire buttons to tabpanels with ids `tabpanel-{panelPrefix}-{key}` */
+	export let panelPrefix = '';
 
 	const dispatch = createEventDispatcher();
 
@@ -118,6 +120,8 @@
 			{@const isActive = view.key === activeView}
 			<button
 				data-key={view.key}
+				id={panelPrefix ? `tab-${panelPrefix}-${view.key}` : undefined}
+				aria-controls={panelPrefix ? `tabpanel-${panelPrefix}-${view.key}` : undefined}
 				on:click={() => handleClick(view)}
 				on:keydown={(e) => handleKeydown(e, i)}
 				disabled={view.disabled}

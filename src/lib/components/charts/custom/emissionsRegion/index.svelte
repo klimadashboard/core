@@ -10,6 +10,7 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { t } from '$lib/utils/t';
 	import {
 		fetchEmissionsData,
@@ -574,7 +575,7 @@
 {:else if results.length === 0 || (selectedRegion && hasOnlyClimateTargets)}
 	<!-- No data: render nothing, Card/page will hide this chart based on hasData: false -->
 {:else if selectedRegion}
-	<div class="flex items-center gap-4 flex-wrap">
+	<ChartSettings>
 		<!-- Layer switch -->
 		{#if filteredViews.length > 1}
 			<div class="">
@@ -612,7 +613,7 @@
 				<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
 			</label>
 		{/if}
-	</div>
+	</ChartSettings>
 
 	<!-- Chart container -->
 	<div

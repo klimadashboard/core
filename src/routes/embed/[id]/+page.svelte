@@ -97,9 +97,4 @@
 		min-height: 0;
 		overflow-y: auto;
 	}
-
-	/* Bottom bar stays fixed */
-	.fixed-embed :global(.chart-card > div:last-child) {
-		flex-shrink: 0;
-	}
 </style>
