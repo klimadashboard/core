@@ -1,4 +1,4 @@
-<!-- $lib/components/charts/custom/mobilityModalSplitStreet/index.svelte -->
+<!-- $lib/components/charts/custom/modalSplit/index.svelte -->
 <script lang="ts">
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
@@ -7,6 +7,8 @@
 	import { page } from '$app/state';
 	import TransportIcons from './TransportIcons.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import { RadioGroup } from '$lib/components/ui';
+	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
 	import { t } from '$lib/utils/t';
 	import {
 		fetchData,
@@ -21,9 +23,13 @@
 		categoryColors,
 		categoryOrder,
 		sustainableCategories,
+		filterByType,
+		getTypeLabel,
+		getSourceInfo,
+		DEFAULT_TYPE,
 		type ModalSplitRawData,
-		type ResolvedGoalConfig,
-		type ModalSplitFetchResult
+		type ModalSplitGoal,
+		type ResolvedGoalConfig
 	} from './config';
 
 	// Get categoryMeta reactively based on page translations
@@ -50,6 +56,12 @@
 	// Initialize showHistoric from URL parameter
 	let showHistoric = page.url.searchParams.get('historic') === 'true';
 
+	// Measurement basis (trips / passenger_km); ?type= preselects it in embeds
+	let selectedType = page.url.searchParams.get('type') || DEFAULT_TYPE;
+	let availableTypes: string[] = [];
+	let allData: ModalSplitRawData[] = [];
+	let goal: ModalSplitGoal | null = null;
+
 	let rawData: ModalSplitRawData[] = [];
 	let historicYears: number[] = [];
 	let latestDataYear: number = 0;
@@ -63,8 +75,17 @@
 	$: chartWidth = Math.max(0, width - labelWidth);
 	$: xScale = scaleLinear().domain([0, 100]).range([0, chartWidth]);
 
-	// Get years to display based on checkbox
-	$: displayYears = showHistoric ? historicYears.filter((y) => y < latestDataYear) : [];
+	// Compare mode: previous vs latest survey as two connected large bars (2+ years, no goal)
+	$: compareMode = historicYears.length >= 2 && !goalConfig;
+	$: previousYear = compareMode ? historicYears[historicYears.length - 2] : null;
+	$: previousYearData = previousYear ? processYearData(rawData, previousYear) : [];
+	$: previousSustainableTotal = previousYearData
+		.filter((s) => sustainableCategories.includes(s.category))
+		.reduce((sum, s) => sum + s.value, 0);
+
+	// Small bars for the years before the first large bar (checkbox)
+	$: olderYears = historicYears.filter((y) => y < (previousYear ?? latestDataYear));
+	$: displayYears = showHistoric ? olderYears : [];
 
 	// Process data for current and goal years
 	$: currentYearData = processYearData(rawData, latestDataYear);
@@ -98,43 +119,40 @@
 	// Get categories that exist in the data (for legend filtering)
 	$: categoriesInData = new Set(rawData.map((d) => d.category));
 
-	// Calculate connector polygon coordinates
-	$: sustainableX0 = xScale(
-		currentYearData
-			.filter((s) => sustainableCategories.includes(s.category))
-			.reduce((min, s) => Math.min(min, s.x0), 100)
-	);
-	$: sustainableX1 = xScale(
-		currentYearData
-			.filter((s) => sustainableCategories.includes(s.category))
-			.reduce((max, s) => Math.max(max, s.x1), 0)
-	);
-	$: goalSustainableX1 = xScale(goalConfig?.targetSustainablePercent ?? 0);
-	$: motorizedX0 = xScale(
-		currentYearData
-			.filter((s) => !sustainableCategories.includes(s.category))
-			.reduce((min, s) => Math.min(min, s.x0), 100)
-	);
-	$: motorizedX1 = xScale(100);
-	$: goalMotorizedX0 = xScale(goalConfig?.targetSustainablePercent ?? 0);
-
-	// Calculate widths for summary lines
-	$: umweltverbundWidth = xScale(currentSustainableTotal);
+	type Span = [number, number];
+	/** Horizontal span (px) of the sustainable or the motorized segments of a bar, for the connectors */
+	function groupSpan(segments: ReturnType<typeof processYearData>, sustainable: boolean): Span {
+		const group = segments.filter((s) => sustainableCategories.includes(s.category) === sustainable);
+		if (!group.length) return [0, 0];
+		return [xScale(Math.min(...group.map((s) => s.x0))), xScale(Math.max(...group.map((s) => s.x1)))];
+	}
+	$: goalX = xScale(goalConfig?.targetSustainablePercent ?? 0);
 
 	// Store metadata for rebuilding chartData when showHistoric changes
 	let updateDate: string = '';
 	let source: string = '';
 
+	// Region shown in the chart: the card's region, or one picked in the RegionSwitcher
+	let switchedRegion: Region | null = null;
+	let switcherId: string | null = null;
+	let switcherFor: string | null = null;
+	$: if (region?.id !== switcherFor) {
+		switcherFor = region?.id ?? null;
+		switchedRegion = null;
+		switcherId = region?.id ?? null;
+	}
+	$: activeRegion = switchedRegion ?? region;
+
 	// Build region candidates: current region + parents
 	// IMPORTANT: This must be declared BEFORE the loadData reactive statement
 	$: regionCandidates = (() => {
 		const candidates: string[] = [];
-		if (region?.id) {
-			candidates.push(region.id);
+		if (activeRegion?.id) {
+			candidates.push(activeRegion.id);
 		}
 		// Add parents in order (closest first)
-		if (region?.parents && Array.isArray(region.parents)) {
-			for (const parent of region.parents) {
+		if (activeRegion?.parents && Array.isArray(activeRegion.parents)) {
+			for (const parent of activeRegion.parents) {
 				if (parent.id) {
 					candidates.push(parent.id);
 				}
@@ -145,7 +163,7 @@
 
 	// Load data when region is ready
 	// IMPORTANT: Must be after regionCandidates is declared
-	$: if (!regionLoading && region) {
+	$: if (!regionLoading && activeRegion) {
 		loadData();
 	}
 
@@ -155,43 +173,42 @@
 
 		try {
 			// Fetch data with region candidates (supports parent fallback)
-			const result = await fetchData(region, {
-				regionId: region?.id,
-				regionCandidates
+			const result = await fetchData(activeRegion, {
+				regionId: activeRegion?.id,
+				regionCandidates,
+				type: selectedType
 			});
 
-			rawData = result.data;
-			historicYears = getHistoricYears(rawData);
-			latestDataYear = getLatestDataYear(rawData);
-			updateDate = result.updateDate;
-			source = result.source;
+			allData = result.allData;
+			availableTypes = result.availableTypes;
+			selectedType = result.type;
 			matchedRegionName = result.matchedRegionName;
 			matchedRegionLayerLabel = result.matchedRegionLayerLabel;
 			usedFallback = result.usedFallback;
 
 			// Fetch goal for the matched region (not the original region) if fallback was used
-			const goalRegionId = result.matchedRegionId || region?.id;
-			const goal = goalRegionId
+			const goalRegionId = result.matchedRegionId || activeRegion?.id;
+			goal = goalRegionId
 				? await fetchGoal(
 						usedFallback && result.matchedRegionId
 							? ({ id: result.matchedRegionId, name: result.matchedRegionName } as any)
-							: region
+							: activeRegion
 					)
 				: null;
 
-			// Resolve goal config (derives startYear from data)
-			goalConfig = resolveGoalConfig(goal, rawData);
+			applyType(allData, selectedType, goal);
 
 			const chartData = buildChartData(
 				rawData,
 				updateDate,
 				source,
-				region,
+				activeRegion,
 				showHistoric,
 				page.data.translations,
 				goalConfig,
 				matchedRegionName,
-				matchedRegionLayerLabel
+				matchedRegionLayerLabel,
+				allData
 			);
 			onChartData?.(chartData);
 		} catch (e) {
@@ -203,18 +220,36 @@
 		}
 	}
 
-	// Update chartData when showHistoric changes (for embed modal to reflect current state)
+	/** Show the rows of one measurement basis; goals are shares of trips, so only shown for those */
+	function applyType(all: ModalSplitRawData[], type: string, g: ModalSplitGoal | null) {
+		rawData = filterByType(all, type);
+		historicYears = getHistoricYears(rawData);
+		latestDataYear = getLatestDataYear(rawData);
+		({ source, updateDate } = getSourceInfo(rawData));
+		// Resolve goal config (derives startYear from data)
+		goalConfig = type === DEFAULT_TYPE ? resolveGoalConfig(g, rawData) : null;
+	}
+
+	$: if (!loading && allData.length > 0) applyType(allData, selectedType, goal);
+
+	$: typeOptions = availableTypes.map((type) => ({
+		value: type,
+		label: getTypeLabel(type, page.data.translations)
+	}));
+
+	// Update chartData when showHistoric or the type changes (for embed modal to reflect current state)
 	$: if (rawData.length > 0 && !loading) {
 		const chartData = buildChartData(
 			rawData,
 			updateDate,
 			source,
-			region,
+			activeRegion,
 			showHistoric,
 			page.data.translations,
 			goalConfig,
 			matchedRegionName,
-			matchedRegionLayerLabel
+			matchedRegionLayerLabel,
+			allData
 		);
 		onChartData?.(chartData);
 	}
@@ -317,7 +352,7 @@
 		}));
 
 		return {
-			title: String(hoveredYear),
+			title: `${hoveredYear} · ${getTypeLabel(selectedType, page.data.translations)}`,
 			items
 		};
 	})();
@@ -423,13 +458,66 @@
 	{/each}
 {/snippet}
 
+<!-- Snippet: Umweltverbund bracket over (or, below=true, under) a large bar -->
+{#snippet umweltverbundIndicator(total: number, below: boolean = false)}
+	{@const w = xScale(total)}
+	<div class="flex {below ? 'items-start mt-1' : 'items-end mb-1'}">
+		<div class="flex-shrink-0" style="width: {labelWidth}px;"></div>
+		<div class="flex {below ? 'flex-col-reverse' : 'flex-col'} items-start text-[#059669]">
+			<span class="text-sm font-medium {below ? 'mt-0.5' : 'mb-0.5'}">
+				{formatPercent(total)}
+				{t(page.data.translations, 'domain.transport.sustainable')}
+			</span>
+			<svg width={w} height="12" class="overflow-visible stroke-current {below ? '-scale-y-100' : ''}">
+				<line x1="0" y1="0" x2="0" y2="8" stroke-width="2" />
+				<line x1="0" y1="0" x2={w} y2="0" stroke-width="2" />
+				<line x1={w} y1="8" x2={w} y2="0" stroke-width="2" />
+			</svg>
+		</div>
+	</div>
+{/snippet}
+
+<!-- Snippet: Large bar of a survey year -->
+{#snippet yearBar(year: number, label: string, segments: ReturnType<typeof processYearData>)}
+	<div class="flex items-stretch" style="height: {LARGE_BAR_HEIGHT}px;">
+		<div class="flex-shrink-0 flex flex-col justify-center pr-4 opacity-70" style="width: {labelWidth}px;">
+			<span class="text-xl font-bold">{year}</span>
+			<span class="text-sm">{label}</span>
+		</div>
+		<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
+			{@render largeBarSegments(mergeSegmentsForLargeBar(segments), year)}
+		</div>
+	</div>
+{/snippet}
+
+<!-- Snippet: Connector polygons from the sustainable/motorized spans of one bar to the next -->
+{#snippet connector(fromSustainable: Span, fromMotorized: Span, toSustainable: Span, toMotorized: Span)}
+	<div class="relative flex" style="height: {CONNECTOR_HEIGHT}px;">
+		<div class="flex-shrink-0" style="width: {labelWidth}px;"></div>
+		<svg class="flex-1 rounded-lg overflow-hidden" style="width: {chartWidth}px; height: {CONNECTOR_HEIGHT}px;">
+			<polygon
+				points="{fromSustainable[0]},0 {fromSustainable[1]},0 {toSustainable[1]},{CONNECTOR_HEIGHT} {toSustainable[0]},{CONNECTOR_HEIGHT}"
+				fill="#059669"
+				opacity="0.25"
+			/>
+			<polygon
+				points="{fromMotorized[0]},0 {fromMotorized[1]},0 {toMotorized[1]},{CONNECTOR_HEIGHT} {toMotorized[0]},{CONNECTOR_HEIGHT}"
+				fill="#475569"
+				opacity="0.25"
+			/>
+		</svg>
+	</div>
+{/snippet}
+
 <!-- Snippet: Legend group -->
 {#snippet legendGroup(title: string, categories: string[])}
 	<div class="flex items-center gap-3">
-		<span class="font-medium text-gray-500 dark:text-gray-400">{title}:</span>
+		<span class="font-bold text-gray-700 dark:text-gray-300">{title}:</span>
 		{#each categories as cat}
 			<div class="flex items-center gap-1.5">
-				<span class="w-3 h-3 rounded-sm" style="background: {categoryColors[cat].main};"></span>
+				<span class="shrink-0" style="color: {categoryColors[cat].main};" aria-hidden="true">
+					<TransportIcons category={cat} size={16} />
+				</span>
 				<span class="text-gray-600 dark:text-gray-400">{categoryMeta[cat].label}</span>
 			</div>
 		{/each}
@@ -437,26 +525,57 @@
 {/snippet}
 
 <div bind:this={containerEl} class="modal-split-street relative w-full select-none">
+	<!-- Spatial level (only in the context of an aggregate region); outside the loading state so focus stays -->
+	{#if !regionLoading && region}
+		<div class="mb-4">
+			<RegionSwitcher
+				{region}
+				bind:selectedId={switcherId}
+				on:change={(e) => (switchedRegion = e.detail.id === region?.id ? null : e.detail)}
+			/>
+		</div>
+	{/if}
+
 	{#if loading || regionLoading}
 		<div class="h-72 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
 		<div class="h-64 flex items-center justify-center text-red-500">{error}</div>
+	{:else if !rawData.length}
+		<div class="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+			{t(page.data.translations, 'status.noDataForRegion')}
+		</div>
 	{:else if !ready || width === 0}
 		<div class="h-72 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else}
-		<!-- Historic toggle checkbox (only when historical data exists) -->
-		{#if historicYears.length > 1}
-			<label
-				class="flex items-center gap-2 mb-4 cursor-pointer text-sm text-gray-600 dark:text-gray-400"
-			>
-				<input
-					type="checkbox"
-					bind:checked={showHistoric}
-					class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+		<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 mb-4">
+			<!-- Historic toggle checkbox (only when historical data exists) -->
+			{#if olderYears.length > 0}
+				<label
+					class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 dark:text-gray-400"
+				>
+					<input
+						type="checkbox"
+						bind:checked={showHistoric}
+						class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+					/>
+					<span>{t(page.data.translations, 'ui.renewable.showHistoric')}</span>
+				</label>
+			{/if}
+
+			<!-- Measurement basis: switch only when the region has more than one -->
+			{#if availableTypes.length > 1}
+				<RadioGroup
+					label={t(page.data.translations, 'domain.transport.modalSplitBasis')}
+					bind:value={selectedType}
+					options={typeOptions}
+					hideLabel
 				/>
-				<span>{t(page.data.translations, 'ui.renewable.showHistoric')}</span>
-			</label>
-		{/if}
+			{:else}
+				<span class="text-sm text-gray-500 dark:text-gray-400">
+					{getTypeLabel(selectedType, page.data.translations)}
+				</span>
+			{/if}
+		</div>
 
 		<div class="flex flex-col">
 			<!-- Historic years (small bars) -->
@@ -482,68 +601,30 @@
 				</div>
 			{/if}
 
-			<!-- Current year (LARGE bar) with Umweltverbund indicator -->
-			<div class="flex flex-col">
-				<!-- Umweltverbund indicator -->
-				<div class="flex items-end mb-1">
-					<div class="flex-shrink-0" style="width: {labelWidth}px;"></div>
-					<div class="flex flex-col items-start text-[#059669]">
-						<span class="text-sm font-medium mb-0.5">
-							{formatPercent(currentSustainableTotal)}
-							{t(page.data.translations, 'domain.transport.sustainable')}
-						</span>
-						<svg width={umweltverbundWidth} height="12" class="overflow-visible stroke-current">
-							<line x1="0" y1="0" x2="0" y2="8" stroke-width="2" />
-							<line x1="0" y1="0" x2={umweltverbundWidth} y2="0" stroke-width="2" />
-							<line
-								x1={umweltverbundWidth}
-								y1="8"
-								x2={umweltverbundWidth}
-								y2="0"
-								stroke-width="2"
-							/>
-						</svg>
-					</div>
-				</div>
-
-				<!-- Current year bar -->
-				<div class="flex items-stretch" style="height: {LARGE_BAR_HEIGHT}px;">
-					<div
-						class="flex-shrink-0 flex flex-col justify-center pr-4 opacity-70"
-						style="width: {labelWidth}px;"
-					>
-						<span class="text-xl font-bold">{latestDataYear}</span>
-						<span class="text-sm">Modal Split aktuell</span>
-					</div>
-					<div class="flex-1 relative rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
-						{@render largeBarSegments(mergeSegmentsForLargeBar(currentYearData), latestDataYear)}
-					</div>
-				</div>
-			</div>
+			{#if previousYear}
+				<!-- Compare mode: previous survey on top, latest below -->
+				{@render umweltverbundIndicator(previousSustainableTotal)}
+				{@render yearBar(previousYear, 'Modal Split', previousYearData)}
+				{@render connector(
+					groupSpan(previousYearData, true),
+					groupSpan(previousYearData, false),
+					groupSpan(currentYearData, true),
+					groupSpan(currentYearData, false)
+				)}
+				{@render yearBar(latestDataYear, 'Modal Split aktuell', currentYearData)}
+				{@render umweltverbundIndicator(currentSustainableTotal, true)}
+			{:else}
+				{@render umweltverbundIndicator(currentSustainableTotal)}
+				{@render yearBar(latestDataYear, 'Modal Split aktuell', currentYearData)}
+			{/if}
 
 			{#if goalConfig}
-				<!-- Connector polygons -->
-				<div class="relative flex" style="height: {CONNECTOR_HEIGHT}px;">
-					<div class="flex-shrink-0" style="width: {labelWidth}px;"></div>
-					<svg
-						class="flex-1 rounded-lg overflow-hidden"
-						style="width: {chartWidth}px; height: {CONNECTOR_HEIGHT}px;"
-					>
-						<!-- Sustainable categories -> Umweltverbund -->
-						<polygon
-							points="{sustainableX0},0 {sustainableX1},0 {goalSustainableX1},{CONNECTOR_HEIGHT} 0,{CONNECTOR_HEIGHT}"
-							fill="#059669"
-							opacity="0.25"
-						/>
-
-						<!-- Motorized categories -> MIV -->
-						<polygon
-							points="{motorizedX0},0 {motorizedX1},0 {chartWidth},{CONNECTOR_HEIGHT} {goalMotorizedX0},{CONNECTOR_HEIGHT}"
-							fill="#475569"
-							opacity="0.25"
-						/>
-					</svg>
-				</div>
+				{@render connector(
+					groupSpan(currentYearData, true),
+					groupSpan(currentYearData, false),
+					[0, goalX],
+					[goalX, chartWidth]
+				)}
 
 				<!-- Goal year (LARGE bar) -->
 				<div class="flex items-stretch" style="height: {LARGE_BAR_HEIGHT}px;">

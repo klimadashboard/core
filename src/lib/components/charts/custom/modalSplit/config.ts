@@ -19,6 +19,8 @@ export type Translations = Record<string, string>;
 export interface ModalSplitParams {
 	regionId?: string;
 	regionCandidates?: string[];
+	/** Measurement basis to show (default: trips, or the first type the region has) */
+	type?: string;
 }
 
 export interface ModalSplitRawData {
@@ -26,6 +28,54 @@ export interface ModalSplitRawData {
 	category: string;
 	value: number;
 	region?: string;
+	type?: string;
+	source?: string;
+	update?: string;
+}
+
+/**
+ * What the shares are shares of (`mobility_modal_split.type`).
+ * Order = preference when a region has several; rows without a type are trips.
+ */
+export const typeOrder = ['trips', 'passenger_km'];
+export const DEFAULT_TYPE = 'trips';
+
+/** Translated label of a measurement basis ("Anteil der Wege", ...) */
+export function getTypeLabel(type: string, translations: Translations): string {
+	const keys: Record<string, string> = {
+		trips: 'domain.transport.shareOfTrips',
+		passenger_km: 'domain.transport.shareOfPassengerKm'
+	};
+	return keys[type] ? t(translations, keys[type]) : type;
+}
+
+/** Types present in `data`, in preference order */
+export function getAvailableTypes(data: ModalSplitRawData[]): string[] {
+	const present = new Set(data.map((d) => d.type || DEFAULT_TYPE));
+	return [...present].sort((a, b) => {
+		const ia = typeOrder.indexOf(a);
+		const ib = typeOrder.indexOf(b);
+		return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b);
+	});
+}
+
+/** The requested type if the data has it, else the preferred one */
+export function resolveType(data: ModalSplitRawData[], requested?: string | null): string {
+	const types = getAvailableTypes(data);
+	if (requested && types.includes(requested)) return requested;
+	return types[0] ?? DEFAULT_TYPE;
+}
+
+/** Source(s) and latest update date of the rows shown */
+export function getSourceInfo(data: ModalSplitRawData[]): { source: string; updateDate: string } {
+	const sources = [...new Set(data.map((d) => d.source).filter(Boolean))];
+	const updates = data.map((d) => d.update).filter(Boolean).sort();
+	return { source: sources.join('; '), updateDate: updates.at(-1) ?? '' };
+}
+
+/** Rows of one measurement basis */
+export function filterByType(data: ModalSplitRawData[], type: string): ModalSplitRawData[] {
+	return data.filter((d) => (d.type || DEFAULT_TYPE) === type);
 }
 
 // Category definitions - order determines left-to-right position in the "street"
@@ -270,7 +320,14 @@ function getLayerPriority(layer: string): number {
 }
 
 export interface ModalSplitFetchResult {
+	/** Rows of the selected type only */
 	data: ModalSplitRawData[];
+	/** Rows of all types (for the table/download) */
+	allData: ModalSplitRawData[];
+	/** Types the matched region has, in preference order */
+	availableTypes: string[];
+	/** The type `data` is filtered to */
+	type: string;
 	updateDate: string;
 	source: string;
 	/** The region ID that had data (may differ from requested region if fallback was used) */
@@ -305,6 +362,9 @@ export async function fetchData(
 	if (regionCandidates.length === 0) {
 		return {
 			data: [],
+			allData: [],
+			availableTypes: [],
+			type: DEFAULT_TYPE,
 			updateDate: '',
 			source: '',
 			matchedRegionId: null,
@@ -320,7 +380,7 @@ export async function fetchData(
 		readItems('mobility_modal_split', {
 			filter: { region: { _in: regionCandidates } },
 			sort: ['year', 'category'],
-			fields: ['year', 'category', 'region', 'value', 'update', 'source'],
+			fields: ['year', 'category', 'type', 'region', 'value', 'update', 'source'],
 			limit: -1
 		})
 	);
@@ -335,34 +395,41 @@ export async function fetchData(
 		dataByRegion.get(regionId)!.push(record);
 	}
 
-	// If we have data for the primary region (first candidate), use it
-	const primaryRegionId = regionCandidates[0];
-	if (dataByRegion.has(primaryRegionId) && dataByRegion.get(primaryRegionId)!.length > 0) {
-		const regionRecords = dataByRegion.get(primaryRegionId)!;
-		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, (region as any)?.layer_label || null, false);
-	}
-
-	// Aggregate regions (Metropolregion): population-weighted mean of the member districts' shares
+	// Aggregate regions (Metropolregion): own rows where published, else the population-weighted
+	// mean of the member districts' shares — decided per basis (e.g. own trips, km from the Kreise)
 	const members = await getAggregateMembers(region);
 	if (region && members) {
+		const own = [...(dataByRegion.get(region.id) ?? [])];
+		const ownTypes = new Set(own.map((r) => r.type || DEFAULT_TYPE));
 		const population = new Map(members.map((m) => [m.id, m.population]));
 		const memberRecords = (await directus.request(
 			readItems('mobility_modal_split', {
 				filter: { region: { _in: [...population.keys()] } },
-				fields: ['year', 'category', 'region', 'value', 'update', 'source'],
+				fields: ['year', 'category', 'type', 'region', 'value', 'update', 'source'],
 				limit: -1
 			})
 		)) as any[];
 		if (memberRecords.length > 0) {
+			// Only average shares of the same basis (trips with trips, km with km)
 			const records = weightedMeanRows(
-				memberRecords,
-				['year', 'category'],
+				memberRecords.map((r) => ({ ...r, type: r.type || DEFAULT_TYPE })),
+				['year', 'category', 'type'],
 				['value'],
 				(r) => population.get(r.region),
 				{ region: region.id }
-			).filter((r) => r.value !== null);
-			return buildFetchResult(records, region.id, region.name, region.layer, region.layer_label || null, false);
+			).filter((r) => r.value !== null && !ownTypes.has(r.type));
+			own.push(...records);
 		}
+		if (own.length > 0) {
+			return buildFetchResult(own, region.id, region.name, region.layer, region.layer_label || null, false, params.type);
+		}
+	}
+
+	// If we have data for the primary region (first candidate), use it
+	const primaryRegionId = regionCandidates[0];
+	if (dataByRegion.has(primaryRegionId) && dataByRegion.get(primaryRegionId)!.length > 0) {
+		const regionRecords = dataByRegion.get(primaryRegionId)!;
+		return buildFetchResult(regionRecords, primaryRegionId, region?.name || null, region?.layer || null, (region as any)?.layer_label || null, false, params.type);
 	}
 
 	// Otherwise, need to find the best fallback from parents
@@ -374,6 +441,9 @@ export async function fetchData(
 	if (candidatesWithData.length === 0) {
 		return {
 			data: [],
+			allData: [],
+			availableTypes: [],
+			type: DEFAULT_TYPE,
 			updateDate: '',
 			source: '',
 			matchedRegionId: null,
@@ -425,7 +495,8 @@ export async function fetchData(
 		bestCandidate.name,
 		bestCandidate.layer,
 		bestCandidate.layer_label,
-		true // Used fallback since primary region had no data
+		true, // Used fallback since primary region had no data
+		params.type
 	);
 }
 
@@ -436,30 +507,31 @@ function buildFetchResult(
 	regionName: string | null,
 	regionLayer: string | null,
 	regionLayerLabel: string | null,
-	usedFallback: boolean
+	usedFallback: boolean,
+	requestedType?: string
 ): ModalSplitFetchResult {
-	const data = rawRecords
+	const allData = rawRecords
 		.map((r) => ({
 			year: typeof r.year === 'string' ? Number(r.year) : r.year,
 			category: r.category,
 			value: typeof r.value === 'string' ? Number(r.value) : r.value,
-			region: r.region
+			region: r.region,
+			type: r.type || DEFAULT_TYPE,
+			source: r.source || undefined,
+			update: r.update || undefined
 		}))
 		.filter((r) => !isNaN(r.year) && !isNaN(r.value));
+	const type = resolveType(allData, requestedType);
+	const data = filterByType(allData, type);
 
 	// Get the most recent update date from the data
-	const updateDates = rawRecords
-		.map((r) => r.update)
-		.filter(Boolean)
-		.sort()
-		.reverse();
-	const updateDate = updateDates[0] || '';
-
-	// Get source from the first record
-	const source = rawRecords.find((r) => r.source)?.source || '';
+	const { source, updateDate } = getSourceInfo(data);
 
 	return {
 		data,
+		allData,
+		availableTypes: getAvailableTypes(allData),
+		type,
 		updateDate,
 		source,
 		matchedRegionId: regionId,
@@ -581,7 +653,7 @@ export function calculateProjection(
 	return result;
 }
 
-/** Get table columns - wide format with categories as columns */
+/** Get table columns - wide format with categories as columns, one row per year and basis */
 export function getTableColumns(
 	data: ModalSplitRawData[],
 	translations: Translations
@@ -593,6 +665,12 @@ export function getTableColumns(
 
 	return [
 		{ key: 'year', label: t(translations, 'table.year'), align: 'left' },
+		{
+			key: 'type',
+			label: t(translations, 'domain.transport.modalSplitBasis'),
+			align: 'left',
+			format: (v: string) => getTypeLabel(v, translations)
+		},
 		...categories.map((cat) => ({
 			key: cat,
 			label: categoryMeta[cat]?.label || cat,
@@ -602,20 +680,23 @@ export function getTableColumns(
 	];
 }
 
-/** Transform data to wide format for table */
+/** Transform data to wide format for table: one row per year and basis */
 export function getTableRows(data: ModalSplitRawData[]): any[] {
-	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
+	return getAvailableTypes(data).flatMap((type) => {
+		const typeData = filterByType(data, type);
+		const years = Array.from(new Set(typeData.map((d) => d.year))).sort((a, b) => a - b);
 
-	return years.map((year) => {
-		const yearData = data.filter((d) => d.year === year);
-		const row: any = { year };
+		return years.map((year) => {
+			const yearData = typeData.filter((d) => d.year === year);
+			const row: any = { year, type };
 
-		for (const cat of categoryOrder) {
-			const entry = yearData.find((d) => d.category === cat);
-			row[cat] = entry?.value || 0;
-		}
+			for (const cat of categoryOrder) {
+				const entry = yearData.find((d) => d.category === cat);
+				row[cat] = entry?.value || 0;
+			}
 
-		return row;
+			return row;
+		});
 	});
 }
 
@@ -635,7 +716,9 @@ export function getPlaceholders(
 	goalConfig: ResolvedGoalConfig | null,
 	matchedRegionName?: string | null,
 	matchedRegionLayerLabel?: string | null,
-	updateDate?: string
+	updateDate?: string,
+	type: string = DEFAULT_TYPE,
+	translations: Translations = {}
 ): Record<string, string | number | boolean> {
 	const years = Array.from(new Set(data.map((d) => d.year))).sort((a, b) => a - b);
 	const firstYear = years[0];
@@ -706,7 +789,9 @@ export function getPlaceholders(
 		goalEcoShare: formatPercent(goalEcoShareRaw),
 		goalChangeAbs: formatPercent(goalChangeAbs),
 		goalYearSpan,
-		lastUpdateDate: updateDate ? formatPeriodDate(updateDate) : ''
+		lastUpdateDate: updateDate ? formatPeriodDate(updateDate) : '',
+		type,
+		shareBasis: getTypeLabel(type, translations)
 	};
 }
 
@@ -720,16 +805,21 @@ export function buildChartData(
 	translations: Translations,
 	goalConfig: ResolvedGoalConfig | null = null,
 	matchedRegionName?: string | null,
-	matchedRegionLayerLabel?: string | null
+	matchedRegionLayerLabel?: string | null,
+	allData: ModalSplitRawData[] = data
 ): ChartData {
+	const type = resolveType(data);
 	return {
 		raw: data,
 		table: {
-			columns: getTableColumns(data, translations),
-			rows: getTableRows(data),
+			columns: getTableColumns(allData, translations),
+			rows: getTableRows(allData),
 			filename: 'modal_split'
 		},
-		placeholders: { ...getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel, updateDate), source },
+		placeholders: {
+			...getPlaceholders(data, region, goalConfig, matchedRegionName, matchedRegionLayerLabel, updateDate, type, translations),
+			source
+		},
 		meta: {
 			updateDate,
 			source,
@@ -793,10 +883,11 @@ export async function fetchChartData({
 
 	const regionCandidates = [regionId, ...parentIds];
 
-	const fetchResult = await fetchData(region, { regionId, regionCandidates });
+	const fetchResult = await fetchData(region, { regionId, regionCandidates, type: DEFAULT_TYPE });
 	if (!fetchResult.data || fetchResult.data.length === 0) return null;
 
-	const goal = await fetchGoal(region);
+	// Goals are set as shares of trips; don't compare them with other bases
+	const goal = fetchResult.type === DEFAULT_TYPE ? await fetchGoal(region) : null;
 	const goalConfig = resolveGoalConfig(goal, fetchResult.data);
 
 	return buildChartData(
@@ -808,6 +899,7 @@ export async function fetchChartData({
 		translations,
 		goalConfig,
 		fetchResult.matchedRegionName,
-		fetchResult.matchedRegionLayerLabel
+		fetchResult.matchedRegionLayerLabel,
+		fetchResult.allData
 	);
 }
