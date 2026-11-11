@@ -12,6 +12,7 @@ import getDirectusInstance from '$lib/utils/directus';
 import { getAggregateMembers, getFallbackParentIds } from '$lib/utils/regionAggregation';
 import { withLayerLabel } from '$lib/utils/getRegion';
 import { formatNumber, formatPercent } from '$lib/utils/formatters';
+import { t } from '$lib/utils/t';
 import type { ChartData, ChartFetchParams, TableColumn } from '$lib/components/charts/types';
 
 const COLLECTION = 'energy_renewable_share_regions';
@@ -58,7 +59,8 @@ function weighted(rows: DbRow[]): { share: number; consumption: number } | null 
 
 export async function fetchChartData({
 	fetch,
-	regionId
+	regionId,
+	translations
 }: ChartFetchParams): Promise<ChartData | null> {
 	if (!regionId) return null;
 	const directus = getDirectusInstance(fetch);
@@ -153,30 +155,32 @@ export async function fetchChartData({
 	const self = references.find((r) => r.kind === 'self');
 
 	const columns: TableColumn[] = [
-		{ key: 'name', label: 'Region', align: 'left' },
+		{ key: 'name', label: t(translations, 'table.region'), align: 'left' },
 		{
 			key: 'share',
-			label: 'Anteil erneuerbar am Stromverbrauch',
+			label: t(translations, 'domain.energy.renewableShareOfConsumption'),
 			align: 'right',
 			format: (v) => formatPercent(v, 1)
 		},
 		{
 			key: 'consumption',
-			label: 'Stromverbrauch (GWh)',
+			label: t(translations, 'domain.energy.electricityConsumptionGwh'),
 			align: 'right',
 			format: (v) => (v == null ? '–' : formatNumber(v / 1000, 0))
 		},
 		{
 			key: 'computed',
-			label: 'Berechnet',
+			label: t(translations, 'domain.energy.computed'),
 			align: 'left',
-			format: (v) => (v ? 'aus Kreisen, verbrauchsgewichtet' : '')
+			format: (v) => (v ? t(translations, 'domain.energy.computedFromMembers') : '')
 		}
 	];
 
 	const notes = [
-		'Bilanziell: erneuerbare Stromerzeugung in der Region im Verhältnis zum Stromverbrauch, Werte über 100 % möglich.',
-		missing.length ? `Keine Daten für: ${missing.join(', ')}.` : ''
+		t(translations, 'domain.energy.renewableShareBalanceNote'),
+		missing.length
+			? t(translations, 'status.noDataFor').replace('{regions}', missing.join(', '))
+			: ''
 	].filter(Boolean);
 
 	return {
