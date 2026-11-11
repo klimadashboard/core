@@ -12,6 +12,7 @@
 <script lang="ts">
 	import { area as d3Area, curveLinear, curveMonotoneX } from 'd3-shape';
 	import type { HoverState } from '../../types';
+	import { wipe } from '../motion';
 
 	export let data: any[] = [];
 	export let x: string = 'x';
@@ -58,7 +59,7 @@
 </script>
 
 {#if xScale && yScale && data.length > 0 && pathD}
-	<g class="mark-area">
+	<g class="mark-area" in:wipe|global>
 		<path
 			d={pathD}
 			fill={color}

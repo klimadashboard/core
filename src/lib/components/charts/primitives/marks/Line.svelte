@@ -2,6 +2,7 @@
 <script lang="ts">
 	import { line as d3Line, area as d3Area, curveLinear, curveMonotoneX } from 'd3-shape';
 	import type { HoverState } from '../../types';
+	import { wipe } from '../motion';
 
 	export let data: any[] = [];
 	export let x: string = 'x';
@@ -61,7 +62,7 @@
 		{/if}
 	</defs>
 
-	<g class="mark-line">
+	<g class="mark-line" in:wipe|global>
 		{#if fillGradient && areaD}
 			<path d={areaD} fill="url(#{gradientId})" />
 		{/if}

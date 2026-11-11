@@ -1,6 +1,7 @@
 <!-- $lib/components/charts/primitives/marks/BarY.svelte -->
 <script lang="ts">
 	import type { HoverState } from '../../types';
+	import { grow, stagger } from '../motion';
 
 	export let data: any[] = [];
 	export let x: string = 'x';
@@ -47,7 +48,8 @@
 				height={barHeight}
 				fill={color}
 				opacity={dimmed ? opacity * 0.4 : opacity}
-				class="transition-opacity duration-100"
+				class="transition-opacity duration-100 [transform-box:fill-box] {value >= 0 ? 'origin-bottom' : 'origin-top'}"
+				in:grow|global={{ delay: stagger(i, data.length) }}
 			/>
 		{/each}
 	</g>
