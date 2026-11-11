@@ -5,6 +5,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import { Legend, Tooltip } from '$lib/components/charts/primitives';
 	import { Button, RadioGroup, Toggle } from '$lib/components/ui';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { formatNumber, formatPower } from '$lib/utils/formatters';
 	import { buildChartData, carriers, fetchData, type CapacityRow } from './config';
 
@@ -103,7 +104,7 @@
 		Keine Daten verfügbar
 	</div>
 {:else}
-	<div class="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
+	<ChartSettings>
 		<RadioGroup
 			label="Energieträger"
 			bind:value={carrier}
@@ -123,7 +124,7 @@
 		{#if hasArea}
 			<Toggle label="pro km²" bind:checked={perArea} />
 		{/if}
-	</div>
+	</ChartSettings>
 
 	{#if carrier === 'all'}
 		<div class="mb-3">
