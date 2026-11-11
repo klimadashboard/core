@@ -55,15 +55,12 @@
 	$: legendItems = [
 		{ key: 'perDay', label: 'Zuwachs pro Tag', color: BAR_COLOR },
 		...(data?.target != null
-			? [{ key: 'target', label: `Anteil am ${NATIONAL_TARGET_HA_PER_DAY}-ha-Ziel`, color: TARGET_COLOR, dashed: true }]
+			? [{ key: 'target', label: `Anteil am ${NATIONAL_TARGET_HA_PER_DAY}-ha-Ziel der Nationalen Nachhaltigkeitsstrategie`, color: TARGET_COLOR, dashed: true }]
 			: [])
 	];
 
 	const ha = (v: number, decimals = 1) => `${formatNumber(v, decimals)} ha`;
-	const pitches = (v: number) => {
-		const n = v / FOOTBALL_PITCH_HA;
-		return `≈ ${formatPitches(n)} ${n >= 0.95 && n < 1.05 ? 'Fußballfeld' : 'Fußballfelder'}`;
-	};
+	const pitches = (v: number) => `≈ ${formatPitches(v / FOOTBALL_PITCH_HA)} Fußballfelder`;
 
 	function tooltipItems(period: string | null) {
 		if (period === TARGET_YEAR && data?.target2030 != null) {
@@ -139,10 +136,8 @@
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} tickCount={4} />
 
 				<!-- The 30 ha target spans the data years only; 2030 has its own target bar -->
-				{@const targetEnd =
-					xScale && latestPeriod && 'step' in xScale
-						? (xScale as any)(latestPeriod) + bandwidth + ((xScale as any).step() - bandwidth) / 2
-						: innerWidth}
+				{@const band = xScale as any}
+				{@const targetEnd = band ? band(latestPeriod) + (band.step() + bandwidth) / 2 : innerWidth}
 				{#if data.target != null && yScale}
 					<!-- Zielbereich: everything at or below the region's share of the target -->
 					<rect
@@ -169,7 +164,7 @@
 				{#if xScale && yScale && bandwidth >= 18}
 					{#each bars as d (d.period)}
 						<text
-							x={((xScale as any)(d.period) ?? 0) + bandwidth / 2}
+							x={band(d.period) + bandwidth / 2}
 							y={yScale(Math.max(0, d.perDay ?? 0)) - 5}
 							text-anchor="middle"
 							class="text-[11px] tabular-nums {d.period === latestPeriod
@@ -196,19 +191,18 @@
 				{/if}
 
 				{#if data.target2030 != null && xScale && yScale}
-					{@const tx = (xScale as any)(TARGET_YEAR) ?? 0}
+					{@const tx = band(TARGET_YEAR)}
 					{@const ty = yScale(data.target2030)}
-					{@const th = Math.max(0, yScale(0) - ty)}
 					{@const dimmed = hover.x !== null && hover.x !== TARGET_YEAR}
 					<g opacity={dimmed ? 0.4 : 1} class="transition-opacity duration-100">
 						<!-- Light fill + dashed outline, as the target bars in the PV chart -->
-						<rect x={tx} y={ty} width={bandwidth} height={th} fill={TARGET_2030_COLOR} opacity="0.25" />
 						<rect
 							x={tx}
 							y={ty}
 							width={bandwidth}
-							height={th}
-							fill="none"
+							height={Math.max(0, yScale(0) - ty)}
+							fill={TARGET_2030_COLOR}
+							fill-opacity="0.25"
 							stroke={TARGET_2030_COLOR}
 							stroke-width="1.5"
 							stroke-dasharray="4,2"
@@ -236,20 +230,20 @@
 					format={(v) => formatNumber(v, 0)}
 					unit="ha/Tag"
 				/>
-				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={String}
+				<AxisX
+					{xScale}
+					{xDomain}
+					{innerWidth}
+					{innerHeight}
+					format={String}
 					tickCount={isMobile ? 4 : 14}
-					forceTicks={[latestPeriod, data.target2030 != null ? TARGET_YEAR : null].filter(Boolean) as any[]}
+					forceTicks={(data.target2030 != null ? [latestPeriod, TARGET_YEAR] : [latestPeriod]) as any[]}
 				/>
 			</svelte:fragment>
 
 			<svelte:fragment slot="tooltip" let:hover>
-				<Tooltip
-					visible={hover.x !== null && tooltipItems(hover.x).length > 0}
-					x={hover.clientX}
-					y={hover.clientY}
-					title={`Jahr ${hover.x ?? ''}`}
-					items={tooltipItems(hover.x)}
-				/>
+				{@const items = tooltipItems(hover.x)}
+				<Tooltip visible={items.length > 0} x={hover.clientX} y={hover.clientY} title={`Jahr ${hover.x}`} {items} />
 			</svelte:fragment>
 		</Chart>
 

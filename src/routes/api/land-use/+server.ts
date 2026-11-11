@@ -7,7 +7,12 @@ import { getAggregateMembers } from '$lib/utils/regionAggregation';
 // Siedlungs- und Verkehrsfläche (Destatis Flächenerhebung) per region and year, in ha.
 // The source CSV in Directus is ~16 MB (all German regions), too large for the browser,
 // so it is loaded and indexed here once and the endpoint returns one region's series.
-// Response: { region, series: [{ period, settlement, transport, suv, total }], germany }
+// Response: { region, series: [{ period, settlement, transport, suv, total }], breaks, germany, source }
+//
+// Known limitation: `suv` is settlement + transport as in the CSV, which includes Bergbaubetrieb
+// and Tagebau/Grube/Steinbruch. The official Siedlungs- und Verkehrsfläche excludes them
+// (e.g. ~320 ha in Lkr. Neustadt a.d. Waldnaab). To match it, add these mining categories to the
+// CSV export as their own `category` and subtract them in sumSeries.
 const CSV_FILE_ID = 'a313aa9b-a7ab-4ed6-8f2f-e81658f1b077';
 const CSV_URL = `https://base.klimadashboard.org/assets/${CSV_FILE_ID}`;
 const COUNTRY_DE = '3d5acf1a-8120-44d1-966b-62c21fa5d331';
@@ -128,17 +133,14 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
 		ids = members.map((m) => m.id);
 	}
 
-	const breaks = DATA_BREAKS.filter(
-		(b) => ids.includes(b.region) || b.parents.includes(region.id)
-	).map(({ period, note }) => ({ period, note }));
-
 	return json(
 		{
 			region: { id: region.id, name: region.name, population: region.population },
 			series: sumSeries(data, ids),
-			breaks,
-			memberCount: ids.length,
-			germany: { population: germany?.population ?? null, series: sumSeries(data, [COUNTRY_DE]) },
+			breaks: DATA_BREAKS.filter((b) => ids.includes(b.region) || b.parents.includes(region.id)).map(
+				({ period, note }) => ({ period, note })
+			),
+			germany: { population: germany?.population ?? null },
 			source: SOURCE
 		},
 		{ headers: { 'Cache-Control': 'public, max-age=3600' } }

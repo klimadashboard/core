@@ -16,10 +16,9 @@ export const FOOTBALL_PITCH_HA = (105 * 68) / 10_000;
 /** Number of football pitches: one decimal below 10, whole numbers above */
 export const formatPitches = (n: number) => formatNumber(n, n < 10 ? 1 : 0);
 
+/** The fields of a /api/land-use series entry this chart needs */
 interface LandUseYear {
 	period: string;
-	settlement: number;
-	transport: number;
 	suv: number;
 	total: number;
 }
@@ -53,7 +52,9 @@ export interface SoilSealingRawData {
 	source: string;
 }
 
-const daysInYear = (year: number) => ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365);
+/** Days between the end of year `from` and the end of year `to` */
+const daysBetween = (from: string, to: string) =>
+	(Date.UTC(Number(to), 11, 31) - Date.UTC(Number(from), 11, 31)) / 86_400_000;
 
 export async function fetchData(
 	region: Region | null,
@@ -70,31 +71,29 @@ export async function fetchData(
 	const breaks: { period: string; note: string }[] = json.breaks ?? [];
 
 	const series: SoilSealingYear[] = rows.map((d, i) => {
-		const added = i > 0 ? d.suv - rows[i - 1].suv : null;
+		const prev = rows[i - 1];
+		const added = prev ? d.suv - prev.suv : null;
 		return {
 			period: d.period,
 			suv: d.suv,
 			added,
-			perDay: added != null ? added / daysInYear(Number(d.period)) : null,
-			breakNote: (i > 0 && breaks.find((b) => b.period === d.period)?.note) || null
+			perDay: prev ? (added as number) / daysBetween(prev.period, d.period) : null,
+			breakNote: (prev && breaks.find((b) => b.period === d.period)?.note) || null
 		};
 	});
 
 	const first = rows[0];
 	const last = rows.at(-1)!;
-	let days = 0;
-	for (let y = Number(first.period) + 1; y <= Number(last.period); y++) days += daysInYear(y);
-
 	const population = json.region?.population;
 	const germanPopulation = json.germany?.population;
 	const populationShare = population && germanPopulation ? population / germanPopulation : null;
 
 	return {
-		regionName: json.region?.name ?? region?.name ?? 'Deutschland',
+		regionName: json.region?.name ?? 'Deutschland',
 		series,
 		latest: series.at(-1)!,
 		suvShare: (last.suv / last.total) * 100,
-		averagePerDay: (last.suv - first.suv) / days,
+		averagePerDay: (last.suv - first.suv) / daysBetween(first.period, last.period),
 		firstYear: first.period,
 		target: populationShare != null ? NATIONAL_TARGET_HA_PER_DAY * populationShare : null,
 		target2030: populationShare != null ? NATIONAL_TARGET_2030_HA_PER_DAY * populationShare : null,
@@ -125,17 +124,16 @@ export function getPlaceholders(data: SoilSealingRawData): Record<string, string
 			data.latest.added != null ? formatNumber(data.latest.added / FOOTBALL_PITCH_HA, 0) : '–',
 		averagePerDay: formatNumber(data.averagePerDay, 1),
 		target: data.target != null ? formatNumber(data.target, 1) : '–',
+		targetPitches: data.target != null ? formatPitches(data.target / FOOTBALL_PITCH_HA) : '–',
 		targetFactor: data.target ? formatNumber(data.averagePerDay / data.target, 1) : '–',
 		target2030: data.target2030 != null ? formatNumber(data.target2030, 1) : '–',
 		populationShare: data.populationShare != null ? formatPercent(data.populationShare * 100, 1) : '–',
-		suv: formatNumber(data.latest.suv),
 		suvShare: formatPercent(data.suvShare, 1)
 	};
 }
 
 export function buildChartData(data: SoilSealingRawData, region: Region | null): ChartData {
 	return {
-		hasData: data.series.length > 0,
 		raw: data.series,
 		table: {
 			columns: getTableColumns(),
@@ -153,7 +151,7 @@ export function buildChartData(data: SoilSealingRawData, region: Region | null):
 export async function fetchChartData({ fetch, regionId }: ChartFetchParams): Promise<ChartData | null> {
 	const region = regionId
 		? ((await getDirectusInstance(fetch).request(
-				readItem('regions', regionId, { fields: ['id', 'code', 'name', 'layer', 'country'] })
+				readItem('regions', regionId, { fields: ['id', 'name', 'layer'] })
 			)) as Region)
 		: null;
 	const data = await fetchData(region, fetch);
