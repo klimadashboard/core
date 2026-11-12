@@ -13,6 +13,8 @@ export interface Skin {
 	/** Permanent, URL-safe id used in `?skin=` — never rename */
 	id: string;
 	label: string;
+	/** Klimadashboard site credited and linked top-right (default: the serving site's PUBLIC_VERSION) */
+	site?: 'de' | 'at' | 'org';
 	fonts?: {
 		/** CSS font stack for body text */
 		body?: string;

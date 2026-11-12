@@ -20,8 +20,8 @@ https://klimadashboard.de/embed/<chartId>?skin=<skinId>[&region=…&auto=true&�
   no 4xx). Embeds therefore never break because a skin was renamed or removed.
 - `skin` can be combined with every other existing embed parameter
   (`region`, `lang`, `auto`, `notitle`, `showtext`, `bgcolor`, chart-specific options).
-- With `region=<uuid|slug>` the top-right credit reads `Klimadashboard.de/<region-slug>` and
-  links to that region's page (with or without a skin).
+- With `region=<uuid|slug>` the top-right "Klimadashboard.de" credit links to that region's page
+  (with or without a skin).
 
 ### Script embed
 
@@ -59,6 +59,7 @@ CMS plugin. Ids are permanent; a skin may be visually updated without changing i
 | `colors.accentDark` | the same for dark mode (must reach 4.5:1 on `gray-900`) |
 | `logos[]` | logos shown top-right (`src`, `alt`, optional `href`; rendered 24px high on phones, 32px from `sm`). They are placed on a white plate, so logos that must sit on white (as most CDs require) stay correct in dark mode |
 | `footer.logos[]` | partner/funding logos at the bottom of the card content, each on a white plate, with optional `caption` above it (e.g. "Gefördert vom") and optional `height` in px (default 64) |
+| `site` | `'de'`, `'at'` or `'org'` — Klimadashboard site credited and linked top-right, regardless of which server serves the embed |
 | `attribution` | only with top-right `logos`: `'compact'` (default) shrinks the Klimadashboard credit to its icon; `'full'` keeps the wordmark + icon |
 
 Every property is optional. A **logos-only skin** (just `logos` and/or `footer`, no `fonts` or
@@ -107,7 +108,7 @@ documents.
 | Fonts | Barlow Condensed (headings) + Barlow Semi Condensed (body), SIL OFL, self-hosted via `static/skins/metropolregion-nuernberg/fonts.css`; loaded only on embeds with this skin | CD: DIN 1451 Engschrift LT (headlines), Trade Gothic LT Condensed No. 18 (body), licensed to the client's domain | — |
 | Heading case | mixed case (as on the website) | CD: DIN 1451 Engschrift in caps (print) | — |
 | Accent | `#647235` (5.3:1 on white); dark mode `#a7be59` (8.6:1 on gray-900) | website green `#a7be59`, darker shades `#8da440`/`#647235`; `#a7be59` fails contrast on white, so it is used in dark mode only | — |
-| Top right | regular Klimadashboard credit; with `region=28a44176-…` (Metropolregion Nürnberg) it reads `Klimadashboard.de/metropolregion-nuernberg` and links to the full dashboard | offer p.3: link to the full dashboard | — |
+| Top right | regular credit, always "Klimadashboard.de" (`site: 'de'`); with `region=28a44176-…` (Metropolregion Nürnberg) it links to the full dashboard `klimadashboard.de/regions/metropolregion-nuernberg` | offer p.3: link to the full dashboard | — |
 | Partner logo | footer: combined EMN \| Klimapakt2030plus lockup (SVG from the website) | CD: both logos always together, on white | confirm we may use the website file; ideally an official delivery |
 | Förderhinweis | footer, next to the partner logo: BMFTR "Gefördert durch" (474×231 JPG from the website) | required by the tender | official BMFTR logo as SVG (the JPG is low-res) |
 

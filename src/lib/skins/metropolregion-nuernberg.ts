@@ -5,6 +5,7 @@ import type { Skin } from './types';
 const skin: Skin = {
 	id: 'metropolregion-nuernberg',
 	label: 'Metropolregion Nürnberg · Klimapakt2030plus',
+	site: 'de',
 	fonts: {
 		// Barlow Condensed (headings) + Barlow Semi Condensed (body), SIL OFL, self-hosted via
 		// fonts.css — close to the website's condensed DIN / Trade Gothic look. The stylesheet is

@@ -59,11 +59,13 @@
 	$: skin = isEmbedRoute ? getSkin(page.url.searchParams.get('skin')) : null;
 	$: compactAttribution = !!skin?.logos?.length && skin.attribution !== 'full';
 	$: regionSlug = isEmbedRoute ? (page.data.regionSlug ?? null) : null;
+	// Skins can credit a fixed Klimadashboard site (e.g. .de for a German partner on any server)
+	$: siteVersion = skin?.site ?? PUBLIC_VERSION;
 
 	$: logoHref =
 		isEmbedRoute && urlRegionId
-			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${regionSlug || urlRegionId}`
-			: `https://klimadashboard.${PUBLIC_VERSION}`;
+			? `https://klimadashboard.${siteVersion}/regions/${regionSlug || urlRegionId}`
+			: `https://klimadashboard.${siteVersion}`;
 
 	function handleClickOutside(e: MouseEvent) {
 		if (showDownloadMenu && !(e.target as HTMLElement).closest('.download-menu')) {
@@ -605,7 +607,7 @@
 
 			<!-- 1. Title + key statement -->
 			<div
-				class="flex mb-3 {skin?.logos?.length || regionSlug
+				class="flex mb-3 {skin?.logos?.length
 					? 'flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-start'
 					: 'justify-between items-start'}"
 				class:opacity-0={showSkeleton}
@@ -634,14 +636,14 @@
 				<a
 					href={logoHref}
 					target="_blank"
-					aria-label="Klimadashboard.{PUBLIC_VERSION}{regionSlug ? `/${regionSlug}` : ''}"
-					title={compactAttribution ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
+					aria-label="Klimadashboard.{siteVersion}"
+					title={compactAttribution ? `Klimadashboard.${siteVersion}` : undefined}
 					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
 					on:click={(e) => e.stopPropagation()}
 				>
 					{#if !compactAttribution}
 						<span class="text-sm font-bold text-[#28A889] text-right"
-							>Klimadashboard.{PUBLIC_VERSION}{regionSlug ? `/${regionSlug}` : ''}</span
+							>Klimadashboard.{siteVersion}</span
 						>
 					{/if}
 					<svg
