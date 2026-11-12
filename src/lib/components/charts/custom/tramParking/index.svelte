@@ -268,23 +268,20 @@
 		<!-- Controls bar -->
 		<ChartSettings>
 			<DateRangeSlider {startDate} {endDate} on:change={handleDateChange} />
+			<Select
+				label="Bezirk"
+				hideLabel
+				bind:value={districtSelectValue}
+				options={districtSelectOptions}
+				on:change={handleDistrictSelect}
+				small
+			/>
+		</ChartSettings>
 
-			<div class="flex items-center gap-3">
-				<Checkbox label="Bim" bind:checked={showBim} />
-				<Checkbox label="Bus" bind:checked={showBus} />
-				<Checkbox label="Nachtbus" bind:checked={showNachtbus} />
-			</div>
-
-			<div class="ml-auto">
-				<Select
-					label="Bezirk"
-					hideLabel
-					bind:value={districtSelectValue}
-					options={districtSelectOptions}
-					on:change={handleDistrictSelect}
-					small
-				/>
-			</div>
+		<ChartSettings secondary>
+			<Checkbox label="Bim" bind:checked={showBim} />
+			<Checkbox label="Bus" bind:checked={showBus} />
+			<Checkbox label="Nachtbus" bind:checked={showNachtbus} />
 		</ChartSettings>
 
 		<!-- Map -->

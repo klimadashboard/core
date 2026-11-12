@@ -7,6 +7,7 @@
 	import { page } from '$app/state';
 	import { scaleLinear } from 'd3-scale';
 	import { tweened } from 'svelte/motion';
+	import { get } from 'svelte/store';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { cubicInOut } from 'svelte/easing';
 	import type { ChartData } from '$lib/components/charts/types';
@@ -90,10 +91,11 @@
 	// ── motion: bar lengths tween between years; starts from 0 ───────────────
 	const lengths = tweened<number[]>([], { easing: cubicInOut });
 	$: target = modes.map((m) => x(m.values[yearIndex] ?? 0));
-	$: if (width > 0 && modes.length) {
-		const from = $lengths.length === target.length ? undefined : target.map(() => 0);
-		if (from) lengths.set(from, { duration: 0 });
-		lengths.set(target, { duration: prefersReducedMotion.current ? 0 : 900 });
+	// animateTo reads the store with get(), so the tween's own frames don't re-trigger this block
+	$: if (width > 0 && target.length) animateTo(target);
+	function animateTo(to: number[]) {
+		if (get(lengths).length !== to.length) lengths.set(to.map(() => 0), { duration: 0 });
+		lengths.set(to, { duration: prefersReducedMotion.current ? 0 : 900 });
 	}
 
 	const pct = (a: number | null, b: number | null) => (a && b != null ? (b / a - 1) * 100 : null);

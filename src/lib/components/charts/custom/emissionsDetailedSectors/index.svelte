@@ -416,7 +416,9 @@
 				max={maxYear}
 			/>
 		</div>
+	</ChartSettings>
 
+	<ChartSettings secondary>
 		{#if memoAvailable}
 			<div class="flex items-center gap-1">
 				<Toggle

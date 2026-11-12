@@ -605,16 +605,16 @@
 				</div>
 			{/if}
 
-			<!-- 1. Title + key statement -->
+			<!-- 1. Eyebrow (chart title) + logo, then the headline (key statement) -->
 			<div
 				class="flex mb-3 {skin?.logos?.length
-					? 'flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-start'
-					: 'justify-between items-start'}"
+					? 'flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-center sm:gap-x-4'
+					: 'justify-between items-center gap-x-4'}"
 				class:opacity-0={showSkeleton}
 			>
 				{#if !embedHideTitle}
 					<h2
-						class="kd-card-title md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
+						class="kd-card-title md:text-lg font-bold text-gray-900 dark:text-white flex-1 leading-tight text-balance"
 					>
 						{title || chart.content?.title}
 					</h2>
@@ -652,7 +652,7 @@
 						viewBox="0 0 256 256"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
-						class="rounded-sm {compactAttribution ? 'h-6 w-6' : 'h-8 w-8'}"
+						class="rounded-sm {compactAttribution ? 'h-6 w-6' : 'h-7 w-7'}"
 					>
 						<rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" />
 						<path
@@ -700,7 +700,7 @@
 				class="no-card-click -mx-4 mb-4 border-y border-gray-200 bg-gray-50 px-4 py-2.5 sm:-mx-5 sm:px-5 dark:border-gray-700/70 dark:bg-gray-800/40"
 				class:opacity-0={showSkeleton}
 			>
-				<div class="flex items-center gap-2">
+				<div class="flex gap-2 {tabs.length > 1 ? 'items-center' : 'items-start'}">
 					{#if tabs.length > 1}
 						<div class="min-w-0">
 							<Switch
