@@ -46,6 +46,8 @@ interface CacheValue {
 	snapshot: ChartSnapshot;
 	expires: number;     // Fresh until (60 min) — within this window, entry is fully valid
 	staleUntil: number;  // Usable until (24h) — past expires but within staleUntil, served as-is
+	/** Built with `textOnly` (no data fetch): must not answer requests that want data */
+	textOnly: boolean;
 }
 
 class LRUCache {
@@ -319,6 +321,9 @@ export async function getChartSnapshots(
 	// Wrap fetch with HTTP response cache — all Directus calls share this cache.
 	// Chart configs receive this transparently via ChartFetchParams.fetch.
 	const cachedFetch = createCachedFetch(fetch);
+	const textOnly = options?.textOnly ?? false;
+	// Text-only and full generations of the same snapshot run separately
+	const inflightKey = (cacheKey: string) => (textOnly ? `${cacheKey}-text` : cacheKey);
 
 	// Check which charts are already cached or in-flight
 	const result: Record<string, ChartSnapshot> = {};
@@ -328,13 +333,14 @@ export async function getChartSnapshots(
 	for (const id of chartIds) {
 		const cacheKey = `${id}-${regionId || 'national'}-${lang}`;
 		const cached = cache.get(cacheKey);
-		if (cached) {
+		// A text-only snapshot (e.g. from a region page) can't answer a request that wants data
+		if (cached && (textOnly || !cached.textOnly)) {
 			result[id] = cached.snapshot;
-		} else if (inflight.has(cacheKey)) {
+		} else if (inflight.has(inflightKey(cacheKey))) {
 			// Another request is already generating this snapshot — wait for it
 			const chartId = id;
 			inflightWaits.push(
-				inflight.get(cacheKey)!.then((entry) => {
+				inflight.get(inflightKey(cacheKey))!.then((entry) => {
 					if (entry) result[chartId] = entry[1];
 				})
 			);
@@ -382,15 +388,14 @@ export async function getChartSnapshots(
 	}
 
 	// Generate snapshots with concurrency limit and in-flight deduplication
-	const textOnly = options?.textOnly ?? false;
 	const tasks = charts.map((chart) => {
-		const cacheKey = `${chart.id}-${regionId || 'national'}-${lang}`;
+		const key = inflightKey(`${chart.id}-${regionId || 'national'}-${lang}`);
 
 		return () => {
 			// Register in-flight promise so concurrent requests can piggy-back
 			const promise = generateChartSnapshot(chart, regionId, parentIds, lang, translations, cachedFetch, textOnly);
-			inflight.set(cacheKey, promise);
-			return promise.finally(() => inflight.delete(cacheKey));
+			inflight.set(key, promise);
+			return promise.finally(() => inflight.delete(key));
 		};
 	});
 
@@ -530,7 +535,10 @@ async function generateChartSnapshot(
 		cache.set(cacheKey, {
 			snapshot,
 			expires: Date.now() + ttl,
-			staleUntil: Date.now() + STALE_TTL
+			staleUntil: Date.now() + STALE_TTL,
+			// A chart whose data fetch failed or timed out is cached as text-only too,
+			// so the next request that wants data retries instead of getting this for an hour
+			textOnly: textOnly || (!chartData && moduleByType.has(chartType))
 		});
 
 		return [chart.id, snapshot];
