@@ -130,8 +130,10 @@
 	$: narrow = width < 500;
 	$: margin = { top: 20, right: narrow ? 8 : 20, bottom: 30, left: narrow ? 32 : 45 };
 	$: decadeStep = narrow ? 20 : 10;
+	// Skip a decade tick that would overlap the label of the current year
+	$: minTickGap = Math.max(5, Math.ceil(years.length / (narrow ? 8 : 15)));
 	$: yearTicks = [
-		...years.map((r) => r.year).filter((y) => y % decadeStep === 0 && lastYear - y > 4),
+		...years.map((r) => r.year).filter((y) => y % decadeStep === 0 && lastYear - y >= minTickGap),
 		lastYear
 	];
 
