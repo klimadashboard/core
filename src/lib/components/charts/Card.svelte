@@ -603,7 +603,7 @@
 				</div>
 			{/if}
 
-			<!-- 1. Eyebrow (chart title) + logo -->
+			<!-- 1. Eyebrow (chart title) + logo, then the headline (key statement) -->
 			<div
 				class="flex mb-3 {skin?.logos?.length || regionSlug
 					? 'flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-center sm:gap-x-4'
@@ -685,8 +685,13 @@
 				</div>
 			</div>
 
-			<!-- 2. Settings: view switch, download/share and the chart's own controls.
-			     Above the headline, because settings change it (placeholders). -->
+			{#if heading && !embedHideTitle}
+				<h3 class="kd-card-heading text-xl md:text-2xl mb-4 text-balance" class:opacity-0={showSkeleton}>
+					{@html heading}
+				</h3>
+			{/if}
+
+			<!-- 2. Settings: view switch, download/share and the chart's own controls -->
 			<div
 				role="group"
 				aria-label={settingsLabel}
@@ -839,13 +844,7 @@
 				{/if}
 			</div>
 
-			<!-- 3. Headline (key statement), then the content -->
-			{#if heading && !embedHideTitle}
-				<h3 class="kd-card-heading text-xl md:text-2xl mb-4 text-balance" class:opacity-0={showSkeleton}>
-					{@html heading}
-				</h3>
-			{/if}
-
+			<!-- 3. Content -->
 			<div bind:this={panelsEl} class:opacity-0={showSkeleton} class="transition-opacity">
 				<!-- Chart Tab -->
 				<div
