@@ -43,14 +43,15 @@
 					const barX = isBandScale ? xPos : xPos - bandwidth / 2;
 					const top = value >= 0 ? yScale(value) : zeroY;
 					const height = Math.abs(yScale(value) - zeroY);
-					return { key: d[x], path: barPath(barX, top, bandwidth, height, value >= 0, radius) };
+					const positive = value >= 0;
+					return { key: d[x], positive, path: barPath(barX, top, bandwidth, height, positive, radius) };
 				})
 			: [];
 </script>
 
 {#if xScale && yScale && data.length > 0}
 	<g class="mark-bar-y">
-		{#each bars as b (b.key)}
+		{#each bars as b, i (b.key)}
 			{@const isHovered = hover.x === b.key}
 			{@const dimmed = hoverDim && hover.x !== null && !isHovered}
 
@@ -58,8 +59,8 @@
 				d={b.path}
 				fill={color}
 				opacity={dimmed ? opacity * 0.4 : opacity}
-				class="transition-opacity duration-100 [transform-box:fill-box] {value >= 0 ? 'origin-bottom' : 'origin-top'}"
-				in:grow|global={{ delay: stagger(i, data.length) }}
+				class="transition-opacity duration-100 [transform-box:fill-box] {b.positive ? 'origin-bottom' : 'origin-top'}"
+				in:grow|global={{ delay: stagger(i, bars.length) }}
 			/>
 		{/each}
 	</g>
