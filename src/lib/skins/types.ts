@@ -23,6 +23,8 @@ export interface Skin {
 		headingTransform?: 'none' | 'uppercase';
 		/** Letter-spacing of the card title (small headline above the chart), e.g. '0.03em' */
 		headingTracking?: string;
+		/** Font weight of the card title (eyebrow), default 700 — pick a weight the skin's font ships */
+		titleWeight?: number;
 		/** Self-hosted @font-face stylesheet, e.g. /skins/<id>/fonts.css */
 		stylesheet?: string;
 	};

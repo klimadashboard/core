@@ -13,7 +13,9 @@ const skin: Skin = {
 		stylesheet: '/skins/metropolregion-nuernberg/fonts.css',
 		body: "'KD Skin Body', 'Arial Narrow', Arial, sans-serif",
 		heading: "'KD Skin Heading', 'Arial Narrow', Arial, sans-serif",
-		headingTransform: 'none'
+		headingTransform: 'none',
+		// Barlow Condensed Bold is too dense at eyebrow size; SemiBold reads closer to the website
+		titleWeight: 600
 	},
 	colors: {
 		// Website's dark Klimapakt green — 5.3:1 on white (the signature #a7be59 is only 2.1:1)

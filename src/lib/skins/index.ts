@@ -24,6 +24,7 @@ export function skinStyle(skin: Skin): string {
 		'--kd-font-heading': skin.fonts?.heading,
 		'--kd-heading-transform': skin.fonts?.headingTransform,
 		'--kd-heading-tracking': skin.fonts?.headingTracking,
+		'--kd-title-weight': skin.fonts?.titleWeight?.toString(),
 		'--kd-accent': skin.colors?.accent,
 		'--kd-accent-dark': skin.colors?.accentDark
 	};

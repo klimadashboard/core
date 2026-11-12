@@ -53,6 +53,7 @@ CMS plugin. Ids are permanent; a skin may be visually updated without changing i
 | Property | Effect |
 |---|---|
 | `fonts.body` / `fonts.heading` | CSS font stacks for body text and the card title/headings |
+| `fonts.titleWeight` | font weight of the card title (eyebrow), default 700 |
 | `fonts.headingTransform` | e.g. `uppercase` (corporate designs that set headlines in caps) |
 | `fonts.stylesheet` | optional URL of a self-hosted `@font-face` stylesheet under `/skins/<id>/` |
 | `colors.accent` | interface accent: active tab marker and the Klimadashboard wordmark |
