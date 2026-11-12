@@ -5,6 +5,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import type { ChartData } from '$lib/components/charts/types';
 	import RankingBars from '$lib/components/charts/RankingBars.svelte';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { RadioGroup } from '$lib/components/ui';
 	import { formatNumber, formatPercent } from '$lib/utils/formatters';
 	import { loadGreenJobAds, buildChartData, type GreenJobAdsData, type Reference } from './config';
@@ -74,7 +75,7 @@
 		</p>
 	{/if}
 	{#if data.states.length}
-		<div class="mb-4">
+		<ChartSettings>
 			<RadioGroup
 				label="Ebene"
 				bind:value={level}
@@ -82,9 +83,8 @@
 					{ value: 'district', label: 'Kreise' },
 					{ value: 'state', label: 'Bundesländer' }
 				]}
-				small
 			/>
-		</div>
+		</ChartSettings>
 	{/if}
 	<RankingBars
 		{rows}
