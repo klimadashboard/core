@@ -7,6 +7,7 @@
 	export let compareFirstYear;
 	export let selectedYear;
 	export let currentDate;
+	export let showChartIcon = false;
 
 	let angle = 0;
 
@@ -25,7 +26,7 @@
 </script>
 
 <div
-	class="rounded-sm overflow-hidden bg-gray-100 dark:bg-gray-900 flex flex-col justify-between"
+	class="w-full rounded-sm overflow-hidden bg-gray-100 dark:bg-gray-900 flex flex-col justify-between"
 	style="border: 2px solid {type.color}"
 >
 	<div
@@ -36,7 +37,28 @@
 			<h3 class="font-bold">{type.label}</h3>
 			<p class="">{type.description}</p>
 		</div>
-		<div class="ml-auto">
+		<div class="ml-auto flex items-center gap-1">
+			{#if showChartIcon}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="22"
+					height="22"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+					class="icon icon-tabler icons-tabler-outline icon-tabler-chart-bar"
+				>
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+					<path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+					<path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+					<path d="M4 20h14" />
+				</svg>
+			{/if}
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				width="24"
