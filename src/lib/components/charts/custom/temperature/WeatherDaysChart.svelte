@@ -128,7 +128,8 @@
 	$: yMax = Math.max(5, reference?.value ?? 0, ...bars.map((r) => r.value ?? 0));
 
 	$: narrow = width < 500;
-	$: margin = { top: 20, right: narrow ? 8 : 20, bottom: 30, left: narrow ? 32 : 45 };
+	// Extra top margin: the current-year label sits above the plot area, never on top of bars
+	$: margin = { top: 34, right: narrow ? 8 : 20, bottom: 30, left: narrow ? 32 : 45 };
 	$: decadeStep = narrow ? 20 : 10;
 	// Skip a decade tick that would overlap the label of the current year
 	$: minTickGap = Math.max(5, Math.ceil(years.length / (narrow ? 8 : 15)));
@@ -146,14 +147,6 @@
 	const barRight = (xScale: any, year: number): number =>
 		(xScale(year) ?? 0) + xScale.bandwidth();
 	const yPos = (yScale: any, value: number): number => yScale(value);
-
-	// Label above the current-year bar; moved above the reference line if they would overlap
-	function currentLabelY(yScale: any, value: number, referenceValue: number | null): number {
-		const labelY = yPos(yScale, value) - 6;
-		if (referenceValue == null) return labelY;
-		const refY = yPos(yScale, referenceValue);
-		return Math.abs(labelY - refY) < 14 ? Math.min(labelY, refY - 8) : labelY;
-	}
 
 	function periodLabel(row: YearRow): string {
 		if (row.current) return `bis ${cutoffLabel}${row.year}`;
@@ -225,7 +218,7 @@
 					/>
 					<text
 						x={barRight(xScale, currentBar.year)}
-						y={currentLabelY(yScale, currentBar.value ?? 0, reference?.value ?? null)}
+						y="-12"
 						text-anchor="end"
 						paint-order="stroke"
 						stroke-width="4"
