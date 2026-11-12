@@ -1,6 +1,6 @@
 <script>
 	import WeatherDaysCard from './WeatherDaysCard.svelte';
-	import formatNumber from '$lib/stores/formatNumber';
+	import { formatNumber } from '$lib/utils/formatters';
 	import dayjs from 'dayjs';
 	import { types } from '$lib/stores/weather';
 	import relativeTime from 'dayjs/plugin/relativeTime';
@@ -126,37 +126,37 @@
 		>
 		<span>Achtung! Hitzewelle in {selectedStation.name}</span>
 	</p>
-	<h3 class="title text-[#DB5537]">
+	<h3 class="text-2xl mb-4 text-center max-w-2xl mx-auto text-balance text-[#DB5537]">
 		An den letzten {heatWaveLength} Tagen hatte es mindestens 30°C. Insgesamt gab es in diesem Jahr bereits
 		{heatDaysThisYear}
 		Hitzetage.
 	</h3>
 {:else if lastHeatDay && dayjs().diff(dayjs(lastHeatDay.date), 'day') < 10 && (dayjs(lastHeatDay.date).isAfter(dayjs(lastSummerDay.date)) || dayjs(lastHeatDay.date).isSame(dayjs(lastSummerDay.date)))}
-	<h3 class="title">
+	<h3 class="text-2xl mb-4 text-center max-w-2xl mx-auto text-balance">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastHeatDay.date))} am {dayjs(lastHeatDay.date).format(
 			'D. MMMM'
 		)} mit
-		{formatNumber(lastHeatDay.tlmax)}°C ein Hitzetag gemessen, es war der {heatDaysThisYear}. dieses
+		{formatNumber(lastHeatDay.tlmax, 1)}°C ein Hitzetag gemessen, es war der {heatDaysThisYear}. dieses
 		Jahr.
 	</h3>
 {:else if summerDaysThisYear > 5 && dayjs().diff(dayjs(lastSummerDay.date), 'day') < 10}
-	<h3 class="title">
+	<h3 class="text-2xl mb-4 text-center max-w-2xl mx-auto text-balance">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastSummerDay.date))} am {dayjs(
 			lastSummerDay.date
 		).format('D. MMMM')} mit
-		{formatNumber(lastSummerDay.tlmax)}°C ein Sommertag gemessen, es war der {summerDaysThisYear}.
+		{formatNumber(lastSummerDay.tlmax, 1)}°C ein Sommertag gemessen, es war der {summerDaysThisYear}.
 		dieses Jahr.
 	</h3>
 {:else if dayjs().diff(dayjs(lastFrostDay.date), 'day') < 10}
-	<h3 class="title">
+	<h3 class="text-2xl mb-4 text-center max-w-2xl mx-auto text-balance">
 		Zuletzt wurde {dayjs().hour(0).to(dayjs(lastFrostDay.date))} am {dayjs(
 			lastFrostDay.date
 		).format('D. MMMM')} mit
-		{formatNumber(lastFrostDay.tlmin)}°C Mindesttemperatur ein Frosttag gemessen, es war der {frostDaysThisYear}.
+		{formatNumber(lastFrostDay.tlmin, 1)}°C Mindesttemperatur ein Frosttag gemessen, es war der {frostDaysThisYear}.
 		dieses Jahr.
 	</h3>
 {:else}
-	<h3 class="title">
+	<h3 class="text-2xl mb-4 text-center max-w-2xl mx-auto text-balance">
 		Die Erderhitzung führt auch in {regionString} zu mehr heißen Tagen und weniger Tagen mit Frost.
 	</h3>
 {/if}
@@ -243,10 +243,3 @@
 	anderem Auswirkungen auf die Anzahl der Schneetage, Gletscher, die Landwirtschaft und die
 	Wasserversorgung.
 </p>
-
-<style>
-	@reference "tailwindcss/theme";
-	.title {
-		@apply text-2xl mb-4 text-center max-w-2xl mx-auto text-balance;
-	}
-</style>
