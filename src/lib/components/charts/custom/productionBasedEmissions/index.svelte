@@ -577,6 +577,14 @@
 			/>
 		{/if}
 
+		<Toggle
+			label="Pro-Kopf Emissionen"
+			bind:checked={showPerCapita}
+			disabled={!hasPerCapitaCols && populations === null}
+		/>
+	</ChartSettings>
+
+	<ChartSettings secondary>
 		{#if allowFlightEmissions}
 			<Toggle
 				label="Int. Flugverkehr"
@@ -588,12 +596,6 @@
 		<Toggle
 			label="Y-Achse fixieren"
 			bind:checked={freezeYAxis}
-		/>
-
-		<Toggle
-			label="Pro-Kopf Emissionen"
-			bind:checked={showPerCapita}
-			disabled={!hasPerCapitaCols && populations === null}
 		/>
 	</ChartSettings>
 

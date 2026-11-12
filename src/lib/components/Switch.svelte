@@ -107,11 +107,11 @@
 		role="tablist"
 		aria-label={label || undefined}
 		class="relative inline-flex rounded-full overflow-x-auto max-w-full scrollbar-none
-			bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700"
+			bg-gray-100 dark:bg-gray-800 p-0.5 border border-gray-200 dark:border-gray-700"
 	>
 		<!-- Sliding indicator -->
 		<div
-			class="absolute inset-y-1 left-0 rounded-full z-0 bg-white dark:bg-gray-900 transition-[transform,width] duration-300 ease-out"
+			class="absolute inset-y-0.5 left-0 rounded-full z-0 bg-white dark:bg-gray-900 transition-[transform,width] duration-300 ease-out"
 			style={indicatorStyle}
 			aria-hidden="true"
 		></div>
@@ -128,7 +128,7 @@
 				role="tab"
 				aria-selected={isActive}
 				tabindex={isActive ? 0 : -1}
-				class="relative z-10 flex items-center gap-2 rounded-full px-2 py-1 text-sm font-medium
+				class="relative z-10 flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium
 					whitespace-nowrap overflow-hidden
 					transition-colors duration-200 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed
 					focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
@@ -138,7 +138,7 @@
 			>
 				{#if view.iconComponent}
 				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">
-					<svelte:component this={view.iconComponent} size={24} />
+					<svelte:component this={view.iconComponent} size={16} />
 				</span>
 			{:else if view.icon}
 				<span class="flex items-center" style={view.color ? `color: ${view.color}` : ''} aria-hidden="true">

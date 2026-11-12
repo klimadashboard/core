@@ -45,7 +45,7 @@
 
 	<!-- Same look as the segmented Switch ($lib/components/Switch.svelte) used in the charts -->
 	<div
-		class="inline-flex max-w-full gap-0.5 rounded-full border border-gray-200 bg-gray-100 {small ? 'p-0.5' : 'p-1'} dark:border-gray-700 dark:bg-gray-800
+		class="inline-flex max-w-full gap-0.5 rounded-full border border-gray-200 bg-gray-100 p-0.5 dark:border-gray-700 dark:bg-gray-800
 			{inline ? 'flex-row flex-wrap' : 'flex-col'} self-start"
 	>
 		{#each options as opt}
@@ -54,7 +54,7 @@
 			<label
 				for={id}
 				class="inline-flex items-center whitespace-nowrap rounded-full font-medium transition-colors duration-200
-					{small ? 'px-2 py-0.5 text-xs' : 'px-2 py-1 text-sm'}
+					{small ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm'}
 					focus-within:ring-2 focus-within:ring-blue-500
 					{disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
 					{checked
