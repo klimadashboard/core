@@ -697,10 +697,10 @@
 			<div
 				role="group"
 				aria-label={settingsLabel}
-				class="no-card-click -mx-4 mb-4 border-y border-gray-200 bg-gray-50 px-4 py-2.5 sm:-mx-5 sm:px-5 dark:border-gray-700/70 dark:bg-gray-800/40"
+				class="no-card-click -mx-4 mb-4 border-y border-gray-200 px-4 py-2.5 sm:-mx-5 sm:px-5 dark:border-gray-700/70"
 				class:opacity-0={showSkeleton}
 			>
-				<div class="flex gap-2 {tabs.length > 1 ? 'items-center' : 'items-start'}">
+				<div class="flex gap-2 {tabs.length > 1 ? 'items-center' : 'flex-wrap items-start'}">
 					{#if tabs.length > 1}
 						<div class="min-w-0">
 							<Switch
