@@ -73,6 +73,19 @@ body {
 	font-family: 'Barlow Condensed', 'Barlow', sans-serif;
 }
 
+/* Embed skins (src/lib/skins) — variables are set inline on the .kd-skin wrapper */
+.kd-skin {
+	font-family: var(--kd-font-body, 'Barlow', sans-serif);
+}
+.kd-skin .kd-card-title,
+.kd-skin .kd-card-heading {
+	font-family: var(--kd-font-heading, var(--kd-font-body, 'Barlow', sans-serif));
+}
+.kd-skin .kd-card-title {
+	text-transform: var(--kd-heading-transform, none);
+	letter-spacing: var(--kd-heading-tracking, normal);
+}
+
 html,
 main {
 	scroll-behavior: smooth;

@@ -17,6 +17,7 @@
 	import { provideChartSettings } from '$lib/components/charts/context/chartSettings';
 	import type { ChartData } from '$lib/components/charts/types';
 	import { t } from '$lib/utils/t';
+	import { getSkin } from '$lib/skins';
 
 	export let chart: any;
 	export let span = 12;
@@ -55,10 +56,13 @@
 	$: isEmbedRoute = page.url.pathname.startsWith('/embed/');
 	$: urlRegionId = page.url.searchParams.get('region');
 	$: embedHideTitle = isEmbedRoute && page.url.searchParams.get('notitle') === 'true';
+	$: skin = isEmbedRoute ? getSkin(page.url.searchParams.get('skin')) : null;
+	$: compactAttribution = !!skin?.logos?.length && skin.attribution !== 'full';
+	$: regionSlug = isEmbedRoute ? (page.data.regionSlug ?? null) : null;
 
 	$: logoHref =
 		isEmbedRoute && urlRegionId
-			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${urlRegionId}`
+			? `https://klimadashboard.${PUBLIC_VERSION}/regions/${regionSlug || urlRegionId}`
 			: `https://klimadashboard.${PUBLIC_VERSION}`;
 
 	function handleClickOutside(e: MouseEvent) {
@@ -600,29 +604,53 @@
 			{/if}
 
 			<!-- 1. Title + key statement -->
-			<div class="flex justify-between items-start mb-3" class:opacity-0={showSkeleton}>
+			<div
+				class="flex mb-3 {skin?.logos?.length || regionSlug
+					? 'flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-start'
+					: 'justify-between items-start'}"
+				class:opacity-0={showSkeleton}
+			>
 				{#if !embedHideTitle}
 					<h2
-						class="md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
+						class="kd-card-title md:text-lg font-bold text-gray-900 dark:text-white flex-1 pr-4 leading-tight text-balance"
 					>
 						{title || chart.content?.title}
 					</h2>
 				{/if}
+				<div class="flex-shrink-0 flex flex-wrap items-center justify-end gap-x-3 gap-y-2 self-end sm:self-auto">
+				{#if skin?.logos?.length}
+					<div class="flex items-center gap-3 bg-white rounded-md px-2 py-1 shadow-sm">
+						{#each skin.logos as logo}
+							{#if logo.href}
+								<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
+									<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
+								</a>
+							{:else}
+								<img src={logo.src} alt={logo.alt} class="h-6 sm:h-8 w-auto" />
+							{/if}
+						{/each}
+					</div>
+				{/if}
 				<a
 					href={logoHref}
 					target="_blank"
-					aria-label="Klimadashboard.{PUBLIC_VERSION}"
+					aria-label="Klimadashboard.{PUBLIC_VERSION}{regionSlug ? `/${regionSlug}` : ''}"
+					title={compactAttribution ? `Klimadashboard.${PUBLIC_VERSION}` : undefined}
 					class="flex-shrink-0 opacity-80 hover:opacity-100 transition flex items-center gap-2"
 					on:click={(e) => e.stopPropagation()}
 				>
-					<span class="text-sm font-bold text-[#28A889]">Klimadashboard.{PUBLIC_VERSION}</span>
+					{#if !compactAttribution}
+						<span class="text-sm font-bold text-[#28A889] text-right"
+							>Klimadashboard.{PUBLIC_VERSION}{regionSlug ? `/${regionSlug}` : ''}</span
+						>
+					{/if}
 					<svg
 						width="256"
 						height="256"
 						viewBox="0 0 256 256"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-8 w-8 rounded-sm"
+						class="rounded-sm {compactAttribution ? 'h-6 w-6' : 'h-8 w-8'}"
 					>
 						<rect width="256" height="256" fill="url(#kd-gradient-{chart.id})" />
 						<path
@@ -654,10 +682,11 @@
 						</defs>
 					</svg>
 				</a>
+				</div>
 			</div>
 
 			{#if heading && !embedHideTitle}
-				<h3 class="text-xl md:text-2xl mb-4 text-balance" class:opacity-0={showSkeleton}>
+				<h3 class="kd-card-heading text-xl md:text-2xl mb-4 text-balance" class:opacity-0={showSkeleton}>
 					{@html heading}
 				</h3>
 			{/if}
@@ -938,6 +967,33 @@
 					{/if}
 				</div>
 			</div>
+
+			<!-- Skin footer (embeds only): funding notices -->
+			{#if skin?.footer}
+				<div
+					class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800 flex flex-wrap items-end justify-between gap-3 text-xs text-gray-600 dark:text-gray-300"
+					class:opacity-0={showSkeleton}
+				>
+					{#if skin.footer.logos?.length}
+						<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+							{#each skin.footer.logos as logo}
+								<figure class="flex flex-col gap-1">
+									{#if logo.caption}<figcaption>{logo.caption}</figcaption>{/if}
+									<div class="bg-white rounded px-2 py-1">
+										{#if logo.href}
+											<a href={logo.href} target="_blank" rel="noopener" on:click={(e) => e.stopPropagation()}>
+												<img src={logo.src} alt={logo.alt} style="height: {logo.height ?? 64}px" class="w-auto" />
+											</a>
+										{:else}
+											<img src={logo.src} alt={logo.alt} style="height: {logo.height ?? 64}px" class="w-auto" />
+										{/if}
+									</div>
+								</figure>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			{/if}
 
 			<!-- Map button -->
 			{#if mapLayerId}
