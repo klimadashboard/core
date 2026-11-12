@@ -148,6 +148,9 @@
 		(xScale(year) ?? 0) + xScale.bandwidth();
 	const yPos = (yScale: any, value: number): number => yScale(value);
 
+	// German dative plural for the legend: "Tropennächte" → "Tropennächten"
+	const dativePlural = (label: string): string => (label.endsWith('e') ? `${label}n` : label);
+
 	function periodLabel(row: YearRow): string {
 		if (row.current) return `bis ${cutoffLabel}${row.year}`;
 		return mode === 'ytd' ? `bis ${cutoffLabel}` : 'im ganzen Jahr';
@@ -268,7 +271,7 @@
 			<div class="text-gray-300 dark:text-gray-600">
 				<Legend
 					items={[
-						{ key: 'complete', label: 'Vollständige Jahre', color: type.color },
+						{ key: 'complete', label: `Anzahl an ${dativePlural(type.label)}`, color: type.color },
 						{ key: 'incomplete', label: 'Jahr mit Datenlücke', color: 'currentColor' },
 						...(reference
 							? [{ key: 'reference', label: `Ø ${reference.start}–${reference.end}`, color: REFERENCE_COLOR, dashed: true }]
