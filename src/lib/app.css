@@ -83,6 +83,7 @@ body {
 }
 .kd-skin .kd-card-title {
 	text-transform: var(--kd-heading-transform, none);
+	letter-spacing: var(--kd-heading-tracking, normal);
 }
 
 html,

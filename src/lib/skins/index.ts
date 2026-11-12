@@ -23,6 +23,7 @@ export function skinStyle(skin: Skin): string {
 		'--kd-font-body': skin.fonts?.body,
 		'--kd-font-heading': skin.fonts?.heading,
 		'--kd-heading-transform': skin.fonts?.headingTransform,
+		'--kd-heading-tracking': skin.fonts?.headingTracking,
 		'--kd-accent': skin.colors?.accent,
 		'--kd-accent-dark': skin.colors?.accentDark
 	};

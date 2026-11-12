@@ -1,0 +1,10 @@
+/* Metropolregion Nürnberg skin fonts: Barlow Condensed (headings) and Barlow Semi Condensed
+   (body), SIL Open Font License 1.1, self-hosted (no font CDN). Linked only by skinned embeds;
+   own family names so they never clash with the global Barlow faces in app.css. */
+@font-face { font-family: 'KD Skin Heading'; font-style: normal; font-weight: 400 500; font-display: swap; src: url('/skins/metropolregion-nuernberg/fonts/barlow-condensed-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'KD Skin Heading'; font-style: normal; font-weight: 600; font-display: swap; src: url('/skins/metropolregion-nuernberg/fonts/barlow-condensed-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'KD Skin Heading'; font-style: normal; font-weight: 700 900; font-display: swap; src: url('/skins/metropolregion-nuernberg/fonts/barlow-condensed-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'KD Skin Body'; font-style: normal; font-weight: 400; font-display: swap; src: url('/skins/metropolregion-nuernberg/fonts/barlow-semi-condensed-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'KD Skin Body'; font-style: italic; font-weight: 400; font-display: swap; src: url('/skins/metropolregion-nuernberg/fonts/barlow-semi-condensed-latin-400-italic.woff2') format('woff2'); }
+@font-face { font-family: 'KD Skin Body'; font-style: normal; font-weight: 500; font-display: swap; src: url('/skins/metropolregion-nuernberg/fonts/barlow-semi-condensed-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'KD Skin Body'; font-style: normal; font-weight: 600 900; font-display: swap; src: url('/skins/metropolregion-nuernberg/fonts/barlow-semi-condensed-latin-600-normal.woff2') format('woff2'); }

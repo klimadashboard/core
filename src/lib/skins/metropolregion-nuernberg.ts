@@ -6,13 +6,12 @@ const skin: Skin = {
 	id: 'metropolregion-nuernberg',
 	label: 'Metropolregion Nürnberg · Klimapakt2030plus',
 	fonts: {
-		// The website uses DIN Condensed (headings) and Trade Gothic LT W01 Cond No. 18 (body).
-		// Both are commercial webfonts licensed to their domain, so we can't self-host copies.
-		// Stand-in: our self-hosted Barlow Condensed (DIN-like) for both. If the licence can be
-		// extended to klimadashboard.de, add /skins/metropolregion-nuernberg/fonts.css, set
-		// `stylesheet` and prepend the families below.
-		body: "'Barlow Condensed', 'Arial Narrow', Arial, sans-serif",
-		heading: "'Barlow Condensed', 'Arial Narrow', Arial, sans-serif",
+		// Barlow Condensed (headings) + Barlow Semi Condensed (body), SIL OFL, self-hosted via
+		// fonts.css — close to the website's condensed DIN / Trade Gothic look. The stylesheet is
+		// only linked on skinned embeds, so other pages never load these files.
+		stylesheet: '/skins/metropolregion-nuernberg/fonts.css',
+		body: "'KD Skin Body', 'Arial Narrow', Arial, sans-serif",
+		heading: "'KD Skin Heading', 'Arial Narrow', Arial, sans-serif",
 		headingTransform: 'none'
 	},
 	colors: {

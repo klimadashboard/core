@@ -19,6 +19,8 @@ export interface Skin {
 		/** CSS font stack for the card title and headings */
 		heading?: string;
 		headingTransform?: 'none' | 'uppercase';
+		/** Letter-spacing of the card title (small headline above the chart), e.g. '0.03em' */
+		headingTracking?: string;
 		/** Self-hosted @font-face stylesheet, e.g. /skins/<id>/fonts.css */
 		stylesheet?: string;
 	};

@@ -104,12 +104,11 @@ documents.
 
 | Element | Now | Website / CD | Open |
 |---|---|---|---|
-| Fonts | Barlow Condensed for headings and body (self-hosted, DIN-like) — **stand-in** | website: DIN Condensed (headings), Trade Gothic LT W01 Cond No. 18 (body), both commercial webfonts licensed to their domain | licence extension for klimadashboard.de + `woff2` files, or OK to keep the stand-in |
+| Fonts | Barlow Condensed (headings) + Barlow Semi Condensed (body), SIL OFL, self-hosted via `static/skins/metropolregion-nuernberg/fonts.css`; loaded only on embeds with this skin | CD: DIN 1451 Engschrift LT (headlines), Trade Gothic LT Condensed No. 18 (body), licensed to the client's domain | — |
 | Heading case | mixed case (as on the website) | CD: DIN 1451 Engschrift in caps (print) | — |
 | Accent | `#647235` (5.3:1 on white); dark mode `#a7be59` (8.6:1 on gray-900) | website green `#a7be59`, darker shades `#8da440`/`#647235`; `#a7be59` fails contrast on white, so it is used in dark mode only | — |
 | Top right | regular Klimadashboard credit; with `region=28a44176-…` (Metropolregion Nürnberg) it reads `Klimadashboard.de/metropolregion-nuernberg` and links to the full dashboard | offer p.3: link to the full dashboard | — |
 | Partner logo | footer: combined EMN \| Klimapakt2030plus lockup (SVG from the website) | CD: both logos always together, on white | confirm we may use the website file; ideally an official delivery |
 | Förderhinweis | footer, next to the partner logo: BMFTR "Gefördert durch" (474×231 JPG from the website) | required by the tender | official BMFTR logo as SVG (the JPG is low-res) |
 
-Screenshots (Nürnberg ones use `&region=28a44176-b4e4-441e-9566-335366666fb9`): `docs/embed-skins-screenshots/` (`default-light`, `nuernberg-light`,
-`nuernberg-dark`, `nuernberg-mobile`).
+Preview: `/embed/<chartId>?skin=metropolregion-nuernberg&region=28a44176-b4e4-441e-9566-335366666fb9`.
