@@ -1,5 +1,6 @@
 <script>
 	import WeatherDaysCard from './WeatherDaysCard.svelte';
+	import WeatherDaysChart from './WeatherDaysChart.svelte';
 	import formatNumber from '$lib/stores/formatNumber';
 	import dayjs from 'dayjs';
 	import { types } from '$lib/stores/weather';
@@ -12,6 +13,10 @@
 
 	export let data;
 	export let selectedStation;
+
+	// Climate index shown in the bar chart below the cards
+	let selectedTypeKey = 'heatDay';
+	$: selectedType = $types.find((d) => d.key == selectedTypeKey) ?? $types[0];
 
 	$: selectedYear = dayjs().month() > 4 ? dayjs().year() : dayjs().year() - 1;
 	$: daysAvailableInSelectedYear = data.filter((d) => dayjs(d.date).year() == selectedYear).length;
@@ -186,22 +191,41 @@
 {#if selectedYear == dayjs().year() || daysAvailableInSelectedYear > 350}
 	<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
 		{#each $types as type}
-			<WeatherDaysCard
-				{type}
-				current={resultCurrent.find((d) => d.key == type.key).value}
-				comparison={resultComparison.find((d) => d.key == type.key).value}
-				{compareLastYear}
-				{compareFirstYear}
-				{selectedYear}
-				currentDate={selectedYear == lastDate.year() ? lastDate : false}
-			/>
+			{@const selected = type.key == selectedType.key}
+			<button
+				type="button"
+				class="flex text-left rounded-sm cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 {selected
+					? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white dark:ring-offset-gray-900'
+					: ''}"
+				aria-pressed={selected}
+				aria-label="{type.label} pro Jahr im Diagramm anzeigen"
+				on:click={() => (selectedTypeKey = type.key)}
+			>
+				<WeatherDaysCard
+					{type}
+					current={resultCurrent.find((d) => d.key == type.key).value}
+					comparison={resultComparison.find((d) => d.key == type.key).value}
+					{compareLastYear}
+					{compareFirstYear}
+					{selectedYear}
+					currentDate={selectedYear == lastDate.year() ? lastDate : false}
+					showChartIcon
+				/>
+			</button>
 		{/each}
 	</div>
+	<p class="text-sm mt-2 text-gray-600 dark:text-gray-400">
+		Wähle eine Kachel, um den Verlauf pro Jahr zu sehen.
+	</p>
 {:else}
 	<p>
 		Keine ausreichenden Temperaturdaten für dieses Jahr verfügbar. Wähle eine andere Wetterstation
 		oder ein anderes Jahr.
 	</p>
+{/if}
+
+{#if selectedType}
+	<WeatherDaysChart {data} type={selectedType} {isDay} stationName={selectedStation?.name} />
 {/if}
 
 <p class="text-sm mt-2 opacity-80 border-t pt-2">
