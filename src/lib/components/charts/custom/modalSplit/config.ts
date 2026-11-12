@@ -791,7 +791,9 @@ export function getPlaceholders(
 		goalYearSpan,
 		lastUpdateDate: updateDate ? formatPeriodDate(updateDate) : '',
 		type,
-		shareBasis: getTypeLabel(type, translations)
+		shareBasis: getTypeLabel(type, translations),
+		// for chart texts: {{#if isPassengerKm}}Personenkilometer{{/if}}{{#if not isPassengerKm}}Wege{{/if}}
+		isPassengerKm: type === 'passenger_km'
 	};
 }
 
