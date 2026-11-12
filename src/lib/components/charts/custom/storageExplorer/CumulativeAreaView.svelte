@@ -6,6 +6,8 @@
 	import AxisX from '$lib/components/charts/primitives/axes/AxisX.svelte';
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import Area from '$lib/components/charts/primitives/marks/Area.svelte';
+	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
 	import {
 		buildChartData,
 		getActiveCategories,
@@ -132,28 +134,9 @@
 		return thinned;
 	})();
 
-	// Generate area path from stacked points
-	function areaPath(
-		points: Array<{ xNum: number; y0: number; y1: number }>,
-		xScale: any,
-		yScale: any
-	): string {
-		if (points.length === 0) return '';
-
-		// Upper line (y1, left to right)
-		let d = `M ${xScale(points[0]!.xNum)} ${yScale(points[0]!.y1 / divisor)}`;
-		for (let i = 1; i < points.length; i++) {
-			d += ` L ${xScale(points[i]!.xNum)} ${yScale(points[i]!.y1 / divisor)}`;
-		}
-
-		// Lower line (y0, right to left)
-		for (let i = points.length - 1; i >= 0; i--) {
-			d += ` L ${xScale(points[i]!.xNum)} ${yScale(points[i]!.y0 / divisor)}`;
-		}
-
-		d += ' Z';
-		return d;
-	}
+	// Stacked points in axis units (the y scale is in kWh / divisor)
+	$: scaled = (points: Array<{ xNum: number; y0: number; y1: number }>) =>
+		points.map((p) => ({ xNum: p.xNum, y0: p.y0 / divisor, y1: p.y1 / divisor }));
 
 	$: if (!dataLoading && data.length > 0) {
 		const chartData = buildChartData(data, region, activeCategories, updateDate, 'cumulative');
@@ -206,23 +189,13 @@
 
 				<!-- Stacked areas (render bottom-up, so first category is at bottom) -->
 				{#each stackedSeries as series}
-					<path
-						d={areaPath(series.points, xScale, yScale)}
-						fill={series.category.color}
-						opacity="0.75"
-					/>
+					<Area data={scaled(series.points)} x="xNum" y0Field="y0" y1Field="y1" color={series.category.color} opacity={0.75} curve="linear" {xScale} {yScale} />
 				{/each}
 
 				<!-- Upper edge lines -->
 				{#each stackedSeries as series}
-					{@const pts = series.points}
-					{#if pts.length > 1}
-						<path
-							d={`M ${pts.map((p) => `${xScale(p.xNum)} ${yScale(p.y1 / divisor)}`).join(' L ')}`}
-							fill="none"
-							stroke={series.category.color}
-							stroke-width="1.5"
-						/>
+					{#if series.points.length > 1}
+						<Line data={scaled(series.points)} x="xNum" y="y1" stroke={series.category.color} strokeWidth={1.5} {xScale} {yScale} />
 					{/if}
 				{/each}
 

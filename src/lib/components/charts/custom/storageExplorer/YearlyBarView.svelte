@@ -7,6 +7,7 @@
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
 	import RuleX from '$lib/components/charts/primitives/marks/RuleX.svelte';
 	import RuleY from '$lib/components/charts/primitives/marks/RuleY.svelte';
+	import BarStack from '$lib/components/charts/primitives/marks/BarStack.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import {
 		buildChartData,
@@ -86,6 +87,11 @@
 		return { period: row.period, total: y0Pos, totalNeg: y0Neg, stacks };
 	});
 
+	$: barData = stackedData.map((d) => ({
+		period: d.period,
+		segments: d.stacks.map((s) => ({ ...s, key: s.category.key, label: s.category.label, color: s.category.color }))
+	}));
+
 	$: xDomain = data.map((d) => d.period);
 	$: yMax = Math.max(...stackedData.map((d) => d.total), 1);
 	$: yMin = Math.min(...stackedData.map((d) => d.totalNeg), 0);
@@ -163,23 +169,16 @@
 				<RuleY y={0} {yScale} {innerWidth} />
 
 				<!-- Stacked bars -->
-				{#each stackedData as periodData}
-					{@const barX = xScale(periodData.period)}
-					{@const barWidth = xScale.bandwidth ? xScale.bandwidth() : 20}
-					{#if barX !== undefined}
-						{#each periodData.stacks as stack}
-							<rect
-								x={barX}
-								y={yScale(stack.y1)}
-								width={barWidth}
-								height={Math.abs(yScale(stack.y0) - yScale(stack.y1))}
-								fill={stack.category.color}
-								class="transition-opacity"
-								opacity={hover.x === periodData.period ? 1 : 0.85}
-							/>
-						{/each}
-					{/if}
-				{/each}
+				<BarStack
+					data={barData}
+					x="period"
+					{xScale}
+					{yScale}
+					{hover}
+					opacity={0.85}
+					hoverOpacity={1}
+					hoverDim={false}
+				/>
 
 				<RuleX {xScale} {innerHeight} {hover} />
 

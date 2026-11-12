@@ -11,6 +11,7 @@
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { RadioGroup } from '$lib/components/ui';
 	import Beeswarm from './Beeswarm.svelte';
+	import { grow } from '$lib/components/charts/primitives/motion';
 	import { fetchChartData, type ShareRow } from './config';
 
 	export let region: Region | null = null;
@@ -77,8 +78,9 @@
 {#snippet bar(row: ShareRow, style: BarStyle, rank?: number)}
 	<li class="relative flex items-center h-6 text-sm {row.kind === 'self' ? 'font-semibold' : ''}">
 		<span
-			class="absolute inset-y-0 left-0 rounded-sm {barClass[style]}"
+			class="absolute inset-y-0 left-0 rounded-sm origin-left {barClass[style]}"
 			style:width={width(row.share)}
+			in:grow|global={{ axis: 'x' }}
 		></span>
 		<span
 			class="relative truncate px-1.5 max-w-[calc(100%-3.5rem)]"

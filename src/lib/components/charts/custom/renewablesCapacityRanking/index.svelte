@@ -6,6 +6,7 @@
 	import { Legend, Tooltip } from '$lib/components/charts/primitives';
 	import { Button, RadioGroup, Toggle } from '$lib/components/ui';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import { grow, stagger } from '$lib/components/charts/primitives/motion';
 	import { formatNumber, formatPower } from '$lib/utils/formatters';
 	import { buildChartData, carriers, fetchData, type CapacityRow } from './config';
 
@@ -161,7 +162,11 @@
 				>
 				<div class="flex items-center gap-2 flex-1 min-w-0" aria-hidden="true">
 					<div class="flex h-4 flex-1 min-w-0">
-						<div class="flex h-full" style="width: {(valueOf(row) / max) * 100}%;">
+						<div
+							class="flex h-full origin-left"
+							style="width: {(valueOf(row) / max) * 100}%;"
+							in:grow|global={{ axis: 'x', delay: stagger(i, visible.length) }}
+						>
 							{#each shown as c (c.key)}
 								<div
 									class="h-full"

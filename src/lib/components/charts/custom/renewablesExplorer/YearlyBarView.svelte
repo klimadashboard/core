@@ -7,6 +7,7 @@
 	import AxisY from '$lib/components/charts/primitives/axes/AxisY.svelte';
 	import RuleX from '$lib/components/charts/primitives/marks/RuleX.svelte';
 	import RuleY from '$lib/components/charts/primitives/marks/RuleY.svelte';
+	import BarY from '$lib/components/charts/primitives/marks/BarY.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import {
 		buildChartData,
@@ -179,6 +180,9 @@
 		return result.sort((a, b) => a.year - b.year);
 	})();
 
+	$: goalBars = combinedData.filter((d) => d.isGoalYear && d.goalRequired > 0);
+	$: actualBars = combinedData.filter((d) => d.value !== 0);
+
 	// X domain includes all years
 	$: xDomain = combinedData.map((d) => d.year);
 
@@ -264,61 +268,36 @@
 				<RuleY y={0} {yScale} {innerWidth} />
 
 				<!-- Goal bars (dashed outline) - rendered first so actual bars appear on top -->
-				{#each combinedData as d}
-					{#if d.isGoalYear && d.goalRequired > 0}
-						{@const barX = xScale(d.year)}
-						{@const barWidth = xScale.bandwidth ? xScale.bandwidth() : 20}
-						{@const barY = yScale(d.goalRequired)}
-						{@const zeroY = yScale(0)}
-						{@const barHeight = Math.abs(zeroY - barY)}
-						{#if barX !== undefined}
-							<!-- Light fill background -->
-							<rect
-								x={barX}
-								y={barY}
-								width={barWidth}
-								height={barHeight}
-								fill={colors.light}
-								opacity="0.4"
-							/>
-							<!-- Dashed outline -->
-							<rect
-								x={barX}
-								y={barY}
-								width={barWidth}
-								height={barHeight}
-								fill="none"
-								stroke={colors.dark}
-								stroke-width="1.5"
-								stroke-dasharray="4,2"
-								opacity="0.8"
-							/>
-						{/if}
-					{/if}
-				{/each}
+				{#if goalBars.length}
+					<BarY data={goalBars} x="year" y="goalRequired" {xScale} {yScale} color={colors.light} opacity={0.4} hoverDim={false} />
+					<BarY
+						data={goalBars}
+						x="year"
+						y="goalRequired"
+						{xScale}
+						{yScale}
+						color="none"
+						stroke={colors.dark}
+						strokeWidth={1.5}
+						strokeDasharray="4,2"
+						opacity={0.8}
+						hoverDim={false}
+					/>
+				{/if}
 
 				<!-- Actual data bars -->
-				{#each combinedData as d}
-					{#if d.value !== 0}
-						{@const barX = xScale(d.year)}
-						{@const barWidth = xScale.bandwidth ? xScale.bandwidth() : 20}
-						{@const value = d.value}
-						{@const barY = value >= 0 ? yScale(value) : yScale(0)}
-						{@const zeroY = yScale(0)}
-						{@const barHeight = Math.abs(zeroY - yScale(value))}
-						{#if barX !== undefined}
-							<rect
-								x={barX}
-								y={barY}
-								width={barWidth}
-								height={barHeight}
-								fill={color}
-								class="transition-opacity"
-								opacity={hover.x === d.year ? 1 : 0.85}
-							/>
-						{/if}
-					{/if}
-				{/each}
+				<BarY
+					data={actualBars}
+					x="year"
+					y="value"
+					{xScale}
+					{yScale}
+					{color}
+					{hover}
+					opacity={0.85}
+					hoverOpacity={1}
+					hoverDim={false}
+				/>
 
 				<RuleX {xScale} {innerHeight} {hover} />
 			</svelte:fragment>

@@ -12,6 +12,12 @@
 	export let opacity: number = 1;
 	export let hover: HoverState = { x: null, clientX: 0, clientY: 0 };
 	export let hoverDim: boolean = true;
+	/** Opacity of the hovered bar (defaults to `opacity`) */
+	export let hoverOpacity: number | null = null;
+	/** Optional outline, e.g. a dashed target bar (use with color="none") */
+	export let stroke: string | null = null;
+	export let strokeWidth: number = 1;
+	export let strokeDasharray: string | null = null;
 	/** Corner radius of the bar's top (or bottom, for negative values) */
 	export let radius: number = 0;
 
@@ -58,7 +64,10 @@
 			<path
 				d={b.path}
 				fill={color}
-				opacity={dimmed ? opacity * 0.4 : opacity}
+				opacity={isHovered && hoverOpacity !== null ? hoverOpacity : dimmed ? opacity * 0.4 : opacity}
+				{stroke}
+				stroke-width={stroke ? strokeWidth : null}
+				stroke-dasharray={strokeDasharray}
 				class="transition-opacity duration-100 [transform-box:fill-box] {b.positive ? 'origin-bottom' : 'origin-top'}"
 				in:grow|global={{ delay: stagger(i, bars.length) }}
 			/>

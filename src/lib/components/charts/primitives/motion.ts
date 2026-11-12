@@ -15,10 +15,21 @@ const STAGGER = 400;
 /** Delay for the i-th of n elements so a series builds up left to right */
 export const stagger = (i: number, n: number) => (n > 1 ? (i / (n - 1)) * STAGGER : 0);
 
-/** Scale an element up from its baseline. Needs `[transform-box:fill-box]` and an origin class. */
-export function grow(_node: Element, { delay = 0, duration = DURATION } = {}) {
+/**
+ * Scale an element up from its baseline: vertical bars (default) or, with `axis: 'x'`, horizontal
+ * HTML bars. SVG elements need `[transform-box:fill-box]`; all need an origin class.
+ */
+export function grow(
+	_node: Element,
+	{ delay = 0, duration = DURATION, axis = 'y' }: { delay?: number; duration?: number; axis?: 'x' | 'y' } = {}
+) {
 	if (prefersReducedMotion.current) return { duration: 0 };
-	return { delay, duration, easing: cubicOut, css: (t: number) => `transform: scaleY(${t})` };
+	return {
+		delay,
+		duration,
+		easing: cubicOut,
+		css: (t: number) => `transform: scale${axis.toUpperCase()}(${t})`
+	};
 }
 
 /** Reveal an element from left to right (lines draw, areas fill), keeping dashes and gradients intact */

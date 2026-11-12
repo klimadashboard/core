@@ -27,6 +27,9 @@
 	export let yScale: any;
 	export let hover: HoverState = { x: null, clientX: 0, clientY: 0 };
 	export let hoverDim: boolean = true;
+	export let opacity: number = 1;
+	/** Opacity of the hovered bar (defaults to `opacity`) */
+	export let hoverOpacity: number | null = null;
 	export let radius: number = 0;
 </script>
 
@@ -53,7 +56,7 @@
 						width={bw}
 						height={segH}
 						fill={seg.color}
-						opacity={dimmed ? 0.4 : 1}
+						opacity={isHovered && hoverOpacity !== null ? hoverOpacity : dimmed ? opacity * 0.4 : opacity}
 						rx={isTop && radius ? radius : 0}
 						ry={isTop && radius ? radius : 0}
 						class="transition-opacity duration-100"
