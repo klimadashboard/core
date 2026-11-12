@@ -27,6 +27,8 @@
 	$: translations = page.data.translations;
 	$: references = data.filter((d) => d.kind !== 'member');
 	$: members = data.filter((d) => d.kind === 'member');
+	// The region's own value is the average its members are compared with (only shown with members)
+	$: average = members.length ? references.find((d) => d.kind === 'self') : undefined;
 	$: max = Math.max(100, ...data.map((d) => d.share));
 	// Bars use the row width minus room for the value after the longest bar
 	$: width = (v: number) => `calc((100% - 3.5rem) * ${Math.max(v, 0) / max})`;
@@ -66,11 +68,6 @@
 			style:width={width(row.share)}
 		></span>
 		<span
-			class="absolute -inset-y-0.5 w-px bg-current opacity-40"
-			style:left={width(100)}
-			aria-hidden="true"
-		></span>
-		<span
 			class="relative truncate px-1.5 max-w-[calc(100%-3.5rem)]"
 			style:min-width={width(row.share)}
 			title={row.name}
@@ -90,17 +87,47 @@
 		{t(translations, 'status.noDataAvailable')}
 	</div>
 {:else}
-	<ul class="space-y-0.5" aria-label={t(translations, 'domain.energy.renewableShareOfConsumption')}>
-		{#each references as row (row.id)}{@render bar(row)}{/each}
-	</ul>
-	{#if members.length}
+	<!-- Line labels: the average label ends at its line when left of the 100 % mark (no overlap) -->
+	<div class="relative h-4 mb-1 text-xs text-gray-600 dark:text-gray-400" aria-hidden="true">
+		{#if average}
+			<span
+				class="absolute whitespace-nowrap {average.share < 100 ? '-translate-x-full pr-1' : 'pl-1'}"
+				style:left={width(average.share)}>Ø {average.name}</span
+			>
+		{/if}
+		<span class="absolute -translate-x-1/2 whitespace-nowrap" style:left={width(100)}>
+			{formatPercent(100, 0)}
+		</span>
+	</div>
+	<div class="relative">
 		<ul
-			class="space-y-0.5 mt-2 pt-2 border-t border-current/10"
-			aria-label={t(translations, 'ui.regionSwitcher.members')}
+			class="space-y-0.5"
+			aria-label={t(translations, 'domain.energy.renewableShareOfConsumption')}
 		>
-			{#each members as row (row.id)}{@render bar(row)}{/each}
+			{#each references as row (row.id)}{@render bar(row)}{/each}
 		</ul>
-	{/if}
+		{#if members.length}
+			<ul
+				class="space-y-0.5 mt-2 pt-2 border-t border-current/10"
+				aria-label={t(translations, 'ui.regionSwitcher.members')}
+			>
+				{#each members as row (row.id)}{@render bar(row)}{/each}
+			</ul>
+		{/if}
+		<!-- One continuous line each: the region's average (solid) and 100 % (dashed) -->
+		<div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+			{#if average}
+				<div
+					class="absolute inset-y-0 border-l border-gray-700 dark:border-gray-200"
+					style:left={width(average.share)}
+				></div>
+			{/if}
+			<div
+				class="absolute inset-y-0 border-l border-dashed border-gray-500 dark:border-gray-400"
+				style:left={width(100)}
+			></div>
+		</div>
+	</div>
 	{#if references.some((r) => r.computed)}
 		<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
 			* {t(translations, 'domain.energy.computedFromMembers')}
