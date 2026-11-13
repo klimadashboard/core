@@ -11,6 +11,21 @@
 	export let selectedStation;
 	export const chart = undefined;
 	export let snowCoverageMinimum = 0;
+	/**
+	 * Optional: only show these station IDs (the selected station always stays visible)
+	 * @type {Set<string> | null}
+	 */
+	export let allowedStationIds = null;
+
+	const visible = (data, allowed, selected) =>
+		allowed
+			? {
+					...data,
+					stations: data.stations.filter(
+						(s) => allowed.has(String(s.id)) || String(s.id) === String(selected?.id)
+					)
+				}
+			: data;
 
 	let tableName = PUBLIC_VERSION == 'de' ? 'de_dwd_stations' : 'at_geosphere_stations';
 	let geoJsonName =
@@ -104,8 +119,19 @@
 </script>
 
 {#await promise then data}
-	<div class="relative">
-		<WeatherStationPicker {data} {selectedStation} on:select={handleStationSelect} />
-		<WeatherStationMap {data} {selectedStation} on:select={handleStationSelect} />
-	</div>
+	<!-- list and map read the stations only once, so rebuild them when the filter changes -->
+	{#key allowedStationIds}
+		<div class="relative">
+			<WeatherStationPicker
+				data={visible(data, allowedStationIds, selectedStation)}
+				{selectedStation}
+				on:select={handleStationSelect}
+			/>
+			<WeatherStationMap
+				data={visible(data, allowedStationIds, selectedStation)}
+				{selectedStation}
+				on:select={handleStationSelect}
+			/>
+		</div>
+	{/key}
 {/await}
