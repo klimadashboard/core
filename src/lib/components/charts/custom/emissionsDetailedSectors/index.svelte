@@ -379,13 +379,15 @@
 	let crfHover = null;
 	let extensiveList = false;
 
-	// Pre-filter: select a sector on load via chart.options.sector (e.g. "traffic")
+	// Highlight a sector via chart.options.sector (e.g. "traffic"): the overview stays open,
+	// the highlighted sector keeps its color and all other sectors are greyed out.
 	// Uses sectorlyData (not sortedData) to avoid reactive cycle since sortedData depends on ksgSelection
-	let initialSelectionApplied = false;
-	$: if (sectorlyData && !initialSelectionApplied && chart?.options?.sector) {
+	let ksgHighlight = null;
+	let initialHighlightApplied = false;
+	$: if (sectorlyData && !initialHighlightApplied && chart?.options?.sector) {
 		const found = sectorlyData.find((s) => s.key === chart.options.sector);
-		if (found) ksgSelection = found.key;
-		initialSelectionApplied = true;
+		if (found) ksgHighlight = found.key;
+		initialHighlightApplied = true;
 	}
 
 	let useAbsoluteUnits = false;
@@ -520,6 +522,7 @@
 			{useAbsoluteUnits}
 			{totalSelectedYear}
 			{selectedYear}
+			{ksgHighlight}
 			bind:ksgSelection
 			bind:crfSelection
 			bind:ksgHover
@@ -533,6 +536,7 @@
 			{sectorlyData}
 			{colorForKey}
 			{selectedYear}
+			{ksgHighlight}
 			bind:ksgSelection
 			bind:crfSelection
 			bind:ksgHover
