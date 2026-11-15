@@ -102,7 +102,8 @@
 			iconComponent: IconWind
 		},
 		{
-			label: 'Memo',
+			// display label only; filters use the dataset label "Memo"
+			label: 'Int. Flug- &amp; Schiffverkehr',
 			color: 'memo',
 			colorCode: 'hsl(227, 38%, 61%)',
 			colorCodeHighlighted: 'hsl(227, 38%, 51%)',
