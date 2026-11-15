@@ -78,19 +78,23 @@
 
 	$: yFields = view === 'share' ? ['_max'] : visible.map((s) => s.key);
 	$: chartRows = view === 'share' ? rows.map((r) => ({ ...r, _max: 100 })) : rows;
-	$: unit = view === 'trend' ? (perCapita ? 't/Kopf' : 'Mio. t') : view === 'index' ? '' : '%';
+	$: unit = view === 'trend' ? (perCapita ? 't/Kopf' : 'Mio. t') : view === 'index' ? 'Index' : '%';
+	const fmtIndex = (v: number) => {
+		const change = Math.round(v - 100);
+		return `${formatNumber(v, 0)} (${change > 0 ? '+' : change < 0 ? '−' : '±'}${Math.abs(change)} %)`;
+	};
 	$: fmtValue = (v: number | null | undefined) =>
 		v == null
 			? '–'
 			: view === 'trend'
 				? `${formatNumber(v, perCapita ? 1 : 2)} ${perCapita ? 't/Kopf' : 'Mio. t'}`
 				: view === 'index'
-					? formatNumber(v, 0)
+					? fmtIndex(v)
 					: `${formatNumber(v, 1)} %`;
 
 	$: narrow = clientWidth > 0 && clientWidth < 500;
 	$: showEndLabels = !narrow && view !== 'share';
-	$: margin = { top: 15, right: showEndLabels ? 165 : 15, bottom: 35, left: narrow ? 40 : 50 };
+	$: margin = { top: 15, right: showEndLabels ? (view === 'index' ? 190 : 165) : 15, bottom: 35, left: narrow ? 40 : 50 };
 
 	function endLabels(yScale: (v: number) => number) {
 		const labels = visible
