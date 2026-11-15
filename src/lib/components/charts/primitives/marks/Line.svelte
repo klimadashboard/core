@@ -25,11 +25,13 @@
 		return v != null && v !== '' && !isNaN(Number(v));
 	}
 
-	function getX(d: any): number {
-		if (!xScale) return 0;
-		const val = xScale(d[x]) ?? 0;
-		if ('bandwidth' in xScale) {
-			return val + xScale.bandwidth() / 2;
+	// scale is passed explicitly in the template so Svelte re-renders the dots when xScale changes
+	// (e.g. resize or an extended x domain); otherwise dots keep their old positions
+	function getX(d: any, scale: any = xScale): number {
+		if (!scale) return 0;
+		const val = scale(d[x]) ?? 0;
+		if ('bandwidth' in scale) {
+			return val + scale.bandwidth() / 2;
 		}
 		return val;
 	}
@@ -78,7 +80,7 @@
 
 		{#if dots}
 			{#each data as d}
-				{@const cx = getX(d)}
+				{@const cx = getX(d, xScale)}
 				{@const cy = yScale(d[y]) ?? 0}
 				{@const isHovered = hover.x === d[x]}
 
@@ -92,7 +94,7 @@
 			{@const hoveredPoint = data.find((d) => d[x] === hover.x)}
 			{#if hoveredPoint && hasValue(hoveredPoint[y])}
 				<circle
-					cx={getX(hoveredPoint)}
+					cx={getX(hoveredPoint, xScale)}
 					cy={yScale(hoveredPoint[y]) ?? 0}
 					r={dotRadius * 2}
 					fill={stroke}
