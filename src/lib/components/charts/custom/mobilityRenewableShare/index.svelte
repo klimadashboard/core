@@ -8,7 +8,14 @@
 	import { onMount } from 'svelte';
 	import CountryPicker from './CountryPicker.svelte';
 	import { pivotByYear, latestPoint, type MobilityRow, type Country, type YearRow } from './transformData';
-	import { HOME_COLOR, FOSSIL_COLOR, COMPARE_STYLES, MAX_COMPARE } from './constants';
+	import { HOME_COLOR, FOSSIL_COLOR, COMPARE_STYLES, MAX_COMPARE, EU_TARGET } from './constants';
+	import type { ChartData } from '../../types';
+
+	export let chart: any = undefined;
+	export let region: any = null;
+	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
+	chart;
+	region; // country comparison, not region-specific
 
 	const homeId = /^[a-z]{2}$/i.test(PUBLIC_VERSION ?? '') ? PUBLIC_VERSION.toUpperCase() : 'DE';
 
@@ -86,7 +93,8 @@
 	$: stacked = view === 'share' && selected.length === 0;
 
 	$: maxValue = Math.max(0, ...rows.flatMap((r) => seriesIds.map((id) => r[id] ?? 0)));
-	$: yMax = view === 'share' ? 100 : Math.max(5, Math.ceil((maxValue * 1.1) / 5) * 5);
+	// values view: keep the EU target line visible
+	$: yMax = view === 'share' ? 100 : Math.ceil((Math.max(maxValue, EU_TARGET.value) * 1.1) / 5) * 5;
 
 	// Responsive: end-of-line labels need room on the right
 	$: narrow = clientWidth > 0 && clientWidth < 500;
@@ -116,6 +124,31 @@
 	}
 
 	const fmt = (v: number | null | undefined) => (v == null ? '–' : `${formatNumber(v, 1)} %`);
+
+	// card: table of the shown countries, placeholders for the CMS text, legal basis of the target
+	$: if (rows.length && onChartData) {
+		const cell = (v: any) => (typeof v === 'number' ? formatNumber(v, 1) : '–');
+		onChartData({
+			raw: rows,
+			table: {
+				columns: [
+					{ key: 'year', label: 'Jahr', align: 'left' },
+					...series.map((s) => ({ key: s.id, label: `${s.name} (%)`, align: 'right' as const, format: cell }))
+				],
+				rows,
+				filename: 'erneuerbare_im_verkehr'
+			},
+			placeholders: {
+				latestYear: homeLatest ? String(homeLatest.year) : '',
+				latestValue: homeLatest ? formatNumber(homeLatest.value, 1) : '',
+				target: String(EU_TARGET.value)
+			},
+			meta: {
+				source: 'Eurostat SHARES',
+				note: `EU-Ziel: mindestens ${EU_TARGET.value} % erneuerbare Energie im Verkehr bis ${EU_TARGET.year} – ${EU_TARGET.legalBasis}.`
+			}
+		});
+	}
 </script>
 
 <div class="w-full" bind:clientWidth>
@@ -194,6 +227,27 @@
 							{hover}
 						/>
 					{/each}
+
+					<!-- EU target -->
+					<line
+						x1="0"
+						x2={innerWidth}
+						y1={yScale(EU_TARGET.value)}
+						y2={yScale(EU_TARGET.value)}
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-dasharray="6 4"
+						class="text-gray-700 dark:text-gray-300"
+					/>
+					<text
+						x={8}
+						y={yScale(EU_TARGET.value) - 6}
+						class="text-xs font-semibold fill-gray-700 dark:fill-gray-300 stroke-white dark:stroke-gray-900"
+						stroke-width="3"
+						paint-order="stroke"
+					>
+						EU-Ziel {EU_TARGET.year}: {EU_TARGET.value} %
+					</text>
 
 					{#if showEndLabels}
 						{#each endLabels(yScale) as l (l.id)}

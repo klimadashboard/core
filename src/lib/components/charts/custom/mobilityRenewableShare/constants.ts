@@ -17,5 +17,13 @@ export const COMPARE_STYLES: Array<{ color: string; dash: string | null }> = [
 
 export const MAX_COMPARE = COMPARE_STYLES.length;
 
+// EU target: at least 29 % renewable energy in final energy consumption in transport by 2030
+// (Member States may instead choose a 14.5 % greenhouse gas intensity reduction)
+export const EU_TARGET = {
+	value: 29,
+	year: 2030,
+	legalBasis: 'Richtlinie (EU) 2023/2413 (RED III), Art. 25'
+};
+
 // kept for backwards compatibility (imported by renewableRegions/Inspector.svelte)
 export const REGION_COLORS = { highlighted: HOME_COLOR };
