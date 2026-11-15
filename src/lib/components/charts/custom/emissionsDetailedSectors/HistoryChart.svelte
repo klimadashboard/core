@@ -15,9 +15,15 @@
 	export let crfHover;
 	// optional: sector that keeps its color in the overview, all others are greyed out
 	export let ksgHighlight = null;
+	// further sectors that keep their colour (e.g. int. aviation & shipping next to mobility)
+	export let ksgAlsoHighlighted = [];
 
 	$: isMuted = (key) =>
-		ksgSelection == null && ksgHighlight != null && key !== ksgHighlight && key !== ksgHover;
+		ksgSelection == null &&
+		ksgHighlight != null &&
+		key !== ksgHighlight &&
+		!ksgAlsoHighlighted.includes(key) &&
+		key !== ksgHover;
 
 	let clientWidth = 1000;
 	let clientHeight = 1000;

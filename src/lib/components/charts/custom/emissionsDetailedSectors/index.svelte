@@ -391,7 +391,21 @@
 	}
 
 	let useAbsoluteUnits = false;
-	let showFlightEmissions = false;
+	// int. aviation & shipping (memo) belongs to mobility: on by default when traffic is highlighted
+	let showFlightEmissions = chart?.options?.sector === 'traffic';
+
+	// keys that keep their colour besides the highlighted one
+	$: ksgAlsoHighlighted = ksgHighlight === 'traffic' ? ['memo'] : [];
+
+	// history chart stacking: highlighted sector at the bottom, related ones (memo) right above it
+	$: historyData =
+		ksgHighlight && sectorlyData
+			? [...sectorlyData].sort((a, b) => {
+					const rank = (s) =>
+						s.key === ksgHighlight ? 0 : ksgAlsoHighlighted.includes(s.key) ? 1 : 2;
+					return rank(a) - rank(b) || sectorlyData.indexOf(a) - sectorlyData.indexOf(b);
+				})
+			: sectorlyData;
 </script>
 
 {#if sortedData}
@@ -523,6 +537,7 @@
 			{totalSelectedYear}
 			{selectedYear}
 			{ksgHighlight}
+			{ksgAlsoHighlighted}
 			bind:ksgSelection
 			bind:crfSelection
 			bind:ksgHover
@@ -533,10 +548,11 @@
 		<HistoryChart
 			{years}
 			{maxYear}
-			{sectorlyData}
+			sectorlyData={historyData}
 			{colorForKey}
 			{selectedYear}
 			{ksgHighlight}
+			{ksgAlsoHighlighted}
 			bind:ksgSelection
 			bind:crfSelection
 			bind:ksgHover

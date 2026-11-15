@@ -22,9 +22,15 @@
 	export let extensiveList;
 	// optional: sector that keeps its color in the overview, all others are greyed out
 	export let ksgHighlight = null;
+	// further sectors that keep their colour (e.g. int. aviation & shipping next to mobility)
+	export let ksgAlsoHighlighted = [];
 
 	$: isMuted = (key) =>
-		ksgSelection == null && ksgHighlight != null && key !== ksgHighlight && key !== ksgHover;
+		ksgSelection == null &&
+		ksgHighlight != null &&
+		key !== ksgHighlight &&
+		!ksgAlsoHighlighted.includes(key) &&
+		key !== ksgHover;
 
 	// Add console logs for the requested props
 	$: console.log('SectorsTreeChart - ksgSelection:', ksgSelection);
