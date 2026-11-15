@@ -46,22 +46,21 @@
 				{@const y = yScale(tick)}
 				{@const isLast = i === ticks.length - 1}
 				{@const labelText = format(tick)}
-				{@const textW = labelText.length * 7 + 2}
-
 				<text x="-4" {y} dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
-					{format(tick)}
+					{labelText}
 				</text>
 				{#if isLast && unit}
-					{@const unitText = unit}
-					<rect
-						x="-2"
+					<!-- Unit sits inside the plot area: use a thin halo instead of an opaque box,
+					     so data reaching the top of the axis (e.g. 100 % stacks) is not covered. -->
+					<text
+						x="4"
 						{y}
-						width={unitText.length * 7 + 10}
-						height="20"
-						transform="translate(0, -10)"
-						class="fill-white dark:fill-gray-900"
-					/>
-					<text x="2" {y} dy="0.32em" class="text-xs fill-gray-500">
+						dy="0.32em"
+						class="text-xs fill-gray-500 stroke-white dark:stroke-gray-900"
+						stroke-width="3"
+						stroke-linejoin="round"
+						paint-order="stroke"
+					>
 						{unit}
 					</text>
 				{/if}
