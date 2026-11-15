@@ -11,12 +11,15 @@
 
 	export let series: StateSeries[] = [];
 	export let years: number[] = [];
+	/** state name -> year -> inhabitants; enables the per-capita measure */
+	export let population: Record<string, Record<number, number>> = {};
 
 	// colour-blind safe palette + dash patterns: series never differ by colour alone
 	const PALETTE = ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#D55E00', '#56B4E9', '#4B5563', '#B8860B', '#7B3294'];
 	const DASHES: (string | null)[] = [null, '6 3', '2 3'];
 
 	let view: 'trend' | 'index' | 'share' = 'trend';
+	let measure: 'absolute' | 'perCapita' = 'absolute';
 	let baseYear = years[0] ?? 1990;
 	let hidden: Set<string> = new Set();
 	let clientWidth = 0;
@@ -36,16 +39,32 @@
 		}));
 	$: visible = states.filter((s) => !hidden.has(s.key));
 
+	$: hasPopulation = Object.keys(population).length > 0;
+	// per capita is not meaningful for the share of the states
+	$: perCapita = hasPopulation && measure === 'perCapita' && view !== 'share';
+
+	/** emissions (t) or emissions per inhabitant (t/Kopf) for a state and year */
+	function valueOf(s: { name: string; values: Record<number, number> }, year: number, pc: boolean): number | null {
+		const v = s.values[year];
+		if (v == null) return null;
+		if (!pc) return v;
+		const pop = population[s.name]?.[year];
+		return pop ? v / pop : null;
+	}
+
 	$: rows = years.map((year) => {
 		const row: Record<string, number | null> = { year };
 		const total = visible.reduce((sum, s) => sum + (s.values[year] ?? 0), 0);
 		let acc = 0;
 		for (const s of visible) {
 			const v = s.values[year] ?? null;
-			if (view === 'trend') row[s.key] = v == null ? null : v / 1_000_000;
-			else if (view === 'index') {
-				const base = s.values[baseYear];
-				row[s.key] = v == null || !base ? null : (v / base) * 100;
+			if (view === 'trend') {
+				const m = valueOf(s, year, perCapita);
+				row[s.key] = m == null ? null : perCapita ? m : m / 1_000_000;
+			} else if (view === 'index') {
+				const m = valueOf(s, year, perCapita);
+				const base = valueOf(s, baseYear, perCapita);
+				row[s.key] = m == null || !base ? null : (m / base) * 100;
 			} else {
 				const share = v == null || !total ? 0 : (v / total) * 100;
 				row[`${s.key}_0`] = acc;
@@ -59,12 +78,12 @@
 
 	$: yFields = view === 'share' ? ['_max'] : visible.map((s) => s.key);
 	$: chartRows = view === 'share' ? rows.map((r) => ({ ...r, _max: 100 })) : rows;
-	$: unit = view === 'trend' ? 'Mio. t' : view === 'index' ? '' : '%';
+	$: unit = view === 'trend' ? (perCapita ? 't/Kopf' : 'Mio. t') : view === 'index' ? '' : '%';
 	$: fmtValue = (v: number | null | undefined) =>
 		v == null
 			? '–'
 			: view === 'trend'
-				? `${formatNumber(v, 2)} Mio. t`
+				? `${formatNumber(v, perCapita ? 1 : 2)} ${perCapita ? 't/Kopf' : 'Mio. t'}`
 				: view === 'index'
 					? formatNumber(v, 0)
 					: `${formatNumber(v, 1)} %`;
@@ -100,6 +119,17 @@
 				{ value: 'share', label: 'Anteil' }
 			]}
 		/>
+		{#if hasPopulation && view !== 'share'}
+			<RadioGroup
+				label="Bezug"
+				hideLabel
+				bind:value={measure}
+				options={[
+					{ value: 'absolute', label: 'Absolut' },
+					{ value: 'perCapita', label: 'Pro Kopf' }
+				]}
+			/>
+		{/if}
 		{#if view === 'index'}
 			<div class="w-40">
 				<Select
@@ -115,9 +145,10 @@
 
 	<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
 		{#if view === 'trend'}
-			Treibhausgas-Emissionen je Bundesland, {years[0]}–{lastYear}.
+			{perCapita ? 'Treibhausgas-Emissionen pro Einwohner:in' : 'Treibhausgas-Emissionen'} je Bundesland, {years[0]}–{lastYear}.
 		{:else if view === 'index'}
-			Entwicklung relativ zu {baseYear} (= 100). Werte unter 100 bedeuten weniger Emissionen als {baseYear}.
+			Entwicklung {perCapita ? 'der Pro-Kopf-Emissionen ' : ''}relativ zu {baseYear} (= 100). Werte unter 100
+			bedeuten weniger Emissionen als {baseYear}.
 		{:else}
 			Anteil der Bundesländer an den gesamten Emissionen.
 		{/if}

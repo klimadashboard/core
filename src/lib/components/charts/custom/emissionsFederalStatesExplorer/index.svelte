@@ -31,13 +31,15 @@
 	];
 
 	const option = chart?.options?.sector;
-	let sector = SECTORS.find((s) => s.value === option || s.key === option)?.value ?? 'Gesamt';
+	let sector = SECTORS.find((s) => s.value === option || s.key === option)?.value ?? 'Verkehr';
 
 	let loading = true;
 	let error: string | null = null;
 	// category -> state -> year -> t CO2eq
 	let data: Record<string, Record<string, Record<number, number>>> = {};
 	let years: number[] = [];
+	// state -> year -> inhabitants (Statistik Austria, as of 1 January)
+	let population: Record<string, Record<number, number>> = {};
 
 	onMount(async () => {
 		try {
@@ -47,10 +49,37 @@
 					filter: {
 						_and: [{ country: { _eq: 'AT' } }, { source: { _eq: SOURCE } }, { type: { _eq: 'Gesamt' } }]
 					},
-					fields: ['year', 'value', 'region.name', 'category.label'],
+					fields: ['year', 'value', 'region.id', 'region.name', 'category.label'],
 					limit: -1
 				})
-			)) as { year: number; value: number | null; region: { name: string } | null; category: { label: string } | null }[];
+			)) as {
+				year: number;
+				value: number | null;
+				region: { id: string; name: string } | null;
+				category: { label: string } | null;
+			}[];
+
+			// population per state and year (optional: per-capita view is hidden without it)
+			const nameById = new Map(rows.filter((r) => r.region).map((r) => [r.region!.id, r.region!.name]));
+			try {
+				const pop = (await directus.request(
+					readItems('population', {
+						filter: { region: { _in: [...nameById.keys()] } },
+						fields: ['region', 'period', 'value'],
+						limit: -1
+					})
+				)) as { region: string; period: string; value: number | null }[];
+				const nextPop: typeof population = {};
+				for (const p of pop) {
+					const name = nameById.get(p.region);
+					const year = Number(String(p.period).slice(0, 4));
+					if (!name || !p.value || !Number.isFinite(year)) continue;
+					(nextPop[name] ??= {})[year] = p.value;
+				}
+				population = nextPop;
+			} catch {
+				population = {};
+			}
 
 			// only the seven sectors; the data also holds a "KSG" sum row that must not be added again
 			const sectorLabels = new Set(SECTORS.filter((s) => s.key).map((s) => s.value));
@@ -113,6 +142,6 @@
 		<div class="w-56">
 			<Select label="Sektor" hideLabel bind:value={sector} options={sectorOptions} small />
 		</div>
-		<Explorer {series} {years} />
+		<Explorer {series} {years} {population} />
 	</div>
 {/if}
