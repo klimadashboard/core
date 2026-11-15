@@ -95,6 +95,7 @@
 		},
 		{
 			label: 'Fluorierte Gase',
+			shortLabel: 'F-Gase',
 			color: 'fluorinated',
 			colorCode: 'hsl(191, 31%, 61%)',
 			colorCodeHighlighted: 'hsl(191, 31%, 51%)',
