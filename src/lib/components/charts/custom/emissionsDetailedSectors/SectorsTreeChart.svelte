@@ -181,13 +181,16 @@
 											title={ksgSector.label.replace(/&shy;/g, '').replace(/&amp;/g, '&')}
 										>
 											{#if ksgSelection == null}
-												<span style="display: inline-block; margin-right: {fontSize / 6}px" class="shrink-0"
-													><svelte:component
-														this={colorForKey(ksgSector.key).iconComponent}
-														size={Math.round(fontSize * (small ? 1 : 1.5))}
-														color="currentColor"
-													/></span
-												>
+												<!-- small tiles: no icon (the sidebar shows it), leaves room for the label -->
+												{#if !small}
+													<span style="display: inline-block; margin-right: {fontSize / 6}px" class="shrink-0"
+														><svelte:component
+															this={colorForKey(ksgSector.key).iconComponent}
+															size={Math.round(fontSize * 1.5)}
+															color="currentColor"
+														/></span
+													>
+												{/if}
 												<!-- small tiles: short label on one line, cut with … if it still does not fit -->
 												<strong
 													class="{small
