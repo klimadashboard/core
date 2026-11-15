@@ -20,6 +20,11 @@
 	export let ksgHover;
 	export let crfHover;
 	export let extensiveList;
+	// optional: sector that keeps its color in the overview, all others are greyed out
+	export let ksgHighlight = null;
+
+	$: isMuted = (key) =>
+		ksgSelection == null && ksgHighlight != null && key !== ksgHighlight && key !== ksgHover;
 
 	// Add console logs for the requested props
 	$: console.log('SectorsTreeChart - ksgSelection:', ksgSelection);
@@ -92,7 +97,7 @@
 						: colorForKey(ksgSector.key).colorCode}
 					style="transition: fill 0.3s ease;"
 					opacity={ksgSelection != null && ksgSector.key != ksgSelection ? 0.2 : 1}
-					class="cursor-pointer"
+					class="cursor-pointer {isMuted(ksgSector.key) ? 'fill-gray-200 dark:fill-gray-700' : ''}"
 					role="presentation"
 					on:mousedown|stopPropagation={() => {
 						ksgSelection = ksgSector.key;
@@ -107,12 +112,16 @@
 				/>
 				{#if ksgSector.relative * HEIGHT > 30}
 					<g
-						class="pointer-events-none"
+						class="pointer-events-none text-gray-400 dark:text-gray-400"
 						transform="translate(-115, {ksgSector.percentCumulative * HEIGHT +
 							(ksgSector.relative * HEIGHT) / 2 -
 							10})"
 					>
-						<svelte:component this={colorForKey(ksgSector.key).iconComponent} size={30} color="white" />
+						<svelte:component
+							this={colorForKey(ksgSector.key).iconComponent}
+							size={30}
+							color={isMuted(ksgSector.key) ? 'currentColor' : 'white'}
+						/>
 					</g>
 				{/if}
 
@@ -136,6 +145,7 @@
 								Math.max(20, Math.min(crfSector.h2 / 2, 50)).toFixed(0)
 							)}
 							{#if c == 0}
+								{@const muted = isMuted(ksgSector.key)}
 								<foreignObject
 									height={ksgSector.h}
 									width={ksgSector.w}
@@ -143,20 +153,28 @@
 									y={ksgSector.y}
 								>
 									<div
-										class="w-full h-full flex items-end justify-start"
-										style="border: 3px solid white; transition: background 0.3s ease; background-color: {ksgHover == ksgSector.key
-											? colorForKey(ksgSector.key).colorCodeHighlighted
-											: colorForKey(ksgSector.key).colorCode};"
+										class="w-full h-full flex items-end justify-start {muted
+											? 'bg-gray-200 dark:bg-gray-700'
+											: ''}"
+										style="border: 3px solid white; transition: background 0.3s ease; {muted
+											? ''
+											: `background-color: ${
+													ksgHover == ksgSector.key
+														? colorForKey(ksgSector.key).colorCodeHighlighted
+														: colorForKey(ksgSector.key).colorCode
+												};`}"
 									>
 										<div
-											class="w-full max-h-full flex items-center flex-wrap grow-0 gap-2 text-white"
+											class="w-full max-h-full flex items-center flex-wrap grow-0 gap-2 {muted
+												? 'text-gray-500 dark:text-gray-300'
+												: 'text-white'}"
 											style="padding: {fontSize < 30
 												? 4
 												: fontSize / 4}px; font-size: {fontSize}px;"
 										>
 											{#if ksgSelection == null}
 												<span style="display: inline-block; margin-right: {fontSize / 6}px"
-													><svelte:component this={colorForKey(ksgSector.key).iconComponent} size={Math.round(fontSize * 1.5)} color="white" /></span
+													><svelte:component this={colorForKey(ksgSector.key).iconComponent} size={Math.round(fontSize * 1.5)} color="currentColor" /></span
 												>
 												<strong
 													class="{ksgSector.h < 100
