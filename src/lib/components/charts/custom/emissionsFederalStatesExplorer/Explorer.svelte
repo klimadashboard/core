@@ -66,8 +66,7 @@
 			} else if (view === 'index') {
 				const m = valueOf(s, year, perCapita);
 				const base = valueOf(s, baseYear, perCapita);
-				// change to the start year in %
-				row[s.key] = m == null || !base ? null : (m / base - 1) * 100;
+				row[s.key] = m == null || !base ? null : (m / base) * 100;
 			} else {
 				const share = v == null || !total ? 0 : (v / total) * 100;
 				row[`${s.key}_0`] = acc;
@@ -81,10 +80,10 @@
 
 	$: yFields = view === 'share' ? ['_max'] : visible.map((s) => s.key);
 	$: chartRows = view === 'share' ? rows.map((r) => ({ ...r, _max: 100 })) : rows;
-	$: unit = view === 'trend' ? (perCapita ? 't/Kopf' : 'Mio. t') : '%';
-	const fmtChange = (v: number) => {
-		const rounded = Math.round(v);
-		return `${rounded > 0 ? '+' : rounded < 0 ? '−' : '±'}${formatNumber(Math.abs(rounded), 0)} %`;
+	$: unit = view === 'trend' ? (perCapita ? 't/Kopf' : 'Mio. t') : view === 'index' ? 'Index' : '%';
+	const fmtIndex = (v: number) => {
+		const change = Math.round(v - 100);
+		return `${formatNumber(v, 0)} (${change > 0 ? '+' : change < 0 ? '−' : '±'}${Math.abs(change)} %)`;
 	};
 	$: fmtValue = (v: number | null | undefined) =>
 		v == null
@@ -92,12 +91,12 @@
 			: view === 'trend'
 				? `${formatNumber(v, perCapita ? 1 : 2)} ${perCapita ? 't/Kopf' : 'Mio. t'}`
 				: view === 'index'
-					? fmtChange(v)
+					? fmtIndex(v)
 					: `${formatNumber(v, 1)} %`;
 
 	$: narrow = clientWidth > 0 && clientWidth < 500;
 	$: showEndLabels = !narrow && view !== 'share';
-	$: margin = { top: 15, right: showEndLabels ? 165 : 15, bottom: 35, left: narrow ? 40 : 50 };
+	$: margin = { top: 15, right: showEndLabels ? (view === 'index' ? 190 : 165) : 15, bottom: 35, left: narrow ? 40 : 50 };
 
 	function endLabels(yScale: (v: number) => number) {
 		const labels = visible
@@ -122,7 +121,7 @@
 			bind:value={view}
 			options={[
 				{ value: 'trend', label: 'Verlauf' },
-				{ value: 'index', label: 'Veränderung' },
+				{ value: 'index', label: '%-Veränderung' },
 				{ value: 'share', label: 'Anteil' }
 			]}
 		/>
@@ -140,7 +139,7 @@
 		{#if view === 'index'}
 			<div class="w-40">
 				<Select
-					label="Startjahr"
+					label="Startjahr (= 100)"
 					bind:value={baseYear}
 					options={years.slice(0, -1).map((y) => ({ value: y, label: `Startjahr ${y}` }))}
 					hideLabel
@@ -154,8 +153,8 @@
 		{#if view === 'trend'}
 			{perCapita ? 'Treibhausgas-Emissionen pro Einwohner:in' : 'Treibhausgas-Emissionen'} je Bundesland, {years[0]}–{lastYear}.
 		{:else if view === 'index'}
-			Veränderung {perCapita ? 'der Pro-Kopf-Emissionen ' : 'der Emissionen '}gegenüber {baseYear} in %. Negative
-			Werte bedeuten weniger Emissionen als {baseYear}.
+			Entwicklung {perCapita ? 'der Pro-Kopf-Emissionen ' : ''}relativ zu {baseYear} (= 100). Werte unter 100
+			bedeuten weniger Emissionen als {baseYear}.
 		{:else}
 			Anteil der Bundesländer an den gesamten Emissionen.
 		{/if}
@@ -171,7 +170,7 @@
 	</div>
 
 	<div class="mt-2">
-		<Chart data={chartRows} x="year" y={yFields} height={380} yMin={view === 'index' ? null : 0} yMax={view === 'share' ? 100 : null} {margin}>
+		<Chart data={chartRows} x="year" y={yFields} height={380} yMin={0} yMax={view === 'share' ? 100 : null} {margin}>
 			<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
 				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={(v) => String(v)} tickCount={7} />
@@ -182,7 +181,7 @@
 					{/each}
 				{:else}
 					{#if view === 'index'}
-						<line x1="0" x2={innerWidth} y1={yScale(0)} y2={yScale(0)} stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" class="text-gray-500 dark:text-gray-400" />
+						<line x1="0" x2={innerWidth} y1={yScale(100)} y2={yScale(100)} stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" class="text-gray-500 dark:text-gray-400" />
 					{/if}
 					{#each [...visible].reverse() as s (s.key)}
 						<Line data={rows} x="year" y={s.key} {xScale} {yScale} stroke={s.color} strokeWidth={2} strokeDasharray={s.dash} {hover} />
