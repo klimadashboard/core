@@ -24,6 +24,8 @@
 	let hidden: Set<string> = new Set();
 	let clientWidth = 0;
 
+	// <Select> returns the option value as string → normalise to a number
+	$: if (typeof baseYear !== 'number') baseYear = Number(baseYear);
 	$: if (!years.includes(baseYear) && years.length) baseYear = years[0];
 	$: lastYear = years.at(-1) ?? 0;
 
