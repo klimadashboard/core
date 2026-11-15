@@ -8,7 +8,7 @@
 	import { onMount } from 'svelte';
 	import { readItems } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
-	import { Chart, AxisX, AxisY, BarStack, Tooltip, Legend } from '$lib/components/charts/primitives';
+	import { Chart, AxisX, AxisY, BarStack, Line, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { RadioGroup, Select } from '$lib/components/ui';
 	import { formatNumber } from '$lib/utils/formatters';
 	import type { ChartData } from '../../types';
@@ -53,6 +53,17 @@
 	let error: string | null = null;
 	let data: Row[] = [];
 
+	// line view: dash patterns so the series do not differ by colour alone
+	const DASH: Record<string, string | null> = {
+		electric: null,
+		plugin: '6 3',
+		hybrid: '2 3',
+		petrol: null,
+		diesel: '6 3',
+		other: '2 3'
+	};
+
+	let chartType: 'bar' | 'line' = 'bar';
 	let period: 'month' | 'year_to_date' = 'month';
 	let measure: 'count' | 'share' = 'count';
 	let untilMonth = 12;
@@ -139,6 +150,9 @@
 		return { x: b.x, label: b.label, total, segments, _top: acc };
 	});
 
+	// one field per group for the line view
+	$: lineRows = stacked.map((b) => ({ x: b.x, ...Object.fromEntries(b.segments.map((s) => [s.key, s.value])) }));
+
 	$: fmtCount = (v: number) => formatNumber(v, 0);
 	$: xFormat = (v: string) => {
 		if (period !== 'month') return v;
@@ -197,6 +211,15 @@
 
 		<div class="flex flex-wrap items-end gap-4">
 			<RadioGroup
+				label="Diagrammart"
+				hideLabel
+				bind:value={chartType}
+				options={[
+					{ value: 'bar', label: 'Balken' },
+					{ value: 'line', label: 'Linien' }
+				]}
+			/>
+			<RadioGroup
 				label="Zeitraum"
 				hideLabel
 				bind:value={period}
@@ -235,24 +258,45 @@
 		{/if}
 
 		<div>
-			<Legend interactive bind:hidden items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color }))} />
+			<Legend
+				interactive
+				bind:hidden
+				items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, dashed: chartType === 'line' && DASH[g.key] != null }))}
+			/>
 			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Antriebsarten in der Legende an- und abwählen.</p>
 		</div>
 
 		<Chart
-			data={stacked}
+			data={chartType === 'bar' ? stacked : lineRows}
 			x="x"
-			y="_top"
+			y={chartType === 'bar' ? '_top' : visibleGroups.map((g) => g.key)}
 			xType="band"
 			height={380}
 			yMin={0}
-			yMax={measure === 'share' ? 100 : null}
+			yMax={measure === 'share' && chartType === 'bar' ? 100 : null}
 			padding={period === 'month' ? 0.15 : 0.3}
 			margin={{ top: 15, right: 10, bottom: 35, left: 55 }}
 		>
 			<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
-				<BarStack data={stacked} x="x" {xScale} {yScale} {hover} />
+				{#if chartType === 'bar'}
+					<BarStack data={stacked} x="x" {xScale} {yScale} {hover} />
+				{:else}
+					{#each visibleGroups as g (g.key)}
+						<Line
+							data={lineRows}
+							x="x"
+							y={g.key}
+							{xScale}
+							{yScale}
+							stroke={g.color}
+							strokeWidth={g.key === 'electric' ? 3 : 2}
+							strokeDasharray={DASH[g.key]}
+							dots={period !== 'month'}
+							{hover}
+						/>
+					{/each}
+				{/if}
 				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={xFormat} tickCount={period === 'month' ? 8 : 10} />
 				<AxisY
 					mode="labels"
