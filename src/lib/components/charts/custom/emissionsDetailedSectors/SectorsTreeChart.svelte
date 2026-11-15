@@ -152,6 +152,7 @@
 							)}
 							{#if c == 0}
 								{@const muted = isMuted(ksgSector.key)}
+								{@const small = ksgSector.h < 100}
 								<foreignObject
 									height={ksgSector.h}
 									width={ksgSector.w}
@@ -171,23 +172,30 @@
 												};`}"
 									>
 										<div
-											class="w-full max-h-full flex items-center flex-wrap grow-0 gap-2 {muted
-												? 'text-gray-500 dark:text-gray-300'
-												: 'text-white'}"
+											class="w-full max-h-full flex items-center grow-0 gap-2 {small
+												? 'flex-nowrap'
+												: 'flex-wrap'} {muted ? 'text-gray-500 dark:text-gray-300' : 'text-white'}"
 											style="padding: {fontSize < 30
 												? 4
 												: fontSize / 4}px; font-size: {fontSize}px;"
+											title={ksgSector.label.replace(/&shy;/g, '').replace(/&amp;/g, '&')}
 										>
 											{#if ksgSelection == null}
-												<span style="display: inline-block; margin-right: {fontSize / 6}px"
-													><svelte:component this={colorForKey(ksgSector.key).iconComponent} size={Math.round(fontSize * 1.5)} color="currentColor" /></span
+												<span style="display: inline-block; margin-right: {fontSize / 6}px" class="shrink-0"
+													><svelte:component
+														this={colorForKey(ksgSector.key).iconComponent}
+														size={Math.round(fontSize * (small ? 1 : 1.5))}
+														color="currentColor"
+													/></span
 												>
+												<!-- small tiles: short label on one line, cut with … if it still does not fit -->
 												<strong
-													class="{ksgSector.h < 100
-														? 'max-w-[60%]'
-														: ''} text-ellipsis overflow-hidden">{@html ksgSector.label}</strong
+													class="{small
+														? 'min-w-0 whitespace-nowrap'
+														: ''} text-ellipsis overflow-hidden"
+													>{@html small ? ksgSector.shortLabel : ksgSector.label}</strong
 												>
-												<span class=""
+												<span class="shrink-0 whitespace-nowrap"
 													>{unitValue({ value: ksgSector.absolute[_y], short: true })}</span
 												>
 											{/if}

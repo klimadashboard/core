@@ -104,6 +104,8 @@
 		{
 			// display label only; filters use the dataset label "Memo"
 			label: 'Int. Flug- &amp; Schiffverkehr',
+			// used in small treemap tiles where the full label does not fit
+			shortLabel: 'Int. Flug &amp; Schiff',
 			color: 'memo',
 			colorCode: 'hsl(227, 38%, 61%)',
 			colorCodeHighlighted: 'hsl(227, 38%, 51%)',
@@ -340,6 +342,7 @@
 			key: ksg.key,
 			ksgSector: ksg.ksgSector,
 			label: colorForKey(ksg.key).label,
+			shortLabel: colorForKey(ksg.key).shortLabel ?? colorForKey(ksg.key).label,
 			sectors: crfSectors,
 			percentCumulative,
 			relative: percentSector,
