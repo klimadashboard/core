@@ -154,10 +154,23 @@
 	$: lineRows = stacked.map((b) => ({ x: b.x, ...Object.fromEntries(b.segments.map((s) => [s.key, s.value])) }));
 
 	$: fmtCount = (v: number) => formatNumber(v, 0);
+	// monthly x axis: label every January with the year and always the latest month ("Okt 26");
+	// a January closer than 3 months to the latest month is dropped so the labels do not overlap
+	$: lastKey = stacked.at(-1)?.x;
+	$: xTicks =
+		period === 'month' && lastKey
+			? [
+					...stacked
+						.map((b) => b.x)
+						.filter((x, i, all) => x.endsWith('-01') && all.length - 1 - i >= 3),
+					lastKey
+				]
+			: [];
 	$: xFormat = (v: string) => {
 		if (period !== 'month') return v;
 		const [y, m] = v.split('-').map(Number);
-		return m === 1 ? String(y) : `${MONTHS_SHORT[m - 1]} ${String(y).slice(2)}`;
+		if (v === lastKey) return `${MONTHS_SHORT[m - 1]} ${String(y).slice(2)}`;
+		return xTicks.includes(v) ? String(y) : '';
 	};
 
 	// headline numbers: latest month
@@ -297,7 +310,15 @@
 						/>
 					{/each}
 				{/if}
-				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={xFormat} tickCount={period === 'month' ? 8 : 10} />
+				<AxisX
+					{xScale}
+					{xDomain}
+					{innerWidth}
+					{innerHeight}
+					format={xFormat}
+					tickCount={period === 'month' ? 2 : 10}
+					forceTicks={xTicks}
+				/>
 				<AxisY
 					mode="labels"
 					{yScale}
