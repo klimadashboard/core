@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Chart, AxisX, AxisY, Line, Area, Tooltip, Legend } from '$lib/components/charts/primitives';
-	import { RadioGroup } from '$lib/components/ui';
+	import { RadioGroup, Toggle } from '$lib/components/ui';
 	import { formatNumber } from '$lib/utils/formatters';
 	import { readItems } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
@@ -28,6 +28,7 @@
 	// UI state
 	let view: 'share' | 'values' = 'share';
 	let selected: string[] = []; // comparison countries (home country is always shown)
+	let showTarget = false; // EU target 2030 with an indicative path from the latest value
 	let clientWidth = 0;
 
 	onMount(async () => {
@@ -93,8 +94,24 @@
 	$: stacked = view === 'share' && selected.length === 0;
 
 	$: maxValue = Math.max(0, ...rows.flatMap((r) => seriesIds.map((id) => r[id] ?? 0)));
-	// values view: keep the EU target line visible
-	$: yMax = view === 'share' ? 100 : Math.ceil((Math.max(maxValue, EU_TARGET.value) * 1.1) / 5) * 5;
+	// values view: keep the EU target visible when it is shown
+	$: yMax =
+		view === 'share' ? 100 : Math.max(5, Math.ceil((Math.max(maxValue, showTarget ? EU_TARGET.value : 0) * 1.1) / 5) * 5);
+
+	// x axis: always label the latest data year; with the target shown, extend the axis to the target year
+	$: lastDataYear = rows.at(-1)?.year ?? null;
+	$: chartRows =
+		showTarget && lastDataYear != null && lastDataYear < EU_TARGET.year
+			? [
+					...rows,
+					...Array.from({ length: EU_TARGET.year - lastDataYear }, (_, i) => {
+						const empty: Record<string, number | null> = { year: lastDataYear + i + 1, _top: null };
+						for (const id of seriesIds) empty[id] = null;
+						return empty;
+					})
+				]
+			: rows;
+	$: xTicks = [lastDataYear, ...(showTarget ? [EU_TARGET.year] : [])].filter((y): y is number => y != null);
 
 	// Responsive: end-of-line labels need room on the right
 	$: narrow = clientWidth > 0 && clientWidth < 500;
@@ -107,6 +124,14 @@
 	};
 
 	$: homeLatest = latestPoint(rows, homeId);
+	// indicative straight path from the latest value of the home country to the EU target
+	$: targetPath =
+		showTarget && homeLatest
+			? [
+					{ year: homeLatest.year, v: homeLatest.value },
+					{ year: EU_TARGET.year, v: EU_TARGET.value }
+				]
+			: [];
 
 	function endLabels(yScale: (v: number) => number) {
 		const labels = series
@@ -181,15 +206,18 @@
 					{styleFor}
 					max={MAX_COMPARE}
 				/>
-				<RadioGroup
-					label="Ansicht"
-					hideLabel
-					bind:value={view}
-					options={[
-						{ value: 'share', label: '100 %' },
-						{ value: 'values', label: 'Werte' }
-					]}
-				/>
+				<div class="flex flex-wrap items-center gap-4">
+					<Toggle label="EU-Ziel {EU_TARGET.year} anzeigen" bind:checked={showTarget} />
+					<RadioGroup
+						label="Ansicht"
+						hideLabel
+						bind:value={view}
+						options={[
+							{ value: 'share', label: '100 %' },
+							{ value: 'values', label: 'Werte' }
+						]}
+					/>
+				</div>
 			</div>
 
 			{#if stacked}
@@ -201,10 +229,18 @@
 				/>
 			{/if}
 
-			<Chart data={rows} x="year" y={seriesIds} height={360} yMin={0} {yMax} {margin}>
+			<Chart data={chartRows} x="year" y={seriesIds} height={360} yMin={0} {yMax} {margin}>
 				<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
 					<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
-					<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={(v) => String(v)} tickCount={6} />
+					<AxisX
+						{xScale}
+						{xDomain}
+						{innerWidth}
+						{innerHeight}
+						format={(v) => String(v)}
+						tickCount={6}
+						forceTicks={xTicks}
+					/>
 
 					{#if stacked}
 						<Area data={rows} x="year" y0Field={homeId} y1Field="_top" color={FOSSIL_COLOR} opacity={0.35} curve="linear" {xScale} {yScale} />
@@ -228,26 +264,37 @@
 						/>
 					{/each}
 
-					<!-- EU target -->
-					<line
-						x1="0"
-						x2={innerWidth}
-						y1={yScale(EU_TARGET.value)}
-						y2={yScale(EU_TARGET.value)}
-						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-dasharray="6 4"
-						class="text-gray-700 dark:text-gray-300"
-					/>
-					<text
-						x={8}
-						y={yScale(EU_TARGET.value) - 6}
-						class="text-xs font-semibold fill-gray-700 dark:fill-gray-300 stroke-white dark:stroke-gray-900"
-						stroke-width="3"
-						paint-order="stroke"
-					>
-						EU-Ziel {EU_TARGET.year}: {EU_TARGET.value} %
-					</text>
+					<!-- EU target: indicative path from the latest value + target point -->
+					{#if targetPath.length}
+						<Line
+							data={targetPath}
+							x="year"
+							y="v"
+							{xScale}
+							{yScale}
+							stroke={HOME_COLOR}
+							strokeWidth={2}
+							strokeDasharray="5 5"
+						/>
+						<circle
+							cx={xScale(EU_TARGET.year)}
+							cy={yScale(EU_TARGET.value)}
+							r="5"
+							fill="white"
+							stroke={HOME_COLOR}
+							stroke-width="2.5"
+						/>
+						<text
+							x={xScale(EU_TARGET.year) - 10}
+							y={yScale(EU_TARGET.value) - 10}
+							text-anchor="end"
+							class="text-xs font-semibold fill-gray-700 dark:fill-gray-300 stroke-white dark:stroke-gray-900"
+							stroke-width="3"
+							paint-order="stroke"
+						>
+							EU-Ziel {EU_TARGET.year}: {EU_TARGET.value} %
+						</text>
+					{/if}
 
 					{#if showEndLabels}
 						{#each endLabels(yScale) as l (l.id)}
@@ -269,7 +316,15 @@
 				<svelte:fragment slot="tooltip" let:hover>
 					{#if hover.x !== null}
 						{@const pt = rows.find((d) => d.year === hover.x)}
-						{#if pt}
+						{#if !pt && showTarget && hover.x === EU_TARGET.year}
+							<Tooltip
+								visible
+								x={hover.clientX}
+								y={hover.clientY}
+								title={String(EU_TARGET.year)}
+								items={[{ label: 'EU-Ziel (indikativ)', value: fmt(EU_TARGET.value), color: HOME_COLOR }]}
+							/>
+						{:else if pt}
 							<Tooltip
 								visible
 								x={hover.clientX}
