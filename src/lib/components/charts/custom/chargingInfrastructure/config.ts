@@ -1,6 +1,6 @@
 import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
-import { formatNumber, formatPower, formatPercent } from '$lib/utils/formatters';
+import { formatNumber, formatPower, formatPercent, formatDate } from '$lib/utils/formatters';
 import { getAggregateCodes, getAggregateMembers } from '$lib/utils/regionAggregation';
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem } from '@directus/sdk';
@@ -194,6 +194,8 @@ export function getPlaceholders(data: ChargingRawData, region: Region | null): R
 	const goal = buildChargingGoal(data, region);
 	const first = data.series[0];
 	return {
+		// Stichtag of the Ladesäulenregister, e.g. for the source: "… (Stand: {{updateDate}})"
+		updateDate: data.updateDate ? formatDate(data.updateDate) : '',
 		firstYear: first?.period ?? '',
 		firstChargingPoints: first ? formatNumber(first.charging_points) : '',
 		goalTarget: goal ? formatNumber(goal.target) : '',
