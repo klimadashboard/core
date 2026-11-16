@@ -12,6 +12,7 @@
 	import RegionProvider from '$lib/components/charts/context/RegionProvider.svelte';
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
 	import RegionMapView from '$lib/components/charts/regionMap/RegionMapView.svelte';
+	import ChargingMap from '$lib/components/charts/custom/chargingInfrastructure/ChargingMap.svelte';
 	import Switch from '$lib/components/Switch.svelte';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { provideChartSettings } from '$lib/components/charts/context/chartSettings';
@@ -919,7 +920,11 @@
 						hidden={activeTab !== 'map'}
 					>
 						{#if mapOpened}
-							<RegionMapView region={chartData?.meta?.region ?? null} energy={mapConfig.energy} />
+							{#if mapConfig.energy === 'charging'}
+								<ChargingMap region={chartData?.meta?.region ?? null} />
+							{:else}
+								<RegionMapView region={chartData?.meta?.region ?? null} energy={mapConfig.energy} />
+							{/if}
 						{/if}
 						{#if source}
 							<p class="text-xs text-gray-500 mt-4">

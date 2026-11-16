@@ -185,15 +185,15 @@
 				<!-- Goal path: drawn first so the actual Zubau of the current year sits on top -->
 				{#if goal}
 					{#each goalYears as year (year)}
-						{@const gx = xScale(year)}
-						{@const gw = xScale.bandwidth?.() ?? 20}
-						{@const top = yScale(goal.perYear)}
+						{@const gx = (xScale as any)(year)}
+						{@const gw = (xScale as any).bandwidth?.() ?? 20}
+						{@const top = (yScale as any)(goal.perYear)}
 						{#if gx !== undefined}
 							<rect
 								x={gx}
 								y={top}
 								width={gw}
-								height={yScale(0) - top}
+								height={(yScale as any)(0) - top}
 								fill={GOAL_COLOR}
 								fill-opacity={GOAL_FILL_OPACITY}
 								stroke={GOAL_COLOR}

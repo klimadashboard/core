@@ -223,6 +223,8 @@ export function buildChartData(data: ChargingRawData, region: Region | null): Ch
 			filename: `ladeinfrastruktur-${region?.name || 'deutschland'}`
 		},
 		placeholders: getPlaceholders(data, region),
+		// "Karte" tab: all charging stations (ChargingMap.svelte, data from /api/charging-locations)
+		map: { energy: 'charging' },
 		meta: {
 			updateDate: data.updateDate ?? undefined,
 			source: data.source,
