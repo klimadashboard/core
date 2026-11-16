@@ -37,7 +37,7 @@ export interface PtSupplyData {
 	updateDate: string | null;
 }
 
-const ASSET_BASE = 'https://base.klimadashboard.org/assets';
+const DIRECTUS = 'https://base.klimadashboard.org';
 /** Platzkilometer_VGN_2019-2025.csv */
 const DEFAULT_CSV = 'daa93383-c0d1-4fcb-a37f-703fac3d6450';
 
@@ -96,7 +96,14 @@ export async function fetchPtSupply({
 	const type: string = chartConfig?.type ?? 'seat_km';
 	const candidates = [regionId, ...parentIds];
 
-	const res = await fetch(`${ASSET_BASE}/${chartConfig?.csv ?? DEFAULT_CSV}`);
+	// Assets are cached for 30 days; versioning the URL with `modified_on` shows a file
+	// replaced in place right away.
+	const fileId: string = chartConfig?.csv ?? DEFAULT_CSV;
+	const file = await fetch(`${DIRECTUS}/files/${fileId}?fields=modified_on`)
+		.then((r) => (r.ok ? r.json() : null))
+		.catch(() => null);
+	const version = encodeURIComponent(file?.data?.modified_on ?? '');
+	const res = await fetch(`${DIRECTUS}/assets/${fileId}${version ? `?v=${version}` : ''}`);
 	if (!res.ok) throw new Error(`CSV ${res.status}`);
 	const parsed: CsvRow[] = Papa.parse(await res.text(), {
 		header: true,
