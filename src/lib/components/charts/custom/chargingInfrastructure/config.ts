@@ -105,6 +105,79 @@ export async function fetchData(
 	};
 }
 
+// ---------------------------------------------------------------- yearly Zubau + 2030 goal
+
+/** Series colours of the Zubau chart (from the Nürnberg charging explorer "inkl. Ziel") */
+export const ZUBAU_COLORS = { normal: '#31AAA9', fast: '#A82020' } as const;
+/** Goal path bars: semi-transparent fill with a dashed outline in the same colour */
+export const GOAL_COLOR = '#892CDC';
+export const GOAL_FILL_OPACITY = 0.3;
+
+/** Masterplan Ladeinfrastruktur II: 1 million public charging points in Germany by 2030 */
+export const CHARGING_GOAL = { target: 1_000_000, targetYear: 2030, startYear: 2026, endYear: 2029 } as const;
+/** 1 million at 82,7 million inhabitants (Destatis forecast 2030) = 12,1 charging points per 1,000 inhabitants */
+export const TARGET_PER_1000 = 12.1;
+
+export interface ChargingGoal {
+	target: number;
+	targetYear: number;
+	startYear: number;
+	endYear: number;
+	/** Stock at the end of startYear − 1 */
+	baseStock: number;
+	remaining: number;
+	/** Required Zubau per goal year */
+	perYear: number;
+	/** Only for regions: the national target per inhabitant applied to this population */
+	population?: number;
+}
+
+export interface ZubauYear {
+	period: number;
+	normal: number;
+	fast: number;
+	total: number;
+	/** Current year: not over yet */
+	partial: boolean;
+}
+
+/** Zubau per year = stock at the end of the year − stock at the end of the previous year (first year has no base). */
+export function toZubau(series: ChargingYear[]): ZubauYear[] {
+	const lastYear = Number(series.at(-1)?.period);
+	const currentYear = new Date().getFullYear();
+	return series.slice(1).map((d, i) => {
+		const prev = series[i];
+		const normal = d.charging_points_normal - prev.charging_points_normal;
+		const fast = d.charging_points_fast - prev.charging_points_fast;
+		const period = Number(d.period);
+		return { period, normal, fast, total: normal + fast, partial: period === lastYear && period >= currentYear };
+	});
+}
+
+/**
+ * Goal path: what is missing to the target after the stock at the end of startYear − 1, spread evenly over the goal
+ * years. Germany: 1 million; any other region: its population × 12,1 per 1,000.
+ */
+export function buildChargingGoal(data: ChargingRawData, region: Region | null): ChargingGoal | null {
+	const base = data.series.find((d) => Number(d.period) === CHARGING_GOAL.startYear - 1);
+	if (!base) return null;
+	const national = !region || region.layer === 'country';
+	const population = national ? undefined : data.population ?? undefined;
+	if (!national && !population) return null;
+	const target = national ? CHARGING_GOAL.target : Math.round((population! * TARGET_PER_1000) / 1000);
+	const remaining = target - base.charging_points;
+	if (remaining <= 0) return null;
+	const years = CHARGING_GOAL.endYear - CHARGING_GOAL.startYear + 1;
+	return {
+		...CHARGING_GOAL,
+		target,
+		baseStock: base.charging_points,
+		remaining,
+		perYear: remaining / years,
+		...(population ? { population } : {})
+	};
+}
+
 export function getTableColumns(): TableColumn[] {
 	return [
 		{ key: 'period', label: 'Jahr', align: 'left' },
@@ -118,7 +191,14 @@ export function getTableColumns(): TableColumn[] {
 
 export function getPlaceholders(data: ChargingRawData, region: Region | null): Record<string, string | number> {
 	const { latest } = data;
+	const goal = buildChargingGoal(data, region);
+	const first = data.series[0];
 	return {
+		firstYear: first?.period ?? '',
+		firstChargingPoints: first ? formatNumber(first.charging_points) : '',
+		goalTarget: goal ? formatNumber(goal.target) : '',
+		goalYear: goal?.targetYear ?? '',
+		goalPerYear: goal ? formatNumber(Math.round(goal.perYear)) : '',
 		regionName: region?.name || 'Deutschland',
 		chargingPoints: formatNumber(latest.charging_points),
 		fastChargingPoints: formatNumber(latest.charging_points_fast),

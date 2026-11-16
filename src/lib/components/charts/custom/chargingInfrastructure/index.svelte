@@ -2,57 +2,110 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import { Chart, AxisX, AxisY, BarStack, Tooltip, Legend } from '$lib/components/charts/primitives';
-	import { RadioGroup } from '$lib/components/ui';
-	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
-	import { formatNumber, formatPower, formatDate } from '$lib/utils/formatters';
-	import { fetchData, buildChartData, type ChargingRawData } from './config';
+	import { IconTargetArrow } from '@tabler/icons-svelte-runes';
+	import { formatNumber, formatDate } from '$lib/utils/formatters';
+	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
+	import {
+		fetchData,
+		buildChartData,
+		buildChargingGoal,
+		toZubau,
+		ZUBAU_COLORS,
+		GOAL_COLOR,
+		GOAL_FILL_OPACITY,
+		TARGET_PER_1000,
+		type ChargingRawData
+	} from './config';
 
 	export let region: Region | null = null;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
 	const SERIES = [
-		{ key: 'normal', label: 'Normalladepunkte (bis 22 kW)', color: '#F5AF4A' },
-		{ key: 'fast', label: 'Schnellladepunkte (über 22 kW)', color: '#373949' }
-	];
+		{ key: 'normal', label: 'Normalladepunkte', color: ZUBAU_COLORS.normal },
+		{ key: 'fast', label: 'Schnellladepunkte', color: ZUBAU_COLORS.fast }
+	] as const;
 
 	let data: ChargingRawData | null = null;
 	let loading = true;
 	let error: string | null = null;
-	let metric: 'points' | 'power' = 'points';
 	let containerEl: HTMLElement;
 	let containerWidth = 0;
+	// The 2030 goal path is shown by default; the checkbox hides it
+	let showGoal = true;
 
 	$: isMobile = containerWidth < 500;
-	$: field = metric === 'points' ? 'charging_points' : 'power_kw';
 
-	$: stackedData = (data?.series ?? []).map((d) => {
+	// Region shown in the chart: the card's region, or a member picked in the RegionSwitcher
+	// (the switcher only appears for aggregate regions such as a Metropolregion)
+	let switchedRegion: Region | null = null;
+	let switcherId: string | null = null;
+	let switcherFor: string | null = null;
+	$: if (region?.id !== switcherFor) {
+		switcherFor = region?.id ?? null;
+		switchedRegion = null;
+		switcherId = region?.id ?? null;
+	}
+	$: activeRegion = switchedRegion ?? region;
+
+	$: zubau = data ? toZubau(data.series) : [];
+	$: goal = data ? buildChargingGoal(data, activeRegion) : null;
+	$: goalYears =
+		goal && showGoal
+			? Array.from({ length: goal.endYear - goal.startYear + 1 }, (_, i) => goal!.startYear + i)
+			: [];
+
+	$: stackedData = zubau.map((d) => {
 		let y0 = 0;
 		const segments = SERIES.map((s) => {
-			const value = d[`${field}_${s.key}` as keyof typeof d] as number;
+			// a decrease (e.g. points taken out of service) counts as 0 in the stack, the tooltip shows the real value
+			const value = Math.max(0, d[s.key]);
 			const seg = { key: s.key, label: s.label, value, y0, y1: y0 + value, color: s.color };
 			y0 += value;
 			return seg;
 		});
 		return { period: d.period, total: y0, segments };
 	});
-	$: yMax = Math.max(1, ...stackedData.map((d) => d.total)) * 1.05;
-
-	function formatValue(v: number) {
-		return metric === 'points' ? formatNumber(v) : formatPower(v);
-	}
+	// Goal years without Zubau yet still need an x band
+	$: chartRows = [
+		...stackedData,
+		...goalYears
+			.filter((y) => !stackedData.some((d) => d.period === y))
+			.map((y) => ({ period: y, total: 0, segments: [] }))
+	].sort((a, b) => a.period - b.period);
+	$: yMax =
+		Math.max(1, ...stackedData.map((d) => d.total), goalYears.length && goal ? goal.perYear : 0) * 1.05;
+	$: unitDivisor = yMax >= 10_000 ? 1000 : 1;
 
 	function formatAxis(v: number) {
-		if (metric === 'power') return formatPower(v);
-		return v >= 10_000 ? `${formatNumber(v / 1000)}k` : formatNumber(v);
+		return unitDivisor > 1 ? formatNumber(v / unitDivisor, v % unitDivisor ? 1 : 0) : formatNumber(v);
 	}
 
-	function tooltipItems(period: string | null) {
-		const bar = stackedData.find((d) => d.period === period);
-		if (!bar) return [];
-		return [
-			...bar.segments.map((s) => ({ label: s.label, value: formatValue(s.value), color: s.color })),
-			{ label: 'Gesamt', value: formatValue(bar.total) }
-		];
+	function tooltipTitle(period: number | null) {
+		const row = zubau.find((d) => d.period === period);
+		if (period == null) return '';
+		if (row?.partial && data?.updateDate) return `Zubau ${period} (bis ${formatDate(data.updateDate)})`;
+		return `Zubau ${period}`;
+	}
+
+	function tooltipItems(period: number | null) {
+		const row = zubau.find((d) => d.period === period);
+		const items: Array<{ label: string; value: string; color?: string }> = [];
+		if (row) {
+			for (const s of [...SERIES].reverse())
+				items.push({ label: s.label, value: formatNumber(row[s.key]), color: s.color });
+			items.push({ label: 'Gesamt', value: formatNumber(row.total) });
+		}
+		if (goal && period != null && goalYears.includes(period)) {
+			items.push({ label: 'Jahresziel', value: formatNumber(Math.round(goal.perYear)), color: GOAL_COLOR });
+			if (row && goal.perYear > 0) {
+				const share = Math.max(0, row.total) / goal.perYear;
+				items.push({
+					label: 'Jahresziel erreicht',
+					value: `${share > 0 && share < 0.01 ? '< 1' : formatNumber(Math.round(share * 100))} %`
+				});
+			}
+		}
+		return items;
 	}
 
 	async function loadData(r: Region | null) {
@@ -71,77 +124,45 @@
 		}
 	}
 
-	$: loadData(region);
+	$: loadData(activeRegion);
 </script>
 
 <div bind:this={containerEl} bind:clientWidth={containerWidth}>
+	<!-- Outside the loading state so focus stays on the controls while the data reloads -->
+	<div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 mb-4">
+		{#if region}
+			<RegionSwitcher
+				{region}
+				bind:selectedId={switcherId}
+				on:change={(e) => (switchedRegion = e.detail.id === region?.id ? null : e.detail)}
+			/>
+		{/if}
+		{#if goal}
+			<label
+				class="inline-flex items-center gap-1.5 cursor-pointer select-none text-sm text-gray-700 dark:text-gray-300"
+			>
+				<IconTargetArrow size={18} stroke={2} aria-hidden="true" class="shrink-0" />
+				<span>{goal.targetYear}-Ziel</span>
+				<input
+					type="checkbox"
+					bind:checked={showGoal}
+					class="ml-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+				/>
+			</label>
+		{/if}
+	</div>
+
 	{#if loading}
 		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
 		<div class="h-[300px] flex items-center justify-center text-red-500">{error}</div>
-	{:else if !data || !data.series.length}
-		<div class="h-[300px] flex items-center justify-center text-gray-500">Keine Daten verfügbar</div>
+	{:else if !data || !zubau.length}
+		<div class="h-[300px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+			Keine Daten verfügbar
+		</div>
 	{:else}
-		<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-			<div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
-				<p class="text-sm text-gray-600 dark:text-gray-400">
-					Ladepunkte{data.updateDate ? ` (Stand ${formatDate(data.updateDate)})` : ''}
-				</p>
-				<p class="text-2xl font-bold text-gray-900 dark:text-white">
-					{formatNumber(data.latest.charging_points)}
-				</p>
-				<p class="text-sm text-gray-600 dark:text-gray-400">
-					davon {formatNumber(data.latest.charging_points_fast)} Schnelllader
-				</p>
-			</div>
-			<div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
-				<p class="text-sm text-gray-600 dark:text-gray-400">Ladeleistung</p>
-				<p class="text-2xl font-bold text-gray-900 dark:text-white">{formatPower(data.latest.power_kw)}</p>
-				<p class="text-sm text-gray-600 dark:text-gray-400">
-					+{formatNumber(data.latest.added_charging_points)} Ladepunkte seit Jahresbeginn
-				</p>
-			</div>
-			<div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
-				<p class="text-sm text-gray-600 dark:text-gray-400">Ladepunkte je 1.000 Einw.</p>
-				<p class="text-2xl font-bold text-gray-900 dark:text-white">
-					{data.perThousand != null ? formatNumber(data.perThousand, 1) : '–'}
-				</p>
-				{#if data.comparisons.length}
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						{data.comparisons.map((c) => `${c.label}: ${formatNumber(c.perThousand, 1)}`).join(' · ')}
-					</p>
-				{/if}
-			</div>
-			<div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-3">
-				<p class="text-sm text-gray-600 dark:text-gray-400">E-Autos je Ladepunkt</p>
-				<p class="text-2xl font-bold text-gray-900 dark:text-white">
-					{data.evsPerPoint != null ? formatNumber(data.evsPerPoint, 1) : '–'}
-				</p>
-				{#if data.electricCars}
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						{formatNumber(data.electricCars.value)} E-Autos ({data.electricCars.period})
-					</p>
-				{/if}
-			</div>
-		</div>
-
-		<div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-			<ChartSettings>
-				<RadioGroup
-					label="Kennzahl"
-					hideLabel
-					bind:value={metric}
-					options={[
-						{ value: 'points', label: 'Ladepunkte' },
-						{ value: 'power', label: 'Ladeleistung' }
-					]}
-				/>
-			</ChartSettings>
-			<Legend items={SERIES} />
-		</div>
-
 		<Chart
-			data={stackedData}
+			data={chartRows}
 			x="period"
 			y="total"
 			xType="band"
@@ -149,13 +170,57 @@
 			yMin={0}
 			{yMax}
 			padding={0.25}
-			margin={{ top: 15, right: isMobile ? 10 : 20, bottom: 35, left: isMobile ? 45 : 60 }}
+			margin={{ top: 15, right: isMobile ? 10 : 20, bottom: 35, left: isMobile ? 40 : 55 }}
 		>
-			<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
+			<svelte:fragment
+				slot="default"
+				let:xScale
+				let:yScale
+				let:xDomain
+				let:innerWidth
+				let:innerHeight
+				let:hover
+			>
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
+				<!-- Goal path: drawn first so the actual Zubau of the current year sits on top -->
+				{#if goal}
+					{#each goalYears as year (year)}
+						{@const gx = xScale(year)}
+						{@const gw = xScale.bandwidth?.() ?? 20}
+						{@const top = yScale(goal.perYear)}
+						{#if gx !== undefined}
+							<rect
+								x={gx}
+								y={top}
+								width={gw}
+								height={yScale(0) - top}
+								fill={GOAL_COLOR}
+								fill-opacity={GOAL_FILL_OPACITY}
+								stroke={GOAL_COLOR}
+								stroke-width="1.5"
+								stroke-dasharray="4,3"
+								opacity={hover.x !== null && hover.x !== year ? 0.5 : 1}
+							/>
+						{/if}
+					{/each}
+				{/if}
 				<BarStack data={stackedData} x="period" {xScale} {yScale} {hover} radius={2} />
-				<AxisY mode="labels" {yScale} {innerWidth} {innerHeight} format={formatAxis} />
-				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={String} tickCount={isMobile ? 4 : 12} />
+				<AxisY
+					mode="labels"
+					{yScale}
+					{innerWidth}
+					{innerHeight}
+					format={formatAxis}
+					unit={unitDivisor > 1 ? 'Tsd' : ''}
+				/>
+				<AxisX
+					{xScale}
+					{xDomain}
+					{innerWidth}
+					{innerHeight}
+					format={String}
+					tickCount={isMobile ? Math.ceil(xDomain.length / 2) : xDomain.length}
+				/>
 			</svelte:fragment>
 
 			<svelte:fragment slot="tooltip" let:hover>
@@ -163,12 +228,49 @@
 					visible={hover.x !== null}
 					x={hover.clientX}
 					y={hover.clientY}
-					title={hover.x === data.latest.period && data.updateDate
-						? `Bestand am ${formatDate(data.updateDate)}`
-						: `Bestand Ende ${hover.x ?? ''}`}
+					title={tooltipTitle(hover.x)}
 					items={tooltipItems(hover.x)}
 				/>
 			</svelte:fragment>
 		</Chart>
+
+		<!-- Legend: the goal swatch repeats the bar style (fill + dashed outline), so it never relies on colour alone -->
+		<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
+			<Legend items={[...SERIES]} />
+			{#if goal && showGoal}
+				<span class="inline-flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300">
+					<svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true" class="flex-shrink-0">
+						<rect
+							x="0.75"
+							y="0.75"
+							width="14.5"
+							height="10.5"
+							rx="1.5"
+							fill={GOAL_COLOR}
+							fill-opacity={GOAL_FILL_OPACITY}
+							stroke={GOAL_COLOR}
+							stroke-width="1.5"
+							stroke-dasharray="3,2"
+						/>
+					</svg>
+					Zielpfad bis {goal.targetYear}
+				</span>
+			{/if}
+		</div>
+
+		{#if goal && showGoal}
+			<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+				Die Bundesregierung strebt laut dem Masterplan Ladeinfrastruktur II bis {goal.targetYear} eine Million
+				öffentliche Ladepunkte an.
+				{#if goal.population}
+					Auf {activeRegion?.name ?? 'die Region'} ({formatNumber(goal.population)} Einwohner) umgelegt, mit {formatNumber(
+						TARGET_PER_1000,
+						1
+					)} Ladepunkten pro 1.000 Einwohner, ergibt das ein Ziel von {formatNumber(goal.target)} Ladepunkten.
+				{/if}
+				Der Zielpfad verteilt die ab dem 31.12.{goal.startYear - 1} fehlenden {formatNumber(goal.remaining)} Ladepunkte
+				gleichmäßig auf {goal.startYear}–{goal.endYear} ({formatNumber(Math.round(goal.perYear))} pro Jahr).
+			</p>
+		{/if}
 	{/if}
 </div>
