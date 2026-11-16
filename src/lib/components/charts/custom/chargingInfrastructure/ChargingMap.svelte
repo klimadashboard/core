@@ -11,7 +11,24 @@
 	import { cartoRasterTiles } from '$lib/utils/cartoBasemap';
 	import { formatNumber, formatDate } from '$lib/utils/formatters';
 	import { getAggregateCodes, isAggregateRegion } from '$lib/utils/regionAggregation';
-	import { ZUBAU_COLORS } from './config';
+	import { CHARGING_CLASSES } from './config';
+
+	/** Pin per location by its highest class of charging point (index = topClass from the endpoint) */
+	const PIN_TYPES = [
+		{ image: 'pin-nlp', color: CHARGING_CLASSES[0].color, label: 'Standort mit Normalladepunkten' },
+		{ image: 'pin-slp', color: CHARGING_CLASSES[1].color, label: 'Standort mit Schnellladepunkten' },
+		{ image: 'pin-hpc', color: CHARGING_CLASSES[2].color, label: 'Standort mit HPC-Ladestationen' }
+	];
+	/** MapLibre expression: a value per topClass (0 NLP, 1 SLP, 2 HPC) */
+	const byClass = (values: [unknown, unknown, unknown]): any => [
+		'match',
+		['get', 'top'],
+		2,
+		values[2],
+		1,
+		values[1],
+		values[0]
+	];
 
 	export let region: any = null;
 	export let height = 420;
@@ -74,7 +91,8 @@
 		id: number;
 		stations: number;
 		points: number;
-		fastPoints: number;
+		/** Charging points by class: [NLP, SLP, HPC] */
+		classes: [number, number, number];
 		kw: number;
 		maxKw: number;
 		operators: string[];
@@ -88,7 +106,7 @@
 	let locationsRequest: Promise<Locations> | null = null;
 	function loadLocations(): Promise<Locations> {
 		// ?v= changes with the response format, so browsers don't reuse a cached older one (max-age 1 h)
-		locationsRequest ??= fetch('/api/charging-locations?v=2').then((r) => {
+		locationsRequest ??= fetch('/api/charging-locations?v=3').then((r) => {
 			if (!r.ok) throw new Error(`Standorte konnten nicht geladen werden (${r.status})`);
 			return r.json();
 		});
@@ -161,7 +179,7 @@
 			out.push({
 				type: 'Feature',
 				geometry: { type: 'Point', coordinates: [p[i + 1], p[i + 2]] },
-				properties: { id: p[i], points: p[i + 3], stations: p[i + 4], fast: p[i + 5] }
+				properties: { id: p[i], points: p[i + 3], stations: p[i + 4], top: p[i + 5] }
 			});
 		}
 		shownStations = stations;
@@ -302,18 +320,16 @@
 				paint: { 'text-color': '#FFFFFF', 'text-halo-color': 'rgba(0,0,0,0.25)', 'text-halo-width': 1 }
 			});
 
-			// Locations at their exact position as pins: red with Schnellladepunkte, teal with
-			// Normalladepunkte only; from 3 charging points their number sits next to the pin
-			map.addImage('pin-normal', pinImage(ZUBAU_COLORS.normal), { pixelRatio: PIN_RATIO });
-			map.addImage('pin-fast', pinImage(ZUBAU_COLORS.fast), { pixelRatio: PIN_RATIO });
-			const isFast: any = ['>', ['get', 'fast'], 0];
+			// Locations at their exact position as pins in the colour of their highest class (as in the
+			// bar chart: NLP teal, SLP yellow, HPC red); from 3 charging points their number sits next to it
+			for (const t of PIN_TYPES) map.addImage(t.image, pinImage(t.color), { pixelRatio: PIN_RATIO });
 			map.addLayer({
 				id: 'stations',
 				type: 'symbol',
 				source: 'stations',
 				filter: ['!', ['has', 'point_count']],
 				layout: {
-					'icon-image': ['case', isFast, 'pin-fast', 'pin-normal'],
+					'icon-image': byClass([PIN_TYPES[0].image, PIN_TYPES[1].image, PIN_TYPES[2].image]),
 					'icon-anchor': 'bottom',
 					'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.55, 16, 0.85],
 					'icon-allow-overlap': true,
@@ -338,7 +354,8 @@
 					'text-allow-overlap': true
 				},
 				paint: {
-					'text-color': ['case', isFast, ZUBAU_COLORS.fast, ZUBAU_COLORS.normal],
+					// Yellow is too light for text: a dark amber for SLP keeps it readable
+					'text-color': byClass([PIN_TYPES[0].color, '#8A6200', PIN_TYPES[2].color]),
 					'text-halo-color': '#FFFFFF',
 					'text-halo-width': 1.5
 				}
@@ -442,9 +459,17 @@
 						<div class="text-xs text-gray-600 dark:text-gray-400">{s.street}, {s.zip} {s.city}</div>
 						<dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-2 text-xs text-gray-700 dark:text-gray-300">
 							<dt>Ladepunkte</dt>
-							<dd>
-								{formatNumber(s.points)}{#if s.fastPoints}&nbsp;(davon {formatNumber(s.fastPoints)} Schnellladen){/if}
-							</dd>
+							<dd>{formatNumber(s.points)}</dd>
+							<!-- By class, only the ones present; a single class as its type -->
+							{#each CHARGING_CLASSES as cls, k}
+								{#if s.classes[k] && s.classes[k] < s.points}
+									<dt class="pl-2">davon {cls.short}</dt>
+									<dd>{formatNumber(s.classes[k])}</dd>
+								{:else if s.classes[k]}
+									<dt class="pl-2">Typ</dt>
+									<dd>{cls.short}</dd>
+								{/if}
+							{/each}
 							{#if many}<dt>Ladeeinrichtungen</dt><dd>{formatNumber(s.stations)}</dd>{/if}
 							<dt>Leistung</dt>
 							<dd>{many ? `${formatNumber(s.kw)} kW gesamt, bis ${formatNumber(s.maxKw)} kW` : `${formatNumber(s.kw)} kW`}</dd>
@@ -461,7 +486,7 @@
 				<span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white" style="background: {BUBBLE}">12</span>
 				Ladepunkte in der Umgebung
 			</span>
-			{#each [{ color: ZUBAU_COLORS.normal, label: 'Standort mit Normalladepunkten' }, { color: ZUBAU_COLORS.fast, label: 'Standort mit Schnellladepunkten' }] as item}
+			{#each PIN_TYPES as item}
 				<span class="inline-flex items-center gap-1">
 					<svg width="17" height="20" viewBox="0 0 {PIN.width} {PIN.height}" aria-hidden="true" class="shrink-0 drop-shadow">
 						<path d={PIN.drop} fill="#FFFFFF" />

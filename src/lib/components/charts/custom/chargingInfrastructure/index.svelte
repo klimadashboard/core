@@ -260,10 +260,10 @@
 				Die Bundesregierung strebt laut dem Masterplan Ladeinfrastruktur II bis {goal.targetYear} eine Million
 				öffentliche Ladepunkte an.
 				{#if goal.population}
-					Auf {activeRegion?.name ?? 'die Region'} ({formatNumber(goal.population)} Einwohner) umgelegt, mit {formatNumber(
+					Auf {activeRegion?.name ?? 'die Region'} ({formatNumber(goal.population)} Einwohner:in) umgelegt, mit {formatNumber(
 						TARGET_PER_1000,
 						1
-					)} Ladepunkten pro 1.000 Einwohner, ergibt das ein Ziel von {formatNumber(goal.target)} Ladepunkten.
+					)} Ladepunkten pro 1.000 Einwohner:in, ergibt das ein Ziel von {formatNumber(goal.target)} Ladepunkten.
 				{/if}
 				Der Zielpfad verteilt die ab dem 31.12.{goal.startYear - 1} fehlenden {formatNumber(goal.remaining)} Ladepunkte
 				gleichmäßig auf {goal.startYear}–{goal.endYear} ({formatNumber(Math.round(goal.perYear))} pro Jahr).

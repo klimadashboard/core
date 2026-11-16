@@ -8,7 +8,8 @@ import type { RequestHandler } from './$types';
 //
 //   GET /api/charging-locations        → { updateDate, source, count, locations, points: number[] }
 //       one entry per location (stations with the same coordinate combined), flat:
-//       [id, lon, lat, chargingPoints, stations, fastChargingPoints, district, ...] (STRIDE values each)
+//       [id, lon, lat, chargingPoints, stations, topClass, district, ...] (STRIDE values each)
+//       topClass: highest class of charging point there (0 NLP ≤ 22 kW, 1 SLP, 2 HPC ≥ 150 kW)
 //       district: AGS of the Kreis the location lies in, as a number (09564 → 9564; 0 = none found),
 //       from point-in-polygon against the district outlines in Directus, so maps can show one region
 //   GET /api/charging-locations?id=123 → details of one location for the map tooltip
@@ -113,7 +114,8 @@ interface Location {
 	id: number;
 	stations: number;
 	points: number;
-	fastPoints: number;
+	/** Charging points by class: [NLP ≤ 22 kW, SLP > 22 to < 150 kW, HPC ≥ 150 kW] */
+	classes: Classes;
 	/** Sum of the stations' rated power */
 	kw: number;
 	maxKw: number;
@@ -279,12 +281,14 @@ function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 	let stations = 0;
 	for (const group of byCoord.values()) {
 		const first = group[0];
-		const fastPoints = group.reduce((sum, s) => sum + (/schnell/i.test(s.type) ? s.points : 0), 0);
+		const classes: Classes = [0, 0, 0];
+		for (const s of group) for (let k = 0; k < 3; k++) classes[k] += s.classes[k];
+		const topClass = classes[2] ? 2 : classes[1] ? 1 : 0;
 		const loc: Location = {
 			id: first.id,
 			stations: group.length,
 			points: group.reduce((sum, s) => sum + s.points, 0),
-			fastPoints,
+			classes,
 			kw: Math.round(group.reduce((sum, s) => sum + s.kw, 0)),
 			maxKw: Math.max(...group.map((s) => s.kw)),
 			operators: [...new Set(group.map((s) => s.operator))],
@@ -312,7 +316,7 @@ function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 			Math.round(loc.lat * 1e5) / 1e5,
 			loc.points,
 			loc.stations,
-			fastPoints,
+			topClass,
 			loc.district
 		);
 	}

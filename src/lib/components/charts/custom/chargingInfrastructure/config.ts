@@ -163,9 +163,15 @@ export const ZUBAU_COLORS = { normal: '#31AAA9', fast: '#A82020' } as const;
 /** Classes of the Zubau bars by the rated power of each charging point */
 export const CHARGING_CLASSES = [
 	// NLP and HPC in the colours of the map pins (Normal- / Schnellladen)
-	{ key: 'nlp', label: 'Normalladepunkte (≤ 22 kW)', color: ZUBAU_COLORS.normal },
-	{ key: 'slp', label: 'Schnellladepunkte (> 22 kW – < 150 kW)', color: '#F5B700' },
-	{ key: 'hpc', label: 'High Power Charging (HPC) Ladestationen (≥ 150 kW)', color: ZUBAU_COLORS.fast }
+	// `short`: compact name for tooltips ("davon 2 HPC-Ladepunkte")
+	{ key: 'nlp', label: 'Normalladepunkte (≤ 22 kW)', short: 'Normalladepunkte', color: ZUBAU_COLORS.normal },
+	{ key: 'slp', label: 'Schnellladepunkte (> 22 kW – < 150 kW)', short: 'Schnellladepunkte', color: '#F5B700' },
+	{
+		key: 'hpc',
+		label: 'High Power Charging (HPC) Ladestationen (≥ 150 kW)',
+		short: 'HPC-Ladepunkte',
+		color: ZUBAU_COLORS.fast
+	}
 ] as const;
 /** Goal path bars: semi-transparent fill with a dashed outline in the same colour */
 export const GOAL_COLOR = '#892CDC';
