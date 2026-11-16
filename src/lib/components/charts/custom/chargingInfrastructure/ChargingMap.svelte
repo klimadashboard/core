@@ -17,6 +17,48 @@
 	export let height = 420;
 
 	const BUBBLE = '#1FB5C9';
+
+	// Station pin (40×48 box): white drop with a soft shadow, a light disc in the series colour and
+	// the Tabler "bolt" icon in that colour. Same paths for the map icon (canvas) and the legend (SVG).
+	const PIN = {
+		width: 40,
+		height: 48,
+		drop: 'M20 44 L15.6 36.4 A17 17 0 1 1 24.4 36.4 Z',
+		disc: { cx: 20, cy: 20, r: 13 },
+		// Tabler bolt (24×24) scaled to 0.75 and centred on the disc
+		bolt: 'M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11',
+		boltTransform: { scale: 0.75, x: 11, y: 11 }
+	};
+	const PIN_RATIO = 2;
+
+	function pinImage(color: string): ImageData {
+		const canvas = document.createElement('canvas');
+		canvas.width = PIN.width * PIN_RATIO;
+		canvas.height = PIN.height * PIN_RATIO;
+		const ctx = canvas.getContext('2d')!;
+		ctx.scale(PIN_RATIO, PIN_RATIO);
+		ctx.shadowColor = 'rgba(0,0,0,0.28)';
+		ctx.shadowBlur = 5;
+		ctx.shadowOffsetY = 1;
+		ctx.fillStyle = '#FFFFFF';
+		ctx.fill(new Path2D(PIN.drop));
+		ctx.shadowColor = 'transparent';
+		ctx.globalAlpha = 0.2;
+		ctx.fillStyle = color;
+		ctx.beginPath();
+		ctx.arc(PIN.disc.cx, PIN.disc.cy, PIN.disc.r, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.globalAlpha = 1;
+		const { scale, x, y } = PIN.boltTransform;
+		ctx.translate(x, y);
+		ctx.scale(scale, scale);
+		ctx.strokeStyle = color;
+		ctx.lineWidth = 2;
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+		ctx.stroke(new Path2D(PIN.bolt));
+		return ctx.getImageData(0, 0, canvas.width, canvas.height);
+	}
 	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH';
 	const TILE_LAYER: Record<string, string> = { state: 'states', district: 'districts', municipality: 'municipalities' };
 	const ZOOM: Record<string, number> = { state: 6.4, district: 8.6, municipality: 10.5 };
@@ -113,8 +155,6 @@
 		const out = [];
 		const p = d.points;
 		let stations = 0;
-		// The district is the 7th value; without it (older response) show everything
-		if (d.stride < 7) keep = null;
 		for (let i = 0; i < p.length; i += d.stride) {
 			if (keep && !keep(p[i + 6])) continue;
 			stations += p[i + 4];
@@ -262,28 +302,24 @@
 				paint: { 'text-color': '#FFFFFF', 'text-halo-color': 'rgba(0,0,0,0.25)', 'text-halo-width': 1 }
 			});
 
-			// Locations at their exact position: size by charging points, red with Schnellladepunkte,
-			// teal with Normalladepunkte only; from 3 charging points the number is written inside
-			const pointsRoot: any = ['sqrt', ['get', 'points']];
+			// Locations at their exact position as pins: red with Schnellladepunkte, teal with
+			// Normalladepunkte only; from 3 charging points their number sits next to the pin
+			map.addImage('pin-normal', pinImage(ZUBAU_COLORS.normal), { pixelRatio: PIN_RATIO });
+			map.addImage('pin-fast', pinImage(ZUBAU_COLORS.fast), { pixelRatio: PIN_RATIO });
 			const isFast: any = ['>', ['get', 'fast'], 0];
 			map.addLayer({
 				id: 'stations',
-				type: 'circle',
+				type: 'symbol',
 				source: 'stations',
 				filter: ['!', ['has', 'point_count']],
-				paint: {
-					'circle-color': ['case', isFast, ZUBAU_COLORS.fast, ZUBAU_COLORS.normal],
-					'circle-radius': [
-						'interpolate',
-						['linear'],
-						['zoom'],
-						10,
-						['+', 2.5, pointsRoot],
-						16,
-						['+', 4, ['*', 2.2, pointsRoot]]
-					],
-					'circle-stroke-color': dark ? '#18181B' : '#FFFFFF',
-					'circle-stroke-width': 1.5
+				layout: {
+					'icon-image': ['case', isFast, 'pin-fast', 'pin-normal'],
+					'icon-anchor': 'bottom',
+					'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.55, 16, 0.85],
+					'icon-allow-overlap': true,
+					'icon-ignore-placement': true,
+					// larger locations drawn on top
+					'symbol-sort-key': ['-', 0, ['get', 'points']]
 				}
 			});
 			map.addLayer({
@@ -296,9 +332,16 @@
 					'text-field': ['number-format', ['get', 'points'], { locale: 'de' }],
 					'text-font': ['Noto Sans Bold'],
 					'text-size': 11,
+					'text-anchor': 'left',
+					// right of the pin's head (the icon is anchored at its tip)
+					'text-offset': [1.45, -2.2],
 					'text-allow-overlap': true
 				},
-				paint: { 'text-color': '#FFFFFF' }
+				paint: {
+					'text-color': ['case', isFast, ZUBAU_COLORS.fast, ZUBAU_COLORS.normal],
+					'text-halo-color': '#FFFFFF',
+					'text-halo-width': 1.5
+				}
 			});
 
 			map.on('click', 'clusters', async (e: any) => {
@@ -328,6 +371,10 @@
 					.then((r) => (r.ok ? r.json() : null))
 					.then((s) => {
 						if (tip?.kind === 'station' && tip.id === id) tip = { ...tip, station: s };
+					})
+					// No details: close the tooltip instead of leaving "Lade Details…"
+					.catch(() => {
+						if (tip?.kind === 'station' && tip.id === id) tip = null;
 					});
 			});
 			// Each layer only closes its own tooltip: leaving a bubble may fire after entering a station
@@ -343,7 +390,6 @@
 		darkObserver = new MutationObserver(() => {
 			(map?.getSource('basemap') as any)?.setTiles(basemap('NoLabels'));
 			(map?.getSource('labels') as any)?.setTiles(basemap('LabelsOnly'));
-			if (map?.getLayer('stations')) map.setPaintProperty('stations', 'circle-stroke-color', pageIsDark() ? '#18181B' : '#FFFFFF');
 			if (map?.getLayer('region-line')) map.setPaintProperty('region-line', 'line-color', pageIsDark() ? '#F4F4F5' : '#18181B');
 		});
 		for (const el of [document.documentElement, document.body])
@@ -409,20 +455,30 @@
 			{/if}
 		</div>
 
-		<!-- Legend: bubbles carry their number as text, single stations differ in size as well as colour -->
+		<!-- Legend: bubbles carry their number as text; the pins match the map icons (colour plus label) -->
 		<div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-700 dark:text-gray-300">
 			<span class="inline-flex items-center gap-1.5">
 				<span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white" style="background: {BUBBLE}">12</span>
 				Ladepunkte in der Umgebung
 			</span>
-			<span class="inline-flex items-center gap-1.5">
-				<span class="inline-block h-2 w-2 rounded-full ring-1 ring-white dark:ring-gray-900" style="background: {ZUBAU_COLORS.normal}"></span>
-				Standort mit Normalladepunkten
-			</span>
-			<span class="inline-flex items-center gap-1.5">
-				<span class="inline-block h-3 w-3 rounded-full ring-1 ring-white dark:ring-gray-900" style="background: {ZUBAU_COLORS.fast}"></span>
-				Standort mit Schnellladepunkten
-			</span>
+			{#each [{ color: ZUBAU_COLORS.normal, label: 'Standort mit Normalladepunkten' }, { color: ZUBAU_COLORS.fast, label: 'Standort mit Schnellladepunkten' }] as item}
+				<span class="inline-flex items-center gap-1">
+					<svg width="17" height="20" viewBox="0 0 {PIN.width} {PIN.height}" aria-hidden="true" class="shrink-0 drop-shadow">
+						<path d={PIN.drop} fill="#FFFFFF" />
+						<circle cx={PIN.disc.cx} cy={PIN.disc.cy} r={PIN.disc.r} fill={item.color} fill-opacity="0.2" />
+						<path
+							d={PIN.bolt}
+							transform="translate({PIN.boltTransform.x} {PIN.boltTransform.y}) scale({PIN.boltTransform.scale})"
+							fill="none"
+							stroke={item.color}
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+					{item.label}
+				</span>
+			{/each}
 			<!-- Count of the region's stations: only once the map has filtered them -->
 			{#if shownStations !== null}
 				<span class="text-gray-500 dark:text-gray-400">
