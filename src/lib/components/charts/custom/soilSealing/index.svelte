@@ -12,6 +12,7 @@
 	} from '$lib/components/charts/primitives';
 	import { RadioGroup } from '$lib/components/ui';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
 	import { formatNumber } from '$lib/utils/formatters';
 	import {
 		fetchData,
@@ -37,7 +38,7 @@
 	let loading = true;
 	let error: string | null = null;
 	let containerWidth = 0;
-	let view: 'pitches' | 'trend' = 'pitches';
+	let view: 'pitches' | 'trend' = 'trend';
 	let period: 'day' | 'year' | 'total' = 'day';
 
 	$: isMobile = containerWidth < 500;
@@ -213,10 +214,32 @@
 		}
 	}
 
-	$: loadData(region);
+	// Region shown in the chart: the card's region, or one picked in the RegionSwitcher
+	// (the switcher only appears for aggregate regions such as a Metropolregion)
+	let switchedRegion: Region | null = null;
+	let switcherId: string | null = null;
+	let switcherFor: string | null = null;
+	$: if (region?.id !== switcherFor) {
+		switcherFor = region?.id ?? null;
+		switchedRegion = null;
+		switcherId = region?.id ?? null;
+	}
+	$: activeRegion = switchedRegion ?? region;
+
+	$: loadData(activeRegion);
 </script>
 
 <div bind:clientWidth={containerWidth}>
+	<!-- Outside the loading state so focus stays on the dropdown while the data reloads -->
+	{#if region}
+		<div class="mb-4">
+			<RegionSwitcher
+				{region}
+				bind:selectedId={switcherId}
+				on:change={(e) => (switchedRegion = e.detail.id === region?.id ? null : e.detail)}
+			/>
+		</div>
+	{/if}
 	{#if loading}
 		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
@@ -232,8 +255,8 @@
 				hideLabel
 				bind:value={view}
 				options={[
-					{ value: 'pitches', label: 'Fußballfelder' },
-					{ value: 'trend', label: 'Verlauf' }
+					{ value: 'trend', label: 'Verlauf' },
+					{ value: 'pitches', label: 'Fußballfelder' }
 				]}
 			/>
 		</ChartSettings>
@@ -334,7 +357,7 @@
 						<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} tickCount={4} />
 
 						{#if data.target != null}
-							<!-- More than the target allowed: area between actual and target path -->
+							<!-- Area between actual and target path: brown when above the target, green when below -->
 							<Area
 								data={gap}
 								x="year"
@@ -343,7 +366,7 @@
 								y1Field="actual"
 								{xScale}
 								{yScale}
-								color={ACTUAL_COLOR}
+								color={excess != null && excess < 0 ? TARGET_2030_COLOR : ACTUAL_COLOR}
 								opacity={0.15}
 								curve="linear"
 							/>
@@ -393,13 +416,13 @@
 						/>
 
 						{#if xScale && yScale}
-							{#if excess != null && excess > 0 && gapLabelRow?.actual != null && gapLabelRow.path30 != null}
+							{#if excess != null && gapLabelRow?.actual != null && gapLabelRow.path30 != null}
 								<text
 									x={(xScale as any)(gapLabelRow.year) + 6}
 									y={(yScale(gapLabelRow.actual) + yScale(gapLabelRow.path30)) / 2 + 4}
 									class="text-xs font-semibold fill-gray-800 dark:fill-gray-100"
 								>
-									+{ha(excess)} über dem Ziel
+									{excess >= 0 ? `+${ha(excess)} über dem Ziel` : `${ha(-excess)} unter dem Ziel`}
 								</text>
 							{/if}
 							{#if !isMobile}

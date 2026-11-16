@@ -13,8 +13,8 @@ export const NATIONAL_TARGET_2030_HA_PER_DAY = 20;
 /** Football pitch of standard size (105 × 68 m), in ha — for an everyday comparison */
 export const FOOTBALL_PITCH_HA = (105 * 68) / 10_000;
 
-/** Number of football pitches: one decimal below 10, whole numbers above */
-export const formatPitches = (n: number) => formatNumber(n, n < 10 ? 1 : 0);
+/** Number of football pitches: two decimals below 1, one below 10, whole numbers above */
+export const formatPitches = (n: number) => formatNumber(n, Math.abs(n) < 1 ? 2 : Math.abs(n) < 10 ? 1 : 0);
 
 /** The fields of a /api/land-use series entry this chart needs */
 interface LandUseYear {
@@ -142,9 +142,13 @@ export function getPlaceholders(data: SoilSealingRawData): Record<string, string
 		populationShare: data.populationShare != null ? formatPercent(data.populationShare * 100, 1) : '–',
 		suvShare: formatPercent(data.suvShare, 1),
 		added: formatNumber(data.added),
-		excess: data.targetAdded != null ? formatNumber(data.added - data.targetAdded) : '–',
+		// Difference to the 30 ha path as an amount plus "mehr"/"weniger", so texts read right on both sides
+		excess: data.targetAdded != null ? formatNumber(Math.abs(data.added - data.targetAdded)) : '–',
+		excessWord: data.targetAdded != null && data.added < data.targetAdded ? 'weniger' : 'mehr',
 		excessPitches:
-			data.targetAdded != null ? formatNumber((data.added - data.targetAdded) / FOOTBALL_PITCH_HA) : '–'
+			data.targetAdded != null
+				? formatPitches(Math.abs(data.added - data.targetAdded) / FOOTBALL_PITCH_HA)
+				: '–'
 	};
 }
 
