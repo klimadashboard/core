@@ -45,7 +45,8 @@
 	// One request per map; repeat requests come from the browser cache (the endpoint sends max-age)
 	let locationsRequest: Promise<Locations> | null = null;
 	function loadLocations(): Promise<Locations> {
-		locationsRequest ??= fetch('/api/charging-locations').then((r) => {
+		// ?v= changes with the response format, so browsers don't reuse a cached older one (max-age 1 h)
+		locationsRequest ??= fetch('/api/charging-locations?v=2').then((r) => {
 			if (!r.ok) throw new Error(`Standorte konnten nicht geladen werden (${r.status})`);
 			return r.json();
 		});
@@ -82,16 +83,48 @@
 	const basemap = (kind: 'NoLabels' | 'LabelsOnly') =>
 		cartoRasterTiles(`${pageIsDark() ? 'dark' : 'light'}${kind}` as any, { retina: true });
 
-	function features(d: Locations): any {
+	/**
+	 * Which locations belong to the region, by the district (Kreis AGS as a number) the endpoint
+	 * assigned them: an aggregate region its member districts, a state its districts, a district
+	 * or municipality its district. Germany (or no region): all, so null.
+	 */
+	function regionFilter(members: string | null): ((district: number) => boolean) | null {
+		if (!region || region.layer === 'country') return null;
+		if (members) {
+			const set = new Set(members.split(',').map((c) => parseInt(c.slice(0, 5), 10)));
+			return (d) => set.has(d);
+		}
+		const c = String(region.code || '');
+		if (region.layer === 'state' && /^\d{2}/.test(c)) {
+			const state = parseInt(c.slice(0, 2), 10);
+			return (d) => Math.floor(d / 1000) === state;
+		}
+		if (/^\d{5}/.test(c)) {
+			const district = parseInt(c.slice(0, 5), 10);
+			return (d) => d === district;
+		}
+		return null;
+	}
+
+	/** Stations (Ladeeinrichtungen) shown, for the legend */
+	let shownStations: number | null = null;
+
+	function features(d: Locations, keep: ((district: number) => boolean) | null): any {
 		const out = [];
 		const p = d.points;
+		let stations = 0;
+		// The district is the 7th value; without it (older response) show everything
+		if (d.stride < 7) keep = null;
 		for (let i = 0; i < p.length; i += d.stride) {
+			if (keep && !keep(p[i + 6])) continue;
+			stations += p[i + 4];
 			out.push({
 				type: 'Feature',
 				geometry: { type: 'Point', coordinates: [p[i + 1], p[i + 2]] },
 				properties: { id: p[i], points: p[i + 3], stations: p[i + 4], fast: p[i + 5] }
 			});
 		}
+		shownStations = stations;
 		return { type: 'FeatureCollection', features: out };
 	}
 
@@ -179,7 +212,8 @@
 
 			map.addSource('stations', {
 				type: 'geojson',
-				data: features(data),
+				// Only the region's stations: no bubbles from neighbouring districts
+				data: features(data, regionFilter(members)),
 				cluster: true,
 				clusterRadius: 45,
 				clusterMaxZoom: 14,
@@ -338,7 +372,7 @@
 				bind:this={mapContainer}
 				class="h-full w-full"
 				role="img"
-				aria-label="Karte der {formatNumber(data?.count ?? 0)} öffentlichen Ladeeinrichtungen in Deutschland, zu Bubbles mit der Zahl ihrer Ladepunkte zusammengefasst"
+				aria-label="Karte der {formatNumber(shownStations ?? data?.count ?? 0)} öffentlichen Ladeeinrichtungen in {region?.name ?? 'Deutschland'}, zu Bubbles mit der Zahl ihrer Ladepunkte zusammengefasst"
 			></div>
 
 			{#if tip}
@@ -389,9 +423,14 @@
 				<span class="inline-block h-3 w-3 rounded-full ring-1 ring-white dark:ring-gray-900" style="background: {ZUBAU_COLORS.fast}"></span>
 				Standort mit Schnellladepunkten
 			</span>
-			<span class="text-gray-500 dark:text-gray-400">
-				{formatNumber(data?.count ?? 0)} Ladeeinrichtungen in Betrieb{data?.updateDate ? `, Stand ${formatDate(data.updateDate)}` : ''}
-			</span>
+			<!-- Count of the region's stations: only once the map has filtered them -->
+			{#if shownStations !== null}
+				<span class="text-gray-500 dark:text-gray-400">
+					{formatNumber(shownStations)} Ladeeinrichtungen in Betrieb{region?.name && region.layer !== 'country'
+						? ` in ${region.name}`
+						: ''}{data?.updateDate ? `, Stand ${formatDate(data.updateDate)}` : ''}
+				</span>
+			{/if}
 		</div>
 	{/if}
 </div>

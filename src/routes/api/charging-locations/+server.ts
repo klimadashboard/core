@@ -8,7 +8,9 @@ import type { RequestHandler } from './$types';
 //
 //   GET /api/charging-locations        → { updateDate, source, count, locations, points: number[] }
 //       one entry per location (stations with the same coordinate combined), flat:
-//       [id, lon, lat, chargingPoints, stations, fastChargingPoints, ...] (STRIDE values each)
+//       [id, lon, lat, chargingPoints, stations, fastChargingPoints, district, ...] (STRIDE values each)
+//       district: AGS of the Kreis the location lies in, as a number (09564 → 9564; 0 = none found),
+//       from point-in-polygon against the district outlines in Directus, so maps can show one region
 //   GET /api/charging-locations?id=123 → details of one location for the map tooltip
 //
 // A newer upload is picked up automatically (newest file whose name starts with FILE_PREFIX).
@@ -19,7 +21,64 @@ const FILE_PREFIX = 'Ladesaeulenregister_BNetzA';
 const FALLBACK_ASSET = 'ee65b3d2-0aca-4855-8536-cfb7f440cd27';
 const SOURCE = 'Bundesnetzagentur, Ladesäulenregister (CC BY 4.0)';
 const CACHE_TTL = 12 * 60 * 60 * 1000;
-const STRIDE = 6;
+const STRIDE = 7;
+
+// ------------------------------------------------------------------ districts (point-in-polygon)
+
+type Ring = number[][];
+interface District {
+	ags: number;
+	bbox: [number, number, number, number];
+	polygons: Ring[][];
+}
+
+async function loadDistricts(): Promise<District[]> {
+	const params = new URLSearchParams({
+		limit: '-1',
+		fields: 'code,outline',
+		'filter[layer][_eq]': 'district',
+		'filter[country][_eq]': 'DE'
+	});
+	const res = await fetch(`${BASE}/items/regions?${params}`);
+	if (!res.ok) throw new Error(`District outlines: ${res.status}`);
+	const rows: Array<{ code: string; outline: any }> = (await res.json()).data ?? [];
+	return rows
+		.filter((r) => r.outline?.coordinates && /^\d{5}$/.test(r.code))
+		.map((r) => {
+			const polygons: Ring[][] =
+				r.outline.type === 'Polygon' ? [r.outline.coordinates] : r.outline.coordinates;
+			const bbox: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+			for (const poly of polygons)
+				for (const [x, y] of poly[0]) {
+					bbox[0] = Math.min(bbox[0], x);
+					bbox[1] = Math.min(bbox[1], y);
+					bbox[2] = Math.max(bbox[2], x);
+					bbox[3] = Math.max(bbox[3], y);
+				}
+			return { ags: parseInt(r.code, 10), bbox, polygons };
+		});
+}
+
+function inRing(x: number, y: number, ring: Ring): boolean {
+	let inside = false;
+	for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+		const [xi, yi] = ring[i];
+		const [xj, yj] = ring[j];
+		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+	}
+	return inside;
+}
+
+/** AGS of the district containing the point (outer ring in, no hole), 0 if none */
+function districtOf(x: number, y: number, districts: District[]): number {
+	for (const d of districts) {
+		const [x0, y0, x1, y1] = d.bbox;
+		if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+		for (const [outer, ...holes] of d.polygons)
+			if (inRing(x, y, outer) && !holes.some((h) => inRing(x, y, h))) return d.ags;
+	}
+	return 0;
+}
 
 interface Station {
 	id: number;
@@ -53,6 +112,8 @@ interface Location {
 	since: string;
 	lon: number;
 	lat: number;
+	/** AGS of its Kreis as a number, 0 if outside all district outlines */
+	district: number;
 }
 
 interface Index {
@@ -121,7 +182,7 @@ const coord = (s: string | undefined) => {
 	return Number.isFinite(n) ? n : NaN;
 };
 
-function parse(text: string): Omit<Index, 'expires'> {
+function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 	const updateDate = text.match(/Letzte Aktualisierung vom:\s*(\d{2})\.(\d{2})\.(\d{4})/);
 	const it = rows(text);
 	// Skip the notes above the header. Not with for…of + break: that would close the generator.
@@ -202,7 +263,8 @@ function parse(text: string): Omit<Index, 'expires'> {
 			city: first.city,
 			since: first.since,
 			lon: first.lon,
-			lat: first.lat
+			lat: first.lat,
+			district: districtOf(first.lon, first.lat, districts)
 		};
 		stations += group.length;
 		locations.set(loc.id, loc);
@@ -212,7 +274,8 @@ function parse(text: string): Omit<Index, 'expires'> {
 			Math.round(loc.lat * 1e5) / 1e5,
 			loc.points,
 			loc.stations,
-			fastPoints
+			fastPoints,
+			loc.district
 		);
 	}
 	return {
@@ -227,10 +290,13 @@ async function load(): Promise<Index> {
 	if (index && Date.now() < index.expires) return index;
 	if (!loading) {
 		loading = (async () => {
-			const res = await fetch(`${BASE}/assets/${await latestAssetId()}`);
+			const [res, districts] = await Promise.all([
+				latestAssetId().then((id) => fetch(`${BASE}/assets/${id}`)),
+				loadDistricts()
+			]);
 			if (!res.ok) throw new Error(`Ladesäulenregister: ${res.status}`);
 			const text = new TextDecoder('latin1').decode(await res.arrayBuffer());
-			index = { ...parse(text), expires: Date.now() + CACHE_TTL };
+			index = { ...parse(text, districts), expires: Date.now() + CACHE_TTL };
 			return index;
 		})().finally(() => (loading = null));
 	}
