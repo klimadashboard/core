@@ -6,9 +6,10 @@ import type { RequestHandler } from './$types';
 // Latin-1, semicolon-separated, ~10 lines of notes above the header). Far too large for the
 // browser, so it is loaded once here, reduced to what the map needs and kept in memory.
 //
-//   GET /api/charging-locations        → { updateDate, source, count, points: number[] }
-//       points is flat: [id, lon, lat, chargingPoints, kw, fast(0|1), ...] (STRIDE values per station)
-//   GET /api/charging-locations?id=123 → details of one station for the map tooltip
+//   GET /api/charging-locations        → { updateDate, source, count, locations, points: number[] }
+//       one entry per location (stations with the same coordinate combined), flat:
+//       [id, lon, lat, chargingPoints, stations, fastChargingPoints, ...] (STRIDE values each)
+//   GET /api/charging-locations?id=123 → details of one location for the map tooltip
 //
 // A newer upload is picked up automatically (newest file whose name starts with FILE_PREFIX).
 
@@ -34,10 +35,32 @@ interface Station {
 	lat: number;
 }
 
+/** All stations at one coordinate */
+interface Location {
+	/** id of its first station */
+	id: number;
+	stations: number;
+	points: number;
+	fastPoints: number;
+	/** Sum of the stations' rated power */
+	kw: number;
+	maxKw: number;
+	operators: string[];
+	street: string;
+	zip: string;
+	city: string;
+	/** Commissioning date of a single station (only shown when there is one) */
+	since: string;
+	lon: number;
+	lat: number;
+}
+
 interface Index {
 	updateDate: string | null;
 	points: number[];
-	byId: Map<number, Station>;
+	locations: Map<number, Location>;
+	/** Number of stations (Ladeeinrichtungen) in operation */
+	stations: number;
 	expires: number;
 }
 
@@ -131,8 +154,9 @@ function parse(text: string): Omit<Index, 'expires'> {
 		lon: col('Längengrad')
 	};
 
-	const points: number[] = [];
-	const byId = new Map<number, Station>();
+	// Stations sharing a coordinate (e.g. 37 units in one car park) become one location: drawn
+	// separately they would stack into a single dot showing only one unit's charging points.
+	const byCoord = new Map<string, Station[]>();
 	for (const r of it) {
 		if (r.length <= c.lon || r[c.status] !== 'In Betrieb') continue;
 		const id = parseInt(r[c.id], 10);
@@ -153,20 +177,49 @@ function parse(text: string): Omit<Index, 'expires'> {
 			lon,
 			lat
 		};
-		byId.set(id, station);
+		const key = `${lon.toFixed(5)},${lat.toFixed(5)}`;
+		const group = byCoord.get(key);
+		if (group) group.push(station);
+		else byCoord.set(key, [station]);
+	}
+
+	const points: number[] = [];
+	const locations = new Map<number, Location>();
+	let stations = 0;
+	for (const group of byCoord.values()) {
+		const first = group[0];
+		const fastPoints = group.reduce((sum, s) => sum + (/schnell/i.test(s.type) ? s.points : 0), 0);
+		const loc: Location = {
+			id: first.id,
+			stations: group.length,
+			points: group.reduce((sum, s) => sum + s.points, 0),
+			fastPoints,
+			kw: Math.round(group.reduce((sum, s) => sum + s.kw, 0)),
+			maxKw: Math.max(...group.map((s) => s.kw)),
+			operators: [...new Set(group.map((s) => s.operator))],
+			street: first.street,
+			zip: first.zip,
+			city: first.city,
+			since: first.since,
+			lon: first.lon,
+			lat: first.lat
+		};
+		stations += group.length;
+		locations.set(loc.id, loc);
 		points.push(
-			id,
-			Math.round(lon * 1e5) / 1e5,
-			Math.round(lat * 1e5) / 1e5,
-			station.points,
-			Math.round(station.kw),
-			/schnell/i.test(station.type) ? 1 : 0
+			loc.id,
+			Math.round(loc.lon * 1e5) / 1e5,
+			Math.round(loc.lat * 1e5) / 1e5,
+			loc.points,
+			loc.stations,
+			fastPoints
 		);
 	}
 	return {
 		updateDate: updateDate ? `${updateDate[3]}-${updateDate[2]}-${updateDate[1]}` : null,
 		points,
-		byId
+		locations,
+		stations
 	};
 }
 
@@ -196,14 +249,15 @@ export const GET: RequestHandler = async ({ url, setHeaders }) => {
 
 	const id = url.searchParams.get('id');
 	if (id !== null) {
-		const station = data.byId.get(parseInt(id, 10));
-		if (!station) throw error(404, 'Ladeeinrichtung nicht gefunden');
-		return json(station);
+		const location = data.locations.get(parseInt(id, 10));
+		if (!location) throw error(404, 'Standort nicht gefunden');
+		return json(location);
 	}
 	return json({
 		updateDate: data.updateDate,
 		source: SOURCE,
-		count: data.byId.size,
+		count: data.stations,
+		locations: data.locations.size,
 		stride: STRIDE,
 		points: data.points
 	});

@@ -27,12 +27,15 @@
 		stride: number;
 		points: number[];
 	}
+	/** All stations (Ladeeinrichtungen) at one coordinate, see /api/charging-locations */
 	interface Station {
 		id: number;
-		operator: string;
-		type: string;
+		stations: number;
 		points: number;
+		fastPoints: number;
 		kw: number;
+		maxKw: number;
+		operators: string[];
 		since: string;
 		street: string;
 		zip: string;
@@ -86,7 +89,7 @@
 			out.push({
 				type: 'Feature',
 				geometry: { type: 'Point', coordinates: [p[i + 1], p[i + 2]] },
-				properties: { id: p[i], points: p[i + 3], kw: p[i + 4], fast: p[i + 5] }
+				properties: { id: p[i], points: p[i + 3], stations: p[i + 4], fast: p[i + 5] }
 			});
 		}
 		return { type: 'FeatureCollection', features: out };
@@ -225,18 +228,43 @@
 				paint: { 'text-color': '#FFFFFF', 'text-halo-color': 'rgba(0,0,0,0.25)', 'text-halo-width': 1 }
 			});
 
-			// Single stations at their exact location: Schnellladen larger and red, Normalladen teal
+			// Locations at their exact position: size by charging points, red with Schnellladepunkte,
+			// teal with Normalladepunkte only; from 3 charging points the number is written inside
+			const pointsRoot: any = ['sqrt', ['get', 'points']];
+			const isFast: any = ['>', ['get', 'fast'], 0];
 			map.addLayer({
 				id: 'stations',
 				type: 'circle',
 				source: 'stations',
 				filter: ['!', ['has', 'point_count']],
 				paint: {
-					'circle-color': ['case', ['==', ['get', 'fast'], 1], ZUBAU_COLORS.fast, ZUBAU_COLORS.normal],
-					'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, ['case', ['==', ['get', 'fast'], 1], 5, 3.5], 16, ['case', ['==', ['get', 'fast'], 1], 9, 7]],
+					'circle-color': ['case', isFast, ZUBAU_COLORS.fast, ZUBAU_COLORS.normal],
+					'circle-radius': [
+						'interpolate',
+						['linear'],
+						['zoom'],
+						10,
+						['+', 2.5, pointsRoot],
+						16,
+						['+', 4, ['*', 2.2, pointsRoot]]
+					],
 					'circle-stroke-color': dark ? '#18181B' : '#FFFFFF',
 					'circle-stroke-width': 1.5
 				}
+			});
+			map.addLayer({
+				id: 'station-count',
+				type: 'symbol',
+				source: 'stations',
+				filter: ['all', ['!', ['has', 'point_count']], ['>=', ['get', 'points'], 3]],
+				minzoom: 13,
+				layout: {
+					'text-field': ['number-format', ['get', 'points'], { locale: 'de' }],
+					'text-font': ['Noto Sans Bold'],
+					'text-size': 11,
+					'text-allow-overlap': true
+				},
+				paint: { 'text-color': '#FFFFFF' }
 			});
 
 			map.on('click', 'clusters', async (e: any) => {
@@ -327,13 +355,20 @@
 						<div class="text-gray-600 dark:text-gray-300">Lade Details…</div>
 					{:else}
 						{@const s = tip.station}
-						<div class="font-semibold text-gray-900 dark:text-white">{s.operator}</div>
+						{@const many = s.stations > 1}
+						<div class="font-semibold text-gray-900 dark:text-white">
+							{s.operators.slice(0, 2).join(', ')}{s.operators.length > 2 ? ` und ${s.operators.length - 2} weitere` : ''}
+						</div>
 						<div class="text-xs text-gray-600 dark:text-gray-400">{s.street}, {s.zip} {s.city}</div>
 						<dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-2 text-xs text-gray-700 dark:text-gray-300">
-							<dt>Art</dt><dd>{s.type.replace('ladeeinrichtung', 'laden')}</dd>
-							<dt>Ladepunkte</dt><dd>{formatNumber(s.points)}</dd>
-							<dt>Leistung</dt><dd>{formatNumber(s.kw)} kW</dd>
-							{#if s.since}<dt>In Betrieb seit</dt><dd>{s.since}</dd>{/if}
+							<dt>Ladepunkte</dt>
+							<dd>
+								{formatNumber(s.points)}{#if s.fastPoints}&nbsp;(davon {formatNumber(s.fastPoints)} Schnellladen){/if}
+							</dd>
+							{#if many}<dt>Ladeeinrichtungen</dt><dd>{formatNumber(s.stations)}</dd>{/if}
+							<dt>Leistung</dt>
+							<dd>{many ? `${formatNumber(s.kw)} kW gesamt, bis ${formatNumber(s.maxKw)} kW` : `${formatNumber(s.kw)} kW`}</dd>
+							{#if !many && s.since}<dt>In Betrieb seit</dt><dd>{s.since}</dd>{/if}
 						</dl>
 					{/if}
 				</div>
@@ -348,11 +383,11 @@
 			</span>
 			<span class="inline-flex items-center gap-1.5">
 				<span class="inline-block h-2 w-2 rounded-full ring-1 ring-white dark:ring-gray-900" style="background: {ZUBAU_COLORS.normal}"></span>
-				Normalladen
+				Standort mit Normalladepunkten
 			</span>
 			<span class="inline-flex items-center gap-1.5">
 				<span class="inline-block h-3 w-3 rounded-full ring-1 ring-white dark:ring-gray-900" style="background: {ZUBAU_COLORS.fast}"></span>
-				Schnellladen
+				Standort mit Schnellladepunkten
 			</span>
 			<span class="text-gray-500 dark:text-gray-400">
 				{formatNumber(data?.count ?? 0)} Ladeeinrichtungen in Betrieb{data?.updateDate ? `, Stand ${formatDate(data.updateDate)}` : ''}
