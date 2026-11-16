@@ -35,9 +35,10 @@ export interface ModalSplitRawData {
 
 /**
  * What the shares are shares of (`mobility_modal_split.type`).
- * Order = preference when a region has several; rows without a type are trips.
+ * Order = preference: passenger_km is shown whenever a region has it; trips only
+ * as a fallback for regions without km data. Rows without a type are trips.
  */
-export const typeOrder = ['trips', 'passenger_km'];
+export const typeOrder = ['passenger_km', 'trips'];
 export const DEFAULT_TYPE = 'trips';
 
 /** Translated label of a measurement basis ("Anteil der Wege", ...) */
@@ -522,6 +523,7 @@ function buildFetchResult(
 		}))
 		.filter((r) => !isNaN(r.year) && !isNaN(r.value));
 	const type = resolveType(allData, requestedType);
+	// Only one basis is offered (no switch, no extra table rows)
 	const data = filterByType(allData, type);
 
 	// Get the most recent update date from the data
@@ -529,8 +531,8 @@ function buildFetchResult(
 
 	return {
 		data,
-		allData,
-		availableTypes: getAvailableTypes(allData),
+		allData: data,
+		availableTypes: [type],
 		type,
 		updateDate,
 		source,
@@ -885,7 +887,7 @@ export async function fetchChartData({
 
 	const regionCandidates = [regionId, ...parentIds];
 
-	const fetchResult = await fetchData(region, { regionId, regionCandidates, type: DEFAULT_TYPE });
+	const fetchResult = await fetchData(region, { regionId, regionCandidates });
 	if (!fetchResult.data || fetchResult.data.length === 0) return null;
 
 	// Goals are set as shares of trips; don't compare them with other bases

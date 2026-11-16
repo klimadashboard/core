@@ -57,7 +57,7 @@
 	let showHistoric = page.url.searchParams.get('historic') === 'true';
 
 	// Measurement basis (trips / passenger_km); ?type= preselects it in embeds
-	let selectedType = page.url.searchParams.get('type') || DEFAULT_TYPE;
+	let selectedType = page.url.searchParams.get('type') || '';
 	let availableTypes: string[] = [];
 	let allData: ModalSplitRawData[] = [];
 	let goal: ModalSplitGoal | null = null;
