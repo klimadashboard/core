@@ -22,6 +22,7 @@ interface RegionRef {
 	name: string;
 	layer: string;
 	layer_label: string | null;
+	population: number | null;
 	parents: Array<{ id: string; layer: string }> | null;
 }
 
@@ -42,11 +43,13 @@ export interface ShareRow {
 	/** % of consumption, can be above 100 */
 	share: number;
 	consumption: number | null;
+	/** inhabitants, sizes the dots in the distribution view */
+	population: number | null;
 	/** true when computed from the members (consumption-weighted) */
 	computed: boolean;
 }
 
-const REGION_FIELDS = ['id', 'name', 'layer', 'layer_label', 'parents'];
+const REGION_FIELDS = ['id', 'name', 'layer', 'layer_label', 'population', 'parents'];
 
 /** Σ share·consumption / Σ consumption over rows with a consumption */
 function weighted(rows: DbRow[]): { share: number; consumption: number } | null {
@@ -105,11 +108,14 @@ export async function fetchChartData({
 				kind,
 				share: own.share,
 				consumption: own.consumption_mwh,
+				population: r.population ?? null,
 				computed: false
 			};
 		if (r.layer === 'country') return null;
 		const agg = weighted(membersOf(r.id));
-		return agg ? { id: r.id, name: r.name, kind, ...agg, computed: true } : null;
+		return agg
+			? { id: r.id, name: r.name, kind, ...agg, population: r.population ?? null, computed: true }
+			: null;
 	}
 
 	// Parents: the region's own (without countries), or for aggregates the states of their members
@@ -139,6 +145,7 @@ export async function fetchChartData({
 			kind: 'member' as const,
 			share: r.share,
 			consumption: r.consumption_mwh,
+			population: r.region.population ?? null,
 			computed: false
 		}))
 		.sort((a, b) => b.share - a.share);
@@ -167,6 +174,12 @@ export async function fetchChartData({
 			label: t(translations, 'domain.energy.electricityConsumptionGwh'),
 			align: 'right',
 			format: (v) => (v == null ? '–' : formatNumber(v / 1000, 0))
+		},
+		{
+			key: 'population',
+			label: translations?.['table.population'] ?? 'Einwohner',
+			align: 'right',
+			format: (v) => (v == null ? '–' : formatNumber(v, 0))
 		},
 		{
 			key: 'computed',
