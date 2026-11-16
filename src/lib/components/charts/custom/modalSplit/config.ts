@@ -323,10 +323,6 @@ function getLayerPriority(layer: string): number {
 export interface ModalSplitFetchResult {
 	/** Rows of the selected type only */
 	data: ModalSplitRawData[];
-	/** Rows of all types (for the table/download) */
-	allData: ModalSplitRawData[];
-	/** Types the matched region has, in preference order */
-	availableTypes: string[];
 	/** The type `data` is filtered to */
 	type: string;
 	updateDate: string;
@@ -363,8 +359,6 @@ export async function fetchData(
 	if (regionCandidates.length === 0) {
 		return {
 			data: [],
-			allData: [],
-			availableTypes: [],
 			type: DEFAULT_TYPE,
 			updateDate: '',
 			source: '',
@@ -442,8 +436,6 @@ export async function fetchData(
 	if (candidatesWithData.length === 0) {
 		return {
 			data: [],
-			allData: [],
-			availableTypes: [],
 			type: DEFAULT_TYPE,
 			updateDate: '',
 			source: '',
@@ -531,8 +523,6 @@ function buildFetchResult(
 
 	return {
 		data,
-		allData: data,
-		availableTypes: [type],
 		type,
 		updateDate,
 		source,
@@ -809,15 +799,14 @@ export function buildChartData(
 	translations: Translations,
 	goalConfig: ResolvedGoalConfig | null = null,
 	matchedRegionName?: string | null,
-	matchedRegionLayerLabel?: string | null,
-	allData: ModalSplitRawData[] = data
+	matchedRegionLayerLabel?: string | null
 ): ChartData {
 	const type = resolveType(data);
 	return {
 		raw: data,
 		table: {
-			columns: getTableColumns(allData, translations),
-			rows: getTableRows(allData),
+			columns: getTableColumns(data, translations),
+			rows: getTableRows(data),
 			filename: 'modal_split'
 		},
 		placeholders: {
@@ -903,7 +892,6 @@ export async function fetchChartData({
 		translations,
 		goalConfig,
 		fetchResult.matchedRegionName,
-		fetchResult.matchedRegionLayerLabel,
-		fetchResult.allData
+		fetchResult.matchedRegionLayerLabel
 	);
 }

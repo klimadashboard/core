@@ -7,7 +7,6 @@
 	import { page } from '$app/state';
 	import TransportIcons from './TransportIcons.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
-	import { RadioGroup } from '$lib/components/ui';
 	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
 	import { t } from '$lib/utils/t';
 	import {
@@ -23,7 +22,6 @@
 		categoryColors,
 		categoryOrder,
 		sustainableCategories,
-		filterByType,
 		getTypeLabel,
 		getSourceInfo,
 		DEFAULT_TYPE,
@@ -56,10 +54,8 @@
 	// Initialize showHistoric from URL parameter
 	let showHistoric = page.url.searchParams.get('historic') === 'true';
 
-	// Measurement basis (trips / passenger_km); ?type= preselects it in embeds
+	// Measurement basis (trips / passenger_km): passenger_km when the region has it, ?type= preselects one in embeds
 	let selectedType = page.url.searchParams.get('type') || '';
-	let availableTypes: string[] = [];
-	let allData: ModalSplitRawData[] = [];
 	let goal: ModalSplitGoal | null = null;
 
 	let rawData: ModalSplitRawData[] = [];
@@ -179,8 +175,6 @@
 				type: selectedType
 			});
 
-			allData = result.allData;
-			availableTypes = result.availableTypes;
 			selectedType = result.type;
 			matchedRegionName = result.matchedRegionName;
 			matchedRegionLayerLabel = result.matchedRegionLayerLabel;
@@ -196,7 +190,7 @@
 					)
 				: null;
 
-			applyType(allData, selectedType, goal);
+			applyType(result.data, selectedType, goal);
 
 			const chartData = buildChartData(
 				rawData,
@@ -207,8 +201,7 @@
 				page.data.translations,
 				goalConfig,
 				matchedRegionName,
-				matchedRegionLayerLabel,
-				allData
+				matchedRegionLayerLabel
 			);
 			onChartData?.(chartData);
 		} catch (e) {
@@ -220,9 +213,9 @@
 		}
 	}
 
-	/** Show the rows of one measurement basis; goals are shares of trips, so only shown for those */
-	function applyType(all: ModalSplitRawData[], type: string, g: ModalSplitGoal | null) {
-		rawData = filterByType(all, type);
+	/** Show the rows of the measurement basis; goals are shares of trips, so only shown for those */
+	function applyType(rows: ModalSplitRawData[], type: string, g: ModalSplitGoal | null) {
+		rawData = rows;
 		historicYears = getHistoricYears(rawData);
 		latestDataYear = getLatestDataYear(rawData);
 		({ source, updateDate } = getSourceInfo(rawData));
@@ -230,14 +223,7 @@
 		goalConfig = type === DEFAULT_TYPE ? resolveGoalConfig(g, rawData) : null;
 	}
 
-	$: if (!loading && allData.length > 0) applyType(allData, selectedType, goal);
-
-	$: typeOptions = availableTypes.map((type) => ({
-		value: type,
-		label: getTypeLabel(type, page.data.translations)
-	}));
-
-	// Update chartData when showHistoric or the type changes (for embed modal to reflect current state)
+	// Update chartData when showHistoric changes (for embed modal to reflect current state)
 	$: if (rawData.length > 0 && !loading) {
 		const chartData = buildChartData(
 			rawData,
@@ -248,8 +234,7 @@
 			page.data.translations,
 			goalConfig,
 			matchedRegionName,
-			matchedRegionLayerLabel,
-			allData
+			matchedRegionLayerLabel
 		);
 		onChartData?.(chartData);
 	}
@@ -562,19 +547,10 @@
 				</label>
 			{/if}
 
-			<!-- Measurement basis: switch only when the region has more than one -->
-			{#if availableTypes.length > 1}
-				<RadioGroup
-					label={t(page.data.translations, 'domain.transport.modalSplitBasis')}
-					bind:value={selectedType}
-					options={typeOptions}
-					hideLabel
-				/>
-			{:else}
-				<span class="text-sm text-gray-500 dark:text-gray-400">
-					{getTypeLabel(selectedType, page.data.translations)}
-				</span>
-			{/if}
+			<!-- Measurement basis -->
+			<span class="text-sm text-gray-500 dark:text-gray-400">
+				{getTypeLabel(selectedType, page.data.translations)}
+			</span>
 		</div>
 
 		<div class="flex flex-col">

@@ -125,6 +125,7 @@ export function getTableColumns(): TableColumn[] {
 }
 
 export function getPlaceholders(data: SoilSealingRawData): Record<string, string | number> {
+	const excess = data.targetAdded != null ? data.added - data.targetAdded : null;
 	return {
 		regionName: data.regionName,
 		year: data.latest.period,
@@ -143,12 +144,9 @@ export function getPlaceholders(data: SoilSealingRawData): Record<string, string
 		suvShare: formatPercent(data.suvShare, 1),
 		added: formatNumber(data.added),
 		// Difference to the 30 ha path as an amount plus "mehr"/"weniger", so texts read right on both sides
-		excess: data.targetAdded != null ? formatNumber(Math.abs(data.added - data.targetAdded)) : '–',
-		excessWord: data.targetAdded != null && data.added < data.targetAdded ? 'weniger' : 'mehr',
-		excessPitches:
-			data.targetAdded != null
-				? formatPitches(Math.abs(data.added - data.targetAdded) / FOOTBALL_PITCH_HA)
-				: '–'
+		excess: excess != null ? formatNumber(Math.abs(excess)) : '–',
+		excessWord: excess != null && excess < 0 ? 'weniger' : 'mehr',
+		excessPitches: excess != null ? formatPitches(Math.abs(excess) / FOOTBALL_PITCH_HA) : '–'
 	};
 }
 

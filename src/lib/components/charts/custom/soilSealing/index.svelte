@@ -190,7 +190,7 @@
 			...(value != null && r.path30 != null && value > r.path30
 				? [
 						{
-							label: 'über dem 30-ha-Ziel',
+							label: `über dem ${NATIONAL_TARGET_HA_PER_DAY}-ha-Ziel`,
 							value: `≈ ${pitchCount(value - r.path30)} Fußballfelder`
 						}
 					]
@@ -444,7 +444,7 @@
 										class="text-xs"
 										fill={TARGET_COLOR}
 									>
-										{ha(end.path30)} · 30 ha
+										{ha(end.path30)} · {NATIONAL_TARGET_HA_PER_DAY} ha
 									</text>
 								{/if}
 								{#if end?.path20 != null}
@@ -454,7 +454,7 @@
 										class="text-xs"
 										fill={TARGET_2030_COLOR}
 									>
-										{ha(end.path20)} · 20 ha
+										{ha(end.path20)} · {NATIONAL_TARGET_2030_HA_PER_DAY} ha
 									</text>
 								{/if}
 							{/if}
