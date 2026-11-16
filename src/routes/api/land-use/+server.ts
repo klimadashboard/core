@@ -5,16 +5,16 @@ import { readItem } from '@directus/sdk';
 import { getAggregateMembers } from '$lib/utils/regionAggregation';
 
 // Siedlungs- und Verkehrsfläche (Destatis Flächenerhebung) per region and year, in ha.
-// The source CSV in Directus is ~16 MB (all German regions), too large for the browser,
-// so it is loaded and indexed here once and the endpoint returns one region's series.
-// Response: { region, series: [{ period, settlement, transport, suv, total }], breaks, germany, source }
+// The source CSVs in Directus are ~16 MB and ~10 MB (all German regions), too large for the
+// browser, so they are loaded and indexed here once and the endpoint returns one region's series.
+// Response: { region, series: [{ period, settlement, transport, mining, suv, total }], breaks, germany, source }
 //
-// Known limitation: `suv` is settlement + transport as in the CSV, which includes Bergbaubetrieb
-// and Tagebau/Grube/Steinbruch. The official Siedlungs- und Verkehrsfläche excludes them
-// (e.g. ~320 ha in Lkr. Neustadt a.d. Waldnaab). To match it, add these mining categories to the
-// CSV export as their own `category` and subtract them in sumSeries.
-const CSV_FILE_ID = 'a313aa9b-a7ab-4ed6-8f2f-e81658f1b077';
-const CSV_URL = `https://base.klimadashboard.org/assets/${CSV_FILE_ID}`;
+// `suv` follows the official definition: settlement + transport without Bergbaubetrieb and
+// Tagebau/Grube/Steinbruch (`mining`, Regionalstatistik 33111-02-01-5 and 33111-02-02-5).
+const CSV_URLS = [
+	'a313aa9b-a7ab-4ed6-8f2f-e81658f1b077', // settlement, transport, total
+	'9c9f61f1-af16-4f57-af54-16142dc01e80' // mining
+].map((id) => `https://base.klimadashboard.org/assets/${id}`);
 const COUNTRY_DE = '3d5acf1a-8120-44d1-966b-62c21fa5d331';
 const SOURCE = 'Statistisches Bundesamt (Destatis), Flächenerhebung nach Art der tatsächlichen Nutzung';
 const CACHE_TTL = 12 * 60 * 60 * 1000;
@@ -34,14 +34,17 @@ const DATA_BREAKS = [
 	}
 ];
 
-type Values = { settlement?: number; transport?: number; total?: number };
+const CATEGORIES = ['settlement', 'transport', 'mining', 'total'] as const;
+type Values = Partial<Record<(typeof CATEGORIES)[number], number>>;
 type Index = Map<string, Map<string, Values>>;
 
 export interface LandUseYear {
 	period: string;
 	settlement: number;
 	transport: number;
-	/** Siedlungs- und Verkehrsfläche = settlement + transport */
+	/** Bergbaubetrieb + Tagebau, Grube, Steinbruch (part of settlement) */
+	mining: number;
+	/** Siedlungs- und Verkehrsfläche = settlement + transport − mining */
 	suv: number;
 	/** Total area of the region */
 	total: number;
@@ -50,20 +53,21 @@ export interface LandUseYear {
 let index: { data: Index; expires: number } | null = null;
 let loading: Promise<Index> | null = null;
 
-function parseCsv(text: string): Index {
-	const data: Index = new Map();
+/** Adds a long-format CSV (columns found by header: region, period, category, value) to the index. */
+function parseCsv(text: string, data: Index) {
 	const lines = text.split('\n');
+	const header = lines[0].trim().split(',');
+	const [r, p, c, v] = ['region', 'period', 'category', 'value'].map((k) => header.indexOf(k));
 	for (let i = 1; i < lines.length; i++) {
-		const [region, period, category, value] = lines[i].trim().split(',');
-		if (!region || !value) continue;
-		if (category !== 'settlement' && category !== 'transport' && category !== 'total') continue;
-		let byPeriod = data.get(region);
-		if (!byPeriod) data.set(region, (byPeriod = new Map()));
-		let values = byPeriod.get(period);
-		if (!values) byPeriod.set(period, (values = {}));
-		values[category] = Number(value);
+		const cols = lines[i].trim().split(',');
+		const category = cols[c] as (typeof CATEGORIES)[number];
+		if (!cols[r] || !cols[v] || !CATEGORIES.includes(category)) continue;
+		let byPeriod = data.get(cols[r]);
+		if (!byPeriod) data.set(cols[r], (byPeriod = new Map()));
+		let values = byPeriod.get(cols[p]);
+		if (!values) byPeriod.set(cols[p], (values = {}));
+		values[category] = Number(cols[v]);
 	}
-	return data;
 }
 
 async function getIndex(fetch: typeof globalThis.fetch): Promise<Index> {
@@ -71,9 +75,15 @@ async function getIndex(fetch: typeof globalThis.fetch): Promise<Index> {
 	// Concurrent requests share one download
 	loading ??= (async () => {
 		try {
-			const res = await fetch(CSV_URL);
-			if (!res.ok) throw new Error(`CSV ${res.status}`);
-			const data = parseCsv(await res.text());
+			const texts = await Promise.all(
+				CSV_URLS.map(async (url) => {
+					const res = await fetch(url);
+					if (!res.ok) throw new Error(`CSV ${res.status}`);
+					return res.text();
+				})
+			);
+			const data: Index = new Map();
+			for (const text of texts) parseCsv(text, data);
 			index = { data, expires: Date.now() + CACHE_TTL };
 			return data;
 		} finally {
@@ -88,12 +98,14 @@ function sumSeries(data: Index, regionIds: string[]): LandUseYear[] {
 	const sums = new Map<string, LandUseYear & { count: number }>();
 	for (const id of regionIds) {
 		for (const [period, v] of data.get(id) ?? []) {
-			if (v.settlement == null || v.transport == null || v.total == null) continue;
+			if (v.settlement == null || v.transport == null || v.mining == null || v.total == null) continue;
 			let s = sums.get(period);
-			if (!s) sums.set(period, (s = { period, settlement: 0, transport: 0, suv: 0, total: 0, count: 0 }));
+			if (!s)
+				sums.set(period, (s = { period, settlement: 0, transport: 0, mining: 0, suv: 0, total: 0, count: 0 }));
 			s.settlement += v.settlement;
 			s.transport += v.transport;
-			s.suv += v.settlement + v.transport;
+			s.mining += v.mining;
+			s.suv += v.settlement + v.transport - v.mining;
 			s.total += v.total;
 			s.count++;
 		}
