@@ -1,11 +1,14 @@
 // $lib/components/charts/custom/ptSupply/config.ts
 //
-// Public transport supply (e.g. seat-km) per mode and year from `transport_pt_supply`.
-// Modes, labels, colours and vehicle shapes come from the `transport_modes` lookup.
-// Rows are stored at the region the source covers (e.g. a transport association's area
-// at a Metropolregion); member regions fall back to it through their `parents`.
+// Public transport supply (e.g. seat-km) per mode and year from a long-format CSV in the
+// Directus file library (columns year, value, type, mode, region, operator, source, update;
+// `mode` is a `transport_modes` key, `region` a region id). Another file can be set per chart
+// with `chartConfig.csv` (asset id). Modes, labels, colours and vehicle shapes come from the
+// `transport_modes` lookup. Rows are stored at the region the source covers (e.g. a transport
+// association's area at a Metropolregion); member regions fall back to it through `parents`.
 
 import type { ChartData, ChartFetchParams, TableColumn } from '$lib/components/charts/types';
+import Papa from 'papaparse';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
 import { isShownOnPage } from '$lib/utils/regionAggregation';
@@ -34,7 +37,22 @@ export interface PtSupplyData {
 	updateDate: string | null;
 }
 
-/** Translation key of the unit per `transport_pt_supply.type` */
+const ASSET_BASE = 'https://base.klimadashboard.org/assets';
+/** Platzkilometer_VGN_2019-2025.csv */
+const DEFAULT_CSV = 'daa93383-c0d1-4fcb-a37f-703fac3d6450';
+
+interface CsvRow {
+	year: number;
+	value: number | null;
+	type: string;
+	mode: string;
+	region: string;
+	operator: string | null;
+	source: string | null;
+	update: string | null;
+}
+
+/** Translation key of the unit per CSV `type` */
 const UNIT_KEYS: Record<string, string> = {
 	seat_km: 'unit.seatKm',
 	vehicle_km: 'unit.vehicleKm',
@@ -70,43 +88,61 @@ export async function fetchPtSupply({
 	lang,
 	fetch,
 	chartConfig
-}: Pick<ChartFetchParams, 'regionId' | 'parentIds' | 'lang' | 'fetch' | 'chartConfig'>): Promise<PtSupplyData | null> {
+}: Pick<
+	ChartFetchParams,
+	'regionId' | 'parentIds' | 'lang' | 'fetch' | 'chartConfig'
+>): Promise<PtSupplyData | null> {
 	if (!regionId) return null;
 	const type: string = chartConfig?.type ?? 'seat_km';
 	const candidates = [regionId, ...parentIds];
-	const directus = getDirectusInstance(fetch);
 
-	const rows = (await directus.request(
-		readItems('transport_pt_supply', {
-			filter: { region: { _in: candidates }, type: { _eq: type } },
-			fields: [
-				'year',
-				'value',
-				'operator',
-				'source',
-				'update',
-				'region.id',
-				'region.name',
-				'region.layer',
-				'region.visible',
-				'mode.key',
-				'mode.label',
-				'mode.vehicle',
-				'mode.color',
-				'mode.sort'
-			],
-			sort: ['year'],
-			limit: -1
-		})
-	)) as any[];
+	const res = await fetch(`${ASSET_BASE}/${chartConfig?.csv ?? DEFAULT_CSV}`);
+	if (!res.ok) throw new Error(`CSV ${res.status}`);
+	const parsed: CsvRow[] = Papa.parse(await res.text(), {
+		header: true,
+		dynamicTyping: true,
+		skipEmptyLines: true
+	}).data;
+	const csvRows = parsed.filter(
+		(r) => r.type === type && candidates.includes(r.region) && r.mode && r.value != null
+	);
+	if (!csvRows.length) return null;
+
+	const directus = getDirectusInstance(fetch);
+	const [modeItems, regionItems] = (await Promise.all([
+		directus.request(
+			readItems('transport_modes', {
+				fields: ['key', 'label', 'vehicle', 'color', 'sort'],
+				limit: -1
+			})
+		),
+		directus.request(
+			readItems('regions', {
+				filter: { id: { _in: [...new Set(csvRows.map((r) => r.region))] } },
+				fields: ['id', 'name', 'layer', 'visible'],
+				limit: -1
+			})
+		)
+	])) as [any[], any[]];
+	const modeInfo = new Map(modeItems.map((m) => [m.key, m]));
+	const regionInfo = new Map(regionItems.map((r) => [r.id, r]));
 
 	// the closest region with data, unless it's an unlaunched aggregate seen from another page
-	const regionRows = (id: string) => rows.filter((r) => r.region?.id === id);
 	const dataRegionId = candidates.find(
-		(id) => regionRows(id).length > 0 && isShownOnPage(regionRows(id)[0].region, regionId)
+		(id) =>
+			regionInfo.has(id) &&
+			csvRows.some((r) => r.region === id) &&
+			isShownOnPage(regionInfo.get(id), regionId)
 	);
 	if (!dataRegionId) return null;
-	const own = regionRows(dataRegionId).filter((r) => r.mode?.key && r.value != null);
+	const dataRegion = regionInfo.get(dataRegionId);
+	const own = csvRows
+		.filter((r) => r.region === dataRegionId)
+		.map((r) => ({
+			...r,
+			update: r.update ? String(r.update) : null,
+			mode: { key: r.mode, ...modeInfo.get(r.mode) }
+		}));
 
 	const years = [...new Set(own.map((r) => r.year as number))].sort((a, b) => a - b);
 	const byMode = new Map<string, PtMode & { sort: number }>();
@@ -127,7 +163,12 @@ export async function fetchPtSupply({
 	}
 	const modes = [...byMode.values()].sort((a, b) => a.sort - b.sort);
 	const totals = years.map((_, i) => modes.reduce((sum, m) => sum + (m.values[i] ?? 0), 0));
-	const updateDate = own.map((r) => r.update).filter(Boolean).sort().at(-1) ?? null;
+	const updateDate =
+		own
+			.map((r) => r.update)
+			.filter(Boolean)
+			.sort()
+			.at(-1) ?? null;
 
 	return {
 		years,
@@ -135,13 +176,16 @@ export async function fetchPtSupply({
 		totals,
 		type,
 		operator: own.find((r) => r.operator)?.operator ?? null,
-		region: { id: dataRegionId, name: own[0].region.name },
+		region: { id: dataRegionId, name: dataRegion.name },
 		source: own.find((r) => r.source)?.source ?? null,
 		updateDate
 	};
 }
 
-export function buildChartData(data: PtSupplyData, translations: Record<string, string>): ChartData {
+export function buildChartData(
+	data: PtSupplyData,
+	translations: Record<string, string>
+): ChartData {
 	const { years, modes, totals } = data;
 	const n = years.length - 1;
 	const { divisor, label: scaleLabel } = getScale(Math.max(...totals), translations);
