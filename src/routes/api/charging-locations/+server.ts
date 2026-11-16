@@ -12,6 +12,9 @@ import type { RequestHandler } from './$types';
 //       district: AGS of the Kreis the location lies in, as a number (09564 → 9564; 0 = none found),
 //       from point-in-polygon against the district outlines in Directus, so maps can show one region
 //   GET /api/charging-locations?id=123 → details of one location for the map tooltip
+//   GET /api/charging-locations?zubau=1[&districts=09564,09562 | &state=09]
+//       → { updateDate, source, years: [{ year, nlp, slp, hpc }] }: charging points by year of
+//       commissioning and class (NLP ≤ 22 kW, SLP > 22 to < 150 kW, HPC ≥ 150 kW, per charging point)
 //
 // A newer upload is picked up automatically (newest file whose name starts with FILE_PREFIX).
 
@@ -92,7 +95,17 @@ interface Station {
 	city: string;
 	lon: number;
 	lat: number;
+	/** Year of commissioning (0 if unknown) */
+	year: number;
+	/** Charging points by class: [NLP ≤ 22 kW, SLP > 22 to < 150 kW, HPC ≥ 150 kW] */
+	classes: Classes;
 }
+
+/** Charging points by class: NLP ≤ 22 kW, SLP > 22 to < 150 kW, HPC ≥ 150 kW */
+type Classes = [number, number, number];
+
+/** Class of a charging point by its rated power: 0 NLP, 1 SLP, 2 HPC */
+const classOf = (kw: number) => (kw >= 150 ? 2 : kw > 22 ? 1 : 0);
 
 /** All stations at one coordinate */
 interface Location {
@@ -122,6 +135,8 @@ interface Index {
 	locations: Map<number, Location>;
 	/** Number of stations (Ladeeinrichtungen) in operation */
 	stations: number;
+	/** Charging points commissioned per district (AGS number) and year, by class */
+	zubau: Map<number, Map<number, Classes>>;
 	expires: number;
 }
 
@@ -212,7 +227,9 @@ function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 		zip: col('Postleitzahl'),
 		city: col('Ort'),
 		lat: col('Breitengrad'),
-		lon: col('Längengrad')
+		lon: col('Längengrad'),
+		// Rated power of each charging point (the register lists up to six per station)
+		plugKw: [1, 2, 3, 4, 5, 6].map((i) => header!.indexOf(`Nennleistung Stecker${i}`))
 	};
 
 	// Stations sharing a coordinate (e.g. 37 units in one car park) become one location: drawn
@@ -225,12 +242,24 @@ function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 		const lon = coord(r[c.lon]);
 		// Germany's bounding box: skips missing or swapped coordinates
 		if (!id || !(lat > 47 && lat < 55.2 && lon > 5.5 && lon < 15.5)) continue;
+		const pointCount = Math.max(1, Math.round(num(r[c.points])));
+		const kw = num(r[c.kw]);
+		// Class per charging point from its own rated power; without it, the station's average
+		const classes: Classes = [0, 0, 0];
+		for (let p = 0; p < pointCount; p++) {
+			const plugCol = c.plugKw[p];
+			const pointKw = plugCol !== undefined && plugCol >= 0 ? num(r[plugCol]) : 0;
+			classes[classOf(pointKw || kw / pointCount)]++;
+		}
+		const since = /(\d{4})\s*$/.exec(r[c.since] ?? '');
 		const station: Station = {
 			id,
 			operator: r[c.operator],
 			type: r[c.type],
-			points: Math.max(1, Math.round(num(r[c.points]))),
-			kw: num(r[c.kw]),
+			points: pointCount,
+			kw,
+			year: since ? parseInt(since[1], 10) : 0,
+			classes,
 			since: r[c.since],
 			street: [r[c.street], r[c.number]].filter(Boolean).join(' '),
 			zip: r[c.zip],
@@ -246,6 +275,7 @@ function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 
 	const points: number[] = [];
 	const locations = new Map<number, Location>();
+	const zubau = new Map<number, Map<number, Classes>>();
 	let stations = 0;
 	for (const group of byCoord.values()) {
 		const first = group[0];
@@ -268,6 +298,14 @@ function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 		};
 		stations += group.length;
 		locations.set(loc.id, loc);
+		let byYear = zubau.get(loc.district);
+		if (!byYear) zubau.set(loc.district, (byYear = new Map()));
+		for (const s of group) {
+			if (!s.year) continue;
+			const sum = byYear.get(s.year) ?? [0, 0, 0];
+			for (let k = 0; k < 3; k++) sum[k] += s.classes[k];
+			byYear.set(s.year, sum);
+		}
 		points.push(
 			loc.id,
 			Math.round(loc.lon * 1e5) / 1e5,
@@ -282,8 +320,30 @@ function parse(text: string, districts: District[]): Omit<Index, 'expires'> {
 		updateDate: updateDate ? `${updateDate[3]}-${updateDate[2]}-${updateDate[1]}` : null,
 		points,
 		locations,
-		stations
+		stations,
+		zubau
 	};
+}
+
+/**
+ * Charging points commissioned per year by class, summed over the selected districts:
+ * `districts` (AGS list), else `state` (AGS prefix), else all of Germany.
+ */
+function zubauFor(data: Index, districts: number[] | null, state: number | null) {
+	const keep = (d: number) =>
+		districts ? districts.includes(d) : state !== null ? Math.floor(d / 1000) === state : true;
+	const years = new Map<number, Classes>();
+	for (const [district, byYear] of data.zubau) {
+		if (!keep(district)) continue;
+		for (const [year, c] of byYear) {
+			const sum = years.get(year) ?? [0, 0, 0];
+			for (let k = 0; k < 3; k++) sum[k] += c[k];
+			years.set(year, sum);
+		}
+	}
+	return [...years.entries()]
+		.sort((a, b) => a[0] - b[0])
+		.map(([year, [nlp, slp, hpc]]) => ({ year, nlp, slp, hpc }));
 }
 
 async function load(): Promise<Index> {
@@ -312,6 +372,20 @@ export const GET: RequestHandler = async ({ url, setHeaders }) => {
 		throw error(502, 'Ladesäulenregister konnte nicht geladen werden');
 	}
 	setHeaders({ 'cache-control': 'public, max-age=3600' });
+
+	if (url.searchParams.has('zubau')) {
+		const districts = url.searchParams.get('districts');
+		const state = url.searchParams.get('state');
+		return json({
+			updateDate: data.updateDate,
+			source: SOURCE,
+			years: zubauFor(
+				data,
+				districts ? districts.split(',').map((d) => parseInt(d.slice(0, 5), 10)) : null,
+				state ? parseInt(state.slice(0, 2), 10) : null
+			)
+		});
+	}
 
 	const id = url.searchParams.get('id');
 	if (id !== null) {

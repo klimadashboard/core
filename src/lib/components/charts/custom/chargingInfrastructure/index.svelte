@@ -9,8 +9,7 @@
 		fetchData,
 		buildChartData,
 		buildChargingGoal,
-		toZubau,
-		ZUBAU_COLORS,
+		CHARGING_CLASSES,
 		GOAL_COLOR,
 		GOAL_FILL_OPACITY,
 		TARGET_PER_1000,
@@ -20,15 +19,12 @@
 	export let region: Region | null = null;
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
-	const SERIES = [
-		{ key: 'normal', label: 'Normalladepunkte', color: ZUBAU_COLORS.normal },
-		{ key: 'fast', label: 'Schnellladepunkte', color: ZUBAU_COLORS.fast }
-	] as const;
+	// Stacked bottom → top: NLP, SLP, HPC (power per charging point)
+	const SERIES = CHARGING_CLASSES;
 
 	let data: ChargingRawData | null = null;
 	let loading = true;
 	let error: string | null = null;
-	let containerEl: HTMLElement;
 	let containerWidth = 0;
 	// The 2030 goal path is shown by default; the checkbox hides it
 	let showGoal = true;
@@ -47,7 +43,8 @@
 	}
 	$: activeRegion = switchedRegion ?? region;
 
-	$: zubau = data ? toZubau(data.series) : [];
+	// Charging points by year of commissioning and class, from the Ladesäulenregister
+	$: zubau = data?.zubau ?? [];
 	$: goal = data ? buildChargingGoal(data, activeRegion) : null;
 	$: goalYears =
 		goal && showGoal
@@ -57,8 +54,7 @@
 	$: stackedData = zubau.map((d) => {
 		let y0 = 0;
 		const segments = SERIES.map((s) => {
-			// a decrease (e.g. points taken out of service) counts as 0 in the stack, the tooltip shows the real value
-			const value = Math.max(0, d[s.key]);
+			const value = d[s.key];
 			const seg = { key: s.key, label: s.label, value, y0, y1: y0 + value, color: s.color };
 			y0 += value;
 			return seg;
@@ -83,7 +79,8 @@
 	function tooltipTitle(period: number | null) {
 		const row = zubau.find((d) => d.period === period);
 		if (period == null) return '';
-		if (row?.partial && data?.updateDate) return `Zubau ${period} (bis ${formatDate(data.updateDate)})`;
+		if (row?.partial && data?.zubauUpdateDate)
+			return `Zubau ${period} (bis ${formatDate(data.zubauUpdateDate)})`;
 		return `Zubau ${period}`;
 	}
 
@@ -127,7 +124,7 @@
 	$: loadData(activeRegion);
 </script>
 
-<div bind:this={containerEl} bind:clientWidth={containerWidth}>
+<div bind:clientWidth={containerWidth}>
 	<!-- Outside the loading state so focus stays on the controls while the data reloads -->
 	<div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 mb-4">
 		{#if region}

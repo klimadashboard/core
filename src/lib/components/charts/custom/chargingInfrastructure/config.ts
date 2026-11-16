@@ -35,6 +35,10 @@ export interface ChargingRawData {
 	comparisons: ChargingComparison[];
 	updateDate: string | null;
 	source: string;
+	/** Yearly Zubau by class from the Ladesäulenregister (empty when not requested or unavailable) */
+	zubau: ZubauYear[];
+	/** Stichtag of the register the Zubau comes from */
+	zubauUpdateDate: string | null;
 }
 
 async function regionParam(region: Region | null, fetch: typeof globalThis.fetch) {
@@ -65,15 +69,18 @@ const perThousand = (points: number, population: number | null | undefined) =>
 
 export async function fetchData(
 	region: Region | null,
-	fetch: typeof globalThis.fetch = globalThis.fetch
+	fetch: typeof globalThis.fetch = globalThis.fetch,
+	/** Zubau by class for the bars; off for server-side placeholders (the register takes seconds to load once) */
+	withZubau = true
 ): Promise<ChargingRawData | null> {
 	const param = await regionParam(region, fetch);
 	const stateCode = await comparisonStateCode(region, fetch);
 
-	const [main, germany, states] = await Promise.all([
+	const [main, germany, states, zubau] = await Promise.all([
 		getJson(fetch, param ? { group: 'year', region: param } : { group: 'year' }),
 		param ? getJson(fetch, { group: 'year' }) : null,
-		stateCode ? getJson(fetch, { group: 'state' }) : null
+		stateCode ? getJson(fetch, { group: 'state' }) : null,
+		withZubau ? fetchZubau(region, fetch) : null
 	]);
 
 	const series: ChargingYear[] = (main.by_period || []).filter(
@@ -101,14 +108,65 @@ export async function fetchData(
 		evsPerPoint: evs && latest.charging_points ? evs / latest.charging_points : null,
 		comparisons,
 		updateDate: main.update_date ?? null,
-		source: main.source || 'Bundesnetzagentur, Ladesäulenregister (CC BY 4.0)'
+		source: main.source || 'Bundesnetzagentur, Ladesäulenregister (CC BY 4.0)',
+		zubau: zubau?.years ?? [],
+		zubauUpdateDate: zubau?.updateDate ?? null
 	};
+}
+
+/**
+ * Charging points commissioned per year by class (NLP / SLP / HPC) from the Ladesäulenregister,
+ * for the region's districts (/api/charging-locations?zubau). Null if unavailable.
+ */
+async function fetchZubau(
+	region: Region | null,
+	fetch: typeof globalThis.fetch
+): Promise<{ years: ZubauYear[]; updateDate: string | null } | null> {
+	const params = new URLSearchParams({ zubau: '1' });
+	if (region && region.layer !== 'country') {
+		const members = await getAggregateCodes(region, fetch);
+		const code = String(region.code ?? '');
+		if (members) params.set('districts', members);
+		else if (region.layer === 'state') params.set('state', code.slice(0, 2));
+		else if (/^\d{5}/.test(code)) params.set('districts', code.slice(0, 5));
+		else return null;
+	}
+	try {
+		const res = await fetch(`/api/charging-locations?${params}`);
+		if (!res.ok) return null;
+		const body = await res.json();
+		const lastYear = Math.max(...body.years.map((y: { year: number }) => y.year));
+		const currentYear = new Date().getFullYear();
+		return {
+			updateDate: body.updateDate ?? null,
+			years: body.years
+				.filter((y: { year: number }) => y.year > FIRST_YEAR)
+				.map((y: { year: number; nlp: number; slp: number; hpc: number }) => ({
+					period: y.year,
+					nlp: y.nlp,
+					slp: y.slp,
+					hpc: y.hpc,
+					total: y.nlp + y.slp + y.hpc,
+					partial: y.year === lastYear && y.year >= currentYear
+				}))
+		};
+	} catch {
+		return null;
+	}
 }
 
 // ---------------------------------------------------------------- yearly Zubau + 2030 goal
 
-/** Series colours of the Zubau chart (from the Nürnberg charging explorer "inkl. Ziel") */
+/** Map colours: locations with Normal- / Schnellladepunkten (from the Nürnberg charging explorer) */
 export const ZUBAU_COLORS = { normal: '#31AAA9', fast: '#A82020' } as const;
+
+/** Classes of the Zubau bars by the rated power of each charging point */
+export const CHARGING_CLASSES = [
+	// NLP and HPC in the colours of the map pins (Normal- / Schnellladen)
+	{ key: 'nlp', label: 'Normalladepunkte (≤ 22 kW)', color: ZUBAU_COLORS.normal },
+	{ key: 'slp', label: 'Schnellladepunkte (> 22 kW – < 150 kW)', color: '#F5B700' },
+	{ key: 'hpc', label: 'High Power Charging (HPC) Ladestationen (≥ 150 kW)', color: ZUBAU_COLORS.fast }
+] as const;
 /** Goal path bars: semi-transparent fill with a dashed outline in the same colour */
 export const GOAL_COLOR = '#892CDC';
 export const GOAL_FILL_OPACITY = 0.3;
@@ -132,26 +190,15 @@ export interface ChargingGoal {
 	population?: number;
 }
 
+/** Charging points commissioned in a year (still in operation), by class */
 export interface ZubauYear {
 	period: number;
-	normal: number;
-	fast: number;
+	nlp: number;
+	slp: number;
+	hpc: number;
 	total: number;
 	/** Current year: not over yet */
 	partial: boolean;
-}
-
-/** Zubau per year = stock at the end of the year − stock at the end of the previous year (first year has no base). */
-export function toZubau(series: ChargingYear[]): ZubauYear[] {
-	const lastYear = Number(series.at(-1)?.period);
-	const currentYear = new Date().getFullYear();
-	return series.slice(1).map((d, i) => {
-		const prev = series[i];
-		const normal = d.charging_points_normal - prev.charging_points_normal;
-		const fast = d.charging_points_fast - prev.charging_points_fast;
-		const period = Number(d.period);
-		return { period, normal, fast, total: normal + fast, partial: period === lastYear && period >= currentYear };
-	});
 }
 
 /**
@@ -239,6 +286,7 @@ export async function fetchChartData({ fetch, regionId }: ChartFetchParams): Pro
 				readItem('regions', regionId, { fields: ['id', 'code', 'name', 'layer', 'country'] })
 			)) as Region)
 		: null;
-	const data = await fetchData(region, fetch);
+	// Placeholders and table only: the bars' Zubau loads in the browser
+	const data = await fetchData(region, fetch, false);
 	return data ? buildChartData(data, region) : null;
 }
