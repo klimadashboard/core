@@ -31,8 +31,8 @@ export interface SoilSealingYear {
 	added: number | null;
 	/** Increase per day, in ha (null for the first year) */
 	perDay: number | null;
-	/** Set when the change in this year is distorted by a known data correction */
-	breakNote: string | null;
+	/** Increase since the first year, in ha */
+	cumulative: number;
 }
 
 export interface SoilSealingRawData {
@@ -44,6 +44,13 @@ export interface SoilSealingRawData {
 	/** Mean increase per day over the whole series, in ha */
 	averagePerDay: number;
 	firstYear: string;
+	/** Mean increase per day over the last three years, in ha: the pace for the 2030 outlook */
+	recentPerDay: number;
+	/** Increase since the first year, in ha, and what the 30 ha target would have allowed */
+	added: number;
+	targetAdded: number | null;
+	/** Notes on corrections applied to the source data */
+	notes: string[];
 	/** Region's share of the 30 ha target, by population, in ha per day */
 	target: number | null;
 	/** Region's share of the 20 ha target for 2030, by population, in ha per day */
@@ -68,7 +75,6 @@ export async function fetchData(
 
 	const rows: LandUseYear[] = json.series ?? [];
 	if (rows.length < 2) return null;
-	const breaks: { period: string; note: string }[] = json.breaks ?? [];
 
 	const series: SoilSealingYear[] = rows.map((d, i) => {
 		const prev = rows[i - 1];
@@ -78,7 +84,7 @@ export async function fetchData(
 			suv: d.suv,
 			added,
 			perDay: prev ? (added as number) / daysBetween(prev.period, d.period) : null,
-			breakNote: (prev && breaks.find((b) => b.period === d.period)?.note) || null
+			cumulative: d.suv - rows[0].suv
 		};
 	});
 
@@ -87,6 +93,8 @@ export async function fetchData(
 	const population = json.region?.population;
 	const germanPopulation = json.germany?.population;
 	const populationShare = population && germanPopulation ? population / germanPopulation : null;
+	const target = populationShare != null ? NATIONAL_TARGET_HA_PER_DAY * populationShare : null;
+	const recentFrom = rows[Math.max(0, rows.length - 4)];
 
 	return {
 		regionName: json.region?.name ?? 'Deutschland',
@@ -95,7 +103,11 @@ export async function fetchData(
 		suvShare: (last.suv / last.total) * 100,
 		averagePerDay: (last.suv - first.suv) / daysBetween(first.period, last.period),
 		firstYear: first.period,
-		target: populationShare != null ? NATIONAL_TARGET_HA_PER_DAY * populationShare : null,
+		recentPerDay: (last.suv - recentFrom.suv) / daysBetween(recentFrom.period, last.period),
+		added: last.suv - first.suv,
+		targetAdded: target != null ? target * daysBetween(first.period, last.period) : null,
+		notes: json.notes ?? [],
+		target,
 		target2030: populationShare != null ? NATIONAL_TARGET_2030_HA_PER_DAY * populationShare : null,
 		populationShare,
 		source: json.source
@@ -108,7 +120,7 @@ export function getTableColumns(): TableColumn[] {
 		{ key: 'suv', label: 'Siedlungs- und Verkehrsfläche (ha)', align: 'right', format: (v) => formatNumber(v) },
 		{ key: 'added', label: 'Zuwachs (ha)', align: 'right', format: (v) => (v == null ? '–' : formatNumber(v)) },
 		{ key: 'perDay', label: 'Zuwachs pro Tag (ha)', align: 'right', format: (v) => (v == null ? '–' : formatNumber(v, 1)) },
-		{ key: 'breakNote', label: 'Hinweis', align: 'left', format: (v) => (v ? 'Datenkorrektur, nicht vergleichbar' : '') }
+		{ key: 'cumulative', label: 'Zuwachs seit Beginn (ha)', align: 'right', format: (v) => formatNumber(v) }
 	];
 }
 
@@ -128,7 +140,11 @@ export function getPlaceholders(data: SoilSealingRawData): Record<string, string
 		targetFactor: data.target ? formatNumber(data.averagePerDay / data.target, 1) : '–',
 		target2030: data.target2030 != null ? formatNumber(data.target2030, 1) : '–',
 		populationShare: data.populationShare != null ? formatPercent(data.populationShare * 100, 1) : '–',
-		suvShare: formatPercent(data.suvShare, 1)
+		suvShare: formatPercent(data.suvShare, 1),
+		added: formatNumber(data.added),
+		excess: data.targetAdded != null ? formatNumber(data.added - data.targetAdded) : '–',
+		excessPitches:
+			data.targetAdded != null ? formatNumber((data.added - data.targetAdded) / FOOTBALL_PITCH_HA) : '–'
 	};
 }
 

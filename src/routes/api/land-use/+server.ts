@@ -7,7 +7,7 @@ import { getAggregateMembers } from '$lib/utils/regionAggregation';
 // Siedlungs- und Verkehrsfläche (Destatis Flächenerhebung) per region and year, in ha.
 // The source CSVs in Directus are ~16 MB and ~10 MB (all German regions), too large for the
 // browser, so they are loaded and indexed here once and the endpoint returns one region's series.
-// Response: { region, series: [{ period, settlement, transport, mining, suv, total }], breaks, germany, source }
+// Response: { region, series: [{ period, settlement, transport, mining, suv, total }], notes, germany, source }
 //
 // `suv` follows the official definition: settlement + transport without Bergbaubetrieb and
 // Tagebau/Grube/Steinbruch (`mining`, Regionalstatistik 33111-02-01-5 and 33111-02-02-5).
@@ -20,21 +20,27 @@ const SOURCE = 'Statistisches Bundesamt (Destatis), Flächenerhebung nach Art de
 const CACHE_TTL = 12 * 60 * 60 * 1000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const CATEGORIES = ['settlement', 'transport', 'mining', 'total'] as const;
+
 /**
- * Known breaks in the series that are not real changes in land use. A break applies to its
- * region, to aggregates containing it (Metropolregion) and to the listed parent regions.
+ * Corrections for known errors in the source data, applied to the region and to the listed
+ * parent regions (whose rows include it); aggregates (Metropolregion) inherit them via their
+ * members. Regions affected get the note in the response.
  */
-const DATA_BREAKS = [
+const CORRECTIONS = [
 	{
-		period: '2022',
+		// Grafenwöhr: the Bayerisches Landesamt für Statistik revised 2014–2021 (corrected reports
+		// A5111C 2018–2021, "korrigierte Fassung vom 12.12.2023"); Destatis still has the old values.
+		// The offset is −1,853 ha in 2017–2021; 2016 was not republished and is assumed equal.
 		region: '4131197d-2724-433a-96d2-4e386a4519ad', // Lkr. Neustadt a.d. Waldnaab
 		parents: ['faacc2ea-6e8a-47c8-a3c4-71bc58d26b09', COUNTRY_DE], // Bayern, Deutschland
+		category: 'settlement' as const,
+		periods: ['2016', '2017', '2018', '2019', '2020', '2021'],
+		delta: -1853,
 		note:
-			'Korrektur im Liegenschaftskataster: Teile des Truppenübungsplatzes Grafenwöhr (Lkr. Neustadt a.d. Waldnaab) waren seit 2014–2016 fälschlich als Siedlungsfläche erfasst und wurden 2022 berichtigt. Der Rückgang von rund 1.700 ha ist kein echter Rückbau.'
+			'Werte bis 2021 bereinigt: Teile des Truppenübungsplatzes Grafenwöhr (Lkr. Neustadt a.d. Waldnaab) waren fälschlich als Siedlungsfläche erfasst. Korrektur nach dem Bayerischen Landesamt für Statistik, für 2016 geschätzt.'
 	}
 ];
-
-const CATEGORIES = ['settlement', 'transport', 'mining', 'total'] as const;
 type Values = Partial<Record<(typeof CATEGORIES)[number], number>>;
 type Index = Map<string, Map<string, Values>>;
 
@@ -84,6 +90,14 @@ async function getIndex(fetch: typeof globalThis.fetch): Promise<Index> {
 			);
 			const data: Index = new Map();
 			for (const text of texts) parseCsv(text, data);
+			for (const c of CORRECTIONS) {
+				for (const id of [c.region, ...c.parents]) {
+					for (const period of c.periods) {
+						const v = data.get(id)?.get(period);
+						if (v?.[c.category] != null) v[c.category]! += c.delta;
+					}
+				}
+			}
 			index = { data, expires: Date.now() + CACHE_TTL };
 			return data;
 		} finally {
@@ -149,8 +163,8 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
 		{
 			region: { id: region.id, name: region.name, population: region.population },
 			series: sumSeries(data, ids),
-			breaks: DATA_BREAKS.filter((b) => ids.includes(b.region) || b.parents.includes(region.id)).map(
-				({ period, note }) => ({ period, note })
+			notes: CORRECTIONS.filter((c) => ids.includes(c.region) || c.parents.includes(region.id)).map(
+				(c) => c.note
 			),
 			germany: { population: germany?.population ?? null },
 			source: SOURCE
