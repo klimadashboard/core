@@ -2,6 +2,7 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { formatNumber, formatPercent } from '$lib/utils/formatters';
 import getDirectusInstance from '$lib/utils/directus';
+import { isSubnationalRegion } from '$lib/utils/regionAggregation';
 import { readItem } from '@directus/sdk';
 
 /** Deutsche Nachhaltigkeitsstrategie: Flächenneuinanspruchnahme unter 30 ha pro Tag bis 2030 */
@@ -67,7 +68,7 @@ export async function fetchData(
 	region: Region | null,
 	fetch: typeof globalThis.fetch = globalThis.fetch
 ): Promise<SoilSealingRawData | null> {
-	const params = region && region.layer !== 'country' ? `?region=${region.id}` : '';
+	const params = isSubnationalRegion(region) ? `?region=${region!.id}` : '';
 	const res = await fetch(`/api/land-use${params}`);
 	if (res.status === 404) return null;
 	if (!res.ok) throw new Error(`Flächendaten konnten nicht geladen werden (${res.status})`);

@@ -43,6 +43,14 @@ const MEMBER_FIELDS = [
 const CACHE_TTL = 60 * 60 * 1000;
 const memberCache = new Map<string, { data: AggregateMember[]; expires: number }>();
 
+/**
+ * True for a region below the country level. Charts use it to decide whether to ask an API for a
+ * region at all: on a chart's own page the "region" from the RegionProvider can be the chart record.
+ */
+export function isSubnationalRegion(region: { layer?: string | null } | null | undefined): boolean {
+	return ['state', 'district', 'municipality', ...AGGREGATE_LAYERS].includes(region?.layer ?? '');
+}
+
 export function isAggregateRegion(region: { layer?: string | null } | null | undefined): boolean {
 	return !!region?.layer && AGGREGATE_LAYERS.includes(region.layer);
 }
