@@ -18,6 +18,7 @@
 	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
 
 	const R = 300; // mosaic radius in layout units
+	const MAX_H = 580; // px, height of the figure in the wide layout at most
 	const TARGET_COLOR = '#5C9A6C';
 	const TONES = [0.82, 1.0, 1.12, 0.92, 1.2, 1.05, 0.96, 1.16];
 	const COLOR = Object.fromEntries(USES.map((u) => [u.key, u.color]));
@@ -66,8 +67,10 @@
 	$: LABEL = wide ? 320 : 24; // room around the circle for the labels on their leader lines
 	$: GAP = wide ? 250 : 150; // between the two rings
 	$: W = wide ? LABEL + 2 * R + GAP + 2 * r2 + 40 : 2 * (LABEL + R);
+	// Wide: drawn width capped so the figure stays at most MAX_H px high (H = 2R + 120 + HEAD)
+	$: figWidth = wide ? Math.min(width, ((MAX_H - 96) * W) / (2 * R + 120)) : width;
 	// SVG units per screen pixel, so text keeps a readable size at any card width
-	$: k = width ? W / width : 1;
+	$: k = figWidth ? W / figWidth : 1;
 	$: px = (n: number) => n * k;
 	// Headline above each circle: actual increase on the left, the target on the right
 	$: HEAD = px(wide ? 96 : 76);
@@ -248,7 +251,7 @@
 			Keine Daten verfügbar
 		</div>
 	{:else}
-		<div class="relative" bind:this={figEl}>
+		<div class="relative mx-auto" style="max-width: {figWidth}px" bind:this={figEl}>
 			<svg
 				viewBox="0 0 {W} {H}"
 				class="block w-full h-auto"
