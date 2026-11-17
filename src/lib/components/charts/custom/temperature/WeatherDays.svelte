@@ -193,14 +193,12 @@
 	<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
 		{#each $types as type}
 			{@const selected = type.key == selectedType.key}
-			<button
-				type="button"
-				class="flex text-left rounded-sm cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 {selected
+			<!-- The card keeps its own heading and values as normal content; a native button
+			     overlays it so the card is selectable without nesting headings inside a button. -->
+			<div
+				class="relative flex rounded-sm {selected
 					? 'ring-2 ring-offset-2 ring-gray-900 dark:ring-white dark:ring-offset-gray-900'
 					: ''}"
-				aria-pressed={selected}
-				aria-label="{type.label} pro Jahr im Diagramm anzeigen"
-				on:click={() => (selectedTypeKey = type.key)}
 			>
 				<WeatherDaysCard
 					{type}
@@ -212,7 +210,14 @@
 					currentDate={selectedYear == lastDate.year() ? lastDate : false}
 					showChartIcon
 				/>
-			</button>
+				<button
+					type="button"
+					class="absolute inset-0 rounded-sm cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+					aria-pressed={selected}
+					aria-label="{type.label} pro Jahr im Diagramm anzeigen"
+					on:click={() => (selectedTypeKey = type.key)}
+				></button>
+			</div>
 		{/each}
 	</div>
 	<p class="text-sm mt-2 text-gray-600 dark:text-gray-400">
