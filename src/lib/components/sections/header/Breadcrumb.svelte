@@ -8,6 +8,9 @@
 	// index page behind them, so they must not be linked.
 	const SEGMENTS_WITHOUT_PAGE = ['team', 'companies'];
 
+	// URL segments are lowercase ("auswirkungen"); German nouns start with a capital letter
+	const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+
 	const updateBreadcrumbs = () => {
 		// Access the current URL from the SvelteKit page store
 		const { pathname } = $page.url;
@@ -25,7 +28,7 @@
 			const label =
 				isLastPart && $page.data?.content?.title
 					? $page.data.content.title
-					: decodeURIComponent(part);
+					: capitalize(decodeURIComponent(part));
 
 			return { label, href, linkable: !SEGMENTS_WITHOUT_PAGE.includes(part) };
 		});
@@ -47,10 +50,10 @@
 				<span class="opacity-50 mx-2">›</span>
 				{#if crumb.linkable}
 					<a href={crumb.href} class="hover:underline">
-						{crumb.label.replace('regions', 'Regionen')}
+						{crumb.label.replace(/^regions$/i, 'Regionen')}
 					</a>
 				{:else}
-					<span>{crumb.label.replace('regions', 'Regionen')}</span>
+					<span>{crumb.label.replace(/^regions$/i, 'Regionen')}</span>
 				{/if}
 			</li>
 		{/each}

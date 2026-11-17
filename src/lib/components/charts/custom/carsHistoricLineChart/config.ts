@@ -557,10 +557,17 @@ export function getPlaceholders(
 
 	// Calculate Elektro share change over last 5 years
 	const lastYear = lastRow?.date instanceof Date ? lastRow.date.getFullYear() : currentYear;
-	const targetYear = lastYear - 5;
+	const preferredStartYear = lastYear - 5;
 
-	// Find the data point closest to 5 years ago
-	const startRow = data.find((d) => d.date instanceof Date && d.date.getFullYear() === targetYear);
+	// Find the data point closest to 5 years ago. Series that don't reach back
+	// that far (e.g. Stuttgart's monthly Neuzulassungen, which start in 2023)
+	// fall back to their earliest point, so the heading stays truthful instead
+	// of rendering an em dash for the start value.
+	const startRow =
+		data.find((d) => d.date instanceof Date && d.date.getFullYear() === preferredStartYear) ??
+		data[0];
+	const targetYear =
+		startRow?.date instanceof Date ? startRow.date.getFullYear() : preferredStartYear;
 	const elektroStart = typeof startRow?.Elektro === 'number' ? startRow.Elektro : null;
 	const elektroEnd = typeof lastRow?.Elektro === 'number' ? lastRow.Elektro : null;
 
