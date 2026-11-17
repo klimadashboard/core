@@ -75,7 +75,8 @@
 		return {
 			key: d.key,
 			value: Math.round(
-				dataComparison.filter((e) => isDay(d.key, e)).length / (compareLastYear - compareFirstYear)
+				dataComparison.filter((e) => isDay(d.key, e)).length /
+					(compareLastYear - compareFirstYear + 1)
 			)
 		};
 	});
