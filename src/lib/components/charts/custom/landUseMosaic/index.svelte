@@ -21,6 +21,14 @@
 	const MAX_H = 580; // px, height of the figure in the wide layout at most
 	const TARGET_COLOR = '#5C9A6C';
 	const TONES = [0.82, 1.0, 1.12, 0.92, 1.2, 1.05, 0.96, 1.16];
+	/** Hex colour with every channel scaled by `f` (like CSS brightness, but only on the fill) */
+	function shade(hex: string, f: number) {
+		const ch = (i: number) =>
+			Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * f))
+				.toString(16)
+				.padStart(2, '0');
+		return `#${ch(1)}${ch(3)}${ch(5)}`;
+	}
 	const COLOR = Object.fromEntries(USES.map((u) => [u.key, u.color]));
 	const ICON = {
 		industry: IconBuildingFactory2,
@@ -60,7 +68,9 @@
 	$: gross = wedges.reduce((a, w) => a + w.value, 0);
 	$: partsLabel = PART_LABELS[data?.parts[0]?.layer ?? ''] ?? 'Teilregionen';
 	// Target circle: same scale as the mosaic, so its area compares directly
-	$: r2 = data?.target2030 && gross ? R * Math.sqrt(Math.min(1, data.target2030 / gross)) : 0;
+	// The mosaic stands for the net Flächeninanspruchnahme (the target's measure), not the wedge sum
+	$: r2 =
+		data?.target2030 && data.net > 0 ? R * Math.sqrt(Math.min(1, data.target2030 / data.net)) : 0;
 
 	// Wide: target circle to the right, group names around the circle. Narrow: target below.
 	$: wide = width >= 900; // below that the side labels would not fit at a readable size
@@ -109,6 +119,15 @@
 		return formatNumber(d, d < 10 ? 1 : 0);
 	};
 	const pct = (v: number, of: number) => `${formatNumber((v / of) * 100, 1)} %`;
+	// Half the width of the headline over the mosaic (its widest line), estimated
+	$: headHalf = data
+		? Math.max(
+				`${perDay(data.net)} Hektar pro Tag`.length * px(22) * 0.55,
+				`Neuinanspruchnahme gesamt in ${data.year}: ${formatNumber(data.net)} Hektar`.length *
+					px(14) *
+					0.5
+			) / 2
+		: 0;
 
 	// Band between the rings: S-curves, drawn along the axis c1 → c2 and rotated into place
 	$: band = (() => {
@@ -159,7 +178,7 @@
 	/** Label lines and size for a cell, or null when the text block would not fit inside it */
 	$: cellLabel = (c: MosaicCell) => {
 		const lines = cellLines(c.name);
-		const value = `${ha(c.value)} (${pct(c.value, gross)})`;
+		const value = ha(c.value);
 		for (const size of [14, 11]) {
 			const fs = px(size);
 			const w =
@@ -287,8 +306,7 @@
 							<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 							<path
 								d={roundedPath(c.polygon, px(10))}
-								fill={COLOR[w.key]}
-								style="filter: brightness({c.rank === 1 ? 0.82 : TONES[c.rank % TONES.length]})"
+								fill={shade(COLOR[w.key], c.rank === 1 ? 0.82 : TONES[c.rank % TONES.length])}
 								class="stroke-white dark:stroke-gray-900 outline-none hover:opacity-80 focus:opacity-80 cursor-default"
 								stroke-width={px(3)}
 								stroke-linejoin="round"
@@ -366,13 +384,25 @@
 						{@const a = labelAngle(w)}
 						{@const dir = Math.cos(a) >= 0 ? 1 : -1}
 						{@const start = polar(R + 22, a)}
-						{@const elbow = polar(R + 52, a)}
+						{@const base = polar(R + 52, a)}
+						<!-- Above the circle on the right, the rule rises above the target's headline -->
+						{@const ruleY =
+							dir > 0 && r2 && base[1] < c1[1] - R * 0.7
+								? Math.min(base[1], c2[1] - r2 - 18 - HEAD - px(14))
+								: base[1]}
+						{@const elbow = ruleY === base[1] ? base : polar((ruleY - c1[1]) / Math.sin(a), a)}
 						{@const share = pct(w.value, gross)}
-						{@const textW = px(w.name.length * 9.6 + share.length * 7)}
+						{@const textW = px(w.name.length * 10 + share.length * 7.5)}
 						{@const iconSize = px(20)}
-						{@const len = textW + iconSize + px(34)}
+						{@const len = textW + iconSize + px(28)}
+						<!-- Labels above the circle start beside the headline, not under it -->
+						{@const clear = elbow[1] < c1[1] - R * 0.7 ? headHalf + px(20) : 0}
+						{@const x0 =
+							dir > 0
+								? Math.max(elbow[0], c1[0] + clear)
+								: Math.min(elbow[0], c1[0] - clear)}
 						{@const end = [
-							dir > 0 ? Math.min(W - px(8), elbow[0] + len) : Math.max(px(8), elbow[0] - len),
+							dir > 0 ? Math.min(W - px(8), x0 + len) : Math.max(px(8), x0 - len),
 							elbow[1]
 						]}
 						<path
@@ -383,18 +413,19 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 						/>
+						<!-- Icon, then name and share, always read from the left end of the text block -->
+						{@const iconX = dir > 0 ? x0 + px(10) : end[0]}
 						{@const Icon = ICON[w.key as keyof typeof ICON]}
 						<Icon
-							x={dir > 0 ? end[0] - textW - iconSize - px(8) : end[0]}
+							x={iconX}
 							y={elbow[1] - px(8) - iconSize + px(3)}
 							size={iconSize}
 							stroke={1.8}
 							color={COLOR[w.key]}
 						/>
 						<text
-							x={dir > 0 ? end[0] : end[0] + iconSize + px(8)}
+							x={iconX + iconSize + px(8)}
 							y={elbow[1] - px(8)}
-							text-anchor={dir > 0 ? 'end' : 'start'}
 							font-size={px(18)}
 						>
 							<tspan font-weight="600" class="fill-gray-900 dark:fill-gray-100">{w.name}</tspan>
@@ -412,7 +443,7 @@
 					font-weight="600"
 					class="fill-gray-900 dark:fill-gray-100"
 				>
-					{data.year}: {perDay(data.net)} Hektar pro Tag
+					{perDay(data.net)} Hektar pro Tag
 				</text>
 				<text
 					x={c1[0]}
@@ -421,7 +452,7 @@
 					font-size={px(14)}
 					class="fill-gray-600 dark:fill-gray-400"
 				>
-					≈ {perDay(data.net / FOOTBALL_PITCH_HA)} Fußballfelder pro Tag
+					≈ {perDay(data.net / FOOTBALL_PITCH_HA)} Fußballfelder
 				</text>
 				<text
 					x={c1[0]}
@@ -430,7 +461,7 @@
 					font-size={px(14)}
 					class="fill-gray-600 dark:fill-gray-400"
 				>
-					Gesamt: {formatNumber(data.net)} Hektar
+					Neuinanspruchnahme gesamt in {data.year}: {formatNumber(data.net)} Hektar
 				</text>
 
 				<!-- Target circle, same scale, same design: disc, ring, label -->
@@ -529,11 +560,13 @@
 								>{pct(tip.cell.value, tip.wedge.value)}</b
 							></span
 						>
-						<span class="flex justify-between gap-3"
-							>Anteil an gesamter Flächeninanspruchnahme<b class="font-semibold whitespace-nowrap"
-								>{pct(tip.cell.value, gross)}</b
-							></span
-						>
+						{#if data.net > 0}
+							<span class="flex justify-between gap-3"
+								>Anteil an gesamter Flächeninanspruchnahme<b class="font-semibold whitespace-nowrap"
+									>{pct(tip.cell.value, data.net)}</b
+								></span
+							>
+						{/if}
 					</div>
 				</div>
 			{/if}
@@ -551,13 +584,16 @@
 		</div>
 
 		<p class="mt-3 text-xs text-gray-600 dark:text-gray-400">
-			Zuwachs {data.year} gegenüber {data.previousYear} je {partsLabel === 'Bundesländer'
+			Der linke Kreis steht für die Flächeninanspruchnahme {data.year}, den Nettozuwachs der
+			Siedlungs- und Verkehrsfläche gegenüber {data.previousYear}: {ha(data.net)}. Die Keile zeigen
+			nur Zuwächse je {partsLabel === 'Bundesländer'
 				? 'Bundesland'
 				: partsLabel === 'Kreise'
 					? 'Kreis'
-					: 'Gemeinde'}; Rückgänge einzelner {partsLabel} in einer Nutzung sind nicht dargestellt, netto
-			ergibt sich ein Zuwachs von {ha(data.net)}. Ohne Bergbau und Tagebau; Verkehrsflächen zählen
-			zu den übrigen Nutzungen.
+					: 'Gemeinde'} und Nutzung, Rückgänge sind nicht dargestellt. Zusammen ergeben sie daher {ha(
+				gross
+			)} und nicht die {ha(data.net)} aus dem Titel. Ohne Bergbau und Tagebau; Verkehrsflächen
+			zählen zu den übrigen Nutzungen.
 			{#each data.notes as note}{' '}{note}{/each}
 		</p>
 	{/if}
