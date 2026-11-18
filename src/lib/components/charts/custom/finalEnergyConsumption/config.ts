@@ -156,6 +156,12 @@ export function totalOf(data: FinalEnergyData, year: number) {
 	return data.categories.reduce((sum, c) => sum + valueOf(data, year, c.key), 0);
 }
 
+/**
+ * Carriers counted as fossil for the headline share. Strom and Fernwärme are left out:
+ * their generation mix is not part of this balance.
+ */
+const FOSSIL_CARRIERS = ['erdgas', 'heizoel', 'kohle', 'treibstoff_fossil'];
+
 export function buildChartData(data: FinalEnergyData, region: Region | null): ChartData {
 	const cats = data.categories;
 	const mwh = (v: number) => formatNumber(v, 0);
@@ -179,6 +185,7 @@ export function buildChartData(data: FinalEnergyData, region: Region | null): Ch
 	const firstTotal = totalOf(data, first);
 	const lastTotal = totalOf(data, last);
 	const change = firstTotal ? (lastTotal / firstTotal - 1) * 100 : 0;
+	const fossilTotal = FOSSIL_CARRIERS.reduce((sum, key) => sum + valueOf(data, last, key), 0);
 	const largest = [...cats].sort(
 		(a, b) => valueOf(data, last, b.key) - valueOf(data, last, a.key)
 	)[0];
@@ -197,6 +204,8 @@ export function buildChartData(data: FinalEnergyData, region: Region | null): Ch
 			firstTotalTWh: formatNumber(firstTotal / 1e6, 1),
 			lastTotalTWh: formatNumber(lastTotal / 1e6, 1),
 			changePercent: `${change > 0 ? '+' : ''}${formatPercent(change, 0)}`,
+			fossilShare: lastTotal ? formatPercent((fossilTotal / lastTotal) * 100, 0) : '',
+			fossilTWh: formatNumber(fossilTotal / 1e6, 1),
 			largestCategory: largest?.label ?? '',
 			largestCategoryTWh: largest ? formatNumber(valueOf(data, last, largest.key) / 1e6, 1) : ''
 		},
