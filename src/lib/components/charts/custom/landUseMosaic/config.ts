@@ -96,7 +96,18 @@ export function getPlaceholders(data: LandUseMosaicData): Record<string, string 
 	const sum = (k: UseKey) => data.parts.reduce((a, p) => a + Math.max(0, p[k]), 0);
 	const gross = USES.reduce((a, u) => a + sum(u.key), 0);
 	const top = [...USES].sort((a, b) => sum(b.key) - sum(a.key))[0];
+	const net = formatNumber(data.net);
+	// Whole heading sentence, so it reads right when there was no net increase or the target is met
+	const summary =
+		data.net <= 0
+			? `${data.year} ist die Siedlungs- und Verkehrsfläche netto nicht gewachsen (${net} Hektar).`
+			: data.target2030 == null
+				? `${data.year} kamen ${net} Hektar hinzu.`
+				: data.net <= data.target2030
+					? `${data.year} kamen ${net} Hektar hinzu – das 2030-Ziel ist eingehalten.`
+					: `${data.year} kamen ${net} Hektar hinzu – ${formatNumber(data.net / data.target2030, 1)}-mal so viel, wie das 2030-Ziel erlaubt.`;
 	return {
+		summary,
 		regionName: data.regionName,
 		year: data.year,
 		net: formatNumber(data.net),

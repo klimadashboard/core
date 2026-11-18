@@ -2,7 +2,12 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
-	import { IconBuildingFactory2, IconHome, IconCategory } from '@tabler/icons-svelte-runes';
+	import {
+		IconBuildingFactory2,
+		IconHome,
+		IconCategory,
+		IconCheck
+	} from '@tabler/icons-svelte-runes';
 	import { formatNumber } from '$lib/utils/formatters';
 	import {
 		fetchData,
@@ -69,8 +74,14 @@
 	$: partsLabel = PART_LABELS[data?.parts[0]?.layer ?? ''] ?? 'Teilregionen';
 	// Target circle: same scale as the mosaic, so its area compares directly
 	// The mosaic stands for the net Flächeninanspruchnahme (the target's measure), not the wedge sum
-	$: r2 =
-		data?.target2030 && data.net > 0 ? R * Math.sqrt(Math.min(1, data.target2030 / data.net)) : 0;
+	// Target met (net at or below the target, or no net increase at all): no "x-mal" comparison, the
+	// target circle is then a fixed size instead of to scale
+	$: met = !!data?.target2030 && data.net <= data.target2030;
+	$: r2 = data?.target2030
+		? met
+			? R * 0.6
+			: R * Math.sqrt(data.target2030 / data.net)
+		: 0;
 
 	// Wide: target circle to the right, group names around the circle. Narrow: target below.
 	$: wide = width >= 900; // below that the side labels would not fit at a readable size
@@ -116,14 +127,14 @@
 	/** A yearly amount per day of that year: one decimal below 10, whole numbers above */
 	$: perDay = (v: number) => {
 		const d = v / (data?.days || 365);
-		return formatNumber(d, d < 10 ? 1 : 0);
+		return formatNumber(d, Math.abs(d) < 0.1 ? 2 : Math.abs(d) < 10 ? 1 : 0);
 	};
 	const pct = (v: number, of: number) => `${formatNumber((v / of) * 100, 1)} %`;
 	// Half the width of the headline over the mosaic (its widest line), estimated
 	$: headHalf = data
 		? Math.max(
 				`${perDay(data.net)} Hektar pro Tag`.length * px(22) * 0.55,
-				`Neuinanspruchnahme gesamt in ${data.year}: ${formatNumber(data.net)} Hektar`.length *
+				`Neuinanspruchnahme in ${data.year}: ${formatNumber(data.net)} Hektar`.length *
 					px(14) *
 					0.5
 			) / 2
@@ -443,7 +454,7 @@
 					font-weight="600"
 					class="fill-gray-900 dark:fill-gray-100"
 				>
-					{perDay(data.net)} Hektar pro Tag
+					{data.net > 0 ? `${perDay(data.net)} Hektar pro Tag` : 'Netto kein Flächenzuwachs'}
 				</text>
 				<text
 					x={c1[0]}
@@ -452,7 +463,9 @@
 					font-size={px(14)}
 					class="fill-gray-600 dark:fill-gray-400"
 				>
-					≈ {perDay(data.net / FOOTBALL_PITCH_HA)} Fußballfelder
+					{data.net > 0
+						? `≈ ${perDay(data.net / FOOTBALL_PITCH_HA)} Fußballfelder`
+						: `Zuwächse im Kreis: ${formatNumber(gross)} Hektar`}
 				</text>
 				<text
 					x={c1[0]}
@@ -461,7 +474,7 @@
 					font-size={px(14)}
 					class="fill-gray-600 dark:fill-gray-400"
 				>
-					Neuinanspruchnahme gesamt in {data.year}: {formatNumber(data.net)} Hektar
+					Neuinanspruchnahme in {data.year}: {formatNumber(data.net)} Hektar
 				</text>
 
 				<!-- Target circle, same scale, same design: disc, ring, label -->
@@ -475,14 +488,39 @@
 						stroke={TARGET_COLOR}
 						stroke-width={px(4)}
 					/>
-					<text
-						x={c2[0]}
-						y={c2[1] + px(7)}
-						text-anchor="middle"
-						font-size={px(20)}
-						font-weight="600"
-						class="fill-white">2030-Ziel</text
-					>
+					{#if met}
+						<IconCheck
+							x={c2[0] - px(18)}
+							y={c2[1] - px(44)}
+							size={px(36)}
+							stroke={2.5}
+							color="white"
+						/>
+						<text
+							x={c2[0]}
+							y={c2[1] + px(14)}
+							text-anchor="middle"
+							font-size={px(20)}
+							font-weight="600"
+							class="fill-white">2030-Ziel</text
+						>
+						<text
+							x={c2[0]}
+							y={c2[1] + px(36)}
+							text-anchor="middle"
+							font-size={px(16)}
+							class="fill-white">eingehalten</text
+						>
+					{:else}
+						<text
+							x={c2[0]}
+							y={c2[1] + px(7)}
+							text-anchor="middle"
+							font-size={px(20)}
+							font-weight="600"
+							class="fill-white">2030-Ziel</text
+						>
+					{/if}
 					<!-- Wide: above the target circle, as far from its ring as the left title from the mosaic's. Narrow: below it. -->
 					{@const ty = wide ? c2[1] - r2 - 18 - HEAD + px(22) : c2[1] + r2 + 18 + px(26)}
 					<text
@@ -522,14 +560,23 @@
 							font-weight="600"
 							class="fill-gray-900 dark:fill-gray-100"
 						>
-							{formatNumber(data.net / data.target2030, 1)}-mal
+							{!met
+								? `${formatNumber(data.net / data.target2030, 1)}-mal`
+								: data.net > 0
+									? `${formatNumber((data.net / data.target2030) * 100, 0)} %`
+									: ha(data.net)}
 						</text>
 						<text
 							x={band.mid[0]}
 							y={band.mid[1] + px(16)}
 							text-anchor="middle"
 							font-size={px(12)}
-							class="fill-gray-600 dark:fill-gray-400">so viel wie das Ziel</text
+							class="fill-gray-600 dark:fill-gray-400"
+							>{!met
+								? 'so viel wie das Ziel'
+								: data.net > 0
+									? 'des Zielwerts'
+									: 'netto'}</text
 						>
 					{/if}
 				{/if}
@@ -584,16 +631,23 @@
 		</div>
 
 		<p class="mt-3 text-xs text-gray-600 dark:text-gray-400">
-			Der linke Kreis steht für die Flächeninanspruchnahme {data.year}, den Nettozuwachs der
-			Siedlungs- und Verkehrsfläche gegenüber {data.previousYear}: {ha(data.net)}. Die Keile zeigen
-			nur Zuwächse je {partsLabel === 'Bundesländer'
+			{#if data.net > 0}
+				Der linke Kreis steht für die Flächeninanspruchnahme {data.year}, den Nettozuwachs der
+				Siedlungs- und Verkehrsfläche gegenüber {data.previousYear}: {ha(data.net)}.
+			{:else}
+				Netto ist die Siedlungs- und Verkehrsfläche {data.year} gegenüber {data.previousYear} nicht
+				gewachsen ({ha(data.net)}). Rückgänge entstehen oft durch Umwidmungen oder Korrekturen im
+				Kataster, nicht unbedingt durch Entsiegelung.
+			{/if}
+			Die Keile zeigen nur Zuwächse je {partsLabel === 'Bundesländer'
 				? 'Bundesland'
 				: partsLabel === 'Kreise'
 					? 'Kreis'
 					: 'Gemeinde'} und Nutzung, Rückgänge sind nicht dargestellt. Zusammen ergeben sie daher {ha(
 				gross
-			)} und nicht die {ha(data.net)} aus dem Titel. Ohne Bergbau und Tagebau; Verkehrsflächen
-			zählen zu den übrigen Nutzungen.
+			)} und nicht die {ha(data.net)} aus dem Titel.
+			{#if met}Ist der Nettozuwachs nicht größer als das Ziel, ist der Zielkreis nicht maßstäblich.{/if}
+			Ohne Bergbau und Tagebau; Verkehrsflächen zählen zu den übrigen Nutzungen.
 			{#each data.notes as note}{' '}{note}{/each}
 		</p>
 	{/if}
