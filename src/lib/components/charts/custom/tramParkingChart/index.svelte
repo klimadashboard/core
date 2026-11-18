@@ -148,8 +148,10 @@
 	// Reset hover when view changes
 	$: if (view) hoverLabel = null;
 
-	// Layout
-	$: leftMargin = view === 'hotspots' ? 215 : 170;
+	// Layout -- narrow screens get a slimmer label column so the dots keep room
+	$: isMobile = containerWidth > 0 && containerWidth < 500;
+	$: leftMargin = view === 'hotspots' ? (isMobile ? 160 : 215) : isMobile ? 92 : 170;
+	$: nameFontSize = isMobile ? (view === 'hotspots' ? 11 : 12) : 13;
 	$: margin = { top: 28, right: 15, bottom: 28, left: leftMargin };
 	$: innerWidth = Math.max(0, containerWidth - margin.left - margin.right);
 	$: bandStep = view === 'districts' ? 52 : 62;
@@ -179,10 +181,10 @@
 				? (v: string) => `Linie ${v}`
 				: (v: string) => v;
 
-	function fmtWait(h: number): string {
+	function fmtWait(h: number, short = false): string {
 		if (h <= 0) return '–';
-		if (h < 1) return `${Math.round(h * 60)} Minuten Wartezeit`;
-		return `${Math.round(h)} Stunden Wartezeit`;
+		if (h < 1) return `${Math.round(h * 60)} ${short ? 'min' : 'Minuten'} Wartezeit`;
+		return `${Math.round(h)} ${short ? 'h' : 'Stunden'} Wartezeit`;
 	}
 
 	$: hoveredItem = hoverLabel ? (aggregated.find((d) => d.label === hoverLabel) ?? null) : null;
@@ -192,30 +194,31 @@
 	$: dotAreaH = Math.floor(bw * 0.65);
 	$: barH = Math.max(4, Math.floor(bw * 0.25));
 	$: dotBarGap = 4;
-	$: rowH = dotAreaH / 3;
-	$: dotR = Math.max(1.5, rowH * 0.4);
-	$: dotStep = Math.max(5, rowH);
 
-	// Pre-compute dot positions; remainder column may have 1 or 2 dots
+	// One dot = one incident. Pick the number of dot rows (3–10) that gives the
+	// biggest dots while the largest group still fits the width and the band height.
+	$: dotLayout = (() => {
+		let best = { rows: 3, step: 0 };
+		for (let rows = 3; rows <= 10; rows++) {
+			const cols = Math.ceil(maxCount / rows);
+			const step = Math.min(innerWidth / cols, dotAreaH / rows, 12);
+			if (step > best.step + 0.01) best = { rows, step };
+		}
+		return best;
+	})();
+	$: dotRowCount = dotLayout.rows;
+	$: rowH = dotLayout.step;
+	$: dotStep = dotLayout.step;
+	$: dotR = Math.max(1, dotStep * 0.4);
+
+	// Pre-compute dot positions: filled column by column, last column may be partial
 	$: dotRows = (xScale && xScaleWait && yScale)
 		? aggregated.map((d) => {
-				const filledW = xScale!(d.count) ?? 0;
-				const totalDots = Math.round((filledW / dotStep) * 3);
-				const numFullCols = Math.floor(totalDots / 3);
-				const remainder = totalDots % 3;
 				const dots: { cx: number; cy: number }[] = [];
-				for (let col = 0; col < numFullCols; col++) {
-					for (let row = 0; row < 3; row++) {
-						dots.push({ cx: col * dotStep + dotStep / 2, cy: row * rowH + rowH / 2 });
-					}
-				}
-				if (remainder > 0) {
-					for (let row = 0; row < remainder; row++) {
-						dots.push({
-							cx: numFullCols * dotStep + dotStep / 2,
-							cy: row * rowH + rowH / 2
-						});
-					}
+				for (let i = 0; i < d.count; i++) {
+					const col = Math.floor(i / dotRowCount);
+					const row = i % dotRowCount;
+					dots.push({ cx: col * dotStep + dotStep / 2, cy: row * rowH + rowH / 2 });
 				}
 				return {
 					label: d.label,
@@ -223,7 +226,7 @@
 					dots,
 					countLabel: `${d.count} Vorfälle`,
 					barWidth: xScaleWait!(d.waitingHours) ?? 0,
-					waitLabel: fmtWait(d.waitingHours)
+					waitLabel: fmtWait(d.waitingHours, isMobile)
 				};
 			})
 		: [];
@@ -336,7 +339,7 @@
 		{#if containerWidth > 0 && yScale && xScale && xScaleWait}
 			<svg width={containerWidth} height={chartHeight} class="overflow-visible">
 				<g transform="translate({margin.left},{margin.top})">
-					<!-- Dots for count (3 rows, remainder column may have 1–2 dots) -->
+					<!-- Dots for count: one dot per incident -->
 					{#each dotRows as dp}
 						{#each dp.dots as dot}
 							<circle
@@ -351,7 +354,7 @@
 
 					<!-- Average wait bar (pill-shaped: rounded right end) -->
 					{#each dotRows as dp}
-						{@const by = dp.bandY + dotAreaH + dotBarGap}
+						{@const by = dp.bandY + rowH * dotRowCount + dotBarGap}
 						{@const bw2 = dp.barWidth}
 						{@const r2 = barH / 2}
 						{#if bw2 > 0}
@@ -363,29 +366,29 @@
 						{/if}
 					{/each}
 
-					<!-- Left labels: name (bold) + count + wait, tightly grouped, right-aligned -->
+					<!-- Left labels: name (bold) + count + wait, tightly grouped, left-aligned -->
 					{#each dotRows as dp}
 						{@const mid = dp.bandY + Math.round(bw / 2)}
 						<text
-							x={-8}
+							x={-margin.left}
 							y={mid - 12}
-							text-anchor="end"
-							font-size="13"
+							text-anchor="start"
+							font-size={nameFontSize}
 							font-weight="bold"
 							class="fill-gray-800 dark:fill-gray-100"
 						>{yLabelFormat(dp.label)}</text>
 						<text
-							x={-8}
+							x={-margin.left}
 							y={mid + 1}
-							text-anchor="end"
-							font-size="11"
+							text-anchor="start"
+							font-size={isMobile ? 10 : 11}
 							fill={COUNT_COLOR}
 						>{dp.countLabel}</text>
 						<text
-							x={-8}
+							x={-margin.left}
 							y={mid + 13}
-							text-anchor="end"
-							font-size="11"
+							text-anchor="start"
+							font-size={isMobile ? 10 : 11}
 							fill={WAIT_COLOR}
 						>{dp.waitLabel}</text>
 					{/each}
