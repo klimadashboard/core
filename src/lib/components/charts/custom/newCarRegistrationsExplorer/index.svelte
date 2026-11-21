@@ -11,6 +11,7 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { Chart, AxisX, AxisY, BarStack, Line, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { RadioGroup, Select } from '$lib/components/ui';
+	import StatePicker from '../emissionsFederalStatesExplorer/StatePicker.svelte';
 	import { formatNumber } from '$lib/utils/formatters';
 	import type { ChartData } from '../../types';
 	import type { Region } from '$lib/utils/getRegion';
@@ -66,6 +67,31 @@
 	};
 
 	let chartType: 'bar' | 'line' = 'bar';
+	let width = 0;
+
+	// line view on wide screens: labels at the line ends instead of the legend; fuel types are picked in a dropdown
+	const END_LABEL: Record<string, string> = {
+		electric: 'Elektro',
+		plugin: 'Plug-in',
+		hybrid: 'Hybrid',
+		petrol: 'Benzin',
+		diesel: 'Diesel',
+		other: 'Sonstige'
+	};
+	$: lineEndLabels = chartType === 'line' && width >= 500;
+	function endLabelsFor(yScale: (v: number) => number, rowsForLabels: Record<string, any>[]) {
+		const labels = visibleGroups
+			.map((g) => {
+				const last = [...rowsForLabels].reverse().find((r) => r[g.key] != null);
+				if (!last) return null;
+				const v = last[g.key] as number;
+				return { key: g.key, color: g.color, text: `${END_LABEL[g.key] ?? g.label} ${measure === 'share' ? `${formatNumber(v, 0)} %` : formatNumber(v, 0)}`, y: yScale(v) };
+			})
+			.filter((l): l is NonNullable<typeof l> => l !== null)
+			.sort((a, b) => a.y - b.y);
+		for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 13) labels[i].y = labels[i - 1].y + 13;
+		return labels;
+	}
 	let period: 'month' | 'year_to_date' = 'month';
 	let measure: 'count' | 'share' = 'count';
 	let untilMonth = 12;
@@ -203,6 +229,7 @@
 			placeholders: {
 				latestMonth: lastPoint ? `${MONTHS[lastPoint.month - 1]} ${lastPoint.year}` : '',
 				latestElectricShare: latestElectricShare != null ? formatNumber(latestElectricShare, 1) : ''
+				// text placeholders for the "Neuzulassungen" block (car…, truck…, bus…): newRegistrationsOverview/textPlaceholders.ts
 			},
 			meta: {
 				// Card.svelte renders the source as HTML
@@ -220,7 +247,7 @@
 {:else if !bars.length}
 	<div class="h-[460px] flex items-center justify-center text-gray-500 dark:text-gray-400">Keine Daten verfügbar</div>
 {:else}
-	<div class="flex flex-col gap-3">
+	<div class="flex flex-col gap-3" bind:clientWidth={width}>
 
 		<div class="flex flex-wrap items-end gap-4">
 			<RadioGroup
@@ -250,6 +277,13 @@
 					{ value: 'share', label: 'Anteil' }
 				]}
 			/>
+			{#if lineEndLabels}
+				<StatePicker
+					title="Antriebsarten"
+					bind:hidden
+					items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, dash: DASH[g.key] }))}
+				/>
+			{/if}
 			{#if period === 'year_to_date'}
 				<div class="w-48">
 					<Select
@@ -270,14 +304,17 @@
 			</p>
 		{/if}
 
-		<div>
-			<Legend
-				interactive
-				bind:hidden
-				items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, dashed: chartType === 'line' && DASH[g.key] != null }))}
-			/>
-			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Antriebsarten in der Legende an- und abwählen.</p>
-		</div>
+		<!-- legend only when the lines have no end labels (bar view, narrow screens) -->
+		{#if !lineEndLabels}
+			<div>
+				<Legend
+					interactive
+					bind:hidden
+					items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, dashed: chartType === 'line' && DASH[g.key] != null }))}
+				/>
+				<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Antriebsarten in der Legende an- und abwählen.</p>
+			</div>
+		{/if}
 
 		<Chart
 			data={chartType === 'bar' ? stacked : lineRows}
@@ -288,7 +325,7 @@
 			yMin={0}
 			yMax={measure === 'share' && chartType === 'bar' ? 100 : null}
 			padding={period === 'month' ? 0.15 : 0.3}
-			margin={{ top: 15, right: 10, bottom: 35, left: 55 }}
+			margin={{ top: 15, right: lineEndLabels ? 110 : 10, bottom: 35, left: 55 }}
 		>
 			<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
@@ -309,6 +346,11 @@
 							{hover}
 						/>
 					{/each}
+					{#if lineEndLabels}
+						{#each endLabelsFor(yScale, lineRows) as l (l.key)}
+							<text x={innerWidth + 6} y={l.y} dy="0.35em" class="text-xs font-semibold" fill={l.color}>{l.text}</text>
+						{/each}
+					{/if}
 				{/if}
 				<AxisX
 					{xScale}

@@ -13,6 +13,7 @@
 	import getDirectusInstance from '$lib/utils/directus';
 	import { Chart, AxisX, AxisY, BarStack, Line, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { RadioGroup } from '$lib/components/ui';
+	import StatePicker from '../emissionsFederalStatesExplorer/StatePicker.svelte';
 	import { formatNumber } from '$lib/utils/formatters';
 	import type { ChartData } from '../../types';
 	import type { Region } from '$lib/utils/getRegion';
@@ -96,6 +97,24 @@
 	let period: 'month' | 'year' = 'month';
 	let measure: 'count' | 'share' = 'share';
 	let hidden: Set<string> = new Set();
+	let width = 0;
+
+	// line view on wide screens: labels at the line ends instead of the legend; fuel types are picked in a dropdown
+	const END_LABEL: Record<string, string> = { electric: 'Elektro', hybrid: 'Hybrid', petrol: 'Benzin', diesel: 'Diesel', other: 'Sonstige' };
+	$: lineEndLabels = chartType === 'line' && width >= 500;
+	function endLabelsFor(yScale: (v: number) => number, rowsForLabels: Record<string, any>[]) {
+		const labels = GROUPS.filter((g) => !hidden.has(g.key))
+			.map((g) => {
+				const last = [...rowsForLabels].reverse().find((r) => r[g.key] != null);
+				if (!last) return null;
+				const v = last[g.key] as number;
+				return { key: g.key, color: g.color, text: `${END_LABEL[g.key] ?? g.label} ${measure === 'share' ? `${formatNumber(v, 0)} %` : formatNumber(v, 0)}`, y: yScale(v) };
+			})
+			.filter((l): l is NonNullable<typeof l> => l !== null)
+			.sort((a, b) => a.y - b.y);
+		for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 13) labels[i].y = labels[i - 1].y + 13;
+		return labels;
+	}
 
 	// federal state page → that state, otherwise Austria
 	const regionId: string = REGIONS.some((r) => r.id === region?.id) ? (region!.id as string) : AUSTRIA_ID;
@@ -274,10 +293,11 @@
 {:else if !data.length}
 	<div class="h-[560px] flex items-center justify-center text-gray-500 dark:text-gray-400">Keine Daten verfügbar</div>
 {:else}
-	<div class="flex flex-col gap-4">
+	<div class="flex flex-col gap-4" bind:clientWidth={width}>
 		<!-- vehicle class tiles (trucks only) -->
 		{#if CLASSES.length > 1}
-		<div role="radiogroup" aria-label="Fahrzeugklasse" class="grid grid-cols-2 md:grid-cols-4 gap-2">
+		<!-- same look as the Pkw / Lkw / Busse switch: one track, the selected class as a raised white segment -->
+		<div role="radiogroup" aria-label="Fahrzeugklasse" class="grid grid-cols-2 md:grid-cols-4 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
 			{#each CLASSES as c (c.key)}
 				{@const active = c.key === vehicleClass}
 				{@const stat = tileStats[c.key]}
@@ -286,20 +306,25 @@
 					role="radio"
 					aria-checked={active}
 					on:click={() => (vehicleClass = c.key)}
-					class="flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+					title={stat ? `${formatNumber(stat.share, 1)} % elektrisch ${stat.month === 12 ? stat.year : `${stat.year} (Jänner bis ${MONTHS[stat.month - 1]})`}` : undefined}
+					class="flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
 						{active
-						? 'border-gray-900 bg-gray-50 text-gray-900 dark:border-white dark:bg-gray-800 dark:text-white'
-						: 'border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-white'}"
+						? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5 dark:bg-gray-950 dark:text-white dark:ring-white/10'
+						: 'text-gray-500 hover:bg-white/60 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-900/60 dark:hover:text-white'}"
 				>
-					<span class="flex h-8 items-end"><TruckIcon type={c.key as Exclude<VehicleClass, 'bus_m2_m3'>} size={26} /></span>
-					<span class="text-sm font-semibold leading-tight">{c.label}</span>
-					<span class="text-xs text-gray-500 dark:text-gray-400 leading-tight">{c.sub}</span>
-					{#if stat}
-						<span class="mt-1 text-xs leading-tight">
-							<strong class="text-emerald-600 dark:text-emerald-400">{formatNumber(stat.share, 1)} %</strong>
-							elektrisch {stat.month === 12 ? stat.year : `${stat.year} (bis ${MONTHS_SHORT[stat.month - 1]})`}
-						</span>
-					{/if}
+					<!-- same box for every icon so the four vehicles look balanced -->
+					<span class="flex h-7 w-11 shrink-0 items-center justify-center">
+						<TruckIcon type={c.key as Exclude<VehicleClass, 'bus_m2_m3'>} size={22} />
+					</span>
+					<span class="flex min-w-0 flex-col">
+						<span class="truncate text-sm font-semibold leading-tight">{c.label}</span>
+						<span class="truncate text-xs leading-tight text-gray-500 dark:text-gray-400">{c.sub}</span>
+						{#if stat}
+							<span class="mt-1 inline-flex w-fit items-center rounded-full bg-green-200 px-1.5 py-px text-[11px] font-semibold leading-4 text-green-800 dark:bg-green-900 dark:text-green-300">
+								{stat.month === 12 ? stat.year : `${stat.year} (Jän–${MONTHS_SHORT[stat.month - 1]})`}: {formatNumber(stat.share, 1)} % elektrisch
+							</span>
+						{/if}
+					</span>
 				</button>
 			{/each}
 		</div>
@@ -334,16 +359,26 @@
 					{ value: 'count', label: 'Anzahl' }
 				]}
 			/>
+			{#if lineEndLabels}
+				<StatePicker
+					title="Antriebsarten"
+					bind:hidden
+					items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, dash: DASH[g.key] }))}
+				/>
+			{/if}
 		</div>
 
-		<div>
-			<Legend
-				interactive
-				bind:hidden
-				items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, dashed: chartType === 'line' && DASH[g.key] != null }))}
-			/>
-			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Antriebsarten in der Legende an- und abwählen.</p>
-		</div>
+		<!-- legend only when the lines have no end labels (bar view, narrow screens) -->
+		{#if !lineEndLabels}
+			<div>
+				<Legend
+					interactive
+					bind:hidden
+					items={GROUPS.map((g) => ({ key: g.key, label: g.label, color: g.color, dashed: chartType === 'line' && DASH[g.key] != null }))}
+				/>
+				<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Antriebsarten in der Legende an- und abwählen.</p>
+			</div>
+		{/if}
 
 		<Chart
 			data={chartType === 'bar' ? stacked : lineRows}
@@ -354,7 +389,7 @@
 			yMin={0}
 			yMax={measure === 'share' && chartType === 'bar' ? 100 : null}
 			padding={period === 'month' ? 0.15 : 0.35}
-			margin={{ top: 15, right: 10, bottom: 35, left: 55 }}
+			margin={{ top: 15, right: lineEndLabels ? 110 : 10, bottom: 35, left: 55 }}
 		>
 			<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
@@ -375,6 +410,11 @@
 							{hover}
 						/>
 					{/each}
+					{#if lineEndLabels}
+						{#each endLabelsFor(yScale, lineRows) as l (l.key)}
+							<text x={innerWidth + 6} y={l.y} dy="0.35em" class="text-xs font-semibold" fill={l.color}>{l.text}</text>
+						{/each}
+					{/if}
 				{/if}
 				<AxisX
 					{xScale}

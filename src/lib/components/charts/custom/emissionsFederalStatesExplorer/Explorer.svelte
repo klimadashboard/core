@@ -6,6 +6,7 @@
 	import { Chart, AxisX, AxisY, Line, Area, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { RadioGroup, Select } from '$lib/components/ui';
 	import { formatNumber } from '$lib/utils/formatters';
+	import StatePicker from './StatePicker.svelte';
 
 	type StateSeries = { name: string; values: Record<number, number> };
 
@@ -136,6 +137,13 @@
 				]}
 			/>
 		{/if}
+		{#if showEndLabels}
+			<!-- legend is hidden here (lines have end labels) → federal states are picked in a dropdown -->
+			<StatePicker
+				bind:hidden
+				items={states.map((s) => ({ key: s.key, label: s.name, color: s.color, dash: s.dash }))}
+			/>
+		{/if}
 		{#if view === 'index'}
 			<div class="w-40">
 				<Select
@@ -156,20 +164,24 @@
 		</p>
 	{/if}
 
-	<div class="mt-3">
-		<Legend
-			interactive
-			bind:hidden
-			items={states.map((s) => ({ key: s.key, label: s.name, color: s.color, dashed: view !== 'share' && s.dash != null }))}
-		/>
-		<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Bundesländer in der Legende an- und abwählen.</p>
-	</div>
+	<!-- legend only when the lines have no end labels (narrow screens, share view) -->
+	{#if !showEndLabels}
+		<div class="mt-3">
+			<Legend
+				interactive
+				bind:hidden
+				items={states.map((s) => ({ key: s.key, label: s.name, color: s.color, dashed: view !== 'share' && s.dash != null }))}
+			/>
+			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Bundesländer in der Legende an- und abwählen.</p>
+		</div>
+	{/if}
 
 	<div class="mt-2">
 		<Chart data={chartRows} x="year" y={yFields} height={380} yMin={0} yMax={view === 'share' ? 100 : null} {margin}>
 			<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
 				<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
-				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={(v) => String(v)} tickCount={7} />
+				<!-- always label the latest year (e.g. 2023); ticks too close to it are dropped by AxisX -->
+				<AxisX {xScale} {xDomain} {innerWidth} {innerHeight} format={(v) => String(v)} tickCount={7} forceTicks={[lastYear]} />
 
 				{#if view === 'share'}
 					{#each visible as s (s.key)}

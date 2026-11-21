@@ -7,6 +7,7 @@
 	import { page } from '$app/state';
 	import { Select, RangeSlider, Toggle } from '$lib/components/ui';
 	import { loadDataset } from './config';
+	import { mobilityPlaceholders } from './mobilityPlaceholders';
 	import {
 		IconBuildingFactory2,
 		IconCar,
@@ -239,7 +240,9 @@
 					totalEmissions: (tableRows[tableRows.length - 1]?.total ?? 0).toLocaleString('de-DE', {
 						minimumFractionDigits: 1,
 						maximumFractionDigits: 1
-					})
+					}),
+					// transport + international aviation, see mobilityPlaceholders.ts
+					...mobilityPlaceholders(result.THG)
 				},
 				meta: { source: 'Umweltbundesamt' }
 			});

@@ -263,7 +263,7 @@
 							<div class="flex flex-col">
 								<p class="truncate text-xs text-gray-700 dark:text-gray-300" title="{nameOf(c)} {formatNumber(latestShares[c] ?? 0, 1)} %">
 									<span class="font-semibold">{nameOf(c)}</span>
-									<span class="font-semibold text-emerald-600 dark:text-emerald-400">
+									<span class="font-semibold text-green-700 dark:text-green-400">
 										{formatNumber(latestShares[c] ?? 0, 1)} %
 									</span>
 								</p>

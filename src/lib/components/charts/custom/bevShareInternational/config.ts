@@ -116,9 +116,38 @@ export function commonLatestMonth(data: CarSalesData, countries: string[]): stri
 	return lasts.length === countries.length ? lasts.sort()[0] : null;
 }
 
+/**
+ * Placeholders for the CMS text, always for Norway, Denmark, China and Austria (independent of the country selection):
+ *   {{latestMonth}}          "Oktober 2026"   latest month all four countries have
+ *   {{norwayShare}} {{denmarkShare}} {{chinaShare}} {{austriaShare}}            BEV share in that month, e.g. "98,8"
+ *   {{chinaShareYearAgo}} {{austriaShareYearAgo}}                                same month one year earlier
+ *   {{yearAgoMonth}}         "Oktober 2025"
+ *   {{chinaAustriaGap}}      "12,0"   percentage points China ahead of Austria
+ */
+export function textPlaceholders(data: CarSalesData): Record<string, string> {
+	const story = ['NO', 'DK', 'CN', 'AT'].filter((c) => data[c]?.length);
+	const latest = commonLatestMonth(data, story);
+	if (!latest) return {};
+	const yearAgo = `${Number(latest.slice(0, 4)) - 1}${latest.slice(4)}`;
+	const at = (c: string, m: string) => share(data[c]?.find((r) => r.month === m));
+	const f = (v: number | null) => (v == null ? '' : formatNumber(v, 1));
+	const cn = at('CN', latest);
+	const atNow = at('AT', latest);
+	return {
+		latestMonth: monthLabel(latest),
+		norwayShare: f(at('NO', latest)),
+		denmarkShare: f(at('DK', latest)),
+		chinaShare: f(cn),
+		austriaShare: f(atNow),
+		yearAgoMonth: monthLabel(yearAgo),
+		chinaShareYearAgo: f(at('CN', yearAgo)),
+		austriaShareYearAgo: f(at('AT', yearAgo)),
+		chinaAustriaGap: cn != null && atNow != null ? formatNumber(cn - atNow, 1) : ''
+	};
+}
+
 export function buildChartData(data: CarSalesData, countries: string[] = [HOME, ...DEFAULT_COMPARE]): ChartData {
 	const list = countries.filter((c) => data[c]);
-	const latest = commonLatestMonth(data, list);
 	const months = [...new Set(list.flatMap((c) => data[c].map((r) => r.month)))].sort();
 	const byMonth = Object.fromEntries(list.map((c) => [c, new Map(data[c].map((r) => [r.month, r]))]));
 	const key = (c: string) => c.toLowerCase().replace(/[^a-z]+/g, '_');
@@ -126,7 +155,6 @@ export function buildChartData(data: CarSalesData, countries: string[] = [HOME, 
 		month: monthLabel(m),
 		...Object.fromEntries(list.map((c) => [key(c), share(byMonth[c].get(m))]))
 	}));
-	const at = (c: string) => (latest && byMonth[c] ? share(byMonth[c].get(latest)) : null);
 	const fmt = (v: any) => (v == null ? '–' : `${formatNumber(v, 1)} %`);
 	return {
 		raw: data,
@@ -138,16 +166,10 @@ export function buildChartData(data: CarSalesData, countries: string[] = [HOME, 
 			rows,
 			filename: 'e_auto_anteil_neuzulassungen_laendervergleich'
 		},
-		placeholders: {
-			latestMonth: latest ? monthLabel(latest) : '',
-			norwayShare: formatNumber(at('NO') ?? 0, 1),
-			denmarkShare: formatNumber(at('DK') ?? 0, 1),
-			chinaShare: formatNumber(at('CN') ?? 0, 1),
-			austriaShare: formatNumber(at('AT') ?? 0, 1)
-		},
+		// text placeholders always for the four countries of the story, independent of the selection in the chart
+		placeholders: textPlaceholders(data),
 		meta: {
-			source: SOURCE_HTML,
-			note: 'Anteil batterieelektrischer Autos an allen Pkw-Neuzulassungen. „Verbrenner“ umfasst auch Hybride ohne Stecker, weil nicht alle Länder sie getrennt ausweisen.'
+			source: SOURCE_HTML
 		}
 	};
 }
