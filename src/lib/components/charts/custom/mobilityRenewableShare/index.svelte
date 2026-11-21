@@ -124,6 +124,44 @@
 	};
 
 	$: homeLatest = latestPoint(rows, homeId);
+
+	// ---------- EU countries ahead of the home country (placeholders for the CMS text) ----------
+	// {{countriesAhead}}           "Schweden, Finnland und die Niederlande"  (the top 3, highest first)
+	// {{countriesAheadMoreCount}}  "2" if more than 3 countries are ahead, otherwise empty
+	// {{countriesAheadCount}}      "3"   all EU countries ahead
+	// {{euAverage}}                "11,2"  EU-27 average in the same year
+	// e.g. "… hatten {{latestYear}} {{countriesAhead}}{{#if countriesAheadMoreCount}} und {{countriesAheadMoreCount}} weitere{{/if}}
+	//       einen höheren Anteil als Österreich."
+	const EU_MEMBERS = new Set([
+		'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'EL', 'GR', 'ES', 'FI', 'FR', 'HR', 'HU', 'IE', 'IT',
+		'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'
+	]);
+	// names that need an article in a sentence ("… und die Niederlande")
+	const WITH_ARTICLE: Record<string, string> = {
+		Niederlande: 'die Niederlande',
+		Slowakei: 'die Slowakei',
+		'Tschechische Republik': 'die Tschechische Republik'
+	};
+	const joinNames = (names: string[]) =>
+		names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} und ${names.at(-1)}`;
+	$: ahead = (() => {
+		if (!homeLatest) return [];
+		const year = String(homeLatest.year);
+		return rawRows
+			.filter((r) => String(r.period) === year && EU_MEMBERS.has(r.region) && r.region !== homeId)
+			.filter((r) => r.value != null && Number(r.value) > homeLatest.value)
+			.sort((a, b) => Number(b.value) - Number(a.value))
+			.map((r) => countryNames[r.region] ?? r.region);
+	})();
+	$: euAverageRow = homeLatest
+		? rawRows.find((r) => String(r.period) === String(homeLatest.year) && (r.region === 'EU27_2020' || r.region === 'EU'))
+		: undefined;
+	$: aheadPlaceholders = {
+		countriesAhead: joinNames(ahead.slice(0, 3).map((n) => WITH_ARTICLE[n] ?? n)),
+		countriesAheadMoreCount: ahead.length > 3 ? String(ahead.length - 3) : '',
+		countriesAheadCount: String(ahead.length),
+		euAverage: euAverageRow?.value != null ? formatNumber(Number(euAverageRow.value), 1) : ''
+	};
 	// indicative straight path from the latest value of the home country to the EU target
 	$: targetPath =
 		showTarget && homeLatest
@@ -166,7 +204,8 @@
 			placeholders: {
 				latestYear: homeLatest ? String(homeLatest.year) : '',
 				latestValue: homeLatest ? formatNumber(homeLatest.value, 1) : '',
-				target: String(EU_TARGET.value)
+				target: String(EU_TARGET.value),
+				...aheadPlaceholders
 			},
 			meta: {
 				source: 'Eurostat SHARES',

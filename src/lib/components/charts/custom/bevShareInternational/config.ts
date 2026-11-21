@@ -116,6 +116,35 @@ export function commonLatestMonth(data: CarSalesData, countries: string[]): stri
 	return lasts.length === countries.length ? lasts.sort()[0] : null;
 }
 
+// share as a fraction in words, for sentences like "… war {{austriaShareText}} der neuen Autos elektrisch":
+// "gut ein Drittel", "rund die Hälfte", "fast neun Zehntel", "praktisch alle"
+const FRACTIONS: [number, string][] = [
+	[1 / 10, 'ein Zehntel'],
+	[1 / 8, 'ein Achtel'],
+	[1 / 7, 'ein Siebtel'],
+	[1 / 6, 'ein Sechstel'],
+	[1 / 5, 'ein Fünftel'],
+	[1 / 4, 'ein Viertel'],
+	[1 / 3, 'ein Drittel'],
+	[2 / 5, 'zwei Fünftel'],
+	[1 / 2, 'die Hälfte'],
+	[3 / 5, 'drei Fünftel'],
+	[2 / 3, 'zwei Drittel'],
+	[3 / 4, 'drei Viertel'],
+	[4 / 5, 'vier Fünftel'],
+	[9 / 10, 'neun Zehntel']
+];
+export function fractionInWords(share: number | null): string {
+	if (share == null || !isFinite(share)) return '';
+	const s = share / 100;
+	if (s >= 0.97) return 'praktisch alle';
+	if (s < 0.09) return 'weniger als ein Zehntel';
+	let [target, words] = FRACTIONS[0];
+	for (const [f, w] of FRACTIONS) if (Math.abs(s - f) < Math.abs(s - target)) [target, words] = [f, w];
+	const diff = (s - target) / target;
+	return `${Math.abs(diff) <= 0.03 ? 'rund' : diff > 0 ? 'gut' : 'fast'} ${words}`;
+}
+
 /**
  * Placeholders for the CMS text, always for Norway, Denmark, China and Austria (independent of the country selection):
  *   {{latestMonth}}          "Oktober 2026"   latest month all four countries have
@@ -123,6 +152,8 @@ export function commonLatestMonth(data: CarSalesData, countries: string[]): stri
  *   {{chinaShareYearAgo}} {{austriaShareYearAgo}}                                same month one year earlier
  *   {{yearAgoMonth}}         "Oktober 2025"
  *   {{chinaAustriaGap}}      "12,0"   percentage points China ahead of Austria
+ *   {{norwayShareText}} {{denmarkShareText}} {{chinaShareText}} {{austriaShareText}}
+ *                            the share in words, e.g. "gut ein Drittel", "fast neun Zehntel", "praktisch alle"
  */
 export function textPlaceholders(data: CarSalesData): Record<string, string> {
 	const story = ['NO', 'DK', 'CN', 'AT'].filter((c) => data[c]?.length);
@@ -142,7 +173,11 @@ export function textPlaceholders(data: CarSalesData): Record<string, string> {
 		yearAgoMonth: monthLabel(yearAgo),
 		chinaShareYearAgo: f(at('CN', yearAgo)),
 		austriaShareYearAgo: f(at('AT', yearAgo)),
-		chinaAustriaGap: cn != null && atNow != null ? formatNumber(cn - atNow, 1) : ''
+		chinaAustriaGap: cn != null && atNow != null ? formatNumber(cn - atNow, 1) : '',
+		norwayShareText: fractionInWords(at('NO', latest)),
+		denmarkShareText: fractionInWords(at('DK', latest)),
+		chinaShareText: fractionInWords(cn),
+		austriaShareText: fractionInWords(atNow)
 	};
 }
 
