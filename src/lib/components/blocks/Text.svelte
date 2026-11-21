@@ -26,6 +26,11 @@
 		@apply text-2xl font-bold mt-12;
 	}
 
+	/* chapter headings (ChapterNav): keep some space above when jumping to them */
+	:global(.text h2[id]) {
+		@apply scroll-mt-8;
+	}
+
 	:global(.text h3) {
 		@apply text-xl font-bold mt-8;
 	}

@@ -7,7 +7,7 @@
 <div class="grid gap-1 grid-cols-2 lg:grid-cols-4 p-1">
 	{#each block.blocks as b}
 		<div class="{b.width} rounded-2xl overflow-hidden row-span-{b.height}">
-			<Block data={[b]} {chartSnapshots} />
+			<Block data={[b]} {chartSnapshots} nested />
 		</div>
 	{/each}
 </div>

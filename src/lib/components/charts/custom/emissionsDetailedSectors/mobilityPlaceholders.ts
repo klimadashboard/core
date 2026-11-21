@@ -11,6 +11,7 @@
 //   "Der Verkehr ist {{transportRankText}} Verursacher von Treibhausgasen in Österreich{{#if transportAbove1990}} –
 //    und seine Emissionen liegen heute über dem Niveau von 1990{{/if}}."
 // {{transportRankText}}    "der größte" if transport is the largest sector, otherwise "einer der größten"
+// {{transportRankTextEn}}  English: "the largest source" / "one of the largest sources"
 // {{transportRank}}        rank among the sectors (e.g. "2")
 // {{transportShare}}       share of total emissions in % (e.g. "28,0")
 // {{transportAbove1990}}   "ja" if emissions in the latest year are above 1990, otherwise empty (for {{#if}})
@@ -34,6 +35,7 @@ export function transportRankPlaceholders(thg: Sector[] | undefined): Record<str
 	return {
 		transportRank: String(rank),
 		transportRankText: rank === 1 ? 'der größte' : 'einer der größten',
+		transportRankTextEn: rank === 1 ? 'the largest source' : 'one of the largest sources',
 		transportShare: total
 			? ((transport[last] / total) * 100).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 			: '',

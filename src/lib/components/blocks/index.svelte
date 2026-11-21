@@ -15,6 +15,8 @@
 
 	export let data;
 	export let chartSnapshots = {};
+	/** set by Grid.svelte for blocks inside a block_grid */
+	export let nested = false;
 
 	const blocks = [
 		{
@@ -77,6 +79,8 @@
 	{#if component}
 		{#if block.collection === 'block_chart' || block.collection === 'block_grid'}
 			<svelte:component this={component} block={block.item} {chartSnapshots} />
+		{:else if block.collection === 'block_teaser'}
+			<svelte:component this={component} block={block.item} {nested} />
 		{:else}
 			<svelte:component this={component} block={block.item} />
 		{/if}

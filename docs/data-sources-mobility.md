@@ -15,7 +15,7 @@ Import/sync scripts belong in the **flow** repository (`klimadashboard/flow`).
 | `newRegistrationsOverview` → Lkw / Busse views (`newTruckRegistrationsExplorer`) | **`vehicle_registrations`** | `vehicle_class` in `truck_n1`, `truck_n2`, `truck_n3`, `semi_trailer_tractor` / `bus_m2_m3` | Statistik Austria, Kfz-Statistik: **Kfz-Neuzulassungen nach Bundesland und Kraftstoffart bzw. Energiequelle** (no plug-in split) | same script |
 | `bevShareInternational` („Aber China“) | **`car_registrations_international`** + Austria from **`vehicle_registrations`** | international: all countries except Austria; Austria: `passenger_car_m1` | Robbie Andrew, Collected vehicle registration data (CC BY 4.0), https://robbieandrew.github.io/carsales/ | `flow/automated/carsales-international-weekly-sync.mjs` (crontab, weekly) |
 | `mobilityRenewableShare` | existing `mobility` | `category = share_renewable` | Eurostat SHARES (`nrg_ind_ren`, REN_TRA); EU target: Richtlinie (EU) 2023/2413 | existing |
-| road deaths chart (planned, `/mobilitaet/rad`) | **`road_accidents`** | e.g. `breakdown = transport_mode`, `measure = killed` | Statistik Austria, Statistik der Straßenverkehrsunfälle, STATreport Tabellenteil (T1, T7, T29, T49, T37, T39, T41) | `flow/manual/statistik-austria-road-accidents-import.mjs` (once a year) |
+| road deaths chart (planned, `/mobilitaet/fahrrad`) | **`road_accidents`** | e.g. `breakdown = transport_mode`, `measure = killed` | Statistik Austria, Statistik der Straßenverkehrsunfälle, STATreport Tabellenteil (T1, T7, T29, T49, T37, T39, T41) | `flow/manual/statistik-austria-road-accidents-import.mjs` (once a year) |
 
 ## New collections
 
