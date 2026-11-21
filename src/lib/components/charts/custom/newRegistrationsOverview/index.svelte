@@ -17,7 +17,8 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import NewCarRegistrations from '../newCarRegistrationsExplorer/index.svelte';
 	import NewVehicleRegistrations from '../newTruckRegistrationsExplorer/index.svelte';
-	import VehicleIcon from '../newTruckRegistrationsExplorer/TruckIcon.svelte';
+	// same icon set as the rest of the site (e.g. IconCar in the emissions charts)
+	import { IconCar, IconTruck, IconBus } from '@tabler/icons-svelte-runes';
 
 	export let chart: any = undefined;
 	export let region: Region | null = null;
@@ -27,9 +28,9 @@
 	export let vehicleRows: any[] | null = null;
 
 	const VIEWS = [
-		{ value: 'car', label: 'Pkw', icon: 'car', vehicleType: 'Autos' },
-		{ value: 'truck', label: 'Lkw', icon: 'truck_n3', vehicleType: 'Lkw' },
-		{ value: 'bus', label: 'Busse', icon: 'bus', vehicleType: 'Busse' }
+		{ value: 'car', label: 'Pkw', icon: IconCar, vehicleType: 'Autos' },
+		{ value: 'truck', label: 'Lkw', icon: IconTruck, vehicleType: 'Lkw' },
+		{ value: 'bus', label: 'Busse', icon: IconBus, vehicleType: 'Busse' }
 	] as const;
 	let view: string = VIEWS.some((v) => v.value === chart?.options?.view) ? chart.options.view : 'car';
 
@@ -79,8 +80,7 @@
 					? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5 dark:bg-gray-950 dark:text-white dark:ring-white/10'
 					: 'text-gray-500 hover:text-gray-900 hover:bg-white/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-900/60'}"
 			>
-				<!-- same box for every icon so car, truck and bus look balanced -->
-				<span class="flex h-6 w-10 items-center justify-center"><VehicleIcon type={v.icon} size={20} /></span>
+				<svelte:component this={v.icon} size={20} stroke={1.75} aria-hidden="true" />
 				<span>{v.label}</span>
 			</button>
 		{/each}

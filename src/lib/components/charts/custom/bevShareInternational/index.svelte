@@ -257,7 +257,7 @@
 
 		<!-- small multiples: full mix -->
 		<div class="mt-2 flex flex-col gap-2">
-			<p class="text-sm font-semibold text-gray-800 dark:text-gray-200">Antriebsmix der Neuzulassungen</p>
+			<p class="text-sm font-semibold text-gray-800 dark:text-gray-200">Antriebsmix der Neuzulassungen:</p>
 			<div class="grid gap-x-3 gap-y-4" style="grid-template-columns: repeat({mixCols}, minmax(0, 1fr));">
 						{#each mixOrder as c (c)}
 							<div class="flex flex-col">
