@@ -189,15 +189,6 @@
 		</div>
 	{:else}
 		<div class="flex flex-col gap-4">
-			{#if homeLatest}
-				<p class="text-sm text-gray-600 dark:text-gray-400">
-					{countryNames[homeId] ?? homeId}
-					{homeLatest.year}:
-					<strong class="text-gray-900 dark:text-white">{fmt(homeLatest.value)}</strong>
-					erneuerbarer Anteil am Energieverbrauch im Verkehr
-				</p>
-			{/if}
-
 			<div class="flex flex-wrap items-start justify-between gap-3">
 				<CountryPicker
 					{options}
@@ -220,15 +211,6 @@
 				</div>
 			</div>
 
-			{#if stacked}
-				<Legend
-					items={[
-						{ key: 'renewable', label: 'Erneuerbar', color: HOME_COLOR },
-						{ key: 'fossil', label: 'Fossil / nicht erneuerbar', color: FOSSIL_COLOR }
-					]}
-				/>
-			{/if}
-
 			<Chart data={chartRows} x="year" y={seriesIds} height={360} yMin={0} {yMax} {margin}>
 				<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
 					<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
@@ -245,6 +227,28 @@
 					{#if stacked}
 						<Area data={rows} x="year" y0Field={homeId} y1Field="_top" color={FOSSIL_COLOR} opacity={0.35} curve="linear" {xScale} {yScale} />
 						<Area data={rows} x="year" y={homeId} color={HOME_COLOR} opacity={0.45} curve="linear" {xScale} {yScale} />
+						<!-- area labels instead of a legend: placed in the middle of the time range -->
+						{@const midRow = rows[Math.floor(rows.length / 2)]}
+						{@const midShare = Number(midRow?.[homeId] ?? 0)}
+						{@const midX = xScale(midRow?.year) ?? innerWidth / 2}
+						<text
+							x={midX}
+							y={yScale((100 + midShare) / 2)}
+							text-anchor="middle"
+							dy="0.35em"
+							class="pointer-events-none text-sm font-semibold fill-gray-500 dark:fill-gray-400"
+						>
+							Fossil / nicht erneuerbar
+						</text>
+						<text
+							x={midX}
+							y={yScale(midShare / 2)}
+							text-anchor="middle"
+							dy="0.35em"
+							class="pointer-events-none text-xs font-semibold fill-green-900 dark:fill-green-100"
+						>
+							Erneuerbar
+						</text>
 					{/if}
 
 					<!-- comparison countries first, home country on top -->

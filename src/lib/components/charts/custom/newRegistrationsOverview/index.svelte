@@ -1,9 +1,10 @@
 <!--
 	Neuzulassungen: one card with a menu Pkw / Lkw / Busse (large icon tiles), so the page does not need three long charts.
 	Only the selected explorer is mounted (and loads its data).
-	- Pkw:   newCarRegistrationsExplorer   (collection `new_car_registrations`)
-	- Lkw:   newTruckRegistrationsExplorer (collection `new_vehicle_registrations`, mode "truck")
-	- Busse: newTruckRegistrationsExplorer (collection `new_vehicle_registrations`, mode "bus")
+	- Pkw:   newCarRegistrationsExplorer   (collection `vehicle_registrations`, passenger cars)
+	- Lkw:   newTruckRegistrationsExplorer (collection `vehicle_registrations`, mode "truck")
+	- Busse: newTruckRegistrationsExplorer (collection `vehicle_registrations`, mode "bus")
+	Data sources: docs/data-sources-mobility.md
 	CMS option `{"view": "truck"}` sets the initial view.
 -->
 <script lang="ts">
@@ -29,7 +30,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<div role="radiogroup" aria-label="Fahrzeugart" class="grid grid-cols-3 gap-2 sm:gap-3">
+	<div role="radiogroup" aria-label="Fahrzeugart" class="grid grid-cols-3 gap-2 max-w-md">
 		{#each VIEWS as v (v.value)}
 			{@const active = v.value === view}
 			<button
@@ -37,13 +38,13 @@
 				role="radio"
 				aria-checked={active}
 				on:click={() => (view = v.value)}
-				class="flex flex-col items-center justify-end gap-2 rounded-xl border-2 px-2 py-3 sm:py-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+				class="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 rounded-lg border-2 px-2 py-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
 					{active
 					? 'border-gray-900 bg-gray-50 text-gray-900 dark:border-white dark:bg-gray-800 dark:text-white'
 					: 'border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-white'}"
 			>
-				<span class="flex h-12 items-end"><VehicleIcon type={v.icon} size={44} /></span>
-				<span class="text-base font-semibold">{v.label}</span>
+				<span class="flex h-8 items-end"><VehicleIcon type={v.icon} size={28} /></span>
+				<span class="text-sm font-semibold">{v.label}</span>
 			</button>
 		{/each}
 	</div>

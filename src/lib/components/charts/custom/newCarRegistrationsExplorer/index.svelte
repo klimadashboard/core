@@ -1,6 +1,7 @@
 <!--
 	Neuzulassungs-Explorer (AT): new passenger car registrations by fuel type.
-	Data: Directus collection `new_car_registrations` (Statistik Austria, Kfz-Statistik, Tabelle 2).
+	Data: Directus collection `vehicle_registrations`, vehicle_class passenger_car_m1, Austria
+	(Statistik Austria, Kfz-Statistik, Tabelle 2) – see docs/data-sources-mobility.md.
 	Views: monthly values or cumulative (January up to a selectable month, one bar per year),
 	each as number of cars or as share in %.
 -->
@@ -29,22 +30,23 @@
 	const MONTHS_SHORT = ['Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
 	// stack order bottom → top; plug-ins are a subset of the hybrids in the data,
-	// so hybrids are shown without plug-ins to avoid double counting
+	// so hybrids are shown without plug-ins to avoid double counting.
+	// Colours as in the car stock chart (carsTypes/config.ts → categoryConfig)
 	const GROUPS = [
-		{ key: 'electric', label: 'Elektro', color: '#1a9850', of: (v: Record<string, number>) => v.electric },
-		{ key: 'plugin', label: 'Plug-in-Hybrid', color: '#91cf60', of: (v) => v.petrol_plugin_hybrid + v.diesel_plugin_hybrid },
+		{ key: 'electric', label: 'Elektro', color: '#10B981', of: (v: Record<string, number>) => v.electric },
+		{ key: 'plugin', label: 'Plug-in-Hybrid', color: '#8B5CF6', of: (v) => v.petrol_plugin_hybrid + v.diesel_plugin_hybrid },
 		{
 			key: 'hybrid',
 			label: 'Hybrid (ohne Plug-in)',
-			color: '#4880A8',
+			color: '#38BDF8',
 			of: (v) => v.petrol_hybrid - v.petrol_plugin_hybrid + (v.diesel_hybrid - v.diesel_plugin_hybrid)
 		},
-		{ key: 'petrol', label: 'Benzin', color: '#9ca3af', of: (v) => v.petrol },
-		{ key: 'diesel', label: 'Diesel', color: '#4b5563', of: (v) => v.diesel },
+		{ key: 'petrol', label: 'Benzin', color: '#F59E0B', of: (v) => v.petrol },
+		{ key: 'diesel', label: 'Diesel', color: '#DB2777', of: (v) => v.diesel },
 		{
 			key: 'other',
 			label: 'Sonstige (Gas, Wasserstoff)',
-			color: '#d6c08a',
+			color: '#94A3B8',
 			of: (v) => v.natural_gas + v.petrol_natural_gas_bivalent + v.petrol_lpg_bivalent + v.hydrogen
 		}
 	] as { key: string; label: string; color: string; of: (v: Record<string, number>) => number }[];
@@ -76,8 +78,9 @@
 			} else {
 				const directus = getDirectusInstance();
 				data = (await directus.request(
-					readItems('new_car_registrations', {
-						filter: { region: { _eq: REGION_ID } },
+					// collection documented in docs/data-sources-mobility.md
+					readItems('vehicle_registrations', {
+						filter: { region: { _eq: REGION_ID }, vehicle_class: { _eq: 'passenger_car_m1' } },
 						fields: ['year', 'month', 'fuel_type', 'period', 'value'],
 						limit: -1
 					})
@@ -201,7 +204,11 @@
 				latestMonth: lastPoint ? `${MONTHS[lastPoint.month - 1]} ${lastPoint.year}` : '',
 				latestElectricShare: latestElectricShare != null ? formatNumber(latestElectricShare, 1) : ''
 			},
-			meta: { source: 'Statistik Austria, Kfz-Statistik' }
+			meta: {
+				// Card.svelte renders the source as HTML
+				source:
+					'Statistik Austria, Kfz-Statistik: <a href="https://www.statistik.at/statistiken/tourismus-und-verkehr/fahrzeuge/kfz-neuzulassungen" target="_blank" rel="noopener" class="underline hover:no-underline">Fahrzeug-Neuzulassungen, Tabelle 2 „Pkw-Neuzulassungen nach Kraftstoffart bzw. Energiequelle“</a>'
+			}
 		});
 	}
 </script>
@@ -214,13 +221,6 @@
 	<div class="h-[460px] flex items-center justify-center text-gray-500 dark:text-gray-400">Keine Daten verfügbar</div>
 {:else}
 	<div class="flex flex-col gap-3">
-		{#if latestElectricShare != null && lastPoint}
-			<p class="text-sm text-gray-600 dark:text-gray-400">
-				{MONTHS[lastPoint.month - 1]}
-				{lastPoint.year}: <strong class="text-gray-900 dark:text-white">{formatNumber(latestElectricShare, 1)} %</strong>
-				der neu zugelassenen Pkw waren Elektroautos ({fmtCount(latestValues?.electric ?? 0)} von {fmtCount(latestTotal)}).
-			</p>
-		{/if}
 
 		<div class="flex flex-wrap items-end gap-4">
 			<RadioGroup

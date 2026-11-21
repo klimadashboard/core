@@ -3,7 +3,7 @@
 	mode "truck" (default): one goods vehicle class at a time, picked with four icon tiles above the chart
 	(N1 vans, N2 light trucks, N3 heavy trucks, semi-trailer tractors).
 	mode "bus": buses (M2 + M3), no tiles. Set via prop `mode` or CMS option `{"vehicleGroup": "bus"}`.
-	Data: Directus collection `new_vehicle_registrations`
+	Data: Directus collection `vehicle_registrations` (see docs/data-sources-mobility.md)
 	(Statistik Austria, Kfz-Neuzulassungen nach Bundesland und Kraftstoffart bzw. Energiequelle).
 	Shows Austria; on a federal state page the data of that state.
 -->
@@ -63,17 +63,17 @@
 	const BUS_CLASSES: VehicleClassInfo[] = [{ key: 'bus_m2_m3', label: 'Busse', sub: 'Klasse M2 und M3', short: 'Busse' }];
 	$: CLASSES = mode === 'bus' ? BUS_CLASSES : TRUCK_CLASSES;
 
-	// stack order bottom → top; same colours as the passenger car explorer
+	// stack order bottom → top; colours as in the car stock chart (carsTypes/config.ts → categoryConfig)
 	// (this source has no plug-in split, so hybrids include plug-in hybrids)
 	const GROUPS = [
-		{ key: 'electric', label: 'Elektro', color: '#1a9850', of: (v: Record<string, number>) => v.electric ?? 0 },
-		{ key: 'hybrid', label: 'Hybrid', color: '#4880A8', of: (v) => (v.petrol_hybrid ?? 0) + (v.diesel_hybrid ?? 0) },
-		{ key: 'petrol', label: 'Benzin', color: '#9ca3af', of: (v) => v.petrol ?? 0 },
-		{ key: 'diesel', label: 'Diesel', color: '#4b5563', of: (v) => v.diesel ?? 0 },
+		{ key: 'electric', label: 'Elektro', color: '#10B981', of: (v: Record<string, number>) => v.electric ?? 0 },
+		{ key: 'hybrid', label: 'Hybrid', color: '#38BDF8', of: (v) => (v.petrol_hybrid ?? 0) + (v.diesel_hybrid ?? 0) },
+		{ key: 'petrol', label: 'Benzin', color: '#F59E0B', of: (v) => v.petrol ?? 0 },
+		{ key: 'diesel', label: 'Diesel', color: '#DB2777', of: (v) => v.diesel ?? 0 },
 		{
 			key: 'other',
 			label: 'Sonstige (Gas, Wasserstoff)',
-			color: '#d6c08a',
+			color: '#94A3B8',
 			of: (v) =>
 				(v.natural_gas ?? 0) +
 				(v.lpg ?? 0) +
@@ -108,7 +108,8 @@
 			} else {
 				const directus = getDirectusInstance();
 				data = (await directus.request(
-					readItems('new_vehicle_registrations', {
+					// collection documented in docs/data-sources-mobility.md
+					readItems('vehicle_registrations', {
 						filter: { vehicle_class: { _in: CLASSES.map((c) => c.key) as string[] } },
 						fields: ['region', 'year', 'month', 'vehicle_class', 'fuel_type', 'period', 'value'],
 						limit: -1
@@ -257,7 +258,9 @@
 				latestElectricShare: latestShare != null ? formatNumber(latestShare, 1) : ''
 			},
 			meta: {
-				source: 'Statistik Austria, Kfz-Statistik',
+				// Card.svelte renders the source as HTML
+				source:
+					'Statistik Austria, Kfz-Statistik: <a href="https://www.statistik.at/statistiken/tourismus-und-verkehr/fahrzeuge/kfz-neuzulassungen" target="_blank" rel="noopener" class="underline hover:no-underline">Kfz-Neuzulassungen nach Bundesland und Kraftstoffart bzw. Energiequelle</a>',
 				note: 'Hybrid enthält Plug-in-Hybride (in dieser Quelle nicht getrennt ausgewiesen).'
 			}
 		});
@@ -293,7 +296,7 @@
 					<span class="text-xs text-gray-500 dark:text-gray-400 leading-tight">{c.sub}</span>
 					{#if stat}
 						<span class="mt-1 text-xs leading-tight">
-							<strong class="text-[#1a9850] dark:text-[#5cc283]">{formatNumber(stat.share, 1)} %</strong>
+							<strong class="text-emerald-600 dark:text-emerald-400">{formatNumber(stat.share, 1)} %</strong>
 							elektrisch {stat.month === 12 ? stat.year : `${stat.year} (bis ${MONTHS_SHORT[stat.month - 1]})`}
 						</span>
 					{/if}
@@ -302,14 +305,6 @@
 		</div>
 		{/if}
 
-		{#if latestShare != null && latestMonthBar}
-			<p class="text-sm text-gray-600 dark:text-gray-400">
-				{MONTHS[latestMonthBar.month - 1]}
-				{latestMonthBar.year}{regionId !== AUSTRIA_ID ? ` (${regionName})` : ''}:
-				<strong class="text-gray-900 dark:text-white">{formatNumber(latestShare, 1)} %</strong>
-				der neu zugelassenen {current.short} fuhren elektrisch ({fmtCount(latestMonthBar.values.electric ?? 0)} von {fmtCount(latestTotal)}).
-			</p>
-		{/if}
 
 		<div class="flex flex-wrap items-end gap-4">
 			<RadioGroup
@@ -427,9 +422,6 @@
 			<p class="text-xs text-gray-500 dark:text-gray-400">
 				* {partialYear.label}: Das laufende Jahr ist noch nicht vollständig – bei „Anzahl“ daher nicht mit den Vorjahren vergleichbar.
 			</p>
-		{/if}
-		{#if period === 'month'}
-			<p class="text-xs text-gray-500 dark:text-gray-400">Monatswerte ab Jänner 2025; für 2024 gibt es nur Jahreswerte.</p>
 		{/if}
 	</div>
 {/if}

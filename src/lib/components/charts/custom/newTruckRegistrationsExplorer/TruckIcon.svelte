@@ -31,17 +31,17 @@
 		<circle cx="7.5" cy="18" r="2.5" />
 		<circle cx="22.5" cy="18" r="2.5" />
 	{:else if type === 'bus'}
-		<!-- city bus: long box, window band, door at the front -->
-		<path d="M6.5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h30a3 3 0 0 1 3 3v9a2 2 0 0 1-2 2" />
-		<path d="M11.5 17h13.5" />
-		<path d="M30 17h1.5" />
-		<path d="M5 6h5v4.5H5z" />
-		<path d="M12.5 6h5v4.5h-5z" />
-		<path d="M20 6h5v4.5h-5z" />
-		<path d="M31.5 17V6h4" />
-		<path d="M33.5 6v11" />
+		<!-- modern city bus: rounded roof, continuous window band, slanted windscreen, double door, front wheel under the cab -->
+		<path d="M6.5 17H3a1 1 0 0 1-1-1V5.5A2.5 2.5 0 0 1 4.5 3H33a3 3 0 0 1 2.9 2.2l1.9 7.3V16a1 1 0 0 1-1 1h-1.3" />
+		<path d="M11.5 17h19" />
+		<path d="M4.5 6.5a1 1 0 0 1 1-1H24v5.5H4.5z" />
+		<path d="M11 5.5v5.5" />
+		<path d="M17.5 5.5v5.5" />
+		<path d="M26 17V5.5h3.5V17" />
+		<path d="M27.75 5.5V17" />
+		<path d="M31.5 5.5h2.6l1.6 6H31.5z" />
 		<circle cx="9" cy="17.5" r="2.5" />
-		<circle cx="27.5" cy="17.5" r="2.5" />
+		<circle cx="33" cy="17.5" r="2.5" />
 	{:else if type === 'truck_n1'}
 		<!-- van -->
 		<path d="M4.5 18H3V9a2 2 0 0 1 2-2h14l6 5h1a2 2 0 0 1 2 2v4h-1.5" />

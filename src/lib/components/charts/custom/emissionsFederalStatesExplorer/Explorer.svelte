@@ -149,16 +149,12 @@
 		{/if}
 	</div>
 
-	<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
-		{#if view === 'trend'}
-			{perCapita ? 'Treibhausgas-Emissionen pro Einwohner:in' : 'Treibhausgas-Emissionen'} je Bundesland, {years[0]}–{lastYear}.
-		{:else if view === 'index'}
+	{#if view === 'index'}
+		<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
 			Entwicklung {perCapita ? 'der Pro-Kopf-Emissionen ' : ''}relativ zu {baseYear} (= 100). Werte unter 100
 			bedeuten weniger Emissionen als {baseYear}.
-		{:else}
-			Anteil der Bundesländer an den gesamten Emissionen.
-		{/if}
-	</p>
+		</p>
+	{/if}
 
 	<div class="mt-3">
 		<Legend
