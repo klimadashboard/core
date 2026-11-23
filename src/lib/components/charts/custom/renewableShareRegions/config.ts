@@ -6,6 +6,10 @@
 // row of their own (states, aggregates) are computed from the rows of their
 // members, weighted with the consumption. Countries are never computed: the
 // table may only cover part of them.
+//
+// Regions without members (districts, municipalities) get peers instead: all districts of
+// their state, with the district itself (or the municipality's district) flagged as `focus`,
+// so the distribution view can show where it stands.
 
 import { readItem, readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
@@ -38,8 +42,13 @@ interface DbRow {
 export interface ShareRow {
 	id: string;
 	name: string;
-	/** 'self' = the page region, 'parent' = a region it belongs to, 'member' = one of its members */
-	kind: 'self' | 'parent' | 'member';
+	/**
+	 * 'self' = the page region, 'parent' = a region it belongs to, 'member' = one of its members,
+	 * 'peer' = a district of the same state (only for regions without members)
+	 */
+	kind: 'self' | 'parent' | 'member' | 'peer';
+	/** the peer that stands for the page region: the district itself or a municipality's district */
+	focus?: boolean;
 	/** % of consumption, can be above 100 */
 	share: number;
 	consumption: number | null;
@@ -150,8 +159,38 @@ export async function fetchChartData({
 		}))
 		.sort((a, b) => b.share - a.share);
 
-	const result = [...references, ...members];
+	// No members: compare the district (the page region or a municipality's district) with
+	// the other districts of its state
+	let peers: ShareRow[] = [];
+	let peerGroup: string | null = null;
+	if (!members.length) {
+		const districtId = rows.some((r) => r.region.id === region.id)
+			? region.id
+			: region.parents?.find((p) => p.layer === 'district')?.id;
+		const district = rows.find((r) => r.region.id === districtId);
+		const stateId = district?.region.parents?.find((p) => p.layer === 'state')?.id;
+		const group = stateId ? membersOf(stateId) : [];
+		if (district && group.length > 1) {
+			peerGroup = parents.find((p) => p.id === stateId)?.name ?? null;
+			peers = group
+				.map((r) => ({
+					id: r.region.id,
+					name: label(r.region),
+					kind: 'peer' as const,
+					focus: r.region.id === district.region.id,
+					share: r.share,
+					consumption: r.consumption_mwh,
+					population: r.region.population ?? null,
+					computed: false
+				}))
+				.sort((a, b) => b.share - a.share);
+		}
+	}
+
+	const result = [...references, ...members, ...peers];
 	if (!result.length) return null;
+	// The table lists every region once (the focus district is also a reference row)
+	const tableRows = result.filter((r, i) => result.findIndex((o) => o.id === r.id) === i);
 
 	// Members of an aggregate region that the source doesn't cover
 	const expected = await getAggregateMembers(region, fetch);
@@ -198,11 +237,12 @@ export async function fetchChartData({
 
 	return {
 		raw: result,
-		table: { columns, rows: result, filename: 'renewable-share-regions' },
+		table: { columns, rows: tableRows, filename: 'renewable-share-regions' },
 		placeholders: {
 			year,
 			share: self ? formatPercent(self.share, 1) : null,
-			regionName: region.name
+			regionName: region.name,
+			peerGroup
 		},
 		meta: {
 			source: sources || undefined,

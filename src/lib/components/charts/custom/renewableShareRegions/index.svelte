@@ -1,7 +1,11 @@
 <!-- $lib/components/charts/custom/renewableShareRegions/index.svelte
-	Deliberately basic ranked bar list (no horizontal bar primitive yet): the label sits on
-	the bar, the value right after it. Reference rows (the region itself and its parents)
-	on top, members below. -->
+	Two views:
+	- Ranking: deliberately basic ranked bar list (no horizontal bar primitive yet), the label on
+	  the bar, the value right after it. Highest three, reference rows (the region itself and its
+	  parents), lowest three.
+	- Verteilung: every district as a dot on the share axis (Beeswarm.svelte), one emphasised.
+	Regions with members (Metropolregion, state) compare those; districts and municipalities
+	compare their district with the other districts of the state ('peer' rows). -->
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { ChartData } from '$lib/components/charts/types';
@@ -9,7 +13,7 @@
 	import { formatPercent } from '$lib/utils/formatters';
 	import { t } from '$lib/utils/t';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
-	import { RadioGroup } from '$lib/components/ui';
+	import { RadioGroup, Select } from '$lib/components/ui';
 	import Beeswarm from './Beeswarm.svelte';
 	import { grow } from '$lib/components/charts/primitives/motion';
 	import { fetchChartData, type ShareRow } from './config';
@@ -32,17 +36,34 @@
 	let loading = true;
 	let error: string | null = null;
 	let view: 'ranking' | 'distribution' = 'ranking';
+	let peerGroup: string | null = null;
+	/** district emphasised in the distribution view */
+	let selected = '';
 
 	$: translations = page.data.translations;
 	$: ready = !loading && !error && data.length > 0;
-	$: references = data.filter((d) => d.kind !== 'member');
+	$: references = data.filter((d) => d.kind === 'self' || d.kind === 'parent');
 	$: members = data.filter((d) => d.kind === 'member');
+	$: peers = data.filter((d) => d.kind === 'peer');
+	// The districts that are ranked: the region's members, or else its state's districts
+	$: pool = members.length ? members : peers;
+	$: focus = peers.find((d) => d.focus);
+	$: rankOf = (row: ShareRow) => (peers.length ? pool.findIndex((d) => d.id === row.id) + 1 : 0);
 	// The region's own value is the average its members are compared with (only shown with members)
 	$: average = members.length ? references.find((d) => d.kind === 'self') : undefined;
-	// members are sorted by share, highest first; small sets are split without overlap
-	$: top = members.slice(0, SHOWN);
-	$: bottom = members.slice(Math.max(SHOWN, members.length - SHOWN));
-	$: hidden = members.length - top.length - bottom.length;
+	// pool is sorted by share, highest first; small sets are split without overlap
+	$: top = pool.slice(0, SHOWN);
+	$: bottom = pool.slice(Math.max(SHOWN, pool.length - SHOWN));
+	$: hidden = pool.length - top.length - bottom.length;
+	$: groupText = peerGroup ? ` in ${peerGroup}` : '';
+	// Distribution: lines for the references, except the one that is a dot (the focus district)
+	$: lines = references.filter((d) => d.id !== focus?.id);
+	$: selectOptions = [
+		{ value: '', label: 'Kreis hervorheben …' },
+		...[...pool]
+			.sort((a, b) => a.name.localeCompare(b.name, 'de'))
+			.map((d) => ({ value: d.id, label: d.name }))
+	];
 	$: max = Math.max(100, ...data.map((d) => d.share));
 	// Bars use the row width minus room for the value after the longest bar
 	$: width = (v: number) => `calc((100% - 3.5rem) * ${Math.max(v, 0) / max})`;
@@ -61,6 +82,8 @@
 					})
 				: null;
 			data = (result?.raw as ShareRow[]) ?? [];
+			peerGroup = (result?.placeholders.peerGroup as string | null) ?? null;
+			selected = data.find((d) => d.focus)?.id ?? '';
 			onChartData?.(result);
 		} catch (e) {
 			console.error('[renewableShareRegions]', e);
@@ -76,7 +99,7 @@
 </script>
 
 {#snippet bar(row: ShareRow, style: BarStyle, rank?: number)}
-	<li class="relative flex items-center h-6 text-sm {row.kind === 'self' ? 'font-semibold' : ''}">
+	<li class="relative flex items-center h-6 text-sm {style === 'self' ? 'font-semibold' : ''}">
 		<span
 			class="absolute inset-y-0 left-0 rounded-sm origin-left {barClass[style]}"
 			style:width={width(row.share)}
@@ -102,7 +125,7 @@
 	<div class="h-[300px] flex items-center justify-center text-gray-500">
 		{t(translations, 'status.noDataAvailable')}
 	</div>
-{:else if members.length > 1}
+{:else if pool.length > 1}
 	<ChartSettings>
 		<RadioGroup
 			label="Ansicht"
@@ -113,17 +136,20 @@
 				{ value: 'distribution', label: 'Verteilung' }
 			]}
 		/>
+		{#if view === 'distribution'}
+			<Select label="Kreis hervorheben" hideLabel small bind:value={selected} options={selectOptions} />
+		{/if}
 	</ChartSettings>
 {/if}
 
 {#if !ready}
 	<!-- loading / error / empty: shown above -->
-{:else if view === 'distribution' && members.length > 1}
+{:else if view === 'distribution' && pool.length > 1}
 	<Beeswarm
-		{members}
-		{average}
-		label={t(translations, 'domain.energy.renewableShareOfConsumption')}
-		populationLabel={translations?.['table.population'] ?? 'Einwohner'}
+		rows={pool}
+		{lines}
+		bind:selected
+		label={t(translations, 'domain.energy.renewableShareOfConsumption') + groupText}
 	/>
 {:else}
 	<!-- Line labels: the average label ends at its line when left of the 100 % mark (no overlap) -->
@@ -149,14 +175,18 @@
 			class="space-y-0.5"
 			aria-label={t(translations, 'domain.energy.renewableShareOfConsumption')}
 		>
-			{#each references as row (row.id)}{@render bar(row, row.kind === 'self' ? 'self' : 'parent')}{/each}
+			{#each references as row (row.id)}{@render bar(
+					row,
+					row.kind === 'self' || row.id === focus?.id ? 'self' : 'parent',
+					rankOf(row) || undefined
+				)}{/each}
 		</ul>
 		{#if bottom.length}
 			<ul class="space-y-0.5 mt-2 pt-2 border-t border-current/10" aria-label="Niedrigste Anteile">
 				{#each bottom as row, i (row.id)}{@render bar(
 						row,
 						'bottom',
-						members.length - bottom.length + i + 1
+						pool.length - bottom.length + i + 1
 					)}{/each}
 			</ul>
 		{/if}
@@ -176,8 +206,8 @@
 	</div>
 	{#if hidden > 0}
 		<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
-			{top.length} höchste und {bottom.length} niedrigste von {members.length} Kreisen; alle in der
-			Verteilung und in der Tabelle.
+			{top.length} höchste und {bottom.length} niedrigste von {pool.length} Kreisen{groupText}; alle in
+			der Verteilung und in der Tabelle.
 		</p>
 	{/if}
 	{#if references.some((r) => r.computed)}
