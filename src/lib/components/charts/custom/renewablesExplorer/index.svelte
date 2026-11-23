@@ -6,11 +6,12 @@
 	import Switch from '$lib/components/Switch.svelte';
 	import YearlyBarView from './YearlyBarView.svelte';
 	import CumulativeLineView from './CumulativeLineView.svelte';
-	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
+	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { fetchRegion } from '$lib/utils/getRegion';
 	import { RadioGroup } from '$lib/components/ui';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import type { ContextRegion } from '$lib/utils/regionContext';
-	import { MAX_COMPARISONS, rankByArea } from './comparison';
+	import { MAX_COMPARISONS } from './comparison';
 	import {
 		getAvailableViews,
 		getViewLabels,
@@ -107,22 +108,52 @@
 	}
 
 
-	// Fetch shared data when region or energy changes
-	$: if (!regionLoading && selectedEnergy) {
-		loadSharedData();
+	// ------------------------------------------------------------------ drill-down
+	// Region shown in the chart: the card's region, or a Kreis / Gemeinde inside it
+	// picked in the RegionDrilldown
+	let switchedRegion: Region | null = null;
+	let switchedFor: string | null | undefined = undefined;
+	$: if (region?.id !== switchedFor) {
+		switchedFor = region?.id;
+		switchedRegion = null;
+	}
+	$: activeRegion = switchedRegion ?? region;
+
+	async function selectRegion(r: ContextRegion) {
+		if (r.id === region?.id) {
+			switchedRegion = null;
+		} else {
+			const next = await fetchRegion(r.id);
+			if (next) switchedRegion = next;
+		}
+		// The region now shown is no comparison of itself
+		comparisons = comparisons.filter((c) => c.id !== r.id);
 	}
 
-	async function loadSharedData() {
+	function toggleComparison(r: ContextRegion) {
+		if (comparisonIds.includes(r.id)) removeComparison(r.id);
+		else addComparisons([r]);
+	}
+
+	// Fetch shared data when the shown region or energy changes
+	$: if (!regionLoading && selectedEnergy) {
+		loadSharedData(activeRegion);
+	}
+
+	let loadToken = 0;
+	async function loadSharedData(target: Region | null) {
 		// Reset on region/energy change
 		dataLoading = true;
 		dataFetched = false;
+		const token = ++loadToken;
 
 		try {
 			const params = { energy: selectedEnergy };
 			const [result, goalResult] = await Promise.all([
-				fetchData(region, params),
-				fetchGoal(region, params)
+				fetchData(target, params),
+				fetchGoal(target, params)
 			]);
+			if (token !== loadToken) return;
 
 			sharedData = result.data;
 			sharedGoal = goalResult;
@@ -136,7 +167,7 @@
 			sharedUpdateDate = '';
 			sharedGridOperatorCheckedRatio = null;
 		} finally {
-			dataLoading = false;
+			if (token === loadToken) dataLoading = false;
 		}
 	}
 
@@ -157,6 +188,7 @@
 	}
 	$: comparisonIds = comparisons.map((r) => r.id);
 	$: showsComparison = currentView === 'cumulative';
+	$: canCompare = availableViews.includes('cumulative');
 
 	function addComparisons(list: ContextRegion[]) {
 		const fresh = list.filter((r) => !comparisonIds.includes(r.id));
@@ -182,62 +214,54 @@
 </script>
 
 <div class="renewables-chart">
-	<!-- View Switcher (optional based on config) -->
-	{#if showViewSwitcher && availableViews.length > 1}
-		<ChartSettings>
+	<ChartSettings>
+		<!-- Row 1: view and metric (optional based on config) -->
+		{#if showViewSwitcher && availableViews.length > 1}
 			<Switch views={switchViews} activeView={currentView} on:itemClick={handleViewSwitch} />
 			{#if currentView === 'yearly' || currentView === 'cumulative'}
 				<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
 			{/if}
-		</ChartSettings>
-	{/if}
-
-	<!-- Comparison: chart-wide, lines show in "Kumulativ" -->
-	{#if availableViews.includes('cumulative')}
-		<div class="mb-4">
-			<RegionSwitcher
+		{/if}
+		<!-- Row 2: region (drill down to any Kreis / Gemeinde, ＋ adds a comparison line) and unit -->
+		<div class="flex w-full flex-wrap items-center gap-x-4 gap-y-2 empty:hidden">
+			<RegionDrilldown
 				{region}
-				mode="compare"
-				selectedIds={comparisonIds}
-				max={MAX_COMPARISONS}
-				rank={(list) => rankByArea(list, selectedEnergy)}
-				rankBasis="pro km²"
-				on:add={(e) => addComparisons(e.detail)}
-				on:remove={(e) => removeComparison(e.detail.id)}
-			>
-				{#snippet end()}
-					{#if showsComparison && currentMetric === 'power'}
-						<RadioGroup
-							label="Einheit"
-							hideLabel
-							small
-							bind:value={selectedUnit}
-							options={[
-								{ value: 'absolute', label: 'absolut' },
-								{ value: 'perArea', label: 'pro km²' }
-							]}
-							on:change={() => (unitTouched = true)}
-						/>
-					{:else if !showsComparison && comparisons.length}
-						<button
-							type="button"
-							class="rounded-full px-2.5 py-1 text-xs font-medium text-blue-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-300"
-							on:click={() => (currentView = 'cumulative')}
-						>
-							{comparisons.length === 1 ? 'Vergleich' : `${comparisons.length} Vergleiche`} in „Kumulativ“ anzeigen
-						</button>
-					{/if}
-				{/snippet}
-			</RegionSwitcher>
+				activeId={activeRegion?.id ?? null}
+				onSelect={selectRegion}
+				compareIds={canCompare ? comparisonIds : []}
+				onToggleCompare={canCompare ? toggleComparison : null}
+				compareMax={MAX_COMPARISONS}
+			/>
+			{#if showsComparison && currentMetric === 'power'}
+				<RadioGroup
+					label="Einheit"
+					hideLabel
+					small
+					bind:value={selectedUnit}
+					options={[
+						{ value: 'absolute', label: 'absolut' },
+						{ value: 'perArea', label: 'pro km²' }
+					]}
+					on:change={() => (unitTouched = true)}
+				/>
+			{:else if !showsComparison && comparisons.length}
+				<button
+					type="button"
+					class="cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium text-blue-700 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-300"
+					on:click={() => (currentView = 'cumulative')}
+				>
+					{comparisons.length === 1 ? 'Vergleich' : `${comparisons.length} Vergleiche`} in „Kumulativ“ anzeigen
+				</button>
+			{/if}
 		</div>
-	{/if}
+	</ChartSettings>
 
 	<!-- Chart Views -->
 	<div class="chart-container">
 		{#if currentView === 'yearly'}
 			<YearlyBarView
 				{selectedEnergy}
-				{region}
+				region={activeRegion}
 				{regionLoading}
 				{onChartData}
 				data={sharedData}
@@ -250,7 +274,7 @@
 		{:else if currentView === 'cumulative'}
 			<CumulativeLineView
 				{selectedEnergy}
-				{region}
+				region={activeRegion}
 				{regionLoading}
 				{onChartData}
 				{regions}

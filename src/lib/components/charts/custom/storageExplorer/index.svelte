@@ -4,6 +4,9 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
 	import Switch from '$lib/components/Switch.svelte';
+	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { fetchRegion } from '$lib/utils/getRegion';
+	import type { ContextRegion } from '$lib/utils/regionContext';
 	import YearlyBarView from './YearlyBarView.svelte';
 	import CumulativeAreaView from './CumulativeAreaView.svelte';
 	import {
@@ -59,15 +62,32 @@
 		icon: metricIcons[metric]
 	}));
 
-	// Fetch data when region changes
-	$: if (!regionLoading) {
-		loadData();
+	// Region shown in the chart: the card's region, or a Kreis / Gemeinde inside it
+	let switchedRegion: Region | null = null;
+	let switchedFor: string | null | undefined = undefined;
+	$: if (region?.id !== switchedFor) {
+		switchedFor = region?.id;
+		switchedRegion = null;
+	}
+	$: activeRegion = switchedRegion ?? region;
+
+	async function selectRegion(r: ContextRegion) {
+		if (r.id === region?.id) switchedRegion = null;
+		else switchedRegion = (await fetchRegion(r.id)) ?? switchedRegion;
 	}
 
-	async function loadData() {
+	// Fetch data when the shown region changes
+	$: if (!regionLoading) {
+		loadData(activeRegion);
+	}
+
+	let loadToken = 0;
+	async function loadData(target: Region | null) {
 		dataLoading = true;
+		const token = ++loadToken;
 		try {
-			const result = await fetchStorageData(region, 'month');
+			const result = await fetchStorageData(target, 'month');
+			if (token !== loadToken) return;
 			sharedData = (result.by_period || []).filter(
 				(d) => String(d.period) >= MONTHLY_START
 			);
@@ -77,7 +97,7 @@
 			sharedData = [];
 			sharedUpdateDate = null;
 		} finally {
-			dataLoading = false;
+			if (token === loadToken) dataLoading = false;
 		}
 	}
 
@@ -91,17 +111,21 @@
 </script>
 
 <div class="storage-explorer">
-	{#if showViewSwitcher}
-		<ChartSettings>
+	<ChartSettings>
+		{#if showViewSwitcher}
 			<Switch views={switchViews} activeView={currentView} on:itemClick={handleViewSwitch} />
 			<Switch views={switchMetrics} activeView={currentMetric} on:itemClick={handleMetricSwitch} />
-		</ChartSettings>
-	{/if}
+		{/if}
+		<!-- Row 2: region (drill down to any Kreis / Gemeinde) -->
+		<div class="flex w-full flex-wrap items-center gap-x-4 gap-y-2 empty:hidden">
+			<RegionDrilldown {region} activeId={activeRegion?.id ?? null} onSelect={selectRegion} />
+		</div>
+	</ChartSettings>
 
 	<div class="chart-container">
 		{#if currentView === 'yearly'}
 			<YearlyBarView
-				{region}
+				region={activeRegion}
 				{regionLoading}
 				{onChartData}
 				data={sharedData}
@@ -111,7 +135,7 @@
 			/>
 		{:else if currentView === 'cumulative'}
 			<CumulativeAreaView
-				{region}
+				region={activeRegion}
 				{regionLoading}
 				{onChartData}
 				data={sharedData}
