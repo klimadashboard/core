@@ -4,7 +4,11 @@
 	import { Chart, AxisX, AxisY, BarStack, Tooltip, Legend } from '$lib/components/charts/primitives';
 	import { IconTargetArrow } from '@tabler/icons-svelte-runes';
 	import { formatNumber, formatDate } from '$lib/utils/formatters';
-	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { fetchRegion } from '$lib/utils/getRegion';
+	import type { ContextRegion } from '$lib/utils/regionContext';
+	import { hasDrilldown } from '$lib/utils/regionTree';
 	import {
 		fetchData,
 		buildChartData,
@@ -31,17 +35,24 @@
 
 	$: isMobile = containerWidth < 500;
 
-	// Region shown in the chart: the card's region, or a member picked in the RegionSwitcher
+	// Region shown in the chart: the card's region, or a member picked in the RegionDrilldown
 	// (the switcher only appears for aggregate regions such as a Metropolregion)
 	let switchedRegion: Region | null = null;
-	let switcherId: string | null = null;
 	let switcherFor: string | null = null;
 	$: if (region?.id !== switcherFor) {
 		switcherFor = region?.id ?? null;
 		switchedRegion = null;
-		switcherId = region?.id ?? null;
 	}
 	$: activeRegion = switchedRegion ?? region;
+
+	// Only offer the dropdown (and its settings row) where there is something to drill into
+	let drillable = false;
+	$: hasDrilldown(region, 'districts').then((v) => (drillable = v));
+
+	async function selectRegion(r: ContextRegion) {
+		if (r.id === region?.id) switchedRegion = null;
+		else switchedRegion = (await fetchRegion(r.id)) ?? switchedRegion;
+	}
 
 	// Charging points by year of commissioning and class, from the Ladesäulenregister
 	$: zubau = data?.zubau ?? [];
@@ -126,28 +137,29 @@
 
 <div bind:clientWidth={containerWidth}>
 	<!-- Outside the loading state so focus stays on the controls while the data reloads -->
-	<div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 mb-4">
-		{#if region}
-			<RegionSwitcher
-				{region}
-				bind:selectedId={switcherId}
-				on:change={(e) => (switchedRegion = e.detail.id === region?.id ? null : e.detail)}
-			/>
-		{/if}
-		{#if goal}
-			<label
-				class="inline-flex items-center gap-1.5 cursor-pointer select-none text-sm text-gray-700 dark:text-gray-300"
-			>
-				<IconTargetArrow size={18} stroke={2} aria-hidden="true" class="shrink-0" />
-				<span>{goal.targetYear}-Ziel</span>
-				<input
-					type="checkbox"
-					bind:checked={showGoal}
-					class="ml-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
-				/>
-			</label>
-		{/if}
-	</div>
+	{#if goal || drillable}
+		<ChartSettings>
+			{#if goal}
+				<label
+					class="inline-flex items-center gap-1.5 cursor-pointer select-none text-sm text-gray-700 dark:text-gray-300"
+				>
+					<IconTargetArrow size={18} stroke={2} aria-hidden="true" class="shrink-0" />
+					<span>{goal.targetYear}-Ziel</span>
+					<input
+						type="checkbox"
+						bind:checked={showGoal}
+						class="ml-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+					/>
+				</label>
+			{/if}
+			{#if drillable}
+				<!-- Region: drill down to a Kreis of the card's region (own row, after the chart's controls) -->
+				<div class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-2">
+					<RegionDrilldown {region} activeId={activeRegion?.id ?? null} onSelect={selectRegion} depth="districts" />
+				</div>
+			{/if}
+		</ChartSettings>
+	{/if}
 
 	{#if loading}
 		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>

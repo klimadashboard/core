@@ -1,7 +1,11 @@
 <script lang="ts">
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
-	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { fetchRegion } from '$lib/utils/getRegion';
+	import type { ContextRegion } from '$lib/utils/regionContext';
+	import { hasDrilldown } from '$lib/utils/regionTree';
 	import {
 		IconBuildingFactory2,
 		IconHome,
@@ -50,14 +54,21 @@
 
 	// --- Region switcher, as in the other regional charts
 	let switchedRegion: Region | null = null;
-	let switcherId: string | null = null;
 	let switcherFor: string | null = null;
 	$: if (region?.id !== switcherFor) {
 		switcherFor = region?.id ?? null;
 		switchedRegion = null;
-		switcherId = region?.id ?? null;
 	}
 	$: activeRegion = switchedRegion ?? region;
+
+	// Only offer the dropdown (and its settings row) where there is something to drill into
+	let drillable = false;
+	$: hasDrilldown(region, 'all').then((v) => (drillable = v));
+
+	async function selectRegion(r: ContextRegion) {
+		if (r.id === region?.id) switchedRegion = null;
+		else switchedRegion = (await fetchRegion(r.id)) ?? switchedRegion;
+	}
 
 	// --- Layout
 	$: wedges = data
@@ -262,14 +273,13 @@
 
 <div bind:clientWidth={width}>
 	<!-- Outside the loading state so focus stays on the dropdown while the data reloads -->
-	{#if region}
-		<div class="mb-4">
-			<RegionSwitcher
-				{region}
-				bind:selectedId={switcherId}
-				on:change={(e) => (switchedRegion = e.detail.id === region?.id ? null : e.detail)}
-			/>
-		</div>
+	{#if region && drillable}
+		<ChartSettings>
+			<!-- Region: drill down to a Kreis / Gemeinde of the card's region (own row, after the chart's controls) -->
+			<div class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-2">
+				<RegionDrilldown {region} activeId={activeRegion?.id ?? null} onSelect={selectRegion} />
+			</div>
+		</ChartSettings>
 	{/if}
 
 	{#if loading}

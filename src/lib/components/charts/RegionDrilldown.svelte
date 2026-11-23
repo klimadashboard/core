@@ -28,7 +28,8 @@
 		compareIds = [],
 		onToggleCompare = null,
 		compareMax = Infinity,
-		compareHint = 'als Vergleichslinie in „Kumulativ“'
+		compareHint = 'als Vergleichslinie in „Kumulativ“',
+		depth = 'all'
 	}: {
 		/** The card's region: the root of the tree */
 		region: Region | null;
@@ -40,19 +41,34 @@
 		onToggleCompare?: ((r: ContextRegion) => void) | null;
 		compareMax?: number;
 		compareHint?: string;
+		/** 'districts': only Kreise, for charts without data per Gemeinde */
+		depth?: 'all' | 'districts';
 	} = $props();
 
 	const uid = Math.random().toString(36).slice(2, 8);
 
-	let tree = $state<RegionTree | null>(null);
+	let rawTree = $state<RegionTree | null>(null);
+	// Without Gemeinden for depth 'districts' (a Kreis then has nothing to drill into)
+	const tree = $derived.by((): RegionTree | null => {
+		if (!rawTree || depth === 'all') return rawTree;
+		const groups = rawTree.groups
+			.map((g) => ({
+				label: g.label,
+				nodes: g.nodes
+					.filter((n) => n.region.layer !== 'municipality')
+					.map((n) => ({ region: n.region, children: [] }))
+			}))
+			.filter((g) => g.nodes.length);
+		return { root: rawTree.root, groups };
+	});
 	let loadedFor: string | null = null;
 	$effect(() => {
 		const id = region?.id ?? null;
 		if (id === loadedFor) return;
 		loadedFor = id;
-		tree = null;
+		rawTree = null;
 		getRegionTree(region).then((t) => {
-			if (loadedFor === id) tree = t;
+			if (loadedFor === id) rawTree = t;
 		});
 	});
 
@@ -394,7 +410,9 @@
 							placeholder={hasTree
 								? onToggleCompare
 									? 'Kreis, Gemeinde oder andere Region suchen…'
-									: 'Kreis oder Gemeinde suchen…'
+									: depth === 'districts'
+										? 'Kreis suchen…'
+										: 'Kreis oder Gemeinde suchen…'
 								: 'Region suchen…'}
 							class="w-full rounded-lg border border-gray-300 bg-white py-1.5 pr-3 pl-8 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-400"
 						/>

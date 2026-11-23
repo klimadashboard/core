@@ -106,3 +106,15 @@ export function getRegionTree(region: { id: string } | null | undefined): Promis
 	cache.set(region.id, { data, expires: Date.now() + CACHE_TTL });
 	return data;
 }
+
+/** Whether RegionDrilldown has anything to offer for this region ('districts': Kreise only) */
+export async function hasDrilldown(
+	region: { id: string } | null | undefined,
+	depth: 'all' | 'districts' = 'all'
+): Promise<boolean> {
+	const tree = await getRegionTree(region);
+	if (!tree) return false;
+	return tree.groups.some((g) =>
+		g.nodes.some((n) => depth === 'all' || n.region.layer !== 'municipality')
+	);
+}

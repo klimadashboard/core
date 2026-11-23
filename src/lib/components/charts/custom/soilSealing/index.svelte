@@ -12,7 +12,10 @@
 	} from '$lib/components/charts/primitives';
 	import { RadioGroup } from '$lib/components/ui';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
-	import RegionSwitcher from '$lib/components/charts/RegionSwitcher.svelte';
+	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { fetchRegion } from '$lib/utils/getRegion';
+	import type { ContextRegion } from '$lib/utils/regionContext';
+	import { hasDrilldown } from '$lib/utils/regionTree';
 	import { formatNumber } from '$lib/utils/formatters';
 	import {
 		fetchData,
@@ -214,31 +217,37 @@
 		}
 	}
 
-	// Region shown in the chart: the card's region, or one picked in the RegionSwitcher
+	// Region shown in the chart: the card's region, or one picked in the RegionDrilldown
 	// (the switcher only appears for aggregate regions such as a Metropolregion)
 	let switchedRegion: Region | null = null;
-	let switcherId: string | null = null;
 	let switcherFor: string | null = null;
 	$: if (region?.id !== switcherFor) {
 		switcherFor = region?.id ?? null;
 		switchedRegion = null;
-		switcherId = region?.id ?? null;
 	}
 	$: activeRegion = switchedRegion ?? region;
+
+	// Only offer the dropdown (and its settings row) where there is something to drill into
+	let drillable = false;
+	$: hasDrilldown(region, 'all').then((v) => (drillable = v));
+
+	async function selectRegion(r: ContextRegion) {
+		if (r.id === region?.id) switchedRegion = null;
+		else switchedRegion = (await fetchRegion(r.id)) ?? switchedRegion;
+	}
 
 	$: loadData(activeRegion);
 </script>
 
 <div bind:clientWidth={containerWidth}>
 	<!-- Outside the loading state so focus stays on the dropdown while the data reloads -->
-	{#if region}
-		<div class="mb-4">
-			<RegionSwitcher
-				{region}
-				bind:selectedId={switcherId}
-				on:change={(e) => (switchedRegion = e.detail.id === region?.id ? null : e.detail)}
-			/>
-		</div>
+	{#if region && drillable}
+		<ChartSettings>
+			<!-- Region: drill down to a Kreis / Gemeinde of the card's region (own row, after the chart's controls) -->
+			<div class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-2">
+				<RegionDrilldown {region} activeId={activeRegion?.id ?? null} onSelect={selectRegion} />
+			</div>
+		</ChartSettings>
 	{/if}
 	{#if loading}
 		<div class="h-[300px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
