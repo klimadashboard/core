@@ -24,6 +24,8 @@ const COLLECTION = 'energy_renewable_share_regions';
 interface RegionRef {
 	id: string;
 	name: string;
+	code: string | null;
+	center: [string, string] | null;
 	layer: string;
 	layer_label: string | null;
 	population: number | null;
@@ -56,9 +58,13 @@ export interface ShareRow {
 	population: number | null;
 	/** true when computed from the members (consumption-weighted) */
 	computed: boolean;
+	/** region code (AGS for German districts), matches the vector tiles of the map view */
+	code?: string | null;
+	/** [lon, lat] as strings, frames the map view */
+	center?: [string, string] | null;
 }
 
-const REGION_FIELDS = ['id', 'name', 'layer', 'layer_label', 'population', 'parents'];
+const REGION_FIELDS = ['id', 'name', 'code', 'center', 'layer', 'layer_label', 'population', 'parents'];
 
 /** Σ share·consumption / Σ consumption over rows with a consumption */
 function weighted(rows: DbRow[]): { share: number; consumption: number } | null {
@@ -155,7 +161,9 @@ export async function fetchChartData({
 			share: r.share,
 			consumption: r.consumption_mwh,
 			population: r.region.population ?? null,
-			computed: false
+			computed: false,
+			code: r.region.code,
+			center: r.region.center
 		}))
 		.sort((a, b) => b.share - a.share);
 
@@ -181,7 +189,9 @@ export async function fetchChartData({
 					share: r.share,
 					consumption: r.consumption_mwh,
 					population: r.region.population ?? null,
-					computed: false
+					computed: false,
+					code: r.region.code,
+					center: r.region.center
 				}))
 				.sort((a, b) => b.share - a.share);
 		}

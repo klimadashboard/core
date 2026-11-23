@@ -1,5 +1,6 @@
 <!-- $lib/components/charts/custom/renewableShareRegions/index.svelte
-	Two views:
+	Three views:
+	- Karte (default): the compared districts as a choropleth (ShareMap.svelte).
 	- Ranking: deliberately basic ranked bar list (no horizontal bar primitive yet), the label on
 	  the bar, the value right after it. Highest three, reference rows (the region itself and its
 	  parents), lowest three; a button folds out the full ranking (inner scroll for long lists),
@@ -17,6 +18,7 @@
 	import { tick } from 'svelte';
 	import { Button, RadioGroup, Select } from '$lib/components/ui';
 	import Beeswarm from './Beeswarm.svelte';
+	import ShareMap from './ShareMap.svelte';
 	import { grow } from '$lib/components/charts/primitives/motion';
 	import { fetchChartData, type ShareRow } from './config';
 
@@ -39,12 +41,12 @@
 	let data: ShareRow[] = [];
 	let loading = true;
 	let error: string | null = null;
-	let view: 'ranking' | 'distribution' = 'ranking';
+	let view: 'map' | 'ranking' | 'distribution' = 'map';
 	/** full ranking folded out */
 	let expanded = false;
 	let scroller: HTMLElement;
 	let peerGroup: string | null = null;
-	/** district emphasised in the distribution view */
+	/** district emphasised in the map and distribution views */
 	let selected = '';
 
 	$: translations = page.data.translations;
@@ -162,11 +164,12 @@
 			hideLabel
 			bind:value={view}
 			options={[
+				{ value: 'map', label: 'Karte' },
 				{ value: 'ranking', label: 'Ranking' },
 				{ value: 'distribution', label: 'Verteilung' }
 			]}
 		/>
-		{#if view === 'distribution'}
+		{#if view !== 'ranking'}
 			<Select
 				label="Kreis hervorheben"
 				hideLabel
@@ -180,6 +183,13 @@
 
 {#if !ready}
 	<!-- loading / error / empty: shown above -->
+{:else if view === 'map' && pool.length > 1}
+	<ShareMap
+		rows={pool}
+		bind:selected
+		{region}
+		label={t(translations, 'domain.energy.renewableShareOfConsumption') + groupText}
+	/>
 {:else if view === 'distribution' && pool.length > 1}
 	<Beeswarm
 		rows={pool}
