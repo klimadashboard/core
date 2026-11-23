@@ -8,9 +8,12 @@
 import { prefersReducedMotion } from 'svelte/motion';
 import { cubicOut } from 'svelte/easing';
 
-const DURATION = 700;
+/** Duration of `grow` */
+export const DURATION = 700;
 /** Total spread of the per-bar delay, independent of the number of bars */
-const STAGGER = 400;
+export const STAGGER = 400;
+/** Duration of `wipe`: marks at a line's end can start once it has (almost) arrived */
+export const WIPE_DURATION = DURATION * 1.5;
 
 /** Delay for the i-th of n elements so a series builds up left to right */
 export const stagger = (i: number, n: number) => (n > 1 ? (i / (n - 1)) * STAGGER : 0);
@@ -33,12 +36,23 @@ export function grow(
 }
 
 /** Reveal an element from left to right (lines draw, areas fill), keeping dashes and gradients intact */
-export function wipe(_node: Element, { delay = 0, duration = DURATION * 1.5 } = {}) {
+export function wipe(_node: Element, { delay = 0, duration = WIPE_DURATION } = {}) {
 	if (prefersReducedMotion.current) return { duration: 0 };
 	return {
 		delay,
 		duration,
 		easing: cubicOut,
 		css: (t: number) => `clip-path: inset(-10% ${(1 - t) * 100}% -10% -10%)`
+	};
+}
+
+/** Fade an element in, e.g. a label once the mark it belongs to has built up */
+export function appear(_node: Element, { delay = 0, duration = 300 } = {}) {
+	if (prefersReducedMotion.current) return { duration: 0 };
+	return {
+		delay,
+		duration,
+		easing: cubicOut,
+		css: (t: number) => `opacity: ${t}`
 	};
 }

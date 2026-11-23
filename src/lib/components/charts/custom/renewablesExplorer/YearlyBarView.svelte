@@ -15,6 +15,7 @@
 	import RuleY from '$lib/components/charts/primitives/marks/RuleY.svelte';
 	import BarY from '$lib/components/charts/primitives/marks/BarY.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import { grow, appear, stagger, DURATION } from '$lib/components/charts/primitives/motion';
 	import {
 		buildChartData,
 		plannedUndatedLabel,
@@ -374,14 +375,18 @@
 
 				<!-- Planned units with a planned year, stacked on that year's Zubau -->
 				{#each plannedSegmentRects(plannedSegments, xScale, yScale) as seg (seg.year)}
+					<!-- grows once the year's actual bar (same stagger as BarY) has built up -->
 					<rect
+						in:grow|global={{
+							delay: stagger(Math.max(0, actualBars.findIndex((b) => b.year >= seg.year)), actualBars.length) + DURATION
+						}}
 						x={seg.x}
 						y={seg.y}
 						width={seg.width}
 						height={seg.height}
 						fill="url(#{hatchId})"
 						stroke-width="1"
-						class="stroke-(--planned) dark:stroke-(--planned-dark)"
+						class="stroke-(--planned) dark:stroke-(--planned-dark) [transform-box:fill-box] origin-bottom"
 						style="--planned: {colors.dark}; --planned-dark: {colors.light}"
 					/>
 				{/each}
@@ -397,14 +402,18 @@
 							y2={innerHeight}
 							stroke-dasharray="2,3"
 							class="stroke-gray-400 dark:stroke-gray-500"
+							in:appear|global
 						/>
+						<!-- after the last year's bar, like one more bar in the stagger -->
 						<path
 							d={shape.path}
 							fill="url(#{hatchId})"
 							stroke-width="1.25"
-							class="stroke-(--planned) dark:stroke-(--planned-dark)"
+							class="stroke-(--planned) dark:stroke-(--planned-dark) [transform-box:fill-box] origin-bottom"
+							in:grow|global={{ delay: stagger(1, 2) }}
 						/>
 						<text
+							in:appear|global={{ delay: stagger(1, 2) + DURATION }}
 							x={shape.labelX}
 							y={shape.labelY}
 							text-anchor="end"

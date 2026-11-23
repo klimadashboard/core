@@ -10,6 +10,7 @@
 	import Line from '$lib/components/charts/primitives/marks/Line.svelte';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Loader from '$lib/components/Loader.svelte';
+	import { grow, appear, WIPE_DURATION } from '$lib/components/charts/primitives/motion';
 	import {
 		buildChartData,
 		getColors,
@@ -69,6 +70,9 @@
 	let containerEl: HTMLElement;
 	let hoveredSeries: string | null = null;
 	const hatchId = `planned-hatch-cum-${Math.random().toString(36).slice(2, 8)}`;
+	// The planned segment grows out of the line's end once the line's wipe has (almost) arrived
+	const PLANNED_DELAY = WIPE_DURATION * 0.7;
+	const PLANNED_GROW = 500;
 
 	// Comparison palette without red/green next to each other (a11y), solar yellow is the main line.
 	// Biomass has a green main line, so the green comparison colour is left out there.
@@ -494,9 +498,11 @@
 								height={stackRect.height}
 								fill="url(#{hatchId})"
 								stroke-width="1.25"
-								class="stroke-(--planned) dark:stroke-(--planned-dark)"
+								class="stroke-(--planned) dark:stroke-(--planned-dark) [transform-box:fill-box] origin-bottom"
+								in:grow|global={{ delay: PLANNED_DELAY, duration: PLANNED_GROW }}
 							/>
 							<text
+								in:appear|global={{ delay: PLANNED_DELAY + PLANNED_GROW }}
 								x={stackRect.labelX}
 								y={stackRect.labelY}
 								text-anchor="end"
