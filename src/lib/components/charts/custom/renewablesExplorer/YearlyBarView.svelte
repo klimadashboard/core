@@ -214,20 +214,10 @@
 		...yearRows.map((d) => Math.max(d.value, Math.max(d.value, 0) + d.plannedValue, d.goalRequired)),
 		0
 	);
-	// The planned units without a date are no yearly rate: when they would dwarf the years,
-	// their bar is cut (break mark, real value in the label) so the history stays readable
-	$: breakPlanned = yearsMax > 0 && undatedValue > yearsMax * 1.5;
+	// Max value considers actual data, goal and planned units (always at true scale)
+	$: maxAbs = Math.max(...combinedData.map((d) => Math.abs(d.value)), yearsMax, undatedValue, 1);
 
-	// Max value considers actual data, goal and planned units
-	$: maxAbs = Math.max(
-		...combinedData.map((d) => Math.abs(d.value)),
-		yearsMax,
-		breakPlanned ? 0 : undatedValue,
-		1
-	);
-
-	// Y-axis max: room above the cut planned bar for its label
-	$: yMax = breakPlanned ? yearsMax * 1.2 : Math.max(yearsMax, undatedValue, 1);
+	$: yMax = Math.max(yearsMax, undatedValue, 1);
 
 	$: unitsDivisor = maxAbs >= 1_000_000 ? 1_000_000 : maxAbs >= 1_000 ? 1_000 : 1;
 	$: unit =
@@ -267,29 +257,16 @@
 		}));
 	}
 
-	/**
-	 * Geometry of the bar with the planned units without a (future) date: hatched shape (with a
-	 * break mark, two slanted cuts, when it's cut), divider before it, label position
-	 */
-	function undatedBarShape(row: Row | null, cut: boolean, xScale: any, yScale: any) {
+	/** Geometry of the bar with the planned units without a (future) date, its divider and label */
+	function undatedBarShape(row: Row | null, xScale: any, yScale: any) {
 		const xs = xScale as BandScale | null;
 		const ys = yScale as LinearScale | null;
 		const x = row && xs ? xs(PLANNED_KEY) : undefined;
 		if (!row || !xs || !ys || x == null) return null;
 		const w = xs.bandwidth();
 		const bottom = ys(0);
-		const top = ys(cut ? ys.domain()[1] * 0.9 : row.plannedValue);
-		let paths = [`M${x},${bottom}V${top}H${x + w}V${bottom}Z`];
-		if (cut) {
-			const yb = top + (bottom - top) * 0.22;
-			const s = Math.min(3, w / 3);
-			const gap = 5;
-			paths = [
-				`M${x},${bottom}V${yb + s}L${x + w},${yb - s}V${bottom}Z`,
-				`M${x},${top}H${x + w}V${yb - s - gap}L${x},${yb + s - gap}Z`
-			];
-		}
-		return { paths, divider: x - (xs.step() - w) / 2, labelX: x + w, labelY: top - 5 };
+		const top = ys(row.plannedValue);
+		return { path: `M${x},${bottom}V${top}H${x + w}V${bottom}Z`, divider: x - (xs.step() - w) / 2, labelX: x + w, labelY: top - 5 };
 	}
 
 	// Update chart data when shared data changes
@@ -410,7 +387,7 @@
 				{/each}
 
 				<!-- Planned units without a (future) date: own bar after the years -->
-				{@const shape = undatedBarShape(undatedRow, breakPlanned, xScale, yScale)}
+				{@const shape = undatedBarShape(undatedRow, xScale, yScale)}
 				{#if undatedRow && shape}
 					<g style="--planned: {colors.dark}; --planned-dark: {colors.light}">
 						<line
@@ -421,14 +398,12 @@
 							stroke-dasharray="2,3"
 							class="stroke-gray-400 dark:stroke-gray-500"
 						/>
-						{#each shape.paths as d}
-							<path
-								{d}
-								fill="url(#{hatchId})"
-								stroke-width="1.25"
-								class="stroke-(--planned) dark:stroke-(--planned-dark)"
-							/>
-						{/each}
+						<path
+							d={shape.path}
+							fill="url(#{hatchId})"
+							stroke-width="1.25"
+							class="stroke-(--planned) dark:stroke-(--planned-dark)"
+						/>
 						<text
 							x={shape.labelX}
 							y={shape.labelY}
@@ -537,9 +512,6 @@
 					{:else}
 						Ein geplantes Inbetriebnahmejahr liegt uns für diese Anlagen nicht vor, daher sind sie im
 						Balken „geplant“ ganz rechts zusammengefasst.
-					{/if}
-					{#if breakPlanned}
-						Dieser Balken ist gekürzt dargestellt (Bruchstelle), der Wert steht darüber.
 					{/if}
 				</p>
 			{/if}
