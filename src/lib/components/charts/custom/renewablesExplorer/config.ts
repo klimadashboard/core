@@ -65,6 +65,29 @@ export interface TurbineData {
 	region_owner?: string | null;
 }
 
+/** Power and number of units, e.g. of the units planned for one year */
+export interface PlannedAmount {
+	power_kw: number;
+	units: number;
+}
+
+/**
+ * Units registered as "In Planung" (MaStR status 31) in a region.
+ * Only some tables carry a planned commissioning date (see PLANNED_DATE_FIELD): there the
+ * units planned for this year or later are split by year. Units without a date, or whose
+ * planned date has already passed, are in `undated`.
+ */
+export interface PlannedData {
+	byYear: Array<PlannedAmount & { year: number }>;
+	undated: PlannedAmount & {
+		/** Units in `undated` whose planned date lies in the past */
+		overdueUnits: number;
+	};
+	total: PlannedAmount;
+	/** Whether the table has planned commissioning dates at all */
+	hasDates: boolean;
+}
+
 /** A single point in the goal path (cumulative target for a specific year) */
 export interface GoalPathPoint {
 	year: number;
@@ -112,6 +135,27 @@ const CARRIER_COLORS: Record<EnergyType, { light: string; dark: string }> = {
 	biomass: { light: '#DDEBCF', dark: '#4A7A22' },
 	hydro: { light: '#D3EEF2', dark: '#11707F' }
 };
+
+/** MaStR status "In Planung" */
+const STATUS_PLANNED = '31';
+
+/**
+ * Planned commissioning date per table ("GeplantesInbetriebnahmedatum"). The wind and solar
+ * tables don't have it (publicly), so their planned units are shown without a year.
+ */
+const PLANNED_DATE_FIELD: Partial<Record<EnergyType, string>> = {
+	biomass: 'planned_commissioning_date',
+	hydro: 'planned_commissioning_date'
+};
+
+/** Energies that show planned units unless the chart config sets `showPlanned` */
+const PLANNED_BY_DEFAULT: EnergyType[] = ['wind'];
+
+/** Whether the chart shows planned units: chart config `showPlanned`, else the energy's default */
+export function showsPlanned(energy: EnergyType, config?: { showPlanned?: unknown } | null): boolean {
+	if (typeof config?.showPlanned === 'boolean') return config.showPlanned;
+	return PLANNED_BY_DEFAULT.includes(energy);
+}
 
 /** Get colors based on energy type */
 export function getColors(energy: EnergyType): { light: string; dark: string } {
@@ -331,6 +375,80 @@ export async function fetchComparisonData(
 	}
 }
 
+/**
+ * Fetch the units "In Planung" of a region, summed by the Directus aggregate API.
+ * Units are matched by their Gemeindeschlüssel (`region`) starting with the region's code,
+ * so a Land, Kreis or Gemeinde works alike; aggregates (Metropolregion) match any member Kreis.
+ * Returns null where the MaStR tables don't apply (other countries) or on errors.
+ */
+export async function fetchPlanned(
+	region: Region | null,
+	params: RenewablesParams,
+	fetchFn: typeof fetch = fetch
+): Promise<PlannedData | null> {
+	const { energy } = params;
+	// The unit tables are German (MaStR)
+	if (region?.country && region.country.toUpperCase() !== 'DE') return null;
+	if (region?.layer === 'country' && region.code?.toLowerCase() !== 'de') return null;
+
+	let codes: string[] = [];
+	if (region && region.layer !== 'country') {
+		const aggregate = await getAggregateCodes(region, fetchFn);
+		const list = aggregate ?? region.codeShort ?? region.code;
+		codes = (list || '').split(',').filter(Boolean);
+		if (!codes.length) return null;
+	}
+
+	const dateField = PLANNED_DATE_FIELD[energy];
+	const query = new URLSearchParams({
+		'aggregate[count]': 'id',
+		'aggregate[sum]': 'net_power_kw',
+		'filter[status][_eq]': STATUS_PLANNED
+	});
+	if (codes.length === 1) {
+		query.set('filter[region][_starts_with]', codes[0]);
+	} else {
+		codes.forEach((code, i) => query.set(`filter[_or][${i}][region][_starts_with]`, code));
+	}
+	if (dateField) query.set('groupBy[]', `year(${dateField})`);
+
+	try {
+		const response = await fetchFn(
+			`https://base.klimadashboard.org/items/energy_${energy}_units?${query}`
+		);
+		if (!response.ok) return null;
+		const rows: any[] = (await response.json()).data || [];
+
+		const currentYear = new Date().getFullYear();
+		const byYear: PlannedData['byYear'] = [];
+		const undated = { power_kw: 0, units: 0, overdueUnits: 0 };
+		for (const row of rows) {
+			const amount = {
+				power_kw: Number(row.sum?.net_power_kw) || 0,
+				units: Number(row.count?.id) || 0
+			};
+			if (!amount.units) continue;
+			const year = dateField ? Number(row[`${dateField}_year`]) : NaN;
+			if (year >= currentYear) {
+				byYear.push({ year, ...amount });
+			} else {
+				undated.power_kw += amount.power_kw;
+				undated.units += amount.units;
+				if (Number.isFinite(year) && year > 0) undated.overdueUnits += amount.units;
+			}
+		}
+		byYear.sort((a, b) => a.year - b.year);
+		const total = [...byYear, undated].reduce(
+			(sum, a) => ({ power_kw: sum.power_kw + a.power_kw, units: sum.units + a.units }),
+			{ power_kw: 0, units: 0 }
+		);
+		return { byYear, undated, total, hasDates: !!dateField };
+	} catch (e) {
+		console.warn('[renewablesExplorer] Failed to fetch planned units:', e);
+		return null;
+	}
+}
+
 /** Fetch all turbines with minimal data (ID + coordinates + region_owner) */
 export async function fetchAllTurbines(energy: EnergyType): Promise<TurbineData[]> {
 	if (typeof window === 'undefined') return [];
@@ -440,24 +558,110 @@ export async function fetchTurbines(
 // TABLE & CHART DATA BUILDERS
 // ============================================================================
 
+/** Number cell that stays empty for rows without the value (e.g. the planned-units row) */
+const optionalNumber = (v: unknown) => (v == null || v === '' ? '' : formatNumber(Number(v)));
+
+/** Label of the planned units without a (future) date, in the table and tooltip */
+export function plannedUndatedLabel(planned: PlannedData): string {
+	return planned.undated.overdueUnits > 0
+		? 'In Planung (ohne oder mit überschrittenem Termin)'
+		: 'In Planung (ohne Termin)';
+}
+
 /** Get table columns */
-export function getTableColumns(params: RenewablesParams): TableColumn[] {
+export function getTableColumns(params: RenewablesParams, planned?: PlannedData | null): TableColumn[] {
 	const unit = params.energy === 'solar' ? 'kWp' : 'kW';
-	return [
+	const columns: TableColumn[] = [
 		{ key: 'year', label: 'Jahr', align: 'left' },
 		{
 			key: 'net_power_kw',
 			label: `Zubau (${unit})`,
 			align: 'right',
-			format: (v) => formatNumber(v)
+			format: optionalNumber
 		},
 		{
 			key: 'cumulative_power_kw',
 			label: `Kumulierte Leistung (${unit})`,
 			align: 'right',
-			format: (v) => formatNumber(v)
+			format: optionalNumber
 		}
 	];
+	if (planned?.total.units) {
+		columns.push(
+			{
+				key: 'planned_power_kw',
+				label: `In Planung (${unit})`,
+				align: 'right',
+				format: optionalNumber
+			},
+			{
+				key: 'planned_units',
+				label: 'In Planung (Anlagen)',
+				align: 'right',
+				format: optionalNumber
+			}
+		);
+	}
+	return columns;
+}
+
+/**
+ * Table rows: one per year (with the units planned for that year, if dated), then one row
+ * for the planned units without a (future) date.
+ */
+export function getTableRows(data: RenewablesRawData[], planned?: PlannedData | null): Record<string, any>[] {
+	if (!planned?.total.units) return data;
+	const byYear = new Map(planned.byYear.map((p) => [p.year, p]));
+	const rows: Record<string, any>[] = data.map((d) => {
+		const p = byYear.get(d.year);
+		return p ? { ...d, planned_power_kw: p.power_kw, planned_units: p.units } : d;
+	});
+	const lastYear = data.at(-1)?.year ?? 0;
+	for (const p of planned.byYear) {
+		if (p.year > lastYear) rows.push({ year: p.year, planned_power_kw: p.power_kw, planned_units: p.units });
+	}
+	if (planned.undated.units) {
+		rows.push({
+			year: plannedUndatedLabel(planned),
+			planned_power_kw: planned.undated.power_kw,
+			planned_units: planned.undated.units
+		});
+	}
+	return rows;
+}
+
+/** Placeholders for the units "In Planung" (empty strings / 0 when there are none) */
+function getPlannedPlaceholders(
+	planned: PlannedData | null | undefined,
+	energy: EnergyType,
+	regionName: string
+): Record<string, string | number> {
+	const powerKw = planned?.total.power_kw ?? 0;
+	const units = planned?.total.units ?? 0;
+	const mw = powerKw / 1000;
+	const plannedPower = formatPower(powerKw, energy);
+	const unitWord = energy === 'wind' ? (units === 1 ? 'Windrad' : 'Windräder') : units === 1 ? 'Anlage' : 'Anlagen';
+
+	const result: Record<string, string | number> = {
+		plannedPower: units ? plannedPower : '',
+		plannedPowerRaw: powerKw,
+		plannedUnits: formatNumber(units),
+		plannedUnitsRaw: units,
+		plannedMW: formatNumber(mw, mw < 10 ? 1 : 0),
+		plannedMWRaw: mw,
+		// Sentence for card texts, empty when nothing is planned
+		plannedText: units
+			? `Im Marktstammdatenregister sind in ${regionName} ${formatNumber(units)} ${unitWord} mit zusammen ${plannedPower} als „in Planung“ gemeldet.`
+			: ''
+	};
+	if (energy === 'wind') {
+		result.plannedWindUnits = result.plannedUnits;
+		result.plannedWindUnitsRaw = units;
+		result.plannedWindMW = result.plannedMW;
+		result.plannedWindMWRaw = mw;
+		result.plannedWindPower = result.plannedPower;
+	}
+	return result;
 }
 
 /** Generate placeholders for text templates */
@@ -467,7 +671,8 @@ export function getPlaceholders(
 	params: RenewablesParams,
 	goal?: RenewableGoal | null,
 	updateDate?: string,
-	gridOperatorCheckedRatio?: number | null
+	gridOperatorCheckedRatio?: number | null,
+	planned?: PlannedData | null
 ): Record<string, string | number> {
 	const { energy } = params;
 	const currentYear = new Date().getFullYear();
@@ -613,7 +818,8 @@ export function getPlaceholders(
 		peakYear: strongestYearData?.year || lastCompletedYear,
 		peakYearAddition: formatPower(strongestYearData?.net_power_kw || 0, energy),
 		unverifiedPercentage: unverifiedPercent,
-		...goalPlaceholders
+		...goalPlaceholders,
+		...getPlannedPlaceholders(planned, energy, regionName)
 	};
 }
 
@@ -640,7 +846,8 @@ export function buildChartData(
 	params: RenewablesParams,
 	viewMode: ViewMode = 'yearly',
 	goal?: RenewableGoal | null,
-	gridOperatorCheckedRatio?: number | null
+	gridOperatorCheckedRatio?: number | null,
+	planned?: PlannedData | null
 ): ChartData {
 	const formattedDate = formatUpdateDateForSource(updateDate);
 	const source = formattedDate
@@ -650,11 +857,19 @@ export function buildChartData(
 	return {
 		raw: data,
 		table: {
-			columns: getTableColumns(params),
-			rows: data,
+			columns: getTableColumns(params, planned),
+			rows: getTableRows(data, planned),
 			filename: `${params.energy}-${viewMode === 'cumulative' ? 'kumuliert' : 'zubau-jaehrlich'}`
 		},
-		placeholders: getPlaceholders(data, region, params, goal, updateDate, gridOperatorCheckedRatio),
+		placeholders: getPlaceholders(
+			data,
+			region,
+			params,
+			goal,
+			updateDate,
+			gridOperatorCheckedRatio,
+			planned
+		),
 		meta: {
 			updateDate,
 			source,
@@ -707,7 +922,7 @@ export async function fetchChartData({
 		const directus = getDirectusInstance(fetchFn);
 		const raw = await directus.request(
 			readItem('regions', regionId, {
-				fields: ['id', 'code', 'code_short', 'name', 'layer', 'layer_label']
+				fields: ['id', 'code', 'code_short', 'name', 'layer', 'layer_label', 'country']
 			})
 		) as any;
 		region = { ...raw, codeShort: raw.code_short } as Region;
@@ -719,7 +934,19 @@ export async function fetchChartData({
 	const { data, updateDate, gridOperatorCheckedRatio } = await fetchData(region, params);
 	if (!data || data.length === 0) return null;
 
-	const goal = await fetchGoal(region, params);
+	const [goal, planned] = await Promise.all([
+		fetchGoal(region, params),
+		showsPlanned(energy, chartConfig) ? fetchPlanned(region, params, fetchFn) : null
+	]);
 
-	return buildChartData(data, updateDate, region, params, 'yearly', goal, gridOperatorCheckedRatio);
+	return buildChartData(
+		data,
+		updateDate,
+		region,
+		params,
+		'yearly',
+		goal,
+		gridOperatorCheckedRatio,
+		planned
+	);
 }

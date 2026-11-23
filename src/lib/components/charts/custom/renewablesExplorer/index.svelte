@@ -20,11 +20,14 @@
 		getMetricIcons,
 		fetchData,
 		fetchGoal,
+		fetchPlanned,
+		showsPlanned,
 		type EnergyType,
 		type ViewMode,
 		type MetricMode,
 		type RenewablesRawData,
-		type RenewableGoal
+		type RenewableGoal,
+		type PlannedData
 	} from './config';
 
 	// Props from Card slot (passed through Custom/index.svelte)
@@ -52,6 +55,7 @@
 	let sharedGoal: RenewableGoal | null = null;
 	let sharedUpdateDate: string = '';
 	let sharedGridOperatorCheckedRatio: number | null = null;
+	let sharedPlanned: PlannedData | null = null;
 	let dataLoading = true;
 	let dataFetched = false;
 
@@ -72,6 +76,8 @@
 	$: selectedEnergy = (config.energy as EnergyType) || 'solar';
 	$: initialView = (config.initialView as ViewMode) || 'yearly';
 	$: showViewSwitcher = config.showViewSwitcher !== false; // defaults to true
+	// Units "In Planung": wind by default, others via config `showPlanned: true`
+	$: withPlanned = showsPlanned(selectedEnergy, config);
 
 	// State
 	let currentView: ViewMode;
@@ -149,14 +155,16 @@
 
 		try {
 			const params = { energy: selectedEnergy };
-			const [result, goalResult] = await Promise.all([
+			const [result, goalResult, plannedResult] = await Promise.all([
 				fetchData(target, params),
-				fetchGoal(target, params)
+				fetchGoal(target, params),
+				withPlanned ? fetchPlanned(target, params) : null
 			]);
 			if (token !== loadToken) return;
 
 			sharedData = result.data;
 			sharedGoal = goalResult;
+			sharedPlanned = plannedResult;
 			sharedUpdateDate = result.updateDate;
 			sharedGridOperatorCheckedRatio = result.gridOperatorCheckedRatio;
 			dataFetched = true;
@@ -164,6 +172,7 @@
 			console.error('[renewablesExplorer] Error loading shared data:', e);
 			sharedData = [];
 			sharedGoal = null;
+			sharedPlanned = null;
 			sharedUpdateDate = '';
 			sharedGridOperatorCheckedRatio = null;
 		} finally {
@@ -266,6 +275,7 @@
 				{onChartData}
 				data={sharedData}
 				goal={sharedGoal}
+				planned={sharedPlanned}
 				updateDate={sharedUpdateDate}
 				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
 				{dataLoading}
@@ -280,6 +290,7 @@
 				{regions}
 				data={sharedData}
 				goal={sharedGoal}
+				planned={sharedPlanned}
 				updateDate={sharedUpdateDate}
 				gridOperatorCheckedRatio={sharedGridOperatorCheckedRatio}
 				{dataLoading}

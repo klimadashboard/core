@@ -20,7 +20,8 @@
 		type MetricMode,
 		type RenewablesRawData,
 		type RenewableGoal,
-		type ComparisonSeries
+		type ComparisonSeries,
+		type PlannedData
 	} from './config';
 
 	// Props
@@ -32,6 +33,8 @@
 	// Shared data props (from parent)
 	export let data: RenewablesRawData[] = [];
 	export let goal: RenewableGoal | null = null;
+	/** Units "In Planung": stacked on the latest value as a hatched segment */
+	export let planned: PlannedData | null = null;
 	export let updateDate: string = '';
 	export let gridOperatorCheckedRatio: number | null = null;
 	export let dataLoading: boolean = true;
@@ -65,6 +68,7 @@
 	let error: string | null = null;
 	let containerEl: HTMLElement;
 	let hoveredSeries: string | null = null;
+	const hatchId = `planned-hatch-cum-${Math.random().toString(36).slice(2, 8)}`;
 
 	// Comparison palette without red/green next to each other (a11y), solar yellow is the main line.
 	// Biomass has a green main line, so the green comparison colour is left out there.
@@ -195,8 +199,32 @@
 		}
 		return Array.from(yearMap.values()).sort((a, b) => a.year - b.year);
 	})();
+	// Planned units on top of the latest value: only for the region alone, in absolute numbers.
+	// From the props: mainData / comparisonSeries are set inside another reactive statement
+	$: lastPoint = data.length ? data[data.length - 1] : null;
+	$: plannedTotal = planned ? (metricMode === 'units' ? planned.total.units : planned.total.power_kw) : 0;
+	$: plannedStack =
+		lastPoint && plannedTotal > 0 && comparisons.length === 0 && (metricMode === 'units' || selectedUnit === 'absolute')
+			? {
+					year: lastPoint.year,
+					base: metricMode === 'units' ? lastPoint.cumulative_units || 0 : lastPoint.cumulative_power_kw,
+					value: plannedTotal
+				}
+			: null;
+
+	/** Hatched rect of the planned units at the latest year (slot scales are typed loosely) */
+	function plannedStackRect(stack: typeof plannedStack, div: number, xScale: any, yScale: any) {
+		const xs = xScale as ((v: number) => number) | null;
+		const ys = yScale as ((v: number) => number) | null;
+		if (!stack || !xs || !ys) return null;
+		const x = xs(stack.year);
+		const y0 = ys(stack.base / div);
+		const y1 = ys((stack.base + stack.value) / div);
+		return { x: x - 5, y: y1, height: Math.max(0, y0 - y1), labelX: x - 9, labelY: y1 + 4 };
+	}
+
 	$: allValues = chartData.flatMap((s) => s.data.map((d) => d.value));
-	$: maxValue = Math.max(...allValues, 1);
+	$: maxValue = Math.max(...allValues, plannedStack ? plannedStack.base + plannedStack.value : 0, 1);
 
 	// Unit label
 	$: unitLabel = (() => {
@@ -263,7 +291,8 @@
 				params,
 				'cumulative',
 				goal,
-				gridOperatorCheckedRatio
+				gridOperatorCheckedRatio,
+				planned
 			);
 			onChartData?.(builtChartData);
 		} catch (e) {
@@ -371,6 +400,15 @@
 					let:hover
 				>
 					<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} unit={unitLabel} />
+					{#if plannedStack}
+						<g style="--planned: {colors.dark}; --planned-dark: {colors.light}">
+							<defs>
+								<pattern id={hatchId} patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)">
+									<line x1="0" y1="0" x2="0" y2="5" class="stroke-(--planned) dark:stroke-(--planned-dark)" stroke-width="2" />
+								</pattern>
+							</defs>
+						</g>
+					{/if}
 					{@const lastDataYear = mainData.length > 0 ? mainData[mainData.length - 1].year : null}
 					{@const goalSeries = chartData.find((s) => s.isGoal)}
 					{@const firstGoalYear = goalSeries?.data[0]?.year}
@@ -444,6 +482,34 @@
 							{/if}
 						</g>
 					{/each}
+
+					<!-- Planned units, stacked on the latest value -->
+					{@const stackRect = plannedStackRect(plannedStack, divisor, xScale, yScale)}
+					{#if plannedStack && stackRect}
+						<g style="--planned: {colors.dark}; --planned-dark: {colors.light}">
+							<rect
+								x={stackRect.x}
+								y={stackRect.y}
+								width="10"
+								height={stackRect.height}
+								fill="url(#{hatchId})"
+								stroke-width="1.25"
+								class="stroke-(--planned) dark:stroke-(--planned-dark)"
+							/>
+							<text
+								x={stackRect.labelX}
+								y={stackRect.labelY}
+								text-anchor="end"
+								stroke-width="3"
+								paint-order="stroke"
+								class="text-[11px] font-semibold fill-gray-800 stroke-white dark:fill-gray-100 dark:stroke-gray-900"
+							>
+								+{metricMode === 'units'
+									? `${formatNumber(plannedStack.value, 0)} in Planung`
+									: `${formatPower(plannedStack.value, selectedEnergy)} in Planung`}
+							</text>
+						</g>
+					{/if}
 				</svelte:fragment>
 
 				<svelte:fragment slot="tooltip" let:hover>
@@ -468,7 +534,21 @@
 									color: s.color
 								};
 							})
-							.filter(Boolean)}
+							.filter(Boolean)
+							.concat(
+								plannedStack && year === plannedStack.year
+									? [
+											{
+												label: 'zzgl. in Planung',
+												value:
+													metricMode === 'units'
+														? formatNumber(plannedStack.value, 0)
+														: formatPower(plannedStack.value, selectedEnergy),
+												color: colors.dark
+											}
+										]
+									: []
+							)}
 						<Tooltip
 							visible={true}
 							x={hover.clientX}
@@ -508,6 +588,16 @@
 					{/if}
 				</button>
 			{/each}
+			{#if plannedStack}
+				<div class="flex items-center gap-2" style="--planned: {colors.dark}; --planned-dark: {colors.light}">
+					<svg width="12" height="12" aria-hidden="true" class="shrink-0">
+						<rect x="0.5" y="0.5" width="11" height="11" fill="url(#{hatchId})" stroke-width="1" class="stroke-(--planned) dark:stroke-(--planned-dark)" />
+					</svg>
+					<span>
+						In Planung (laut Marktstammdatenregister, noch nicht in Betrieb)
+					</span>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </div>

@@ -1,4 +1,10 @@
 <!-- $lib/components/charts/custom/renewablesChart/YearlyBarView.svelte -->
+<script context="module" lang="ts">
+	/** x key of the bar with the planned units without a (future) date, after all years */
+	const PLANNED_KEY = 9999;
+	let instanceCount = 0;
+</script>
+
 <script lang="ts">
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
@@ -11,6 +17,7 @@
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import {
 		buildChartData,
+		plannedUndatedLabel,
 		getColor,
 		getColors,
 		getYearlyValue,
@@ -22,7 +29,8 @@
 		type EnergyType,
 		type MetricMode,
 		type RenewablesRawData,
-		type RenewableGoal
+		type RenewableGoal,
+		type PlannedData
 	} from './config';
 
 	// Props
@@ -34,6 +42,8 @@
 	// Shared data props (from parent)
 	export let data: RenewablesRawData[] = [];
 	export let goal: RenewableGoal | null = null;
+	/** Units "In Planung" (null: not shown for this energy / region) */
+	export let planned: PlannedData | null = null;
 	export let updateDate: string = '';
 	export let gridOperatorCheckedRatio: number | null = null;
 	export let dataLoading: boolean = true;
@@ -41,6 +51,7 @@
 
 	// State
 	let containerEl: HTMLElement;
+	const hatchId = `planned-hatch-${++instanceCount}`;
 
 	// Derived
 	$: params = { energy: selectedEnergy };
@@ -117,93 +128,106 @@
 		};
 	})();
 
-	// Build combined data with goal bars
+	// Units "In Planung" in the selected metric
+	$: plannedByYear = new Map(
+		(planned?.byYear ?? []).map((p) => [p.year, metricMode === 'power' ? p.power_kw : p.units])
+	);
+	$: undatedPlanned = planned && planned.undated.units > 0 ? planned.undated : null;
+	$: undatedValue = undatedPlanned ? (metricMode === 'power' ? undatedPlanned.power_kw : undatedPlanned.units) : 0;
+
+	type Row = RenewablesRawData & {
+		value: number;
+		cumulativeValue: number;
+		isGoalYear: boolean;
+		goalRequired: number;
+		/** Planned for this year (or, in the PLANNED_KEY row, planned without a date) */
+		plannedValue: number;
+	};
+
+	// Build combined data: actual years, goal years and years with planned units,
+	// plus the PLANNED_KEY row for the planned units without a (future) date
 	$: combinedData = (() => {
-		if (!goalInfo)
-			return data.map((d) => ({
+		const rows = new Map<number, Row>();
+		const emptyRow = (year: number): Row => ({
+			year,
+			net_power_kw: 0,
+			cumulative_power_kw: 0,
+			value: 0,
+			cumulativeValue: 0,
+			isGoalYear: false,
+			goalRequired: 0,
+			plannedValue: 0
+		});
+		const rowFor = (year: number) => {
+			if (!rows.has(year)) rows.set(year, emptyRow(year));
+			return rows.get(year)!;
+		};
+
+		for (const d of data) {
+			rows.set(d.year, {
 				...d,
 				value: getYearlyValue(d, metricMode),
 				cumulativeValue: getCumulativeValue(d, metricMode),
 				isGoalYear: false,
-				goalRequired: 0
-			}));
-
-		const result: Array<{
-			year: number;
-			net_power_kw: number;
-			cumulative_power_kw: number;
-			value: number;
-			cumulativeValue: number;
-			isGoalYear: boolean;
-			goalRequired: number;
-		}> = [];
-
-		// Helper to get required value for a year
-		const getGoalRequired = (year: number): number => {
-			if (goalInfo.yearlyRequiredMap) {
-				return goalInfo.yearlyRequiredMap.get(year) || 0;
-			}
-			return goalInfo.yearlyRequired;
-		};
-
-		// Add all historical data
-		for (const d of data) {
-			const isGoalYear = d.year >= goalInfo.startYear && d.year <= goalInfo.endYear;
-			result.push({
-				...d,
-				value: getYearlyValue(d, metricMode),
-				cumulativeValue: getCumulativeValue(d, metricMode),
-				isGoalYear,
-				goalRequired: isGoalYear ? getGoalRequired(d.year) : 0
+				goalRequired: 0,
+				plannedValue: 0
 			});
 		}
 
-		// Add future years that don't have data yet (up to but NOT including target year)
-		for (let year = goalInfo.startYear; year <= goalInfo.endYear; year++) {
-			if (!result.find((d) => d.year === year)) {
-				const goalRequired = getGoalRequired(year);
-				// Only add if there's actually a goal value for this year
-				if (goalRequired > 0 || !goalInfo.hasCustomPath) {
-					result.push({
-						year,
-						net_power_kw: 0,
-						cumulative_power_kw: 0,
-						value: 0,
-						cumulativeValue: 0,
-						isGoalYear: true,
-						goalRequired
-					});
+		if (goalInfo) {
+			// Goal years: existing years, and future years with a goal value
+			for (let year = goalInfo.startYear; year <= goalInfo.endYear; year++) {
+				const goalRequired = goalInfo.yearlyRequiredMap
+					? goalInfo.yearlyRequiredMap.get(year) || 0
+					: goalInfo.yearlyRequired;
+				if (rows.has(year) || goalRequired > 0 || !goalInfo.hasCustomPath) {
+					const row = rowFor(year);
+					row.isGoalYear = true;
+					row.goalRequired = goalRequired;
 				}
 			}
 		}
 
-		return result.sort((a, b) => a.year - b.year);
+		for (const [year, value] of plannedByYear) {
+			if (value > 0) rowFor(year).plannedValue = value;
+		}
+
+		const result = [...rows.values()].sort((a, b) => a.year - b.year);
+		if (undatedValue > 0) result.push({ ...emptyRow(PLANNED_KEY), plannedValue: undatedValue });
+		return result;
 	})();
 
-	$: goalBars = combinedData.filter((d) => d.isGoalYear && d.goalRequired > 0);
-	$: actualBars = combinedData.filter((d) => d.value !== 0);
+	$: yearRows = combinedData.filter((d) => d.year !== PLANNED_KEY);
+	$: undatedRow = combinedData.find((d) => d.year === PLANNED_KEY) ?? null;
+	$: goalBars = yearRows.filter((d) => d.isGoalYear && d.goalRequired > 0);
+	$: actualBars = yearRows.filter((d) => d.value !== 0);
+	// Planned units with a planned year: stacked on that year's actual Zubau
+	$: plannedSegments = yearRows
+		.filter((d) => d.plannedValue > 0)
+		.map((d) => ({ year: d.year, base: Math.max(d.value, 0), top: Math.max(d.value, 0) + d.plannedValue }));
 
 	// X domain includes all years
 	$: xDomain = combinedData.map((d) => d.year);
 
-	// Get max goal value (could be from map or single value)
-	$: maxGoalRequired = (() => {
-		if (!goalInfo) return 0;
-		if (goalInfo.yearlyRequiredMap) {
-			return Math.max(...goalInfo.yearlyRequiredMap.values(), 0);
-		}
-		return goalInfo.yearlyRequired;
-	})();
+	// Highest bar of the years (actual + planned for that year, goal)
+	$: yearsMax = Math.max(
+		...yearRows.map((d) => Math.max(d.value, Math.max(d.value, 0) + d.plannedValue, d.goalRequired)),
+		0
+	);
+	// The planned units without a date are no yearly rate: when they would dwarf the years,
+	// their bar is cut (break mark, real value in the label) so the history stays readable
+	$: breakPlanned = yearsMax > 0 && undatedValue > yearsMax * 1.5;
 
-	// Max value considers both actual data and goal
+	// Max value considers actual data, goal and planned units
 	$: maxAbs = Math.max(
 		...combinedData.map((d) => Math.abs(d.value)),
-		maxGoalRequired,
+		yearsMax,
+		breakPlanned ? 0 : undatedValue,
 		1
 	);
 
-	// Y-axis max needs to include goal bars
-	$: yMax = Math.max(...combinedData.map((d) => d.value), maxGoalRequired, 1);
+	// Y-axis max: room above the cut planned bar for its label
+	$: yMax = breakPlanned ? yearsMax * 1.2 : Math.max(yearsMax, undatedValue, 1);
 
 	$: unitsDivisor = maxAbs >= 1_000_000 ? 1_000_000 : maxAbs >= 1_000 ? 1_000 : 1;
 	$: unit =
@@ -220,9 +244,66 @@
 		return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0);
 	};
 
+	$: formatValue = (v: number) =>
+		metricMode === 'power' ? formatPower(v, selectedEnergy) : formatNumber(v, 0);
+	$: plannedTotal = planned ? (metricMode === 'power' ? planned.total.power_kw : planned.total.units) : 0;
+	$: showLegend = !!(goal && goalInfo) || plannedTotal > 0;
+
+	// Slot scales are typed loosely by <Chart>: geometry is computed here with explicit types
+	type BandScale = ((v: number) => number | undefined) & { bandwidth(): number; step(): number };
+	type LinearScale = ((v: number) => number) & { domain(): number[] };
+
+	/** Rects of the planned units with a planned year, stacked on that year's Zubau */
+	function plannedSegmentRects(segments: typeof plannedSegments, xScale: any, yScale: any) {
+		const xs = xScale as BandScale | null;
+		const ys = yScale as LinearScale | null;
+		if (!xs || !ys) return [];
+		return segments.map((seg) => ({
+			year: seg.year,
+			x: xs(seg.year) ?? 0,
+			y: ys(seg.top),
+			width: xs.bandwidth(),
+			height: Math.max(0, ys(seg.base) - ys(seg.top))
+		}));
+	}
+
+	/**
+	 * Geometry of the bar with the planned units without a (future) date: hatched shape (with a
+	 * break mark, two slanted cuts, when it's cut), divider before it, label position
+	 */
+	function undatedBarShape(row: Row | null, cut: boolean, xScale: any, yScale: any) {
+		const xs = xScale as BandScale | null;
+		const ys = yScale as LinearScale | null;
+		const x = row && xs ? xs(PLANNED_KEY) : undefined;
+		if (!row || !xs || !ys || x == null) return null;
+		const w = xs.bandwidth();
+		const bottom = ys(0);
+		const top = ys(cut ? ys.domain()[1] * 0.9 : row.plannedValue);
+		let paths = [`M${x},${bottom}V${top}H${x + w}V${bottom}Z`];
+		if (cut) {
+			const yb = top + (bottom - top) * 0.22;
+			const s = Math.min(3, w / 3);
+			const gap = 5;
+			paths = [
+				`M${x},${bottom}V${yb + s}L${x + w},${yb - s}V${bottom}Z`,
+				`M${x},${top}H${x + w}V${yb - s - gap}L${x},${yb + s - gap}Z`
+			];
+		}
+		return { paths, divider: x - (xs.step() - w) / 2, labelX: x + w, labelY: top - 5 };
+	}
+
 	// Update chart data when shared data changes
 	$: if (!dataLoading && data.length > 0) {
-		const chartData = buildChartData(data, updateDate, region, params, 'yearly', goal, gridOperatorCheckedRatio);
+		const chartData = buildChartData(
+			data,
+			updateDate,
+			region,
+			params,
+			'yearly',
+			goal,
+			gridOperatorCheckedRatio,
+			planned
+		);
 		onChartData?.(chartData);
 	} else if (!dataLoading && data.length === 0) {
 		onChartData?.(null);
@@ -254,16 +335,31 @@
 				let:innerHeight
 				let:hover
 			>
+				<!-- Hatching of planned units; dark-mode colour via CSS variables -->
+				<g style="--planned: {colors.dark}; --planned-dark: {colors.light}">
+					<defs>
+						<pattern
+							id={hatchId}
+							patternUnits="userSpaceOnUse"
+							width="5"
+							height="5"
+							patternTransform="rotate(45)"
+						>
+							<line x1="0" y1="0" x2="0" y2="5" class="stroke-(--planned) dark:stroke-(--planned-dark)" stroke-width="2" />
+						</pattern>
+					</defs>
+				</g>
+
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
-				{@const lastYear = xDomain.length > 0 ? xDomain[xDomain.length - 1] : null}
+				{@const lastYear = yearRows.length > 0 ? yearRows[yearRows.length - 1].year : null}
 				<AxisX
 					{xScale}
 					{xDomain}
 					{innerWidth}
 					{innerHeight}
-					format={String}
+					format={(v) => (v === PLANNED_KEY ? 'geplant' : String(v))}
 					tickCount={Math.ceil(xDomain.length / 3)}
-					forceTicks={lastYear ? [lastYear] : []}
+					forceTicks={undatedRow ? [PLANNED_KEY] : lastYear ? [lastYear] : []}
 				/>
 				<RuleY y={0} {yScale} {innerWidth} />
 
@@ -299,78 +395,154 @@
 					hoverDim={false}
 				/>
 
+				<!-- Planned units with a planned year, stacked on that year's Zubau -->
+				{#each plannedSegmentRects(plannedSegments, xScale, yScale) as seg (seg.year)}
+					<rect
+						x={seg.x}
+						y={seg.y}
+						width={seg.width}
+						height={seg.height}
+						fill="url(#{hatchId})"
+						stroke-width="1"
+						class="stroke-(--planned) dark:stroke-(--planned-dark)"
+						style="--planned: {colors.dark}; --planned-dark: {colors.light}"
+					/>
+				{/each}
+
+				<!-- Planned units without a (future) date: own bar after the years -->
+				{@const shape = undatedBarShape(undatedRow, breakPlanned, xScale, yScale)}
+				{#if undatedRow && shape}
+					<g style="--planned: {colors.dark}; --planned-dark: {colors.light}">
+						<line
+							x1={shape.divider}
+							x2={shape.divider}
+							y1={0}
+							y2={innerHeight}
+							stroke-dasharray="2,3"
+							class="stroke-gray-400 dark:stroke-gray-500"
+						/>
+						{#each shape.paths as d}
+							<path
+								{d}
+								fill="url(#{hatchId})"
+								stroke-width="1.25"
+								class="stroke-(--planned) dark:stroke-(--planned-dark)"
+							/>
+						{/each}
+						<text
+							x={shape.labelX}
+							y={shape.labelY}
+							text-anchor="end"
+							stroke-width="3"
+							paint-order="stroke"
+							class="text-[11px] font-semibold fill-gray-800 stroke-white dark:fill-gray-100 dark:stroke-gray-900"
+						>
+							{formatValue(undatedRow.plannedValue)}
+						</text>
+					</g>
+				{/if}
+
 				<RuleX {xScale} {innerHeight} {hover} />
 			</svelte:fragment>
 
 			<svelte:fragment slot="tooltip" let:hover>
 				{@const point = combinedData.find((d) => d.year === hover.x)}
+				{@const isPlannedBar = hover.x === PLANNED_KEY}
 				<Tooltip
 					visible={hover.x !== null}
 					x={hover.clientX}
 					y={hover.clientY}
-					title={hover.x !== null ? String(hover.x) : ''}
-					items={point
+					title={isPlannedBar && planned ? plannedUndatedLabel(planned) : hover.x !== null ? String(hover.x) : ''}
+					items={isPlannedBar && undatedPlanned
 						? [
-								...(point.value !== 0
-									? [
-											{
-												label: metricMode === 'power' ? 'Zubau' : 'Neu installierte Anlagen',
-												value:
-													metricMode === 'power'
-														? formatPower(point.value, selectedEnergy)
-														: formatNumber(point.value, 0),
-												color
-											}
-										]
-									: []),
-								...(point.cumulativeValue > 0
-									? [
-											{
-												label: 'Kumuliert',
-												value:
-													metricMode === 'power'
-														? formatPower(point.cumulativeValue, selectedEnergy)
-														: formatNumber(point.cumulativeValue, 0)
-											}
-										]
-									: []),
-								...(point.isGoalYear && point.goalRequired > 0
-									? [
-											{
-												label: 'Benötigt für Ziel',
-												value: formatPower(point.goalRequired, selectedEnergy),
-												color: colors.dark
-											}
-										]
+								{ label: 'Leistung', value: formatPower(undatedPlanned.power_kw, selectedEnergy), color: colors.dark },
+								{ label: 'Anlagen', value: formatNumber(undatedPlanned.units, 0) },
+								...(undatedPlanned.overdueUnits > 0
+									? [{ label: 'davon Termin überschritten', value: formatNumber(undatedPlanned.overdueUnits, 0) }]
 									: [])
 							]
-						: []}
+						: point
+							? [
+									...(point.value !== 0
+										? [
+												{
+													label: metricMode === 'power' ? 'Zubau' : 'Neu installierte Anlagen',
+													value: formatValue(point.value),
+													color
+												}
+											]
+										: []),
+									...(point.cumulativeValue > 0
+										? [{ label: 'Kumuliert', value: formatValue(point.cumulativeValue) }]
+										: []),
+									...(point.plannedValue > 0
+										? [{ label: 'In Planung für dieses Jahr', value: formatValue(point.plannedValue), color: colors.dark }]
+										: []),
+									...(point.isGoalYear && point.goalRequired > 0
+										? [
+												{
+													label: 'Benötigt für Ziel',
+													value: formatPower(point.goalRequired, selectedEnergy),
+													color: colors.dark
+												}
+											]
+										: [])
+								]
+							: []}
 					container={containerEl}
 				/>
 			</svelte:fragment>
 		</Chart>
 
 		<!-- Legend -->
-		{#if goal && goalInfo}
-			<div class="flex flex-wrap gap-4 mt-4 text-sm">
+		{#if showLegend}
+			<div class="flex flex-wrap gap-x-4 gap-y-2 mt-4 text-sm">
 				<div class="flex items-center gap-2">
 					<div class="w-4 h-3 rounded-sm" style="background: {color}"></div>
 					<span>Tatsächlicher Zubau</span>
 				</div>
-				<div class="flex items-center gap-2">
-					<div
-						class="w-4 h-3 rounded-sm border-2 border-dashed"
-						style="border-color: {colors.dark}; background: {colors.light}; opacity: 0.6"
-					></div>
-					<span>
-						{#if goalInfo.hasCustomPath}
-							Zielpfad bis {goalInfo.targetYear}
-						{:else}
-							Benötigt: {formatPower(goalInfo.yearlyRequired, selectedEnergy)}/Jahr bis {goalInfo.targetYear}
-						{/if}
-					</span>
-				</div>
+				{#if goal && goalInfo}
+					<div class="flex items-center gap-2">
+						<div
+							class="w-4 h-3 rounded-sm border-2 border-dashed"
+							style="border-color: {colors.dark}; background: {colors.light}; opacity: 0.6"
+						></div>
+						<span>
+							{#if goalInfo.hasCustomPath}
+								Zielpfad bis {goalInfo.targetYear}
+							{:else}
+								Benötigt: {formatPower(goalInfo.yearlyRequired, selectedEnergy)}/Jahr bis {goalInfo.targetYear}
+							{/if}
+						</span>
+					</div>
+				{/if}
+				{#if planned && plannedTotal > 0}
+					<div class="flex items-center gap-2" style="--planned: {colors.dark}; --planned-dark: {colors.light}">
+						<svg width="16" height="12" aria-hidden="true" class="shrink-0">
+							<rect x="0.5" y="0.5" width="15" height="11" fill="url(#{hatchId})" stroke-width="1" class="stroke-(--planned) dark:stroke-(--planned-dark)" />
+						</svg>
+						<span>
+							In Planung: {formatNumber(planned.total.units, 0)}
+							{planned.total.units === 1 ? 'Anlage' : 'Anlagen'} mit {formatPower(planned.total.power_kw, selectedEnergy)}
+						</span>
+					</div>
+				{/if}
 			</div>
+			{#if planned && plannedTotal > 0}
+				<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+					„In Planung“ heißt: im Marktstammdatenregister als geplant gemeldet, noch nicht in Betrieb.
+					{#if planned.hasDates}
+						Anlagen mit geplantem Inbetriebnahmejahr stehen schraffiert auf diesem Jahr; ohne oder mit
+						bereits überschrittenem Termin sind sie im Balken „geplant“ zusammengefasst.
+					{:else}
+						Ein geplantes Inbetriebnahmejahr liegt uns für diese Anlagen nicht vor, daher sind sie im
+						Balken „geplant“ ganz rechts zusammengefasst.
+					{/if}
+					{#if breakPlanned}
+						Dieser Balken ist gekürzt dargestellt (Bruchstelle), der Wert steht darüber.
+					{/if}
+				</p>
+			{/if}
 		{/if}
 	{/if}
 </div>
