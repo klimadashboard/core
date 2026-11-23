@@ -6,13 +6,14 @@
 
 	The emphasised district (the page's own, or one picked in the dropdown or by clicking it) gets
 	a strong outline and a label with value and rank; on a municipality's page the municipality is
-	outlined too. Tooltips show value and rank, the legend counts the districts per class.
+	outlined too. An annotation with an arrow points at the district with the highest share
+	(black text with a white halo, inverted in dark mode), placed towards the map's centre. Tooltips show value and rank, the legend counts the districts per class.
 	Geometry from our own vector tiles (no basemap, no glyphs), framed on the districts' centres. -->
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import * as maplibregl from '$lib/utils/maplibre';
 	import 'maplibre-gl/dist/maplibre-gl.css';
-	import { formatPercent } from '$lib/utils/formatters';
+	import { formatNumber, formatPercent } from '$lib/utils/formatters';
 	import { Legend } from '$lib/components/charts/primitives';
 	import type { Region } from '$lib/utils/getRegion';
 	import type { ShareRow } from './config';
@@ -45,6 +46,7 @@
 	let map: maplibregl.Map | null = null;
 	let mapLoaded = false;
 	let marker: maplibregl.Marker | null = null;
+	let annotation: maplibregl.Marker | null = null;
 	let hoverCode: string | null = null;
 	let tooltip: { x: number; y: number; row: ShareRow } | null = null;
 	let darkObserver: MutationObserver | null = null;
@@ -56,6 +58,114 @@
 	$: emphasised = rows.find((r) => r.id === selected);
 	$: municipalityCode =
 		region?.layer === 'municipality' ? String(region.codeShort || region.code || '') : '';
+
+	// Annotation: the district with the highest share
+	$: top = ranked[0];
+	$: annotationText = top ? describeTop(top) : '';
+
+	function describeTop(row: ShareRow): string {
+		const name = row.name.includes('(')
+			? row.name
+			: row.layerLabel === 'Kreisfreie Stadt'
+				? `Stadt ${row.name}`
+				: row.layerLabel
+					? `${row.layerLabel} ${row.name}`
+					: row.name;
+		const value = formatPercent(row.share, 0);
+		if (row.share >= 150)
+			return `${name} erzeugt ${formatNumber(row.share / 100, 1)}-mal so viel erneuerbaren Strom, wie dort verbraucht wird (${value})`;
+		if (row.share >= 100)
+			return `${name} erzeugt mehr erneuerbaren Strom, als dort verbraucht wird (${value})`;
+		return `${name} deckt den größten Teil seines Verbrauchs mit erneuerbarem Strom (${value})`;
+	}
+
+	/** Greedy line wrap for the SVG text */
+	function wrap(text: string, max: number): string[] {
+		const lines: string[] = [];
+		for (const word of text.split(' ')) {
+			const last = lines.at(-1);
+			if (last !== undefined && (last + ' ' + word).length <= max)
+				lines[lines.length - 1] += ' ' + word;
+			else lines.push(word);
+		}
+		return lines;
+	}
+
+	const SVG_NS = 'http://www.w3.org/2000/svg';
+	const svgEl = (tag: string, attrs: Record<string, string | number>) => {
+		const el = document.createElementNS(SVG_NS, tag);
+		for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+		return el;
+	};
+
+	/** Arrow from the text to the district's centre; text on the side towards the map's centre */
+	function drawAnnotation() {
+		annotation?.remove();
+		annotation = null;
+		const c = top?.center?.map(Number);
+		if (!map || !top || !c?.every(Number.isFinite)) return;
+		const p = map.project(c as [number, number]);
+		const { clientWidth: w, clientHeight: h } = map.getContainer();
+		const left = p.x > w / 2;
+		const above = p.y > h / 2;
+		const dx = (left ? -1 : 1) * Math.min(80, w / 5);
+		const dy = (above ? -1 : 1) * 56;
+		const lines = wrap(annotationText, w < 500 ? 26 : 40);
+		const LINE = 15;
+
+		const svg = svgEl('svg', { width: 1, height: 1, overflow: 'visible', 'aria-hidden': 'true' });
+		svg.setAttribute('class', 'block overflow-visible');
+		// Arrow: quadratic curve from the text's corner to just short of the centre, with a head
+		const sx = dx;
+		const sy = dy + (above ? 6 : -6 - LINE + 4);
+		const cx = 0;
+		const cy = sy;
+		const len = Math.hypot(cx, cy) || 1;
+		const ex = (cx / len) * 7;
+		const ey = (cy / len) * 7;
+		const angle = Math.atan2(ey - cy, ex - cx);
+		const head = (a: number) => `${ex - 7 * Math.cos(angle + a)},${ey - 7 * Math.sin(angle + a)}`;
+		const d = `M${sx},${sy} Q${cx},${cy} ${ex},${ey} M${head(0.45)} L${ex},${ey} L${head(-0.45)}`;
+		for (const casing of [true, false]) {
+			const path = svgEl('path', {
+				d,
+				fill: 'none',
+				'stroke-width': casing ? 4 : 1.5,
+				'stroke-linecap': 'round',
+				'stroke-linejoin': 'round'
+			});
+			path.setAttribute(
+				'class',
+				casing ? 'stroke-white dark:stroke-black' : 'stroke-gray-900 dark:stroke-gray-100'
+			);
+			svg.appendChild(path);
+		}
+		// Text: lines grow away from the arrow, black with a white halo (inverted in dark mode)
+		const text = svgEl('text', {
+			'text-anchor': left ? 'end' : 'start',
+			'stroke-width': 3.5,
+			'stroke-linejoin': 'round'
+		});
+		text.setAttribute(
+			'class',
+			'text-xs font-semibold fill-gray-900 stroke-white [paint-order:stroke] dark:fill-gray-100 dark:stroke-black'
+		);
+		const x = dx + (left ? 4 : -4);
+		lines.forEach((line, i) => {
+			const y = above ? dy - (lines.length - 1 - i) * LINE : dy + i * LINE;
+			const span = svgEl('tspan', { x, y });
+			span.textContent = line;
+			text.appendChild(span);
+		});
+		svg.appendChild(text);
+
+		const el = document.createElement('div');
+		el.className = 'pointer-events-none';
+		el.appendChild(svg);
+		annotation = new maplibregl.Marker({ element: el, anchor: 'top-left' })
+			.setLngLat(c as [number, number])
+			.addTo(map);
+	}
 
 	$: legendItems = COLORS.map((color, i) => ({
 		key: String(i),
@@ -117,7 +227,14 @@
 			});
 			map.addSource('districts', tiles('districts'));
 			const add = (id: string, type: any, paint: any, extra: any = {}) =>
-				map!.addLayer({ id, type, source: 'districts', 'source-layer': 'districts', paint, ...extra });
+				map!.addLayer({
+					id,
+					type,
+					source: 'districts',
+					'source-layer': 'districts',
+					paint,
+					...extra
+				});
 			add('fill', 'fill', {});
 			add('border', 'line', { 'line-width': 0.6 });
 			add('hover', 'line', {
@@ -194,7 +311,7 @@
 		marker?.remove();
 		marker = null;
 		const c = emphasised?.center?.map(Number);
-		if (emphasised && c?.every(Number.isFinite)) {
+		if (emphasised && emphasised !== top && c?.every(Number.isFinite)) {
 			const el = document.createElement('div');
 			el.className =
 				'pointer-events-none rounded bg-white/90 px-1.5 py-0.5 text-xs text-gray-900 shadow dark:bg-gray-900/90 dark:text-white whitespace-nowrap';
@@ -207,6 +324,7 @@
 				.setLngLat(c as [number, number])
 				.addTo(map);
 		}
+		drawAnnotation();
 	}
 
 	$: paint(byCode, emphasised, isDark, mapLoaded);
@@ -216,6 +334,7 @@
 	onDestroy(() => {
 		darkObserver?.disconnect();
 		marker?.remove();
+		annotation?.remove();
 		map?.remove();
 		map = null;
 	});
@@ -231,7 +350,7 @@
 		role="img"
 		aria-label="Karte: {label}. {emphasised
 			? `${emphasised.name} ${formatPercent(emphasised.share, 1)}, Platz ${rankOf(emphasised)} von ${rows.length}.`
-			: ''} Alle Werte in der Tabelle."
+			: ''} {annotationText}. Alle Werte in der Tabelle."
 	></div>
 
 	{#if tooltip}
@@ -250,8 +369,8 @@
 	<div class="mt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
 		<Legend items={legendItems} />
 		<p>
-			Anteil erneuerbarer Strom am Stromverbrauch je Kreis; ab {pct(100)} wird mehr erzeugt als
-			verbraucht. Kreis anklicken oder auswählen, um ihn hervorzuheben.
+			Anteil erneuerbarer Strom am Stromverbrauch je Kreis; ab {pct(100)} wird mehr erzeugt als verbraucht.
+			Kreis anklicken oder auswählen, um ihn hervorzuheben.
 		</p>
 	</div>
 </div>

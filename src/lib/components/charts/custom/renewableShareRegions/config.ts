@@ -62,6 +62,8 @@ export interface ShareRow {
 	code?: string | null;
 	/** [lon, lat] as strings, frames the map view */
 	center?: [string, string] | null;
+	/** e.g. "Landkreis", "Kreisfreie Stadt" (for the map annotation) */
+	layerLabel?: string | null;
 }
 
 const REGION_FIELDS = ['id', 'name', 'code', 'center', 'layer', 'layer_label', 'population', 'parents'];
@@ -163,7 +165,8 @@ export async function fetchChartData({
 			population: r.region.population ?? null,
 			computed: false,
 			code: r.region.code,
-			center: r.region.center
+			center: r.region.center,
+			layerLabel: r.region.layer_label
 		}))
 		.sort((a, b) => b.share - a.share);
 
@@ -191,7 +194,8 @@ export async function fetchChartData({
 					population: r.region.population ?? null,
 					computed: false,
 					code: r.region.code,
-					center: r.region.center
+					center: r.region.center,
+					layerLabel: r.region.layer_label
 				}))
 				.sort((a, b) => b.share - a.share);
 		}

@@ -15,7 +15,9 @@
 	import ChargingMap from '$lib/components/charts/custom/chargingInfrastructure/ChargingMap.svelte';
 	import CardTabs from '$lib/components/charts/CardTabs.svelte';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import ChartMap from '$lib/components/charts/ChartMap.svelte';
 	import { provideChartSettings } from '$lib/components/charts/context/chartSettings';
+	import { provideChartMap } from '$lib/components/charts/context/chartMap';
 	import type { ChartData } from '$lib/components/charts/types';
 	import { t } from '$lib/utils/t';
 	import { getSkin } from '$lib/skins';
@@ -47,6 +49,8 @@
 
 	// Controls a chart wraps in <ChartSettings> show up in the settings area
 	const chartSettings = provideChartSettings();
+	// A map a chart wraps in <ChartMap> shows up in the "Karte" tab
+	const chartMap = provideChartMap();
 
 	// Charts that support the 'view' option (simple view)
 	const chartsWithViewOption = ['heatingRegions'];
@@ -148,6 +152,16 @@
 	// while a chart-internal view (e.g. the wind turbine map) reports data without it.
 	let mapConfig: { energy: string } | null = null;
 	$: if (chartData?.map) mapConfig = chartData.map;
+	$: hasMap = !!mapConfig || !!$chartMap;
+	// <ChartMap default>: open the map tab first, unless the reader already picked a tab
+	let tabPicked = false;
+	let mapDefaultApplied = false;
+	$: if ($chartMap?.isDefault && !tabPicked && !mapDefaultApplied) {
+		mapDefaultApplied = true;
+		activeTab = 'map';
+	}
+	// The chart's map can go away (e.g. while it reloads for another region)
+	$: if (activeTab === 'map' && !hasMap) activeTab = 'chart';
 	// Mount the map on first open only, then keep it (and its state) around
 	let mapOpened = false;
 	$: if (activeTab === 'map') mapOpened = true;
@@ -230,7 +244,7 @@
 				page.data.translations?.['ui.card.tabMap'] ??
 				page.data.translations?.['ui.card.map'] ??
 				'Karte',
-			show: !!mapConfig
+			show: hasMap
 		},
 		{
 			id: 'table' as TabId,
@@ -280,6 +294,7 @@
 	}
 
 	function setTab(tab: TabId) {
+		tabPicked = true;
 		activeTab = tab;
 		liveTabLabel = tabs.find((t) => t.id === tab)?.label || '';
 		if (tab !== 'chart') window.rybbit?.event('Chart Tab', { tab, chart: chart.id });
@@ -916,7 +931,7 @@
 				</div>
 
 				<!-- Map Tab -->
-				{#if mapConfig}
+				{#if hasMap}
 					<div
 						id="tabpanel-{chart.id}-map"
 						role="tabpanel"
@@ -925,7 +940,10 @@
 						aria-labelledby="tab-{chart.id}-map"
 						hidden={activeTab !== 'map'}
 					>
-						{#if mapOpened}
+						{#if mapOpened && $chartMap}
+							<!-- the chart's own map (<ChartMap>) -->
+							<ChartMap outlet />
+						{:else if mapOpened && mapConfig}
 							{#if mapConfig.energy === 'charging'}
 								<ChargingMap region={chartData?.meta?.region ?? null} />
 							{:else}

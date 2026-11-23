@@ -1,6 +1,6 @@
 <!-- $lib/components/charts/custom/renewableShareRegions/index.svelte
-	Three views:
-	- Karte (default): the compared districts as a choropleth (ShareMap.svelte).
+	Map in the Card's "Karte" tab (opened first, via <ChartMap default>): the compared districts as
+	a choropleth (ShareMap.svelte). Two views in the "Grafik" tab:
 	- Ranking: deliberately basic ranked bar list (no horizontal bar primitive yet), the label on
 	  the bar, the value right after it. Highest three, reference rows (the region itself and its
 	  parents), lowest three; a button folds out the full ranking (inner scroll for long lists),
@@ -15,6 +15,7 @@
 	import { formatPercent } from '$lib/utils/formatters';
 	import { t } from '$lib/utils/t';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import ChartMap from '$lib/components/charts/ChartMap.svelte';
 	import { tick } from 'svelte';
 	import { Button, RadioGroup, Select } from '$lib/components/ui';
 	import Beeswarm from './Beeswarm.svelte';
@@ -41,7 +42,7 @@
 	let data: ShareRow[] = [];
 	let loading = true;
 	let error: string | null = null;
-	let view: 'map' | 'ranking' | 'distribution' = 'map';
+	let view: 'ranking' | 'distribution' = 'ranking';
 	/** full ranking folded out */
 	let expanded = false;
 	let scroller: HTMLElement;
@@ -164,12 +165,11 @@
 			hideLabel
 			bind:value={view}
 			options={[
-				{ value: 'map', label: 'Karte' },
 				{ value: 'ranking', label: 'Ranking' },
 				{ value: 'distribution', label: 'Verteilung' }
 			]}
 		/>
-		{#if view !== 'ranking'}
+		{#if view === 'distribution'}
 			<Select
 				label="Kreis hervorheben"
 				hideLabel
@@ -183,13 +183,6 @@
 
 {#if !ready}
 	<!-- loading / error / empty: shown above -->
-{:else if view === 'map' && pool.length > 1}
-	<ShareMap
-		rows={pool}
-		bind:selected
-		{region}
-		label={t(translations, 'domain.energy.renewableShareOfConsumption') + groupText}
-	/>
 {:else if view === 'distribution' && pool.length > 1}
 	<Beeswarm
 		rows={pool}
@@ -295,4 +288,18 @@
 			* {t(translations, 'domain.energy.computedFromMembers')}
 		</p>
 	{/if}
+{/if}
+
+{#if ready && pool.length > 1}
+	<ChartMap default>
+		<div class="mb-3 max-w-xs">
+			<Select label="Kreis hervorheben" hideLabel small bind:value={selected} options={selectOptions} />
+		</div>
+		<ShareMap
+			rows={pool}
+			bind:selected
+			{region}
+			label={t(translations, 'domain.energy.renewableShareOfConsumption') + groupText}
+		/>
+	</ChartMap>
 {/if}
