@@ -13,7 +13,7 @@
 	import EmbedModal from '$lib/components/charts/EmbedModal.svelte';
 	import RegionMapView from '$lib/components/charts/regionMap/RegionMapView.svelte';
 	import ChargingMap from '$lib/components/charts/custom/chargingInfrastructure/ChargingMap.svelte';
-	import Switch from '$lib/components/Switch.svelte';
+	import CardTabs from '$lib/components/charts/CardTabs.svelte';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { provideChartSettings } from '$lib/components/charts/context/chartSettings';
 	import type { ChartData } from '$lib/components/charts/types';
@@ -694,38 +694,40 @@
 				</h3>
 			{/if}
 
-			<!-- 2. Settings: view switch, download/share and the chart's own controls -->
+			<!-- 2. Tab bar (views + actions), then the chart's own controls in a tinted strip -->
 			<div
 				role="group"
 				aria-label={settingsLabel}
-				class="no-card-click -mx-4 mb-4 border-y border-gray-200 px-4 py-2.5 sm:-mx-5 sm:px-5 dark:border-gray-700/70"
+				class="no-card-click -mx-4 mb-4 sm:-mx-5"
 				class:opacity-0={showSkeleton}
 			>
-				<div class="flex gap-2 {tabs.length > 1 ? 'items-center' : 'flex-wrap items-start'}">
+				<div
+					class="flex min-h-11 items-end gap-2 border-b border-gray-200 px-1 sm:px-2 dark:border-gray-700/70"
+				>
 					{#if tabs.length > 1}
-						<div class="min-w-0">
-							<Switch
-								views={tabs}
-								activeView={activeTab}
+						<div class="min-w-0 flex-1">
+							<CardTabs
+								{tabs}
+								active={activeTab}
 								label={t(page.data.translations, 'ui.card.views') === 'ui.card.views'
 									? 'Ansicht'
 									: t(page.data.translations, 'ui.card.views')}
 								panelPrefix={chart.id}
-								on:itemClick={(e) => setTab(e.detail)}
+								onSelect={(id) => setTab(id as TabId)}
 							/>
 						</div>
 					{:else if showChartSettings}
 						<!-- Single view: the chart's own controls share the row with the actions -->
-						<div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+						<div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 self-center px-3 py-2">
 							<ChartSettings outlet />
 						</div>
 					{/if}
-					<div class="ml-auto flex shrink-0 items-center gap-1">
+					<div class="ml-auto flex shrink-0 items-center gap-0.5 self-center py-1.5 pr-1 sm:pr-1.5">
 						{#if hasData}
 							<div class="relative download-menu">
 								<button
 									on:click={toggleDownloadMenu}
-									class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex items-center gap-0.5"
+									class="cursor-pointer p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 flex items-center gap-0.5"
 									aria-label={t(page.data.translations, 'action.downloadData')}
 									aria-expanded={showDownloadMenu}
 									aria-haspopup="true"
@@ -775,7 +777,7 @@
 												{#each section.items as item}
 													<button
 														on:click={item.handler}
-														class="w-full px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+														class="w-full cursor-pointer px-3 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
 													>
 														<span
 															class="text-xs font-mono bg-gray-100 dark:bg-gray-600 px-1.5 py-0.5 rounded"
@@ -793,7 +795,7 @@
 
 						<a
 							href="/charts/{chart.id}{currentRegionId ? `?region=${currentRegionId}` : ''}"
-							class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+							class="cursor-pointer p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
 							on:click={(e) => e.stopPropagation()}
 							aria-label={t(page.data.translations, 'ui.card.permalink')}
 							title={t(page.data.translations, 'ui.card.permalink')}
@@ -815,7 +817,7 @@
 
 						<button
 							on:click={openEmbedModal}
-							class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+							class="cursor-pointer p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
 							aria-label={t(page.data.translations, 'ui.embed.code')}
 							title={t(page.data.translations, 'action.embed')}
 						>
@@ -840,7 +842,7 @@
 				</div>
 				{#if showChartSettings && tabs.length > 1}
 					<div
-						class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-200 pt-2 dark:border-gray-700/70"
+						class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-gray-200 bg-gray-50 px-4 py-2.5 sm:px-5 dark:border-gray-700/70 dark:bg-gray-800/40"
 					>
 						<ChartSettings outlet />
 					</div>
@@ -853,8 +855,10 @@
 				<div
 					id="tabpanel-{chart.id}-chart"
 					role="tabpanel"
+					tabindex="0"
 					aria-labelledby="tab-{chart.id}-chart"
 					hidden={activeTab !== 'chart'}
+					class="rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-gray-900"
 				>
 					<div class="relative">
 						<RegionProvider {regionId} let:region let:loading>
@@ -916,6 +920,8 @@
 					<div
 						id="tabpanel-{chart.id}-map"
 						role="tabpanel"
+						tabindex="0"
+						class="rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-gray-900"
 						aria-labelledby="tab-{chart.id}-map"
 						hidden={activeTab !== 'map'}
 					>
@@ -939,8 +945,10 @@
 				<div
 					id="tabpanel-{chart.id}-table"
 					role="tabpanel"
+					tabindex="0"
 					aria-labelledby="tab-{chart.id}-table"
 					hidden={activeTab !== 'table'}
+					class="rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-gray-900"
 				>
 					{#if chartData?.table}
 						<Table
@@ -956,9 +964,10 @@
 				<div
 					id="tabpanel-{chart.id}-text"
 					role="tabpanel"
+					tabindex="0"
 					aria-labelledby="tab-{chart.id}-text"
 					hidden={activeTab !== 'text'}
-					class="overflow-y-auto"
+					class="overflow-y-auto rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-gray-900"
 					style="max-height: {textPanelMaxHeight}px;"
 				>
 					{#if text}
