@@ -30,6 +30,7 @@
 	} from './config';
 	import TargetLabels from './TargetLabels.svelte';
 	import { getTargetLabels, getTargetNote, formatReduction } from './targetLabels';
+	import { computeTrend } from './trend';
 
 	// Props from Card slot
 	export let region: any = null;
@@ -354,6 +355,39 @@
 	$: latestTotal = latestData?.total ?? 0;
 	$: lastTarget = climateTargets.length > 0 ? climateTargets[climateTargets.length - 1] : null;
 
+	// 5-Jahres-Trend: latest total continued at the average yearly change of the last
+	// 5 years, up to the last climate target
+	$: trend =
+		activeCategory === 'all' && !isHorizontal && lastTarget && latestYear !== null
+			? computeTrend(grouped, latestYear, lastTarget.year, '5')
+			: null;
+	$: trendEnd = trend && trend.points.length >= 2 ? trend.points[trend.points.length - 1] : null;
+	$: trendReachesZero = !!trend && trend.zeroYear !== null && trend.zeroYear <= trend.targetYear;
+	// Trend label at the line's end, right-aligned left of the end point; it may cross the line.
+	// y = baseline of its first line, width = rough text width (12px semibold)
+	$: trendLabel = trendEnd
+		? {
+				x: xScale(trendEnd.year) - 8,
+				y: yScale(trendEnd.value) - (trendReachesZero ? 24 : 6),
+				width: 96
+			}
+		: null;
+	// Pixel y the target annotations must stay above at plot x: the trend line and its label
+	$: trendAvoid = trend
+		? (x: number) => {
+				let top: number | null = null;
+				const year = xScale.invert(x);
+				if (trendEnd && year >= trend.endYear && year <= trendEnd.year) {
+					top = yScale(trend.valueAt(year));
+				}
+				if (trendLabel && x >= trendLabel.x - trendLabel.width && x <= trendLabel.x + 8) {
+					top = Math.min(top ?? Infinity, trendLabel.y - 12);
+				}
+				return top;
+			}
+		: null;
+	$: unitShort = showPerCapita ? 't' : useMegatons ? 'Mt' : 't';
+
 	// Check if we have any nowcast data
 	$: hasNowcast = grouped.some((g) => g.nowcast != null && g.nowcast > 0);
 
@@ -455,7 +489,16 @@
 								? t(page.data.translations, 'domain.emissions.climateNeutral') || 'Klimaneutral'
 								: `${formatNumber(targetData.value)} ${unit}`,
 							color: '#6b7280'
-						}
+						},
+						...(trend
+							? [
+									{
+										label: '5-Jahres-Trend',
+										value: `${formatNumber(trend.valueAt(hoveredYear))} ${unit}`,
+										color: '#CB181D'
+									}
+								]
+							: [])
 					]
 				};
 			}
@@ -653,7 +696,13 @@
 						{#each xScale.ticks(width > 600 ? 10 : 5) as tick}
 							<g transform="translate({xScale(tick)}, 0)" class="text-xs">
 								<line y2={5} class="stroke-current opacity-10" />
-								<text y={18} text-anchor="middle" fill="currentColor" class="opacity-70"
+								<text
+									y={18}
+									text-anchor="middle"
+									fill="currentColor"
+									stroke-width="3"
+									stroke-linejoin="round"
+									class="opacity-70 stroke-white [paint-order:stroke] dark:stroke-black"
 									>{tick}</text
 								>
 							</g>
@@ -672,7 +721,9 @@
 									dominant-baseline="middle"
 									text-anchor="end"
 									fill="currentColor"
-									class="opacity-70"
+									stroke-width="3"
+									stroke-linejoin="round"
+									class="opacity-70 stroke-white [paint-order:stroke] dark:stroke-black"
 								>
 									{tick}
 								</text>
@@ -681,7 +732,9 @@
 										x={margin.left + 2}
 										dominant-baseline="middle"
 										fill="currentColor"
-										class="opacity-70"
+										stroke-width="3"
+										stroke-linejoin="round"
+										class="opacity-70 stroke-white [paint-order:stroke] dark:stroke-black"
 									>
 										{unit}
 									</text>
@@ -765,6 +818,27 @@
 						</g>
 					{/if}
 
+					<!-- Trend projection: latest total continued at the recent average change -->
+					{#if trend && trend.points.length >= 2}
+						{@const trendD = trend.points
+							.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p.year)},${yScale(p.value)}`)
+							.join(' ')}
+						<g
+							transform="translate({margin.left},{margin.top})"
+							class="pointer-events-none text-xs"
+							transition:fade={{ duration: 200 }}
+						>
+							<path d={trendD} fill="none" stroke-width="5" stroke-linecap="round" class="stroke-white dark:stroke-black" opacity="0.8" />
+							<path
+								d={trendD}
+								fill="none"
+								stroke-width="2.5"
+								stroke-linecap="round"
+								stroke-dasharray="0.5 5"
+								class="stroke-red-700 dark:stroke-red-400"
+							/>
+						</g>
+					{/if}
 					<!-- Climate targets -->
 					{#if climateTargets.length > 0 && activeCategory === 'all'}
 						<g transform="translate({margin.left},{margin.top})">
@@ -828,10 +902,43 @@
 									{hoveredYear}
 									{latestYear}
 									{latestTotal}
+									marginRight={margin.right}
+									avoid={trendAvoid}
 								/>
 							{/if}
 						</g>
 					{/if}
+
+					<!-- Trend end point and label, on top of the annotations' leader lines -->
+					{#if trend && trendEnd && trendLabel}
+						<g transform="translate({margin.left},{margin.top})" class="pointer-events-none text-xs">
+							<circle
+								cx={xScale(trendEnd.year)}
+								cy={yScale(trendEnd.value)}
+								r="3.5"
+								stroke-width="1.5"
+								class="fill-red-700 stroke-white dark:fill-red-400 dark:stroke-black"
+							/>
+							<text
+								x={trendLabel.x}
+								y={trendLabel.y}
+								text-anchor="end"
+								stroke-width="4"
+								stroke-linejoin="round"
+								class="fill-red-800 stroke-white [paint-order:stroke] dark:fill-red-300 dark:stroke-black"
+							>
+								<tspan x={trendLabel.x} font-weight="600">5-Jahres-Trend</tspan>
+								<tspan x={trendLabel.x} dy="14">
+									{#if trendReachesZero}
+										≈ 0 ab {Math.ceil(trend.zeroYear ?? 0)}
+									{:else}
+										{trend.targetYear}: {formatNumber(trendEnd.value)} {unitShort}
+									{/if}
+								</tspan>
+							</text>
+						</g>
+					{/if}
+
 				</svg>
 			{/if}
 
@@ -859,6 +966,27 @@
 				on:itemClick={(e) => (activeCategory = e.detail)}
 			/>
 		</div>
+
+		<!-- 5-Jahres-Trend legend -->
+		{#if trend}
+			<div class="flex items-start gap-2 mt-3 text-sm text-gray-600 dark:text-gray-400">
+				<svg width="20" height="12" class="mt-1 shrink-0" aria-hidden="true">
+					<line x1="2" y1="6" x2="18" y2="6" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="0.5 5" class="stroke-red-700 dark:stroke-red-400" />
+				</svg>
+				<span>
+					5-Jahres-Trend: {trend.slope <= 0 ? 'Ø-Rückgang' : 'Ø-Anstieg'}
+					{trend.startYear}–{trend.endYear}
+					({formatNumber(Math.abs(trend.slope), undefined, showPerCapita ? 2 : 1)} {unitShort}/Jahr) fortgeschrieben.
+					{#if trend.zeroYear !== null && trend.zeroYear <= trend.targetYear}
+						In diesem Tempo wären die Emissionen um {Math.ceil(trend.zeroYear)} bei null.
+					{:else if trend.zeroYear !== null}
+						In diesem Tempo wären die Emissionen erst um {Math.ceil(trend.zeroYear)} bei null.
+					{:else}
+						In diesem Tempo sinken die Emissionen nicht.
+					{/if}
+				</span>
+			</div>
+		{/if}
 
 		<!-- Nowcast legend (when nowcast data is present and viewing all sectors) -->
 		{#if hasNowcast && activeCategory === 'all'}
