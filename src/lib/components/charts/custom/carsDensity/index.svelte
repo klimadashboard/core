@@ -10,6 +10,11 @@
 	import { line as d3Line, curveMonotoneX } from 'd3-shape';
 	import { min, max } from 'd3-array';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { fetchRegion } from '$lib/utils/getRegion';
+	import type { ContextRegion } from '$lib/utils/regionContext';
+	import { hasDrilldown } from '$lib/utils/regionTree';
 	import {
 		fetchData,
 		getPlaceholders,
@@ -70,29 +75,53 @@
 	$: privateColor = getColor('private', isDark);
 	$: companyColor = getColor('company', isDark);
 
-	// Load data when region changes
-	$: if (!regionLoading) {
-		loadData();
+	// Region shown in the chart: the card's region, or a Kreis picked in the RegionDrilldown
+	// (same drill-down as modalSplit)
+	let switchedRegion: Region | null = null;
+	let switchedFor: string | null = null;
+	$: if (region?.id !== switchedFor) {
+		switchedFor = region?.id ?? null;
+		switchedRegion = null;
+	}
+	$: activeRegion = switchedRegion ?? region;
+
+	// Only offer the dropdown (and its settings row) where there is something to drill into
+	let drillable = false;
+	$: hasDrilldown(region, 'districts').then((v) => (drillable = v));
+
+	async function selectRegion(r: ContextRegion) {
+		if (r.id === region?.id) switchedRegion = null;
+		else switchedRegion = (await fetchRegion(r.id)) ?? switchedRegion;
 	}
 
-	async function loadData() {
+	// Load data when the shown region changes
+	$: if (!regionLoading) {
+		loadData(activeRegion);
+	}
+
+	let loadToken = 0;
+	async function loadData(target: Region | null) {
+		const token = ++loadToken;
 		loading = true;
 		error = null;
 
 		try {
-			data = await fetchData(fetch, region);
+			const result = await fetchData(fetch, target);
+			if (token !== loadToken) return; // a newer region was picked meanwhile
+			data = result;
 
 			if (onChartData && data) {
 				const privacyNote = t(page.data.translations, 'ui.card.privacyNote');
-				onChartData(buildChartData(data, region, privacyNote));
+				onChartData(buildChartData(data, target, privacyNote));
 			}
 		} catch (e) {
+			if (token !== loadToken) return;
 			console.error('[CarDensity] Error loading data:', e);
 			error = e instanceof Error ? e.message : t(page.data.translations, 'status.error');
 			data = null;
 			onChartData?.(null);
 		} finally {
-			loading = false;
+			if (token === loadToken) loading = false;
 		}
 	}
 
@@ -193,6 +222,21 @@
 	items={tooltipItems}
 />
 
+<!-- Region: drill down to a Kreis of the card's region; outside the loading state so focus
+     stays on the dropdown while data reloads -->
+{#if !regionLoading && region && drillable}
+	<ChartSettings>
+		<div class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-2">
+			<RegionDrilldown
+				{region}
+				activeId={activeRegion?.id ?? null}
+				onSelect={selectRegion}
+				depth="districts"
+			/>
+		</div>
+	</ChartSettings>
+{/if}
+
 {#if loading || regionLoading}
 	<div class="h-64 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 {:else if error}
@@ -228,7 +272,7 @@
 								</svg>
 							{/each}
 						</div>
-						<span class="text-xs leading-tight whitespace-nowrap shrink-0"
+						<span class="text-xs leading-tight min-w-0"
 							>10 {t(page.data.translations, 'domain.transport.residents')}</span
 						>
 					</div>
@@ -254,7 +298,7 @@
 							{/if}
 						</div>
 						<span
-							class="text-xs leading-tight whitespace-nowrap shrink-0"
+							class="text-xs leading-tight min-w-0"
 							style="color: {carsColor}"
 						>
 							{carsPerTenRegion.toFixed(1)}
@@ -288,7 +332,7 @@
 								</svg>
 							{/if}
 						</div>
-						<span class="text-xs leading-tight whitespace-nowrap shrink-0 opacity-50">
+						<span class="text-xs leading-tight min-w-0 opacity-50">
 							{carsPerTenNational.toFixed(1)}
 							{t(page.data.translations, 'domain.transport.carsIn')}
 							{data.country.name}
