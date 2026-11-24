@@ -15,9 +15,17 @@
 
 	export let label: string;
 	export let value: any = '';
-	/** Optional icon per option (a Tabler icon component), tinted with `color` if given */
-	export let options: Array<{ value: any; label: string; iconComponent?: any; color?: string }> =
-		[];
+	/**
+	 * Optional icon per option: a component (e.g. Tabler) or an inline SVG string (`icon`),
+	 * tinted with `color` if given
+	 */
+	export let options: Array<{
+		value: any;
+		label: string;
+		iconComponent?: any;
+		icon?: string;
+		color?: string;
+	}> = [];
 	export let hideLabel: boolean = false;
 	export let disabled: boolean = false;
 	export let name: string = `rg-${Math.random().toString(36).slice(2, 8)}`;
@@ -74,7 +82,7 @@
 					on:change={() => handleChange(opt.value)}
 					class="sr-only"
 				/>
-				{#if opt.iconComponent}
+				{#if opt.iconComponent || opt.icon}
 					<span
 						class="flex items-center {opt.color
 							? 'text-[color:var(--themed-color)] dark:text-[color:var(--themed-color-dark)]'
@@ -82,7 +90,11 @@
 						style={themedColorVars(opt.color)}
 						aria-hidden="true"
 					>
-						<svelte:component this={opt.iconComponent} size={small ? 14 : 16} />
+						{#if opt.iconComponent}
+							<svelte:component this={opt.iconComponent} size={small ? 14 : 16} />
+						{:else}
+							{@html opt.icon}
+						{/if}
 					</span>
 				{/if}
 				{opt.label}

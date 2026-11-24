@@ -12,11 +12,12 @@
 	} from '$lib/components/charts/primitives';
 	import { RadioGroup, Toggle, Checkbox } from '$lib/components/ui';
 	import { formatNumber, formatPercent } from '$lib/utils/formatters';
+	import { scaleLinear } from 'd3-scale';
 	import { theme } from '$lib/stores/theme';
 	import {
 		IconBolt,
 		IconFlame,
-		IconBuildingFactory,
+		IconTemperature,
 		IconBarrel,
 		IconPick,
 		IconTemperatureSun,
@@ -25,8 +26,13 @@
 		IconPlant,
 		IconTrendingUp,
 		IconTrendingDown,
-		IconArrowRight
+		IconArrowRight,
+		IconChartBubble,
+		IconActivity
 	} from '@tabler/icons-svelte-runes';
+
+	/** Bar icon of the "Jährlicher Zubau" view in the renewables charts (renewablesExplorer) */
+	const BAR_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;
 	import {
 		fetchData,
 		fetchMatrix,
@@ -46,8 +52,20 @@
 	let hidden = new Set<string>();
 	let containerWidth = 0;
 	let view: 'stacked' | 'multiples' | 'matrix' = 'matrix';
-	/** Small multiples: each panel scales to its own carrier instead of the shared maximum */
-	let freeScale = false;
+	/** Small multiples: own y-scale per panel by default, one shared scale on request */
+	let sharedScale = false;
+	/**
+	 * Small-multiple plot margins: room above for the direct value labels, below for the two
+	 * year labels, 4px at the sides for the end dots (the heading is indented to match).
+	 */
+	const panelMargin = { top: 18, right: 4, bottom: 22, left: 4 };
+	/** TWh value as shown in the panels: one decimal, "<0,1" for small non-zero values */
+	const formatTWhValue = (twh: number) => (twh > 0 && twh < 0.05 ? '<0,1' : formatNumber(twh, 1));
+	/** "−12 %" with a real minus and a narrow no-break space; "±0 %" below half a percent */
+	const formatChange = (pct: number) =>
+		Math.abs(pct) < 0.5
+			? '±0 %'
+			: `${pct < 0 ? '−' : '+'}${formatNumber(Math.abs(pct), 0)} %`;
 	/** Matrix shows each carrier's share of its sector; the checkbox switches to absolute TWh */
 	let showTWh = false;
 	$: matrixUnit = (showTWh ? 'twh' : 'sector') as 'twh' | 'sector';
@@ -56,7 +74,7 @@
 	const carrierIcons: Record<string, any> = {
 		strom: IconBolt,
 		erdgas: IconFlame,
-		fernwaerme: IconBuildingFactory,
+		fernwaerme: IconTemperature,
 		heizoel: IconBarrel,
 		kohle: IconPick,
 		umweltwaerme: IconTemperatureSun,
@@ -67,9 +85,9 @@
 
 	// Matrix view only where the region has a carrier × sector split
 	$: viewOptions = [
-		...(matrix ? [{ value: 'matrix', label: 'Sektoren' }] : []),
-		{ value: 'multiples', label: 'Energieträger' },
-		{ value: 'stacked', label: 'Gestapelt' }
+		...(matrix ? [{ value: 'matrix', label: 'Sektoren', iconComponent: IconChartBubble }] : []),
+		{ value: 'multiples', label: 'Energieträger', iconComponent: IconActivity },
+		{ value: 'stacked', label: 'Gestapelt', icon: BAR_ICON }
 	];
 
 	$: isMobile = containerWidth < 500;
@@ -95,7 +113,11 @@
 		});
 		return { year: String(year), total: y0, segments };
 	});
-	$: yMax = Math.max(1, ...stackedData.map((d) => d.total)) * 1.05;
+	// Next "nice" tick above the tallest bar, so the top axis label (with unit) sits on free space
+	$: yMax = scaleLinear()
+		.domain([0, Math.max(1, ...stackedData.map((d) => d.total)) * 1.05])
+		.nice(5)
+		.domain()[1];
 
 	// Small multiples: one row per year with every carrier in TWh, shared y scale across panels
 	$: lineData = (data?.years ?? []).map((year) => ({
@@ -109,10 +131,8 @@
 	);
 	/** Calls a Chart slot scale (typed as linear | band | null) for a plain number */
 	const scaled = (scale: any, v: number): number => scale?.(v) ?? 0;
-	/** Axis labels keep the decimals small per-panel scales need (e.g. 0,2 TWh) */
-	const formatTick = (v: number) =>
-		formatNumber(v, Number.isInteger(v) ? 0 : Number.isInteger(Math.round(v * 1e6) / 1e5) ? 1 : 2);
-	$: panelYMax = (key: string) => Math.max(0.1, ...lineData.map((d) => (d as any)[key])) * 1.1;
+	// No headroom: the panel's top margin already leaves room for the direct value labels
+	$: panelYMax = (key: string) => Math.max(0.1, ...lineData.map((d) => (d as any)[key]));
 	$: columns = containerWidth < 420 ? 2 : containerWidth < 720 ? 3 : 4;
 	$: firstYear = data?.years[0] ?? 0;
 	$: lastYear = data?.years.at(-1) ?? 0;
@@ -253,7 +273,7 @@
 		<div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
 			<RadioGroup label="Ansicht" hideLabel bind:value={view} options={viewOptions} />
 			{#if view === 'multiples'}
-				<Toggle label="Eigene Skala je Feld" bind:checked={freeScale} />
+				<Toggle label="Gleiche Skala für alle" bind:checked={sharedScale} />
 			{:else if view === 'matrix'}
 				<Checkbox label="Werte in TWh" bind:checked={showTWh} />
 			{/if}
@@ -312,7 +332,11 @@
 			</Chart>
 
 			<div class="mt-3">
-				<Legend items={categories} bind:hidden interactive />
+				<Legend
+					items={categories.map((c) => ({ ...c, iconComponent: carrierIcons[c.key] }))}
+					bind:hidden
+					interactive
+				/>
 			</div>
 		{:else if view === 'matrix' && matrix}
 			<div
@@ -415,10 +439,12 @@
 			>
 				{#each sortedCategories as cat (cat.key)}
 					{@const change = changeOf(cat.key)}
-					<figure>
-						<figcaption class="mb-2">
+					<figure class="min-w-0">
+						<!-- Heading flush with the plot: name (one line), value, then year and change as plain text -->
+						<figcaption class="pl-1">
 							<span
-								class="flex items-center gap-1.5 text-sm font-medium leading-tight text-gray-700 dark:text-gray-300"
+								class="flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-tight text-gray-900 dark:text-gray-100"
+								title={cat.label}
 							>
 								{#if carrierIcons[cat.key]}
 									<svelte:component
@@ -430,24 +456,20 @@
 										class="shrink-0"
 									/>
 								{/if}
-								{cat.label}
+								<span class="truncate">{cat.label}</span>
 							</span>
-							<!-- Value and change on one line; years are named in the note below the grid -->
+							<span class="mt-1.5 flex items-baseline gap-1 text-gray-900 dark:text-white">
+								<span class="text-2xl font-condensed leading-none tabular-nums"
+									>{formatTWhValue(valueOf(data, lastYear, cat.key) / 1e6)}</span
+								>
+								<span class="text-sm font-medium">TWh</span>
+							</span>
 							<span
-								class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-gray-900 dark:text-white"
+								class="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs tabular-nums text-gray-500 dark:text-gray-400"
 							>
-								<span class="flex items-baseline gap-1">
-									<span class="text-2xl font-condensed leading-none"
-										>{formatNumber(valueOf(data, lastYear, cat.key) / 1e6, 1)}</span
-									>
-									<span class="text-sm font-medium">TWh</span>
-									<span class="sr-only">im Jahr {lastYear}</span>
-								</span>
+								<span class="sr-only">Wert {lastYear}</span>
 								{#if change !== null}
-									<span
-										class="flex items-center gap-1 text-xs font-medium tabular-nums px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-500/40 text-gray-800 dark:text-gray-100"
-										title="Veränderung {firstYear}–{lastYear}"
-									>
+									<span class="flex items-center gap-0.5">
 										{#if change > 0.5}
 											<IconTrendingUp size={13} stroke={2} aria-hidden="true" />
 										{:else if change < -0.5}
@@ -455,8 +477,7 @@
 										{:else}
 											<IconArrowRight size={13} stroke={2} aria-hidden="true" />
 										{/if}
-										{change > 0 ? '+' : ''}{formatPercent(change, 0)}
-										<span class="sr-only">seit {firstYear}</span>
+										{formatChange(change)} seit {firstYear}
 									</span>
 								{/if}
 							</span>
@@ -464,11 +485,11 @@
 						<Chart
 							data={lineData}
 							x="year"
-							y={freeScale ? cat.key : categoryKeys}
-							height={140}
+							y={sharedScale ? categoryKeys : cat.key}
+							height={130}
 							yMin={0}
-							yMax={freeScale ? panelYMax(cat.key) : multiplesYMax}
-							margin={{ top: 8, right: 8, bottom: 24, left: 30 }}
+							yMax={sharedScale ? multiplesYMax : panelYMax(cat.key)}
+							margin={panelMargin}
 						>
 							<svelte:fragment
 								slot="default"
@@ -479,23 +500,14 @@
 								let:innerHeight
 								let:hover
 							>
-								<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} tickCount={3} />
-								<!-- Comparison lines only on the shared scale; on a per-panel scale they would overflow and mislead -->
-								{#if !freeScale}
-									<g class="opacity-40 dark:opacity-30">
-										{#each categories.filter((c) => c.key !== cat.key) as other (other.key)}
-											<Line
-												data={lineData}
-												x="year"
-												y={other.key}
-												{xScale}
-												{yScale}
-												stroke="#9ca3af"
-												strokeWidth={1}
-											/>
-										{/each}
-									</g>
-								{/if}
+								<!-- No y-axis or grid: values are labelled directly; only the zero baseline -->
+								<line
+									x1={0}
+									x2={innerWidth}
+									y1={innerHeight}
+									y2={innerHeight}
+									class="stroke-gray-300 dark:stroke-gray-600"
+								/>
 								<Line
 									data={lineData}
 									x="year"
@@ -506,33 +518,43 @@
 									stroke={cat.color}
 									strokeWidth={2.5}
 									dotRadius={2}
+									fillGradient
+									fillOpacity={0.5}
 								/>
-								<!-- Endpoints of the highlighted change -->
-								{#each [firstYear, lastYear] as yr}
+								<!-- Endpoints of the change, labelled directly (start grey, end dark) -->
+								{#each [firstYear, lastYear] as yr, i}
+									{@const v = valueOf(data, yr, cat.key) / 1e6}
 									<circle
 										cx={scaled(xScale, yr)}
-										cy={scaled(yScale, valueOf(data, yr, cat.key) / 1e6)}
+										cy={scaled(yScale, v)}
 										r={3.5}
 										fill={cat.color}
 									/>
+									<text
+										x={scaled(xScale, yr)}
+										y={scaled(yScale, v) - 8}
+										text-anchor={i === 0 ? 'start' : 'end'}
+										font-size="11"
+										stroke-width="3"
+										stroke-linejoin="round"
+										class="tabular-nums [paint-order:stroke] stroke-white dark:stroke-gray-900 {i ===
+										0
+											? 'fill-gray-500 dark:fill-gray-400'
+											: 'fill-gray-900 font-semibold dark:fill-gray-100'}"
+									>
+										{formatTWhValue(v)}
+									</text>
+									<!-- First and last year only, flush with the plot edges -->
+									<text
+										x={i === 0 ? 0 : innerWidth}
+										y={innerHeight + 16}
+										text-anchor={i === 0 ? 'start' : 'end'}
+										font-size="11"
+										class="fill-gray-500 dark:fill-gray-400"
+									>
+										{yr}
+									</text>
 								{/each}
-								<AxisY
-									mode="labels"
-									{yScale}
-									{innerWidth}
-									{innerHeight}
-									tickCount={3}
-									format={formatTick}
-								/>
-								<AxisX
-									{xScale}
-									{xDomain}
-									{innerWidth}
-									{innerHeight}
-									format={String}
-									tickCount={2}
-									forceTicks={[firstYear, lastYear]}
-								/>
 							</svelte:fragment>
 
 							<svelte:fragment slot="tooltip" let:hover>
@@ -549,14 +571,9 @@
 				{/each}
 			</div>
 			<p class="mt-3 text-xs text-gray-600 dark:text-gray-400">
-				Werte {lastYear}, Veränderung seit {firstYear}.
-				{#if freeScale}
-					Endenergieverbrauch in TWh. Jedes Feld hat eine eigene Skala – Höhen sind nicht zwischen
-					Feldern vergleichbar.
-				{:else}
-					Endenergieverbrauch in TWh, gleiche Skala in allen Feldern. Graue Linien: übrige
-					Energieträger zum Vergleich.
-				{/if}
+				Endenergieverbrauch in TWh{sharedScale
+					? ', gleiche Skala in allen Feldern.'
+					: '. Jedes Feld hat eine eigene Skala – Höhen sind nicht zwischen Feldern vergleichbar.'}
 			</p>
 		{/if}
 	{/if}

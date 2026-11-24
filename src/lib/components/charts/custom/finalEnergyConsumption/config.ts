@@ -22,6 +22,12 @@ export interface FinalEnergyData {
 /** First year shown; earlier balances are not displayed. */
 export const FIRST_YEAR = 2017;
 
+/** Display names overriding the Directus category labels (used by every view, table and text) */
+const CARRIER_LABELS: Record<string, string> = {
+	treibstoff_fossil: 'Fossile Kraftstoffe',
+	treibstoff_biogen: 'Biogene Kraftstoffe'
+};
+
 /** Energy-carrier rows of the region's own balance from FIRST_YEAR on; regions without one show the empty state (no parent fallback). */
 export async function fetchData(
 	regionId: string | null,
@@ -56,7 +62,11 @@ export async function fetchData(
 	for (const r of rows) {
 		const c = r.category;
 		if (!categories.has(c.code))
-			categories.set(c.code, { key: c.code, label: c.label, color: c.color });
+			categories.set(c.code, {
+				key: c.code,
+				label: CARRIER_LABELS[c.code] ?? c.label,
+				color: c.color
+			});
 		values.set(`${r.year}|${c.code}`, Number(r.value));
 	}
 	return {
