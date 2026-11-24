@@ -205,7 +205,14 @@ export async function fetchEmissionsData(
 			if (regionData.length > 0) {
 				return {
 					key: region.layer,
-					label: `${region.layer_label} ${region.name}`,
+					// No layer prefix for states, or when the name already contains it
+					// ("Metropolregion Nürnberg", not "Metropolregion Metropolregion Nürnberg")
+					label:
+						!region.layer_label ||
+						region.layer_label === 'Bundesland' ||
+						region.name.toLowerCase().includes(region.layer_label.toLowerCase())
+							? region.name
+							: `${region.layer_label} ${region.name}`,
 					layer_label: region.layer_label,
 					name: region.name,
 					data: regionData,
