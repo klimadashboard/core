@@ -12,6 +12,7 @@
  */
 import getDirectusInstance from '$lib/utils/directus';
 import { readItem, readItems } from '@directus/sdk';
+import { withLayerLabel } from '$lib/utils/getRegion';
 
 export const AGGREGATE_LAYERS = ['metropolitan_region', 'group'];
 
@@ -99,6 +100,26 @@ export function regionSwitcherLabel(region: {
 		layerLabel === 'Bundesland' ||
 		region.name.toLowerCase().includes(layerLabel.toLowerCase());
 	return omitPrefix ? region.name : `${layerLabel} ${region.name}`;
+}
+
+/** Short type suffix for districts in rankings: "Ansbach (LK)", "Fürth (Stadt)" */
+const DISTRICT_SUFFIX: Record<string, string> = {
+	Landkreis: 'LK',
+	'Kreisfreie Stadt': 'Stadt'
+};
+
+/**
+ * Name of a member region in a ranking: districts always carry "(LK)" / "(Stadt)"; other
+ * members (e.g. municipalities) get their layer label only when the name occurs twice.
+ */
+export function memberLabel(
+	name: string,
+	layerLabel: string | null | undefined,
+	duplicate: boolean
+): string {
+	const suffix = layerLabel ? DISTRICT_SUFFIX[layerLabel] : undefined;
+	if (suffix) return `${name} (${suffix})`;
+	return duplicate ? withLayerLabel(name, layerLabel) : name;
 }
 
 /** Puts foreign aggregate regions last, keeping the order of everything else. */

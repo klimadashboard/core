@@ -6,10 +6,13 @@
 
 import type { ChartData, ChartFetchParams, TableColumn } from '$lib/components/charts/types';
 import type { Region } from '$lib/utils/getRegion';
-import { withLayerLabel } from '$lib/utils/getRegion';
 import { readItem, readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
-import { getAggregateMembers, type AggregateMember } from '$lib/utils/regionAggregation';
+import {
+	getAggregateMembers,
+	memberLabel,
+	type AggregateMember
+} from '$lib/utils/regionAggregation';
 import { CARRIERS } from '$lib/components/charts/regionMap/regionMapData';
 import { formatDate, formatNumber, formatPower } from '$lib/utils/formatters';
 
@@ -31,19 +34,6 @@ const MEMBER_LAYER: Record<string, 'district' | 'municipality'> = {
 };
 
 type RegionRef = Pick<Region, 'id' | 'layer' | 'code' | 'country'>;
-
-/** Short type suffix for district members, shown on every bar: "Ansbach (LK)", "Fürth (Stadt)" */
-const DISTRICT_SUFFIX: Record<string, string> = {
-	Landkreis: 'LK',
-	'Kreisfreie Stadt': 'Stadt'
-};
-
-function memberName(name: string, layerLabel: string | null | undefined, duplicate: boolean): string {
-	const suffix = layerLabel ? DISTRICT_SUFFIX[layerLabel] : undefined;
-	if (suffix) return `${name} (${suffix})`;
-	// Other members (e.g. municipalities): only disambiguate equal names
-	return duplicate ? withLayerLabel(name, layerLabel) : name;
-}
 
 export interface CapacityRow {
 	code: string;
@@ -115,7 +105,7 @@ export async function fetchData(
 			const duplicate = names.filter((n) => n === m.name).length > 1;
 			return {
 				code,
-				name: memberName(m.name, m.layer_label, duplicate),
+				name: memberLabel(m.name, m.layer_label, duplicate),
 				kind: m.layer_label ?? '',
 				area: m.area || null,
 				kw,

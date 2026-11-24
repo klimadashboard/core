@@ -13,8 +13,11 @@
 
 import { readItem, readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
-import { getAggregateMembers, getFallbackParentIds } from '$lib/utils/regionAggregation';
-import { withLayerLabel } from '$lib/utils/getRegion';
+import {
+	getAggregateMembers,
+	getFallbackParentIds,
+	memberLabel
+} from '$lib/utils/regionAggregation';
 import { formatNumber, formatPercent } from '$lib/utils/formatters';
 import { t } from '$lib/utils/t';
 import type { ChartData, ChartFetchParams, TableColumn } from '$lib/components/charts/types';
@@ -110,11 +113,11 @@ export async function fetchChartData({
 	const rows = all.filter((r) => r.year === year && r.region);
 	const membersOf = (id: string) => rows.filter((r) => r.region.parents?.some((p) => p.id === id));
 
-	// Duplicate names (Ansbach city / Landkreis Ansbach) get their layer label
+	// Districts are labelled "(LK)" / "(Stadt)"; other duplicate names get their layer label
 	const nameCount = new Map<string, number>();
 	for (const r of rows) nameCount.set(r.region.name, (nameCount.get(r.region.name) ?? 0) + 1);
 	const label = (r: RegionRef) =>
-		(nameCount.get(r.name) ?? 0) > 1 ? withLayerLabel(r.name, r.layer_label) : r.name;
+		memberLabel(r.name, r.layer_label, (nameCount.get(r.name) ?? 0) > 1);
 
 	function reference(r: RegionRef, kind: 'self' | 'parent'): ShareRow | null {
 		const own = rows.find((row) => row.region.id === r.id);
