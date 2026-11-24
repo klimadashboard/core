@@ -32,6 +32,12 @@
 	export let inline: boolean = true;
 	/** Compact pills (e.g. next to chips in a toolbar row) */
 	export let small: boolean = false;
+	/**
+	 * In a container narrower than `@2xl` (42rem; the chart Card is an `@container`),
+	 * unselected options with an icon show only the icon (label stays for screen readers and
+	 * as tooltip), so a row of icon options fits on one line instead of wrapping
+	 */
+	export let compact: boolean = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -62,10 +68,12 @@
 		{#each options as opt}
 			{@const checked = value === opt.value}
 			{@const id = `${name}-${opt.value}`}
+			{@const iconOnly = compact && !checked && !!(opt.iconComponent || opt.icon)}
 			<label
 				for={id}
+				title={iconOnly ? opt.label : undefined}
 				class="inline-flex items-center gap-1 whitespace-nowrap rounded-full font-medium transition-colors duration-200
-					{small ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm'}
+					{small ? 'px-2 py-0.5 text-xs' : iconOnly ? 'px-1.5 py-1 text-sm @2xl:px-2.5' : 'px-2.5 py-1 text-sm'}
 					focus-within:ring-2 focus-within:ring-blue-500
 					{disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
 					{checked
@@ -97,7 +105,7 @@
 						{/if}
 					</span>
 				{/if}
-				{opt.label}
+				<span class={iconOnly ? 'sr-only @2xl:not-sr-only' : ''}>{opt.label}</span>
 			</label>
 		{/each}
 	</div>

@@ -117,6 +117,7 @@
 	<ChartSettings>
 		<RadioGroup
 			label="Energieträger"
+			compact
 			bind:value={carrier}
 			options={[
 				{ value: 'all', label: 'Gesamt' },
