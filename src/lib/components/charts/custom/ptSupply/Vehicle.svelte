@@ -9,6 +9,21 @@
 	export let vehicle: Vehicle;
 	export let length: number;
 	export let color: string;
+	/** Internal: draw exactly one vehicle (used for each bus of a convoy) */
+	export let single = false;
+
+	// Buses don't grow into one endless bus: a long bar becomes a row of solo/articulated buses
+	// with small gaps; together they still span exactly `length`
+	const BUS_LENGTH = 90;
+	const BUS_GAP = 4;
+	$: convoy =
+		vehicle === 'bus' && !single
+			? (() => {
+					const n = Math.max(1, Math.round((length + BUS_GAP) / (BUS_LENGTH + BUS_GAP)));
+					const each = (length - BUS_GAP * (n - 1)) / n;
+					return Array.from({ length: n }, (_, i) => ({ x: i * (each + BUS_GAP), len: each }));
+				})()
+			: null;
 
 	const DARK = '#1f2937';
 	const LIGHT = '#ffffff';
@@ -103,7 +118,15 @@
 	$: windowH = s.height * (s.windows === 'single' ? 0.38 : 0.42);
 </script>
 
-{#if L > 0}
+{#if convoy && convoy.length > 1}
+	<g aria-hidden="true">
+		{#each convoy as bus}
+			<g transform="translate({bus.x},0)">
+				<svelte:self vehicle="bus" length={bus.len} {color} single />
+			</g>
+		{/each}
+	</g>
+{:else if L > 0}
 	<g aria-hidden="true">
 		<!-- roof equipment on the first car -->
 		{#if s.roof === 'pantograph' && L > 30}
