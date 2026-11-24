@@ -85,6 +85,22 @@ export function isShownOnPage(
 	return !(region.layer && LAUNCH_GATED_LAYERS.includes(region.layer) && region.visible === false);
 }
 
+/**
+ * Label for a chart's region switcher: no layer prefix for states, or when the name
+ * already contains it ("Metropolregion Nürnberg", not "Metropolregion Metropolregion Nürnberg").
+ */
+export function regionSwitcherLabel(region: {
+	name: string;
+	layer_label?: string | null;
+}): string {
+	const layerLabel = region.layer_label ?? '';
+	const omitPrefix =
+		!layerLabel ||
+		layerLabel === 'Bundesland' ||
+		region.name.toLowerCase().includes(layerLabel.toLowerCase());
+	return omitPrefix ? region.name : `${layerLabel} ${region.name}`;
+}
+
 /** Puts foreign aggregate regions last, keeping the order of everything else. */
 export function aggregatesLast<T extends { id: string; key: string }>(
 	results: T[],

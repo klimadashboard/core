@@ -29,8 +29,10 @@
 		type PageRegionContext
 	} from './config';
 	import TargetLabels from './TargetLabels.svelte';
-	import { getTargetLabels, getTargetNote, formatReduction } from './targetLabels';
+	import { getTargetLabels, getTargetNote, formatReduction, hasReduction } from './targetLabels';
 	import { computeTrend } from './trend';
+	import { getSectorIcon } from './sectorIcons';
+	import { IconMapPin } from '@tabler/icons-svelte-runes';
 
 	// Props from Card slot
 	export let region: any = null;
@@ -211,6 +213,9 @@
 		return views;
 	})();
 
+	// Map pin on the selected region, as in the region picker of the energy charts
+	$: regionSwitchViews = filteredViews.map((v) => ({ ...v, activeIcon: IconMapPin }));
+
 	// Auto-select appropriate view
 	$: if (
 		filteredViews.length > 0 &&
@@ -369,12 +374,28 @@
 	$: latestTotal = latestData?.total ?? 0;
 	$: lastTarget = climateTargets.length > 0 ? climateTargets[climateTargets.length - 1] : null;
 
-	// 5-Jahres-Trend: latest total continued at the average yearly change of the last
-	// 5 years, up to the last climate target
+	// 5-Jahres-Trend: latest total (or the selected sector's value) continued at the average
+	// yearly change of the last 5 years, up to the last climate target
+	$: trendSeries =
+		activeCategory === 'all'
+			? grouped
+			: grouped.map((g) => ({
+					year: g.year,
+					total: g.sectors.find((s) => s.sector === activeCategory)?.value ?? 0
+				}));
 	$: trend =
-		activeCategory === 'all' && !isHorizontal && lastTarget && latestYear !== null
-			? computeTrend(grouped, latestYear, lastTarget.year, '5')
+		!isHorizontal && lastTarget && latestYear !== null
+			? computeTrend(trendSeries, latestYear, lastTarget.year, '5')
 			: null;
+	// In a single-sector view, the climate-neutrality target is marked at zero
+	// ("Klimaneutralität", no percentage — the region's targets are not split by sector)
+	$: sectorNeutralLabels =
+		activeCategory !== 'all' && !isHorizontal
+			? targetLabels
+					.filter((l) => l.netZero)
+					.map((l) => ({ ...l, reductionPercent: null, baseYear: null }))
+			: [];
+	$: sectorNeutralTargets = sectorNeutralLabels.map((l) => ({ year: l.year, value: 0 }));
 	$: trendEnd = trend && trend.points.length >= 2 ? trend.points[trend.points.length - 1] : null;
 	$: trendReachesZero = !!trend && trend.zeroYear !== null && trend.zeroYear <= trend.targetYear;
 	// Trend label at the line's end, right-aligned left of the end point; it may cross the line.
@@ -433,7 +454,11 @@
 		'<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>';
 	$: switchOptions = [
 		{ key: 'all', label: t(page.data.translations, 'domain.sector.sectors') },
-		...displayedCategories.map((c) => ({ ...c, icon: circleIcon }))
+		...displayedCategories.map((c) => ({
+			...c,
+			iconComponent: getSectorIcon(c.key),
+			icon: circleIcon // fallback for categories without a Tabler icon
+		}))
 	];
 
 	// Tooltip data
@@ -488,7 +513,7 @@
 				return {
 					title: `${hoveredYear} (${t(page.data.translations, 'domain.emissions.target') || 'Ziel'})`,
 					items: [
-						...(targetLabel
+						...(targetLabel && hasReduction(targetLabel)
 							? [
 									{
 										label: targetLabel.netZero ? 'Klimaneutralität' : 'Reduktionsziel',
@@ -637,7 +662,7 @@
 		{#if filteredViews.length > 1}
 			<div class="">
 				<Switch
-					views={filteredViews}
+					views={regionSwitchViews}
 					activeView={activeLayer}
 					on:itemClick={(e) => (activeLayer = e.detail)}
 				/>
@@ -927,6 +952,21 @@
 							{/if}
 						</g>
 					{/if}
+					{#if sectorNeutralLabels.length > 0}
+						<g transform="translate({margin.left},{margin.top})">
+							<TargetLabels
+								labels={sectorNeutralLabels}
+								targets={sectorNeutralTargets}
+								{xScale}
+								{yScale}
+								{innerWidth}
+								{hoveredYear}
+								latestYear={null}
+								marginRight={margin.right}
+								avoid={trendAvoid}
+							/>
+						</g>
+					{/if}
 
 					<!-- Trend end point and label, on top of the annotations' leader lines -->
 					{#if trend && trendEnd && trendLabel}
@@ -981,6 +1021,7 @@
 		<div class="mt-4">
 			<Switch
 				views={switchOptions}
+				compact
 				activeView={activeCategory}
 				on:itemClick={(e) => (activeCategory = e.detail)}
 			/>

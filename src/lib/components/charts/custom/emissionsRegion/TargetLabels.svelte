@@ -7,10 +7,10 @@
 <script lang="ts">
 	import type { ScaleLinear } from 'd3-scale';
 	import type { EmissionsRawData } from './config';
-	import type { TargetLabel } from './targetLabels';
+	import { hasReduction, type TargetLabel } from './targetLabels';
 
 	export let labels: TargetLabel[] = [];
-	export let targets: EmissionsRawData[] = []; // in display units, same as the bars
+	export let targets: Pick<EmissionsRawData, 'year' | 'value'>[] = []; // in display units, same as the bars
 	export let xScale: ScaleLinear<number, number>;
 	export let yScale: ScaleLinear<number, number>;
 	export let innerWidth = 0;
@@ -26,7 +26,11 @@
 	const RUN = 12; // horizontal offset of the text from the column centre
 	const CHAR_W = 6.4; // rough width of a 12px character, enough for layout decisions
 
-	$: firstTarget = targets.find((t) => t.year === labels[0]?.year && latestYear !== null && t.year > latestYear);
+	// The dashed path only leads to targets with a computed reduction
+	$: firstReductionYear = labels.find(hasReduction)?.year;
+	$: firstTarget = targets.find(
+		(t) => t.year === firstReductionYear && latestYear !== null && t.year > latestYear
+	);
 
 	type Placed = {
 		year: number;
@@ -45,10 +49,12 @@
 		for (const label of labels) {
 			const target = targets.find((t) => t.year === label.year);
 			if (!target) continue;
-			const lines = [
-				{ text: `−${label.reductionPercent} %`, strong: true },
-				...(label.netZero ? [{ text: 'Klimaneutralität', strong: false }] : [])
-			];
+			const lines = hasReduction(label)
+				? [
+						{ text: `−${label.reductionPercent} %`, strong: true },
+						...(label.netZero ? [{ text: 'Klimaneutralität', strong: false }] : [])
+					]
+				: [{ text: 'Klimaneutralität', strong: true }];
 			const width = Math.max(...lines.map((l) => l.text.length)) * CHAR_W;
 			const tipX = xScale(label.year);
 			const tipY = yScale(target.value);

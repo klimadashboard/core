@@ -4,9 +4,15 @@ import type { Region } from '$lib/utils/getRegion';
 import type { TableColumn, ChartData, ChartFetchParams } from '$lib/components/charts/types';
 import { readItems } from '@directus/sdk';
 import getDirectusInstance from '$lib/utils/directus';
-import { getFallbackParentIds, aggregatesLast, isShownOnPage } from '$lib/utils/regionAggregation';
+import {
+	getFallbackParentIds,
+	aggregatesLast,
+	isShownOnPage,
+	regionSwitcherLabel
+} from '$lib/utils/regionAggregation';
 import { t } from '$lib/utils/t';
 import { formatPeriodDate } from '$lib/utils/formatters';
+import { sectorLabel } from './sectorLabels';
 
 export type Translations = Record<string, string>;
 
@@ -191,7 +197,7 @@ export async function fetchEmissionsData(
 		const cat = categoryMap.get(e.category);
 		return {
 			...e,
-			category_label: cat?.label ?? e.category,
+			category_label: sectorLabel(e.category, cat?.label),
 			category_color: cat?.color ?? '#ccc'
 		};
 	});
@@ -205,14 +211,7 @@ export async function fetchEmissionsData(
 			if (regionData.length > 0) {
 				return {
 					key: region.layer,
-					// No layer prefix for states, or when the name already contains it
-					// ("Metropolregion Nürnberg", not "Metropolregion Metropolregion Nürnberg")
-					label:
-						!region.layer_label ||
-						region.layer_label === 'Bundesland' ||
-						region.name.toLowerCase().includes(region.layer_label.toLowerCase())
-							? region.name
-							: `${region.layer_label} ${region.name}`,
+					label: regionSwitcherLabel(region),
 					layer_label: region.layer_label,
 					name: region.name,
 					data: regionData,

@@ -10,6 +10,8 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import Tooltip from '$lib/components/charts/primitives/Tooltip.svelte';
 	import Switch from '$lib/components/Switch.svelte';
+	import { IconMapPin } from '@tabler/icons-svelte-runes';
+	import { themedColorVars } from '$lib/utils/themedColor';
 	import {
 		fetchEmissionsData,
 		calculateSectorProgress,
@@ -186,6 +188,8 @@
 
 	// Filter views
 	$: filteredViews = views;
+	// Map pin on the selected region, as in the region picker of the energy charts
+	$: regionSwitchViews = filteredViews.map((v) => ({ ...v, activeIcon: IconMapPin }));
 
 	// Auto-select view
 	$: if (
@@ -309,7 +313,7 @@
 	{#if filteredViews.length > 1}
 		<ChartSettings>
 			<Switch
-				views={filteredViews}
+				views={regionSwitchViews}
 				activeView={activeLayer}
 				on:itemClick={(e) => (activeLayer = e.detail)}
 			/>
@@ -376,7 +380,10 @@
 						</div>
 
 						<!-- Track -->
-						<div class="relative flex-1" style="height: {trackHeight}px;">
+						<div
+							class="relative flex-1"
+							style="height: {trackHeight}px; {themedColorVars(sector.color)}"
+						>
 							<!-- Background track (gray rounded bar) -->
 							<div
 								class="absolute inset-0 bg-current/10 rounded-full"
@@ -385,21 +392,20 @@
 
 							<!-- Progress fill (animated) - using percentage for accurate sizing -->
 							<!-- Only show bar for positive progress, negative shows text only -->
+							<!-- Sector colour, lightened in dark mode if too dark (see themedColor.ts) -->
 							{#if !isNegative}
 								<div
-									class="absolute left-0 top-0 rounded-full transition-none"
-									style="height: {trackHeight}px; width: {animatedProgress}%; background-color: {sector.color};"
+									class="absolute left-0 top-0 rounded-full transition-none bg-[color:var(--themed-color)] dark:bg-[color:var(--themed-color-dark)]"
+									style="height: {trackHeight}px; width: {animatedProgress}%;"
 								></div>
 							{/if}
 
 							<!-- Percentage label inside bar -->
 							<span
-								class="absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold whitespace-nowrap"
-								style="left: {isNegative
-									? '6px'
-									: `calc(${animatedProgress}% + 6px)`}; color: {isNegative
-									? '#ef4444'
-									: sector.color};"
+								class="absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold whitespace-nowrap {isNegative
+									? 'text-[#ef4444]'
+									: 'text-[color:var(--themed-color)] dark:text-[color:var(--themed-color-dark)]'}"
+								style="left: {isNegative ? '6px' : `calc(${animatedProgress}% + 6px)`};"
 							>
 								{Math.round(sector.contributionPercent)}%
 							</span>
