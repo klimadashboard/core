@@ -224,12 +224,26 @@
 		activeCategory = 'all';
 	}
 
-	// Auto-enable per-capita for Bavaria
-	$: if (results.length > 0 && activeLayer) {
+	// Auto-enable per-capita for Bavaria; switch it off again when leaving Bavaria,
+	// unless the user changed the checkbox themselves in the meantime
+	let lastLayer: string | null = null;
+	let autoPerCapita = false;
+	$: if (results.length > 0 && activeLayer && activeLayer !== lastLayer) {
+		lastLayer = activeLayer;
 		const selectedRegion = results.find((r) => r.key === activeLayer);
-		if (selectedRegion?.layer_label === 'Bundesland' && selectedRegion.name.includes('Bayern')) {
+		const isBavaria =
+			selectedRegion?.layer_label === 'Bundesland' && selectedRegion.name.includes('Bayern');
+		if (isBavaria && !showPerCapita) {
 			showPerCapita = true;
+			autoPerCapita = true;
+		} else if (!isBavaria && autoPerCapita) {
+			showPerCapita = false;
+			autoPerCapita = false;
 		}
+	}
+	// A manual toggle makes the current setting the user's choice
+	function onPerCapitaChange() {
+		autoPerCapita = false;
 	}
 
 	// Helper to get population for a specific region
@@ -653,7 +667,12 @@
 					/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
 				</svg>
 				<span>{t(page.data.translations, 'ui.emissions.perCapita')}</span>
-				<input type="checkbox" bind:checked={showPerCapita} class="ml-1" />
+				<input
+					type="checkbox"
+					bind:checked={showPerCapita}
+					on:change={onPerCapitaChange}
+					class="ml-1"
+				/>
 			</label>
 		{/if}
 	</ChartSettings>
