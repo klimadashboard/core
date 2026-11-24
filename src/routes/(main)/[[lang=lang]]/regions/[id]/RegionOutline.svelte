@@ -12,23 +12,33 @@
 		return [x, y];
 	}
 
+	// Shoelace area of a projected ring (absolute value)
+	function ringArea(ring) {
+		let sum = 0;
+		for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+			sum += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]);
+		}
+		return Math.abs(sum / 2);
+	}
+
 	$: if (outline) {
-		const projectedCoords = [];
+		// Only draw the outer ring of each polygon: interior rings (holes) are
+		// mostly slivers left over from merging municipalities and render as dots.
+		const polygons =
+			outline.type === 'Polygon'
+				? [outline.coordinates]
+				: outline.type === 'MultiPolygon'
+					? outline.coordinates
+					: [];
+		const projectedRings = polygons
+			.filter((polygon) => polygon?.[0]?.length)
+			.map((polygon) => polygon[0].map(([lng, lat]) => projectCoord(lng, lat)));
 
-		function collectAndProject(coords) {
-			if (typeof coords[0] === 'number') {
-				const [lng, lat] = coords;
-				projectedCoords.push(projectCoord(lng, lat));
-			} else {
-				coords.forEach(collectAndProject);
-			}
-		}
-
-		if (outline.type === 'Polygon') {
-			outline.coordinates.forEach(collectAndProject);
-		} else if (outline.type === 'MultiPolygon') {
-			outline.coordinates.forEach((polygon) => polygon.forEach(collectAndProject));
-		}
+		// Drop tiny parts (< 0.05 % of the largest part) — slivers, not real exclaves
+		const areas = projectedRings.map(ringArea);
+		const maxArea = Math.max(0, ...areas);
+		const rings = projectedRings.filter((_, i) => areas[i] >= maxArea * 0.0005);
+		const projectedCoords = rings.flat();
 
 		if (projectedCoords.length > 0) {
 			// Calculate bounds from projected coordinates
@@ -50,28 +60,13 @@
 
 			viewBox = `${minX - padding} ${minY - padding} ${width + padding * 2} ${height + padding * 2}`;
 
-			// Generate path data with projected coordinates
-			function generatePath(rings) {
-				return rings
-					.map((ring) => {
-						return (
-							ring
-								.map((coord, i) => {
-									const [lng, lat] = coord;
-									const [x, y] = projectCoord(lng, lat);
-									return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-								})
-								.join(' ') + ' Z'
-						);
-					})
-					.join(' ');
-			}
-
-			if (outline.type === 'Polygon') {
-				pathData = generatePath(outline.coordinates);
-			} else if (outline.type === 'MultiPolygon') {
-				pathData = outline.coordinates.map((polygon) => generatePath(polygon)).join(' ');
-			}
+			pathData = rings
+				.map(
+					(ring) => ring.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ') + ' Z'
+				)
+				.join(' ');
+		} else {
+			pathData = '';
 		}
 	}
 </script>
