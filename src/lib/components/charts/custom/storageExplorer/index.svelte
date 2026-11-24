@@ -35,7 +35,7 @@
 
 	// Config from Directus
 	$: config = chart.config || {};
-	$: initialView = (config.initialView as ViewMode) || 'yearly';
+	$: initialView = (config.initialView as ViewMode) || 'cumulative';
 	$: showViewSwitcher = config.showViewSwitcher !== false;
 
 	// State

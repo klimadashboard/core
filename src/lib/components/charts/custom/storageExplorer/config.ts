@@ -68,6 +68,26 @@ export function formatPeriodLabel(period: number | string): string {
 	return `${monthNames[parseInt(month, 10) - 1]} '${year.slice(2)}`;
 }
 
+/**
+ * Sum monthly rows into years (rows must be sorted ascending): `added_*` fields are
+ * summed, `cumulative_*` fields keep the value at the end of the year.
+ */
+export function aggregateToYears(rows: StoragePeriodData[]): StoragePeriodData[] {
+	const years = new Map<number, StoragePeriodData>();
+	for (const row of rows) {
+		const year = periodYear(row.period);
+		const agg = years.get(year) ?? { period: year };
+		for (const [field, value] of Object.entries(row)) {
+			if (field === 'period' || typeof value !== 'number') continue;
+			agg[field] = field.includes('_cumulative_')
+				? value
+				: ((agg[field] as number | undefined) ?? 0) + value;
+		}
+		years.set(year, agg);
+	}
+	return [...years.values()];
+}
+
 /** Convert a period to a numeric value for linear scales: "2020-01" → timestamp */
 export function periodToNumber(period: number | string): number {
 	if (typeof period === 'number') return period;
@@ -119,7 +139,7 @@ export function getValue(row: StoragePeriodData, categoryKey: string, metric: st
 
 export function getViewLabels(): Record<ViewMode, string> {
 	return {
-		yearly: 'Monatlicher Zubau',
+		yearly: 'Jährlicher Zubau',
 		cumulative: 'Kumulativ'
 	};
 }
@@ -310,14 +330,16 @@ export function buildChartData(
 	region: Region | null,
 	activeCategories: StorageCategory[],
 	updateDate: string | null,
-	viewMode: ViewMode = 'yearly'
+	viewMode: ViewMode = 'yearly',
+	/** Rows for the table/download, e.g. years for the bar view; placeholders always use `data` */
+	tableRows: StoragePeriodData[] = data
 ): ChartData {
 	return {
-		raw: data,
+		raw: tableRows,
 		table: {
 			columns: getTableColumns(activeCategories),
-			rows: data,
-			filename: `speicher-${viewMode === 'cumulative' ? 'kumuliert' : 'zubau-monatlich'}`
+			rows: tableRows,
+			filename: `speicher-${viewMode === 'cumulative' ? 'kumuliert' : 'zubau-jaehrlich'}`
 		},
 		placeholders: getPlaceholders(data, region, activeCategories, updateDate),
 		meta: {

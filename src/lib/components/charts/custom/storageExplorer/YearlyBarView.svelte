@@ -15,6 +15,7 @@
 		getValue,
 		getMetricField,
 		LATE_REGISTRATION_MONTHS,
+		aggregateToYears,
 		formatNumber,
 		formatPeriodLabel,
 		type MetricMode,
@@ -62,8 +63,11 @@
 
 	$: metricField = getMetricField('yearly', metricMode);
 
-	// Build stacked data: for each period, compute y0 and y1 for each category
-	$: stackedData = data.map((row) => {
+	// Bars show yearly additions; `data` stays monthly (shared with the cumulative view)
+	$: yearData = aggregateToYears(data);
+
+	// Build stacked data: for each year, compute y0 and y1 for each category
+	$: stackedData = yearData.map((row) => {
 		let y0Pos = 0;
 		let y0Neg = 0;
 		const stacks: Array<{
@@ -92,7 +96,7 @@
 		segments: d.stacks.map((s) => ({ ...s, key: s.category.key, label: s.category.label, color: s.category.color }))
 	}));
 
-	$: xDomain = data.map((d) => d.period);
+	$: xDomain = yearData.map((d) => d.period);
 	$: yMax = Math.max(...stackedData.map((d) => d.total), 1);
 	$: yMin = Math.min(...stackedData.map((d) => d.totalNeg), 0);
 	$: unitsDivisor = yMax >= 1_000_000 ? 1_000_000 : yMax >= 1_000 ? 1_000 : 1;
@@ -104,13 +108,21 @@
 		? (v: number) => { const scaled = v / capacityDivisor; return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0); }
 		: (v: number) => { const scaled = v / unitsDivisor; return formatNumber(scaled, scaled % 1 !== 0 ? 1 : 0); };
 
+	// Shade from the year containing the first of the last LATE_REGISTRATION_MONTHS months
 	$: lateRegistrationStart =
-		xDomain.length > LATE_REGISTRATION_MONTHS
-			? xDomain[xDomain.length - LATE_REGISTRATION_MONTHS]
+		data.length > LATE_REGISTRATION_MONTHS
+			? parseInt(String(data[data.length - LATE_REGISTRATION_MONTHS]!.period).split('-')[0]!, 10)
 			: undefined;
 
 	$: if (!dataLoading && data.length > 0) {
-		const chartData = buildChartData(data, region, activeCategories, updateDate, 'yearly');
+		const chartData = buildChartData(
+			data,
+			region,
+			activeCategories,
+			updateDate,
+			'yearly',
+			yearData
+		);
 		onChartData?.(chartData);
 	} else if (!dataLoading && data.length === 0) {
 		onChartData?.(null);
@@ -145,26 +157,15 @@
 			>
 				<AxisY {yScale} {innerWidth} {innerHeight} format={yFormat} {unit} />
 				{@const lastPeriod = xDomain.length > 0 ? xDomain[xDomain.length - 1] : null}
-				{@const smallScreen = innerWidth < 500}
-				{@const janEvenYears = xDomain.filter((p) => {
-					const parts = String(p).split('-');
-					return parts[1] === '01' && parseInt(parts[0]!) % 2 === 0;
-				})}
-				{@const janAny = xDomain.filter((p) => String(p).split('-')[1] === '01')}
-				{@const smallScreenTicks = janEvenYears.length > 0 ? janEvenYears : janAny}
+				<!-- As many year ticks as fit (AxisX thins them by width), always the last year -->
 				<AxisX
 					{xScale}
 					{xDomain}
 					{innerWidth}
 					{innerHeight}
-					format={smallScreen
-						? (v) => {
-								const parts = String(v).split('-');
-								return parts[1] === '01' ? parts[0]! : '';
-							}
-						: formatPeriodLabel}
-					tickCount={smallScreen ? 1 : Math.ceil(xDomain.length / 6)}
-					forceTicks={smallScreen ? smallScreenTicks : (lastPeriod ? [lastPeriod] : [])}
+					format={formatPeriodLabel}
+					tickCount={xDomain.length}
+					forceTicks={lastPeriod !== null ? [lastPeriod] : []}
 				/>
 				<RuleY y={0} {yScale} {innerWidth} />
 
@@ -184,11 +185,14 @@
 
 				<!-- Late registration overlay -->
 				{#if lateRegistrationStart !== undefined}
+					<!-- Shades exactly the bars of the affected year(s), up to the last bar's right edge -->
 					{@const overlayX = xScale(lateRegistrationStart) ?? 0}
+					{@const lastPeriod = xDomain[xDomain.length - 1]}
+					{@const overlayRight = (xScale(lastPeriod) ?? 0) + (xScale.bandwidth?.() ?? 0)}
 					<rect
 						x={overlayX}
 						y={-48}
-						width={innerWidth - overlayX}
+						width={Math.max(0, overlayRight - overlayX)}
 						height={innerHeight + 48}
 						fill="currentColor"
 						opacity="0.06"
@@ -199,9 +203,8 @@
 						class="fill-gray-400 dark:fill-gray-500 pointer-events-none"
 						font-size="10"
 					>
-						<tspan x={innerWidth - 4} y={-26}>Nach-</tspan>
-						<tspan x={innerWidth - 4} dy="12">meldungen</tspan>
-						<tspan x={innerWidth - 4} dy="12">erwartet</tspan>
+						<tspan x={overlayRight - 4} y={-20}>Nachmeldungen</tspan>
+						<tspan x={overlayRight - 4} dy="12">erwartet</tspan>
 					</text>
 				{/if}
 			</svelte:fragment>

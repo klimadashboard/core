@@ -216,8 +216,7 @@
 						class="fill-gray-400 dark:fill-gray-500 pointer-events-none"
 						font-size="10"
 					>
-						<tspan x={innerWidth - 4} y={-26}>Nach-</tspan>
-						<tspan x={innerWidth - 4} dy="12">meldungen</tspan>
+						<tspan x={innerWidth - 4} y={-20}>Nachmeldungen</tspan>
 						<tspan x={innerWidth - 4} dy="12">erwartet</tspan>
 					</text>
 				{/if}
