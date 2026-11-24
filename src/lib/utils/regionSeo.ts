@@ -122,14 +122,7 @@ export function buildRegionIntro(
 		return `${name}${where ? `, ${where},` : ''}${factPart}.${dataPart}`.trim();
 	}
 
-	const facts: string[] = [];
-	if (pop) facts.push(`${formatPopulation(pop)} Einwohner:innen`);
-	if (area) facts.push(`eine Fläche von ${formatArea(area)}`);
-	const factPart = facts.length ? ` hat ${joinList(facts, lang)}` : '';
-	const dataPart = catList
-		? ` Auf dem Klimadashboard findest du aktuelle Daten zu ${catList} für ${name}.`
-		: '';
-	return `${name}${where ? `, ${where},` : ''}${factPart}.${dataPart}`.trim();
+	return 'Auf dem Klimadashboard findest du aktuelle Daten zu Emissionen, Energie, Mobilität, Heizungen, klimatischen sowie wirtschaftlichen Entwicklungen.';
 }
 
 /** Page <title>, e.g. "München – Klimadaten (Stadt in Bayern)". */
