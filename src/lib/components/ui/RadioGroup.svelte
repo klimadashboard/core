@@ -11,10 +11,13 @@
 -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { themedColorVars } from '$lib/utils/themedColor';
 
 	export let label: string;
 	export let value: any = '';
-	export let options: Array<{ value: any; label: string }> = [];
+	/** Optional icon per option (a Tabler icon component), tinted with `color` if given */
+	export let options: Array<{ value: any; label: string; iconComponent?: any; color?: string }> =
+		[];
 	export let hideLabel: boolean = false;
 	export let disabled: boolean = false;
 	export let name: string = `rg-${Math.random().toString(36).slice(2, 8)}`;
@@ -53,7 +56,7 @@
 			{@const id = `${name}-${opt.value}`}
 			<label
 				for={id}
-				class="inline-flex items-center whitespace-nowrap rounded-full font-medium transition-colors duration-200
+				class="inline-flex items-center gap-1 whitespace-nowrap rounded-full font-medium transition-colors duration-200
 					{small ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm'}
 					focus-within:ring-2 focus-within:ring-blue-500
 					{disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
@@ -71,6 +74,17 @@
 					on:change={() => handleChange(opt.value)}
 					class="sr-only"
 				/>
+				{#if opt.iconComponent}
+					<span
+						class="flex items-center {opt.color
+							? 'text-[color:var(--themed-color)] dark:text-[color:var(--themed-color-dark)]'
+							: ''}"
+						style={themedColorVars(opt.color)}
+						aria-hidden="true"
+					>
+						<svelte:component this={opt.iconComponent} size={small ? 14 : 16} />
+					</span>
+				{/if}
 				{opt.label}
 			</label>
 		{/each}

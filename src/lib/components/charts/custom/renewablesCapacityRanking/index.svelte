@@ -3,8 +3,9 @@
 <script lang="ts">
 	import type { ChartData } from '$lib/components/charts/types';
 	import type { Region } from '$lib/utils/getRegion';
-	import { Legend, Tooltip } from '$lib/components/charts/primitives';
+	import { Tooltip } from '$lib/components/charts/primitives';
 	import { Button, RadioGroup, Toggle } from '$lib/components/ui';
+	import { IconSolarPanel, IconWindmill, IconLeaf, IconDroplet } from '@tabler/icons-svelte-runes';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import { grow, stagger } from '$lib/components/charts/primitives/motion';
 	import { formatNumber, formatPower } from '$lib/utils/formatters';
@@ -19,6 +20,14 @@
 	let error: string | null = null;
 	let rows: CapacityRow[] = [];
 	let carrier = 'all';
+
+	/** Tabler icon per carrier in the Energieträger selector */
+	const carrierIcons: Record<string, unknown> = {
+		solar: IconSolarPanel,
+		wind: IconWindmill,
+		biomass: IconLeaf,
+		hydro: IconDroplet
+	};
 	let kind = 'all';
 	let perArea = false;
 	let expanded = false;
@@ -111,7 +120,12 @@
 			bind:value={carrier}
 			options={[
 				{ value: 'all', label: 'Gesamt' },
-				...carriers.map((c) => ({ value: c.key, label: c.label }))
+				...carriers.map((c) => ({
+					value: c.key,
+					label: c.label,
+					iconComponent: carrierIcons[c.key],
+					color: c.color
+				}))
 			]}
 		/>
 		{#if kinds.length > 1}
@@ -123,15 +137,12 @@
 			/>
 		{/if}
 		{#if hasArea}
-			<Toggle label="pro km²" bind:checked={perArea} />
+			<!-- Bottom-aligned and centred on the 34px segmented controls, not on their labels -->
+			<div class="self-end pb-1">
+				<Toggle label="pro km²" bind:checked={perArea} />
+			</div>
 		{/if}
 	</ChartSettings>
-
-	{#if carrier === 'all'}
-		<div class="mb-3">
-			<Legend items={carriers} />
-		</div>
-	{/if}
 
 	<ol
 		bind:clientWidth={width}

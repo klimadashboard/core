@@ -32,6 +32,19 @@ const MEMBER_LAYER: Record<string, 'district' | 'municipality'> = {
 
 type RegionRef = Pick<Region, 'id' | 'layer' | 'code' | 'country'>;
 
+/** Short type suffix for district members, shown on every bar: "Ansbach (LK)", "Fürth (Stadt)" */
+const DISTRICT_SUFFIX: Record<string, string> = {
+	Landkreis: 'LK',
+	'Kreisfreie Stadt': 'Stadt'
+};
+
+function memberName(name: string, layerLabel: string | null | undefined, duplicate: boolean): string {
+	const suffix = layerLabel ? DISTRICT_SUFFIX[layerLabel] : undefined;
+	if (suffix) return `${name} (${suffix})`;
+	// Other members (e.g. municipalities): only disambiguate equal names
+	return duplicate ? withLayerLabel(name, layerLabel) : name;
+}
+
 export interface CapacityRow {
 	code: string;
 	name: string;
@@ -102,8 +115,7 @@ export async function fetchData(
 			const duplicate = names.filter((n) => n === m.name).length > 1;
 			return {
 				code,
-				// "Ansbach" is both a city and a Landkreis
-				name: duplicate ? withLayerLabel(m.name, m.layer_label) : m.name,
+				name: memberName(m.name, m.layer_label, duplicate),
 				kind: m.layer_label ?? '',
 				area: m.area || null,
 				kw,
