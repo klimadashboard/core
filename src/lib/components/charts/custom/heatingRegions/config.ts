@@ -1,6 +1,6 @@
 import getDirectusInstance from '$lib/utils/directus';
 import { withLayerLabel } from '$lib/utils/getRegion';
-import { readItems } from '@directus/sdk';
+import { aggregate, readItems } from '@directus/sdk';
 import type { Region } from '$lib/utils/getRegion';
 import type { ChartData, TableColumn, ChartFetchParams } from '$lib/components/charts/types';
 import { isAggregateRegion } from '$lib/utils/regionAggregation';
@@ -106,7 +106,7 @@ function getChildMunicipalities(
 
 /** Whether census data for this region is summed from its municipalities */
 function isSummedFromMunicipalities(region: RegionWithDistance): boolean {
-	return region.layer === 'district' || isAggregateRegion(region);
+	return region.layer === 'state' || region.layer === 'district' || isAggregateRegion(region);
 }
 
 /** Find parent state for an AT region */
@@ -209,6 +209,40 @@ export function formatMikrozensusPeriod(period: string | null | undefined): stri
 	return `${year - 1}/${year}`;
 }
 
+/** Sum DE census heating counts per category, optionally limited to some municipalities.
+ *  Directus sums server-side; the id list is chunked so each GET URL stays short
+ *  (SEARCH would avoid that but is blocked by CORS in the browser). */
+async function sumCensusByCategory(municipalityIds?: string[]): Promise<HeatingDataPoint[]> {
+	const directus = getDirectusInstance(fetch);
+	const source = { _eq: 'zensus-federal-statistical-office' };
+	const chunks: (string[] | null)[] = [];
+	if (!municipalityIds) chunks.push(null);
+	else for (let i = 0; i < municipalityIds.length; i += 100) chunks.push(municipalityIds.slice(i, i + 100));
+
+	const rows = (
+		await Promise.all(
+			chunks.map((ids) =>
+				directus.request(
+					aggregate('energy_heating_systems', {
+						aggregate: { sum: ['value'] },
+						groupBy: ['category'],
+						query: { filter: ids ? { source, region: { _in: ids } } : { source } }
+					})
+				)
+			)
+		)
+	).flat() as unknown as Array<{ category: string; sum: { value: string | null } }>;
+
+	const sums = new Map<string, number>();
+	for (const r of rows) sums.set(r.category, (sums.get(r.category) ?? 0) + (Number(r.sum.value) || 0));
+	const total = sums.get('total') ?? 0;
+	return [...sums].map(([category, value]) => ({
+		category,
+		value,
+		percentage: total ? (value / total) * 100 : null
+	}));
+}
+
 /** Fetch heating data for a region (DE: census per municipality, AT: mikrozensus per federal state) */
 export async function fetchHeatingData(
 	regionObj: RegionWithDistance | null,
@@ -222,71 +256,13 @@ export async function fetchHeatingData(
 		return { data, dataPeriod };
 	}
 
-	const directus = getDirectusInstance(fetch);
+	// DE: the census covers every municipality, so the country sums the whole source;
+	// states, districts and aggregate regions sum their municipalities
+	if (regionObj.layer === 'country') return { data: await sumCensusByCategory() };
+	if (!isSummedFromMunicipalities(regionObj)) return { data: await sumCensusByCategory([regionObj.id]) };
 
-	// DE: districts and aggregate regions sum their municipalities
-	if (isSummedFromMunicipalities(regionObj)) {
-		const children = getChildMunicipalities(allRegions, regionObj);
-		const muniIds = children.map((c) => c.id);
-
-		if (muniIds.length === 0) return { data: [] };
-
-		// Chunk the id list so the query URL stays short (a Metropolregion has ~700 municipalities)
-		const chunks: string[][] = [];
-		for (let i = 0; i < muniIds.length; i += 100) chunks.push(muniIds.slice(i, i + 100));
-		const rawData = (
-			await Promise.all(
-				chunks.map((ids) =>
-					directus.request(
-						readItems('energy_heating_systems', {
-							filter: {
-								region: { _in: ids },
-								source: { _eq: 'zensus-federal-statistical-office' }
-							},
-							limit: -1
-						})
-					)
-				)
-			)
-		).flat();
-
-		// Sum values per category across municipalities
-		const sums = new Map<string, number>();
-		for (const row of rawData as any[]) {
-			const key = row.category;
-			sums.set(key, (sums.get(key) ?? 0) + (Number(row.value) || 0));
-		}
-
-		const total = sums.get('total') ?? 0;
-		const data = Array.from(sums.entries()).map(([category, value]) => ({
-			category,
-			value,
-			percentage: total ? (value / total) * 100 : null
-		}));
-
-		return {
-			data: data.sort((a, b) => (a.category === 'total' ? -1 : b.category === 'total' ? 1 : 0))
-		};
-	}
-
-	// DE: Default — municipality
-	const rawData = await directus.request(
-		readItems('energy_heating_systems', {
-			filter: {
-				region: { _eq: regionObj.id },
-				source: { _eq: 'zensus-federal-statistical-office' }
-			}
-		})
-	);
-
-	const total = (rawData as any[]).find((d) => d.category === 'total')?.value ?? 0;
-	return {
-		data: (rawData as any[]).map((d) => ({
-			category: d.category,
-			value: d.value,
-			percentage: total ? (d.value / total) * 100 : null
-		}))
-	};
+	const muniIds = getChildMunicipalities(allRegions, regionObj).map((c) => c.id);
+	return { data: muniIds.length ? await sumCensusByCategory(muniIds) : [] };
 }
 
 /** Build region label with aggregation info for districts / AT state-level */
@@ -363,6 +339,35 @@ export function getComparisonRegions(
 			.slice(0, 5);
 	}
 
+	// DE aggregate regions (Metropolregion): its state and Germany first, then the usual set
+	const leading = isAggregateRegion(selectedRegion)
+		? [
+				findMajorityState(selectedRegion, allRegions),
+				allRegions.find((r) => r.layer === 'country' && r.country === selectedRegion.country)
+			].filter((r): r is RegionWithDistance => !!r)
+		: [];
+	return [...leading, ...getDefaultComparisonsDE(selectedRegion, allRegions)];
+}
+
+/** The state most of an aggregate region's municipalities belong to */
+function findMajorityState(
+	region: RegionWithDistance,
+	allRegions: RegionWithDistance[]
+): RegionWithDistance | null {
+	const counts = new Map<string, number>();
+	for (const m of getChildMunicipalities(allRegions, region)) {
+		const stateId = m.parents?.find((p) => p.layer === 'state')?.id;
+		if (stateId) counts.set(stateId, (counts.get(stateId) ?? 0) + 1);
+	}
+	const topId = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
+	return allRegions.find((r) => r.id === topId) ?? null;
+}
+
+/** DE: major cities for large regions, otherwise the nearest same-layer regions */
+function getDefaultComparisonsDE(
+	selectedRegion: RegionWithDistance,
+	allRegions: RegionWithDistance[]
+): RegionWithDistance[] {
 	// DE large cities: show other major DE cities
 	if (
 		selectedRegion.population &&

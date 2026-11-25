@@ -8,6 +8,11 @@
 	import HeatingChart from './Chart.svelte';
 	import ExchangeRateCards from './PerDay.svelte';
 	import RegionComparison from './RegionComparison.svelte';
+	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
+	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { fetchRegion } from '$lib/utils/getRegion';
+	import type { ContextRegion } from '$lib/utils/regionContext';
+	import { hasDrilldown } from '$lib/utils/regionTree';
 	import {
 		fetchHeatingData,
 		buildChartData,
@@ -45,7 +50,7 @@
 		allRegions = regions.filter(
 			(r: any) =>
 				(r.country === 'DE' || r.country === 'AT') &&
-				(r.layer === 'municipality' || r.layer === 'district' || r.layer === 'state')
+				['municipality', 'district', 'state', 'country'].includes(r.layer)
 		) as RegionWithDistance[];
 		regionsLoaded = true;
 	}
@@ -55,8 +60,23 @@
 		loadRegions();
 	}
 
-	// Use region prop directly as selectedRegion (cast to RegionWithDistance)
-	$: selectedRegion = region as RegionWithDistance | null;
+	// Region shown in the chart: the card's region, or a Kreis picked in the RegionDrilldown
+	let switchedRegion: Region | null = null;
+	let switcherFor: string | null = null;
+	$: if (region?.id !== switcherFor) {
+		switcherFor = region?.id ?? null;
+		switchedRegion = null;
+	}
+	$: selectedRegion = (switchedRegion ?? region) as RegionWithDistance | null;
+
+	// Only offer the dropdown where there is something to drill into (e.g. a Metropolregion)
+	let drillable = false;
+	$: hasDrilldown(region, 'districts').then((v) => (drillable = v));
+
+	async function selectRegion(r: ContextRegion) {
+		if (r.id === region?.id) switchedRegion = null;
+		else switchedRegion = (await fetchRegion(r.id)) ?? switchedRegion;
+	}
 
 	// Use SSR snapshot for initial data if available and matching current region
 	$: snapshotRegionId = snapshotData?.meta?.region?.id;
@@ -196,6 +216,14 @@
 {/snippet}
 
 <div class="heating-regions">
+	<!-- Spatial level; outside the loading state so focus stays on the dropdown while data reloads -->
+	{#if !regionLoading && region && drillable}
+		<ChartSettings>
+			<div class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-2">
+				<RegionDrilldown {region} activeId={selectedRegion?.id ?? null} onSelect={selectRegion} depth="districts" />
+			</div>
+		</ChartSettings>
+	{/if}
 
 	{#if loading || regionLoading || !regionsLoaded}
 		<div class="mt-4 space-y-3">
