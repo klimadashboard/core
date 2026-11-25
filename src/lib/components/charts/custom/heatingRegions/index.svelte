@@ -7,6 +7,7 @@
 	import type { ChartData } from '$lib/components/charts/types';
 	import HeatingChart from './Chart.svelte';
 	import ExchangeRateCards from './PerDay.svelte';
+	import ExchangeCard from './ExchangeCard.svelte';
 	import RegionComparison from './RegionComparison.svelte';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
@@ -20,7 +21,6 @@
 		getDataRegion,
 		categories,
 		formatExchangeRate,
-		formatNumber,
 		getTargetYear,
 		type RegionWithDistance,
 		type HeatingDataPoint
@@ -132,88 +132,14 @@
 	$: isAT = selectedRegion?.country === 'AT';
 	$: targetYear = getTargetYear(selectedRegion?.country);
 
-	// Exchange rate cards config
+	// Exchange rate cards (mobile slider)
 	$: gasEntry = data.find((d) => d.category === 'gas');
 	$: oilEntry = data.find((d) => d.category === 'heating oil');
-	$: gasRate = formatExchangeRate(gasEntry?.value ?? 0, selectedRegion?.country);
-	$: oilRate = formatExchangeRate(oilEntry?.value ?? 0, selectedRegion?.country);
-
-	interface CardConfig {
-		color: string;
-		icon: 'flame' | 'leaf';
-		label: string;
-		rate: { value: number; unit: 'day' | 'month' | 'year' };
-	}
-
 	$: exchangeCards = [
-		{ color: '#118BD2', icon: 'flame', label: 'Gasheizungen', rate: gasRate },
-		{ color: '#9C3A03', icon: 'leaf', label: 'Ölheizungen', rate: oilRate }
-	] as CardConfig[];
-
-	function getUnitLabel(unit: 'day' | 'month' | 'year'): string {
-		return page.data?.translations?.[unit] ?? unit;
-	}
+		{ color: '#118BD2', icon: 'flame', label: 'Gasheizungen', rate: formatExchangeRate(gasEntry?.value ?? 0, selectedRegion?.country) },
+		{ color: '#9C3A03', icon: 'drop', label: 'Ölheizungen', rate: formatExchangeRate(oilEntry?.value ?? 0, selectedRegion?.country) }
+	] as const;
 </script>
-
-{#snippet exchangeCard(config: CardConfig)}
-	<div
-		class="rounded-xl p-4 border h-full"
-		style="background-color: {config.color}10; border-color: {config.color}33;"
-	>
-		<div class="flex items-start gap-3">
-			<div
-				class="w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0"
-				style="background-color: {config.color};"
-			>
-				{#if config.icon === 'flame'}
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<path
-							d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"
-						/>
-					</svg>
-				{:else}
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<path
-							d="M2 12a5 5 0 0 0 5 5 8 8 0 0 1 5 2 8 8 0 0 1 5-2 5 5 0 0 0 5-5V7h-5a8 8 0 0 0-5 2 8 8 0 0 0-5-2H2z"
-						/>
-						<path d="M6 11c1.5 0 3 .5 3 2-2 0-3 0-3-2z" />
-						<path d="M18 11c-1.5 0-3 .5-3 2 2 0 3 0 3-2z" />
-					</svg>
-				{/if}
-			</div>
-			<div class="flex-1 min-w-0">
-				<p class="text-4xl font-light tabular-nums" style="color: {config.color};">
-					{formatNumber(config.rate.value)}
-				</p>
-				<p class="text-sm text-gray-700 dark:text-gray-300 mt-1 leading-snug">
-					<strong>{config.label}</strong> müssen pro
-					<strong>{getUnitLabel(config.rate.unit)}</strong>
-					getauscht werden, um bis {targetYear} die Klimaziele einzuhalten.
-				</p>
-			</div>
-		</div>
-	</div>
-{/snippet}
 
 <div class="heating-regions">
 	<!-- Spatial level; outside the loading state so focus stays on the dropdown while data reloads -->
@@ -250,12 +176,15 @@
 			{:else}
 				<!-- Full view: Chart + PerDay cards + RegionComparison -->
 				<!-- Desktop: 2/3 Chart + 1/3 PerDay cards -->
-				<div class="hidden lg:grid lg:grid-cols-3 gap-6 mt-4">
+				<div class="hidden lg:grid lg:grid-cols-3 gap-8 mt-4">
 					<div class="lg:col-span-2">
 						<HeatingChart {data} {categories} />
 					</div>
-					<div class="lg:col-span-1">
-						<ExchangeRateCards {data} country={selectedRegion?.country} layout="stacked" />
+					<!-- Boxes stretch to the height of the rings -->
+					<div class="lg:col-span-1 flex flex-col">
+						<div class="flex-1">
+							<ExchangeRateCards {data} country={selectedRegion?.country} layout="stacked" />
+						</div>
 						<p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
 							{#if isAT}
 								Berechnung basierend auf Mikrozensus-Daten bis zum Zieljahr {targetYear}.
@@ -285,7 +214,7 @@
 							<SplideTrack>
 								{#each exchangeCards as card}
 									<SplideSlide>
-										{@render exchangeCard(card)}
+										<ExchangeCard {...card} {targetYear} />
 									</SplideSlide>
 								{/each}
 							</SplideTrack>
