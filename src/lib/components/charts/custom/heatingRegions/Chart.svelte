@@ -45,6 +45,13 @@
 		return 1 - Math.pow(1 - local, 3);
 	}
 
+	/** "Label (count; share%)" summed over the given entries */
+	function countAndShare(label: string, entries: HeatingDataPoint[]): string {
+		const count = entries.reduce((s, d) => s + d.value, 0);
+		const share = entries.reduce((s, d) => s + (d.percentage ?? 0), 0);
+		return `${label} (${formatNumber(count)}; ${formatNumber(share)}%)`;
+	}
+
 	// Unique gradient ids per chart instance
 	const uid = Math.random().toString(36).slice(2, 8);
 </script>
@@ -98,16 +105,7 @@
 
 {#if processed.other.length > 0}
 	<p class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
-		<span class="font-semibold text-gray-900 dark:text-white"
-			>Sonstige ({formatNumber(processed.other.reduce((s, d) => s + (d.percentage ?? 0), 0))}%):</span
-		>
-		{#each processed.other as datapoint, i}
-			{@const category = getCategoryConfig(datapoint.category)}
-			<span style="color: {category?.color}">
-				{category?.label || datapoint.category} ({formatNumber(datapoint.percentage)}%)
-			</span>
-			{#if i !== processed.other.length - 1},
-			{/if}
-		{/each}
+		<span class="text-gray-900 dark:text-white">{countAndShare('Sonstige', processed.other)}:</span>
+		{processed.other.map((d) => countAndShare(getCategoryConfig(d.category)?.label || d.category, [d])).join(', ')}
 	</p>
 {/if}
