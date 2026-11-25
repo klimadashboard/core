@@ -5,6 +5,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { interpolateRgb } from 'd3-interpolate';
 	import { fade } from 'svelte/transition';
+	import { BASEMAP_GLYPHS } from '$lib/utils/basemap';
 
 	export let selectedRegion;
 	export let selectedPeriod;
@@ -33,7 +34,6 @@
 
 	const dispatch = createEventDispatcher();
 
-	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH'; // <-- replace with your API key
 
 	// Color scale
 	function createColorScale(data) {
@@ -56,7 +56,7 @@
 			canvasContextAttributes: { preserveDrawingBuffer: true },
 			style: {
 				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
+				glyphs: BASEMAP_GLYPHS,
 				sources: {
 					labels: {
 						type: 'vector',

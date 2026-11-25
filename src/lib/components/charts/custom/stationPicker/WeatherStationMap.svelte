@@ -4,7 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { createEventDispatcher } from 'svelte';
 	import { page } from '$app/stores';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions } from '$lib/utils/basemap';
 
 	const dispatch = createEventDispatcher();
 
@@ -15,8 +15,6 @@
 	let mapContainer;
 	let mapLoaded = false;
 
-	let MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH';
-
 	// Initialize the map
 	onMount(() => {
 		map = new maplibregl.Map({
@@ -24,25 +22,15 @@
 			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
-			style: {
-				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
+			...basemapMapOptions('light', {
+				labels: 'none',
 				sources: {
 					labels: {
 						type: 'vector',
 						url: 'https://tiles.klimadashboard.org/data/labels-' + PUBLIC_VERSION + '.json'
 					}
-				},
-				layers: [
-					{
-						id: 'background',
-						type: 'background',
-						paint: {
-							'background-color': 'transparent'
-						}
-					}
-				]
-			},
+				}
+			}),
 			center: PUBLIC_VERSION === 'at' ? [13.5, 47.6] : [10.5, 51.2], // Center AT or DE
 			zoom: PUBLIC_VERSION === 'at' ? 6 : 4.5,
 			minZoom: 4,
@@ -57,22 +45,6 @@
 			map.addSource('outline', {
 				type: 'geojson',
 				data: data.geo
-			});
-
-			map.addSource(
-				'carto-light',
-				cartoRasterSource('lightNoLabels', {
-					attribution:
-						'© <a href="https://carto.com/">CARTO</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-				})
-			);
-
-			map.addLayer({
-				id: 'carto-light-layer',
-				type: 'raster',
-				source: 'carto-light',
-				minzoom: 0,
-				maxzoom: 22
 			});
 
 			map.addLayer({

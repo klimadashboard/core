@@ -8,7 +8,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import Loader from '$lib/components/Loader.svelte';
 	import type { ChartData } from '$lib/components/charts/types';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions, setBasemap } from '$lib/utils/basemap';
 	import {
 		fetchAllTurbines,
 		fetchTurbineDetails,
@@ -174,22 +174,6 @@
 		}
 	}
 
-	function getBasemapStyle(dark: boolean) {
-		return {
-			version: 8,
-			sources: {
-				'carto-basemap': cartoRasterSource(dark ? 'dark' : 'light', { subdomains: ['a', 'b', 'c'] })
-			},
-			layers: [
-				{
-					id: 'carto-basemap',
-					type: 'raster',
-					source: 'carto-basemap'
-				}
-			]
-		};
-	}
-
 	// Approximate bounding box for Germany
 	const GERMANY_BOUNDS: [[number, number], [number, number]] = [
 		[5.87, 47.27],
@@ -238,7 +222,7 @@
 
 		map = new maplibregl.Map({
 			container: mapContainer,
-			style: getBasemapStyle(isDarkMode),
+			...basemapMapOptions(isDarkMode ? 'dark' : 'light'),
 			center: centerCoords,
 			zoom: region || urlRegionId ? 8 : 5,
 			// Keep the WebGL drawing buffer around after each frame is presented.
@@ -284,12 +268,11 @@
 			const nowDark = document.body.classList.contains('dark');
 			if (nowDark !== isDarkMode) {
 				isDarkMode = nowDark;
-				if (map) {
-					map.setStyle(getBasemapStyle(isDarkMode));
-					map.once('styledata', () => {
-						addTurbinesToMap();
-					});
-				}
+				// Keeps the turbine and outline layers
+				if (map)
+					setBasemap(map, isDarkMode ? 'dark' : 'light').catch((e) =>
+						console.error('Basemap:', e)
+					);
 			}
 		});
 		observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });

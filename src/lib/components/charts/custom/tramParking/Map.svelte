@@ -2,7 +2,7 @@
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import * as maplibregl from '$lib/utils/maplibre';
 	import { browser } from '$app/environment';
-	import { cartoRasterTiles } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions, setBasemap } from '$lib/utils/basemap';
 
 	export let incidents = [];
 	export let selectedDistrict = null;
@@ -155,14 +155,9 @@
 		return document.body.classList.contains('dark');
 	}
 
-	function basemapNoLabelsTiles() {
-		const style = isDark() ? 'darkNoLabels' : 'lightNoLabels';
-		return cartoRasterTiles(style, { retina: true });
-	}
-
-	function basemapLabelsTiles() {
-		const style = isDark() ? 'darkLabelsOnly' : 'lightLabelsOnly';
-		return cartoRasterTiles(style, { retina: true });
+	/** @returns {'dark' | 'light'} */
+	function basemapTheme() {
+		return isDark() ? 'dark' : 'light';
 	}
 
 	function createMap() {
@@ -172,26 +167,8 @@
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
 			interactive: true,
-			style: {
-				version: 8,
-				glyphs: 'https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=C9NLXahOLRDRQl9OB6yH',
-				sources: {
-					'basemap-base': {
-						type: 'raster',
-						tiles: basemapNoLabelsTiles(),
-						tileSize: 512,
-						maxzoom: 20
-					}
-				},
-				layers: [
-					{
-						id: 'basemap-base',
-						type: 'raster',
-						source: 'basemap-base',
-						paint: { 'raster-opacity': 0.55 }
-					}
-				]
-			},
+			// Faded basemap with its labels below the data layers – context without obscuring lines
+			...basemapMapOptions(basemapTheme(), { opacity: 0.55 }),
 			center: VIENNA_CENTER,
 			zoom: VIENNA_ZOOM,
 			minZoom: 10,
@@ -206,33 +183,17 @@
 			addLayers();
 		});
 
+		let theme = basemapTheme();
 		const observer = new MutationObserver(() => {
-			if (!map) return;
-			const base = map.getSource('basemap-base');
-			if (base) base.setTiles(basemapNoLabelsTiles());
-			const labels = map.getSource('basemap-labels');
-			if (labels) labels.setTiles(basemapLabelsTiles());
+			if (!map || basemapTheme() === theme) return;
+			theme = basemapTheme();
+			setBasemap(map, theme).catch((e) => console.error('Basemap:', e));
 		});
 		observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 	}
 
 	function addLayers() {
 		if (!map || !mapLoaded) return;
-
-		// Labels layer (below data layers — provides context without obscuring lines)
-		map.addSource('basemap-labels', {
-			type: 'raster',
-			tiles: basemapLabelsTiles(),
-			tileSize: 512,
-			maxzoom: 20
-		});
-		map.addLayer({
-			id: 'basemap-labels',
-			type: 'raster',
-			source: 'basemap-labels',
-			minzoom: 13,
-			paint: { 'raster-opacity': 0.5 }
-		});
 
 		// Districts layer
 		if (districts) {

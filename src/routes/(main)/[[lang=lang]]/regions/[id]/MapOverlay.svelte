@@ -10,7 +10,7 @@
 	import MapSolar from './maps/MapSolar.svelte';
 	import MapWind from './maps/MapWind.svelte';
 	import MapCarTypes from './maps/MapCarTypes.svelte';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions, setBasemap } from '$lib/utils/basemap';
 
 	export let regionId;
 	export let regionName;
@@ -126,19 +126,14 @@
 
 		map = new maplibregl.Map({
 			container: mapContainer,
-			style: {
-				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=C9NLXahOLRDRQl9OB6yH`,
+			...basemapMapOptions(isDarkMode ? 'dark' : 'colorful', {
 				sources: {
 					labels: {
 						type: 'vector',
 						url: 'https://tiles.klimadashboard.org/data/labels-' + PUBLIC_VERSION + '.json'
 					}
-				},
-				layers: [
-					{ id: 'background', type: 'background', paint: { 'background-color': 'transparent' } }
-				]
-			},
+				}
+			}),
 			center,
 			zoom,
 			minZoom: zoom - 1,
@@ -148,19 +143,6 @@
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
-			// Add CARTO basemap
-			map.addSource(
-				'carto-basemap',
-				cartoRasterSource(isDarkMode ? 'dark' : 'voyager', { maxzoom: 20 })
-			);
-
-			map.addLayer({
-				id: 'carto-basemap',
-				type: 'raster',
-				source: 'carto-basemap',
-				paint: { 'raster-opacity': 1 }
-			});
-
 			// Add city labels layer
 			map.addLayer({
 				id: 'city-labels',
@@ -210,40 +192,13 @@
 	function updateBasemap() {
 		if (!map) return;
 
-		// Update the source tiles - keep the source, just update tiles
-		const source = map.getSource('carto-basemap');
-		if (source && source.type === 'raster') {
-			// Remove and re-add the layer with new tiles
-			if (map.getLayer('carto-basemap')) {
-				map.removeLayer('carto-basemap');
-			}
-			map.removeSource('carto-basemap');
-
-			map.addSource(
-				'carto-basemap',
-				cartoRasterSource(isDarkMode ? 'dark' : 'voyager', { maxzoom: 20 })
-			);
-
-			// Get the first layer id to insert before (should be city-labels or first data layer)
-			const firstLayerId = map.getStyle().layers[0]?.id;
-
-			// Re-add the layer at the very bottom (before all other layers)
-			map.addLayer(
-				{
-					id: 'carto-basemap',
-					type: 'raster',
-					source: 'carto-basemap',
-					paint: { 'raster-opacity': 1 }
-				},
-				firstLayerId
-			);
-		}
-
-		// Update label colors
+		// Update label colors (before the swap, which keeps own layers as they are)
 		if (map.getLayer('city-labels')) {
 			map.setPaintProperty('city-labels', 'text-color', isDarkMode ? '#fff' : '#000');
 			map.setPaintProperty('city-labels', 'text-halo-color', isDarkMode ? '#000' : '#fff');
 		}
+
+		setBasemap(map, isDarkMode ? 'dark' : 'colorful').catch((e) => console.error('Basemap:', e));
 	}
 
 	function handleClose() {

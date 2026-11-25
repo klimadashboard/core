@@ -5,7 +5,7 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { fetchRegion } from '$lib/utils/getRegion';
 	import type { Region } from '$lib/utils/getRegion';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions } from '$lib/utils/basemap';
 
 	// Props
 	export let regionId: string | null = null;
@@ -165,19 +165,7 @@
 			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
-			style: {
-				version: 8,
-				sources: {
-					'carto-light': cartoRasterSource('light', { subdomains: ['a', 'b', 'c'] })
-				},
-				layers: [
-					{
-						id: 'carto-light',
-						type: 'raster',
-						source: 'carto-light'
-					}
-				]
-			},
+			...basemapMapOptions('light'),
 			center: centerCoords,
 			zoom: 9
 		});

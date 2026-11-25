@@ -9,7 +9,7 @@
 	import type { GeoJSONFeature, GeoJSONSource, LngLatLike } from 'maplibre-gl';
 	import { page } from '$app/state';
 	import Switch from '$lib/components/Switch.svelte';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions } from '$lib/utils/basemap';
 
 	export let selection;
 
@@ -49,10 +49,8 @@
 			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
-			style: {
-				version: 8,
+			...basemapMapOptions('light', {
 				sources: {
-					carto: cartoRasterSource('light', { attribution: '© OpenStreetMap contributors © CARTO' }),
 					climate: {
 						type: 'vector',
 						tiles: ['https://tiles.klimadashboard.org/data/indicators_all/{z}/{x}/{y}.pbf'],
@@ -68,13 +66,6 @@
 					}
 				},
 				layers: [
-					{
-						id: 'carto-basemap',
-						type: 'raster',
-						source: 'carto',
-						minzoom: 0,
-						maxzoom: 22
-					},
 					{
 						id: 'climate-layer',
 						type: 'fill',
@@ -122,7 +113,7 @@
 						}
 					}
 				]
-			},
+			}),
 			center: [13.3, 47.5],
 			zoom: 6
 		});

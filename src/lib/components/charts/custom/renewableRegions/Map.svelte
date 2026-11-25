@@ -7,7 +7,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import Loader from '$lib/components/Loader.svelte';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions, setBasemapOpacity } from '$lib/utils/basemap';
 
 	let layers = [
 		{
@@ -195,19 +195,17 @@
 			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
-			style: {
-				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=C9NLXahOLRDRQl9OB6yH`,
+			// Basemap only from zoom 9, faded in on zoom (own city labels end at zoom 9)
+			...basemapMapOptions('colorful', {
+				opacity: 0,
+				minzoom: 9,
 				sources: {
 					labels: {
 						type: 'vector',
 						url: 'https://tiles.klimadashboard.org/data/labels-' + PUBLIC_VERSION + '.json'
 					}
-				},
-				layers: [
-					{ id: 'background', type: 'background', paint: { 'background-color': 'transparent' } }
-				]
-			},
+				}
+			}),
 			center,
 			zoom,
 			minZoom: zoom,
@@ -219,19 +217,6 @@
 
 		map.on('load', () => {
 			installRegionSourceAndLayers();
-
-			map.addSource('carto-voyager', cartoRasterSource('voyager', { maxzoom: 20 }));
-
-			map.addLayer(
-				{
-					id: 'carto-voyager',
-					type: 'raster',
-					source: 'carto-voyager',
-					paint: { 'raster-opacity': 0 },
-					minzoom: 9
-				},
-				map.getLayer(fillLayerId(selectedLayer)) ? fillLayerId(selectedLayer) : undefined
-			);
 
 			map.addLayer({
 				id: 'city-labels',
@@ -252,12 +237,13 @@
 			mapReady = true;
 		});
 
+		let basemapOpacity = 0;
 		map.on('zoom', () => {
 			zoomLevel = map.getZoom();
 			const fadeTarget = zoomLevel > 9 ? 1 : 0;
-			if (map.getLayer('carto-voyager')) {
-				map.setPaintProperty('carto-voyager', 'raster-opacity', fadeTarget);
-				map.setPaintProperty('carto-voyager', 'raster-fade-duration', 300);
+			if (mapReady && fadeTarget !== basemapOpacity) {
+				basemapOpacity = fadeTarget;
+				setBasemapOpacity(map, fadeTarget);
 			}
 		});
 	});

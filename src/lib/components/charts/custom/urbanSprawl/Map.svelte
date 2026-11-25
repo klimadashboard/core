@@ -4,7 +4,7 @@
 	import { scaleLinear } from 'd3-scale';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { fade } from 'svelte/transition';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions } from '$lib/utils/basemap';
 
 	export let data; // raw data from Directus
 	export let regions; // geo features
@@ -45,23 +45,17 @@
 			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
-			style: {
-				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=C9NLXahOLRDRQl9OB6yH`,
+			// Own city labels on top, so the basemap's labels are left out
+			...basemapMapOptions('colorful', {
+				labels: 'none',
+				opacity: 0.5,
 				sources: {
 					labels: {
 						type: 'vector',
 						url: `https://tiles.klimadashboard.org/data/labels-${PUBLIC_VERSION}.json`
 					}
-				},
-				layers: [
-					{
-						id: 'background',
-						type: 'background',
-						paint: { 'background-color': 'transparent' }
-					}
-				]
-			},
+				}
+			}),
 			center,
 			zoom
 		});
@@ -79,20 +73,11 @@
 
 			const REGION_LAYER = 'districts';
 
-			map.addSource('carto-voyager', cartoRasterSource('voyager', { maxzoom: 20 }));
-
 			const matchExpr = ['match', ['get', 'RS']];
 			transformedData.forEach((d) => {
 				matchExpr.push(d.region, colorScale(d.value));
 			});
 			matchExpr.push('#ccc');
-
-			map.addLayer({
-				id: 'carto-voyager',
-				type: 'raster',
-				source: 'carto-voyager',
-				paint: { 'raster-opacity': 0.5 }
-			});
 
 			map.addLayer({
 				id: 'regions-fill',

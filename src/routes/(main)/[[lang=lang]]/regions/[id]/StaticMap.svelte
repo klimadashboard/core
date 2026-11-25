@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import * as maplibregl from '$lib/utils/maplibre';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions, setBasemap } from '$lib/utils/basemap';
 
 	export let center;
 	export let zoom;
@@ -10,24 +10,6 @@
 	let mapContainer;
 	let map;
 	let observer;
-
-	function getBaseMapStyle(isDark) {
-		return {
-			version: 8,
-			sources: {
-				carto: cartoRasterSource(isDark ? 'dark' : 'light', {
-					attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
-				})
-			},
-			layers: [
-				{
-					id: 'carto',
-					type: 'raster',
-					source: 'carto'
-				}
-			]
-		};
-	}
 
 	function addOutlineLayer(isDark) {
 		if (!outline) return;
@@ -90,7 +72,7 @@
 		map = new maplibregl.Map({
 			container: mapContainer,
 			interactive: false,
-			style: getBaseMapStyle(isDark),
+			...basemapMapOptions(isDark ? 'dark' : 'light'),
 			center,
 			zoom,
 			attributionControl: false
@@ -101,19 +83,15 @@
 			fitToOutline();
 		});
 
+		let shownDark = isDark;
 		observer = new MutationObserver(() => {
 			const nowDark = document.body.classList.contains('dark');
-			const currentTiles = map.getStyle().sources.carto.tiles?.[0];
-
-			const isCurrentlyDark = currentTiles?.includes('dark_all');
-
-			if (nowDark !== isCurrentlyDark) {
-				map.setStyle(getBaseMapStyle(nowDark));
-				// Re-add outline layer after style change
-				map.once('style.load', () => {
-					addOutlineLayer(nowDark);
-				});
-			}
+			if (nowDark === shownDark) return;
+			shownDark = nowDark;
+			// Keeps the outline layer; only its colour follows the theme
+			if (map.getLayer('region-outline-stroke'))
+				map.setPaintProperty('region-outline-stroke', 'line-color', nowDark ? '#ffffff' : '#000000');
+			setBasemap(map, nowDark ? 'dark' : 'light').catch((e) => console.error('Basemap:', e));
 		});
 
 		observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });

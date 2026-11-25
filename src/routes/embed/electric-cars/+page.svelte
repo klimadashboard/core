@@ -5,6 +5,7 @@
 	import { interpolateRgb } from 'd3-interpolate';
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import 'maplibre-gl/dist/maplibre-gl.css';
+	import { BASEMAP_GLYPHS } from '$lib/utils/basemap';
 
 	export let data;
 
@@ -21,7 +22,6 @@
 	let map;
 	let tooltipEl;
 
-	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH';
 
 	const shareByRegion = {};
 	const shareValues = [];
@@ -58,7 +58,7 @@
 			container: mapContainer,
 			style: {
 				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
+				glyphs: BASEMAP_GLYPHS,
 				sources: {
 					labels: {
 						type: 'vector',

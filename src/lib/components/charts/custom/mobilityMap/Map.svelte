@@ -5,7 +5,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import { buildTileOutlines } from './mapUtils';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions } from '$lib/utils/basemap';
 
 	export let selectedRegion;
 	export let selectedDate;
@@ -33,8 +33,6 @@
 	// source (and the auto-selected tile) right after the initial load.
 	let renderedDate = null;
 	const minStopsZoom = 12;
-
-	const MAPTILER_KEY = 'C9NLXahOLRDRQl9OB6yH';
 
 	const clearSelectedStates = () => {
 		selectedTiles.forEach((tile) => {
@@ -187,20 +185,14 @@
 			// Keep the WebGL drawing buffer readable so the PNG/JPEG card export
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
-			style: {
-				version: 8,
-				glyphs: `https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=${MAPTILER_KEY}`,
+			...basemapMapOptions('light', {
 				sources: {
-					carto: cartoRasterSource('light', {
-						attribution: '© OpenStreetMap contributors © CARTO'
-					}),
 					labels: {
 						type: 'vector',
 						url: `https://tiles.klimadashboard.org/data/labels-${PUBLIC_VERSION}.json`
 					}
-				},
-				layers: [{ id: 'carto-basemap', type: 'raster', source: 'carto', minzoom: 0, maxzoom: 22 }]
-			},
+				}
+			}),
 			center: [13.3, 47.5],
 			zoom: 7,
 			minZoom: 6,

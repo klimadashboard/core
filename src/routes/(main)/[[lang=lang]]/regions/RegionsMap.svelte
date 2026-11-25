@@ -4,7 +4,7 @@
 	import { PUBLIC_VERSION } from '$env/static/public';
 	import { page } from '$app/state';
 	import formatNumber from '$lib/stores/formatNumber';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions, setBasemap } from '$lib/utils/basemap';
 
 	let map;
 	let hoveredCode = '';
@@ -18,12 +18,14 @@
 
 	const regionInfoMap = new Map(regions.filter((r) => r.code).map((r) => [String(r.code), r]));
 
-	function getBaseMapStyle(isDark: boolean) {
-		return {
-			version: 8,
-			glyphs: 'https://data.klimadashboard.org/fonts/{fontstack}/{range}.pbf',
+	function getMapStyle(isDark: boolean) {
+		return basemapMapOptions(isDark ? 'dark' : 'light', {
+			// Our glyph server only has Barlow, which the basemap labels then use as well
+			fonts: {
+				glyphs: 'https://data.klimadashboard.org/fonts/{fontstack}/{range}.pbf',
+				textFont: ['Barlow-Regular']
+			},
 			sources: {
-				carto: cartoRasterSource(isDark ? 'dark' : 'light'),
 				municipalities: {
 					type: 'vector',
 					tiles: [
@@ -45,15 +47,8 @@
 							}))
 					}
 				}
-			},
-			layers: [
-				{
-					id: 'carto-basemap',
-					type: 'raster',
-					source: 'carto'
-				}
-			]
-		};
+			}
+		});
 	}
 
 	onMount(async () => {
@@ -77,7 +72,7 @@
 
 		map = new maplibregl.Map({
 			container: 'map',
-			style: getBaseMapStyle(isDark),
+			...getMapStyle(isDark),
 			center,
 			zoom: defaultView[PUBLIC_VERSION].zoom,
 			minZoom: 4.5,
@@ -86,13 +81,12 @@
 
 		map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
+		let shownDark = isDark;
 		const observer = new MutationObserver(() => {
 			const nowDark = document.body.classList.contains('dark');
-			const currentTiles = map.getStyle().sources.carto.tiles?.[0];
-			const isCurrentlyDark = currentTiles?.includes('dark_all');
-
-			if (nowDark !== isCurrentlyDark) {
-				map.setStyle(getBaseMapStyle(nowDark));
+			if (nowDark !== shownDark) {
+				shownDark = nowDark;
+				setBasemap(map, nowDark ? 'dark' : 'light').catch((e) => console.error('Basemap:', e));
 			}
 		});
 

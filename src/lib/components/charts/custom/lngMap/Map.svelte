@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import * as maplibregl from '$lib/utils/maplibre';
 	import { browser } from '$app/environment';
-	import { cartoRasterSource } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions } from '$lib/utils/basemap';
 
 	export let data;
 
@@ -73,20 +73,7 @@
 			// (snapdom -> canvas.toDataURL in Card.svelte) captures the map, not a blank image.
 			canvasContextAttributes: { preserveDrawingBuffer: true },
 			interactive: true,
-			style: {
-				version: 8,
-				sources: {
-					'carto-basemap': cartoRasterSource('voyager', { maxzoom: 20 })
-				},
-				layers: [
-					{
-						id: 'carto-basemap',
-						type: 'raster',
-						source: 'carto-basemap',
-						paint: { 'raster-opacity': 1 }
-					}
-				]
-			},
+			...basemapMapOptions('colorful'),
 			center: [10.454, 54.368],
 			zoom: 6,
 			maxZoom: 9,

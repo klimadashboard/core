@@ -7,7 +7,7 @@
 	import MapCarTypes from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapCarTypes.svelte';
 	import MapSolar from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapSolar.svelte';
 	import MapWind from '../../../(main)/[[lang=lang]]/regions/[id]/maps/MapWind.svelte';
-	import { cartoGlStyleUrl } from '$lib/utils/cartoBasemap';
+	import { basemapMapOptions, setBasemap } from '$lib/utils/basemap';
 
 	// Get layer ID from URL params
 	$: layerId = $page.params.layerId;
@@ -43,7 +43,9 @@
 		const observer = new MutationObserver((mutations) => {
 			for (const mutation of mutations) {
 				if (mutation.attributeName === 'class') {
-					isDarkMode = document.body.classList.contains('dark');
+					const nowDark = document.body.classList.contains('dark');
+					if (nowDark === isDarkMode) continue;
+					isDarkMode = nowDark;
 					updateBasemap();
 				}
 			}
@@ -63,11 +65,9 @@
 	});
 
 	function initMap() {
-		const basemapStyle = cartoGlStyleUrl(isDarkMode ? 'darkMatter' : 'voyager');
-
 		map = new maplibregl.Map({
 			container: mapContainer,
-			style: basemapStyle,
+			...basemapMapOptions(isDarkMode ? 'dark' : 'colorful'),
 			center: [lng, lat],
 			zoom: zoom,
 			attributionControl: false
@@ -89,11 +89,8 @@
 
 	function updateBasemap() {
 		if (!map) return;
-		const basemapStyle = cartoGlStyleUrl(isDarkMode ? 'darkMatter' : 'voyager');
-		map.setStyle(basemapStyle);
-		map.once('style.load', () => {
-			mapReady = true;
-		});
+		// Keeps the layer component's sources and layers
+		setBasemap(map, isDarkMode ? 'dark' : 'colorful').catch((e) => console.error('Basemap:', e));
 	}
 
 	function reportHeight() {
