@@ -1,83 +1,37 @@
-<script context="module" lang="ts">
-	function clickOutside(node: HTMLElement, handler: (event: MouseEvent) => void) {
-		const handleClick = (event: MouseEvent) => {
-			if (node && !node.contains(event.target as Node) && !event.defaultPrevented) {
-				handler(event);
-			}
-		};
-		document.addEventListener('click', handleClick, true);
-		return { destroy() { document.removeEventListener('click', handleClick, true); } };
-	}
-</script>
-
 <script lang="ts">
 	import { Chart, AxisX, AxisY, Line, Area, Tooltip, Legend } from '$lib/components/charts/primitives';
+	import { RadioGroup, Toggle } from '$lib/components/ui';
 	import { formatNumber } from '$lib/utils/formatters';
 	import { readItems } from '@directus/sdk';
 	import getDirectusInstance from '$lib/utils/directus';
+	import { PUBLIC_VERSION } from '$env/static/public';
 	import { onMount } from 'svelte';
-	import {
-		transformDataForChart,
-		type LineChartData,
-		type MobilityRow,
-		type Country
-	} from './transformData';
-	import { FOSSIL_COLOR } from './constants';
+	import CountryPicker from './CountryPicker.svelte';
+	import { pivotByYear, latestPoint, type MobilityRow, type Country, type YearRow } from './transformData';
+	import { HOME_COLOR, FOSSIL_COLOR, COMPARE_STYLES, MAX_COMPARE, EU_TARGET } from './constants';
+	import type { ChartData } from '../../types';
+
+	export let chart: any = undefined;
+	export let region: any = null;
+	export let onChartData: ((data: ChartData | null) => void) | undefined = undefined;
+	chart;
+	region; // country comparison, not region-specific
+
+	const homeId = /^[a-z]{2}$/i.test(PUBLIC_VERSION ?? '') ? PUBLIC_VERSION.toUpperCase() : 'DE';
 
 	let loading = true;
 	let error: Error | null = null;
-	let lineChartData: LineChartData = { chartData: [], keys: [], labels: [], colors: [] };
-	let compareCountries = false;
-	let currentCountry = 'DE';
-	let availableCountries: { id: string; name: string | null | undefined; selected: boolean }[] = [];
-	let data: MobilityRow[] = [];
-	let countries: Country[] = [];
-	let selectedCountries: string[] = [];
-	let isDropdownOpen = false;
+	let rawRows: MobilityRow[] = [];
+	let countryNames: Record<string, string> = {};
+	let options: { id: string; name: string }[] = [];
 
-	function getCountryFromDomain(): string {
-		const hostname = window.location.hostname;
-		if (hostname.includes('.at')) return 'AT';
-		if (hostname.includes('.de')) return 'DE';
-		return 'DE';
-	}
-
-	$: defaultCountries = compareCountries ? [currentCountry, 'SE', 'FR', 'PL'] : [currentCountry];
-
-	function updateChartData() {
-		if (!data?.length || !countries?.length) return;
-		selectedCountries = availableCountries.filter((c) => c.selected).map((c) => c.id);
-		lineChartData = transformDataForChart(
-			data.filter((item) => selectedCountries.includes(item.region ?? '')),
-			countries,
-			currentCountry
-		);
-		if (selectedCountries.length === 1) {
-			const key = selectedCountries[0];
-			const chartDataWithFossil = lineChartData.chartData.map((d) => ({
-				...d,
-				fossil: Math.max(0, 100 - (d[key] ?? 0))
-			}));
-			lineChartData = {
-				chartData: chartDataWithFossil,
-				keys: [...lineChartData.keys, 'fossil'],
-				labels: ['Erneuerbar', 'Fossil'],
-				colors: [...lineChartData.colors, FOSSIL_COLOR]
-			};
-		}
-	}
-
-	function toggleCountry(id: string) {
-		const idx = availableCountries.findIndex((c) => c.id === id);
-		if (idx !== -1) {
-			availableCountries[idx].selected = !availableCountries[idx].selected;
-			availableCountries = [...availableCountries];
-			updateChartData();
-		}
-	}
+	// UI state
+	let view: 'share' | 'values' = 'share';
+	let selected: string[] = []; // comparison countries (home country is always shown)
+	let showTarget = false; // EU target 2030 with an indicative path from the latest value
+	let clientWidth = 0;
 
 	onMount(async () => {
-		currentCountry = getCountryFromDomain();
 		try {
 			const directus = getDirectusInstance();
 			const [mobilityData, countriesData] = await Promise.all([
@@ -90,13 +44,15 @@
 				),
 				directus.request(readItems('countries', { fields: ['id', 'name_de'], limit: -1 }))
 			]);
-			data = mobilityData as MobilityRow[];
-			countries = countriesData as Country[];
-			availableCountries = countries
-				.filter((c) => data.some((item) => item.region === c.id))
-				.map((c) => ({ id: c.id, name: c.name_de, selected: defaultCountries.includes(c.id) }))
-				.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
-			updateChartData();
+			rawRows = mobilityData as MobilityRow[];
+			const withData = new Set(rawRows.map((r) => r.region));
+			for (const c of countriesData as Country[]) {
+				if (withData.has(c.id)) countryNames[c.id] = c.name_de ?? c.id;
+			}
+			options = Object.entries(countryNames)
+				.filter(([id]) => id !== homeId)
+				.map(([id, name]) => ({ id, name }))
+				.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 		} catch (e) {
 			error = e as Error;
 		} finally {
@@ -104,182 +60,337 @@
 		}
 	});
 
-	$: showAreas = lineChartData.keys.includes('fossil');
-	$: legendItems = lineChartData.keys.map((k, i) => ({
-		key: k,
-		label: lineChartData.labels[i] ?? k,
-		color: lineChartData.colors[i]
-	}));
-	$: chartData = lineChartData.chartData.map((d, i) => ({ ...d, _x: i }));
+	// Stable style per comparison country: keeps its colour/dash while others are added or removed
+	let slots: Record<string, number> = {};
+	$: {
+		const next: Record<string, number> = {};
+		const used = new Set<number>();
+		for (const id of selected) {
+			if (slots[id] != null) {
+				next[id] = slots[id];
+				used.add(slots[id]);
+			}
+		}
+		for (const id of selected) {
+			if (next[id] == null) {
+				let i = 0;
+				while (used.has(i)) i++;
+				next[id] = i;
+				used.add(i);
+			}
+		}
+		slots = next;
+	}
+	$: styleFor = (id: string) => COMPARE_STYLES[(slots[id] ?? 0) % COMPARE_STYLES.length];
+
+	$: series = [
+		{ id: homeId, name: countryNames[homeId] ?? homeId, color: HOME_COLOR, dash: null as string | null, width: 3.5 },
+		...selected.map((id) => ({ id, name: countryNames[id] ?? id, ...styleFor(id), width: 2 }))
+	];
+	$: seriesIds = series.map((s) => s.id);
+	$: rows = pivotByYear(rawRows, seriesIds).map((r) => ({ ...r, _top: 100 })) as (YearRow & { _top: number })[];
+
+	// Single country in 100 % view: renewable vs. fossil as stacked areas
+	$: stacked = view === 'share' && selected.length === 0;
+
+	$: maxValue = Math.max(0, ...rows.flatMap((r) => seriesIds.map((id) => r[id] ?? 0)));
+	// values view: keep the EU target visible when it is shown
+	$: yMax =
+		view === 'share' ? 100 : Math.max(5, Math.ceil((Math.max(maxValue, showTarget ? EU_TARGET.value : 0) * 1.1) / 5) * 5);
+
+	// x axis: always label the latest data year; with the target shown, extend the axis to the target year
+	$: lastDataYear = rows.at(-1)?.year ?? null;
+	$: chartRows =
+		showTarget && lastDataYear != null && lastDataYear < EU_TARGET.year
+			? [
+					...rows,
+					...Array.from({ length: EU_TARGET.year - lastDataYear }, (_, i) => {
+						const empty: Record<string, number | null> = { year: lastDataYear + i + 1, _top: null };
+						for (const id of seriesIds) empty[id] = null;
+						return empty;
+					})
+				]
+			: rows;
+	$: xTicks = [lastDataYear, ...(showTarget ? [EU_TARGET.year] : [])].filter((y): y is number => y != null);
+
+	// Responsive: end-of-line labels need room on the right
+	$: narrow = clientWidth > 0 && clientWidth < 500;
+	$: showEndLabels = !narrow && !stacked;
+	$: margin = {
+		top: 15,
+		right: showEndLabels ? 120 : narrow ? 10 : 20,
+		bottom: 35,
+		left: narrow ? 35 : 45
+	};
+
+	$: homeLatest = latestPoint(rows, homeId);
+
+	// ---------- EU countries ahead of the home country (placeholders for the CMS text) ----------
+	// {{countriesAhead}}           "Schweden, Finnland und die Niederlande"  (the top 3, highest first)
+	// {{countriesAheadMoreCount}}  "2" if more than 3 countries are ahead, otherwise empty
+	// {{countriesAheadCount}}      "3"   all EU countries ahead
+	// {{euAverage}}                "11,2"  EU-27 average in the same year
+	// e.g. "… hatten {{latestYear}} {{countriesAhead}}{{#if countriesAheadMoreCount}} und {{countriesAheadMoreCount}} weitere{{/if}}
+	//       einen höheren Anteil als Österreich."
+	const EU_MEMBERS = new Set([
+		'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'EL', 'GR', 'ES', 'FI', 'FR', 'HR', 'HU', 'IE', 'IT',
+		'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'
+	]);
+	// names that need an article in a sentence ("… und die Niederlande")
+	const WITH_ARTICLE: Record<string, string> = {
+		Niederlande: 'die Niederlande',
+		Slowakei: 'die Slowakei',
+		'Tschechische Republik': 'die Tschechische Republik'
+	};
+	const joinNames = (names: string[]) =>
+		names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} und ${names.at(-1)}`;
+	$: ahead = (() => {
+		if (!homeLatest) return [];
+		const year = String(homeLatest.year);
+		return rawRows
+			.filter((r) => String(r.period) === year && EU_MEMBERS.has(r.region) && r.region !== homeId)
+			.filter((r) => r.value != null && Number(r.value) > homeLatest.value)
+			.sort((a, b) => Number(b.value) - Number(a.value))
+			.map((r) => countryNames[r.region] ?? r.region);
+	})();
+	$: euAverageRow = homeLatest
+		? rawRows.find((r) => String(r.period) === String(homeLatest.year) && (r.region === 'EU27_2020' || r.region === 'EU'))
+		: undefined;
+	$: aheadPlaceholders = {
+		countriesAhead: joinNames(ahead.slice(0, 3).map((n) => WITH_ARTICLE[n] ?? n)),
+		countriesAheadMoreCount: ahead.length > 3 ? String(ahead.length - 3) : '',
+		countriesAheadCount: String(ahead.length),
+		euAverage: euAverageRow?.value != null ? formatNumber(Number(euAverageRow.value), 1) : ''
+	};
+	// indicative straight path from the latest value of the home country to the EU target
+	$: targetPath =
+		showTarget && homeLatest
+			? [
+					{ year: homeLatest.year, v: homeLatest.value },
+					{ year: EU_TARGET.year, v: EU_TARGET.value }
+				]
+			: [];
+
+	function endLabels(yScale: (v: number) => number) {
+		const labels = series
+			.map((s) => {
+				const p = latestPoint(rows, s.id);
+				return p ? { ...s, year: p.year, value: p.value, y: yScale(p.value) } : null;
+			})
+			.filter((l): l is NonNullable<typeof l> => l !== null)
+			.sort((a, b) => a.y - b.y);
+		// push overlapping labels apart (min. 14 px)
+		for (let i = 1; i < labels.length; i++) {
+			if (labels[i].y - labels[i - 1].y < 14) labels[i].y = labels[i - 1].y + 14;
+		}
+		return labels;
+	}
+
+	const fmt = (v: number | null | undefined) => (v == null ? '–' : `${formatNumber(v, 1)} %`);
+
+	// card: table of the shown countries, placeholders for the CMS text, legal basis of the target
+	$: if (rows.length && onChartData) {
+		const cell = (v: any) => (typeof v === 'number' ? formatNumber(v, 1) : '–');
+		onChartData({
+			raw: rows,
+			table: {
+				columns: [
+					{ key: 'year', label: 'Jahr', align: 'left' },
+					...series.map((s) => ({ key: s.id, label: `${s.name} (%)`, align: 'right' as const, format: cell }))
+				],
+				rows,
+				filename: 'erneuerbare_im_verkehr'
+			},
+			placeholders: {
+				latestYear: homeLatest ? String(homeLatest.year) : '',
+				latestValue: homeLatest ? formatNumber(homeLatest.value, 1) : '',
+				target: String(EU_TARGET.value),
+				...aheadPlaceholders
+			},
+			meta: {
+				source: 'Eurostat SHARES',
+				note: `EU-Ziel: mindestens ${EU_TARGET.value} % erneuerbare Energie im Verkehr bis ${EU_TARGET.year} – ${EU_TARGET.legalBasis}.`
+			}
+		});
+	}
 </script>
 
-<div class="w-full p-4">
+<div class="w-full" bind:clientWidth>
 	{#if loading}
 		<div class="h-[400px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
 	{:else if error}
 		<div class="h-[400px] flex items-center justify-center text-red-500">
-			Error loading chart data: {error.message}
+			Fehler beim Laden der Daten: {error.message}
 		</div>
-	{:else if data?.length}
-		<div class="flex flex-col gap-4">
-			<!-- Controls -->
-			<div class="flex flex-col sm:flex-row gap-2 items-center justify-between relative">
-				<label class="flex items-center gap-2 cursor-pointer py-1.5">
-					<input
-						type="checkbox"
-						class="cursor-pointer"
-						bind:checked={compareCountries}
-						on:change={() => {
-							availableCountries = availableCountries.map((c) => ({
-								...c,
-								selected: defaultCountries.includes(c.id)
-							}));
-							updateChartData();
-						}}
-					/>
-					<span>Mit anderen Ländern vergleichen</span>
-				</label>
-
-				{#if compareCountries}
-					<div class="flex items-center gap-2 relative">
-						<span class="text-sm text-gray-600">
-							{selectedCountries.length} von {availableCountries.length} ausgewählt
-						</span>
-						<button
-							id="dropdown-button"
-							class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-2 border border-gray-300"
-							on:click={() => (isDropdownOpen = !isDropdownOpen)}
-						>
-							<span class="font-medium">Länderauswahl</span>
-							<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-							</svg>
-						</button>
-					</div>
-				{/if}
-
-				{#if isDropdownOpen}
-					<div
-						class="absolute z-10 top-full right-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 max-h-80 overflow-y-auto"
-						use:clickOutside={() => (isDropdownOpen = false)}
-					>
-						<div class="p-2 border-b border-gray-200">
-							<div class="flex justify-between items-center">
-								<span class="font-medium">Länder</span>
-								<div class="flex gap-2">
-									<button class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
-										on:click={() => { availableCountries = availableCountries.map((c) => ({ ...c, selected: true })); updateChartData(); }}>
-										Alle
-									</button>
-									<button class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
-										on:click={() => { availableCountries = availableCountries.map((c) => ({ ...c, selected: false })); updateChartData(); }}>
-										Keine
-									</button>
-								</div>
-							</div>
-						</div>
-						<div class="p-2">
-							{#each availableCountries as country}
-								<label class="flex items-center gap-2 hover:bg-gray-100 p-1 rounded cursor-pointer">
-									<input type="checkbox" checked={country.selected} on:change={() => toggleCountry(country.id)} />
-									<span>{country.name}</span>
-								</label>
-							{/each}
-						</div>
-					</div>
-				{/if}
-			</div>
-
-			{#if chartData.length > 0}
-				<Legend items={legendItems} />
-				<Chart
-					data={chartData}
-					x="_x"
-					y={lineChartData.keys}
-					height={360}
-					yMin={0}
-					yMax={100}
-					margin={{ top: 10, right: 20, bottom: 35, left: 50 }}
-				>
-					<svelte:fragment
-						slot="default"
-						let:xScale
-						let:yScale
-						let:xDomain
-						let:innerWidth
-						let:innerHeight
-						let:hover
-					>
-						<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
-						<AxisX
-							{xScale}
-							{xDomain}
-							{innerWidth}
-							{innerHeight}
-							format={(v) => chartData[Math.round(v)]?.label ?? ''}
-							tickCount={5}
-						/>
-
-						{#each lineChartData.keys as key, i}
-							{#if showAreas}
-								<Area
-									data={chartData}
-									x="_x"
-									y={key}
-									color={lineChartData.colors[i]}
-									{xScale}
-									{yScale}
-									opacity={0.4}
-									curve="monotone"
-								/>
-							{/if}
-							<Line
-								data={chartData}
-								x="_x"
-								y={key}
-								{xScale}
-								{yScale}
-								stroke={lineChartData.colors[i]}
-								strokeWidth={2}
-								dots={true}
-								dotRadius={3}
-								{hover}
-							/>
-						{/each}
-
-						<AxisY mode="labels" {yScale} {innerWidth} {innerHeight} unit="%" />
-					</svelte:fragment>
-
-					<svelte:fragment slot="tooltip" let:hover>
-						{#if hover.x !== null}
-							{@const pt = chartData.find((d) => d._x === hover.x)}
-							{#if pt}
-								<Tooltip
-									visible
-									x={hover.clientX}
-									y={hover.clientY}
-									title={pt.label ?? String(hover.x)}
-									items={lineChartData.keys
-										.filter((k) => pt[k] != null)
-										.map((k, i) => ({
-											label: lineChartData.labels[i] ?? k,
-											value: formatNumber(pt[k], 1) + '%',
-											color: lineChartData.colors[i]
-										}))}
-								/>
-							{/if}
-						{/if}
-					</svelte:fragment>
-				</Chart>
-			{:else}
-				<div class="h-[360px] flex items-center justify-center text-gray-500">
-					Keine Daten verfügbar
-				</div>
-			{/if}
+	{:else if !rows.length}
+		<div class="h-[400px] flex items-center justify-center text-gray-500 dark:text-gray-400">
+			Keine Daten verfügbar
 		</div>
 	{:else}
-		<div class="h-[400px] flex items-center justify-center text-gray-500">
-			Keine Daten verfügbar
+		<div class="flex flex-col gap-4">
+			<div class="flex flex-wrap items-start justify-between gap-3">
+				<CountryPicker
+					{options}
+					bind:selected
+					home={{ id: homeId, name: countryNames[homeId] ?? homeId, color: HOME_COLOR }}
+					{styleFor}
+					max={MAX_COMPARE}
+				/>
+				<div class="flex flex-wrap items-center gap-4">
+					<Toggle label="EU-Ziel {EU_TARGET.year} anzeigen" bind:checked={showTarget} />
+					<RadioGroup
+						label="Ansicht"
+						hideLabel
+						bind:value={view}
+						options={[
+							{ value: 'share', label: '100 %' },
+							{ value: 'values', label: 'Werte' }
+						]}
+					/>
+				</div>
+			</div>
+
+			<Chart data={chartRows} x="year" y={seriesIds} height={360} yMin={0} {yMax} {margin}>
+				<svelte:fragment slot="default" let:xScale let:yScale let:xDomain let:innerWidth let:innerHeight let:hover>
+					<AxisY mode="grid" {yScale} {innerWidth} {innerHeight} />
+					<AxisX
+						{xScale}
+						{xDomain}
+						{innerWidth}
+						{innerHeight}
+						format={(v) => String(v)}
+						tickCount={6}
+						forceTicks={xTicks}
+					/>
+
+					{#if stacked}
+						<Area data={rows} x="year" y0Field={homeId} y1Field="_top" color={FOSSIL_COLOR} opacity={0.35} curve="linear" {xScale} {yScale} />
+						<Area data={rows} x="year" y={homeId} color={HOME_COLOR} opacity={0.45} curve="linear" {xScale} {yScale} />
+						<!-- area labels instead of a legend: placed in the middle of the time range -->
+						{@const midRow = rows[Math.floor(rows.length / 2)]}
+						{@const midShare = Number(midRow?.[homeId] ?? 0)}
+						{@const midX = xScale(midRow?.year) ?? innerWidth / 2}
+						<text
+							x={midX}
+							y={yScale((100 + midShare) / 2)}
+							text-anchor="middle"
+							dy="0.35em"
+							class="pointer-events-none text-sm font-semibold fill-gray-500 dark:fill-gray-400"
+						>
+							Fossil / nicht erneuerbar
+						</text>
+						<text
+							x={midX}
+							y={yScale(midShare / 2)}
+							text-anchor="middle"
+							dy="0.35em"
+							class="pointer-events-none text-xs font-semibold fill-green-900 dark:fill-green-100"
+						>
+							Erneuerbar
+						</text>
+					{/if}
+
+					<!-- comparison countries first, home country on top -->
+					{#each [...series].reverse() as s (s.id)}
+						<Line
+							data={rows}
+							x="year"
+							y={s.id}
+							{xScale}
+							{yScale}
+							stroke={s.color}
+							strokeWidth={s.width}
+							strokeDasharray={s.dash}
+							dots={s.id === homeId}
+							dotRadius={2.5}
+							{hover}
+						/>
+					{/each}
+
+					<!-- EU target: indicative path from the latest value + target point -->
+					{#if targetPath.length}
+						<Line
+							data={targetPath}
+							x="year"
+							y="v"
+							{xScale}
+							{yScale}
+							stroke={HOME_COLOR}
+							strokeWidth={2}
+							strokeDasharray="5 5"
+						/>
+						<circle
+							cx={xScale(EU_TARGET.year)}
+							cy={yScale(EU_TARGET.value)}
+							r="5"
+							fill="white"
+							stroke={HOME_COLOR}
+							stroke-width="2.5"
+						/>
+						<text
+							x={xScale(EU_TARGET.year) - 10}
+							y={yScale(EU_TARGET.value) - 10}
+							text-anchor="end"
+							class="text-xs font-semibold fill-gray-700 dark:fill-gray-300 stroke-white dark:stroke-gray-900"
+							stroke-width="3"
+							paint-order="stroke"
+						>
+							EU-Ziel {EU_TARGET.year}: {EU_TARGET.value} %
+						</text>
+					{/if}
+
+					{#if showEndLabels}
+						{#each endLabels(yScale) as l (l.id)}
+							<text
+								x={innerWidth + 8}
+								y={l.y}
+								dy="0.32em"
+								class="text-xs {l.id === homeId ? 'font-bold' : ''}"
+								fill={l.color}
+							>
+								{l.name} {formatNumber(l.value, 1)} %
+							</text>
+						{/each}
+					{/if}
+
+					<AxisY mode="labels" {yScale} {innerWidth} {innerHeight} unit="%" />
+				</svelte:fragment>
+
+				<svelte:fragment slot="tooltip" let:hover>
+					{#if hover.x !== null}
+						{@const pt = rows.find((d) => d.year === hover.x)}
+						{#if !pt && showTarget && hover.x === EU_TARGET.year}
+							<Tooltip
+								visible
+								x={hover.clientX}
+								y={hover.clientY}
+								title={String(EU_TARGET.year)}
+								items={[{ label: 'EU-Ziel (indikativ)', value: fmt(EU_TARGET.value), color: HOME_COLOR }]}
+							/>
+						{:else if pt}
+							<Tooltip
+								visible
+								x={hover.clientX}
+								y={hover.clientY}
+								title={String(pt.year)}
+								items={stacked
+									? [
+											{ label: 'Erneuerbar', value: fmt(pt[homeId]), color: HOME_COLOR },
+											{
+												label: 'Fossil / nicht erneuerbar',
+												value: pt[homeId] == null ? '–' : fmt(100 - (pt[homeId] ?? 0)),
+												color: FOSSIL_COLOR
+											}
+										]
+									: series
+											.filter((s) => pt[s.id] != null)
+											.sort((a, b) => (pt[b.id] ?? 0) - (pt[a.id] ?? 0))
+											.map((s) => ({ label: s.name, value: fmt(pt[s.id]), color: s.color }))}
+							/>
+						{/if}
+					{/if}
+				</svelte:fragment>
+			</Chart>
 		</div>
 	{/if}
 </div>

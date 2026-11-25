@@ -1,5 +1,3 @@
-import { DEFAULT_COLOR, REGION_COLORS } from './constants';
-
 export type MobilityRow = {
 	period: string | null;
 	region: string | null;
@@ -11,92 +9,33 @@ export type Country = {
 	name_de: string | null;
 };
 
-// Type for chart data structure
-export type LineChartData = {
-	chartData: Array<Record<string, any>>;
-	keys: string[];
-	labels: string[];
-	colors: string[];
-};
+export type YearRow = { year: number } & Record<string, number | null>;
 
 /**
- * Transforms API data into the format expected by the ChartLine component
- * @param apiData Data from the Mobility API
- * @param countries Countries data with region IDs and German names
- * @param currentCountry The current country code based on the domain (DE or AT)
- * @returns Formatted data for the chart component
+ * Pivots the long-format rows from the `mobility` table into one row per year
+ * with one column per region (country code). Missing values stay `null`.
  */
-export function transformDataForChart(
-	apiData: MobilityRow[],
-	countries: Country[],
-	currentCountry: string = 'DE'
-): LineChartData {
-	if (!apiData?.length) {
-		return { chartData: [], keys: [], labels: [], colors: [] };
+export function pivotByYear(rows: MobilityRow[], regions: string[]): YearRow[] {
+	const byYear = new Map<number, YearRow>();
+	for (const r of rows) {
+		if (!r.region || !regions.includes(r.region)) continue;
+		const year = Number(r.period);
+		if (!Number.isFinite(year)) continue;
+		if (!byYear.has(year)) {
+			const empty = { year } as YearRow;
+			for (const id of regions) empty[id] = null;
+			byYear.set(year, empty);
+		}
+		byYear.get(year)![r.region] = r.value ?? null;
 	}
+	return [...byYear.values()].sort((a, b) => a.year - b.year);
+}
 
-	// Get unique periods and regions
-	const periods = [...new Set(apiData.map((item) => item.period))].sort();
-
-	// Extract and filter regions to ensure they are valid strings
-	let regions = [...new Set(apiData.map((item) => item.region))]
-		.filter((region): region is string => region !== null && region !== undefined)
-		.sort((a, b) => a.localeCompare(b));
-
-	// Move the current country to the end so it's drawn last (on top)
-	if (regions.includes(currentCountry)) {
-		regions = regions.filter((region) => region !== currentCountry);
-		regions.push(currentCountry);
+/** Latest year with a value for the given region */
+export function latestPoint(rows: YearRow[], region: string): { year: number; value: number } | null {
+	for (let i = rows.length - 1; i >= 0; i--) {
+		const v = rows[i][region];
+		if (v != null && Number.isFinite(v)) return { year: rows[i].year, value: v };
 	}
-
-	// Create a lookup map for quick access to values
-	const dataMap: Record<string, Record<string, number>> = {};
-
-	// Populate the data map with values from the API
-	apiData.forEach((item) => {
-		const period = item.period ?? '';
-		const region = item.region ?? '';
-
-		// Initialize period entry if it doesn't exist
-		dataMap[period] = dataMap[period] ?? {};
-
-		// Store the value, defaulting to NaN if null/undefined
-		dataMap[period][region] = item.value ?? NaN;
-	});
-
-	// Create chart data with the format expected by chartLine
-	const chartData = periods.map((period, index) => {
-		const dataPoint: Record<string, any> = {
-			x: index,
-			label: period
-		};
-
-		// Add each region's value as a property
-		regions.forEach((region) => {
-			dataPoint[region] = dataMap[period ?? '']?.[region] ?? NaN;
-		});
-
-		return dataPoint;
-	});
-
-	// Create colors array matching the regions order
-	const colors = regions.map((region) =>
-		// Use highlighted color for the current country, otherwise default
-		region === currentCountry
-			? REGION_COLORS.highlighted
-			: (REGION_COLORS[region as keyof typeof REGION_COLORS] ?? DEFAULT_COLOR)
-	);
-
-	// Create labels using country names when available
-	const labels = regions.map((region) => {
-		const country = countries.find((country) => country.id === region);
-		return country?.name_de ?? region;
-	});
-
-	return {
-		chartData,
-		keys: regions,
-		labels,
-		colors
-	};
+	return null;
 }

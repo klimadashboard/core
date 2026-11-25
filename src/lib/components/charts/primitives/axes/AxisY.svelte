@@ -34,7 +34,7 @@
 					y1={y}
 					y2={y}
 					stroke="currentColor"
-					class={isZero ? 'text-gray-400' : 'text-gray-200'}
+					class={isZero ? 'text-gray-400 dark:text-gray-500' : 'text-gray-200 dark:text-gray-700'}
 					stroke-width={isZero ? 1 : 0.5}
 				/>
 			{/each}
@@ -46,22 +46,21 @@
 				{@const y = yScale(tick)}
 				{@const isLast = i === ticks.length - 1}
 				{@const labelText = format(tick)}
-				{@const textW = labelText.length * 7 + 2}
-
-				<text x="-4" {y} dy="0.32em" text-anchor="end" class="text-xs fill-gray-500">
-					{format(tick)}
+				<text x="-4" {y} dy="0.32em" text-anchor="end" class="text-xs fill-gray-500 dark:fill-gray-400">
+					{labelText}
 				</text>
 				{#if isLast && unit}
-					{@const unitText = unit}
-					<rect
-						x="-2"
+					<!-- Unit sits inside the plot area: use a thin halo instead of an opaque box,
+					     so data reaching the top of the axis (e.g. 100 % stacks) is not covered. -->
+					<text
+						x="4"
 						{y}
-						width={unitText.length * 7 + 10}
-						height="20"
-						transform="translate(0, -10)"
-						class="fill-white dark:fill-gray-900"
-					/>
-					<text x="2" {y} dy="0.32em" class="text-xs fill-gray-500">
+						dy="0.32em"
+						class="text-xs fill-gray-500 stroke-white dark:fill-gray-300 dark:stroke-transparent"
+						stroke-width="3"
+						stroke-linejoin="round"
+						paint-order="stroke"
+					>
 						{unit}
 					</text>
 				{/if}
@@ -73,7 +72,7 @@
 					x={-innerHeight / 2}
 					y="-42"
 					text-anchor="middle"
-					class="text-xs fill-gray-600 font-medium"
+					class="text-xs fill-gray-600 dark:fill-gray-400 font-medium"
 				>
 					{label}
 				</text>

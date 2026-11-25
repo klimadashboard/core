@@ -4,6 +4,7 @@ import getDirectusInstance from '$lib/utils/directus';
 import { PUBLIC_VERSION } from '$env/static/public';
 import mappingAt from './mapping.at.json';
 import mappingDe from './mapping.de.json';
+import { mobilityPlaceholders } from './mobilityPlaceholders';
 const mapping = PUBLIC_VERSION === 'de' ? mappingDe : mappingAt;
 
 const FLU_GASES = ['HFC', 'PFC', 'SF6', 'NF3'];
@@ -140,7 +141,9 @@ export async function fetchChartData({
 			totalEmissions: totalEmissions.toLocaleString('de-DE', {
 				minimumFractionDigits: 1,
 				maximumFractionDigits: 1
-			})
+			}),
+			// transport + international aviation, see mobilityPlaceholders.ts
+			...mobilityPlaceholders(data.THG)
 		},
 		meta: { source: 'Umweltbundesamt' }
 	};

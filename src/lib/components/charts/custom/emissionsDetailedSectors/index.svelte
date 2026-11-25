@@ -7,6 +7,7 @@
 	import { page } from '$app/state';
 	import { Select, RangeSlider, Toggle } from '$lib/components/ui';
 	import { loadDataset } from './config';
+	import { mobilityPlaceholders } from './mobilityPlaceholders';
 	import {
 		IconBuildingFactory2,
 		IconCar,
@@ -95,6 +96,7 @@
 		},
 		{
 			label: 'Fluorierte Gase',
+			shortLabel: 'F-Gase',
 			color: 'fluorinated',
 			colorCode: 'hsl(191, 31%, 61%)',
 			colorCodeHighlighted: 'hsl(191, 31%, 51%)',
@@ -102,7 +104,10 @@
 			iconComponent: IconWind
 		},
 		{
-			label: 'Memo',
+			// display label only; filters use the dataset label "Memo"
+			label: 'Int. Flug- &amp; Schiffverkehr',
+			// used in small treemap tiles where the full label does not fit
+			shortLabel: 'Flug &amp; Schiff',
 			color: 'memo',
 			colorCode: 'hsl(227, 38%, 61%)',
 			colorCodeHighlighted: 'hsl(227, 38%, 51%)',
@@ -235,7 +240,9 @@
 					totalEmissions: (tableRows[tableRows.length - 1]?.total ?? 0).toLocaleString('de-DE', {
 						minimumFractionDigits: 1,
 						maximumFractionDigits: 1
-					})
+					}),
+					// transport + international aviation, see mobilityPlaceholders.ts
+					...mobilityPlaceholders(result.THG)
 				},
 				meta: { source: 'Umweltbundesamt' }
 			});
@@ -339,6 +346,7 @@
 			key: ksg.key,
 			ksgSector: ksg.ksgSector,
 			label: colorForKey(ksg.key).label,
+			shortLabel: colorForKey(ksg.key).shortLabel ?? colorForKey(ksg.key).label,
 			sectors: crfSectors,
 			percentCumulative,
 			relative: percentSector,
@@ -379,17 +387,33 @@
 	let crfHover = null;
 	let extensiveList = false;
 
-	// Pre-filter: select a sector on load via chart.options.sector (e.g. "traffic")
+	// Highlight a sector via chart.options.sector (e.g. "traffic"): the overview stays open,
+	// the highlighted sector keeps its color and all other sectors are greyed out.
 	// Uses sectorlyData (not sortedData) to avoid reactive cycle since sortedData depends on ksgSelection
-	let initialSelectionApplied = false;
-	$: if (sectorlyData && !initialSelectionApplied && chart?.options?.sector) {
+	let ksgHighlight = null;
+	let initialHighlightApplied = false;
+	$: if (sectorlyData && !initialHighlightApplied && chart?.options?.sector) {
 		const found = sectorlyData.find((s) => s.key === chart.options.sector);
-		if (found) ksgSelection = found.key;
-		initialSelectionApplied = true;
+		if (found) ksgHighlight = found.key;
+		initialHighlightApplied = true;
 	}
 
 	let useAbsoluteUnits = false;
-	let showFlightEmissions = false;
+	// int. aviation & shipping (memo) belongs to mobility: on by default when traffic is highlighted
+	let showFlightEmissions = chart?.options?.sector === 'traffic';
+
+	// keys that keep their colour besides the highlighted one
+	$: ksgAlsoHighlighted = ksgHighlight === 'traffic' ? ['memo'] : [];
+
+	// history chart stacking: highlighted sector at the bottom, related ones (memo) right above it
+	$: historyData =
+		ksgHighlight && sectorlyData
+			? [...sectorlyData].sort((a, b) => {
+					const rank = (s) =>
+						s.key === ksgHighlight ? 0 : ksgAlsoHighlighted.includes(s.key) ? 1 : 2;
+					return rank(a) - rank(b) || sectorlyData.indexOf(a) - sectorlyData.indexOf(b);
+				})
+			: sectorlyData;
 </script>
 
 {#if sortedData}
@@ -520,6 +544,8 @@
 			{useAbsoluteUnits}
 			{totalSelectedYear}
 			{selectedYear}
+			{ksgHighlight}
+			{ksgAlsoHighlighted}
 			bind:ksgSelection
 			bind:crfSelection
 			bind:ksgHover
@@ -530,9 +556,11 @@
 		<HistoryChart
 			{years}
 			{maxYear}
-			{sectorlyData}
+			sectorlyData={historyData}
 			{colorForKey}
 			{selectedYear}
+			{ksgHighlight}
+			{ksgAlsoHighlighted}
 			bind:ksgSelection
 			bind:crfSelection
 			bind:ksgHover
