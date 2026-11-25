@@ -49,9 +49,10 @@ export interface ShareRow {
 	name: string;
 	/**
 	 * 'self' = the page region, 'parent' = a region it belongs to, 'member' = one of its members,
-	 * 'peer' = a district of the same state (only for regions without members)
+	 * 'peer' = a district of the same state (only for regions without members),
+	 * 'missing' = a member the source has no row for (share NaN; only hatched on the map)
 	 */
-	kind: 'self' | 'parent' | 'member' | 'peer';
+	kind: 'self' | 'parent' | 'member' | 'peer' | 'missing';
 	/** the peer that stands for the page region: the district itself or a municipality's district */
 	focus?: boolean;
 	/** % of consumption, can be above 100 */
@@ -212,7 +213,20 @@ export async function fetchChartData({
 	// Members of an aggregate region that the source doesn't cover
 	const expected = await getAggregateMembers(region, fetch);
 	const covered = new Set(members.map((m) => m.id));
-	const missing = expected?.filter((m) => !covered.has(m.id)).map((m) => m.name) ?? [];
+	const missingMembers = expected?.filter((m) => !covered.has(m.id)) ?? [];
+	const missing = missingMembers.map((m) => m.name);
+	// Kept out of ranking and table; the map hatches them as part of the region
+	const missingRows: ShareRow[] = missingMembers.map((m) => ({
+		id: m.id,
+		name: m.name,
+		kind: 'missing',
+		share: NaN,
+		consumption: null,
+		population: m.population ?? null,
+		computed: false,
+		code: m.code ?? null,
+		center: m.center ?? null
+	}));
 
 	const sources = [...new Set(rows.map((r) => r.source).filter(Boolean))].join(', ');
 	const self = references.find((r) => r.kind === 'self');
@@ -253,7 +267,7 @@ export async function fetchChartData({
 	].filter(Boolean);
 
 	return {
-		raw: result,
+		raw: [...result, ...missingRows],
 		table: { columns, rows: tableRows, filename: 'renewable-share-regions' },
 		placeholders: {
 			year,

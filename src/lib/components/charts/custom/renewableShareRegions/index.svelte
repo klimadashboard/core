@@ -98,7 +98,8 @@
 			.sort((a, b) => a.name.localeCompare(b.name, 'de'))
 			.map((d) => ({ value: d.id, label: d.name }))
 	];
-	$: max = Math.max(100, ...data.map((d) => d.share));
+	$: missing = data.filter((d) => d.kind === 'missing');
+	$: max = Math.max(100, ...data.filter((d) => d.kind !== 'missing').map((d) => d.share));
 	// Bars use the bar column minus room for the value after the longest bar
 	$: width = (v: number) => `calc((100% - 3rem) * ${Math.max(v, 0) / max})`;
 
@@ -291,6 +292,7 @@
 		</div>
 		<ShareMap
 			rows={pool}
+			{missing}
 			bind:selected
 			{region}
 			label={t(translations, 'domain.energy.renewableShareOfConsumption') + groupText}

@@ -26,10 +26,13 @@ export interface AggregateMember {
 	country: string;
 	population: number | null;
 	area: number | null;
+	/** [lon, lat] */
+	center: [string, string] | null;
 	parents: Array<{ id: string; layer: string }> | null;
 }
 
 const MEMBER_FIELDS = [
+	'center',
 	'id',
 	'code',
 	'code_short',
