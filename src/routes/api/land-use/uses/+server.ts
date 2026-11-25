@@ -89,6 +89,8 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
 			},
 			year,
 			previousYear: prev,
+			// Years that can be shown (their previous year has data too), for a year selector
+			years: years.filter((y) => years.includes(String(+y - 1))),
 			days: (Date.UTC(+year, 11, 31) - Date.UTC(+prev, 11, 31)) / 86_400_000,
 			germany: { population: germany?.population ?? null },
 			children: parts,

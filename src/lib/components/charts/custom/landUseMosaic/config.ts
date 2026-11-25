@@ -34,6 +34,8 @@ export interface LandUseMosaicData {
 	regionLayer: string;
 	year: string;
 	previousYear: string;
+	/** All years that can be shown, ascending */
+	years: string[];
 	parts: LandUsePart[];
 	/** Net increase of the whole region, in ha */
 	net: number;
@@ -54,10 +56,14 @@ export const PART_LABELS: Record<string, string> = {
 
 export async function fetchData(
 	region: Region | null,
-	fetch: typeof globalThis.fetch = globalThis.fetch
+	fetch: typeof globalThis.fetch = globalThis.fetch,
+	/** A specific year; the latest one if omitted */
+	year?: string | null
 ): Promise<LandUseMosaicData | null> {
-	const params = isSubnationalRegion(region) ? `?region=${region!.id}` : '';
-	const res = await fetch(`/api/land-use/uses${params}`);
+	const params = new URLSearchParams();
+	if (isSubnationalRegion(region)) params.set('region', region!.id);
+	if (year) params.set('year', year);
+	const res = await fetch(`/api/land-use/uses${params.size ? `?${params}` : ''}`);
 	if (res.status === 404) return null;
 	if (!res.ok) throw new Error(`Flächendaten konnten nicht geladen werden (${res.status})`);
 	const json = await res.json();
@@ -72,6 +78,7 @@ export async function fetchData(
 		regionLayer: json.region?.layer ?? 'country',
 		year: json.year,
 		previousYear: json.previousYear,
+		years: json.years ?? [json.year],
 		parts,
 		net: parts.reduce((a, p) => a + p.suv, 0),
 		days: json.days,

@@ -3,6 +3,7 @@
 	import type { Region } from '$lib/utils/getRegion';
 	import ChartSettings from '$lib/components/charts/ChartSettings.svelte';
 	import RegionDrilldown from '$lib/components/charts/RegionDrilldown.svelte';
+	import { RangeSlider } from '$lib/components/ui';
 	import { fetchRegion } from '$lib/utils/getRegion';
 	import type { ContextRegion } from '$lib/utils/regionContext';
 	import { hasDrilldown } from '$lib/utils/regionTree';
@@ -245,24 +246,40 @@
 		showTip(wedge, cell, pt.x, pt.y);
 	}
 
-	async function loadData(r: Region | null) {
+	// --- Year: the latest by default; the slider (as in ptSupply) picks another one
+	let selectedYear: string | null = null;
+	let sliderYear = 0;
+	let years: string[] = [];
+	// Another region starts again at its latest year
+	$: activeRegion, (selectedYear = null);
+
+	let loadToken = 0;
+	async function loadData(r: Region | null, year: string | null) {
+		const token = ++loadToken;
 		loading = true;
 		error = null;
 		tip = null;
 		try {
-			data = await fetchData(r);
+			const result = await fetchData(r, fetch, year);
+			if (token !== loadToken) return; // a newer region or year was picked meanwhile
+			data = result;
+			if (data) {
+				years = data.years;
+				sliderYear = Number(data.year);
+			}
 			onChartData?.(data ? buildChartData(data, r) : null);
 		} catch (e) {
+			if (token !== loadToken) return;
 			console.error('[LandUseMosaic] Error:', e);
 			error = e instanceof Error ? e.message : 'Fehler beim Laden';
 			data = null;
 			onChartData?.(null);
 		} finally {
-			loading = false;
+			if (token === loadToken) loading = false;
 		}
 	}
 
-	$: loadData(activeRegion);
+	$: loadData(activeRegion, selectedYear);
 </script>
 
 <svelte:window
@@ -273,12 +290,28 @@
 
 <div bind:clientWidth={width}>
 	<!-- Outside the loading state so focus stays on the dropdown while the data reloads -->
-	{#if region && drillable}
+	{#if (region && drillable) || years.length > 1}
 		<ChartSettings>
-			<!-- Region: drill down to a Kreis / Gemeinde of the card's region (own row, after the chart's controls) -->
-			<div class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-2">
-				<RegionDrilldown {region} activeId={activeRegion?.id ?? null} onSelect={selectRegion} />
-			</div>
+			{#if years.length > 1}
+				<!-- Year, as in the ÖPNV-Angebot chart -->
+				<div class="w-full max-w-xs">
+					<RangeSlider
+						label="Jahr"
+						bind:value={sliderYear}
+						min={Number(years[0])}
+						max={Number(years.at(-1))}
+						step={1}
+						format={(v) => String(v)}
+						on:input={(e) => (selectedYear = String(e.detail))}
+					/>
+				</div>
+			{/if}
+			{#if region && drillable}
+				<!-- Region: drill down to a Kreis / Gemeinde of the card's region (own row, after the chart's controls) -->
+				<div class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-2">
+					<RegionDrilldown {region} activeId={activeRegion?.id ?? null} onSelect={selectRegion} />
+				</div>
+			{/if}
 		</ChartSettings>
 	{/if}
 
